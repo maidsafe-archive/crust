@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,11 +44,11 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>option</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-30007' class='srclink' href='https://doc.rust-lang.org/nightly/core/option/index.html?gotosrc=30007' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Optional values</p>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-30147' class='srclink' href='https://doc.rust-lang.org/nightly/core/option/index.html?gotosrc=30147' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Optional values.</p>
 
 <p>Type <code>Option</code> represents an optional value: every <code>Option</code>
 is either <code>Some</code> and contains a value, or <code>None</code>, and
@@ -127,16 +128,12 @@ in Rust are stored as efficiently as any other pointer type.</p>
 <span class='kw'>let</span> <span class='ident'>msg</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;howdy&quot;</span>);
 
 <span class='comment'>// Take a reference to the contained string</span>
-<span class='kw'>match</span> <span class='ident'>msg</span> {
-    <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>m</span>) <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='op'>*</span><span class='ident'>m</span>),
-    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> (),
+<span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>m</span>) <span class='op'>=</span> <span class='ident'>msg</span> {
+    <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='op'>*</span><span class='ident'>m</span>);
 }
 
 <span class='comment'>// Remove the contained string, destroying the Option</span>
-<span class='kw'>let</span> <span class='ident'>unwrapped_msg</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>msg</span> {
-    <span class='prelude-val'>Some</span>(<span class='ident'>m</span>) <span class='op'>=&gt;</span> <span class='ident'>m</span>,
-    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='string'>&quot;default message&quot;</span>,
-};</pre>
+<span class='kw'>let</span> <span class='ident'>unwrapped_msg</span> <span class='op'>=</span> <span class='ident'>msg</span>.<span class='ident'>unwrap_or</span>(<span class='string'>&quot;default message&quot;</span>);</pre>
 
 <p>Initialize a result to <code>None</code> before a loop:</p>
 
@@ -174,39 +171,35 @@ in Rust are stored as efficiently as any other pointer type.</p>
 }</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.IntoIter.html'
-                               title='bitflags::__core::option::IntoIter'>IntoIter</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over the item contained inside an Option.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Iter.html'
-                               title='bitflags::__core::option::Iter'>Iter</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over a reference of the contained item in an Option.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.IterMut.html'
-                               title='bitflags::__core::option::IterMut'>IterMut</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over a mutable reference of the contained item in an Option.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.IntoIter.html'
+                                  title='bitflags::__core::option::IntoIter'>IntoIter</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over the item contained inside an Option.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Iter.html'
+                                  title='bitflags::__core::option::Iter'>Iter</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over a reference of the contained item in an Option.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.IterMut.html'
+                                  title='bitflags::__core::option::IterMut'>IterMut</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over a mutable reference of the contained item in an Option.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.Option.html'
-                               title='bitflags::__core::option::Option'>Option</a></td>
-                        <td class='docblock short'>
-                             <p>The <code>Option</code> type. See <a href="index.html">the module level documentation</a> for more.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Option.html'
+                                  title='bitflags::__core::option::Option'>Option</a></td>
+                           <td class='docblock short'>
+                                <p>The <code>Option</code> type. See <a href="index.html">the module level documentation</a> for more.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

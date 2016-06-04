@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>itertools</a>::<wbr><a class='struct' href=''>GroupByLazy</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1068' class='srclink' href='../src/itertools/groupbylazy.rs.html#284-291' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1068' class='srclink' href='../src/itertools/groupbylazy.rs.html#284-291' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct GroupByLazy&lt;K, I, F&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a></span> {
     // some fields omitted
 }</pre><div class='docblock'><p><code>GroupByLazy</code> is the storage for the lazy grouping operation.</p>
@@ -62,9 +63,9 @@ value. It should be stored in a local variable or temporary and
 iterated.</p>
 
 <p>See <a href="trait.Itertools.html#method.group_by_lazy"><code>.group_by_lazy()</code></a> for more information.</p>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, K, I, F&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a> for &amp;'a <a class='struct' href='../itertools/struct.GroupByLazy.html' title='itertools::GroupByLazy'>GroupByLazy</a>&lt;K, I, F&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>, I::Item: 'a, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;I::Item) -&gt; K, K: <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a></span></code></h3><div class='impl-items'><h4 id='associatedtype.Item' class='type'><code>type Item = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>K, <a class='struct' href='../itertools/struct.Group.html' title='itertools::Group'>Group</a>&lt;'a, K, I, F&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a></code></h4>
-<h4 id='associatedtype.IntoIter' class='type'><code>type IntoIter = <a class='struct' href='../itertools/struct.Groups.html' title='itertools::Groups'>Groups</a>&lt;'a, K, I, F&gt;</code></h4>
-<h4 id='method.into_iter' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#method.into_iter' class='fnname'>into_iter</a>(self) -&gt; Self::<a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIter</a></code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, K, I, F&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a> for &amp;'a <a class='struct' href='../itertools/struct.GroupByLazy.html' title='itertools::GroupByLazy'>GroupByLazy</a>&lt;K, I, F&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>, I::Item: 'a, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;I::Item) -&gt; K, K: <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a></span></code></h3><div class='impl-items'><h4 id='associatedtype.Item' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#associatedtype.Item' class='type'>Item</a> = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>K, <a class='struct' href='../itertools/struct.Group.html' title='itertools::Group'>Group</a>&lt;'a, K, I, F&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a></code></h4>
+<h4 id='associatedtype.IntoIter' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#associatedtype.IntoIter' class='type'>IntoIter</a> = <a class='struct' href='../itertools/struct.Groups.html' title='itertools::Groups'>Groups</a>&lt;'a, K, I, F&gt;</code></h4>
+<h4 id='method.into_iter' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#tymethod.into_iter' class='fnname'>into_iter</a>(self) -&gt; Self::<a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIter</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 

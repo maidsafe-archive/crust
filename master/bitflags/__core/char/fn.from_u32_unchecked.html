@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,13 +44,13 @@
 
     <section id='main' class="content fn">
 <h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>char</a>::<wbr><a class='fn' href=''>from_u32_unchecked</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-28514' class='srclink' href='https://doc.rust-lang.org/nightly/core/char/fn.from_u32_unchecked.html?gotosrc=28514' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-28387' class='srclink' href='https://doc.rust-lang.org/nightly/core/char/fn.from_u32_unchecked.html?gotosrc=28387' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub unsafe fn from_u32_unchecked(i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a></pre><span class="since">1.5.0</span><div class='docblock'><p>Converts a <code>u32</code> to a <code>char</code>, ignoring validity.</p>
 
-<p>Note that all <a href="../primitive.char.html"><code>char</code></a>s are valid <a href="../primitive.u32.html"><code>u32</code></a>s, and can be casted to one with
+<p>Note that all <a href="../../std/primitive.char.html"><code>char</code></a>s are valid <a href="../../std/primitive.u32.html"><code>u32</code></a>s, and can be casted to one with
 <a href="../../book/casting-between-types.html#as"><code>as</code></a>:</p>
 
 <pre class='rust rust-example-rendered'>
@@ -58,9 +59,9 @@
 
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>128175</span>, <span class='ident'>i</span>);</pre>
 
-<p>However, the reverse is not true: not all valid <a href="../primitive.u32.html"><code>u32</code></a>s are valid
-<a href="../primitive.char.html"><code>char</code></a>s. <code>from_u32_unchecked()</code> will ignore this, and blindly cast to
-<a href="../primitive.char.html"><code>char</code></a>, possibly creating an invalid one.</p>
+<p>However, the reverse is not true: not all valid <a href="../../std/primitive.u32.html"><code>u32</code></a>s are valid
+<a href="../../std/primitive.char.html"><code>char</code></a>s. <code>from_u32_unchecked()</code> will ignore this, and blindly cast to
+<a href="../../std/primitive.char.html"><code>char</code></a>, possibly creating an invalid one.</p>
 
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
 <p>This function is unsafe, as it may construct invalid <code>char</code> values.</p>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>time</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-0' class='srclink' href='../src/time/lib.rs.html#11-1275' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/time/lib.rs.html#11-1275' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Simple time handling.</p>
 
 <h1 id='usage' class='section-header'><a href='#usage'>Usage</a></h1>
@@ -66,167 +67,148 @@ time = &quot;0.1&quot;
 standard library.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Duration.html'
-                               title='time::Duration'>Duration</a></td>
-                        <td class='docblock short'>
-                             <p>ISO 8601 time duration with nanosecond precision.
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Duration.html'
+                                  title='time::Duration'>Duration</a></td>
+                           <td class='docblock short'>
+                                <p>ISO 8601 time duration with nanosecond precision.
 This also allows for the negative duration; see individual methods for details.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.OutOfRangeError.html'
-                               title='time::OutOfRangeError'>OutOfRangeError</a></td>
-                        <td class='docblock short'>
-                             <p>Represents error when converting <code>Duration</code> to/from a standard library
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.OutOfRangeError.html'
+                                  title='time::OutOfRangeError'>OutOfRangeError</a></td>
+                           <td class='docblock short'>
+                                <p>Represents error when converting <code>Duration</code> to/from a standard library
 implementation</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.PreciseTime.html'
-                               title='time::PreciseTime'>PreciseTime</a></td>
-                        <td class='docblock short'>
-                             <p>An opaque structure representing a moment in time.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SteadyTime.html'
-                               title='time::SteadyTime'>SteadyTime</a></td>
-                        <td class='docblock short'>
-                             <p>A structure representing a moment in time.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Timespec.html'
-                               title='time::Timespec'>Timespec</a></td>
-                        <td class='docblock short'>
-                             <p>A record specifying a time value in seconds and nanoseconds, where
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.PreciseTime.html'
+                                  title='time::PreciseTime'>PreciseTime</a></td>
+                           <td class='docblock short'>
+                                <p>An opaque structure representing a moment in time.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SteadyTime.html'
+                                  title='time::SteadyTime'>SteadyTime</a></td>
+                           <td class='docblock short'>
+                                <p>A structure representing a moment in time.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Timespec.html'
+                                  title='time::Timespec'>Timespec</a></td>
+                           <td class='docblock short'>
+                                <p>A record specifying a time value in seconds and nanoseconds, where
 nanoseconds represent the offset from the given second.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Tm.html'
-                               title='time::Tm'>Tm</a></td>
-                        <td class='docblock short'>
-                             <p>Holds a calendar date and time broken down into its components (year, month,
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Tm.html'
+                                  title='time::Tm'>Tm</a></td>
+                           <td class='docblock short'>
+                                <p>Holds a calendar date and time broken down into its components (year, month,
 day, and so on), also called a broken-down time value.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.TmFmt.html'
-                               title='time::TmFmt'>TmFmt</a></td>
-                        <td class='docblock short'>
-                             <p>A wrapper around a <code>Tm</code> and format string that implements Display.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.TmFmt.html'
+                                  title='time::TmFmt'>TmFmt</a></td>
+                           <td class='docblock short'>
+                                <p>A wrapper around a <code>Tm</code> and format string that implements Display.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.ParseError.html'
-                               title='time::ParseError'>ParseError</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.ParseError.html'
+                                  title='time::ParseError'>ParseError</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.at.html'
-                               title='time::at'>at</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the specified time in the local timezone</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.at_utc.html'
-                               title='time::at_utc'>at_utc</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the specified time in UTC</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.empty_tm.html'
-                               title='time::empty_tm'>empty_tm</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.get_time.html'
-                               title='time::get_time'>get_time</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the current time as a <code>timespec</code> containing the seconds and
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.at.html'
+                                  title='time::at'>at</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the specified time in the local timezone</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.at_utc.html'
+                                  title='time::at_utc'>at_utc</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the specified time in UTC</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.empty_tm.html'
+                                  title='time::empty_tm'>empty_tm</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.get_time.html'
+                                  title='time::get_time'>get_time</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the current time as a <code>timespec</code> containing the seconds and
 nanoseconds since 1970-01-01T00:00:00Z.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.now.html'
-                               title='time::now'>now</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the current time in the local timezone</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.now_utc.html'
-                               title='time::now_utc'>now_utc</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the current time in UTC</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.precise_time_ns.html'
-                               title='time::precise_time_ns'>precise_time_ns</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the current value of a high-resolution performance counter
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.now.html'
+                                  title='time::now'>now</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the current time in the local timezone</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.now_utc.html'
+                                  title='time::now_utc'>now_utc</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the current time in UTC</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.precise_time_ns.html'
+                                  title='time::precise_time_ns'>precise_time_ns</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the current value of a high-resolution performance counter
 in nanoseconds since an unspecified epoch.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.precise_time_s.html'
-                               title='time::precise_time_s'>precise_time_s</a></td>
-                        <td class='docblock short'>
-                             <p>Returns the current value of a high-resolution performance counter
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.precise_time_s.html'
+                                  title='time::precise_time_s'>precise_time_s</a></td>
+                           <td class='docblock short'>
+                                <p>Returns the current value of a high-resolution performance counter
 in seconds since an unspecified epoch.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.strftime.html'
-                               title='time::strftime'>strftime</a></td>
-                        <td class='docblock short'>
-                             <p>Formats the time according to the format string.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.strptime.html'
-                               title='time::strptime'>strptime</a></td>
-                        <td class='docblock short'>
-                             <p>Parses the time from the string according to the format string.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.tzset.html'
-                               title='time::tzset'>tzset</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.strftime.html'
+                                  title='time::strftime'>strftime</a></td>
+                           <td class='docblock short'>
+                                <p>Formats the time according to the format string.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.strptime.html'
+                                  title='time::strptime'>strptime</a></td>
+                           <td class='docblock short'>
+                                <p>Parses the time from the string according to the format string.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.tzset.html'
+                                  title='time::tzset'>tzset</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

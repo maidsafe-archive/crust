@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='struct' href=''>Barrier</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-10057' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/barrier/struct.Barrier.html?gotosrc=10057' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-10025' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/barrier/struct.Barrier.html?gotosrc=10025' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Barrier {
     // some fields omitted
 }</pre><span class="since">1.0.0</span><div class='docblock'><p>A barrier enables multiple threads to synchronize the beginning
@@ -56,33 +57,23 @@ of some computation.</p>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>handles</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='number'>10</span>);
 <span class='kw'>let</span> <span class='ident'>barrier</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Barrier</span>::<span class='ident'>new</span>(<span class='number'>10</span>));
 <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>10</span> {
     <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>barrier</span>.<span class='ident'>clone</span>();
     <span class='comment'>// The same messages will be printed together.</span>
     <span class='comment'>// You will NOT see any interleaving.</span>
-    <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span><span class='op'>||</span> {
+    <span class='ident'>handles</span>.<span class='ident'>push</span>(<span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span><span class='op'>||</span> {
         <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;before wait&quot;</span>);
         <span class='ident'>c</span>.<span class='ident'>wait</span>();
         <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;after wait&quot;</span>);
-    });
+    }));
+}
+<span class='comment'>// Wait for other threads to finish.</span>
+<span class='kw'>for</span> <span class='ident'>handle</span> <span class='kw'>in</span> <span class='ident'>handles</span> {
+    <span class='ident'>handle</span>.<span class='ident'>join</span>().<span class='ident'>unwrap</span>();
 }</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.Barrier.html' title='bitflags::__core::sync::Barrier'>Barrier</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(n: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.Barrier.html' title='bitflags::__core::sync::Barrier'>Barrier</a></code></h4>
-<div class='docblock'><p>Creates a new barrier that can block a given number of threads.</p>
-
-<p>A barrier will block <code>n</code>-1 threads which call <code>wait</code> and then wake up
-all threads at once when the <code>n</code>th thread calls <code>wait</code>.</p>
-</div><h4 id='method.wait' class='method'><code>fn <a href='#method.wait' class='fnname'>wait</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.BarrierWaitResult.html' title='bitflags::__core::sync::BarrierWaitResult'>BarrierWaitResult</a></code></h4>
-<div class='docblock'><p>Blocks the current thread until all threads has rendezvoused here.</p>
-
-<p>Barriers are re-usable after all threads have rendezvoused once, and can
-be used continuously.</p>
-
-<p>A single (arbitrary) thread will receive a <code>BarrierWaitResult</code> that
-returns <code>true</code> from <code>is_leader</code> when returning from this function, and
-all other threads will receive a result that will return <code>false</code> from
-<code>is_leader</code></p>
-</div></div></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

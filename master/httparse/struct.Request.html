@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>httparse</a>::<wbr><a class='struct' href=''>Request</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-198' class='srclink' href='../src/httparse/lib.rs.html#191-200' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-190' class='srclink' href='../src/httparse/lib.rs.html#191-200' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Request&lt;'headers, 'buf&gt; {
     pub method: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'buf <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
     pub path: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'buf <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
@@ -77,13 +78,13 @@ could be parsed, before reading more, in case you wish to exit early.</p>
 }</pre>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.method'><code>method</code></td><td><div class='docblock'><p>The request method, such as <code>GET</code>.</p>
+                             <td id='structfield.method'><code>method</code></td><td><div class='docblock'><p>The request method, such as <code>GET</code>.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.path'><code>path</code></td><td><div class='docblock'><p>The request path, such as <code>/about-us</code>.</p>
+                             <td id='structfield.path'><code>path</code></td><td><div class='docblock'><p>The request path, such as <code>/about-us</code>.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.version'><code>version</code></td><td><div class='docblock'><p>The request version, such as <code>HTTP/1.1</code>.</p>
+                             <td id='structfield.version'><code>version</code></td><td><div class='docblock'><p>The request version, such as <code>HTTP/1.1</code>.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.headers'><code>headers</code></td><td><div class='docblock'><p>The request headers.</p>
+                             <td id='structfield.headers'><code>headers</code></td><td><div class='docblock'><p>The request headers.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'h, 'b&gt; <a class='struct' href='../httparse/struct.Request.html' title='httparse::Request'>Request</a>&lt;'h, 'b&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(headers: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h mut [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../httparse/struct.Request.html' title='httparse::Request'>Request</a>&lt;'h, 'b&gt;</code></h4>
 <div class='docblock'><p>Creates a new Request, using a slice of headers you allocate.</p>
 </div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../httparse/type.Result.html' title='httparse::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</code></h4>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>rustc_serialize</a>::<wbr><a class='trait' href=''>Encodable</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-309' class='srclink' href='../src/rustc_serialize/serialize.rs.html#198-200' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-309' class='srclink' href='../src/rustc_serialize/serialize.rs.html#198-200' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Encodable {
     fn <a href='#tymethod.encode' class='fnname'>encode</a>&lt;S: <a class='trait' href='../rustc_serialize/trait.Encoder.html' title='rustc_serialize::Encoder'>Encoder</a>&gt;(&amp;self, s: &amp;mut S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, S::Error&gt;;
 }</pre>
@@ -137,8 +138,8 @@
 <li><code>impl&lt;T&gt; <a class='trait' href='../rustc_serialize/trait.Encodable.html' title='rustc_serialize::Encodable'>Encodable</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html' title='std::collections::hash::set::HashSet'>HashSet</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../rustc_serialize/trait.Encodable.html' title='rustc_serialize::Encodable'>Encodable</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a></span></code></li>
 <li><code>impl <a class='trait' href='../rustc_serialize/trait.Encodable.html' title='rustc_serialize::Encodable'>Encodable</a> for <a class='enum' href='../rustc_serialize/json/enum.Json.html' title='rustc_serialize::json::Json'>Json</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../implementors/rustc_serialize/trait.Encodable.js">
-                      </script></section>
+                         src="../implementors/rustc_serialize/trait.Encodable.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a href='index.html'>atomic</a>::<wbr><a class='struct' href=''>AtomicPtr</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-27870' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/struct.AtomicPtr.html?gotosrc=27870' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-27707' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/struct.AtomicPtr.html?gotosrc=27707' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct AtomicPtr&lt;T&gt; {
     // some fields omitted
 }</pre><span class="since">1.0.0</span><div class='docblock'><p>A raw pointer type which can be safely shared between threads.</p>
@@ -128,17 +129,17 @@ this operation.</p>
 <span class='kw'>let</span> <span class='ident'>another_ptr</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='number'>10</span>;
 
 <span class='kw'>let</span> <span class='ident'>value</span> <span class='op'>=</span> <span class='ident'>some_ptr</span>.<span class='ident'>compare_and_swap</span>(<span class='ident'>other_ptr</span>, <span class='ident'>another_ptr</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);</pre>
-</div><h4 id='method.compare_exchange' class='method'><code>fn <a href='#method.compare_exchange' class='fnname'>compare_exchange</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
+</div><h4 id='method.compare_exchange' class='method'><code>fn <a href='#method.compare_exchange' class='fnname'>compare_exchange</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>&gt;</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>extended_compare_and_swap</code>)<p>: recently added</p>
 </em></div><div class='docblock'><p>Stores a value into the pointer if the current value is the same as the <code>current</code> value.</p>
 
-<p>The return value is always the previous value. If it is equal to <code>current</code>, then the value
-was updated.</p>
+<p>The return value is a result indicating whether the new value was written and containing
+the previous value. On success this value is guaranteed to be equal to <code>new</code>.</p>
 
 <p><code>compare_exchange</code> takes two <code>Ordering</code> arguments to describe the memory ordering of this
 operation. The first describes the required ordering if the operation succeeds while the
 second describes the required ordering when the operation fails. The failure ordering can&#39;t
-be <code>Acquire</code> or <code>AcqRel</code> and must be equivalent or weaker than the success ordering.</p>
+be <code>Release</code> or <code>AcqRel</code> and must be equivalent or weaker than the success ordering.</p>
 
 <h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
@@ -152,19 +153,19 @@ be <code>Acquire</code> or <code>AcqRel</code> and must be equivalent or weaker 
 
 <span class='kw'>let</span> <span class='ident'>value</span> <span class='op'>=</span> <span class='ident'>some_ptr</span>.<span class='ident'>compare_exchange</span>(<span class='ident'>other_ptr</span>, <span class='ident'>another_ptr</span>,
                                       <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);</pre>
-</div><h4 id='method.compare_exchange_weak' class='method'><code>fn <a href='#method.compare_exchange_weak' class='fnname'>compare_exchange_weak</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a></code></h4>
+</div><h4 id='method.compare_exchange_weak' class='method'><code>fn <a href='#method.compare_exchange_weak' class='fnname'>compare_exchange_weak</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>&gt;</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>extended_compare_and_swap</code>)<p>: recently added</p>
 </em></div><div class='docblock'><p>Stores a value into the pointer if the current value is the same as the <code>current</code> value.</p>
 
 <p>Unlike <code>compare_exchange</code>, this function is allowed to spuriously fail even when the
 comparison succeeds, which can result in more efficient code on some platforms. The
-returned value is a tuple of the existing value and a flag indicating whether the
-new value was written.</p>
+return value is a result indicating whether the new value was written and containing the
+previous value.</p>
 
 <p><code>compare_exchange_weak</code> takes two <code>Ordering</code> arguments to describe the memory
 ordering of this operation. The first describes the required ordering if the operation
 succeeds while the second describes the required ordering when the operation fails. The
-failure ordering can&#39;t be <code>Acquire</code> or <code>AcqRel</code> and must be equivalent or weaker than the
+failure ordering can&#39;t be <code>Release</code> or <code>AcqRel</code> and must be equivalent or weaker than the
 success ordering.</p>
 
 <h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
@@ -176,17 +177,13 @@ success ordering.</p>
 <span class='kw'>let</span> <span class='ident'>new</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='number'>10</span>;
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>old</span> <span class='op'>=</span> <span class='ident'>some_ptr</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
 <span class='kw'>loop</span> {
-    <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>some_ptr</span>.<span class='ident'>compare_exchange_weak</span>(<span class='ident'>old</span>, <span class='ident'>new</span>,
-                                                <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>,
-                                                <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
-    <span class='kw'>if</span> <span class='ident'>result</span>.<span class='number'>1</span> {
-        <span class='kw'>break</span>;
-    } <span class='kw'>else</span> {
-        <span class='ident'>old</span> <span class='op'>=</span> <span class='ident'>result</span>.<span class='number'>0</span>;
+    <span class='kw'>match</span> <span class='ident'>some_ptr</span>.<span class='ident'>compare_exchange_weak</span>(<span class='ident'>old</span>, <span class='ident'>new</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>) {
+        <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='kw'>break</span>,
+        <span class='prelude-val'>Err</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='ident'>old</span> <span class='op'>=</span> <span class='ident'>x</span>,
     }
 }</pre>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='../../../../bitflags/__core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h4>
-</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code><span class="since">1.3.0</span></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code><span class="since">1.3.0</span></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='../../../../bitflags/__core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicPtr.html' title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a>&lt;T&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 

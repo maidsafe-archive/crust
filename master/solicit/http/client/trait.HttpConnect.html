@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,13 +44,13 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>client</a>::<wbr><a class='trait' href=''>HttpConnect</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1306' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#76-86' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1278' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#76-86' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait HttpConnect {
-    type Stream: <a class='trait' href='../../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a>;
-    type Err: <a class='trait' href='../../../solicit/http/client/trait.HttpConnectError.html' title='solicit::http::client::HttpConnectError'>HttpConnectError</a> + 'static;
+    type <a href='#associatedtype.Stream' class='type'>Stream</a>: <a class='trait' href='../../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a>;
+    type <a href='#associatedtype.Err' class='type'>Err</a>: <a class='trait' href='../../../solicit/http/client/trait.HttpConnectError.html' title='solicit::http::client::HttpConnectError'>HttpConnectError</a> + 'static;
     fn <a href='#tymethod.connect' class='fnname'>connect</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../../solicit/http/client/struct.ClientStream.html' title='solicit::http::client::ClientStream'>ClientStream</a>&lt;Self::<a class='trait' href='../../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>Stream</a>&gt;, Self::<a class='trait' href='../../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>Err</a>&gt;;
 }</pre><div class='docblock'><p>A trait that can be implemented by structs that want to provide the
 functionality of establishing network connections for use by HTTP/2 connections.</p>
@@ -64,9 +65,9 @@ preface. The helper function <code>write_preface</code> can be used for this pur
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Stream' class='method stab '><code>type Stream: <a class='trait' href='../../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a></code></h3><div class='docblock'><p>The type of the underlying transport stream that the <code>HttpConnection</code>s
+        <h3 id='associatedtype.Stream' class='method stab '><code>type <a href='#associatedtype.Stream' class='type'>Stream</a>: <a class='trait' href='../../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a></code></h3><div class='docblock'><p>The type of the underlying transport stream that the <code>HttpConnection</code>s
 produced by this <code>HttpConnect</code> implementation will be based on.</p>
-</div><h3 id='associatedtype.Err' class='method stab '><code>type Err: <a class='trait' href='../../../solicit/http/client/trait.HttpConnectError.html' title='solicit::http::client::HttpConnectError'>HttpConnectError</a> + 'static</code></h3><div class='docblock'><p>The type of the error that can be produced by trying to establish the
+</div><h3 id='associatedtype.Err' class='method stab '><code>type <a href='#associatedtype.Err' class='type'>Err</a>: <a class='trait' href='../../../solicit/http/client/trait.HttpConnectError.html' title='solicit::http::client::HttpConnectError'>HttpConnectError</a> + 'static</code></h3><div class='docblock'><p>The type of the error that can be produced by trying to establish the
 connection (i.e. calling the <code>connect</code> method).</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
@@ -77,8 +78,8 @@ connection (i.e. calling the <code>connect</code> method).</p>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;'a&gt; <a class='trait' href='../../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>HttpConnect</a> for <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a>&lt;'a&gt;</code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/solicit/http/client/trait.HttpConnect.js">
-                      </script></section>
+                         src="../../../implementors/solicit/http/client/trait.HttpConnect.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

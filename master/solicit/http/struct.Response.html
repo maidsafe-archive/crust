@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>solicit</a>::<wbr><a href='index.html'>http</a>::<wbr><a class='struct' href=''>Response</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1623' class='srclink' href='../../src/solicit/http/mod.rs.html#139-149' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1590' class='srclink' href='../../src/solicit/http/mod.rs.html#139-149' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Response {
     pub stream_id: <a class='type' href='../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>,
     pub headers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../solicit/http/type.Header.html' title='solicit::http::Header'>Header</a>&gt;,
@@ -57,21 +58,21 @@
 The headers contain both the meta-headers, as well as the actual headers.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.stream_id'><code>stream_id</code></td><td><div class='docblock'><p>The ID of the stream to which the response is associated. HTTP/1.1 does
+                             <td id='structfield.stream_id'><code>stream_id</code></td><td><div class='docblock'><p>The ID of the stream to which the response is associated. HTTP/1.1 does
 not really have an equivalent to this.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.headers'><code>headers</code></td><td><div class='docblock'><p>Exposes <em>all</em> the raw response headers, including the meta-headers.
+                             <td id='structfield.headers'><code>headers</code></td><td><div class='docblock'><p>Exposes <em>all</em> the raw response headers, including the meta-headers.
 (For now the only meta header allowed in HTTP/2 responses is the
 <code>:status</code>.)</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.body'><code>body</code></td><td><div class='docblock'><p>The full body of the response as an uninterpreted sequence of bytes.</p>
+                             <td id='structfield.body'><code>body</code></td><td><div class='docblock'><p>The full body of the response as an uninterpreted sequence of bytes.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../solicit/http/struct.Response.html' title='solicit::http::Response'>Response</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(stream_id: <a class='type' href='../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, headers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../solicit/http/type.Header.html' title='solicit::http::Header'>Header</a>&gt;, body: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='struct' href='../../solicit/http/struct.Response.html' title='solicit::http::Response'>Response</a></code></h4>
 <div class='docblock'><p>Creates a new <code>Response</code> with all the components already provided.</p>
 </div><h4 id='method.status_code' class='method'><code>fn <a href='#method.status_code' class='fnname'>status_code</a>(&amp;self) -&gt; <a class='type' href='../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt;</code></h4>
 <div class='docblock'><p>Gets the response status code from the pseudo-header. If the response
 does not contain the response as the first pseuo-header, an error is
 returned as such a response is malformed.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../solicit/http/struct.Response.html' title='solicit::http::Response'>Response</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../solicit/http/struct.Response.html' title='solicit::http::Response'>Response</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../solicit/http/struct.Response.html' title='solicit::http::Response'>Response</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../solicit/http/struct.Response.html' title='solicit::http::Response'>Response</a></code></h4>
 <h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>hyper</a>::<wbr><a href='index.html'>header</a>::<wbr><a class='trait' href=''>HeaderFormat</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-4690' class='srclink' href='../../src/hyper/header/mod.rs.html#135-142' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-4687' class='srclink' href='../../src/hyper/header/mod.rs.html#135-142' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait HeaderFormat: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + HeaderClone + <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='../../typeable/trait.Typeable.html' title='typeable::Typeable'>Typeable</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> {
     fn <a href='#tymethod.fmt_header' class='fnname'>fmt_header</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a>;
 }</pre><div class='docblock'><p>A trait for any object that will represent a header field and value.</p>
@@ -59,7 +60,7 @@
 
 <p>This method is not allowed to introduce an Err not produced
 by the passed-in Formatter.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for &amp;'a <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for &amp;'a <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -109,8 +110,8 @@ by the passed-in Formatter.</p>
 <li><code>impl <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> for <a class='struct' href='../../hyper/header/struct.UserAgent.html' title='hyper::header::UserAgent'>UserAgent</a></code></li>
 <li><code>impl <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> for <a class='enum' href='../../hyper/header/enum.Vary.html' title='hyper::header::Vary'>Vary</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/hyper/header/trait.HeaderFormat.js">
-                      </script></section>
+                         src="../../implementors/hyper/header/trait.HeaderFormat.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

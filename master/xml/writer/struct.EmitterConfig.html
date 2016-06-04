@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>xml</a>::<wbr><a href='index.html'>writer</a>::<wbr><a class='struct' href=''>EmitterConfig</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-2616' class='srclink' href='../../src/xml/writer/config.rs.html#12-76' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-2581' class='srclink' href='../../src/xml/writer/config.rs.html#12-76' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct EmitterConfig {
     pub line_separator: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
     pub indent_string: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
@@ -62,12 +63,12 @@
 <p>This structure contains various options which control XML document emitter behavior.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.line_separator'><code>line_separator</code></td><td><div class='docblock'><p>Line separator used to separate lines in formatted output. Default is <code>&quot;\n&quot;</code>.</p>
+                             <td id='structfield.line_separator'><code>line_separator</code></td><td><div class='docblock'><p>Line separator used to separate lines in formatted output. Default is <code>&quot;\n&quot;</code>.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.indent_string'><code>indent_string</code></td><td><div class='docblock'><p>A string which will be used for a single level of indentation. Default is <code>&quot; &quot;</code>
+                             <td id='structfield.indent_string'><code>indent_string</code></td><td><div class='docblock'><p>A string which will be used for a single level of indentation. Default is <code>&quot; &quot;</code>
 (two spaces).</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.perform_indent'><code>perform_indent</code></td><td><div class='docblock'><p>Whether or not the emitted document should be indented. Default is false.</p>
+                             <td id='structfield.perform_indent'><code>perform_indent</code></td><td><div class='docblock'><p>Whether or not the emitted document should be indented. Default is false.</p>
 
 <p>The emitter is capable to perform automatic indentation of the emitted XML document.
 It is done in stream-like fashion and does not require the knowledge of the whole
@@ -77,7 +78,7 @@ document in advance.</p>
 existing layout when processing an existing XML document. Also the indentiation algorithm
 is not thoroughly tested. Hence by default it is disabled.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.perform_escaping'><code>perform_escaping</code></td><td><div class='docblock'><p>Whether or not characters in output events will be escaped. Default is true.</p>
+                             <td id='structfield.perform_escaping'><code>perform_escaping</code></td><td><div class='docblock'><p>Whether or not characters in output events will be escaped. Default is true.</p>
 
 <p>The emitter can automatically escape characters which can&#39;t appear in PCDATA sections
 or element attributes of an XML document, like <code>&lt;</code> or <code>&quot;</code> (in attributes). This may
@@ -87,30 +88,30 @@ should be scanned for invalid characters.</p>
 <p>If this option is disabled, the XML writer may produce non-well-formed documents, so
 use <code>false</code> value for this option with care.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.write_document_declaration'><code>write_document_declaration</code></td><td><div class='docblock'><p>Whether or not to write XML document declaration at the beginning of a document.
+                             <td id='structfield.write_document_declaration'><code>write_document_declaration</code></td><td><div class='docblock'><p>Whether or not to write XML document declaration at the beginning of a document.
 Default is true.</p>
 
 <p>This option controls whether the document declaration should be emitted automatically
 before a root element is written if it was not emitted explicitly by the user.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.normalize_empty_elements'><code>normalize_empty_elements</code></td><td><div class='docblock'><p>Whether or not to convert elements with empty content to empty elements. Default is true.</p>
+                             <td id='structfield.normalize_empty_elements'><code>normalize_empty_elements</code></td><td><div class='docblock'><p>Whether or not to convert elements with empty content to empty elements. Default is true.</p>
 
 <p>This option allows turning elements like <code>&lt;a&gt;&lt;/a&gt;</code> (an element with empty content)
 into <code>&lt;a /&gt;</code> (an empty element).</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.cdata_to_characters'><code>cdata_to_characters</code></td><td><div class='docblock'><p>Whether or not to emit CDATA events as plain characters. Default is false.</p>
+                             <td id='structfield.cdata_to_characters'><code>cdata_to_characters</code></td><td><div class='docblock'><p>Whether or not to emit CDATA events as plain characters. Default is false.</p>
 
 <p>This option forces the emitter to convert CDATA events into regular character events,
 performing all the necessary escaping beforehand. This may be occasionally useful
 for feeding the document into incorrect parsers which do not support CDATA.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.keep_element_names_stack'><code>keep_element_names_stack</code></td><td><div class='docblock'><p>Whether or not to keep element names to support <code>EndElement</code> events without explicit names.
+                             <td id='structfield.keep_element_names_stack'><code>keep_element_names_stack</code></td><td><div class='docblock'><p>Whether or not to keep element names to support <code>EndElement</code> events without explicit names.
 Default is true.</p>
 
 <p>This option makes the emitter to keep names of written elements in order to allow
 omitting names when writing closing element tags. This could incur some memory overhead.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.autopad_comments'><code>autopad_comments</code></td><td><div class='docblock'><p>Whether or not to automatically insert leading and trailing spaces in emitted comments,
+                             <td id='structfield.autopad_comments'><code>autopad_comments</code></td><td><div class='docblock'><p>Whether or not to automatically insert leading and trailing spaces in emitted comments,
 if necessary. Default is true.</p>
 
 <p>This is a convenience option in order for the user not to append spaces before and after
@@ -162,11 +163,11 @@ this configuration object.</p>
 <div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
 </div></div><h3 class='impl'><code>impl <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.autopad_comments' class='method'><code>fn <a href='#method.autopad_comments' class='fnname'>autopad_comments</a>(self, value: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h4>
 <div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h4>
-</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h4>
 <h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>

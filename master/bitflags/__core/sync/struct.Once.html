@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='struct' href=''>Once</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-10364' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/once/struct.Once.html?gotosrc=10364' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-10315' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/once/struct.Once.html?gotosrc=10315' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Once {
     // some fields omitted
 }</pre><span class="since">1.0.0</span><div class='docblock'><p>A synchronization primitive which can be used to run a one-time global
@@ -63,23 +64,7 @@ value.</p>
 <span class='ident'>START</span>.<span class='ident'>call_once</span>(<span class='op'>||</span> {
     <span class='comment'>// run initialization here</span>
 });</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.Once.html' title='bitflags::__core::sync::Once'>Once</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><span class="since">1.2.0</span><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.Once.html' title='bitflags::__core::sync::Once'>Once</a></code></h4>
-<div class='docblock'><p>Creates a new <code>Once</code> value.</p>
-</div><h4 id='method.call_once' class='method'><code>fn <a href='#method.call_once' class='fnname'>call_once</a>&lt;F&gt;(&amp;'static self, f: F) <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a></span></code></h4>
-<div class='docblock'><p>Performs an initialization routine once and only once. The given closure
-will be executed if this is the first time <code>call_once</code> has been called,
-and otherwise the routine will <em>not</em> be invoked.</p>
-
-<p>This method will block the calling thread if another initialization
-routine is currently running.</p>
-
-<p>When this function returns, it is guaranteed that some initialization
-has run and completed (it may not be the closure specified). It is also
-guaranteed that any memory writes performed by the executed closure can
-be reliably observed by other threads at this point (there is a
-happens-before relation between the closure and code executing after the
-return).</p>
-</div></div></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

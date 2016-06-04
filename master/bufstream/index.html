@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>bufstream</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-0' class='srclink' href='../src/bufstream/lib.rs.html#11-187' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/bufstream/lib.rs.html#11-187' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>A crate for separately buffered streams.</p>
 
 <p>This crate provides a <code>BufStream</code> type which provides buffering of both the
@@ -71,24 +72,22 @@ bufstream = &quot;0.1&quot;
 <span class='ident'>buf</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span>[<span class='number'>0</span>; <span class='number'>1024</span>]).<span class='ident'>unwrap</span>();</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.BufStream.html'
-                               title='bufstream::BufStream'>BufStream</a></td>
-                        <td class='docblock short'>
-                             <p>Wraps a Stream and buffers input and output to and from it.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.IntoInnerError.html'
-                               title='bufstream::IntoInnerError'>IntoInnerError</a></td>
-                        <td class='docblock short'>
-                             <p>An error returned by <code>into_inner</code> which combines an error that
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.BufStream.html'
+                                  title='bufstream::BufStream'>BufStream</a></td>
+                           <td class='docblock short'>
+                                <p>Wraps a Stream and buffers input and output to and from it.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.IntoInnerError.html'
+                                  title='bufstream::IntoInnerError'>IntoInnerError</a></td>
+                           <td class='docblock short'>
+                                <p>An error returned by <code>into_inner</code> which combines an error that
 happened while writing out the buffer, and the buffered writer object
 which may be used to recover from the condition.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

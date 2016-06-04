@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>connection</a>::<wbr><a class='struct' href=''>HttpConnection</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-743' class='srclink' href='../../../src/solicit/http/connection.rs.html#109-120' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-725' class='srclink' href='../../../src/solicit/http/connection.rs.html#109-120' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct HttpConnection&lt;S, R&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a></span> {
     pub receiver: R,
     pub sender: S,
@@ -65,11 +66,11 @@ requiring the higher level to directly look at the frames themselves, rather onl
 content within the frames.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.receiver'><code>receiver</code></td><td><div class='docblock'><p>The instance handling the reading of frames.</p>
+                             <td id='structfield.receiver'><code>receiver</code></td><td><div class='docblock'><p>The instance handling the reading of frames.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.sender'><code>sender</code></td><td><div class='docblock'><p>The instance handling the writing of frames.</p>
+                             <td id='structfield.sender'><code>sender</code></td><td><div class='docblock'><p>The instance handling the writing of frames.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.scheme'><code>scheme</code></td><td><div class='docblock'><p>The scheme of the connection</p>
+                             <td id='structfield.scheme'><code>scheme</code></td><td><div class='docblock'><p>The scheme of the connection</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;S, R&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(sender: S, receiver: R, scheme: <a class='enum' href='../../../solicit/http/enum.HttpScheme.html' title='solicit::http::HttpScheme'>HttpScheme</a>) -&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>HttpConnection</code> that will use the given sender and receiver instances
 for writing and reading frames, respectively.</p>

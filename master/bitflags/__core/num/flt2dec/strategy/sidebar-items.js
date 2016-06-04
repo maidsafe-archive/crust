@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["dragon","Almost direct (but slightly optimized) Rust translation of Figure 3 of [1]."],["grisu","Rust adaptation of Grisu3 algorithm described in [1]. It uses about 1KB of precomputed table, and in turn, it's very quick for most inputs."]]});

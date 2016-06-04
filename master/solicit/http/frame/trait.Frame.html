@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>frame</a>::<wbr><a class='trait' href=''>Frame</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-551' class='srclink' href='../../../src/solicit/http/frame/mod.rs.html#118-148' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-538' class='srclink' href='../../../src/solicit/http/frame/mod.rs.html#118-148' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Frame: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> {
-    type FlagType: <a class='trait' href='../../../solicit/http/frame/trait.Flag.html' title='solicit::http::frame::Flag'>Flag</a>;
+    type <a href='#associatedtype.FlagType' class='type'>FlagType</a>: <a class='trait' href='../../../solicit/http/frame/trait.Flag.html' title='solicit::http::frame::Flag'>Flag</a>;
     fn <a href='#tymethod.from_raw' class='fnname'>from_raw</a>(raw_frame: <a class='struct' href='../../../solicit/http/frame/struct.RawFrame.html' title='solicit::http::frame::RawFrame'>RawFrame</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self&gt;;
     fn <a href='#tymethod.is_set' class='fnname'>is_set</a>(&amp;self, flag: Self::<a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>FlagType</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>;
     fn <a href='#tymethod.get_stream_id' class='fnname'>get_stream_id</a>(&amp;self) -&gt; <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>;
@@ -59,7 +60,7 @@
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.FlagType' class='method stab '><code>type FlagType: <a class='trait' href='../../../solicit/http/frame/trait.Flag.html' title='solicit::http::frame::Flag'>Flag</a></code></h3><div class='docblock'><p>The type that represents the flags that the particular <code>Frame</code> can take.
+        <h3 id='associatedtype.FlagType' class='method stab '><code>type <a href='#associatedtype.FlagType' class='type'>FlagType</a>: <a class='trait' href='../../../solicit/http/frame/trait.Flag.html' title='solicit::http::frame::Flag'>Flag</a></code></h3><div class='docblock'><p>The type that represents the flags that the particular <code>Frame</code> can take.
 This makes sure that only valid <code>Flag</code>s are used with each <code>Frame</code>.</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
@@ -86,8 +87,8 @@ frame&#39;s rules, etc.</p>
 <li><code>impl <a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>Frame</a> for <a class='struct' href='../../../solicit/http/frame/headers/struct.HeadersFrame.html' title='solicit::http::frame::headers::HeadersFrame'>HeadersFrame</a></code></li>
 <li><code>impl <a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>Frame</a> for <a class='struct' href='../../../solicit/http/frame/settings/struct.SettingsFrame.html' title='solicit::http::frame::settings::SettingsFrame'>SettingsFrame</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/solicit/http/frame/trait.Frame.js">
-                      </script></section>
+                         src="../../../implementors/solicit/http/frame/trait.Frame.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

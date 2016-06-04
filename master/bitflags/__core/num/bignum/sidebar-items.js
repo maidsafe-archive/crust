@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["tests",""]],"struct":[["Big32x40","Stack-allocated arbitrary-precision (up to certain limit) integer."]],"trait":[["FullOps","Arithmetic operations required by bignums."]],"type":[["Digit32",""]]});

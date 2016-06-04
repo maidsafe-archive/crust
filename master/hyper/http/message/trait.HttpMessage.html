@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>hyper</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>message</a>::<wbr><a class='trait' href=''>HttpMessage</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-5937' class='srclink' href='../../../src/hyper/http/message.rs.html#54-77' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-5934' class='srclink' href='../../../src/hyper/http/message.rs.html#54-77' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait HttpMessage: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='../../../typeable/trait.Typeable.html' title='typeable::Typeable'>Typeable</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> {
     fn <a href='#tymethod.set_outgoing' class='fnname'>set_outgoing</a>(&amp;mut self, head: <a class='struct' href='../../../hyper/http/message/struct.RequestHead.html' title='hyper::http::message::RequestHead'>RequestHead</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../../hyper/http/message/struct.RequestHead.html' title='hyper::http::message::RequestHead'>RequestHead</a>&gt;;
     fn <a href='#tymethod.get_incoming' class='fnname'>get_incoming</a>(&amp;mut self) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../../hyper/http/message/struct.ResponseHead.html' title='hyper::http::message::ResponseHead'>ResponseHead</a>&gt;;
@@ -83,8 +84,8 @@ data.</p>
     <li><code>impl <a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a> for <a class='struct' href='../../../hyper/http/h1/struct.Http11Message.html' title='hyper::http::h1::Http11Message'>Http11Message</a></code></li>
 <li><code>impl&lt;S&gt; <a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a> for <a class='struct' href='../../../hyper/http/h2/struct.Http2Message.html' title='hyper::http::h2::Http2Message'>Http2Message</a>&lt;S&gt; <span class='where'>where S: <a class='trait' href='../../../hyper/http/h2/trait.CloneableStream.html' title='hyper::http::h2::CloneableStream'>CloneableStream</a></span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/hyper/http/message/trait.HttpMessage.js">
-                      </script></section>
+                         src="../../../implementors/hyper/http/message/trait.HttpMessage.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

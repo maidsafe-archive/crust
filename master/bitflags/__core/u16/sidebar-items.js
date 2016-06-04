@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["BITS",""],["BYTES",""],["MAX",""],["MIN",""]]});
+initSidebarItems({"constant":[["MAX",""],["MIN",""]]});

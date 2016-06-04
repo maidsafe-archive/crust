@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>itertools</a>::<wbr><a href='index.html'>misc</a>::<wbr><a class='trait' href=''>Slice</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1860' class='srclink' href='../../src/itertools/misc.rs.html#209-216' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1860' class='srclink' href='../../src/itertools/misc.rs.html#209-216' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub unsafe trait Slice {
-    type Item;
+    type <a href='#associatedtype.Item' class='type'>Item</a>;
 }</pre><div class='docblock'><p>A helper trait to let <code>ZipSlices</code> accept both <code>&amp;[T]</code> and <code>&amp;mut [T]</code>.</p>
 
 <p>Unsafe trait because:</p>
@@ -59,7 +60,7 @@
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Item' class='method stab '><code>type Item</code></h3><div class='docblock'><p>The type of a reference to the slice&#39;s elements</p>
+        <h3 id='associatedtype.Item' class='method stab '><code>type <a href='#associatedtype.Item' class='type'>Item</a></code></h3><div class='docblock'><p>The type of a reference to the slice&#39;s elements</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -69,8 +70,8 @@
 <li><code>impl&lt;'a, A&gt; <a class='trait' href='../../itertools/misc/trait.Slice.html' title='itertools::misc::Slice'>Slice</a> for <a class='struct' href='../../itertools/struct.StrideMut.html' title='itertools::StrideMut'>StrideMut</a>&lt;'a, A&gt;</code></li>
 <li><code>impl&lt;T, U&gt; <a class='trait' href='../../itertools/misc/trait.Slice.html' title='itertools::misc::Slice'>Slice</a> for <a class='struct' href='../../itertools/struct.ZipSlices.html' title='itertools::ZipSlices'>ZipSlices</a>&lt;T, U&gt; <span class='where'>where T: <a class='trait' href='../../itertools/misc/trait.Slice.html' title='itertools::misc::Slice'>Slice</a>, U: <a class='trait' href='../../itertools/misc/trait.Slice.html' title='itertools::misc::Slice'>Slice</a></span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/itertools/misc/trait.Slice.js">
-                      </script></section>
+                         src="../../implementors/itertools/misc/trait.Slice.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

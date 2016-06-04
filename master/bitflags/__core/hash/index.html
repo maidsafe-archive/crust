@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>hash</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-33316' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/index.html?gotosrc=33316' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-33884' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/index.html?gotosrc=33884' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Generic hashing support.</p>
 
 <p>This module provides a generic way to compute the hash of a value. The
@@ -105,57 +106,44 @@ the trait <code>Hash</code>:</p>
 }</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.BuildHasherDefault.html'
-                               title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a></td>
-                        <td class='docblock short'>
-                             <p>A structure which implements <code>BuildHasher</code> for all <code>Hasher</code> types which also
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.BuildHasherDefault.html'
+                                  title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a></td>
+                           <td class='docblock short'>
+                                <p>A structure which implements <code>BuildHasher</code> for all <code>Hasher</code> types which also
 implement <code>Default</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SipHasher.html'
-                               title='bitflags::__core::hash::SipHasher'>SipHasher</a></td>
-                        <td class='docblock short'>
-                             <p>An implementation of SipHash 2-4.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SipHasher.html'
+                                  title='bitflags::__core::hash::SipHasher'>SipHasher</a></td>
+                           <td class='docblock short'>
+                                <p>An implementation of SipHash 2-4.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.BuildHasher.html'
-                               title='bitflags::__core::hash::BuildHasher'>BuildHasher</a></td>
-                        <td class='docblock short'>
-                             <p>A <code>BuildHasher</code> is typically used as a factory for instances of <code>Hasher</code>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.BuildHasher.html'
+                                  title='bitflags::__core::hash::BuildHasher'>BuildHasher</a></td>
+                           <td class='docblock short'>
+                                <p>A <code>BuildHasher</code> is typically used as a factory for instances of <code>Hasher</code>
 which a <code>HashMap</code> can then use to hash keys independently.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Hash.html'
-                               title='bitflags::__core::hash::Hash'>Hash</a></td>
-                        <td class='docblock short'>
-                             <p>A hashable type.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Hasher.html'
-                               title='bitflags::__core::hash::Hasher'>Hasher</a></td>
-                        <td class='docblock short'>
-                             <p>A trait which represents the ability to hash an arbitrary stream of bytes.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='trait' href='trait.HashState.html'
-                               title='bitflags::__core::hash::HashState'>HashState</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>Deprecated, renamed to <code>BuildHasher</code></p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Hash.html'
+                                  title='bitflags::__core::hash::Hash'>Hash</a></td>
+                           <td class='docblock short'>
+                                <p>A hashable type.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Hasher.html'
+                                  title='bitflags::__core::hash::Hasher'>Hasher</a></td>
+                           <td class='docblock short'>
+                                <p>A trait which represents the ability to hash an arbitrary stream of bytes.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

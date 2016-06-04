@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>net</a>::<wbr><a class='trait' href=''>ToSocketAddrs</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-5911' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/addr/trait.ToSocketAddrs.html?gotosrc=5911' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-5800' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/addr/trait.ToSocketAddrs.html?gotosrc=5800' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait ToSocketAddrs <span class='where'>where Self::<a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>Iter</a>::<a class='trait' href='../../../bitflags/__core/iter/trait.Iterator.html' title='bitflags::__core::iter::Iterator'>Item</a> == <a class='enum' href='../../../bitflags/__core/net/enum.SocketAddr.html' title='bitflags::__core::net::SocketAddr'>SocketAddr</a></span> {
-    type Iter: <a class='trait' href='../../../bitflags/__core/iter/trait.Iterator.html' title='bitflags::__core::iter::Iterator'>Iterator</a>;
+    type <a href='#associatedtype.Iter' class='type'>Iter</a>: <a class='trait' href='../../../bitflags/__core/iter/trait.Iterator.html' title='bitflags::__core::iter::Iterator'>Iterator</a>;
     fn <a href='#tymethod.to_socket_addrs' class='fnname'>to_socket_addrs</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;Self::<a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>Iter</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
 }</pre><div class='docblock'><p>A trait for objects which can be converted or resolved to one or more
 <code>SocketAddr</code> values.</p>
@@ -105,7 +106,7 @@ some other type (e.g. a string) just for it to be converted back to
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Iter' class='method stab '><code>type Iter: <a class='trait' href='../../../bitflags/__core/iter/trait.Iterator.html' title='bitflags::__core::iter::Iterator'>Iterator</a></code></h3><div class='docblock'><p>Returned iterator over socket addresses which this type may correspond
+        <h3 id='associatedtype.Iter' class='method stab '><code>type <a href='#associatedtype.Iter' class='type'>Iter</a>: <a class='trait' href='../../../bitflags/__core/iter/trait.Iterator.html' title='bitflags::__core::iter::Iterator'>Iterator</a></code></h3><div class='docblock'><p>Returned iterator over socket addresses which this type may correspond
 to.</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
@@ -123,19 +124,15 @@ performed.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='enum' href='../../../bitflags/__core/net/enum.SocketAddr.html' title='bitflags::__core::net::SocketAddr'>SocketAddr</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='struct' href='../../../bitflags/__core/net/struct.SocketAddrV4.html' title='bitflags::__core::net::SocketAddrV4'>SocketAddrV4</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='struct' href='../../../bitflags/__core/net/struct.SocketAddrV6.html' title='bitflags::__core::net::SocketAddrV6'>SocketAddrV6</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='enum' href='../../../bitflags/__core/net/enum.IpAddr.html' title='bitflags::__core::net::IpAddr'>IpAddr</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a></code></li>
+    <li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='enum' href='../../../bitflags/__core/net/enum.IpAddr.html' title='bitflags::__core::net::IpAddr'>IpAddr</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='struct' href='../../../bitflags/__core/net/struct.Ipv4Addr.html' title='bitflags::__core::net::Ipv4Addr'>Ipv4Addr</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='struct' href='../../../bitflags/__core/net/struct.Ipv6Addr.html' title='bitflags::__core::net::Ipv6Addr'>Ipv6Addr</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a>&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [</a><a class='enum' href='../../../bitflags/__core/net/enum.SocketAddr.html' title='bitflags::__core::net::SocketAddr'>SocketAddr</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
-<li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> for &amp;'a T <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/net/trait.ToSocketAddrs.html' title='bitflags::__core::net::ToSocketAddrs'>ToSocketAddrs</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/std/net/addr/trait.ToSocketAddrs.js">
-                      </script></section>
+                         src="../../../implementors/std/net/addr/trait.ToSocketAddrs.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

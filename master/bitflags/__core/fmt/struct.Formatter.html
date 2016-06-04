@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fmt</a>::<wbr><a class='struct' href=''>Formatter</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-35001' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html?gotosrc=35001' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-35413' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html?gotosrc=35413' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Formatter&lt;'a&gt; {
     // some fields omitted
 }</pre><span class="since">1.0.0</span><div class='docblock'><p>A struct to represent both where to emit formatting strings to and how they
@@ -90,7 +91,7 @@ formatter.</p>
 <div class='docblock'><p>Flags for formatting (packed version of rt::Flag)</p>
 </div><h4 id='method.fill' class='method'><span class="since">1.5.0</span><code>fn <a href='#method.fill' class='fnname'>fill</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a></code></h4>
 <div class='docblock'><p>Character used as &#39;fill&#39; whenever there is alignment</p>
-</div><h4 id='method.align' class='method'><code>fn <a href='#method.align' class='fnname'>align</a>(&amp;self) -&gt; <a class='enum' href='../../../core/fmt/rt/v1/enum.Alignment.html' title='core::fmt::rt::v1::Alignment'>Alignment</a></code></h4>
+</div><h4 id='method.align' class='method'><code>fn <a href='#method.align' class='fnname'>align</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/fmt/enum.Alignment.html' title='core::fmt::Alignment'>Alignment</a></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>fmt_flags_align</code>)<p>: method was just created</p>
 </em></div><div class='docblock'><p>Flag indicating what form of alignment was requested</p>
 </div><h4 id='method.width' class='method'><span class="since">1.5.0</span><code>fn <a href='#method.width' class='fnname'>width</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>&gt;</code></h4>
@@ -204,7 +205,7 @@ formatter.</p>
 
 <span class='comment'>// prints &quot;{&quot;A&quot;: 10, &quot;B&quot;: 11}&quot;</span>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>Foo</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;A&quot;</span>.<span class='ident'>to_string</span>(), <span class='number'>10</span>), (<span class='string'>&quot;B&quot;</span>.<span class='ident'>to_string</span>(), <span class='number'>11</span>)]));</pre>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Write.html' title='bitflags::__core::fmt::Write'>Write</a> for <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>&lt;'a&gt;</code><span class="since">1.2.0</span></h3><div class='impl-items'><h4 id='method.write_str-1' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Write.html#method.write_str' class='fnname'>write_str</a>(&amp;mut self, s: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Write.html' title='bitflags::__core::fmt::Write'>Write</a> for <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>&lt;'a&gt;</code><span class="since">1.2.0</span></h3><div class='impl-items'><h4 id='method.write_str-1' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Write.html#tymethod.write_str' class='fnname'>write_str</a>(&amp;mut self, s: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.write_char' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Write.html#method.write_char' class='fnname'>write_char</a>(&amp;mut self, c: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.write_fmt-1' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Write.html#method.write_fmt' class='fnname'>write_fmt</a>(&amp;mut self, args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div></section>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,64 +44,58 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>shorthash</a>::<wbr><a class='mod' href=''>siphash24</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-4520' class='srclink' href='../../../../src/sodiumoxide/crypto/shorthash/siphash24.rs.html#1-169' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-4520' class='srclink' href='../../../../src/sodiumoxide/crypto/shorthash/siphash24.rs.html#1-169' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p><code>SipHash-2-4</code></p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Digest.html'
-                               title='sodiumoxide::crypto::shorthash::siphash24::Digest'>Digest</a></td>
-                        <td class='docblock short'>
-                             <p><code>Digest</code> structure</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Key.html'
-                               title='sodiumoxide::crypto::shorthash::siphash24::Key'>Key</a></td>
-                        <td class='docblock short'>
-                             <p><code>Key</code></p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Digest.html'
+                                  title='sodiumoxide::crypto::shorthash::siphash24::Digest'>Digest</a></td>
+                           <td class='docblock short'>
+                                <p><code>Digest</code> structure</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Key.html'
+                                  title='sodiumoxide::crypto::shorthash::siphash24::Key'>Key</a></td>
+                           <td class='docblock short'>
+                                <p><code>Key</code></p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.DIGESTBYTES.html'
-                               title='sodiumoxide::crypto::shorthash::siphash24::DIGESTBYTES'>DIGESTBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Digest</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.KEYBYTES.html'
-                               title='sodiumoxide::crypto::shorthash::siphash24::KEYBYTES'>KEYBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Key</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.DIGESTBYTES.html'
+                                  title='sodiumoxide::crypto::shorthash::siphash24::DIGESTBYTES'>DIGESTBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Digest</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.KEYBYTES.html'
+                                  title='sodiumoxide::crypto::shorthash::siphash24::KEYBYTES'>KEYBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Key</code>.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.gen_key.html'
-                               title='sodiumoxide::crypto::shorthash::siphash24::gen_key'>gen_key</a></td>
-                        <td class='docblock short'>
-                             <p><code>gen_key()</code> randomly generates a key for shorthash</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.shorthash.html'
-                               title='sodiumoxide::crypto::shorthash::siphash24::shorthash'>shorthash</a></td>
-                        <td class='docblock short'>
-                             <p><code>shorthash</code> hashes a message <code>m</code> under a key <code>k</code>. It
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.gen_key.html'
+                                  title='sodiumoxide::crypto::shorthash::siphash24::gen_key'>gen_key</a></td>
+                           <td class='docblock short'>
+                                <p><code>gen_key()</code> randomly generates a key for shorthash</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.shorthash.html'
+                                  title='sodiumoxide::crypto::shorthash::siphash24::shorthash'>shorthash</a></td>
+                           <td class='docblock short'>
+                                <p><code>shorthash</code> hashes a message <code>m</code> under a key <code>k</code>. It
 returns a hash <code>h</code>.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

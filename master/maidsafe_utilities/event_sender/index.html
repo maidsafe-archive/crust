@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
     
@@ -43,50 +44,46 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>maidsafe_utilities</a>::<wbr><a class='mod' href=''>event_sender</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-643' class='srclink' href='../../src/maidsafe_utilities/event_sender.rs.html#18-270' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-135' class='srclink' href='../../src/maidsafe_utilities/event_sender.rs.html#18-269' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Utilities related to event-subsetting.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.EventSender.html'
-                               title='maidsafe_utilities::event_sender::EventSender'>EventSender</a></td>
-                        <td class='docblock short'>
-                             <p>This structure is coded to achieve event-subsetting. Receivers in Rust are blocking. One cannot
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.EventSender.html'
+                                  title='maidsafe_utilities::event_sender::EventSender'>EventSender</a></td>
+                           <td class='docblock short'>
+                                <p>This structure is coded to achieve event-subsetting. Receivers in Rust are blocking. One cannot
 listen to multiple receivers at the same time except by using <code>try_recv</code> which again is bad for
 the same reasons spin-lock based on some sleep is bad (wasting cycles, 50% efficient on an
 average etc.).</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.EventSenderError.html'
-                               title='maidsafe_utilities::event_sender::EventSenderError'>EventSenderError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors that can be returned by <code>EventSender</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.MaidSafeEventCategory.html'
-                               title='maidsafe_utilities::event_sender::MaidSafeEventCategory'>MaidSafeEventCategory</a></td>
-                        <td class='docblock short'>
-                             <p>Category of events meant for a MaidSafe observer listening to both, routing and crust events</p>
-                        </td>
-                    </tr>
-                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.EventSenderError.html'
+                                  title='maidsafe_utilities::event_sender::EventSenderError'>EventSenderError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors that can be returned by EventSender</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.MaidSafeEventCategory.html'
+                                  title='maidsafe_utilities::event_sender::MaidSafeEventCategory'>MaidSafeEventCategory</a></td>
+                           <td class='docblock short'>
+                                <p>Category of events meant for a MaidSafe observer listening to both, routing and crust events</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='type' href='type.MaidSafeObserver.html'
-                               title='maidsafe_utilities::event_sender::MaidSafeObserver'>MaidSafeObserver</a></td>
-                        <td class='docblock short'>
-                             <p>Observer that Crust (and users of Routing if required) must allow to be registered</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.MaidSafeObserver.html'
+                                  title='maidsafe_utilities::event_sender::MaidSafeObserver'>MaidSafeObserver</a></td>
+                           <td class='docblock short'>
+                                <p>Observer that Crust (and users of Routing if required) must allow to be registered</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

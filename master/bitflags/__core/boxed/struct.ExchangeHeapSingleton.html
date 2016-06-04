@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,19 +44,19 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>boxed</a>::<wbr><a class='struct' href=''>ExchangeHeapSingleton</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-89' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.ExchangeHeapSingleton.html?gotosrc=89' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-89' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.ExchangeHeapSingleton.html?gotosrc=89' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ExchangeHeapSingleton {
     // some fields omitted
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>box_heap</code>)<p>: may be renamed; uncertain about custom allocator design</p>
 </em></div><div class='docblock'><p>This the singleton type used solely for <code>boxed::HEAP</code>.</p>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Placer.html' title='bitflags::__core::ops::Placer'>Placer</a>&lt;T&gt; for <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h3><div class='impl-items'><h4 id='associatedtype.Place' class='type'><code>type Place = <a class='struct' href='../../../bitflags/__core/boxed/struct.IntermediateBox.html' title='bitflags::__core::boxed::IntermediateBox'>IntermediateBox</a>&lt;T&gt;</code></h4>
-<h4 id='method.make_place' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Placer.html#method.make_place' class='fnname'>make_place</a>(self) -&gt; <a class='struct' href='../../../bitflags/__core/boxed/struct.IntermediateBox.html' title='bitflags::__core::boxed::IntermediateBox'>IntermediateBox</a>&lt;T&gt;</code></h4>
-</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Placer.html' title='bitflags::__core::ops::Placer'>Placer</a>&lt;T&gt; for <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h3><div class='impl-items'><h4 id='associatedtype.Place' class='type'><code>type <a href='../../../bitflags/__core/ops/trait.Placer.html#associatedtype.Place' class='type'>Place</a> = <a class='struct' href='../../../bitflags/__core/boxed/struct.IntermediateBox.html' title='bitflags::__core::boxed::IntermediateBox'>IntermediateBox</a>&lt;T&gt;</code></h4>
+<h4 id='method.make_place' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Placer.html#tymethod.make_place' class='fnname'>make_place</a>(self) -&gt; <a class='struct' href='../../../bitflags/__core/boxed/struct.IntermediateBox.html' title='bitflags::__core::boxed::IntermediateBox'>IntermediateBox</a>&lt;T&gt;</code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h4>
 <h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a></code></h3><div class='impl-items'></div></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

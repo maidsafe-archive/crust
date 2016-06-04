@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,17 +44,22 @@
 
     <section id='main' class="content fn">
 <h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>ptr</a>::<wbr><a class='fn' href=''>read_volatile</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-6143' class='srclink' href='https://doc.rust-lang.org/nightly/core/ptr/fn.read_volatile.html?gotosrc=6143' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe fn read_volatile&lt;T&gt;(src: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>) -&gt; T</pre><div class='stability'><em class='stab unstable'>Unstable (<code>volatile</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>Performs a volatile read of the value from <code>src</code> without moving it. This
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-5857' class='srclink' href='https://doc.rust-lang.org/nightly/core/ptr/fn.read_volatile.html?gotosrc=5857' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe fn read_volatile&lt;T&gt;(src: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>) -&gt; T</pre><span class="since">1.9.0</span><div class='docblock'><p>Performs a volatile read of the value from <code>src</code> without moving it. This
 leaves the memory in <code>src</code> unchanged.</p>
 
 <p>Volatile operations are intended to act on I/O memory, and are guaranteed
 to not be elided or reordered by the compiler across other volatile
-operations. See the LLVM documentation on [<a href="http://llvm.org/docs/LangRef.html#volatile-memory-accesses">volatile</a>].</p>
+operations.</p>
+
+<h1 id='notes' class='section-header'><a href='#notes'>Notes</a></h1>
+<p>Rust does not currently have a rigorously and formally defined memory model,
+so the precise semantics of what &quot;volatile&quot; means here is subject to change
+over time. That being said, the semantics will almost always end up pretty
+similar to <a href="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf">C11&#39;s definition of volatile</a>.</p>
 
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
 <p>Beyond accepting a raw pointer, this is unsafe because it semantically

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,13 +44,13 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>ops</a>::<wbr><a class='trait' href=''>Boxed</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-22048' class='srclink' href='https://doc.rust-lang.org/nightly/core/ops/trait.Boxed.html?gotosrc=22048' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-21889' class='srclink' href='https://doc.rust-lang.org/nightly/core/ops/trait.Boxed.html?gotosrc=21889' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Boxed {
-    type Data;
-    type Place: <a class='trait' href='../../../bitflags/__core/ops/trait.BoxPlace.html' title='bitflags::__core::ops::BoxPlace'>BoxPlace</a>&lt;Self::<a class='trait' href='../../../bitflags/__core/ops/trait.Boxed.html' title='bitflags::__core::ops::Boxed'>Data</a>&gt;;
+    type <a href='#associatedtype.Data' class='type'>Data</a>;
+    type <a href='#associatedtype.Place' class='type'>Place</a>: <a class='trait' href='../../../bitflags/__core/ops/trait.BoxPlace.html' title='bitflags::__core::ops::BoxPlace'>BoxPlace</a>&lt;Self::<a class='trait' href='../../../bitflags/__core/ops/trait.Boxed.html' title='bitflags::__core::ops::Boxed'>Data</a>&gt;;
     unsafe fn <a href='#tymethod.finalize' class='fnname'>finalize</a>(filled: Self::<a class='trait' href='../../../bitflags/__core/ops/trait.Boxed.html' title='bitflags::__core::ops::Boxed'>Place</a>) -&gt; Self;
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>Core trait for the <code>box EXPR</code> form.</p>
 
@@ -73,8 +74,8 @@ implementation of <code>BoxPlace</code> to use, namely:
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Data' class='method stab unstable'><code>type Data</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>The kind of data that is stored in this kind of box.</p>
-</div><h3 id='associatedtype.Place' class='method stab unstable'><code>type Place: <a class='trait' href='../../../bitflags/__core/ops/trait.BoxPlace.html' title='bitflags::__core::ops::BoxPlace'>BoxPlace</a>&lt;Self::<a class='trait' href='../../../bitflags/__core/ops/trait.Boxed.html' title='bitflags::__core::ops::Boxed'>Data</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>The place that will negotiate the storage of the data.</p>
+        <h3 id='associatedtype.Data' class='method stab unstable'><code>type <a href='#associatedtype.Data' class='type'>Data</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>The kind of data that is stored in this kind of box.</p>
+</div><h3 id='associatedtype.Place' class='method stab unstable'><code>type <a href='#associatedtype.Place' class='type'>Place</a>: <a class='trait' href='../../../bitflags/__core/ops/trait.BoxPlace.html' title='bitflags::__core::ops::BoxPlace'>BoxPlace</a>&lt;Self::<a class='trait' href='../../../bitflags/__core/ops/trait.Boxed.html' title='bitflags::__core::ops::Boxed'>Data</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>The place that will negotiate the storage of the data.</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
@@ -86,8 +87,8 @@ returned instance of <code>Self</code> and forgetting <code>filled</code>.</p>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Boxed.html' title='bitflags::__core::ops::Boxed'>Boxed</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;T&gt;</code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/core/ops/trait.Boxed.js">
-                      </script></section>
+                         src="../../../implementors/core/ops/trait.Boxed.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

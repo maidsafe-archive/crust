@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>boxed</a>::<wbr><a class='trait' href=''>FnBox</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-264' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/trait.FnBox.html?gotosrc=264' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-264' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/trait.FnBox.html?gotosrc=264' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait FnBox&lt;A&gt; {
-    type Output;
+    type <a href='#associatedtype.Output' class='type'>Output</a>;
     fn <a href='#tymethod.call_box' class='fnname'>call_box</a>(self: <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;Self&gt;, args: A) -&gt; Self::<a class='trait' href='../../../bitflags/__core/boxed/trait.FnBox.html' title='bitflags::__core::boxed::FnBox'>Output</a>;
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>fnbox</code>)<p>: Newly introduced</p>
 </em></div><div class='docblock'><p><code>FnBox</code> is a version of the <code>FnOnce</code> intended for use with boxed
@@ -88,7 +89,7 @@ stored in the map is <code>Box&lt;FnBox() -&gt; i32&gt;</code> and not <code>Box
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Output' class='method stab unstable'><code>type Output</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>fnbox</code>)<p>: Newly introduced</p>
+        <h3 id='associatedtype.Output' class='method stab unstable'><code>type <a href='#associatedtype.Output' class='type'>Output</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>fnbox</code>)<p>: Newly introduced</p>
 </em></div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
@@ -96,10 +97,9 @@ stored in the map is <code>Box&lt;FnBox() -&gt; i32&gt;</code> and not <code>Box
 </em></div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;A, F&gt; <a class='trait' href='../../../bitflags/__core/boxed/trait.FnBox.html' title='bitflags::__core::boxed::FnBox'>FnBox</a>&lt;A&gt; for F <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>&lt;A&gt;</span></code></li>
-</ul><script type="text/javascript" async
-                              src="../../../implementors/alloc/boxed/trait.FnBox.js">
-                      </script></section>
+    </ul><script type="text/javascript" async
+                         src="../../../implementors/alloc/boxed/trait.FnBox.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

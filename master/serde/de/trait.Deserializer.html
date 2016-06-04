@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>serde</a>::<wbr><a href='index.html'>de</a>::<wbr><a class='trait' href=''>Deserializer</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-5564' class='srclink' href='../../src/serde/de/mod.rs.html#156-424' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-5564' class='srclink' href='../../src/serde/de/mod.rs.html#156-424' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Deserializer {
-    type Error: <a class='trait' href='../../serde/de/trait.Error.html' title='serde::de::Error'>Error</a>;
+    type <a href='#associatedtype.Error' class='type'>Error</a>: <a class='trait' href='../../serde/de/trait.Error.html' title='serde::de::Error'>Error</a>;
     fn <a href='#tymethod.visit' class='fnname'>visit</a>&lt;V&gt;(&amp;mut self, visitor: V) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;V::Value, Self::<a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Error</a>&gt; <span class='where'>where V: <a class='trait' href='../../serde/de/trait.Visitor.html' title='serde::de::Visitor'>Visitor</a></span>;
 
     fn <a href='#method.visit_bool' class='fnname'>visit_bool</a>&lt;V&gt;(&amp;mut self, visitor: V) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;V::Value, Self::<a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Error</a>&gt; <span class='where'>where V: <a class='trait' href='../../serde/de/trait.Visitor.html' title='serde::de::Visitor'>Visitor</a></span> { ... }
@@ -95,7 +96,7 @@ value. It supports two entry point styles which enables different kinds of deser
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Error' class='method stab '><code>type Error: <a class='trait' href='../../serde/de/trait.Error.html' title='serde::de::Error'>Error</a></code></h3><div class='docblock'><p>The error type that can be returned if some error occurs during deserialization.</p>
+        <h3 id='associatedtype.Error' class='method stab '><code>type <a href='#associatedtype.Error' class='type'>Error</a>: <a class='trait' href='../../serde/de/trait.Error.html' title='serde::de::Error'>Error</a></code></h3><div class='docblock'><p>The error type that can be returned if some error occurs during deserialization.</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
@@ -176,8 +177,8 @@ deserializer.</p>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Deserializer</a> for <a class='struct' href='../../serde/de/value/struct.BytesDeserializer.html' title='serde::de::value::BytesDeserializer'>BytesDeserializer</a>&lt;'a&gt;</code></li>
 <li><code>impl <a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Deserializer</a> for <a class='struct' href='../../serde/de/value/struct.ByteBufDeserializer.html' title='serde::de::value::ByteBufDeserializer'>ByteBufDeserializer</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/serde/de/trait.Deserializer.js">
-                      </script></section>
+                         src="../../implementors/serde/de/trait.Deserializer.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

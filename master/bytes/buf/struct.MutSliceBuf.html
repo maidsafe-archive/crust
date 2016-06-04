@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,16 +44,16 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>bytes</a>::<wbr><a href='index.html'>buf</a>::<wbr><a class='struct' href=''>MutSliceBuf</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-343' class='srclink' href='../../src/bytes/buf/slice.rs.html#32-35' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-343' class='srclink' href='../../src/bytes/buf/slice.rs.html#32-35' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct MutSliceBuf&lt;'a&gt; {
     // some fields omitted
 }</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../bytes/struct.MutSliceBuf.html' title='bytes::MutSliceBuf'>MutSliceBuf</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.wrap' class='method'><code>fn <a href='#method.wrap' class='fnname'>wrap</a>(bytes: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../../bytes/struct.MutSliceBuf.html' title='bytes::MutSliceBuf'>MutSliceBuf</a>&lt;'a&gt;</code></h4>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a> for <a class='struct' href='../../bytes/struct.MutSliceBuf.html' title='bytes::MutSliceBuf'>MutSliceBuf</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.remaining' class='method'><code>fn <a href='../../bytes/buf/trait.MutBuf.html#method.remaining' class='fnname'>remaining</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
-<h4 id='method.advance' class='method'><code>unsafe fn <a href='../../bytes/buf/trait.MutBuf.html#method.advance' class='fnname'>advance</a>(&amp;mut self, cnt: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
-<h4 id='method.mut_bytes' class='method'><code>unsafe fn <a href='../../bytes/buf/trait.MutBuf.html#method.mut_bytes' class='fnname'>mut_bytes</a>&lt;'b&gt;(&amp;'b mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a> for <a class='struct' href='../../bytes/struct.MutSliceBuf.html' title='bytes::MutSliceBuf'>MutSliceBuf</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.remaining' class='method'><code>fn <a href='../../bytes/buf/trait.MutBuf.html#tymethod.remaining' class='fnname'>remaining</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.advance' class='method'><code>unsafe fn <a href='../../bytes/buf/trait.MutBuf.html#tymethod.advance' class='fnname'>advance</a>(&amp;mut self, cnt: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
+<h4 id='method.mut_bytes' class='method'><code>unsafe fn <a href='../../bytes/buf/trait.MutBuf.html#tymethod.mut_bytes' class='fnname'>mut_bytes</a>&lt;'b&gt;(&amp;'b mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
 <h4 id='method.has_remaining' class='method'><code>fn <a href='../../bytes/buf/trait.MutBuf.html#method.has_remaining' class='fnname'>has_remaining</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.write_slice' class='method'><code>fn <a href='../../bytes/buf/trait.MutBuf.html#method.write_slice' class='fnname'>write_slice</a>(&amp;mut self, src: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <h4 id='method.write_byte' class='method'><code>fn <a href='../../bytes/buf/trait.MutBuf.html#method.write_byte' class='fnname'>write_byte</a>(&amp;mut self, byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>

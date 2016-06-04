@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>path</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-6796' class='srclink' href='https://doc.rust-lang.org/nightly/std/path/index.html?gotosrc=6796' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-6809' class='srclink' href='https://doc.rust-lang.org/nightly/std/path/index.html?gotosrc=6809' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Cross-platform path manipulation.</p>
 
 <p>This module provides two types, <code>PathBuf</code> and <code>Path</code> (akin to <code>String</code> and
@@ -134,99 +135,88 @@ normalization is possible to build on top of the components APIs,
 and will be included in this library in the near future.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Components.html'
-                               title='bitflags::__core::path::Components'>Components</a></td>
-                        <td class='docblock short'>
-                             <p>The core iterator giving the components of a path.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Display.html'
-                               title='bitflags::__core::path::Display'>Display</a></td>
-                        <td class='docblock short'>
-                             <p>Helper struct for safely printing paths with <code>format!()</code> and <code>{}</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Iter.html'
-                               title='bitflags::__core::path::Iter'>Iter</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over the components of a path, as <code>OsStr</code> slices.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Path.html'
-                               title='bitflags::__core::path::Path'>Path</a></td>
-                        <td class='docblock short'>
-                             <p>A slice of a path (akin to <code>str</code>).</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.PathBuf.html'
-                               title='bitflags::__core::path::PathBuf'>PathBuf</a></td>
-                        <td class='docblock short'>
-                             <p>An owned, mutable path (akin to <code>String</code>).</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.PrefixComponent.html'
-                               title='bitflags::__core::path::PrefixComponent'>PrefixComponent</a></td>
-                        <td class='docblock short'>
-                             <p>A Windows path prefix, e.g. <code>C:</code> or <code>\server\share</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.StripPrefixError.html'
-                               title='bitflags::__core::path::StripPrefixError'>StripPrefixError</a></td>
-                        <td class='docblock short'>
-                             <p>An error returned from the <code>Path::strip_prefix</code> method indicating that the
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Components.html'
+                                  title='bitflags::__core::path::Components'>Components</a></td>
+                           <td class='docblock short'>
+                                <p>The core iterator giving the components of a path.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Display.html'
+                                  title='bitflags::__core::path::Display'>Display</a></td>
+                           <td class='docblock short'>
+                                <p>Helper struct for safely printing paths with <code>format!()</code> and <code>{}</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Iter.html'
+                                  title='bitflags::__core::path::Iter'>Iter</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over the components of a path, as <code>OsStr</code> slices.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Path.html'
+                                  title='bitflags::__core::path::Path'>Path</a></td>
+                           <td class='docblock short'>
+                                <p>A slice of a path (akin to <code>str</code>).</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.PathBuf.html'
+                                  title='bitflags::__core::path::PathBuf'>PathBuf</a></td>
+                           <td class='docblock short'>
+                                <p>An owned, mutable path (akin to <code>String</code>).</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.PrefixComponent.html'
+                                  title='bitflags::__core::path::PrefixComponent'>PrefixComponent</a></td>
+                           <td class='docblock short'>
+                                <p>A Windows path prefix, e.g. <code>C:</code> or <code>\server\share</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.StripPrefixError.html'
+                                  title='bitflags::__core::path::StripPrefixError'>StripPrefixError</a></td>
+                           <td class='docblock short'>
+                                <p>An error returned from the <code>Path::strip_prefix</code> method indicating that the
 prefix was not found in <code>self</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.Component.html'
-                               title='bitflags::__core::path::Component'>Component</a></td>
-                        <td class='docblock short'>
-                             <p>A single component of a path.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.Prefix.html'
-                               title='bitflags::__core::path::Prefix'>Prefix</a></td>
-                        <td class='docblock short'>
-                             <p>Path prefixes (Windows only).</p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Component.html'
+                                  title='bitflags::__core::path::Component'>Component</a></td>
+                           <td class='docblock short'>
+                                <p>A single component of a path.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Prefix.html'
+                                  title='bitflags::__core::path::Prefix'>Prefix</a></td>
+                           <td class='docblock short'>
+                                <p>Path prefixes (Windows only).</p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.MAIN_SEPARATOR.html'
-                               title='bitflags::__core::path::MAIN_SEPARATOR'>MAIN_SEPARATOR</a></td>
-                        <td class='docblock short'>
-                             <p>The primary separator for the current platform</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.MAIN_SEPARATOR.html'
+                                  title='bitflags::__core::path::MAIN_SEPARATOR'>MAIN_SEPARATOR</a></td>
+                           <td class='docblock short'>
+                                <p>The primary separator for the current platform</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.is_separator.html'
-                               title='bitflags::__core::path::is_separator'>is_separator</a></td>
-                        <td class='docblock short'>
-                             <p>Determines whether the character is one of the permitted path
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.is_separator.html'
+                                  title='bitflags::__core::path::is_separator'>is_separator</a></td>
+                           <td class='docblock short'>
+                                <p>Determines whether the character is one of the permitted path
 separators for the current platform.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

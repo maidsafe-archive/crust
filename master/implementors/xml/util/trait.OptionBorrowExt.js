@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['xml'] = [];implementors['igd'] = [];
+implementors['xml'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

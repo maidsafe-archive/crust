@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>slice</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-2825' class='srclink' href='https://doc.rust-lang.org/nightly/collections/slice/index.html?gotosrc=2825' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-2852' class='srclink' href='https://doc.rust-lang.org/nightly/collections/slice/index.html?gotosrc=2852' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>A dynamically-sized view into a contiguous sequence, <code>[T]</code>.</p>
 
 <p>Slices are a view into a block of memory represented as a pointer and a
@@ -114,144 +115,121 @@ iterators.</li>
 <code>.chunks()</code>, <code>.windows()</code> and more.</li>
 </ul>
 
-<p><em><a href="../primitive.slice.html">See also the slice primitive type</a>.</em></p>
-</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<p><em><a href="../../std/primitive.slice.html">See also the slice primitive type</a>.</em></p>
+</div><h2 id='structs-1' class='section-header'><a href="#structs-1">Structs</a></h2>
 <table>
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='mod' href='bytes/index.html'
-                               title='bitflags::__core::slice::bytes'>bytes</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>Operations on <code>[u8]</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='structs-1' class='section-header'><a href="#structs-1">Structs</a></h2>
-<table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Chunks.html'
-                               title='bitflags::__core::slice::Chunks'>Chunks</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over a slice in (non-overlapping) chunks (<code>size</code> elements at a
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Chunks.html'
+                                  title='bitflags::__core::slice::Chunks'>Chunks</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over a slice in (non-overlapping) chunks (<code>size</code> elements at a
 time).</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.ChunksMut.html'
-                               title='bitflags::__core::slice::ChunksMut'>ChunksMut</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over a slice in (non-overlapping) mutable chunks (<code>size</code>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ChunksMut.html'
+                                  title='bitflags::__core::slice::ChunksMut'>ChunksMut</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over a slice in (non-overlapping) mutable chunks (<code>size</code>
 elements at a time). When the slice len is not evenly divided by the chunk
 size, the last slice of the iteration will be the remainder.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Iter.html'
-                               title='bitflags::__core::slice::Iter'>Iter</a></td>
-                        <td class='docblock short'>
-                             <p>Immutable slice iterator</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.IterMut.html'
-                               title='bitflags::__core::slice::IterMut'>IterMut</a></td>
-                        <td class='docblock short'>
-                             <p>Mutable slice iterator.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RSplitN.html'
-                               title='bitflags::__core::slice::RSplitN'>RSplitN</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over subslices separated by elements that match a
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Iter.html'
+                                  title='bitflags::__core::slice::Iter'>Iter</a></td>
+                           <td class='docblock short'>
+                                <p>Immutable slice iterator</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.IterMut.html'
+                                  title='bitflags::__core::slice::IterMut'>IterMut</a></td>
+                           <td class='docblock short'>
+                                <p>Mutable slice iterator.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RSplitN.html'
+                                  title='bitflags::__core::slice::RSplitN'>RSplitN</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over subslices separated by elements that match a
 predicate function, limited to a given number of splits, starting
 from the end of the slice.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RSplitNMut.html'
-                               title='bitflags::__core::slice::RSplitNMut'>RSplitNMut</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over subslices separated by elements that match a
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RSplitNMut.html'
+                                  title='bitflags::__core::slice::RSplitNMut'>RSplitNMut</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over subslices separated by elements that match a
 predicate function, limited to a given number of splits, starting
 from the end of the slice.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Split.html'
-                               title='bitflags::__core::slice::Split'>Split</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over subslices separated by elements that match a predicate
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Split.html'
+                                  title='bitflags::__core::slice::Split'>Split</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over subslices separated by elements that match a predicate
 function.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SplitMut.html'
-                               title='bitflags::__core::slice::SplitMut'>SplitMut</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over the subslices of the vector which are separated
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SplitMut.html'
+                                  title='bitflags::__core::slice::SplitMut'>SplitMut</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over the subslices of the vector which are separated
 by elements that match <code>pred</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SplitN.html'
-                               title='bitflags::__core::slice::SplitN'>SplitN</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over subslices separated by elements that match a predicate
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SplitN.html'
+                                  title='bitflags::__core::slice::SplitN'>SplitN</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over subslices separated by elements that match a predicate
 function, limited to a given number of splits.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SplitNMut.html'
-                               title='bitflags::__core::slice::SplitNMut'>SplitNMut</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over subslices separated by elements that match a predicate
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SplitNMut.html'
+                                  title='bitflags::__core::slice::SplitNMut'>SplitNMut</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over subslices separated by elements that match a predicate
 function, limited to a given number of splits.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Windows.html'
-                               title='bitflags::__core::slice::Windows'>Windows</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over overlapping subslices of length <code>size</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Windows.html'
+                                  title='bitflags::__core::slice::Windows'>Windows</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over overlapping subslices of length <code>size</code>.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class='unstable module-item'>
-                        <td><a class='trait' href='trait.SliceConcatExt.html'
-                               title='bitflags::__core::slice::SliceConcatExt'>SliceConcatExt</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>An extension trait for concatenating slices</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class='unstable module-item'>
+                           <td><a class='trait' href='trait.SliceConcatExt.html'
+                                  title='bitflags::__core::slice::SliceConcatExt'>SliceConcatExt</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An extension trait for concatenating slices</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.from_raw_parts.html'
-                               title='bitflags::__core::slice::from_raw_parts'>from_raw_parts</a></td>
-                        <td class='docblock short'>
-                             <p>Forms a slice from a pointer and a length.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.from_raw_parts_mut.html'
-                               title='bitflags::__core::slice::from_raw_parts_mut'>from_raw_parts_mut</a></td>
-                        <td class='docblock short'>
-                             <p>Performs the same functionality as <code>from_raw_parts</code>, except that a mutable
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.from_raw_parts.html'
+                                  title='bitflags::__core::slice::from_raw_parts'>from_raw_parts</a></td>
+                           <td class='docblock short'>
+                                <p>Forms a slice from a pointer and a length.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.from_raw_parts_mut.html'
+                                  title='bitflags::__core::slice::from_raw_parts_mut'>from_raw_parts_mut</a></td>
+                           <td class='docblock short'>
+                                <p>Performs the same functionality as <code>from_raw_parts</code>, except that a mutable
 slice is returned.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

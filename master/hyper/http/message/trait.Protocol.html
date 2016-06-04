@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>hyper</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>message</a>::<wbr><a class='trait' href=''>Protocol</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-5895' class='srclink' href='../../../src/hyper/http/message.rs.html#26-29' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-5892' class='srclink' href='../../../src/hyper/http/message.rs.html#26-29' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Protocol {
     fn <a href='#tymethod.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;;
 }</pre><div class='docblock'><p>The trait provides an API for creating new <code>HttpMessage</code>s depending on the underlying HTTP
@@ -61,8 +62,8 @@ protocol.</p>
     <li><code>impl <a class='trait' href='../../../hyper/http/message/trait.Protocol.html' title='hyper::http::message::Protocol'>Protocol</a> for <a class='struct' href='../../../hyper/http/h1/struct.Http11Protocol.html' title='hyper::http::h1::Http11Protocol'>Http11Protocol</a></code></li>
 <li><code>impl&lt;C, S&gt; <a class='trait' href='../../../hyper/http/message/trait.Protocol.html' title='hyper::http::message::Protocol'>Protocol</a> for <a class='struct' href='../../../hyper/http/h2/struct.Http2Protocol.html' title='hyper::http::h2::Http2Protocol'>Http2Protocol</a>&lt;C, S&gt; <span class='where'>where C: <a class='trait' href='../../../hyper/net/trait.NetworkConnector.html' title='hyper::net::NetworkConnector'>NetworkConnector</a>&lt;Stream=S&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static, S: <a class='trait' href='../../../hyper/net/trait.NetworkStream.html' title='hyper::net::NetworkStream'>NetworkStream</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a></span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/hyper/http/message/trait.Protocol.js">
-                      </script></section>
+                         src="../../../implementors/hyper/http/message/trait.Protocol.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

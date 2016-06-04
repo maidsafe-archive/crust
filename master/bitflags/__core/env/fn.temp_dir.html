@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,11 +44,11 @@
 
     <section id='main' class="content fn">
 <h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>env</a>::<wbr><a class='fn' href=''>temp_dir</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-3006' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.temp_dir.html?gotosrc=3006' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn temp_dir() -&gt; <a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Returns the path to a temporary directory.</p>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-2952' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.temp_dir.html?gotosrc=2952' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn temp_dir() -&gt; <a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Returns the path of a temporary directory.</p>
 
 <p>On Unix, returns the value of the &#39;TMPDIR&#39; environment variable if it is
 set, otherwise for non-Android it returns &#39;/tmp&#39;. If Android, since there
@@ -56,7 +57,7 @@ is no global temporary folder (it is usually allocated per-app), we return
 
 <p>On Windows, returns the value of, in order, the &#39;TMP&#39;, &#39;TEMP&#39;,
 &#39;USERPROFILE&#39; environment variable  if any are set and not the empty
-string. Otherwise, tmpdir returns the path to the Windows directory. This
+string. Otherwise, tmpdir returns the path of the Windows directory. This
 behavior is identical to that of <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364992(v=vs.85).aspx">GetTempPath</a>, which this function
 uses internally.</p>
 

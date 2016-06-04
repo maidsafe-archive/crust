@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a class='mod' href=''>session</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-990' class='srclink' href='../../../src/solicit/http/session.rs.html#1-500' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-967' class='srclink' href='../../../src/solicit/http/session.rs.html#1-500' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Defines the interface for the session-level management of HTTP/2
 communication. This is effectively an API that allows hooking into an
 HTTP/2 connection in order to handle events arising on the connection.</p>
@@ -54,85 +55,76 @@ HTTP/2 connection in order to handle events arising on the connection.</p>
 <p>The module also provides a default implementation for some of the traits.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DefaultSessionState.html'
-                               title='solicit::http::session::DefaultSessionState'>DefaultSessionState</a></td>
-                        <td class='docblock short'>
-                             <p>An implementation of the <code>SessionState</code> trait that tracks the active streams in a <code>HashMap</code>,
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DefaultSessionState.html'
+                                  title='solicit::http::session::DefaultSessionState'>DefaultSessionState</a></td>
+                           <td class='docblock short'>
+                                <p>An implementation of the <code>SessionState</code> trait that tracks the active streams in a <code>HashMap</code>,
 mapping the stream ID to the concrete <code>Stream</code> instance.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DefaultStream.html'
-                               title='solicit::http::session::DefaultStream'>DefaultStream</a></td>
-                        <td class='docblock short'>
-                             <p>An implementation of the <code>Stream</code> trait that saves all headers and data
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DefaultStream.html'
+                                  title='solicit::http::session::DefaultStream'>DefaultStream</a></td>
+                           <td class='docblock short'>
+                                <p>An implementation of the <code>Stream</code> trait that saves all headers and data
 in memory.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.StreamIter.html'
-                               title='solicit::http::session::StreamIter'>StreamIter</a></td>
-                        <td class='docblock short'>
-                             <p>A newtype for an iterator over <code>Stream</code>s saved in a <code>SessionState</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.StreamIter.html'
+                                  title='solicit::http::session::StreamIter'>StreamIter</a></td>
+                           <td class='docblock short'>
+                                <p>A newtype for an iterator over <code>Stream</code>s saved in a <code>SessionState</code>.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.StreamDataChunk.html'
-                               title='solicit::http::session::StreamDataChunk'>StreamDataChunk</a></td>
-                        <td class='docblock short'>
-                             <p>The enum represents the successful completion of the <code>Stream::get_data_chunk</code> method.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.StreamDataError.html'
-                               title='solicit::http::session::StreamDataError'>StreamDataError</a></td>
-                        <td class='docblock short'>
-                             <p>The enum represents errors that can be returned from the <code>Stream::get_data_chunk</code> method.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.StreamState.html'
-                               title='solicit::http::session::StreamState'>StreamState</a></td>
-                        <td class='docblock short'>
-                             <p>The enum represents all the states that an HTTP/2 stream can be found in.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.StreamDataChunk.html'
+                                  title='solicit::http::session::StreamDataChunk'>StreamDataChunk</a></td>
+                           <td class='docblock short'>
+                                <p>The enum represents the successful completion of the <code>Stream::get_data_chunk</code> method.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.StreamDataError.html'
+                                  title='solicit::http::session::StreamDataError'>StreamDataError</a></td>
+                           <td class='docblock short'>
+                                <p>The enum represents errors that can be returned from the <code>Stream::get_data_chunk</code> method.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.StreamState.html'
+                                  title='solicit::http::session::StreamState'>StreamState</a></td>
+                           <td class='docblock short'>
+                                <p>The enum represents all the states that an HTTP/2 stream can be found in.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Session.html'
-                               title='solicit::http::session::Session'>Session</a></td>
-                        <td class='docblock short'>
-                             <p>A trait that defines the interface between an <code>HttpConnection</code> and the higher-levels that use
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Session.html'
+                                  title='solicit::http::session::Session'>Session</a></td>
+                           <td class='docblock short'>
+                                <p>A trait that defines the interface between an <code>HttpConnection</code> and the higher-levels that use
 it. Essentially, it allows the <code>HttpConnection</code> to pass information onto those higher levels
 through a well-defined interface.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.SessionState.html'
-                               title='solicit::http::session::SessionState'>SessionState</a></td>
-                        <td class='docblock short'>
-                             <p>A trait defining a set of methods for accessing and influencing an HTTP/2 session&#39;s state.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Stream.html'
-                               title='solicit::http::session::Stream'>Stream</a></td>
-                        <td class='docblock short'>
-                             <p>A trait representing a single HTTP/2 stream. An HTTP/2 connection multiplexes a number of
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.SessionState.html'
+                                  title='solicit::http::session::SessionState'>SessionState</a></td>
+                           <td class='docblock short'>
+                                <p>A trait defining a set of methods for accessing and influencing an HTTP/2 session&#39;s state.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Stream.html'
+                                  title='solicit::http::session::Stream'>Stream</a></td>
+                           <td class='docblock short'>
+                                <p>A trait representing a single HTTP/2 stream. An HTTP/2 connection multiplexes a number of
 streams.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

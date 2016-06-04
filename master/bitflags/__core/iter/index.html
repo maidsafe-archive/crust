@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,11 +44,11 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>iter</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-28675' class='srclink' href='https://doc.rust-lang.org/nightly/core/iter/index.html?gotosrc=28675' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Composable external iteration</p>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-28619' class='srclink' href='https://doc.rust-lang.org/nightly/core/iter/index.html?gotosrc=28619' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Composable external iteration.</p>
 
 <p>If you&#39;ve found yourself with a collection of some kind, and needed to
 perform an operation on the elements of said collection, you&#39;ll quickly run
@@ -83,7 +84,7 @@ see &#39;<a href="#implementing-iterator">Implementing Iterator</a>&#39;.</li>
 }</pre>
 
 <p>An iterator has a method, <a href="trait.Iterator.html#tymethod.next"><code>next()</code></a>, which when called, returns an
-<a href="../option/enum.Option.html"><code>Option</code></a><code>&lt;Item&gt;</code>. <a href="trait.Iterator.html#tymethod.next"><code>next()</code></a> will return <code>Some(Item)</code> as long as there
+<a href="../../std/option/enum.Option.html"><code>Option</code></a><code>&lt;Item&gt;</code>. <a href="trait.Iterator.html#tymethod.next"><code>next()</code></a> will return <code>Some(Item)</code> as long as there
 are elements, and once they&#39;ve all been exhausted, will return <code>None</code> to
 indicate that iteration is finished. Individual iterators may choose to
 resume iteration, and so calling <a href="trait.Iterator.html#tymethod.next"><code>next()</code></a> again may or may not eventually
@@ -302,284 +303,236 @@ iterator into a finite one:</p>
 <p>This will print the numbers <code>0</code> through <code>4</code>, each on their own line.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Chain.html'
-                               title='bitflags::__core::iter::Chain'>Chain</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that strings two iterators together.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Cloned.html'
-                               title='bitflags::__core::iter::Cloned'>Cloned</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that clones the elements of an underlying iterator.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Cycle.html'
-                               title='bitflags::__core::iter::Cycle'>Cycle</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that repeats endlessly.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Empty.html'
-                               title='bitflags::__core::iter::Empty'>Empty</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that yields nothing.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Enumerate.html'
-                               title='bitflags::__core::iter::Enumerate'>Enumerate</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that yields the current count and the element during iteration.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Filter.html'
-                               title='bitflags::__core::iter::Filter'>Filter</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that filters the elements of <code>iter</code> with <code>predicate</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.FilterMap.html'
-                               title='bitflags::__core::iter::FilterMap'>FilterMap</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that uses <code>f</code> to both filter and map elements from <code>iter</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.FlatMap.html'
-                               title='bitflags::__core::iter::FlatMap'>FlatMap</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that maps each element to an iterator, and yields the elements
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Chain.html'
+                                  title='bitflags::__core::iter::Chain'>Chain</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that strings two iterators together.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Cloned.html'
+                                  title='bitflags::__core::iter::Cloned'>Cloned</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that clones the elements of an underlying iterator.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Cycle.html'
+                                  title='bitflags::__core::iter::Cycle'>Cycle</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that repeats endlessly.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Empty.html'
+                                  title='bitflags::__core::iter::Empty'>Empty</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that yields nothing.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Enumerate.html'
+                                  title='bitflags::__core::iter::Enumerate'>Enumerate</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that yields the current count and the element during iteration.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Filter.html'
+                                  title='bitflags::__core::iter::Filter'>Filter</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that filters the elements of <code>iter</code> with <code>predicate</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.FilterMap.html'
+                                  title='bitflags::__core::iter::FilterMap'>FilterMap</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that uses <code>f</code> to both filter and map elements from <code>iter</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.FlatMap.html'
+                                  title='bitflags::__core::iter::FlatMap'>FlatMap</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that maps each element to an iterator, and yields the elements
 of the produced iterators.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Fuse.html'
-                               title='bitflags::__core::iter::Fuse'>Fuse</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that yields <code>None</code> forever after the underlying iterator
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Fuse.html'
+                                  title='bitflags::__core::iter::Fuse'>Fuse</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that yields <code>None</code> forever after the underlying iterator
 yields <code>None</code> once.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Inspect.html'
-                               title='bitflags::__core::iter::Inspect'>Inspect</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that calls a function with a reference to each element before
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Inspect.html'
+                                  title='bitflags::__core::iter::Inspect'>Inspect</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that calls a function with a reference to each element before
 yielding it.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Map.html'
-                               title='bitflags::__core::iter::Map'>Map</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that maps the values of <code>iter</code> with <code>f</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Once.html'
-                               title='bitflags::__core::iter::Once'>Once</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that yields an element exactly once.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Peekable.html'
-                               title='bitflags::__core::iter::Peekable'>Peekable</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator with a <code>peek()</code> that returns an optional reference to the next
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Map.html'
+                                  title='bitflags::__core::iter::Map'>Map</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that maps the values of <code>iter</code> with <code>f</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Once.html'
+                                  title='bitflags::__core::iter::Once'>Once</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that yields an element exactly once.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Peekable.html'
+                                  title='bitflags::__core::iter::Peekable'>Peekable</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator with a <code>peek()</code> that returns an optional reference to the next
 element.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Repeat.html'
-                               title='bitflags::__core::iter::Repeat'>Repeat</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that repeats an element endlessly.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Rev.html'
-                               title='bitflags::__core::iter::Rev'>Rev</a></td>
-                        <td class='docblock short'>
-                             <p>An double-ended iterator with the direction inverted.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Scan.html'
-                               title='bitflags::__core::iter::Scan'>Scan</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator to maintain state while iterating another iterator.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Skip.html'
-                               title='bitflags::__core::iter::Skip'>Skip</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that skips over <code>n</code> elements of <code>iter</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SkipWhile.html'
-                               title='bitflags::__core::iter::SkipWhile'>SkipWhile</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that rejects elements while <code>predicate</code> is true.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Take.html'
-                               title='bitflags::__core::iter::Take'>Take</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that only iterates over the first <code>n</code> iterations of <code>iter</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.TakeWhile.html'
-                               title='bitflags::__core::iter::TakeWhile'>TakeWhile</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that only accepts elements while <code>predicate</code> is true.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Zip.html'
-                               title='bitflags::__core::iter::Zip'>Zip</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that iterates two other iterators simultaneously.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='struct' href='struct.RangeInclusive.html'
-                               title='bitflags::__core::iter::RangeInclusive'>RangeInclusive</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>An iterator over the range [start, stop]</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.StepBy.html'
-                               title='bitflags::__core::iter::StepBy'>StepBy</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>An adapter for stepping range iterators by a custom amount.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Repeat.html'
+                                  title='bitflags::__core::iter::Repeat'>Repeat</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that repeats an element endlessly.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Rev.html'
+                                  title='bitflags::__core::iter::Rev'>Rev</a></td>
+                           <td class='docblock short'>
+                                <p>An double-ended iterator with the direction inverted.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Scan.html'
+                                  title='bitflags::__core::iter::Scan'>Scan</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator to maintain state while iterating another iterator.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Skip.html'
+                                  title='bitflags::__core::iter::Skip'>Skip</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that skips over <code>n</code> elements of <code>iter</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SkipWhile.html'
+                                  title='bitflags::__core::iter::SkipWhile'>SkipWhile</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that rejects elements while <code>predicate</code> is true.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Take.html'
+                                  title='bitflags::__core::iter::Take'>Take</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that only iterates over the first <code>n</code> iterations of <code>iter</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.TakeWhile.html'
+                                  title='bitflags::__core::iter::TakeWhile'>TakeWhile</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that only accepts elements while <code>predicate</code> is true.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Zip.html'
+                                  title='bitflags::__core::iter::Zip'>Zip</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that iterates two other iterators simultaneously.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.StepBy.html'
+                                  title='bitflags::__core::iter::StepBy'>StepBy</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An adapter for stepping range iterators by a custom amount.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.DoubleEndedIterator.html'
-                               title='bitflags::__core::iter::DoubleEndedIterator'>DoubleEndedIterator</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator able to yield elements from both ends.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.ExactSizeIterator.html'
-                               title='bitflags::__core::iter::ExactSizeIterator'>ExactSizeIterator</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator that knows its exact length.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Extend.html'
-                               title='bitflags::__core::iter::Extend'>Extend</a></td>
-                        <td class='docblock short'>
-                             <p>Extend a collection with the contents of an iterator.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.FromIterator.html'
-                               title='bitflags::__core::iter::FromIterator'>FromIterator</a></td>
-                        <td class='docblock short'>
-                             <p>Conversion from an <code>Iterator</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.IntoIterator.html'
-                               title='bitflags::__core::iter::IntoIterator'>IntoIterator</a></td>
-                        <td class='docblock short'>
-                             <p>Conversion into an <code>Iterator</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Iterator.html'
-                               title='bitflags::__core::iter::Iterator'>Iterator</a></td>
-                        <td class='docblock short'>
-                             <p>An interface for dealing with iterators.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='trait' href='trait.Step.html'
-                               title='bitflags::__core::iter::Step'>Step</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Objects that can be stepped over in both directions.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.DoubleEndedIterator.html'
+                                  title='bitflags::__core::iter::DoubleEndedIterator'>DoubleEndedIterator</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator able to yield elements from both ends.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.ExactSizeIterator.html'
+                                  title='bitflags::__core::iter::ExactSizeIterator'>ExactSizeIterator</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator that knows its exact length.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Extend.html'
+                                  title='bitflags::__core::iter::Extend'>Extend</a></td>
+                           <td class='docblock short'>
+                                <p>Extend a collection with the contents of an iterator.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.FromIterator.html'
+                                  title='bitflags::__core::iter::FromIterator'>FromIterator</a></td>
+                           <td class='docblock short'>
+                                <p>Conversion from an <code>Iterator</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.IntoIterator.html'
+                                  title='bitflags::__core::iter::IntoIterator'>IntoIterator</a></td>
+                           <td class='docblock short'>
+                                <p>Conversion into an <code>Iterator</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Iterator.html'
+                                  title='bitflags::__core::iter::Iterator'>Iterator</a></td>
+                           <td class='docblock short'>
+                                <p>An interface for dealing with iterators.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='trait' href='trait.Step.html'
+                                  title='bitflags::__core::iter::Step'>Step</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>Objects that can be stepped over in both directions.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.empty.html'
-                               title='bitflags::__core::iter::empty'>empty</a></td>
-                        <td class='docblock short'>
-                             <p>Creates an iterator that yields nothing.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.once.html'
-                               title='bitflags::__core::iter::once'>once</a></td>
-                        <td class='docblock short'>
-                             <p>Creates an iterator that yields an element exactly once.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.repeat.html'
-                               title='bitflags::__core::iter::repeat'>repeat</a></td>
-                        <td class='docblock short'>
-                             <p>Creates a new iterator that endlessly repeats a single element.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='fn' href='fn.range_inclusive.html'
-                               title='bitflags::__core::iter::range_inclusive'>range_inclusive</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>Returns an iterator over the range [start, stop].</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.empty.html'
+                                  title='bitflags::__core::iter::empty'>empty</a></td>
+                           <td class='docblock short'>
+                                <p>Creates an iterator that yields nothing.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.once.html'
+                                  title='bitflags::__core::iter::once'>once</a></td>
+                           <td class='docblock short'>
+                                <p>Creates an iterator that yields an element exactly once.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.repeat.html'
+                                  title='bitflags::__core::iter::repeat'>repeat</a></td>
+                           <td class='docblock short'>
+                                <p>Creates a new iterator that endlessly repeats a single element.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

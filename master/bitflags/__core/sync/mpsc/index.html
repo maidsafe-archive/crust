@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a class='mod' href=''>mpsc</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-8638' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/index.html?gotosrc=8638' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-8615' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/index.html?gotosrc=8615' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Multi-producer, single-consumer FIFO queue communication primitives.</p>
 
 <p>This module provides message-based communication over channels, concretely
@@ -150,124 +151,111 @@ propagation of failure among threads if one unexpectedly dies.</p>
 <span class='ident'>rx</span>.<span class='ident'>recv</span>().<span class='ident'>unwrap</span>();</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.IntoIter.html'
-                               title='bitflags::__core::sync::mpsc::IntoIter'>IntoIter</a></td>
-                        <td class='docblock short'>
-                             <p>An owning iterator over messages on a receiver, this iterator will block
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.IntoIter.html'
+                                  title='bitflags::__core::sync::mpsc::IntoIter'>IntoIter</a></td>
+                           <td class='docblock short'>
+                                <p>An owning iterator over messages on a receiver, this iterator will block
 whenever <code>next</code> is called, waiting for a new message, and <code>None</code> will be
 returned when the corresponding channel has hung up.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Iter.html'
-                               title='bitflags::__core::sync::mpsc::Iter'>Iter</a></td>
-                        <td class='docblock short'>
-                             <p>An iterator over messages on a receiver, this iterator will block
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Iter.html'
+                                  title='bitflags::__core::sync::mpsc::Iter'>Iter</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over messages on a receiver, this iterator will block
 whenever <code>next</code> is called, waiting for a new message, and <code>None</code> will be
 returned when the corresponding channel has hung up.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Receiver.html'
-                               title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a></td>
-                        <td class='docblock short'>
-                             <p>The receiving-half of Rust&#39;s channel type. This half can only be owned by
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Receiver.html'
+                                  title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a></td>
+                           <td class='docblock short'>
+                                <p>The receiving-half of Rust&#39;s channel type. This half can only be owned by
 one thread</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RecvError.html'
-                               title='bitflags::__core::sync::mpsc::RecvError'>RecvError</a></td>
-                        <td class='docblock short'>
-                             <p>An error returned from the <code>recv</code> function on a <code>Receiver</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SendError.html'
-                               title='bitflags::__core::sync::mpsc::SendError'>SendError</a></td>
-                        <td class='docblock short'>
-                             <p>An error returned from the <code>send</code> function on channels.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Sender.html'
-                               title='bitflags::__core::sync::mpsc::Sender'>Sender</a></td>
-                        <td class='docblock short'>
-                             <p>The sending-half of Rust&#39;s asynchronous channel type. This half can only be
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RecvError.html'
+                                  title='bitflags::__core::sync::mpsc::RecvError'>RecvError</a></td>
+                           <td class='docblock short'>
+                                <p>An error returned from the <code>recv</code> function on a <code>Receiver</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SendError.html'
+                                  title='bitflags::__core::sync::mpsc::SendError'>SendError</a></td>
+                           <td class='docblock short'>
+                                <p>An error returned from the <code>send</code> function on channels.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Sender.html'
+                                  title='bitflags::__core::sync::mpsc::Sender'>Sender</a></td>
+                           <td class='docblock short'>
+                                <p>The sending-half of Rust&#39;s asynchronous channel type. This half can only be
 owned by one thread, but it can be cloned to send to other threads.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SyncSender.html'
-                               title='bitflags::__core::sync::mpsc::SyncSender'>SyncSender</a></td>
-                        <td class='docblock short'>
-                             <p>The sending-half of Rust&#39;s synchronous channel type. This half can only be
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SyncSender.html'
+                                  title='bitflags::__core::sync::mpsc::SyncSender'>SyncSender</a></td>
+                           <td class='docblock short'>
+                                <p>The sending-half of Rust&#39;s synchronous channel type. This half can only be
 owned by one thread, but it can be cloned to send to other threads.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.Handle.html'
-                               title='bitflags::__core::sync::mpsc::Handle'>Handle</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>A handle to a receiver which is currently a member of a <code>Select</code> set of
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.Handle.html'
+                                  title='bitflags::__core::sync::mpsc::Handle'>Handle</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>A handle to a receiver which is currently a member of a <code>Select</code> set of
 receivers.  This handle is used to keep the receiver in the set as well as
 interact with the underlying receiver.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.Select.html'
-                               title='bitflags::__core::sync::mpsc::Select'>Select</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>The &quot;receiver set&quot; of the select interface. This structure is used to manage
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.Select.html'
+                                  title='bitflags::__core::sync::mpsc::Select'>Select</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>The &quot;receiver set&quot; of the select interface. This structure is used to manage
 a set of receivers which are being selected over.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.TryRecvError.html'
-                               title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></td>
-                        <td class='docblock short'>
-                             <p>This enumeration is the list of the possible reasons that <code>try_recv</code> could
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.TryRecvError.html'
+                                  title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></td>
+                           <td class='docblock short'>
+                                <p>This enumeration is the list of the possible reasons that <code>try_recv</code> could
 not return data when called.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.TrySendError.html'
-                               title='bitflags::__core::sync::mpsc::TrySendError'>TrySendError</a></td>
-                        <td class='docblock short'>
-                             <p>This enumeration is the list of the possible error outcomes for the
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.TrySendError.html'
+                                  title='bitflags::__core::sync::mpsc::TrySendError'>TrySendError</a></td>
+                           <td class='docblock short'>
+                                <p>This enumeration is the list of the possible error outcomes for the
 <code>SyncSender::try_send</code> method.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.channel.html'
-                               title='bitflags::__core::sync::mpsc::channel'>channel</a></td>
-                        <td class='docblock short'>
-                             <p>Creates a new asynchronous channel, returning the sender/receiver halves.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.sync_channel.html'
-                               title='bitflags::__core::sync::mpsc::sync_channel'>sync_channel</a></td>
-                        <td class='docblock short'>
-                             <p>Creates a new synchronous, bounded channel.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.channel.html'
+                                  title='bitflags::__core::sync::mpsc::channel'>channel</a></td>
+                           <td class='docblock short'>
+                                <p>Creates a new asynchronous channel, returning the sender/receiver halves.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.sync_channel.html'
+                                  title='bitflags::__core::sync::mpsc::sync_channel'>sync_channel</a></td>
+                           <td class='docblock short'>
+                                <p>Creates a new synchronous, bounded channel.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

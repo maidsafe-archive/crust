@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>unicode_bidi</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-0' class='srclink' href='../src/unicode_bidi/lib.rs.html#10-1026' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/unicode_bidi/lib.rs.html#10-1026' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This crate implements the <a href="http://www.unicode.org/reports/tr9/">Unicode Bidirectional Algorithm</a> for display of mixed
 right-to-left and left-to-right text.  It is written in safe Rust, compatible with the
 current stable release.</p>
@@ -88,97 +89,86 @@ current stable release.</p>
 </div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
 <table><tr><td><code>pub use tables::{<a class='enum' href='../unicode_bidi/tables/enum.BidiClass.html' title='unicode_bidi::tables::BidiClass'>BidiClass</a>, <a class='fn' href='../unicode_bidi/tables/fn.bidi_class.html' title='unicode_bidi::tables::bidi_class'>bidi_class</a>, UNICODE_VERSION};</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='tables/index.html'
-                               title='unicode_bidi::tables'>tables</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='tables/index.html'
+                                  title='unicode_bidi::tables'>tables</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.BidiInfo.html'
-                               title='unicode_bidi::BidiInfo'>BidiInfo</a></td>
-                        <td class='docblock short'>
-                             <p>Output of <code>process_text</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.InitialProperties.html'
-                               title='unicode_bidi::InitialProperties'>InitialProperties</a></td>
-                        <td class='docblock short'>
-                             <p>Output of <code>initial_scan</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.ParagraphInfo.html'
-                               title='unicode_bidi::ParagraphInfo'>ParagraphInfo</a></td>
-                        <td class='docblock short'>
-                             <p>Info about a single paragraph</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.BidiInfo.html'
+                                  title='unicode_bidi::BidiInfo'>BidiInfo</a></td>
+                           <td class='docblock short'>
+                                <p>Output of <code>process_text</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.InitialProperties.html'
+                                  title='unicode_bidi::InitialProperties'>InitialProperties</a></td>
+                           <td class='docblock short'>
+                                <p>Output of <code>initial_scan</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ParagraphInfo.html'
+                                  title='unicode_bidi::ParagraphInfo'>ParagraphInfo</a></td>
+                           <td class='docblock short'>
+                                <p>Info about a single paragraph</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.initial_scan.html'
-                               title='unicode_bidi::initial_scan'>initial_scan</a></td>
-                        <td class='docblock short'>
-                             <p>Find the paragraphs and BidiClasses in a string of text.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.is_ltr.html'
-                               title='unicode_bidi::is_ltr'>is_ltr</a></td>
-                        <td class='docblock short'>
-                             <p>Even embedding levels are left-to-right.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.is_rtl.html'
-                               title='unicode_bidi::is_rtl'>is_rtl</a></td>
-                        <td class='docblock short'>
-                             <p>Odd levels are right-to-left.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.process_text.html'
-                               title='unicode_bidi::process_text'>process_text</a></td>
-                        <td class='docblock short'>
-                             <p>Determine the bidirectional embedding levels for a single paragraph.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.reorder_line.html'
-                               title='unicode_bidi::reorder_line'>reorder_line</a></td>
-                        <td class='docblock short'>
-                             <p>Re-order a line based on resolved levels.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.visual_runs.html'
-                               title='unicode_bidi::visual_runs'>visual_runs</a></td>
-                        <td class='docblock short'>
-                             <p>Find the level runs within a line and return them in visual order.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.initial_scan.html'
+                                  title='unicode_bidi::initial_scan'>initial_scan</a></td>
+                           <td class='docblock short'>
+                                <p>Find the paragraphs and BidiClasses in a string of text.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.is_ltr.html'
+                                  title='unicode_bidi::is_ltr'>is_ltr</a></td>
+                           <td class='docblock short'>
+                                <p>Even embedding levels are left-to-right.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.is_rtl.html'
+                                  title='unicode_bidi::is_rtl'>is_rtl</a></td>
+                           <td class='docblock short'>
+                                <p>Odd levels are right-to-left.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.process_text.html'
+                                  title='unicode_bidi::process_text'>process_text</a></td>
+                           <td class='docblock short'>
+                                <p>Determine the bidirectional embedding levels for a single paragraph.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.reorder_line.html'
+                                  title='unicode_bidi::reorder_line'>reorder_line</a></td>
+                           <td class='docblock short'>
+                                <p>Re-order a line based on resolved levels.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.visual_runs.html'
+                                  title='unicode_bidi::visual_runs'>visual_runs</a></td>
+                           <td class='docblock short'>
+                                <p>Find the level runs within a line and return them in visual order.</p>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='type' href='type.LevelRun.html'
-                               title='unicode_bidi::LevelRun'>LevelRun</a></td>
-                        <td class='docblock short'>
-                             <p>A maximal substring of characters with the same embedding level.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.LevelRun.html'
+                                  title='unicode_bidi::LevelRun'>LevelRun</a></td>
+                           <td class='docblock short'>
+                                <p>A maximal substring of characters with the same embedding level.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

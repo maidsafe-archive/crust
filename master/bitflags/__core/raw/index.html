@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>raw</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-30364' class='srclink' href='https://doc.rust-lang.org/nightly/core/raw/index.html?gotosrc=30364' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-30534' class='srclink' href='https://doc.rust-lang.org/nightly/core/raw/index.html?gotosrc=30534' title='goto source code'>[src]</a></span></h1>
 <div class='stability'><em class='stab unstable'>Unstable (<code>raw</code>)</em></div><div class='docblock'><p>Contains struct definitions for the layout of compiler built-in types.</p>
 
 <p>They can be used as targets of transmutes in unsafe code for manipulating
@@ -55,32 +56,29 @@ the raw representations directly.</p>
 <p>Their definition should always match the ABI defined in <code>rustc::back::abi</code>.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.Slice.html'
-                               title='bitflags::__core::raw::Slice'>Slice</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>The representation of a slice like <code>&amp;[T]</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.TraitObject.html'
-                               title='bitflags::__core::raw::TraitObject'>TraitObject</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>The representation of a trait object like <code>&amp;SomeTrait</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                       <tr class='unstable deprecated module-item'>
+                           <td><a class='struct' href='struct.Slice.html'
+                                  title='bitflags::__core::raw::Slice'>Slice</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable deprecated'>Deprecated</em>] <p>The representation of a slice like <code>&amp;[T]</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.TraitObject.html'
+                                  title='bitflags::__core::raw::TraitObject'>TraitObject</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>The representation of a trait object like <code>&amp;SomeTrait</code>.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class='unstable module-item'>
-                        <td><a class='trait' href='trait.Repr.html'
-                               title='bitflags::__core::raw::Repr'>Repr</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>This trait is meant to map equivalences between raw structs and their
+                       <tr class='unstable deprecated module-item'>
+                           <td><a class='trait' href='trait.Repr.html'
+                                  title='bitflags::__core::raw::Repr'>Repr</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable deprecated'>Deprecated</em>] <p>This trait is meant to map equivalences between raw structs and their
 corresponding rust values.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

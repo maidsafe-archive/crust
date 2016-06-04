@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>serde</a>::<wbr><a href='index.html'>ser</a>::<wbr><a class='trait' href=''>Serializer</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-7145' class='srclink' href='../../src/serde/ser/mod.rs.html#17-322' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-7145' class='srclink' href='../../src/serde/ser/mod.rs.html#17-322' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Serializer {
-    type Error;
+    type <a href='#associatedtype.Error' class='type'>Error</a>;
     fn <a href='#tymethod.visit_bool' class='fnname'>visit_bool</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, Self::<a class='trait' href='../../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Error</a>&gt;;
     fn <a href='#tymethod.visit_i64' class='fnname'>visit_i64</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, Self::<a class='trait' href='../../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Error</a>&gt;;
     fn <a href='#tymethod.visit_u64' class='fnname'>visit_u64</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, Self::<a class='trait' href='../../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Error</a>&gt;;
@@ -92,7 +93,7 @@
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Error' class='method stab '><code>type Error</code></h3><div class='docblock'><p>The error type that can be returned if some error occurs during serialization.</p>
+        <h3 id='associatedtype.Error' class='method stab '><code>type <a href='#associatedtype.Error' class='type'>Error</a></code></h3><div class='docblock'><p>The error type that can be returned if some error occurs during serialization.</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
@@ -189,8 +190,8 @@ specific field attributes should be used with the serializer.</p>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     </ul><script type="text/javascript" async
-                              src="../../implementors/serde/ser/trait.Serializer.js">
-                      </script></section>
+                         src="../../implementors/serde/ser/trait.Serializer.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,163 +44,145 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>bytes</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-0' class='srclink' href='../src/bytes/lib.rs.html#1-54' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/bytes/lib.rs.html#1-54' title='goto source code'>[src]</a></span></h1>
 <h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
 <table><tr><td><code>pub use buf::{<a class='trait' href='../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>, <a class='trait' href='../bytes/buf/trait.BufExt.html' title='bytes::buf::BufExt'>BufExt</a>, <a class='trait' href='../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>, <a class='trait' href='../bytes/buf/trait.MutBufExt.html' title='bytes::buf::MutBufExt'>MutBufExt</a>, <a class='trait' href='../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Source</a>, <a class='trait' href='../bytes/buf/trait.Sink.html' title='bytes::buf::Sink'>Sink</a>};</code></td></tr><tr><td><code>pub use str::{<a class='trait' href='../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a>, <a class='trait' href='../bytes/str/trait.ToBytes.html' title='bytes::str::ToBytes'>ToBytes</a>};</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='alloc/index.html'
-                               title='bytes::alloc'>alloc</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='buf/index.html'
-                               title='bytes::buf'>buf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='str/index.html'
-                               title='bytes::str'>str</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='mod' href='traits/index.html'
-                               title='bytes::traits'>traits</a></td>
-                        <td class='docblock short'>
-                             <p>All traits are re-exported here to allow glob imports.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='alloc/index.html'
+                                  title='bytes::alloc'>alloc</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='buf/index.html'
+                                  title='bytes::buf'>buf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='str/index.html'
+                                  title='bytes::str'>str</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='mod' href='traits/index.html'
+                                  title='bytes::traits'>traits</a></td>
+                           <td class='docblock short'>
+                                <p>All traits are re-exported here to allow glob imports.</p>
+                           </td>
+                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.ByteBuf.html'
-                               title='bytes::ByteBuf'>ByteBuf</a></td>
-                        <td class='docblock short'>
-                             <p>A <code>Buf</code> backed by a contiguous region of memory.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Bytes.html'
-                               title='bytes::Bytes'>Bytes</a></td>
-                        <td class='docblock short'>
-                             <p>A specialized <code>ByteStr</code> box.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.MutByteBuf.html'
-                               title='bytes::MutByteBuf'>MutByteBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.MutSliceBuf.html'
-                               title='bytes::MutSliceBuf'>MutSliceBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.ROByteBuf.html'
-                               title='bytes::ROByteBuf'>ROByteBuf</a></td>
-                        <td class='docblock short'>
-                             <p>Same as <code>ByteBuf</code> but cannot be flipped to a <code>MutByteBuf</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RingBuf.html'
-                               title='bytes::RingBuf'>RingBuf</a></td>
-                        <td class='docblock short'>
-                             <p>Buf backed by a continous chunk of memory. Maintains a read cursor and a
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ByteBuf.html'
+                                  title='bytes::ByteBuf'>ByteBuf</a></td>
+                           <td class='docblock short'>
+                                <p>A <code>Buf</code> backed by a contiguous region of memory.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Bytes.html'
+                                  title='bytes::Bytes'>Bytes</a></td>
+                           <td class='docblock short'>
+                                <p>A specialized <code>ByteStr</code> box.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.MutByteBuf.html'
+                                  title='bytes::MutByteBuf'>MutByteBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.MutSliceBuf.html'
+                                  title='bytes::MutSliceBuf'>MutSliceBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ROByteBuf.html'
+                                  title='bytes::ROByteBuf'>ROByteBuf</a></td>
+                           <td class='docblock short'>
+                                <p>Same as <code>ByteBuf</code> but cannot be flipped to a <code>MutByteBuf</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RingBuf.html'
+                                  title='bytes::RingBuf'>RingBuf</a></td>
+                           <td class='docblock short'>
+                                <p>Buf backed by a continous chunk of memory. Maintains a read cursor and a
 write cursor. When reads and writes reach the end of the allocated buffer,
 wraps around to the start.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Rope.html'
-                               title='bytes::Rope'>Rope</a></td>
-                        <td class='docblock short'>
-                             <p>An immutable sequence of bytes formed by concatenation of other <code>ByteStr</code>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Rope.html'
+                                  title='bytes::Rope'>Rope</a></td>
+                           <td class='docblock short'>
+                                <p>An immutable sequence of bytes formed by concatenation of other <code>ByteStr</code>
 values, without copying the data in the pieces. The concatenation is
 represented as a tree whose leaf nodes are each a <code>Bytes</code> value.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RopeBuf.html'
-                               title='bytes::RopeBuf'>RopeBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SeqByteStr.html'
-                               title='bytes::SeqByteStr'>SeqByteStr</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SliceBuf.html'
-                               title='bytes::SliceBuf'>SliceBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SmallByteStr.html'
-                               title='bytes::SmallByteStr'>SmallByteStr</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SmallByteStrBuf.html'
-                               title='bytes::SmallByteStrBuf'>SmallByteStrBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Take.html'
-                               title='bytes::Take'>Take</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RopeBuf.html'
+                                  title='bytes::RopeBuf'>RopeBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SeqByteStr.html'
+                                  title='bytes::SeqByteStr'>SeqByteStr</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SliceBuf.html'
+                                  title='bytes::SliceBuf'>SliceBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SmallByteStr.html'
+                                  title='bytes::SmallByteStr'>SmallByteStr</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SmallByteStrBuf.html'
+                                  title='bytes::SmallByteStrBuf'>SmallByteStrBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Take.html'
+                                  title='bytes::Take'>Take</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.BufError.html'
-                               title='bytes::BufError'>BufError</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.BufError.html'
+                                  title='bytes::BufError'>BufError</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,138 +44,124 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>sign</a>::<wbr><a class='mod' href=''>ed25519</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-566' class='srclink' href='../../../../src/sodiumoxide/crypto/sign/ed25519.rs.html#1-356' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-566' class='srclink' href='../../../../src/sodiumoxide/crypto/sign/ed25519.rs.html#1-356' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p><code>ed25519</code>, a signature scheme specified in
 <a href="http://ed25519.cr.yp.to/">Ed25519</a>. This function is conjectured to meet the
 standard notion of unforgeability for a public-key signature scheme under
 chosen-message attacks.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.PublicKey.html'
-                               title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a></td>
-                        <td class='docblock short'>
-                             <p><code>PublicKey</code> for signatures</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SecretKey.html'
-                               title='sodiumoxide::crypto::sign::ed25519::SecretKey'>SecretKey</a></td>
-                        <td class='docblock short'>
-                             <p><code>SecretKey</code> for signatures</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Seed.html'
-                               title='sodiumoxide::crypto::sign::ed25519::Seed'>Seed</a></td>
-                        <td class='docblock short'>
-                             <p><code>Seed</code> that can be used for keypair generation</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Signature.html'
-                               title='sodiumoxide::crypto::sign::ed25519::Signature'>Signature</a></td>
-                        <td class='docblock short'>
-                             <p>Detached signature</p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.PublicKey.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a></td>
+                           <td class='docblock short'>
+                                <p><code>PublicKey</code> for signatures</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SecretKey.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::SecretKey'>SecretKey</a></td>
+                           <td class='docblock short'>
+                                <p><code>SecretKey</code> for signatures</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Seed.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::Seed'>Seed</a></td>
+                           <td class='docblock short'>
+                                <p><code>Seed</code> that can be used for keypair generation</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Signature.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::Signature'>Signature</a></td>
+                           <td class='docblock short'>
+                                <p>Detached signature</p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.PUBLICKEYBYTES.html'
-                               title='sodiumoxide::crypto::sign::ed25519::PUBLICKEYBYTES'>PUBLICKEYBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>PublicKey</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.SECRETKEYBYTES.html'
-                               title='sodiumoxide::crypto::sign::ed25519::SECRETKEYBYTES'>SECRETKEYBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>SecretKey</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.SEEDBYTES.html'
-                               title='sodiumoxide::crypto::sign::ed25519::SEEDBYTES'>SEEDBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Seed</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.SIGNATUREBYTES.html'
-                               title='sodiumoxide::crypto::sign::ed25519::SIGNATUREBYTES'>SIGNATUREBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Signature</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.PUBLICKEYBYTES.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::PUBLICKEYBYTES'>PUBLICKEYBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>PublicKey</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.SECRETKEYBYTES.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::SECRETKEYBYTES'>SECRETKEYBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>SecretKey</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.SEEDBYTES.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::SEEDBYTES'>SEEDBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Seed</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.SIGNATUREBYTES.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::SIGNATUREBYTES'>SIGNATUREBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Signature</code>.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.gen_keypair.html'
-                               title='sodiumoxide::crypto::sign::ed25519::gen_keypair'>gen_keypair</a></td>
-                        <td class='docblock short'>
-                             <p><code>gen_keypair()</code> randomly generates a secret key and a corresponding public
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.gen_keypair.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::gen_keypair'>gen_keypair</a></td>
+                           <td class='docblock short'>
+                                <p><code>gen_keypair()</code> randomly generates a secret key and a corresponding public
 key.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.keypair_from_seed.html'
-                               title='sodiumoxide::crypto::sign::ed25519::keypair_from_seed'>keypair_from_seed</a></td>
-                        <td class='docblock short'>
-                             <p><code>keypair_from_seed()</code> computes a secret key and a corresponding public key
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.keypair_from_seed.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::keypair_from_seed'>keypair_from_seed</a></td>
+                           <td class='docblock short'>
+                                <p><code>keypair_from_seed()</code> computes a secret key and a corresponding public key
 from a <code>Seed</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.sign.html'
-                               title='sodiumoxide::crypto::sign::ed25519::sign'>sign</a></td>
-                        <td class='docblock short'>
-                             <p><code>sign()</code> signs a message <code>m</code> using the signer&#39;s secret key <code>sk</code>.
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.sign.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::sign'>sign</a></td>
+                           <td class='docblock short'>
+                                <p><code>sign()</code> signs a message <code>m</code> using the signer&#39;s secret key <code>sk</code>.
 <code>sign()</code> returns the resulting signed message <code>sm</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.sign_detached.html'
-                               title='sodiumoxide::crypto::sign::ed25519::sign_detached'>sign_detached</a></td>
-                        <td class='docblock short'>
-                             <p><code>sign_detached()</code> signs a message <code>m</code> using the signer&#39;s secret key <code>sk</code>.
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.sign_detached.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::sign_detached'>sign_detached</a></td>
+                           <td class='docblock short'>
+                                <p><code>sign_detached()</code> signs a message <code>m</code> using the signer&#39;s secret key <code>sk</code>.
 <code>sign_detached()</code> returns the resulting signature <code>sig</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.verify.html'
-                               title='sodiumoxide::crypto::sign::ed25519::verify'>verify</a></td>
-                        <td class='docblock short'>
-                             <p><code>verify()</code> verifies the signature in <code>sm</code> using the signer&#39;s public key <code>pk</code>.
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.verify.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::verify'>verify</a></td>
+                           <td class='docblock short'>
+                                <p><code>verify()</code> verifies the signature in <code>sm</code> using the signer&#39;s public key <code>pk</code>.
 <code>verify()</code> returns the message <code>Ok(m)</code>.
 If the signature fails verification, <code>verify()</code> returns <code>Err(())</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.verify_detached.html'
-                               title='sodiumoxide::crypto::sign::ed25519::verify_detached'>verify_detached</a></td>
-                        <td class='docblock short'>
-                             <p><code>verify_detached()</code> verifies the signature in <code>sig</code> against the message <code>m</code>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.verify_detached.html'
+                                  title='sodiumoxide::crypto::sign::ed25519::verify_detached'>verify_detached</a></td>
+                           <td class='docblock short'>
+                                <p><code>verify_detached()</code> verifies the signature in <code>sig</code> against the message <code>m</code>
 and the signer&#39;s public key <code>pk</code>.
 <code>verify_detached()</code> returns true if the signature is valid, false otherwise.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

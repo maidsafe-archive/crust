@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,17 +44,17 @@
 
     <section id='main' class="content fn">
 <h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>env</a>::<wbr><a class='fn' href=''>current_exe</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-3007' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.current_exe.html?gotosrc=3007' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn current_exe() -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</pre><span class="since">1.0.0</span><div class='docblock'><p>Returns the full filesystem path to the current running executable.</p>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-2953' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.current_exe.html?gotosrc=2953' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn current_exe() -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</pre><span class="since">1.0.0</span><div class='docblock'><p>Returns the full filesystem path of the current running executable.</p>
 
-<p>The path returned is not necessarily a &quot;real path&quot; to the executable as
+<p>The path returned is not necessarily a &quot;real path&quot; of the executable as
 there may be intermediate symlinks.</p>
 
 <h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
-<p>Acquiring the path to the current executable is a platform-specific operation
+<p>Acquiring the path of the current executable is a platform-specific operation
 that can fail for a good number of reasons. Some errors can include, but not
 be limited to, filesystem operations failing or general syscall failures.</p>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,75 +44,61 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>xml</a>::<wbr><a class='mod' href=''>common</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-336' class='srclink' href='../../src/xml/common.rs.html#1-169' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Contains several types used throughout the library.</p>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-375' class='srclink' href='../../src/xml/common.rs.html#1-130' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Contains common types and functions used throughout the library.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Error.html'
-                               title='xml::common::Error'>Error</a></td>
-                        <td class='docblock short'>
-                             <p>XML parsing error.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.TextPosition.html'
-                               title='xml::common::TextPosition'>TextPosition</a></td>
-                        <td class='docblock short'>
-                             <p>Represents a position inside some textual document.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.TextPosition.html'
+                                  title='xml::common::TextPosition'>TextPosition</a></td>
+                           <td class='docblock short'>
+                                <p>Represents a position inside some textual document.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.XmlVersion.html'
-                               title='xml::common::XmlVersion'>XmlVersion</a></td>
-                        <td class='docblock short'>
-                             <p>XML version enumeration.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.XmlVersion.html'
+                                  title='xml::common::XmlVersion'>XmlVersion</a></td>
+                           <td class='docblock short'>
+                                <p>XML version enumeration.</p>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Position.html'
-                               title='xml::common::Position'>Position</a></td>
-                        <td class='docblock short'>
-                             <p>Get the position in the document corresponding to the object</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Position.html'
+                                  title='xml::common::Position'>Position</a></td>
+                           <td class='docblock short'>
+                                <p>Get the position in the document corresponding to the object</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.is_name_char.html'
-                               title='xml::common::is_name_char'>is_name_char</a></td>
-                        <td class='docblock short'>
-                             <p>Checks whether the given character is a name character (<code>NameChar</code>)
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.is_name_char.html'
+                                  title='xml::common::is_name_char'>is_name_char</a></td>
+                           <td class='docblock short'>
+                                <p>Checks whether the given character is a name character (<code>NameChar</code>)
 as is defined by XML 1.1 specification, <a href="http://www.w3.org/TR/2006/REC-xml11-20060816/#sec-common-syn">section 2.3</a>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.is_name_start_char.html'
-                               title='xml::common::is_name_start_char'>is_name_start_char</a></td>
-                        <td class='docblock short'>
-                             <p>Checks whether the given character is a name start character (<code>NameStartChar</code>)
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.is_name_start_char.html'
+                                  title='xml::common::is_name_start_char'>is_name_start_char</a></td>
+                           <td class='docblock short'>
+                                <p>Checks whether the given character is a name start character (<code>NameStartChar</code>)
 as is defined by XML 1.1 specification, <a href="http://www.w3.org/TR/2006/REC-xml11-20060816/#sec-common-syn">section 2.3</a>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.is_whitespace_char.html'
-                               title='xml::common::is_whitespace_char'>is_whitespace_char</a></td>
-                        <td class='docblock short'>
-                             <p>Checks whether the given character is a white space character (<code>S</code>)
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.is_whitespace_char.html'
+                                  title='xml::common::is_whitespace_char'>is_whitespace_char</a></td>
+                           <td class='docblock short'>
+                                <p>Checks whether the given character is a white space character (<code>S</code>)
 as is defined by XML 1.1 specification, <a href="http://www.w3.org/TR/2006/REC-xml11-20060816/#sec-common-syn">section 2.3</a>.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

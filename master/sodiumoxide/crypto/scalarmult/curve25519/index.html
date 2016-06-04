@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>scalarmult</a>::<wbr><a class='mod' href=''>curve25519</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1035' class='srclink' href='../../../../src/sodiumoxide/crypto/scalarmult/curve25519.rs.html#1-152' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1035' class='srclink' href='../../../../src/sodiumoxide/crypto/scalarmult/curve25519.rs.html#1-152' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p><code>crypto_scalarmult_curve25519</code> specified in
 <a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>, Sections 2, 3, and 4.
 This function is conjectured to be strong. For background see Bernstein,
@@ -54,60 +55,54 @@ This function is conjectured to be strong. For background see Bernstein,
 Science 3958 (2006), 207–228, <a href="http://cr.yp.to/papers.html#curve25519">http://cr.yp.to/papers.html#curve25519</a>.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.GroupElement.html'
-                               title='sodiumoxide::crypto::scalarmult::curve25519::GroupElement'>GroupElement</a></td>
-                        <td class='docblock short'>
-                             <p><code>GroupElement</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Scalar.html'
-                               title='sodiumoxide::crypto::scalarmult::curve25519::Scalar'>Scalar</a></td>
-                        <td class='docblock short'>
-                             <p><code>Scalar</code> value (integer in byte representation)</p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.GroupElement.html'
+                                  title='sodiumoxide::crypto::scalarmult::curve25519::GroupElement'>GroupElement</a></td>
+                           <td class='docblock short'>
+                                <p><code>GroupElement</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Scalar.html'
+                                  title='sodiumoxide::crypto::scalarmult::curve25519::Scalar'>Scalar</a></td>
+                           <td class='docblock short'>
+                                <p><code>Scalar</code> value (integer in byte representation)</p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.GROUPELEMENTBYTES.html'
-                               title='sodiumoxide::crypto::scalarmult::curve25519::GROUPELEMENTBYTES'>GROUPELEMENTBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>GroupElement</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.SCALARBYTES.html'
-                               title='sodiumoxide::crypto::scalarmult::curve25519::SCALARBYTES'>SCALARBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Scalar</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.GROUPELEMENTBYTES.html'
+                                  title='sodiumoxide::crypto::scalarmult::curve25519::GROUPELEMENTBYTES'>GROUPELEMENTBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>GroupElement</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.SCALARBYTES.html'
+                                  title='sodiumoxide::crypto::scalarmult::curve25519::SCALARBYTES'>SCALARBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Scalar</code>.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.scalarmult.html'
-                               title='sodiumoxide::crypto::scalarmult::curve25519::scalarmult'>scalarmult</a></td>
-                        <td class='docblock short'>
-                             <p><code>scalarmult()</code> multiplies a group element <code>p</code>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.scalarmult.html'
+                                  title='sodiumoxide::crypto::scalarmult::curve25519::scalarmult'>scalarmult</a></td>
+                           <td class='docblock short'>
+                                <p><code>scalarmult()</code> multiplies a group element <code>p</code>
 by an integer <code>n</code>. It returns the resulting group element
 <code>q</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.scalarmult_base.html'
-                               title='sodiumoxide::crypto::scalarmult::curve25519::scalarmult_base'>scalarmult_base</a></td>
-                        <td class='docblock short'>
-                             <p><code>scalarmult_base()</code> computes the scalar product of a standard
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.scalarmult_base.html'
+                                  title='sodiumoxide::crypto::scalarmult::curve25519::scalarmult_base'>scalarmult_base</a></td>
+                           <td class='docblock short'>
+                                <p><code>scalarmult_base()</code> computes the scalar product of a standard
 group element and an integer <code>n</code>. It returns the resulting
 group element <code>q</code>/</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

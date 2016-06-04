@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,18 +44,18 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>bytes</a>::<wbr><a href='index.html'>buf</a>::<wbr><a class='trait' href=''>Source</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-499' class='srclink' href='../../src/bytes/buf/mod.rs.html#207-211' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-499' class='srclink' href='../../src/bytes/buf/mod.rs.html#207-211' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Source {
-    type Error;
+    type <a href='#associatedtype.Error' class='type'>Error</a>;
     fn <a href='#tymethod.fill' class='fnname'>fill</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Self::<a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Error</a>&gt;;
 }</pre><div class='docblock'><p>A value that writes bytes from itself into a <code>MutBuf</code>.</p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Error' class='method stab '><code>type Error</code></h3></div>
+        <h3 id='associatedtype.Error' class='method stab '><code>type <a href='#associatedtype.Error' class='type'>Error</a></code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
         <h3 id='tymethod.fill' class='method stab '><code>fn <a href='#tymethod.fill' class='fnname'>fill</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Self::<a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Error</a>&gt;</code></h3></div>
@@ -66,8 +67,8 @@
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Source</a> for &amp;'a <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Source</a> for &amp;'a <a class='struct' href='../../bytes/struct.Rope.html' title='bytes::Rope'>Rope</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/bytes/buf/trait.Source.js">
-                      </script></section>
+                         src="../../implementors/bytes/buf/trait.Source.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

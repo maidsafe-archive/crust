@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,59 +44,63 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>time</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-10567' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/index.html?gotosrc=10567' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-10548' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/index.html?gotosrc=10548' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Temporal quantification.</p>
+
+<p>Example:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
+
+<span class='kw'>let</span> <span class='ident'>five_seconds</span> <span class='op'>=</span> <span class='ident'>Duration</span>::<span class='ident'>new</span>(<span class='number'>5</span>, <span class='number'>0</span>);
+<span class='comment'>// both declarations are equivalent</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Duration</span>::<span class='ident'>new</span>(<span class='number'>5</span>, <span class='number'>0</span>), <span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>5</span>));</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Duration.html'
-                               title='bitflags::__core::time::Duration'>Duration</a></td>
-                        <td class='docblock short'>
-                             <p>A duration type to represent a span of time, typically used for system
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Duration.html'
+                                  title='bitflags::__core::time::Duration'>Duration</a></td>
+                           <td class='docblock short'>
+                                <p>A duration type to represent a span of time, typically used for system
 timeouts.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Instant.html'
-                               title='bitflags::__core::time::Instant'>Instant</a></td>
-                        <td class='docblock short'>
-                             <p>A measurement of a monotonically increasing clock.
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Instant.html'
+                                  title='bitflags::__core::time::Instant'>Instant</a></td>
+                           <td class='docblock short'>
+                                <p>A measurement of a monotonically increasing clock.
  Opaque and useful only with <code>Duration</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SystemTime.html'
-                               title='bitflags::__core::time::SystemTime'>SystemTime</a></td>
-                        <td class='docblock short'>
-                             <p>A measurement of the system clock, useful for talking to
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SystemTime.html'
+                                  title='bitflags::__core::time::SystemTime'>SystemTime</a></td>
+                           <td class='docblock short'>
+                                <p>A measurement of the system clock, useful for talking to
 external entities like the file system or other processes.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SystemTimeError.html'
-                               title='bitflags::__core::time::SystemTimeError'>SystemTimeError</a></td>
-                        <td class='docblock short'>
-                             <p>An error returned from the <code>duration_since</code> method on <code>SystemTime</code>,
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SystemTimeError.html'
+                                  title='bitflags::__core::time::SystemTimeError'>SystemTimeError</a></td>
+                           <td class='docblock short'>
+                                <p>An error returned from the <code>duration_since</code> method on <code>SystemTime</code>,
 used to learn about why how far in the opposite direction a timestamp lies.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.UNIX_EPOCH.html'
-                               title='bitflags::__core::time::UNIX_EPOCH'>UNIX_EPOCH</a></td>
-                        <td class='docblock short'>
-                             <p>An anchor in time which can be used to create new <code>SystemTime</code> instances or
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.UNIX_EPOCH.html'
+                                  title='bitflags::__core::time::UNIX_EPOCH'>UNIX_EPOCH</a></td>
+                           <td class='docblock short'>
+                                <p>An anchor in time which can be used to create new <code>SystemTime</code> instances or
 learn about where in time a <code>SystemTime</code> lies.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

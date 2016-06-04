@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>slice</a>::<wbr><a class='trait' href=''>SliceConcatExt</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-2989' class='srclink' href='https://doc.rust-lang.org/nightly/collections/slice/trait.SliceConcatExt.html?gotosrc=2989' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-3015' class='srclink' href='https://doc.rust-lang.org/nightly/collections/slice/trait.SliceConcatExt.html?gotosrc=3015' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait SliceConcatExt&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
-    type Output;
+    type <a href='#associatedtype.Output' class='type'>Output</a>;
     fn <a href='#tymethod.concat' class='fnname'>concat</a>(&amp;self) -&gt; Self::<a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>Output</a>;
     fn <a href='#tymethod.join' class='fnname'>join</a>(&amp;self, sep: &amp;T) -&gt; Self::<a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>Output</a>;
     fn <a href='#tymethod.connect' class='fnname'>connect</a>(&amp;self, sep: &amp;T) -&gt; Self::<a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>Output</a>;
@@ -57,7 +58,7 @@
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Output' class='method stab unstable'><code>type Output</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>slice_concat_ext</code>)<p>: trait should not have to exist</p>
+        <h3 id='associatedtype.Output' class='method stab unstable'><code>type <a href='#associatedtype.Output' class='type'>Output</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>slice_concat_ext</code>)<p>: trait should not have to exist</p>
 </em></div><div class='docblock'><p>The resulting type after concatenation</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
@@ -77,11 +78,11 @@ given separator between each.</p>
 </em></div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;T, V&gt; <a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>SliceConcatExt</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a>V<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a>, V: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a>T<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;</span></code></li>
-<li><code>impl&lt;S&gt; <a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>SliceConcatExt</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a>S<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a> <span class='where'>where S: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt;</span></code></li>
+    <li><code>impl&lt;S&gt; <a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>SliceConcatExt</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a>S<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a> <span class='where'>where S: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt;</span></code></li>
+<li><code>impl&lt;T, V&gt; <a class='trait' href='../../../bitflags/__core/slice/trait.SliceConcatExt.html' title='bitflags::__core::slice::SliceConcatExt'>SliceConcatExt</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a>V<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a>, V: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a>T<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;</span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/collections/slice/trait.SliceConcatExt.js">
-                      </script></section>
+                         src="../../../implementors/collections/slice/trait.SliceConcatExt.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,81 +44,73 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>bytes</a>::<wbr><a class='mod' href=''>str</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-627' class='srclink' href='../../src/bytes/str/mod.rs.html#1-187' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-627' class='srclink' href='../../src/bytes/str/mod.rs.html#1-187' title='goto source code'>[src]</a></span></h1>
 <h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Bytes.html'
-                               title='bytes::str::Bytes'>Bytes</a></td>
-                        <td class='docblock short'>
-                             <p>A specialized <code>ByteStr</code> box.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Rope.html'
-                               title='bytes::str::Rope'>Rope</a></td>
-                        <td class='docblock short'>
-                             <p>An immutable sequence of bytes formed by concatenation of other <code>ByteStr</code>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Bytes.html'
+                                  title='bytes::str::Bytes'>Bytes</a></td>
+                           <td class='docblock short'>
+                                <p>A specialized <code>ByteStr</code> box.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Rope.html'
+                                  title='bytes::str::Rope'>Rope</a></td>
+                           <td class='docblock short'>
+                                <p>An immutable sequence of bytes formed by concatenation of other <code>ByteStr</code>
 values, without copying the data in the pieces. The concatenation is
 represented as a tree whose leaf nodes are each a <code>Bytes</code> value.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RopeBuf.html'
-                               title='bytes::str::RopeBuf'>RopeBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SeqByteStr.html'
-                               title='bytes::str::SeqByteStr'>SeqByteStr</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SmallByteStr.html'
-                               title='bytes::str::SmallByteStr'>SmallByteStr</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SmallByteStrBuf.html'
-                               title='bytes::str::SmallByteStrBuf'>SmallByteStrBuf</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RopeBuf.html'
+                                  title='bytes::str::RopeBuf'>RopeBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SeqByteStr.html'
+                                  title='bytes::str::SeqByteStr'>SeqByteStr</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SmallByteStr.html'
+                                  title='bytes::str::SmallByteStr'>SmallByteStr</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SmallByteStrBuf.html'
+                                  title='bytes::str::SmallByteStrBuf'>SmallByteStrBuf</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.ByteStr.html'
-                               title='bytes::str::ByteStr'>ByteStr</a></td>
-                        <td class='docblock short'>
-                             <p>An immutable sequence of bytes. Operations will not mutate the original
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.ByteStr.html'
+                                  title='bytes::str::ByteStr'>ByteStr</a></td>
+                           <td class='docblock short'>
+                                <p>An immutable sequence of bytes. Operations will not mutate the original
 value. Since only immutable access is permitted, operations do not require
 copying (though, sometimes copying will happen as an optimization).</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.ToBytes.html'
-                               title='bytes::str::ToBytes'>ToBytes</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.ToBytes.html'
+                                  title='bytes::str::ToBytes'>ToBytes</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

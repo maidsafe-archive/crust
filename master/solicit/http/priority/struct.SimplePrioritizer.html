@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>priority</a>::<wbr><a class='struct' href=''>SimplePrioritizer</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1242' class='srclink' href='../../../src/solicit/http/priority.rs.html#31-36' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1214' class='srclink' href='../../../src/solicit/http/priority.rs.html#31-36' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct SimplePrioritizer&lt;'a, 'b, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span> {
     // some fields omitted
 }</pre><div class='docblock'><p>An implementation of the <code>DataPrioritizer</code> trait that is based on finding the first stream from
@@ -57,7 +58,7 @@ and should not be relied on.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, 'b, State&gt; <a class='struct' href='../../../solicit/http/priority/struct.SimplePrioritizer.html' title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a>&lt;'a, 'b, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(state: &amp;'a mut State, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../../../solicit/http/priority/struct.SimplePrioritizer.html' title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a>&lt;'a, 'b, State&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>SimplePrioritizer</code> that will use the given state to find stream data that
 should be sent and use the given buffer to hold the data of the returned chunk.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, 'b, State&gt; <a class='trait' href='../../../solicit/http/priority/trait.DataPrioritizer.html' title='solicit::http::priority::DataPrioritizer'>DataPrioritizer</a> for <a class='struct' href='../../../solicit/http/priority/struct.SimplePrioritizer.html' title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a>&lt;'a, 'b, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></h3><div class='impl-items'><h4 id='method.get_next_chunk' class='method'><code>fn <a href='../../../solicit/http/priority/trait.DataPrioritizer.html#method.get_next_chunk' class='fnname'>get_next_chunk</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&gt;&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, 'b, State&gt; <a class='trait' href='../../../solicit/http/priority/trait.DataPrioritizer.html' title='solicit::http::priority::DataPrioritizer'>DataPrioritizer</a> for <a class='struct' href='../../../solicit/http/priority/struct.SimplePrioritizer.html' title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a>&lt;'a, 'b, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></h3><div class='impl-items'><h4 id='method.get_next_chunk' class='method'><code>fn <a href='../../../solicit/http/priority/trait.DataPrioritizer.html#tymethod.get_next_chunk' class='fnname'>get_next_chunk</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&gt;&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 

@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,13 +44,13 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>mio</a>::<wbr><a class='trait' href=''>Handler</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-580' class='srclink' href='../src/mio/handler.rs.html#4-36' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-580' class='srclink' href='../src/mio/handler.rs.html#4-36' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Handler: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> {
-    type Timeout;
-    type Message: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a>;
+    type <a href='#associatedtype.Timeout' class='type'>Timeout</a>;
+    type <a href='#associatedtype.Message' class='type'>Message</a>: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a>;
     fn <a href='#method.ready' class='fnname'>ready</a>(&amp;mut self, event_loop: &amp;mut <a class='struct' href='../mio/struct.EventLoop.html' title='mio::EventLoop'>EventLoop</a>&lt;Self&gt;, token: <a class='struct' href='../mio/struct.Token.html' title='mio::Token'>Token</a>, events: <a class='struct' href='../mio/struct.EventSet.html' title='mio::EventSet'>EventSet</a>) { ... }
     fn <a href='#method.notify' class='fnname'>notify</a>(&amp;mut self, event_loop: &amp;mut <a class='struct' href='../mio/struct.EventLoop.html' title='mio::EventLoop'>EventLoop</a>&lt;Self&gt;, msg: Self::<a class='trait' href='../mio/trait.Handler.html' title='mio::Handler'>Message</a>) { ... }
     fn <a href='#method.timeout' class='fnname'>timeout</a>(&amp;mut self, event_loop: &amp;mut <a class='struct' href='../mio/struct.EventLoop.html' title='mio::EventLoop'>EventLoop</a>&lt;Self&gt;, timeout: Self::<a class='trait' href='../mio/trait.Handler.html' title='mio::Handler'>Timeout</a>) { ... }
@@ -58,7 +59,7 @@
 }</pre>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Timeout' class='method stab '><code>type Timeout</code></h3><h3 id='associatedtype.Message' class='method stab '><code>type Message: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></code></h3></div>
+        <h3 id='associatedtype.Timeout' class='method stab '><code>type <a href='#associatedtype.Timeout' class='type'>Timeout</a></code></h3><h3 id='associatedtype.Message' class='method stab '><code>type <a href='#associatedtype.Message' class='type'>Message</a>: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></code></h3></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
         <h3 id='method.ready' class='method stab '><code>fn <a href='#method.ready' class='fnname'>ready</a>(&amp;mut self, event_loop: &amp;mut <a class='struct' href='../mio/struct.EventLoop.html' title='mio::EventLoop'>EventLoop</a>&lt;Self&gt;, token: <a class='struct' href='../mio/struct.Token.html' title='mio::Token'>Token</a>, events: <a class='struct' href='../mio/struct.EventSet.html' title='mio::EventSet'>EventSet</a>)</code></h3><div class='docblock'><p>Invoked when the socket represented by <code>token</code> is ready to be operated
@@ -79,8 +80,8 @@ loop tick.</p>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     </ul><script type="text/javascript" async
-                              src="../implementors/mio/trait.Handler.js">
-                      </script></section>
+                         src="../implementors/mio/trait.Handler.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

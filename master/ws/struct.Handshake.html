@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>ws</a>::<wbr><a class='struct' href=''>Handshake</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1332' class='srclink' href='../src/ws/handshake.rs.html#78-88' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1321' class='srclink' href='../src/ws/handshake.rs.html#78-88' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Handshake {
     pub request: <a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>,
     pub response: <a class='struct' href='../ws/struct.Response.html' title='ws::Response'>Response</a>,
@@ -55,14 +56,14 @@
 }</pre><div class='docblock'><p>A struct representing the two halves of the WebSocket handshake.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.request'><code>request</code></td><td><div class='docblock'><p>The HTTP request sent to begin the handshake.</p>
+                             <td id='structfield.request'><code>request</code></td><td><div class='docblock'><p>The HTTP request sent to begin the handshake.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.response'><code>response</code></td><td><div class='docblock'><p>The HTTP response from the server confirming the handshake.</p>
+                             <td id='structfield.response'><code>response</code></td><td><div class='docblock'><p>The HTTP response from the server confirming the handshake.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.peer_addr'><code>peer_addr</code></td><td><div class='docblock'><p>The socket address of the other endpoint. This address may
+                             <td id='structfield.peer_addr'><code>peer_addr</code></td><td><div class='docblock'><p>The socket address of the other endpoint. This address may
 be an intermediary such as a proxy server.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.local_addr'><code>local_addr</code></td><td><div class='docblock'><p>The socket address of this enpoint.</p>
+                             <td id='structfield.local_addr'><code>local_addr</code></td><td><div class='docblock'><p>The socket address of this endpoint.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../ws/struct.Handshake.html' title='ws::Handshake'>Handshake</a></code></h3><div class='impl-items'><h4 id='method.remote_addr' class='method'><code>fn <a href='#method.remote_addr' class='fnname'>remote_addr</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;&gt;</code></h4>
 <div class='docblock'><p>Get the IP address of the remote connection.</p>
 
@@ -76,7 +77,7 @@ WebSocket client and want to obtain the address of the server, use
 <code>Handshake::peer_addr</code> instead.</p>
 
 <p>This method does not ensure that the address is a valid IP address.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Handshake.html' title='ws::Handshake'>Handshake</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Handshake.html' title='ws::Handshake'>Handshake</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 

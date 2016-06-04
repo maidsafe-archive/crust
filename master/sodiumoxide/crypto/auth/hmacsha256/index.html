@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,82 +44,74 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>auth</a>::<wbr><a class='mod' href=''>hmacsha256</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1745' class='srclink' href='../../../../src/sodiumoxide/crypto/auth/hmacsha256.rs.html#1-73' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1745' class='srclink' href='../../../../src/sodiumoxide/crypto/auth/hmacsha256.rs.html#1-73' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p><code>HMAC-SHA-256</code> <code>HMAC-SHA-256</code> is conjectured to meet the standard notion of
 unforgeability.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Key.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::Key'>Key</a></td>
-                        <td class='docblock short'>
-                             <p>Authentication <code>Key</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.State.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::State'>State</a></td>
-                        <td class='docblock short'>
-                             <p>Authentication <code>State</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Tag.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::Tag'>Tag</a></td>
-                        <td class='docblock short'>
-                             <p>Authentication <code>Tag</code></p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Key.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::Key'>Key</a></td>
+                           <td class='docblock short'>
+                                <p>Authentication <code>Key</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.State.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::State'>State</a></td>
+                           <td class='docblock short'>
+                                <p>Authentication <code>State</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Tag.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::Tag'>Tag</a></td>
+                           <td class='docblock short'>
+                                <p>Authentication <code>Tag</code></p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.KEYBYTES.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::KEYBYTES'>KEYBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Key</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.TAGBYTES.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::TAGBYTES'>TAGBYTES</a></td>
-                        <td class='docblock short'>
-                             <p>Number of bytes in a <code>Tag</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.KEYBYTES.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::KEYBYTES'>KEYBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Key</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.TAGBYTES.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::TAGBYTES'>TAGBYTES</a></td>
+                           <td class='docblock short'>
+                                <p>Number of bytes in a <code>Tag</code>.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.authenticate.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::authenticate'>authenticate</a></td>
-                        <td class='docblock short'>
-                             <p><code>authenticate()</code> authenticates a message <code>m</code> using a secret key <code>k</code>.
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.authenticate.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::authenticate'>authenticate</a></td>
+                           <td class='docblock short'>
+                                <p><code>authenticate()</code> authenticates a message <code>m</code> using a secret key <code>k</code>.
 The function returns an authenticator tag.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.gen_key.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::gen_key'>gen_key</a></td>
-                        <td class='docblock short'>
-                             <p><code>gen_key()</code> randomly generates a key for authentication</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.verify.html'
-                               title='sodiumoxide::crypto::auth::hmacsha256::verify'>verify</a></td>
-                        <td class='docblock short'>
-                             <p><code>verify()</code> returns <code>true</code> if <code>tag</code> is a correct authenticator of message <code>m</code>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.gen_key.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::gen_key'>gen_key</a></td>
+                           <td class='docblock short'>
+                                <p><code>gen_key()</code> randomly generates a key for authentication</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.verify.html'
+                                  title='sodiumoxide::crypto::auth::hmacsha256::verify'>verify</a></td>
+                           <td class='docblock short'>
+                                <p><code>verify()</code> returns <code>true</code> if <code>tag</code> is a correct authenticator of message <code>m</code>
 under a secret key <code>k</code>. Otherwise it returns false.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

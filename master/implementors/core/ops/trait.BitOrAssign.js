@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['libc'] = [];implementors['mio'] = [];implementors['socket_addr'] = [];implementors['hyper'] = [];implementors['igd'] = ["impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.BitOrAssign.html' title='core::ops::BitOrAssign'>BitOrAssign</a>&lt;<a class='struct' href='xml/writer/emitter/struct.IndentFlags.html' title='xml::writer::emitter::IndentFlags'>IndentFlags</a>&gt; for <a class='struct' href='xml/writer/emitter/struct.IndentFlags.html' title='xml::writer::emitter::IndentFlags'>IndentFlags</a>",];implementors['crust'] = [];
+implementors['libc'] = [];implementors['void'] = [];implementors['mio'] = [];implementors['serde'] = [];implementors['socket_addr'] = [];implementors['hyper'] = [];implementors['igd'] = [];implementors['crust'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

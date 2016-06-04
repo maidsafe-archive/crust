@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>connection</a>::<wbr><a class='struct' href=''>DataChunk</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-812' class='srclink' href='../../../src/solicit/http/connection.rs.html#200-207' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-794' class='srclink' href='../../../src/solicit/http/connection.rs.html#200-207' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct DataChunk&lt;'a&gt; {
     pub data: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;,
     pub stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>,
@@ -54,11 +55,11 @@
 }</pre><div class='docblock'><p>The struct represents a chunk of data that should be sent to the peer on a particular stream.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.data'><code>data</code></td><td><div class='docblock'><p>The data that should be sent.</p>
+                             <td id='structfield.data'><code>data</code></td><td><div class='docblock'><p>The data that should be sent.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.stream_id'><code>stream_id</code></td><td><div class='docblock'><p>The ID of the stream on which the data should be sent.</p>
+                             <td id='structfield.stream_id'><code>stream_id</code></td><td><div class='docblock'><p>The ID of the stream on which the data should be sent.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.end_stream'><code>end_stream</code></td><td><div class='docblock'><p>Whether the data chunk will also end the stream.</p>
+                             <td id='structfield.end_stream'><code>end_stream</code></td><td><div class='docblock'><p>Whether the data chunk will also end the stream.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(data: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, end_stream: <a class='enum' href='../../../solicit/http/connection/enum.EndStream.html' title='solicit::http::connection::EndStream'>EndStream</a>) -&gt; <a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>DataChunk</code>.</p>
 

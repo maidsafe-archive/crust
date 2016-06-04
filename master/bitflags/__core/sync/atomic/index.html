@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a class='mod' href=''>atomic</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-27848' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/index.html?gotosrc=27848' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-27684' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/index.html?gotosrc=27684' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Atomic types</p>
 
 <p>Atomic types provide primitive shared-memory communication between
@@ -102,81 +103,72 @@ are often used for lazy global initialization.</p>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;live threads: {}&quot;</span>, <span class='ident'>old_thread_count</span> <span class='op'>+</span> <span class='number'>1</span>);</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.AtomicBool.html'
-                               title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></td>
-                        <td class='docblock short'>
-                             <p>A boolean type which can be safely shared between threads.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.AtomicIsize.html'
-                               title='bitflags::__core::sync::atomic::AtomicIsize'>AtomicIsize</a></td>
-                        <td class='docblock short'>
-                             <p>A signed integer type which can be safely shared between threads.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.AtomicPtr.html'
-                               title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a></td>
-                        <td class='docblock short'>
-                             <p>A raw pointer type which can be safely shared between threads.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.AtomicUsize.html'
-                               title='bitflags::__core::sync::atomic::AtomicUsize'>AtomicUsize</a></td>
-                        <td class='docblock short'>
-                             <p>An unsigned integer type which can be safely shared between threads.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.AtomicBool.html'
+                                  title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></td>
+                           <td class='docblock short'>
+                                <p>A boolean type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.AtomicIsize.html'
+                                  title='bitflags::__core::sync::atomic::AtomicIsize'>AtomicIsize</a></td>
+                           <td class='docblock short'>
+                                <p>A signed integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.AtomicPtr.html'
+                                  title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a></td>
+                           <td class='docblock short'>
+                                <p>A raw pointer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.AtomicUsize.html'
+                                  title='bitflags::__core::sync::atomic::AtomicUsize'>AtomicUsize</a></td>
+                           <td class='docblock short'>
+                                <p>An unsigned integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.Ordering.html'
-                               title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></td>
-                        <td class='docblock short'>
-                             <p>Atomic memory orderings</p>
-                        </td>
-                    </tr>
-                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Ordering.html'
+                                  title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></td>
+                           <td class='docblock short'>
+                                <p>Atomic memory orderings</p>
+                           </td>
+                       </tr></table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.ATOMIC_BOOL_INIT.html'
-                               title='bitflags::__core::sync::atomic::ATOMIC_BOOL_INIT'>ATOMIC_BOOL_INIT</a></td>
-                        <td class='docblock short'>
-                             <p>An <code>AtomicBool</code> initialized to <code>false</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.ATOMIC_ISIZE_INIT.html'
-                               title='bitflags::__core::sync::atomic::ATOMIC_ISIZE_INIT'>ATOMIC_ISIZE_INIT</a></td>
-                        <td class='docblock short'>
-                             <p>An <code>AtomicIsize</code> initialized to <code>0</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='constant' href='constant.ATOMIC_USIZE_INIT.html'
-                               title='bitflags::__core::sync::atomic::ATOMIC_USIZE_INIT'>ATOMIC_USIZE_INIT</a></td>
-                        <td class='docblock short'>
-                             <p>An <code>AtomicUsize</code> initialized to <code>0</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_BOOL_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_BOOL_INIT'>ATOMIC_BOOL_INIT</a></td>
+                           <td class='docblock short'>
+                                <p>An <code>AtomicBool</code> initialized to <code>false</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_ISIZE_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_ISIZE_INIT'>ATOMIC_ISIZE_INIT</a></td>
+                           <td class='docblock short'>
+                                <p>An <code>AtomicIsize</code> initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_USIZE_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_USIZE_INIT'>ATOMIC_USIZE_INIT</a></td>
+                           <td class='docblock short'>
+                                <p>An <code>AtomicUsize</code> initialized to <code>0</code>.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.fence.html'
-                               title='bitflags::__core::sync::atomic::fence'>fence</a></td>
-                        <td class='docblock short'>
-                             <p>An atomic fence.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.fence.html'
+                                  title='bitflags::__core::sync::atomic::fence'>fence</a></td>
+                           <td class='docblock short'>
+                                <p>An atomic fence.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

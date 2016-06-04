@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>fmt</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-2365' class='srclink' href='https://doc.rust-lang.org/nightly/collections/fmt/index.html?gotosrc=2365' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-2393' class='srclink' href='https://doc.rust-lang.org/nightly/collections/fmt/index.html?gotosrc=2393' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Utilities for formatting and printing strings</p>
 
 <p>This module contains the runtime support for the <code>format!</code> syntax extension.
@@ -440,20 +441,20 @@ to the <em>value</em> to print, and the <code>precision</code> must come in the 
 <p>For example, these:</p>
 
 <pre class='rust rust-example-rendered'>
-<span class='comment'>// Hello {arg 0 (x)} is {arg 1 (0.01} with precision specified inline (5)}</span>
+<span class='comment'>// Hello {arg 0 (x)} is {arg 1 (0.01) with precision specified inline (5)}</span>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello {0} is {1:.5}&quot;</span>, <span class='string'>&quot;x&quot;</span>, <span class='number'>0.01</span>);
 
-<span class='comment'>// Hello {arg 1 (x)} is {arg 2 (0.01} with precision specified in arg 0 (5)}</span>
+<span class='comment'>// Hello {arg 1 (x)} is {arg 2 (0.01) with precision specified in arg 0 (5)}</span>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello {1} is {2:.0$}&quot;</span>, <span class='number'>5</span>, <span class='string'>&quot;x&quot;</span>, <span class='number'>0.01</span>);
 
-<span class='comment'>// Hello {arg 0 (x)} is {arg 2 (0.01} with precision specified in arg 1 (5)}</span>
+<span class='comment'>// Hello {arg 0 (x)} is {arg 2 (0.01) with precision specified in arg 1 (5)}</span>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello {0} is {2:.1$}&quot;</span>, <span class='string'>&quot;x&quot;</span>, <span class='number'>5</span>, <span class='number'>0.01</span>);
 
-<span class='comment'>// Hello {next arg (x)} is {second of next two args (0.01} with precision</span>
+<span class='comment'>// Hello {next arg (x)} is {second of next two args (0.01) with precision</span>
 <span class='comment'>//                          specified in first of next two args (5)}</span>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello {} is {:.*}&quot;</span>,    <span class='string'>&quot;x&quot;</span>, <span class='number'>5</span>, <span class='number'>0.01</span>);
 
-<span class='comment'>// Hello {next arg (x)} is {arg 2 (0.01} with precision</span>
+<span class='comment'>// Hello {next arg (x)} is {arg 2 (0.01) with precision</span>
 <span class='comment'>//                          specified in its predecessor (5)}</span>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello {} is {2:.*}&quot;</span>,   <span class='string'>&quot;x&quot;</span>, <span class='number'>5</span>, <span class='number'>0.01</span>);</pre>
 
@@ -480,209 +481,164 @@ them with the same character. For example, the <code>{</code> character is escap
 <code>{{</code> and the <code>}</code> character is escaped with <code>}}</code>.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Arguments.html'
-                               title='bitflags::__core::fmt::Arguments'>Arguments</a></td>
-                        <td class='docblock short'>
-                             <p>This structure represents a safely precompiled version of a format string
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Arguments.html'
+                                  title='bitflags::__core::fmt::Arguments'>Arguments</a></td>
+                           <td class='docblock short'>
+                                <p>This structure represents a safely precompiled version of a format string
 and its arguments. This cannot be generated at runtime because it cannot
 safely be done so, so no constructors are given and the fields are private
 to prevent modification.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DebugList.html'
-                               title='bitflags::__core::fmt::DebugList'>DebugList</a></td>
-                        <td class='docblock short'>
-                             <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DebugMap.html'
-                               title='bitflags::__core::fmt::DebugMap'>DebugMap</a></td>
-                        <td class='docblock short'>
-                             <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DebugSet.html'
-                               title='bitflags::__core::fmt::DebugSet'>DebugSet</a></td>
-                        <td class='docblock short'>
-                             <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DebugStruct.html'
-                               title='bitflags::__core::fmt::DebugStruct'>DebugStruct</a></td>
-                        <td class='docblock short'>
-                             <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.DebugTuple.html'
-                               title='bitflags::__core::fmt::DebugTuple'>DebugTuple</a></td>
-                        <td class='docblock short'>
-                             <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Error.html'
-                               title='bitflags::__core::fmt::Error'>Error</a></td>
-                        <td class='docblock short'>
-                             <p>The error type which is returned from formatting a message into a stream.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Formatter.html'
-                               title='bitflags::__core::fmt::Formatter'>Formatter</a></td>
-                        <td class='docblock short'>
-                             <p>A struct to represent both where to emit formatting strings to and how they
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DebugList.html'
+                                  title='bitflags::__core::fmt::DebugList'>DebugList</a></td>
+                           <td class='docblock short'>
+                                <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DebugMap.html'
+                                  title='bitflags::__core::fmt::DebugMap'>DebugMap</a></td>
+                           <td class='docblock short'>
+                                <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DebugSet.html'
+                                  title='bitflags::__core::fmt::DebugSet'>DebugSet</a></td>
+                           <td class='docblock short'>
+                                <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DebugStruct.html'
+                                  title='bitflags::__core::fmt::DebugStruct'>DebugStruct</a></td>
+                           <td class='docblock short'>
+                                <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.DebugTuple.html'
+                                  title='bitflags::__core::fmt::DebugTuple'>DebugTuple</a></td>
+                           <td class='docblock short'>
+                                <p>A struct to help with <code>fmt::Debug</code> implementations.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Error.html'
+                                  title='bitflags::__core::fmt::Error'>Error</a></td>
+                           <td class='docblock short'>
+                                <p>The error type which is returned from formatting a message into a stream.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Formatter.html'
+                                  title='bitflags::__core::fmt::Formatter'>Formatter</a></td>
+                           <td class='docblock short'>
+                                <p>A struct to represent both where to emit formatting strings to and how they
 should be formatted. A mutable version of this is passed to all formatting
 traits.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='struct' href='struct.Radix.html'
-                               title='bitflags::__core::fmt::Radix'>Radix</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>A radix with in the range of <code>2..36</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='struct' href='struct.RadixFmt.html'
-                               title='bitflags::__core::fmt::RadixFmt'>RadixFmt</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>A helper type for formatting radixes.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Binary.html'
-                               title='bitflags::__core::fmt::Binary'>Binary</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>b</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Debug.html'
-                               title='bitflags::__core::fmt::Debug'>Debug</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>?</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Display.html'
-                               title='bitflags::__core::fmt::Display'>Display</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for an empty format, <code>{}</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.LowerExp.html'
-                               title='bitflags::__core::fmt::LowerExp'>LowerExp</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>e</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.LowerHex.html'
-                               title='bitflags::__core::fmt::LowerHex'>LowerHex</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>x</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Octal.html'
-                               title='bitflags::__core::fmt::Octal'>Octal</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>o</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Pointer.html'
-                               title='bitflags::__core::fmt::Pointer'>Pointer</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>p</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.UpperExp.html'
-                               title='bitflags::__core::fmt::UpperExp'>UpperExp</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>E</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.UpperHex.html'
-                               title='bitflags::__core::fmt::UpperHex'>UpperHex</a></td>
-                        <td class='docblock short'>
-                             <p>Format trait for the <code>X</code> character.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.Write.html'
-                               title='bitflags::__core::fmt::Write'>Write</a></td>
-                        <td class='docblock short'>
-                             <p>A collection of methods that are required to format a message into a stream.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Binary.html'
+                                  title='bitflags::__core::fmt::Binary'>Binary</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>b</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Debug.html'
+                                  title='bitflags::__core::fmt::Debug'>Debug</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>?</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Display.html'
+                                  title='bitflags::__core::fmt::Display'>Display</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for an empty format, <code>{}</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.LowerExp.html'
+                                  title='bitflags::__core::fmt::LowerExp'>LowerExp</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>e</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.LowerHex.html'
+                                  title='bitflags::__core::fmt::LowerHex'>LowerHex</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>x</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Octal.html'
+                                  title='bitflags::__core::fmt::Octal'>Octal</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>o</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Pointer.html'
+                                  title='bitflags::__core::fmt::Pointer'>Pointer</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>p</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.UpperExp.html'
+                                  title='bitflags::__core::fmt::UpperExp'>UpperExp</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>E</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.UpperHex.html'
+                                  title='bitflags::__core::fmt::UpperHex'>UpperHex</a></td>
+                           <td class='docblock short'>
+                                <p>Format trait for the <code>X</code> character.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.Write.html'
+                                  title='bitflags::__core::fmt::Write'>Write</a></td>
+                           <td class='docblock short'>
+                                <p>A collection of methods that are required to format a message into a stream.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.format.html'
-                               title='bitflags::__core::fmt::format'>format</a></td>
-                        <td class='docblock short'>
-                             <p>The format function takes a precompiled format string and a list of
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.format.html'
+                                  title='bitflags::__core::fmt::format'>format</a></td>
+                           <td class='docblock short'>
+                                <p>The format function takes a precompiled format string and a list of
 arguments, to return the resulting formatted string.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.write.html'
-                               title='bitflags::__core::fmt::write'>write</a></td>
-                        <td class='docblock short'>
-                             <p>The <code>write</code> function takes an output stream, a precompiled format string,
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.write.html'
+                                  title='bitflags::__core::fmt::write'>write</a></td>
+                           <td class='docblock short'>
+                                <p>The <code>write</code> function takes an output stream, a precompiled format string,
 and a list of arguments. The arguments will be formatted according to the
 specified format string into the output stream provided.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable deprecated module-item'>
-                        <td><a class='fn' href='fn.radix.html'
-                               title='bitflags::__core::fmt::radix'>radix</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>Constructs a radix formatter in the range of <code>2..36</code>.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+                           </td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='type' href='type.Result.html'
-                               title='bitflags::__core::fmt::Result'>Result</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.Result.html'
+                                  title='bitflags::__core::fmt::Result'>Result</a></td>
+                           <td class='docblock short'>
+                                
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

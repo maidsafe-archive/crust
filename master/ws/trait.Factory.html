@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>ws</a>::<wbr><a class='trait' href=''>Factory</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-877' class='srclink' href='../src/ws/factory.rs.html#5-104' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-869' class='srclink' href='../src/ws/factory.rs.html#5-104' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Factory {
-    type Handler: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a>;
+    type <a href='#associatedtype.Handler' class='type'>Handler</a>: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a>;
     fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a>;
 
     fn <a href='#method.on_shutdown' class='fnname'>on_shutdown</a>(&amp;mut self) { ... }
@@ -59,7 +60,7 @@
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Handler' class='method stab '><code>type Handler: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a></code></h3></div>
+        <h3 id='associatedtype.Handler' class='method stab '><code>type <a href='#associatedtype.Handler' class='type'>Handler</a>: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a></code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
         <h3 id='tymethod.connection_made' class='method stab '><code>fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a></code></h3><div class='docblock'><p>Called when a TCP connection is made.</p>
@@ -143,8 +144,8 @@ state that was not internally tracked by the handler.</p>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     </ul><script type="text/javascript" async
-                              src="../implementors/ws/trait.Factory.js">
-                      </script></section>
+                         src="../implementors/ws/trait.Factory.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

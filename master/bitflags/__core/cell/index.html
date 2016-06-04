@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>cell</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-28272' class='srclink' href='https://doc.rust-lang.org/nightly/core/cell/index.html?gotosrc=28272' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-28138' class='srclink' href='https://doc.rust-lang.org/nightly/core/cell/index.html?gotosrc=28138' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Shareable mutable containers.</p>
 
 <p>Values of the <code>Cell&lt;T&gt;</code> and <code>RefCell&lt;T&gt;</code> types may be mutated through shared references (i.e.
@@ -173,56 +174,50 @@ is declared to take <code>&amp;self</code>, not <code>&amp;mut self</code>. Ther
 }</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Cell.html'
-                               title='bitflags::__core::cell::Cell'>Cell</a></td>
-                        <td class='docblock short'>
-                             <p>A mutable memory location that admits only <code>Copy</code> data.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Ref.html'
-                               title='bitflags::__core::cell::Ref'>Ref</a></td>
-                        <td class='docblock short'>
-                             <p>Wraps a borrowed reference to a value in a <code>RefCell</code> box.
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Cell.html'
+                                  title='bitflags::__core::cell::Cell'>Cell</a></td>
+                           <td class='docblock short'>
+                                <p>A mutable memory location that admits only <code>Copy</code> data.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Ref.html'
+                                  title='bitflags::__core::cell::Ref'>Ref</a></td>
+                           <td class='docblock short'>
+                                <p>Wraps a borrowed reference to a value in a <code>RefCell</code> box.
 A wrapper type for an immutably borrowed value from a <code>RefCell&lt;T&gt;</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RefCell.html'
-                               title='bitflags::__core::cell::RefCell'>RefCell</a></td>
-                        <td class='docblock short'>
-                             <p>A mutable memory location with dynamically checked borrow rules</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RefMut.html'
-                               title='bitflags::__core::cell::RefMut'>RefMut</a></td>
-                        <td class='docblock short'>
-                             <p>A wrapper type for a mutably borrowed value from a <code>RefCell&lt;T&gt;</code>.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.UnsafeCell.html'
-                               title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a></td>
-                        <td class='docblock short'>
-                             <p>The core primitive for interior mutability in Rust.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RefCell.html'
+                                  title='bitflags::__core::cell::RefCell'>RefCell</a></td>
+                           <td class='docblock short'>
+                                <p>A mutable memory location with dynamically checked borrow rules</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.RefMut.html'
+                                  title='bitflags::__core::cell::RefMut'>RefMut</a></td>
+                           <td class='docblock short'>
+                                <p>A wrapper type for a mutably borrowed value from a <code>RefCell&lt;T&gt;</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.UnsafeCell.html'
+                                  title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a></td>
+                           <td class='docblock short'>
+                                <p>The core primitive for interior mutability in Rust.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class='unstable module-item'>
-                        <td><a class='enum' href='enum.BorrowState.html'
-                               title='bitflags::__core::cell::BorrowState'>BorrowState</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>An enumeration of values returned from the <code>state</code> method on a <code>RefCell&lt;T&gt;</code>.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class='unstable module-item'>
+                           <td><a class='enum' href='enum.BorrowState.html'
+                                  title='bitflags::__core::cell::BorrowState'>BorrowState</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An enumeration of values returned from the <code>state</code> method on a <code>RefCell&lt;T&gt;</code>.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

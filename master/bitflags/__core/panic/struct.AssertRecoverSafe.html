@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,53 +44,12 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='struct' href=''>AssertRecoverSafe</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-6736' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/struct.AssertRecoverSafe.html?gotosrc=6736' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct AssertRecoverSafe&lt;T&gt;(_);</pre><div class='stability'><em class='stab unstable'>Unstable (<code>recover</code>)<p>: awaiting feedback</p>
-</em></div><div class='docblock'><p>A simple wrapper around a type to assert that it is panic safe.</p>
-
-<p>When using <code>recover</code> it may be the case that some of the closed over
-variables are not panic safe. For example if <code>&amp;mut T</code> is captured the
-compiler will generate a warning indicating that it is not panic safe. It
-may not be the case, however, that this is actually a problem due to the
-specific usage of <code>recover</code> if panic safety is specifically taken into
-account. This wrapper struct is useful for a quick and lightweight
-annotation that a variable is indeed panic safe.</p>
-
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
-<pre class='rust rust-example-rendered'>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>recover</span>, <span class='ident'>std_panic</span>)]</span>
-
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>panic</span>::{<span class='self'>self</span>, <span class='ident'>AssertRecoverSafe</span>};
-
-<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>variable</span> <span class='op'>=</span> <span class='number'>4</span>;
-
-<span class='comment'>// This code will not compile because the closure captures `&amp;mut variable`</span>
-<span class='comment'>// which is not considered panic safe by default.</span>
-
-<span class='comment'>// panic::recover(|| {</span>
-<span class='comment'>//     variable += 3;</span>
-<span class='comment'>// });</span>
-
-<span class='comment'>// This, however, will compile due to the `AssertRecoverSafe` wrapper</span>
-<span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>wrapper</span> <span class='op'>=</span> <span class='ident'>AssertRecoverSafe</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>variable</span>);
-    <span class='ident'>panic</span>::<span class='ident'>recover</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='op'>*</span><span class='op'>*</span><span class='ident'>wrapper</span> <span class='op'>+=</span> <span class='number'>3</span>;
-    })
-};
-<span class='comment'>// ...</span></pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/panic/struct.AssertRecoverSafe.html' title='bitflags::__core::panic::AssertRecoverSafe'>AssertRecoverSafe</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(t: T) -&gt; <a class='struct' href='../../../bitflags/__core/panic/struct.AssertRecoverSafe.html' title='bitflags::__core::panic::AssertRecoverSafe'>AssertRecoverSafe</a>&lt;T&gt;</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>recover</code>)<p>: awaiting feedback</p>
-</em></div><div class='docblock'><p>Creates a new <code>AssertRecoverSafe</code> wrapper around the provided type.</p>
-</div><h4 id='method.into_inner' class='method'><code>fn <a href='#method.into_inner' class='fnname'>into_inner</a>(self) -&gt; T</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>recover</code>)<p>: awaiting feedback</p>
-</em></div><div class='docblock'><p>Consumes the <code>AssertRecoverSafe</code>, returning the wrapped value.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/panic/trait.RecoverSafe.html' title='bitflags::__core::panic::RecoverSafe'>RecoverSafe</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertRecoverSafe.html' title='bitflags::__core::panic::AssertRecoverSafe'>AssertRecoverSafe</a>&lt;T&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/panic/trait.RefRecoverSafe.html' title='bitflags::__core::panic::RefRecoverSafe'>RefRecoverSafe</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertRecoverSafe.html' title='bitflags::__core::panic::AssertRecoverSafe'>AssertRecoverSafe</a>&lt;T&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertRecoverSafe.html' title='bitflags::__core::panic::AssertRecoverSafe'>AssertRecoverSafe</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='associatedtype.Target' class='type'><code>type Target = T</code></h4>
-<h4 id='method.deref' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Deref.html#method.deref' class='fnname'>deref</a>(&amp;self) -&gt; &amp;T</code></h4>
-</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.DerefMut.html' title='bitflags::__core::ops::DerefMut'>DerefMut</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertRecoverSafe.html' title='bitflags::__core::panic::AssertRecoverSafe'>AssertRecoverSafe</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.deref_mut' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.DerefMut.html#method.deref_mut' class='fnname'>deref_mut</a>(&amp;mut self) -&gt; &amp;mut T</code></h4>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-6716' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/struct.AssertRecoverSafe.html?gotosrc=6716' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct AssertRecoverSafe&lt;T&gt;(pub T);</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.9.0<p>: renamed to <code>AssertUnwindSafe</code></p>
+</em></div><div class='docblock'><p>Deprecated, renamed to <code>AssertUnwindSafe</code></p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

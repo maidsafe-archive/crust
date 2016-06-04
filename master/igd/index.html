@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,130 +44,115 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>igd</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-0' class='srclink' href='../src/igd/lib.rs.html#1-35' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-0' class='srclink' href='../src/igd/lib.rs.html#1-35' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This library allows you to communicate with an IGD enabled device.
 Use one of the <code>search_gateway</code> functions to obtain a <code>Gateway</code> object.
 You can then communicate with the device via this object.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Gateway.html'
-                               title='igd::Gateway'>Gateway</a></td>
-                        <td class='docblock short'>
-                             <p>This structure represents a gateway found by the search functions.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.XmlError.html'
-                               title='igd::XmlError'>XmlError</a></td>
-                        <td class='docblock short'>
-                             <p>XML parsing error.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Gateway.html'
+                                  title='igd::Gateway'>Gateway</a></td>
+                           <td class='docblock short'>
+                                <p>This structure represents a gateway found by the search functions.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.XmlError.html'
+                                  title='igd::XmlError'>XmlError</a></td>
+                           <td class='docblock short'>
+                                <p>XML parsing error.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.AddAnyPortError.html'
-                               title='igd::AddAnyPortError'>AddAnyPortError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors returned by <code>Gateway::add_any_port</code> and <code>Gateway::get_any_address</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.AddPortError.html'
-                               title='igd::AddPortError'>AddPortError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors returned by <code>Gateway::add_port</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.GetExternalIpError.html'
-                               title='igd::GetExternalIpError'>GetExternalIpError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors returned by <code>Gateway::get_external_ip</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.HttpError.html'
-                               title='igd::HttpError'>HttpError</a></td>
-                        <td class='docblock short'>
-                             <p>A set of errors that can occur parsing HTTP streams.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.PortMappingProtocol.html'
-                               title='igd::PortMappingProtocol'>PortMappingProtocol</a></td>
-                        <td class='docblock short'>
-                             <p>Represents the protocols available for port mapping.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.RemovePortError.html'
-                               title='igd::RemovePortError'>RemovePortError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors returned by <code>Gateway::remove_port</code></p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.RequestError.html'
-                               title='igd::RequestError'>RequestError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors that can occur when sending the request to the gateway.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.SearchError.html'
-                               title='igd::SearchError'>SearchError</a></td>
-                        <td class='docblock short'>
-                             <p>Errors than can occur while trying to find the gateway.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.AddAnyPortError.html'
+                                  title='igd::AddAnyPortError'>AddAnyPortError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors returned by <code>Gateway::add_any_port</code> and <code>Gateway::get_any_address</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.AddPortError.html'
+                                  title='igd::AddPortError'>AddPortError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors returned by <code>Gateway::add_port</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.GetExternalIpError.html'
+                                  title='igd::GetExternalIpError'>GetExternalIpError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors returned by <code>Gateway::get_external_ip</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.HttpError.html'
+                                  title='igd::HttpError'>HttpError</a></td>
+                           <td class='docblock short'>
+                                <p>A set of errors that can occur parsing HTTP streams.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.PortMappingProtocol.html'
+                                  title='igd::PortMappingProtocol'>PortMappingProtocol</a></td>
+                           <td class='docblock short'>
+                                <p>Represents the protocols available for port mapping.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.RemovePortError.html'
+                                  title='igd::RemovePortError'>RemovePortError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors returned by <code>Gateway::remove_port</code></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.RequestError.html'
+                                  title='igd::RequestError'>RequestError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors that can occur when sending the request to the gateway.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.SearchError.html'
+                                  title='igd::SearchError'>SearchError</a></td>
+                           <td class='docblock short'>
+                                <p>Errors than can occur while trying to find the gateway.</p>
+                           </td>
+                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.search_gateway.html'
-                               title='igd::search_gateway'>search_gateway</a></td>
-                        <td class='docblock short'>
-                             <p>Search gateway, bind to all interfaces and use a timeout of 3 seconds.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.search_gateway_from.html'
-                               title='igd::search_gateway_from'>search_gateway_from</a></td>
-                        <td class='docblock short'>
-                             <p>Search gateway, bind to the given interface and use a time of 3 seconds.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.search_gateway_from_timeout.html'
-                               title='igd::search_gateway_from_timeout'>search_gateway_from_timeout</a></td>
-                        <td class='docblock short'>
-                             <p>Search gateway, bind to the given interface and use the given duration for the timeout.</p>
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.search_gateway_timeout.html'
-                               title='igd::search_gateway_timeout'>search_gateway_timeout</a></td>
-                        <td class='docblock short'>
-                             <p>Search gateway, bind to all interfaces and use the given duration for the timeout.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='impls' class='section-header'><a href="#impls">Implementations</a></h2>
-<table></table></section>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.search_gateway.html'
+                                  title='igd::search_gateway'>search_gateway</a></td>
+                           <td class='docblock short'>
+                                <p>Search gateway, bind to all interfaces and use a timeout of 3 seconds.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.search_gateway_from.html'
+                                  title='igd::search_gateway_from'>search_gateway_from</a></td>
+                           <td class='docblock short'>
+                                <p>Search gateway, bind to the given interface and use a time of 3 seconds.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.search_gateway_from_timeout.html'
+                                  title='igd::search_gateway_from_timeout'>search_gateway_from_timeout</a></td>
+                           <td class='docblock short'>
+                                <p>Search gateway, bind to the given interface and use the given duration for the timeout.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='fn' href='fn.search_gateway_timeout.html'
+                                  title='igd::search_gateway_timeout'>search_gateway_timeout</a></td>
+                           <td class='docblock short'>
+                                <p>Search gateway, bind to all interfaces and use the given duration for the timeout.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

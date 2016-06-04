@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../../../index.html'>bitflags</a>::<wbr><a href='../../../index.html'>__core</a>::<wbr><a href='../../index.html'>os</a>::<wbr><a href='../index.html'>ext</a>::<wbr><a href='index.html'>prelude</a>::<wbr><a class='trait' href=''>MetadataExt</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-12995' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/fs/trait.MetadataExt.html?gotosrc=12995' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-13083' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/fs/trait.MetadataExt.html?gotosrc=13083' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait MetadataExt {
     fn <a href='#tymethod.dev' class='fnname'>dev</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>;
     fn <a href='#tymethod.ino' class='fnname'>ino</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>;
@@ -70,10 +71,9 @@
         <h3 id='tymethod.dev' class='method stab '><code>fn <a href='#tymethod.dev' class='fnname'>dev</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><h3 id='tymethod.ino' class='method stab '><code>fn <a href='#tymethod.ino' class='fnname'>ino</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><h3 id='tymethod.mode' class='method stab '><code>fn <a href='#tymethod.mode' class='fnname'>mode</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h3><h3 id='tymethod.nlink' class='method stab '><code>fn <a href='#tymethod.nlink' class='fnname'>nlink</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><h3 id='tymethod.uid' class='method stab '><code>fn <a href='#tymethod.uid' class='fnname'>uid</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h3><h3 id='tymethod.gid' class='method stab '><code>fn <a href='#tymethod.gid' class='fnname'>gid</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h3><h3 id='tymethod.rdev' class='method stab '><code>fn <a href='#tymethod.rdev' class='fnname'>rdev</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><h3 id='tymethod.size' class='method stab '><code>fn <a href='#tymethod.size' class='fnname'>size</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><h3 id='tymethod.atime' class='method stab '><code>fn <a href='#tymethod.atime' class='fnname'>atime</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></h3><h3 id='tymethod.atime_nsec' class='method stab '><code>fn <a href='#tymethod.atime_nsec' class='fnname'>atime_nsec</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></h3><h3 id='tymethod.mtime' class='method stab '><code>fn <a href='#tymethod.mtime' class='fnname'>mtime</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></h3><h3 id='tymethod.mtime_nsec' class='method stab '><code>fn <a href='#tymethod.mtime_nsec' class='fnname'>mtime_nsec</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></h3><h3 id='tymethod.ctime' class='method stab '><code>fn <a href='#tymethod.ctime' class='fnname'>ctime</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></h3><h3 id='tymethod.ctime_nsec' class='method stab '><code>fn <a href='#tymethod.ctime_nsec' class='fnname'>ctime_nsec</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></h3><h3 id='tymethod.blksize' class='method stab '><code>fn <a href='#tymethod.blksize' class='fnname'>blksize</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><h3 id='tymethod.blocks' class='method stab '><code>fn <a href='#tymethod.blocks' class='fnname'>blocks</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../../../bitflags/__core/os/ext/prelude/trait.MetadataExt.html' title='bitflags::__core::os::ext::prelude::MetadataExt'>MetadataExt</a> for <a class='struct' href='../../../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a></code></li>
-</ul><script type="text/javascript" async
-                              src="../../../../../implementors/std/sys/ext/fs/trait.MetadataExt.js">
-                      </script></section>
+    </ul><script type="text/javascript" async
+                         src="../../../../../implementors/std/sys/ext/fs/trait.MetadataExt.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

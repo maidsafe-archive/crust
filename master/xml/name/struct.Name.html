@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>xml</a>::<wbr><a href='index.html'>name</a>::<wbr><a class='struct' href=''>Name</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-14' class='srclink' href='../../src/xml/name.rs.html#23-32' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-16' class='srclink' href='../../src/xml/name.rs.html#48-57' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Name&lt;'a&gt; {
     pub local_name: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>,
     pub namespace: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
@@ -54,43 +55,75 @@
 }</pre><div class='docblock'><p>Represents a qualified XML name.</p>
 
 <p>A qualified name always consists at least of a local name. It can optionally contain
-a prefix; if it contains a prefix, it must also contain a namespace URI, but this is not
-enforced statically; see below. The name can contain a namespace without a prefix; in
-that case a default, empty prefix is assumed.</p>
+a prefix; when reading an XML document, if it contains a prefix, it must also contain a
+namespace URI, but this is not enforced statically; see below. The name can contain a
+namespace without a prefix; in that case a default, empty prefix is assumed.</p>
+
+<p>When writing XML documents, it is possible to omit the namespace URI, leaving only
+the prefix. In this case the writer will check that the specifed prefix is bound to some
+URI in the current namespace context. If both prefix and namespace URI are specified,
+it is checked that the current namespace context contains this exact correspondence
+between prefix and namespace URI.</p>
 
 <h1 id='prefixes-and-uris' class='section-header'><a href='#prefixes-and-uris'>Prefixes and URIs</a></h1>
 <p>A qualified name with a prefix must always contain a proper namespace URI --- names with
 a prefix but without a namespace associated with that prefix are meaningless. However,
-it is impossible to obtain proper namespace URY by a prefix without a context, and such
+it is impossible to obtain proper namespace URI by a prefix without a context, and such
 context is only available when parsing a document (or it can be constructed manually
 when writing a document). Tying a name to a context statically seems impractical. This
 may change in future, though.</p>
+
+<h1 id='conversions' class='section-header'><a href='#conversions'>Conversions</a></h1>
+<p><code>Name</code> implements some <code>From</code> instances for conversion from strings and tuples. For example:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n1</span>: <span class='ident'>Name</span> <span class='op'>=</span> <span class='string'>&quot;p:some-name&quot;</span>.<span class='ident'>into</span>();
+<span class='kw'>let</span> <span class='ident'>n2</span>: <span class='ident'>Name</span> <span class='op'>=</span> (<span class='string'>&quot;p&quot;</span>, <span class='string'>&quot;some-name&quot;</span>).<span class='ident'>into</span>();
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n1</span>, <span class='ident'>n2</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n1</span>.<span class='ident'>local_name</span>, <span class='string'>&quot;some-name&quot;</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n1</span>.<span class='ident'>prefix</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;p&quot;</span>));
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>n1</span>.<span class='ident'>namespace</span>.<span class='ident'>is_none</span>());</pre>
+
+<p>This is added to support easy specification of XML elements when writing XML documents.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.local_name'><code>local_name</code></td><td><div class='docblock'><p>A local name, e.g. <code>string</code> in <code>xsi:string</code>.</p>
+                             <td id='structfield.local_name'><code>local_name</code></td><td><div class='docblock'><p>A local name, e.g. <code>string</code> in <code>xsi:string</code>.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.namespace'><code>namespace</code></td><td><div class='docblock'><p>A namespace URI, e.g. <code>http://www.w3.org/2000/xmlns/</code>.</p>
+                             <td id='structfield.namespace'><code>namespace</code></td><td><div class='docblock'><p>A namespace URI, e.g. <code>http://www.w3.org/2000/xmlns/</code>.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.prefix'><code>prefix</code></td><td><div class='docblock'><p>A name prefix, e.g. <code>xsi</code> in <code>xsi:string</code>.</p>
+                             <td id='structfield.prefix'><code>prefix</code></td><td><div class='docblock'><p>A name prefix, e.g. <code>xsi</code> in <code>xsi:string</code>.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.to_owned' class='method'><code>fn <a href='#method.to_owned' class='fnname'>to_owned</a>(&amp;self) -&gt; <a class='struct' href='../../xml/name/struct.OwnedName.html' title='xml::name::OwnedName'>OwnedName</a></code></h4>
 <div class='docblock'><p>Returns an owned variant of the qualified name.</p>
 </div><h4 id='method.local' class='method'><code>fn <a href='#method.local' class='fnname'>local</a>(local_name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a></code></h4>
 <div class='docblock'><p>Returns a new <code>Name</code> instance representing plain local name.</p>
+</div><h4 id='method.prefixed' class='method'><code>fn <a href='#method.prefixed' class='fnname'>prefixed</a>(local_name: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, prefix: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h4>
+<div class='docblock'><p>Returns a new <code>Name</code> instance with the given local name and prefix.</p>
 </div><h4 id='method.qualified' class='method'><code>fn <a href='#method.qualified' class='fnname'>qualified</a>(local_name: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, namespace: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, prefix: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Returns a new <code>Name</code> instance representing a qualified name with or without a prefix and
 with a namespace URI.</p>
 </div><h4 id='method.to_repr' class='method'><code>fn <a href='#method.to_repr' class='fnname'>to_repr</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
-<div class='docblock'><p>Returns correct XML representation of this local name and prefix.</p>
+<div class='docblock'><p>Returns a correct XML representation of this local name and prefix.</p>
 
 <p>This method is different from the autoimplemented <code>to_string()</code> because it does not
 include namespace URI in the result.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash' class='fnname'>hash</a>&lt;__H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a>&gt;(&amp;self, __arg_0: &amp;mut __H)</code></h4>
+</div><h4 id='method.repr_display' class='method'><code>fn <a href='#method.repr_display' class='fnname'>repr_display</a>(&amp;self) -&gt; <a class='struct' href='../../xml/name/struct.ReprDisplay.html' title='xml::name::ReprDisplay'>ReprDisplay</a></code></h4>
+<div class='docblock'><p>Returns a structure which can be displayed with <code>std::fmt</code> machinery to obtain this
+local name and prefix.</p>
+
+<p>This method is needed for efficiency purposes in order not to create unnecessary
+allocations.</p>
+</div><h4 id='method.prefix_repr' class='method'><code>fn <a href='#method.prefix_repr' class='fnname'>prefix_repr</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<div class='docblock'><p>Returns either a prefix of this name or <code>namespace::NS_NO_PREFIX</code> constant.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(s: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt; for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.from-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>((prefix, name): <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a>&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#tymethod.hash' class='fnname'>hash</a>&lt;__H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a>&gt;(&amp;self, __arg_0: &amp;mut __H)</code></h4>
 <h4 id='method.hash_slice' class='method'><span class="since">1.3.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[Self]</a>, state: &amp;mut H) <span class='where'>where H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a></span></code></h4>
-</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h4>
 <h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></h3><div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>

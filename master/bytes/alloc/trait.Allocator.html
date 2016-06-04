@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>bytes</a>::<wbr><a href='index.html'>alloc</a>::<wbr><a class='trait' href=''>Allocator</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-38' class='srclink' href='../../src/bytes/alloc/mod.rs.html#19-26' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-38' class='srclink' href='../../src/bytes/alloc/mod.rs.html#19-26' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Allocator: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> {
     fn <a href='#tymethod.allocate' class='fnname'>allocate</a>(&amp;self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/alloc/struct.MemRef.html' title='bytes::alloc::MemRef'>MemRef</a>;
     fn <a href='#tymethod.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a>);
@@ -67,8 +68,8 @@ requirement.</p>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl <a class='trait' href='../../bytes/alloc/trait.Allocator.html' title='bytes::alloc::Allocator'>Allocator</a> for <a class='struct' href='../../bytes/alloc/struct.Heap.html' title='bytes::alloc::Heap'>Heap</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/bytes/alloc/trait.Allocator.js">
-                      </script></section>
+                         src="../../implementors/bytes/alloc/trait.Allocator.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

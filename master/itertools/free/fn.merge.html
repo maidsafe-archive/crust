@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content fn">
 <h1 class='fqn'><span class='in-band'>Function <a href='../index.html'>itertools</a>::<wbr><a href='index.html'>free</a>::<wbr><a class='fn' href=''>merge</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-807' class='srclink' href='../../src/itertools/free.rs.html#218-224' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-807' class='srclink' href='../../src/itertools/free.rs.html#218-224' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn merge&lt;I, J&gt;(i: I, j: J) -&gt; <a class='struct' href='../../itertools/struct.Merge.html' title='itertools::Merge'>Merge</a>&lt;I::IntoIter, J::IntoIter&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, J: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=I::Item&gt;, I::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html' title='core::cmp::PartialOrd'>PartialOrd</a></span></pre><div class='docblock'><p>Create an iterator that merges elements in <code>i</code> and <code>j</code>.</p>
 
 <p><code>IntoIterator</code> enabled version of <code>i.merge(j)</code>.</p>

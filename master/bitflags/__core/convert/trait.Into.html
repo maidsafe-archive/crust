@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,19 +44,19 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>convert</a>::<wbr><a class='trait' href=''>Into</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-22742' class='srclink' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html?gotosrc=22742' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-22578' class='srclink' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html?gotosrc=22578' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Into&lt;T&gt; {
     fn <a href='#tymethod.into' class='fnname'>into</a>(self) -&gt; T;
 }</pre><div class='docblock'><p>A conversion that consumes <code>self</code>, which may or may not be expensive.</p>
 
 <p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
-return an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p>
+returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p>
 
-<p>Library writer should not implement directly this trait, but should prefer the implementation
-of the <code>From</code> trait, which offer greater flexibility and provide the equivalent <code>Into</code>
+<p>Library authors should not directly implement this trait, but should prefer implementing
+the <code>From</code> trait, which offers greater flexibility and provides an equivalent <code>Into</code>
 implementation for free, thanks to a blanket implementation in the standard library.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
@@ -82,12 +83,10 @@ implementation for free, thanks to a blanket implementation in the standard libr
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;T, U&gt; <a class='trait' href='../../../bitflags/__core/convert/trait.Into.html' title='bitflags::__core::convert::Into'>Into</a>&lt;U&gt; for T <span class='where'>where U: <a class='trait' href='../../../bitflags/__core/convert/trait.From.html' title='bitflags::__core::convert::From'>From</a>&lt;T&gt;</span></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/convert/trait.Into.html' title='bitflags::__core::convert::Into'>Into</a>&lt;<a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;&gt; for <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/convert/trait.Into.html' title='bitflags::__core::convert::Into'>Into</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.OsString.html' title='bitflags::__core::ffi::OsString'>OsString</a>&gt; for <a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a></code></li>
+    <li><code>impl <a class='trait' href='../../../bitflags/__core/convert/trait.Into.html' title='bitflags::__core::convert::Into'>Into</a>&lt;<a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;&gt; for <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/core/convert/trait.Into.js">
-                      </script></section>
+                         src="../../../implementors/core/convert/trait.Into.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

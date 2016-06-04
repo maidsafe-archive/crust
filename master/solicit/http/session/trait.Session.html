@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a href='index.html'>session</a>::<wbr><a class='trait' href=''>Session</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-998' class='srclink' href='../../../src/solicit/http/session.rs.html#22-32' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-975' class='srclink' href='../../../src/solicit/http/session.rs.html#22-32' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Session {
     fn <a href='#tymethod.new_data_chunk' class='fnname'>new_data_chunk</a>(&amp;mut self, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, data: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>);
     fn <a href='#tymethod.new_headers' class='fnname'>new_headers</a>(&amp;mut self, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, headers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../../solicit/http/type.Header.html' title='solicit::http::Header'>Header</a>&gt;);
@@ -75,8 +76,8 @@ stream. The given list of headers is already decoded by the connection.</p>
     <li><code>impl&lt;'a, State&gt; <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a> for <a class='struct' href='../../../solicit/http/client/struct.ClientSession.html' title='solicit::http::client::ClientSession'>ClientSession</a>&lt;'a, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></li>
 <li><code>impl&lt;'a, State&gt; <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a> for <a class='struct' href='../../../solicit/http/server/struct.ServerSession.html' title='solicit::http::server::ServerSession'>ServerSession</a>&lt;'a, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../implementors/solicit/http/session/trait.Session.js">
-                      </script></section>
+                         src="../../../implementors/solicit/http/session/trait.Session.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

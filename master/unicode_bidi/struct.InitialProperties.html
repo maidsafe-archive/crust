@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     
     
@@ -43,22 +44,22 @@
 
     <section id='main' class="content struct">
 <h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>unicode_bidi</a>::<wbr><a class='struct' href=''>InitialProperties</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-204' class='srclink' href='../src/unicode_bidi/lib.rs.html#253-260' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-199' class='srclink' href='../src/unicode_bidi/lib.rs.html#253-260' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct InitialProperties {
     pub initial_classes: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../unicode_bidi/tables/enum.BidiClass.html' title='unicode_bidi::tables::BidiClass'>BidiClass</a>&gt;,
     pub paragraphs: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../unicode_bidi/struct.ParagraphInfo.html' title='unicode_bidi::ParagraphInfo'>ParagraphInfo</a>&gt;,
 }</pre><div class='docblock'><p>Output of <code>initial_scan</code></p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
-                                  <td id='structfield.initial_classes'><code>initial_classes</code></td><td><div class='docblock'><p>The BidiClass of the character at each byte in the text.
+                             <td id='structfield.initial_classes'><code>initial_classes</code></td><td><div class='docblock'><p>The BidiClass of the character at each byte in the text.
 If a character is multiple bytes, its class will appear multiple times in the vector.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.paragraphs'><code>paragraphs</code></td><td><div class='docblock'><p>The boundaries and level of each paragraph within the text.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+                             <td id='structfield.paragraphs'><code>paragraphs</code></td><td><div class='docblock'><p>The boundaries and level of each paragraph within the text.</p>
+</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../unicode_bidi/struct.InitialProperties.html' title='unicode_bidi::InitialProperties'>InitialProperties</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>

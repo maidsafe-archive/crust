@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
+    
 
     <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>rustc_serialize</a>::<wbr><a class='trait' href=''>Decodable</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-314' class='srclink' href='../src/rustc_serialize/serialize.rs.html#202-204' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-314' class='srclink' href='../src/rustc_serialize/serialize.rs.html#202-204' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Decodable: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> {
     fn <a href='#tymethod.decode' class='fnname'>decode</a>&lt;D: <a class='trait' href='../rustc_serialize/trait.Decoder.html' title='rustc_serialize::Decoder'>Decoder</a>&gt;(d: &amp;mut D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self, D::Error&gt;;
 }</pre>
@@ -133,8 +134,8 @@
 <li><code>impl&lt;K, V&gt; <a class='trait' href='../rustc_serialize/trait.Decodable.html' title='rustc_serialize::Decodable'>Decodable</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;K, V&gt; <span class='where'>where K: <a class='trait' href='../rustc_serialize/trait.Decodable.html' title='rustc_serialize::Decodable'>Decodable</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a>, V: <a class='trait' href='../rustc_serialize/trait.Decodable.html' title='rustc_serialize::Decodable'>Decodable</a></span></code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../rustc_serialize/trait.Decodable.html' title='rustc_serialize::Decodable'>Decodable</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html' title='std::collections::hash::set::HashSet'>HashSet</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../rustc_serialize/trait.Decodable.html' title='rustc_serialize::Decodable'>Decodable</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a></span></code></li>
 </ul><script type="text/javascript" async
-                              src="../implementors/rustc_serialize/trait.Decodable.js">
-                      </script></section>
+                         src="../implementors/rustc_serialize/trait.Decodable.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

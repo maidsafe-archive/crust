@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
+    
 
     
     
@@ -43,12 +44,12 @@
 
     <section id='main' class="content trait">
 <h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>bytes</a>::<wbr><a href='index.html'>str</a>::<wbr><a class='trait' href=''>ByteStr</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1100' class='srclink' href='../../src/bytes/str/mod.rs.html#18-69' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1100' class='srclink' href='../../src/bytes/str/mod.rs.html#18-69' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait ByteStr: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='../../bytes/str/trait.ToBytes.html' title='bytes::str::ToBytes'>ToBytes</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Output=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt; + 'static {
-    type Buf: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> + 'static;
+    type <a href='#associatedtype.Buf' class='type'>Buf</a>: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> + 'static;
     fn <a href='#tymethod.buf' class='fnname'>buf</a>(&amp;self) -&gt; Self::<a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>Buf</a>;
     fn <a href='#tymethod.concat' class='fnname'>concat</a>&lt;B: <a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a> + 'static&gt;(&amp;self, other: &amp;B) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>;
     fn <a href='#tymethod.len' class='fnname'>len</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
@@ -64,7 +65,7 @@ copying (though, sometimes copying will happen as an optimization).</p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Buf' class='method stab '><code>type Buf: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> + 'static</code></h3></div>
+        <h3 id='associatedtype.Buf' class='method stab '><code>type <a href='#associatedtype.Buf' class='type'>Buf</a>: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> + 'static</code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
         <h3 id='tymethod.buf' class='method stab '><code>fn <a href='#tymethod.buf' class='fnname'>buf</a>(&amp;self) -&gt; Self::<a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>Buf</a></code></h3><div class='docblock'><p>Returns a read-only <code>Buf</code> for accessing the byte contents of the
@@ -101,8 +102,8 @@ to <code>end</code> (exclusive).</p>
 <li><code>impl <a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a> for <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></li>
 <li><code>impl <a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a> for <a class='struct' href='../../bytes/struct.SmallByteStr.html' title='bytes::SmallByteStr'>SmallByteStr</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/bytes/str/trait.ByteStr.js">
-                      </script></section>
+                         src="../../implementors/bytes/str/trait.ByteStr.js">
+                 </script></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

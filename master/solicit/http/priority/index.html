@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
+    
 
     
     
@@ -43,10 +44,10 @@
 
     <section id='main' class="content mod">
 <h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>solicit</a>::<wbr><a href='../index.html'>http</a>::<wbr><a class='mod' href=''>priority</a></span><span class='out-of-band'><span id='render-detail'>
-            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                [<span class='inner'>&#x2212;</span>]
-            </a>
-        </span><a id='src-1234' class='srclink' href='../../../src/solicit/http/priority.rs.html#1-174' title='goto source code'>[src]</a></span></h1>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-1206' class='srclink' href='../../../src/solicit/http/priority.rs.html#1-174' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>The module exposes an API for defining data prioritization strategies.</p>
 
 <p>Types that implement the <code>DataPrioritizer</code> trait can be used to provide new data for an
@@ -55,24 +56,22 @@ have control over exactly <em>when</em> the data is sent. This is left up to the
 implementations to trigger.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.SimplePrioritizer.html'
-                               title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a></td>
-                        <td class='docblock short'>
-                             <p>An implementation of the <code>DataPrioritizer</code> trait that is based on finding the first stream from
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SimplePrioritizer.html'
+                                  title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a></td>
+                           <td class='docblock short'>
+                                <p>An implementation of the <code>DataPrioritizer</code> trait that is based on finding the first stream from
 the given <code>SessionState</code> instance that can send data and returning this chunk.</p>
-                        </td>
-                    </tr>
-                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+                           </td>
+                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='trait' href='trait.DataPrioritizer.html'
-                               title='solicit::http::priority::DataPrioritizer'>DataPrioritizer</a></td>
-                        <td class='docblock short'>
-                             <p>A trait that types that want to provide data to an HTTP/2 connection need to implement.</p>
-                        </td>
-                    </tr>
-                </table></section>
+                       <tr class=' module-item'>
+                           <td><a class='trait' href='trait.DataPrioritizer.html'
+                                  title='solicit::http::priority::DataPrioritizer'>DataPrioritizer</a></td>
+                           <td class='docblock short'>
+                                <p>A trait that types that want to provide data to an HTTP/2 connection need to implement.</p>
+                           </td>
+                       </tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
