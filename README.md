@@ -1,11 +1,6 @@
 # Crust
 
-[![](https://img.shields.io/badge/Project%20SAFE-Approved-green.svg)](http://maidsafe.net/applications) [![](https://img.shields.io/badge/License-GPL3-green.svg)](https://github.com/maidsafe/crust/blob/master/COPYING)
-
-
-**Primary Maintainer:**     Andrew Cann (andrew.cann@maidsafe.net)
-
-**Secondary Maintainer:**   Vinícius dos Santos Oliveira (vinipsmaker@maidsafe.net)
+**Maintainer:** Spandan Sharma (spandan.sharma@maidsafe.net)
 
 Reliable p2p network connections in Rust with NAT traversal. One of the most needed libraries for any server-less, decentralised project.
 
@@ -13,7 +8,7 @@ Reliable p2p network connections in Rust with NAT traversal. One of the most nee
 |:---:|:--------:|:---------:|:-----:|:------:|:----:|
 |[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_arm_status_badge)](http://ci.maidsafe.net:8080/job/crust_arm_status_badge/)|[![Build status](https://ci.appveyor.com/api/projects/status/ajw6ab26p86jdac4/branch/master?svg=true)](https://ci.appveyor.com/project/MaidSafe-QA/crust/branch/master)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|[![Stories in Ready](https://badge.waffle.io/maidsafe/crust.png?label=ready&title=Ready)](https://waffle.io/maidsafe/crust)|
 
-| [API Documentation - master branch](http://maidsafe.net/crust/master) | [SAFE Network System Documentation](http://systemdocs.maidsafe.net) | [MaidSafe website](http://maidsafe.net) | [SAFE Network Forum](https://forum.safenetwork.io) |
+| [API Documentation - master branch](http://docs.maidsafe.net/crust/master) | [MaidSafe website](http://maidsafe.net) | [SAFE Network Forum](https://forum.safenetwork.io) |
 |:------:|:-------:|:-------:|:-------:|
 
 ## Overview
@@ -58,3 +53,19 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] Tcp hole punching as per paper
 - [ ] Tracer tcp (TCP with magic in clear [unencrypted])
 - [ ] Wireshark module for tracer TCP
+
+## License
+
+Licensed under either of
+
+* the MaidSafe.net Commercial License, version 1.0 or later ([LICENSE](LICENSE))
+* the General Public License (GPL), version 3 ([COPYING](COPYING) or http://www.gnu.org/licenses/gpl-3.0.en.html)
+
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the
+work by you, as defined in the MaidSafe Contributor Agreement, version 1.1 ([CONTRIBUTOR]
+(CONTRIBUTOR)), shall be dual licensed as above, and you agree to be bound by the terms of the
+MaidSafe Contributor Agreement, version 1.1.
