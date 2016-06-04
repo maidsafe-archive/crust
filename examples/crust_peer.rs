@@ -73,7 +73,7 @@ The crust peer will run, using any \
 off any provided \
                               peers.  Locations for the config file are specified at
 \
-                              http://maidsafe.net/crust/master/crust/file_handler/struct.\
+                              http://docs.maidsafe.net/crust/master/crust/file_handler/struct.\
                               FileHandler.html#method.read_file
 
 An example of a config file can \
