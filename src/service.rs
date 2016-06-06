@@ -477,7 +477,7 @@ impl Service {
         let mapping_context = self.mapping_context.clone();
         if let Err(e) = self.post(move |mut core, mut event_loop| {
             let event_tx_clone = event_tx.clone();
-            let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
+            let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0));
             match MappingTcpSocket::new(core,
                                         event_loop,
                                         &addr,
@@ -587,6 +587,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn rendezvous_connect_two_peers() {
         maidsafe_utilities::log::init(true).unwrap();
         timebomb(Duration::from_secs(10), || {
@@ -688,7 +689,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn sending_receiving_multiple_services() {
         const NUM_SERVICES: usize = 15;
         const MSG_SIZE: usize = 1024;
