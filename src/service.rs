@@ -346,6 +346,15 @@ impl Service {
             }
 
             if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                {
+                    let mut guard = cm.lock().unwrap();
+                    guard.entry(their_id)
+                        .or_insert(ConnectionId {
+                            active_connection: None,
+                            currently_handshaking: 0,
+                        })
+                        .currently_handshaking += 1;
+                }
                 let event_tx_rc = Rc::new(event_tx);
                 let connection_map_cloned = cm.clone();
                 let event_tx_rc_cloned = event_tx_rc.clone();
