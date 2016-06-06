@@ -373,22 +373,42 @@ impl Service {
                                                        event_tx);
                         }
                         None => {
-                            // Do not raise error if we aready established connection
-                            // to this peer elsewhere.
-                            if connection_map_cloned.lock().unwrap().contains_key(&their_id) {
-                                return;
+                            {
+                                let mut guard = connection_map_cloned.lock().unwrap();
+                                let remove = {
+                                    let conn_id = guard.get_mut(&their_id).expect("Logic Error");
+                                    conn_id.currently_handshaking -= 1;
+                                    conn_id.currently_handshaking == 0 &&
+                                    conn_id.active_connection.is_none()
+                                };
+                                if !remove {
+                                    // There is an active OR atleast 1 currently handshaking
+                                    // connection
+                                    return;
+                                }
+                                let _ = guard.remove(&their_id);
                             }
                             let error = io::Error::new(io::ErrorKind::Other,
-                                                       format!("Failed puch hole to peer: {:?}", their_id));
+                                                       format!("Failed punching hole to peer: {:?}", their_id));
                             let _ = event_tx_rc_cloned.send(Event::NewPeer(Err(error), their_id));
                         }
                     }
                 });
                 if let Err(e) = res {
-                    // Do not raise error if we aready established connection
-                    // to this peer elsewhere.
-                    if cm.lock().unwrap().contains_key(&their_id) {
-                        return;
+                    {
+                        let mut guard = cm.lock().unwrap();
+                        let remove = {
+                            let conn_id = guard.get_mut(&their_id).expect("Logic Error");
+                            conn_id.currently_handshaking -= 1;
+                            conn_id.currently_handshaking == 0 &&
+                            conn_id.active_connection.is_none()
+                        };
+                        if !remove {
+                            // There is an active OR atleast 1 currently handshaking
+                            // connection
+                            return;
+                        }
+                        let _ = guard.remove(&their_id);
                     }
 
                     if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
