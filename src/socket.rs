@@ -24,7 +24,7 @@ use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use mio::{Evented, EventSet, PollOpt, Selector, Token, EventLoop};
+use mio::{Evented, EventSet, PollOpt, Poll, Token, EventLoop};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
@@ -190,7 +190,7 @@ impl Socket {
 
 impl Evented for Socket {
     fn register(&self,
-                selector: &mut Selector,
+                selector: &Poll,
                 token: Token,
                 interest: EventSet,
                 opts: PollOpt)
@@ -199,7 +199,7 @@ impl Evented for Socket {
     }
 
     fn reregister(&self,
-                  selector: &mut Selector,
+                  selector: &Poll,
                   token: Token,
                   interest: EventSet,
                   opts: PollOpt)
@@ -207,7 +207,7 @@ impl Evented for Socket {
         self.stream.reregister(selector, token, interest, opts)
     }
 
-    fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
+    fn deregister(&self, selector: &Poll) -> io::Result<()> {
         self.stream.deregister(selector)
     }
 }

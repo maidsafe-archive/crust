@@ -133,13 +133,14 @@ impl Service {
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
         let our_keys = box_::gen_keypair();
+        let our_id = peer_id::new(our_keys.0);
         let name_hash = name_hash(&config.network_name);
 
         // Form our initial contact info
         let our_contact_info = Arc::new(Mutex::new(StaticContactInfo::default()));
         let mapping_context = MappingContext::new();
 
-        let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
+        let joiner = RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
             let mut core = Core::with_context_counter(2);
             event_loop.run(&mut core).expect("EventLoop failed to run");
         }));
@@ -365,10 +366,8 @@ impl Service {
                                          their_connection_info.tcp_info,
                                          move |core, event_loop, stream_opt|
                 {
-                    debug!("PunchHole finished");
                     match stream_opt {
                         Some((stream, token)) => {
-                            debug!("PunchHole succeeded. Creating ConnectionCandidate");
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc_cloned).clone();
 
@@ -403,6 +402,7 @@ impl Service {
                         }
                     }
                 });
+
                 if let Err(e) = res {
                     {
                         let mut guard = cm.lock().unwrap();
@@ -413,8 +413,7 @@ impl Service {
                             conn_id.active_connection.is_none()
                         };
                         if !remove {
-                            // There is an active OR atleast 1 currently handshaking
-                            // connection
+                            // There is an active OR at least 1 currently handshaking connection
                             return;
                         }
                         let _ = guard.remove(&their_id);
@@ -477,7 +476,7 @@ impl Service {
         let mapping_context = self.mapping_context.clone();
         if let Err(e) = self.post(move |mut core, mut event_loop| {
             let event_tx_clone = event_tx.clone();
-            let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0));
+            let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
             match MappingTcpSocket::new(core,
                                         event_loop,
                                         &addr,
@@ -587,7 +586,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn rendezvous_connect_two_peers() {
         maidsafe_utilities::log::init(true).unwrap();
         timebomb(Duration::from_secs(10), || {
@@ -623,6 +621,9 @@ mod tests {
 
         debug!("Connecting ...");
         unwrap_result!(service_0.connect(priv_info_0, pub_info_1));
+        if cfg!(windows) {
+            ::std::thread::sleep(Duration::from_millis(100));
+        }
         unwrap_result!(service_1.connect(priv_info_1, pub_info_0));
 
         debug!("Receiving NewPeers ...");

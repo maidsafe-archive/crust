@@ -6,6 +6,7 @@ use std::collections::{HashMap, hash_map};
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::time::Duration;
 
 use rand;
 use net2;
@@ -48,7 +49,6 @@ struct ReadingStream {
     nonce: [u8; NONCE_LEN],
     in_buff: [u8; SECRET_LEN + NONCE_LEN],
     bytes_read: usize,
-    //timeout: Timeout,
 }
 
 impl<F> PunchHole<F>
@@ -78,7 +78,7 @@ impl<F> PunchHole<F>
                                  token,
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
                                  PollOpt::level()));
-        match event_loop.timeout_ms(token, 5000) {
+        match event_loop.timeout(token, Duration::from_millis(5000)) {
             Ok(_) => (),
             Err(e) => {
                 debug!("Error setting hole punch timeout: {:?}", e);
@@ -101,7 +101,7 @@ impl<F> PunchHole<F>
                                      token,
                                      EventSet::writable() | EventSet::error() | EventSet::hup(),
                                      PollOpt::level()));
-            let timeout = match event_loop.timeout_ms(token, 4000) {
+            let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
                 Ok(timeout) => timeout,
                 Err(e) => {
                     debug!("Error setting hole punch connect() timeout: {:?}", e);
@@ -143,20 +143,19 @@ impl<F> PunchHole<F>
             .read_u32::<BigEndian>()
             .unwrap();
 
-        debug!("{:0x} PunchHole ready: Listener == {:?}", us, self.listener_token);
+        trace!("{:0x} PunchHole ready: Listener == {:?}", us, self.listener_token);
         for (i, (token, writing_stream)) in self.writing_streams.iter().enumerate() {
-            debug!("{:0x} PunchHole ready: WritingStream[{}] {:?} ({} bytes)", us, i, token, writing_stream.bytes_written);
+            trace!("{:0x} PunchHole ready: WritingStream[{}] {:?} ({} bytes)", us, i, token, writing_stream.bytes_written);
         }
         for (i, (token, reading_stream)) in self.reading_streams.iter().enumerate() {
-            debug!("{:0x} PunchHole ready: ReadingStream[{}] {:?} ({} bytes)", us, i, token, reading_stream.bytes_read);
+            trace!("{:0x} PunchHole ready: ReadingStream[{}] {:?} ({} bytes)", us, i, token, reading_stream.bytes_read);
         }
-        debug!("{:0x} PunchHole ready: {:?} {:?}", us, token, event_set);
+        trace!("{:0x} PunchHole ready: {:?} {:?}", us, token, event_set);
 
         if token == self.listener_token {
-            debug!("PunchHole listener ready");
             match self.listener.accept() {
                 Err(e) => {
-                    debug!("Error accepting connection during hole punching: {}", e);
+                    warn!("Error accepting connection during hole punching: {}", e);
                     return;
                 }
                 Ok(None) => return,
@@ -173,7 +172,7 @@ impl<F> PunchHole<F>
                             return;
                         },
                     };
-                    let timeout = match event_loop.timeout_ms(token, 4000) {
+                    let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
                         Ok(timeout) => timeout,
                         Err(e) => {
                             debug!("Error registering timeout: {:?}", e);
@@ -186,7 +185,7 @@ impl<F> PunchHole<F>
                         bytes_written: 0,
                         timeout: timeout,
                     };
-                    debug!("Accepted new incoming stream with {:?}", token);
+                    trace!("Accepted new incoming stream with {:?}", token);
                     let _ = core.insert_context(token, self.context);
                     let _ = self.writing_streams.insert(token, writing_stream);
                 }
@@ -195,11 +194,11 @@ impl<F> PunchHole<F>
         }
 
         if let hash_map::Entry::Occupied(mut oe) = self.writing_streams.entry(token) {
-            debug!("PunchHole writer ready");
+            trace!("PunchHole writer ready");
             let res = {
                 let writing_stream = oe.get_mut();
-                let _ = event_loop.clear_timeout(writing_stream.timeout);
-                match event_loop.timeout_ms(token, 4000) {
+                let _ = event_loop.clear_timeout(&writing_stream.timeout);
+                match event_loop.timeout(token, Duration::from_millis(4000)) {
                     Ok(timeout) => {
                         writing_stream.timeout = timeout;
                         let written = writing_stream.bytes_written;
@@ -226,7 +225,7 @@ impl<F> PunchHole<F>
             };
             match res {
                 Err(e) => {
-                    debug!("Error writing stream during hole punching: {}", e);
+                    warn!("Error writing stream during hole punching: {}", e);
                     let writing_stream = oe.remove();
                     match event_loop.deregister(&writing_stream.stream) {
                         Ok(()) => (),
@@ -235,10 +234,11 @@ impl<F> PunchHole<F>
                     let _ = core.remove_context(token);
                 }
                 Ok(None) => {
+                    info!("Writer retured with None");
                     return;
                 }
                 Ok(Some(0)) => {
-                    debug!("Writer disconnected");
+                    info!("Writer disconnected");
                     let writing_stream = oe.remove();
                     let _ = core.remove_context(token);
                     match event_loop.deregister(&writing_stream.stream) {
@@ -251,16 +251,16 @@ impl<F> PunchHole<F>
                 }
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_written += n;
-                    debug!("Wrote {} bytes. {} written total", n, oe.get_mut().bytes_written);
+                    trace!("Wrote {} bytes. {} written total", n, oe.get_mut().bytes_written);
                     let written = oe.get_mut().bytes_written;
                     if written >= SECRET_LEN + NONCE_LEN {
                         let writing_stream = oe.remove();
-                        let _ = event_loop.clear_timeout(writing_stream.timeout);
+                        let _ = event_loop.clear_timeout(&writing_stream.timeout);
                         match event_loop.reregister(&writing_stream.stream,
                                                     token,
                                                     EventSet::readable() | EventSet::error() |
                                                     EventSet::hup(),
-                                                    PollOpt::edge()) {
+                                                    PollOpt::level()) {
                             Ok(()) => (),
                             Err(e) => {
                                 debug!("Error reregistering stream: {}", e);
@@ -274,7 +274,7 @@ impl<F> PunchHole<F>
                             in_buff: [0u8; SECRET_LEN + NONCE_LEN],
                             bytes_read: 0,
                         };
-                        debug!("Finished writing. Stream entering reading mode.");
+                        trace!("Finished writing. Stream entering reading mode.");
                         let _ = self.reading_streams.insert(token, reading_stream);
                     }
                 }
@@ -283,7 +283,7 @@ impl<F> PunchHole<F>
         }
 
         if let hash_map::Entry::Occupied(mut oe) = self.reading_streams.entry(token) {
-            debug!("PunchHole reader ready");
+            trace!("PunchHole reader ready");
             let res = {
                 let reading_stream = oe.get_mut();
                 let read = reading_stream.bytes_read;
@@ -291,44 +291,44 @@ impl<F> PunchHole<F>
             };
             match res {
                 Err(e) => {
-                    debug!("Error reading stream during hole punching: {}", e);
+                    warn!("Error reading stream during hole punching: {}", e);
                     let reading_stream = oe.remove();
                     match event_loop.deregister(&reading_stream.stream) {
                         Ok(()) => (),
-                        Err(e) => debug!("Error deregistering socket: {}", e),
+                        Err(e) => warn!("Error deregistering socket: {}", e),
                     };
                     let _ = core.remove_context(token);
                     return;
                 }
                 Ok(None) => (),
                 Ok(Some(0)) => {
-                    debug!("Reader disconnected");
+                    info!("Reader disconnected");
                     let reading_stream = oe.remove();
                     let _ = core.remove_context(token);
                     match event_loop.deregister(&reading_stream.stream) {
                         Ok(()) => (),
                         Err(e) => {
-                            debug!("Error deregistering stream: {}", e);
+                            warn!("Error deregistering stream: {}", e);
                             return;
                         }
                     };
                 }
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_read += n;
-                    debug!("Read {} bytes. {} read in total", n, oe.get_mut().bytes_read);
+                    trace!("Read {} bytes. {} read in total", n, oe.get_mut().bytes_read);
                     let read = oe.get_mut().bytes_read;
                     if read >= SECRET_LEN + NONCE_LEN {
                         let reading_stream = oe.remove();
                         let recv_secret = &reading_stream.in_buff[..SECRET_LEN];
                         if recv_secret != self.their_secret {
-                            debug!("Secret mismatch during hole punching: {:?} != {:?}",
+                            warn!("Secret mismatch during hole punching: {:?} != {:?}",
                                    recv_secret,
                                    self.their_secret);
                             let _ = core.remove_context(token);
                             match event_loop.deregister(&reading_stream.stream) {
                                 Ok(()) => (),
                                 Err(e) => {
-                                    debug!("Error deregistering socket: {}", e);
+                                    warn!("Error deregistering socket: {}", e);
                                     return;
                                 }
                             };
@@ -342,9 +342,9 @@ impl<F> PunchHole<F>
                             .unwrap();
                         let new_score = recv_nonce.wrapping_add(sent_nonce);
                         let old_score = self.best_stream.as_ref().map_or(0, |&(i, _, _)| i);
-                        debug!("Finshed reading. Stream score == {}, old score == {}", new_score, old_score);
+                        trace!("Finshed reading. Stream score == {}, old score == {}", new_score, old_score);
                         if new_score >= old_score {
-                            debug!("Highest scoring stream so far");
+                            trace!("Highest scoring stream so far");
                             self.best_stream = Some((new_score, reading_stream.stream, token));
                         }
                     }
@@ -398,7 +398,6 @@ impl<F> State for PunchHole<F>
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        debug!("PunchHole terminating");
         let stream_opt = self.best_stream.take().map(|(_, s, token)| (s, token));
         let finished = self.finished.take().unwrap();
 
