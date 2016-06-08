@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::any::Any;
+use std::time::Duration;
 
 use core::{Core, Context, State};
 use service::{ConnectionId, ConnectionMap};
@@ -232,11 +233,11 @@ struct Heartbeat {
 impl Heartbeat {
     fn new(core: &mut Core, event_loop: &mut EventLoop<Core>, context: Context) -> ::Res<Self> {
         let recv_token = core.get_new_token();
-        let recv_timeout = try!(event_loop.timeout_ms(recv_token, INACTIVITY_TIMEOUT_MS));
+        let recv_timeout = try!(event_loop.timeout(recv_token, Duration::from_millis(INACTIVITY_TIMEOUT_MS)));
         let _ = core.insert_context(recv_token, context);
 
         let send_token = core.get_new_token();
-        let send_timeout = try!(event_loop.timeout_ms(send_token, HEARTBEAT_PERIOD_MS));
+        let send_timeout = try!(event_loop.timeout(send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)));
         let _ = core.insert_context(send_token, context);
 
         Ok(Heartbeat {
@@ -253,7 +254,7 @@ impl Heartbeat {
         // }
         if token == self.send_token {
             return if let Err(error) =
-                          event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS) {
+                          event_loop.timeout(self.send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)) {
                 warn!("Failed to reschedule heartbeat send timer: {:?}", error);
                 HeartbeatAction::Terminate
             } else {
@@ -265,22 +266,22 @@ impl Heartbeat {
     }
 
     fn reset_receive(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
-        let _ = event_loop.clear_timeout(self.recv_timeout);
-        self.recv_timeout = try!(event_loop.timeout_ms(self.recv_token, INACTIVITY_TIMEOUT_MS));
+        let _ = event_loop.clear_timeout(&self.recv_timeout);
+        self.recv_timeout = try!(event_loop.timeout(self.recv_token, Duration::from_millis(INACTIVITY_TIMEOUT_MS)));
         Ok(())
     }
 
     fn reset_send(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
-        let _ = event_loop.clear_timeout(self.send_timeout);
-        self.send_timeout = try!(event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS));
+        let _ = event_loop.clear_timeout(&self.send_timeout);
+        self.send_timeout = try!(event_loop.timeout(self.send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)));
         Ok(())
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = event_loop.clear_timeout(self.recv_timeout);
+        let _ = event_loop.clear_timeout(&self.recv_timeout);
         let _ = core.remove_context(self.recv_token);
 
-        let _ = event_loop.clear_timeout(self.send_timeout);
+        let _ = event_loop.clear_timeout(&self.send_timeout);
         let _ = core.remove_context(self.send_token);
     }
 }

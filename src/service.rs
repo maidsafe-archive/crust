@@ -25,6 +25,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use bootstrap::Bootstrap;
@@ -36,11 +37,11 @@ use error::CrustError;
 use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::mapping_context::MappingContext;
-// use nat::punch_hole::PunchHole;
+use nat::punch_hole::PunchHole;
 use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
 use peer_id::{self, PeerId};
 use service_discovery::ServiceDiscovery;
-// use socket::Socket;
+use socket::Socket;
 use static_contact_info::StaticContactInfo;
 
 #[derive(Debug, Clone, Copy)]
@@ -132,13 +133,14 @@ impl Service {
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
         let our_keys = box_::gen_keypair();
+        let our_id = peer_id::new(our_keys.0);
         let name_hash = name_hash(&config.network_name);
 
         // Form our initial contact info
         let our_contact_info = Arc::new(Mutex::new(StaticContactInfo::default()));
         let mapping_context = MappingContext::new();
 
-        let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
+        let joiner = RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
             let mut core = Core::with_context_counter(2);
             event_loop.run(&mut core).expect("EventLoop failed to run");
         }));
@@ -266,7 +268,7 @@ impl Service {
 
     /// connect to peer
     pub fn connect(&self,
-                   _our_connection_info: PrivConnectionInfo,
+                   our_connection_info: PrivConnectionInfo,
                    their_connection_info: PubConnectionInfo)
                    -> ::Res<()> {
         let event_tx = self.event_tx.clone();
@@ -344,45 +346,86 @@ impl Service {
                 });
             }
 
-            // if let Some(tcp_socket) = our_connection_info.tcp_socket {
-            //     // FIXME: check this error
-            //     let _ = PunchHole::start(core,
-            //                              event_loop,
-            //                              tcp_socket,
-            //                              our_connection_info.priv_tcp_info,
-            //                              their_connection_info.tcp_info,
-            //                              move |core, event_loop, stream_opt| {
-            //         match stream_opt {
-            //             Some(stream) => {
-            //                 let token = core.get_new_token();
-            //                 let socket = Socket::wrap(stream);
-            //                 let event_tx = (&*event_tx_rc).clone();
+            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                {
+                    let mut guard = cm.lock().unwrap();
+                    guard.entry(their_id)
+                        .or_insert(ConnectionId {
+                            active_connection: None,
+                            currently_handshaking: 0,
+                        })
+                        .currently_handshaking += 1;
+                }
+                let event_tx_rc = Rc::new(event_tx);
+                let connection_map_cloned = cm.clone();
+                let event_tx_rc_cloned = event_tx_rc.clone();
+                let res = PunchHole::start(core,
+                                         event_loop,
+                                         tcp_socket,
+                                         our_connection_info.priv_tcp_info,
+                                         their_connection_info.tcp_info,
+                                         move |core, event_loop, stream_opt|
+                {
+                    match stream_opt {
+                        Some((stream, token)) => {
+                            let socket = Socket::wrap(stream);
+                            let event_tx = (&*event_tx_rc_cloned).clone();
 
-            //                 ConnectionCandidate::start(core,
-            //                                            event_loop,
-            //                                            token,
-            //                                            socket,
-            //                                            cm,
-            //                                            our_id,
-            //                                            their_id,
-            //                                            event_tx);
-            //             }
-            //             None => {
-            //                 // Do not raise error if we aready established connection
-            //                 // to this peer elsewhere.
-            //                 if cm.lock().unwrap().contains_key(&their_id) {
-            //                     return;
-            //                 }
+                            ConnectionCandidate::start(core,
+                                                       event_loop,
+                                                       token,
+                                                       socket,
+                                                       connection_map_cloned,
+                                                       our_id,
+                                                       their_id,
+                                                       event_tx);
+                        }
+                        None => {
+                            {
+                                let mut guard = connection_map_cloned.lock().unwrap();
+                                let remove = {
+                                    let conn_id = guard.get_mut(&their_id).expect("Logic Error");
+                                    conn_id.currently_handshaking -= 1;
+                                    conn_id.currently_handshaking == 0 &&
+                                    conn_id.active_connection.is_none()
+                                };
+                                if !remove {
+                                    // There is an active OR atleast 1 currently handshaking
+                                    // connection
+                                    return;
+                                }
+                                let _ = guard.remove(&their_id);
+                            }
+                            let error = io::Error::new(io::ErrorKind::Other,
+                                                       format!("Failed punching hole to peer: {:?}", their_id));
+                            let _ = event_tx_rc_cloned.send(Event::NewPeer(Err(error), their_id));
+                        }
+                    }
+                });
 
-            //                 if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
-            //                     let error = io::Error::new(io::ErrorKind::Other,
-            //                                                "Failed to punch hole");
-            //                     let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
-            //                 }
-            //             }
-            //         }
-            //     });
-            // }
+                if let Err(e) = res {
+                    {
+                        let mut guard = cm.lock().unwrap();
+                        let remove = {
+                            let conn_id = guard.get_mut(&their_id).expect("Logic Error");
+                            conn_id.currently_handshaking -= 1;
+                            conn_id.currently_handshaking == 0 &&
+                            conn_id.active_connection.is_none()
+                        };
+                        if !remove {
+                            // There is an active OR at least 1 currently handshaking connection
+                            return;
+                        }
+                        let _ = guard.remove(&their_id);
+                    }
+
+                    if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                        let msg = format!("Io error starting hole-punching: {}", e);
+                        let error = io::Error::new(io::ErrorKind::Other, msg);
+                        let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
+                    }
+                }
+            }
         });
 
         Ok(())
@@ -517,6 +560,7 @@ mod tests {
     use std::sync::mpsc::Receiver;
     use std::thread::JoinHandle;
     use std::time::Duration;
+    use maidsafe_utilities;
 
     use event::Event;
     use tests::{get_event_sender, timebomb};
@@ -542,9 +586,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn rendezvous_connect_two_peers() {
-        timebomb(Duration::from_secs(5), || {
+        maidsafe_utilities::log::init(true).unwrap();
+        timebomb(Duration::from_secs(10), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
             let service_0 = unwrap_result!(Service::new(event_tx_0));
 
@@ -552,8 +596,10 @@ mod tests {
             let service_1 = unwrap_result!(Service::new(event_tx_1));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+            debug!("Exchanging messages ...");
             exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);
         });
+        ::std::thread::sleep(Duration::from_secs(1));
     }
 
     fn connect(service_0: &Service,
@@ -568,14 +614,19 @@ mod tests {
         let conn_info_result_1 =
             expect_event!(event_rx_1, Event::ConnectionInfoPrepared(result) => result);
 
-        let pub_info_0 = unwrap_result!(conn_info_result_0.result);
-        let pub_info_1 = unwrap_result!(conn_info_result_1.result);
-        let priv_info_0 = pub_info_0.to_pub_connection_info();
-        let priv_info_1 = pub_info_1.to_pub_connection_info();
+        let priv_info_0 = unwrap_result!(conn_info_result_0.result);
+        let priv_info_1 = unwrap_result!(conn_info_result_1.result);
+        let pub_info_0 = priv_info_0.to_pub_connection_info();
+        let pub_info_1 = priv_info_1.to_pub_connection_info();
 
-        unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
-        unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
+        debug!("Connecting ...");
+        unwrap_result!(service_0.connect(priv_info_0, pub_info_1));
+        if cfg!(windows) {
+            ::std::thread::sleep(Duration::from_millis(100));
+        }
+        unwrap_result!(service_1.connect(priv_info_1, pub_info_0));
 
+        debug!("Receiving NewPeers ...");
         expect_event!(event_rx_0, Event::NewPeer(res, id) => {
             unwrap_result!(res);
             assert_eq!(id, service_1.id());
@@ -585,6 +636,8 @@ mod tests {
             unwrap_result!(res);
             assert_eq!(id, service_0.id());
         });
+
+        debug!("Finished connecting");
     }
 
     fn exchange_messages(service_0: &Service,
