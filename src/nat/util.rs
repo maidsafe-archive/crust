@@ -175,5 +175,5 @@ pub fn expand_unspecified_ipv6(ipv6: Ipv6Addr) -> io::Result<Vec<Ipv6Addr>> {
 }
 
 pub fn ipv4_is_unspecified(ip: &Ipv4Addr) -> bool {
-    ip.octets() == [0, 0, 0, 0] || ip.octets() == [127, 0, 0, 1]
+    ip.octets() == [0, 0, 0, 0]
 }

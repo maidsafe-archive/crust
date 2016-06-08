@@ -19,24 +19,27 @@ use std::io;
 use std::net::AddrParseError;
 use maidsafe_utilities::serialisation::SerialisationError;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum ServiceDiscoveryError {
-        Io(e: io::Error) {
-            description("Io error during service discovery")
-            display("Io error during service discovery: {}", e)
-            from()
-        }
-        AddrParse(e: AddrParseError) {
-            description("Error parsing address for service discovery")
-            display("Error parsing address for service discovery: {}", e)
-            from()
-        }
-        Serialisation(e: SerialisationError) {
-            description("Serialisation error during service discovery")
-            display("Serialisation error during service discovery: {}", e)
-            from()
-        }
+#[derive(Debug)]
+pub enum ServiceDiscoveryError {
+    Io(io::Error),
+    AddrParse(AddrParseError),
+    Serialisation(SerialisationError),
+}
+
+impl From<io::Error> for ServiceDiscoveryError {
+    fn from(e: io::Error) -> Self {
+        ServiceDiscoveryError::Io(e)
     }
 }
 
+impl From<AddrParseError> for ServiceDiscoveryError {
+    fn from(e: AddrParseError) -> Self {
+        ServiceDiscoveryError::AddrParse(e)
+    }
+}
+
+impl From<SerialisationError> for ServiceDiscoveryError {
+    fn from(e: SerialisationError) -> Self {
+        ServiceDiscoveryError::Serialisation(e)
+    }
+}
