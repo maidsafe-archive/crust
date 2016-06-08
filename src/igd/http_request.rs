@@ -83,6 +83,17 @@ impl HttpRequest {
 
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
+
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>,
+                 token: Token) {
+        if let Err(error) = event_loop.deregister(&self.socket) {
+            warn!("{:?} - Failed to deregister HTTP state",
+                  error);
+        }
+
+        let _ = core.remove_context(token);
+        let _ = core.remove_state(self.context);
+    }
 }
 
 impl State for HttpRequest {
@@ -96,6 +107,7 @@ impl State for HttpRequest {
             if let Err(e) = self.socket.take_socket_error() {
                 self.callback.invoke(Err(HttpError::IoError(e)), core,
                                      event_loop);
+                self.terminate(core, event_loop, token);
                 return;
             }
         }
@@ -149,6 +161,7 @@ impl State for HttpRequest {
                                     let res = self.result.drain(..).collect();
                                     self.callback.invoke(Ok(res), core,
                                                          event_loop);
+                                    self.terminate(core, event_loop, token);
                                     return;
                                 }
                             }
@@ -156,6 +169,7 @@ impl State for HttpRequest {
                             Err(e) => {
                                 self.callback.invoke(Err(HttpError::ParsingError(e)),
                                                      core, event_loop);
+                                self.terminate(core, event_loop, token);
                                 return;
                             }
                         }

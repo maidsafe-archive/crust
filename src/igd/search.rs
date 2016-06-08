@@ -95,6 +95,17 @@ impl SearchGateway {
         mem::swap(&mut t, &mut self.callback);
         t
     }
+
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>,
+                 token: Token) {
+        if let Err(error) = event_loop.deregister(&self.socket) {
+            warn!("{:?} - Failed to deregister search gateway state",
+                  error);
+        }
+
+        let _ = core.remove_context(token);
+        let _ = core.remove_state(self.context);
+    }
 }
 
 impl State for SearchGateway {
@@ -112,6 +123,7 @@ impl State for SearchGateway {
                     Err(e) => {
                         self.callback.invoke(Err(SearchError::Utf8Error(e)),
                                              core, event_loop);
+                        self.terminate(core, event_loop, token);
                         return;
                     }
                 };
@@ -119,11 +131,19 @@ impl State for SearchGateway {
                     None => {
                         self.callback.invoke(Err(SearchError::InvalidResponse),
                                              core, event_loop);
+                        self.terminate(core, event_loop, token);
                         return;
                     }
                     Some(location) => {
+                        if let Err(error) = event_loop.deregister(&self.socket) {
+                            warn!("{:?} - Failed to deregister search gateway state",
+                                  error);
+                        }
+                        let _ = core.remove_context(token);
+
                         let mut cb2 = self.take_callback();
                         let location2 = location.0.clone();
+                        let context = self.context.clone();
                         get_control_url(&location, core, event_loop,
                                         move |res, core, event_loop| {
                                             let control_url = match res {
@@ -131,6 +151,7 @@ impl State for SearchGateway {
                                                 Err(e) => {
                                                     cb2.invoke(Err(e), core,
                                                                event_loop);
+                                                    let _ = core.remove_state(context);
                                                     return;
                                                 }
                                             };
@@ -140,6 +161,7 @@ impl State for SearchGateway {
                                             };
                                             cb2.invoke(Ok(gateway), core,
                                                        event_loop);
+                                            let _ = core.remove_state(context);
                                             return;
                                         });
                         return;
@@ -160,6 +182,7 @@ impl State for SearchGateway {
             Err(e) => {
                 self.callback.invoke(Err(SearchError::IoError(e)), core,
                                      event_loop);
+                self.terminate(core, event_loop, token);
                 return;
             }
         }
