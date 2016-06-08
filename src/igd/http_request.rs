@@ -122,8 +122,15 @@ impl State for HttpRequest {
                     let mut buf = [0u8; 10240];
                     let read = match self.socket.read(&mut buf) {
                         Ok(r) => r,
-                        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => break,
-                        Err(e) => panic!("Unexpected error {:?}", e.kind()),
+                        Err(ref e) => {
+                            match e.kind() {
+                                io::ErrorKind::WouldBlock
+                                    | io::ErrorKind::Interrupted => {
+                                        break;
+                                    }
+                                _ => panic!("Unexpected error {:?}", e.kind()),
+                            }
+                        }
                     };
                     if read == 0 {
                         break;
