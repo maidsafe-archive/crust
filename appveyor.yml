@@ -24,8 +24,8 @@ platform:
   - x64
 
 configuration:
-#  - Debug
-  - Release
+  - Debug
+#  - Release
 
 build_script:
   - ps: . ".\Build.ps1"
