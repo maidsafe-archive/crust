@@ -147,7 +147,8 @@ impl Socket {
             data.set_position(0);
             try!(data.write_u32::<LittleEndian>(len as u32));
 
-            let entry = self.write_queue.entry(priority).or_insert(VecDeque::with_capacity(10));
+            let entry =
+                self.write_queue.entry(priority).or_insert_with(|| VecDeque::with_capacity(10));
             entry.push_back(data.into_inner());
         }
 

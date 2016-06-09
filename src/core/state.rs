@@ -21,7 +21,7 @@ use std::any::Any;
 use core::Core;
 use mio::{EventLoop, EventSet, Handler, Token};
 
-/// Priority of a message to be sent by Crust. Priority 0 being the highest and very unlikely to be
+/// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be
 /// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to
 /// allow higher priority messages through.
 pub type Priority = u8;
