@@ -22,7 +22,7 @@ use std::time::Duration;
 
 use active_connection::ActiveConnection;
 use connect::ConnectionCandidate;
-use core::{Core, State};
+use core::{Core, State, Priority};
 use event::Event;
 use message::Message;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
@@ -59,8 +59,8 @@ impl ExchangeMsg {
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(event_loop.register(&socket, token, event_set, PollOpt::edge()));
 
-        let timeout =
-            try!(event_loop.timeout(token, Duration::from_millis(timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS))));
+        let timeout = try!(event_loop.timeout(token,
+                     Duration::from_millis(timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS))));
 
         let state = ExchangeMsg {
             cm: cm,
@@ -112,7 +112,9 @@ impl ExchangeMsg {
 
         let our_pk = self.our_pk;
         self.next_state = NextState::ActiveConnection(their_id);
-        self.write(core, event_loop, Some(Message::BootstrapResponse(our_pk)))
+        self.write(core,
+                   event_loop,
+                   Some((Message::BootstrapResponse(our_pk), 0)))
     }
 
     fn handle_connect(&mut self,
@@ -128,7 +130,9 @@ impl ExchangeMsg {
         let our_pk = self.our_pk;
         let name_hash = self.name_hash;
         self.next_state = NextState::ConnectionCandidate(their_id);
-        self.write(core, event_loop, Some(Message::Connect(our_pk, name_hash)));
+        self.write(core,
+                   event_loop,
+                   Some((Message::Connect(our_pk, name_hash), 0)));
     }
 
     fn get_peer_id(&self, their_public_key: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
@@ -157,7 +161,10 @@ impl ExchangeMsg {
         Ok(their_id)
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
+    fn write(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             msg: Option<(Message, Priority)>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_id) = self.next_state {
             let terminate = match self.cm.lock().unwrap().get(&their_id).map(|elt| *elt) {

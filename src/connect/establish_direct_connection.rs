@@ -86,7 +86,7 @@ impl<F> EstablishDirectConnection<F>
             None
         } else {
             self.sent = true;
-            Some(Message::Connect(self.our_public_key, self.name_hash))
+            Some((Message::Connect(self.our_public_key, self.name_hash), 0))
         };
 
         match self.socket
@@ -203,4 +203,3 @@ impl<F> State for EstablishDirectConnection<F>
         self
     }
 }
-

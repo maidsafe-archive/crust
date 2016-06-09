@@ -300,7 +300,8 @@ mod broken_peer {
                         let public_key = box_::gen_keypair().0;
                         unwrap_result!(self.0.write(event_loop,
                                                     token,
-                                                    Some(Message::BootstrapResponse(public_key))));
+                                                    Some((Message::BootstrapResponse(public_key),
+                                                          0))));
                     }
                     Some(_) | None => (),
                 }

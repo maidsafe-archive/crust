@@ -18,7 +18,7 @@
 use std::any::Any;
 use std::time::Duration;
 
-use core::{Core, Context, State};
+use core::{Core, Context, State, Priority};
 use service::{ConnectionId, ConnectionMap};
 use event::Event;
 use message::Message;
@@ -128,7 +128,10 @@ impl ActiveConnection {
         }
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
+    fn write(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             msg: Option<(Message, Priority)>) {
         if let Err(error) = self.socket.write(event_loop, self.token, msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, error);
             self.terminate(core, event_loop);
@@ -168,8 +171,12 @@ impl State for ActiveConnection {
         }
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        self.write(core, event_loop, Some(Message::Data(data)));
+    fn write(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             data: Vec<u8>,
+             priority: Priority) {
+        self.write(core, event_loop, Some((Message::Data(data), priority)));
         self.reset_send_heartbeat(core, event_loop);
     }
 
@@ -204,7 +211,7 @@ impl State for ActiveConnection {
     fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         match self.heartbeat.timeout(event_loop, token) {
             HeartbeatAction::None => (),
-            HeartbeatAction::Send => self.write(core, event_loop, Some(Message::Heartbeat)),
+            HeartbeatAction::Send => self.write(core, event_loop, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {
                 // TODO Disabling heartbeat for now to make testing easier
                 // debug!("Dropping connection to {:?} due to peer inactivity",
@@ -233,11 +240,13 @@ struct Heartbeat {
 impl Heartbeat {
     fn new(core: &mut Core, event_loop: &mut EventLoop<Core>, context: Context) -> ::Res<Self> {
         let recv_token = core.get_new_token();
-        let recv_timeout = try!(event_loop.timeout(recv_token, Duration::from_millis(INACTIVITY_TIMEOUT_MS)));
+        let recv_timeout =
+            try!(event_loop.timeout(recv_token, Duration::from_millis(INACTIVITY_TIMEOUT_MS)));
         let _ = core.insert_context(recv_token, context);
 
         let send_token = core.get_new_token();
-        let send_timeout = try!(event_loop.timeout(send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)));
+        let send_timeout =
+            try!(event_loop.timeout(send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)));
         let _ = core.insert_context(send_token, context);
 
         Ok(Heartbeat {
@@ -253,8 +262,8 @@ impl Heartbeat {
         //     return HeartbeatAction::Terminate;
         // }
         if token == self.send_token {
-            return if let Err(error) =
-                          event_loop.timeout(self.send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)) {
+            let timeout = Duration::from_millis(HEARTBEAT_PERIOD_MS);
+            return if let Err(error) = event_loop.timeout(self.send_token, timeout) {
                 warn!("Failed to reschedule heartbeat send timer: {:?}", error);
                 HeartbeatAction::Terminate
             } else {
@@ -267,13 +276,15 @@ impl Heartbeat {
 
     fn reset_receive(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
         let _ = event_loop.clear_timeout(&self.recv_timeout);
-        self.recv_timeout = try!(event_loop.timeout(self.recv_token, Duration::from_millis(INACTIVITY_TIMEOUT_MS)));
+        self.recv_timeout = try!(event_loop.timeout(self.recv_token,
+                                                    Duration::from_millis(INACTIVITY_TIMEOUT_MS)));
         Ok(())
     }
 
     fn reset_send(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
         let _ = event_loop.clear_timeout(&self.send_timeout);
-        self.send_timeout = try!(event_loop.timeout(self.send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)));
+        self.send_timeout =
+            try!(event_loop.timeout(self.send_token, Duration::from_millis(HEARTBEAT_PERIOD_MS)));
         Ok(())
     }
 

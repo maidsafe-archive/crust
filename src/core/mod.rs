@@ -21,7 +21,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+pub use self::state::Priority;
 pub use self::state::State;
+
 /// State Trait
 pub mod state;
 

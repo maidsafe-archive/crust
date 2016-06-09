@@ -21,7 +21,7 @@ use std::rc::Rc;
 
 use active_connection::ActiveConnection;
 use service::{ConnectionId, ConnectionMap};
-use core::{Core, State};
+use core::{Core, State, Priority};
 use event::Event;
 use message::Message;
 use mio::{EventLoop, EventSet, Token};
@@ -60,7 +60,7 @@ impl ConnectionCandidate {
         let _ = core.insert_state(context, state.clone());
 
         if our_id > their_id {
-            state.borrow_mut().write(core, event_loop, Some(Message::ChooseConnection));
+            state.borrow_mut().write(core, event_loop, Some((Message::ChooseConnection, 0)));
         }
     }
 
@@ -79,7 +79,10 @@ impl ConnectionCandidate {
         }
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
+    fn write(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             msg: Option<(Message, Priority)>) {
         let terminate = match self.cm.lock().unwrap().get(&self.their_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
