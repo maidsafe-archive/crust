@@ -52,7 +52,7 @@ pub struct Bootstrap {
     context: Context,
     cm: ConnectionMap,
     peers: Vec<socket_addr::SocketAddr>,
-    blacklist: Vec<net::SocketAddr>,
+    blacklist: HashSet<net::SocketAddr>,
     name_hash: u64,
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
@@ -71,7 +71,7 @@ impl Bootstrap {
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,
-                 blacklist: Vec<net::SocketAddr>,
+                 blacklist: HashSet<net::SocketAddr>,
                  bootstrap_context: Context,
                  service_discovery_context: Context,
                  event_tx: ::CrustEventSender)
@@ -137,9 +137,7 @@ impl Bootstrap {
 
     fn begin_bootstrap(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
-        while let Some(avoid) = self.blacklist.pop() {
-            peers.retain(|addr| addr.0 != avoid);
-        }
+        peers.retain(|addr| !self.blacklist.contains(&addr.0));
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, event_loop);

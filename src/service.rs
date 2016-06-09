@@ -21,7 +21,7 @@ use net2;
 use socket_addr;
 use sodiumoxide;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
-use std::collections::HashMap;
+use std::collections::{HashSet, HashMap};
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
@@ -205,7 +205,7 @@ impl Service {
     }
 
     /// Start the bootstrapping procedure.
-    pub fn start_bootstrap(&mut self, blacklist: Vec<SocketAddr>) -> ::Res<()> {
+    pub fn start_bootstrap(&mut self, blacklist: HashSet<SocketAddr>) -> ::Res<()> {
         let config = self.config.clone();
         let our_public_key = self.our_keys.0;
         let name_hash = self.name_hash;
