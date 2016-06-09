@@ -16,11 +16,11 @@
 // relating to use of the SAFE Network Software.
 
 use std::mem;
-use core::Core;
+use core::{Core, Priority};
 use error::CrustError;
 use std::net::SocketAddr;
-use std::collections::VecDeque;
 use mio::tcp::{Shutdown, TcpStream};
+use std::collections::{VecDeque, HashMap};
 use rustc_serialize::{Decodable, Encodable};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -33,7 +33,8 @@ pub struct Socket {
     stream: TcpStream,
     read_buffer: Vec<u8>,
     read_len: usize,
-    write_queue: VecDeque<Vec<u8>>,
+    write_queue: HashMap<Priority, VecDeque<Vec<u8>>>,
+    current_write: Option<Vec<u8>>,
 }
 
 impl Socket {
@@ -47,7 +48,8 @@ impl Socket {
             stream: stream,
             read_buffer: Vec::new(),
             read_len: 0,
-            write_queue: VecDeque::new(),
+            write_queue: HashMap::with_capacity(4),
+            current_write: None,
         }
     }
 
@@ -128,9 +130,9 @@ impl Socket {
     pub fn write<T: Encodable>(&mut self,
                                el: &mut EventLoop<Core>,
                                token: Token,
-                               msg: Option<T>)
+                               msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
-        if let Some(msg) = msg {
+        if let Some((msg, priority)) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
             // Preallocate space for the message length at the beginning of the
@@ -145,21 +147,34 @@ impl Socket {
             data.set_position(0);
             try!(data.write_u32::<LittleEndian>(len as u32));
 
-            self.write_queue.push_back(data.into_inner());
+            let entry = self.write_queue.entry(priority).or_insert(VecDeque::with_capacity(10));
+            entry.push_back(data.into_inner());
         }
 
-        if let Some(mut data) = self.write_queue.pop_front() {
+        if self.current_write.is_none() {
+            let (key, data, empty) = match self.write_queue.iter_mut().next() {
+                Some((key, queue)) => {
+                    (*key, queue.pop_front().expect("Logic Error - Queue pop"), queue.is_empty())
+                }
+                None => return Ok(true),
+            };
+            if empty {
+                let _ = self.write_queue.remove(&key);
+            }
+            self.current_write = Some(data);
+        }
+
+        if let Some(data) = self.current_write.take() {
             match self.stream.write(&data) {
-                Ok(bytes_written) => {
-                    if bytes_written < data.len() {
-                        data = data[bytes_written..].to_owned();
-                        self.write_queue.push_front(data);
+                Ok(bytes_txd) => {
+                    if bytes_txd < data.len() {
+                        self.current_write = Some(data[bytes_txd..].to_owned());
                     }
                 }
                 Err(error) => {
                     if error.kind() == ErrorKind::WouldBlock ||
                        error.kind() == ErrorKind::Interrupted {
-                        self.write_queue.push_front(data);
+                        self.current_write = Some(data);
                     } else {
                         return Err(From::from(error));
                     }
@@ -167,7 +182,9 @@ impl Socket {
             }
         }
 
-        let event_set = if self.write_queue.is_empty() {
+        let done = self.current_write.is_none() && self.write_queue.is_empty();
+
+        let event_set = if done {
             EventSet::error() | EventSet::hup() | EventSet::readable()
         } else {
             EventSet::error() | EventSet::hup() | EventSet::readable() | EventSet::writable()
@@ -175,7 +192,7 @@ impl Socket {
 
         try!(el.reregister(self, token, event_set, PollOpt::edge()));
 
-        Ok(self.write_queue.is_empty())
+        Ok(done)
     }
 
     /// Shut down the socket (both reading and writing).

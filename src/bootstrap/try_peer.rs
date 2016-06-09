@@ -23,7 +23,7 @@ use socket::Socket;
 use message::Message;
 use std::net::SocketAddr;
 use peer_id::{self, PeerId};
-use core::{Context, Core, State};
+use core::{Context, Core, State, Priority};
 use sodiumoxide::crypto::box_::PublicKey;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 
@@ -37,7 +37,7 @@ pub struct TryPeer {
     context: Context,
     peer: SocketAddr,
     socket: Option<Socket>,
-    request: Option<Message>,
+    request: Option<(Message, Priority)>,
     finish: Finish,
 }
 
@@ -59,7 +59,7 @@ impl TryPeer {
             context: context,
             peer: peer,
             socket: Some(socket),
-            request: Some(Message::BootstrapRequest(our_pk, name_hash)),
+            request: Some((Message::BootstrapRequest(our_pk, name_hash), 0)),
             finish: finish,
         };
 
@@ -74,7 +74,10 @@ impl TryPeer {
         Ok(context)
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
+    fn write(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             msg: Option<(Message, Priority)>) {
         if self.socket.as_mut().unwrap().write(event_loop, self.token, msg).is_err() {
             self.handle_error(core, event_loop);
         }

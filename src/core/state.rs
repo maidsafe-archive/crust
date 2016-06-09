@@ -21,6 +21,11 @@ use std::any::Any;
 use core::Core;
 use mio::{EventLoop, EventSet, Handler, Token};
 
+/// Priority of a message to be sent by Crust. Priority 0 being the highest and very unlikely to be
+/// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to
+/// allow higher priority messages through.
+pub type Priority = u8;
+
 /// A trait for state machines
 pub trait State {
     /// Return the state as an `Any`
@@ -45,5 +50,10 @@ pub trait State {
     }
 
     /// Write some data
-    fn write(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _data: Vec<u8>) {}
+    fn write(&mut self,
+             _core: &mut Core,
+             _event_loop: &mut EventLoop<Core>,
+             _data: Vec<u8>,
+             _priority: Priority) {
+    }
 }

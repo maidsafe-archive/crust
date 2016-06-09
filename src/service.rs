@@ -32,7 +32,7 @@ use bootstrap::Bootstrap;
 use config_handler::{self, Config};
 use connect::{ConnectionCandidate, EstablishDirectConnection};
 use connection_listener::ConnectionListener;
-use core::{Context, Core, CoreMessage};
+use core::{Context, Core, CoreMessage, Priority};
 use error::CrustError;
 use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
@@ -140,10 +140,11 @@ impl Service {
         let our_contact_info = Arc::new(Mutex::new(StaticContactInfo::default()));
         let mapping_context = MappingContext::new();
 
-        let joiner = RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
-            let mut core = Core::with_context_counter(2);
-            event_loop.run(&mut core).expect("EventLoop failed to run");
-        }));
+        let joiner =
+            RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
+                let mut core = Core::with_context_counter(2);
+                event_loop.run(&mut core).expect("EventLoop failed to run");
+            }));
 
         Ok(Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
@@ -360,12 +361,11 @@ impl Service {
                 let connection_map_cloned = cm.clone();
                 let event_tx_rc_cloned = event_tx_rc.clone();
                 let res = PunchHole::start(core,
-                                         event_loop,
-                                         tcp_socket,
-                                         our_connection_info.priv_tcp_info,
-                                         their_connection_info.tcp_info,
-                                         move |core, event_loop, stream_opt|
-                {
+                                           event_loop,
+                                           tcp_socket,
+                                           our_connection_info.priv_tcp_info,
+                                           their_connection_info.tcp_info,
+                                           move |core, event_loop, stream_opt| {
                     match stream_opt {
                         Some((stream, token)) => {
                             let socket = Socket::wrap(stream);
@@ -397,7 +397,9 @@ impl Service {
                                 let _ = guard.remove(&their_id);
                             }
                             let error = io::Error::new(io::ErrorKind::Other,
-                                                       format!("Failed punching hole to peer: {:?}", their_id));
+                                                       format!("Failed punching hole to peer: \
+                                                                {:?}",
+                                                               their_id));
                             let _ = event_tx_rc_cloned.send(Event::NewPeer(Err(error), their_id));
                         }
                     }
@@ -448,10 +450,10 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&self, peer_id: PeerId, data: Vec<u8>, _priority: u8) -> ::Res<()> {
+    pub fn send(&self, peer_id: PeerId, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
         // TODO(Spandan) This is wrong. Correct size can only be obtained post serialisation of
         // enum in which this will be put
-        if data.len() > ::MAX_PAYLOAD_SIZE {
+        if msg.len() > ::MAX_PAYLOAD_SIZE {
             return Err(CrustError::PayloadSizeProhibitive);
         }
 
@@ -462,7 +464,7 @@ impl Service {
 
         self.post(move |mut core, mut event_loop| {
             if let Some(state) = core.get_state(context) {
-                state.borrow_mut().write(&mut core, &mut event_loop, data);
+                state.borrow_mut().write(&mut core, &mut event_loop, msg, priority);
             }
         })
     }
@@ -692,9 +694,9 @@ mod tests {
     #[test]
     #[ignore]
     fn sending_receiving_multiple_services() {
-        const NUM_SERVICES: usize = 15;
-        const MSG_SIZE: usize = 1024;
-        const NUM_MSGS: usize = 257;
+        const NUM_SERVICES: usize = 10;
+        const MSG_SIZE: usize = 20 * 1024;
+        const NUM_MSGS: usize = 100;
 
         struct TestNode {
             event_rx: Receiver<Event>,
