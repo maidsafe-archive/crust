@@ -66,9 +66,9 @@ fn bootstrap_two_services_and_exchange_messages() {
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
 
-    unwrap_result!(service1.start_bootstrap());
+    unwrap_result!(service1.start_bootstrap(vec![]));
 
-    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
@@ -111,9 +111,9 @@ fn bootstrap_two_services_using_service_discovery() {
     expect_event!(event_rx0, Event::ListenerStarted(_port));
 
     service1.start_service_discovery();
-    unwrap_result!(service1.start_bootstrap());
+    unwrap_result!(service1.start_bootstrap(vec![]));
 
-    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
@@ -141,9 +141,9 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
-    unwrap_result!(service1.start_bootstrap());
+    unwrap_result!(service1.start_bootstrap(vec![]));
 
-    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
@@ -156,7 +156,7 @@ fn bootstrap_fails_if_there_are_no_contacts() {
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
 
-    unwrap_result!(service.start_bootstrap());
+    unwrap_result!(service.start_bootstrap(vec![]));
     expect_event!(event_rx, Event::BootstrapFailed);
 }
 
@@ -176,7 +176,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
 
-    unwrap_result!(service.start_bootstrap());
+    unwrap_result!(service.start_bootstrap(vec![]));
     expect_event!(event_rx, Event::BootstrapFailed);
 }
 
@@ -194,9 +194,9 @@ fn drop_disconnects() {
 
     let (event_tx_1, event_rx_1) = get_event_sender();
     let mut service_1 = unwrap_result!(Service::with_config(event_tx_1, config_1));
-    unwrap_result!(service_1.start_bootstrap());
+    unwrap_result!(service_1.start_bootstrap(vec![]));
 
-    let peer_id_0 = expect_event!(event_rx_1, Event::BootstrapConnect(peer_id) => peer_id);
+    let peer_id_0 = expect_event!(event_rx_1, Event::BootstrapConnect(peer_id, _) => peer_id);
     expect_event!(event_rx_0, Event::BootstrapAccept(_peer_id));
 
     // Dropping service_0 should make service_1 receive a LostPeer event.
@@ -359,8 +359,8 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
 
-    unwrap_result!(service.start_bootstrap());
-    let peer_id = expect_event!(event_rx, Event::BootstrapConnect(peer_id) => peer_id);
+    unwrap_result!(service.start_bootstrap(vec![]));
+    let peer_id = expect_event!(event_rx, Event::BootstrapConnect(peer_id, _) => peer_id);
 
     // The peer should drop after inactivity.
     expect_event!(event_rx, Event::LostPeer(lost_peer_id) => {
@@ -389,8 +389,8 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
 
-    unwrap_result!(service1.start_bootstrap());
-    expect_event!(event_rx1, Event::BootstrapConnect(_peer_id));
+    unwrap_result!(service1.start_bootstrap(vec![]));
+    expect_event!(event_rx1, Event::BootstrapConnect(_peer_id, _));
     expect_event!(event_rx0, Event::BootstrapAccept(_peer_id));
 
     thread::sleep(Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS));

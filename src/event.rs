@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
+use std::net::SocketAddr;
 
 use peer_id::PeerId;
 use service::ConnectionInfoResult;
@@ -27,7 +28,7 @@ pub enum Event {
     /// Invoked when a bootstrap peer connects to us
     BootstrapAccept(PeerId),
     /// Invoked when we get a bootstrap connection to a new peer.
-    BootstrapConnect(PeerId),
+    BootstrapConnect(PeerId, SocketAddr),
     /// Invoked when we failed to connect to all bootstrap contacts.
     BootstrapFailed,
     /// Invoked when we are ready to listen for incomming connection. Contains
