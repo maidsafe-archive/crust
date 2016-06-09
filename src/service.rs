@@ -21,7 +21,7 @@ use net2;
 use socket_addr;
 use sodiumoxide;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
-use std::collections::HashMap;
+use std::collections::{HashSet, HashMap};
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
@@ -205,8 +205,7 @@ impl Service {
     }
 
     /// Start the bootstrapping procedure.
-    // TODO: accept a blacklist parameter.
-    pub fn start_bootstrap(&mut self) -> ::Res<()> {
+    pub fn start_bootstrap(&mut self, blacklist: HashSet<SocketAddr>) -> ::Res<()> {
         let config = self.config.clone();
         let our_public_key = self.our_keys.0;
         let name_hash = self.name_hash;
@@ -214,17 +213,20 @@ impl Service {
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, event_loop| {
-            if let Err(e) = Bootstrap::start(core,
-                                             event_loop,
-                                             name_hash,
-                                             our_public_key,
-                                             cm,
-                                             &config,
-                                             BOOTSTRAP_CONTEXT,
-                                             SERVICE_DISCOVERY_CONTEXT,
-                                             event_tx.clone()) {
-                error!("Could not bootstrap: {:?}", e);
-                let _ = event_tx.send(Event::BootstrapFailed);
+            if core.get_state(BOOTSTRAP_CONTEXT).is_none() {
+                if let Err(e) = Bootstrap::start(core,
+                                                 event_loop,
+                                                 name_hash,
+                                                 our_public_key,
+                                                 cm,
+                                                 &config,
+                                                 blacklist,
+                                                 BOOTSTRAP_CONTEXT,
+                                                 SERVICE_DISCOVERY_CONTEXT,
+                                                 event_tx.clone()) {
+                    error!("Could not bootstrap: {:?}", e);
+                    let _ = event_tx.send(Event::BootstrapFailed);
+                }
             }
         })
     }

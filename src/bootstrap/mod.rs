@@ -52,6 +52,7 @@ pub struct Bootstrap {
     context: Context,
     cm: ConnectionMap,
     peers: Vec<socket_addr::SocketAddr>,
+    blacklist: HashSet<net::SocketAddr>,
     name_hash: u64,
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
@@ -70,6 +71,7 @@ impl Bootstrap {
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,
+                 blacklist: HashSet<net::SocketAddr>,
                  bootstrap_context: Context,
                  service_discovery_context: Context,
                  event_tx: ::CrustEventSender)
@@ -86,7 +88,8 @@ impl Bootstrap {
 
         let token = core.get_new_token();
         let bs_timeout_token = core.get_new_token();
-        let bs_timeout = try!(event_loop.timeout(bs_timeout_token, Duration::from_millis(BOOTSTRAP_TIMEOUT_MS)));
+        let bs_timeout = try!(event_loop.timeout(bs_timeout_token,
+                                                 Duration::from_millis(BOOTSTRAP_TIMEOUT_MS)));
 
         let sd_meta = match seek_peers(core, event_loop, service_discovery_context, token) {
             Ok((rx, timeout)) => {
@@ -107,6 +110,7 @@ impl Bootstrap {
             context: bootstrap_context,
             cm: cm,
             peers: peers,
+            blacklist: blacklist,
             name_hash: name_hash,
             our_pk: our_pk,
             event_tx: event_tx,
@@ -132,7 +136,8 @@ impl Bootstrap {
     }
 
     fn begin_bootstrap(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let peers = mem::replace(&mut self.peers, Vec::new());
+        let mut peers = mem::replace(&mut self.peers, Vec::new());
+        peers.retain(|addr| !self.blacklist.contains(&addr.0));
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, event_loop);
@@ -161,20 +166,20 @@ impl Bootstrap {
                      core: &mut Core,
                      event_loop: &mut EventLoop<Core>,
                      child_context: Context,
-                     res: Result<(Socket, Token, PeerId), net::SocketAddr>) {
+                     res: Result<(Socket, net::SocketAddr, Token, PeerId), net::SocketAddr>) {
         let _ = self.children.remove(&child_context);
         match res {
-            Ok((socket, token, peer_id)) => {
-                ActiveConnection::start(core,
-                                        event_loop,
-                                        token,
-                                        socket,
-                                        self.cm.clone(),
-                                        peer_id,
-                                        peer_id::new(self.our_pk),
-                                        Event::BootstrapConnect(peer_id),
-                                        self.event_tx.clone());
-                return self.terminate(core, event_loop);
+            Ok((socket, peer_addr, token, peer_id)) => {
+                self.terminate(core, event_loop);
+                return ActiveConnection::start(core,
+                                               event_loop,
+                                               token,
+                                               socket,
+                                               self.cm.clone(),
+                                               peer_id,
+                                               peer_id::new(self.our_pk),
+                                               Event::BootstrapConnect(peer_id, peer_addr),
+                                               self.event_tx.clone());
             }
             Err(bad_peer) => {
                 self.cache.remove_peer_acceptor(socket_addr::SocketAddr(bad_peer));
@@ -249,7 +254,8 @@ fn seek_peers(core: &mut Core,
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
         try!(state.seek_peers());
-        let timeout = try!(event_loop.timeout(token, Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS)));
+        let timeout =
+            try!(event_loop.timeout(token, Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS)));
 
         Ok((rx, timeout))
     } else {
