@@ -166,22 +166,20 @@ impl Bootstrap {
                      core: &mut Core,
                      event_loop: &mut EventLoop<Core>,
                      child_context: Context,
-                     res: Result<(Socket, Token, PeerId), net::SocketAddr>) {
+                     res: Result<(Socket, net::SocketAddr, Token, PeerId), net::SocketAddr>) {
         let _ = self.children.remove(&child_context);
         match res {
-            Ok((socket, token, peer_id)) => {
-                if let Ok(peer_addr) = socket.peer_addr() {
-                    self.terminate(core, event_loop);
-                    return ActiveConnection::start(core,
-                                                   event_loop,
-                                                   token,
-                                                   socket,
-                                                   self.cm.clone(),
-                                                   peer_id,
-                                                   peer_id::new(self.our_pk),
-                                                   Event::BootstrapConnect(peer_id, peer_addr),
-                                                   self.event_tx.clone());
-                }
+            Ok((socket, peer_addr, token, peer_id)) => {
+                self.terminate(core, event_loop);
+                return ActiveConnection::start(core,
+                                               event_loop,
+                                               token,
+                                               socket,
+                                               self.cm.clone(),
+                                               peer_id,
+                                               peer_id::new(self.our_pk),
+                                               Event::BootstrapConnect(peer_id, peer_addr),
+                                               self.event_tx.clone());
             }
             Err(bad_peer) => {
                 self.cache.remove_peer_acceptor(socket_addr::SocketAddr(bad_peer));

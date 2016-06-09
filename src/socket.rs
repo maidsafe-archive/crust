@@ -53,10 +53,6 @@ impl Socket {
         }
     }
 
-    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
-        Ok(try!(self.stream.peer_addr()))
-    }
-
     // Read message from the socket. Call this from inside the `ready` handler.
     //
     // Returns:

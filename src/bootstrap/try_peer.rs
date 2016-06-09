@@ -27,10 +27,13 @@ use core::{Context, Core, State, Priority};
 use sodiumoxide::crypto::box_::PublicKey;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 
+// TODO(Spandan) Result contains socket address too as currently due to bug in mio we are unable to
+// obtain peer address from a connected socket. Track https://github.com/carllerche/mio/issues/397
+// and remove this once that is solved.
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,
                             Context,
-                            Result<(Socket, Token, PeerId), SocketAddr>)>;
+                            Result<(Socket, SocketAddr, Token, PeerId), SocketAddr>)>;
 
 pub struct TryPeer {
     token: Token,
@@ -89,8 +92,10 @@ impl TryPeer {
                 let _ = core.remove_context(self.token);
                 let _ = core.remove_state(self.context);
                 let context = self.context;
-                let data =
-                    (self.socket.take().expect("Logic Error"), self.token, peer_id::new(peer_pk));
+                let data = (self.socket.take().expect("Logic Error"),
+                            self.peer,
+                            self.token,
+                            peer_id::new(peer_pk));
                 (*self.finish)(core, event_loop, context, Ok(data));
             }
             Ok(None) => (),
