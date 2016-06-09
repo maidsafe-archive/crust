@@ -31,6 +31,7 @@ impl Closure {
     }
 }
 
+#[derive(Clone)]
 enum MyState {
     Connecting { req_to_send: Vec<u8> },
     Receiving,
@@ -55,8 +56,15 @@ impl HttpRequest {
                         &mut EventLoop<Core>) + 'static {
         let context = core.get_new_context();
         let token = core.get_new_token();
-        let socket = tcp::TcpStream::connect(&SocketAddr::V4(address.clone()))
-            .unwrap();
+        let socket = match tcp::TcpStream::connect(&SocketAddr::V4(address.clone())) {
+            Ok(s) => s,
+            Err(e) => {
+                callback(Err(HttpError::IoError(e)), core, event_loop);
+                let _ = core.remove_context(token);
+                let _ = core.remove_state(context);
+                return;
+            }
+        };
 
         let mut event_set = EventSet::error() | EventSet::readable()
             | EventSet::writable();
@@ -113,11 +121,24 @@ impl State for HttpRequest {
         }
 
         let mut new_state = None;
-        match self.state {
+        match self.state.clone() {
             MyState::Connecting { ref mut req_to_send } => {
                 if event_set.is_writable() {
-                    let n = self.socket.write(&req_to_send[..]).unwrap();
-                    self.socket.flush().unwrap();
+                    let n = match self.socket.write(&req_to_send[..]) {
+                        Ok(n) => n,
+                        Err(e) => {
+                            let e = HttpError::IoError(e);
+                            self.callback.invoke(Err(e), core, event_loop);
+                            self.terminate(core, event_loop, token);
+                            return;
+                        }
+                    };
+                    if let Err(e) = self.socket.flush() {
+                        let e = HttpError::IoError(e);
+                        self.callback.invoke(Err(e), core, event_loop);
+                        self.terminate(core, event_loop, token);
+                        return;
+                    }
                     let _ = req_to_send.drain(..n);
                     if req_to_send.len() == 0 {
                         self.event_set.remove(EventSet::writable());
@@ -134,13 +155,20 @@ impl State for HttpRequest {
                     let mut buf = [0u8; 10240];
                     let read = match self.socket.read(&mut buf) {
                         Ok(r) => r,
-                        Err(ref e) => {
+                        Err(e) => {
                             match e.kind() {
                                 io::ErrorKind::WouldBlock
                                     | io::ErrorKind::Interrupted => {
                                         break;
                                     }
-                                _ => panic!("Unexpected error {:?}", e.kind()),
+                                _ => {
+                                    error!("Unexpected error {:?}", e.kind());
+                                    let e = HttpError::IoError(e);
+                                    self.callback.invoke(Err(e), core,
+                                                         event_loop);
+                                    self.terminate(core, event_loop, token);
+                                    return;
+                                }
                             }
                         }
                     };

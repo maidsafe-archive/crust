@@ -61,11 +61,21 @@ impl SearchGateway {
         let context = core.get_new_context();
         let token = core.get_new_token();
         let addr = SocketAddr::V4(SocketAddrV4::new(ip, 0));
-        let socket = udp::UdpSocket::bound(&addr).unwrap();
+        let socket = match udp::UdpSocket::bound(&addr) {
+            Ok(s) => s,
+            Err(e) => {
+                callback(Err(SearchError::IoError(e)), core, event_loop);
+                let _ = core.remove_context(token);
+                let _ = core.remove_state(context);
+                return;
+            }
+        };
 
         if let Err(e) = socket.send_to(SEARCH_REQUEST.as_bytes(),
                                        &"239.255.255.250:1900".parse().unwrap()) {
             callback(Err(SearchError::IoError(e)), core, event_loop);
+            let _ = core.remove_context(token);
+            let _ = core.remove_state(context);
             return;
         }
 
