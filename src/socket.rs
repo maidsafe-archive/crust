@@ -15,17 +15,22 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::collections::{VecDeque, HashMap};
+use std::io::{self, Cursor, ErrorKind, Read, Write};
 use std::mem;
+use std::net::SocketAddr;
+use std::time::Instant;
+
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use core::{Core, Priority};
 use error::CrustError;
-use std::net::SocketAddr;
-use mio::tcp::{Shutdown, TcpStream};
-use std::collections::{VecDeque, HashMap};
-use rustc_serialize::{Decodable, Encodable};
-use std::io::{self, Cursor, ErrorKind, Read, Write};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use mio::{Evented, EventSet, PollOpt, Poll, Token, EventLoop};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
+use mio::{Evented, EventSet, PollOpt, Poll, Token, EventLoop};
+use mio::tcp::{Shutdown, TcpStream};
+use rustc_serialize::{Decodable, Encodable};
+
+ /// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+ const MAX_MSG_AGE_SECS: u64 = 60;
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
 // (de)serialization.
@@ -33,7 +38,7 @@ pub struct Socket {
     stream: TcpStream,
     read_buffer: Vec<u8>,
     read_len: usize,
-    write_queue: HashMap<Priority, VecDeque<Vec<u8>>>,
+    write_queue: HashMap<Priority, VecDeque<(Instant, Vec<u8>)>>,
     current_write: Option<Vec<u8>>,
 }
 
@@ -132,6 +137,21 @@ impl Socket {
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
+        let _ = self.write_queue.iter_mut()
+                    .skip_while(|&(&priority, ref queue)| {
+                        priority == 0 || // Don't drop messages with priority 0.
+                        queue.front().map_or(true, |&(ref timestamp, _)| {
+                            timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
+                        })
+                    })
+                    .all(|(priority, queue)| {
+                        debug!("Insufficient bandwidth. Dropped {} messages with priority {}.",
+                               queue.len(),
+                               priority);
+                        queue.clear();
+                        true
+                    });
+
         if let Some((msg, priority)) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
@@ -149,11 +169,11 @@ impl Socket {
 
             let entry =
                 self.write_queue.entry(priority).or_insert_with(|| VecDeque::with_capacity(10));
-            entry.push_back(data.into_inner());
+            entry.push_back((Instant::now(), data.into_inner()));
         }
 
         if self.current_write.is_none() {
-            let (key, data, empty) = match self.write_queue.iter_mut().next() {
+            let (key, (_time_stamp, data), empty) = match self.write_queue.iter_mut().next() {
                 Some((key, queue)) => {
                     (*key, queue.pop_front().expect("Logic Error - Queue pop"), queue.is_empty())
                 }
