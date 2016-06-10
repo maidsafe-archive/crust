@@ -443,6 +443,9 @@ mod test {
         }
     }
 
+    // TODO(Spandan) Due to mio bug this will fail on windows.
+    //               Track https://github.com/carllerche/mio/issues/397
+    #[cfg(target_family = "unix")]
     #[test]
     fn stun_service() {
         let listener = start_listener();
