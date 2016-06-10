@@ -137,20 +137,20 @@ impl Socket {
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
-        let _ = self.write_queue.iter_mut()
-                    .skip_while(|&(&priority, ref queue)| {
-                        priority == 0 || // Don't drop messages with priority 0.
-                        queue.front().map_or(true, |&(ref timestamp, _)| {
-                            timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
-                        })
-                    })
-                    .all(|(priority, queue)| {
-                        debug!("Insufficient bandwidth. Dropped {} messages with priority {}.",
-                               queue.len(),
-                               priority);
-                        queue.clear();
+        let mut expired_keys = Vec::new();
+        let _ = self.write_queue.iter()
+                    .all(|(&priority, ref queue)| {
+                        if priority != 0 || // Don't drop messages with priority 0.
+                           queue.front().map_or(false, |&(ref timestamp, _)| {
+                               timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
+                           }) {
+                            expired_keys.push(priority);
+                        }
                         true
                     });
+        for it in expired_keys.iter() {
+            let _ = self.write_queue.remove(&it);
+        }
 
         if let Some((msg, priority)) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
