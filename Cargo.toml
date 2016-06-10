@@ -14,7 +14,7 @@ byteorder = "~0.5.1"
 config_file_handler = "~0.3.0"
 log = "~0.3.6"
 maidsafe_utilities = "~0.6.0"
-mio = { git = "https://github.com/ustulation/mio.git" }
+mio = { git = "https://github.com/carllerche/mio.git" }
 nat_traversal = "~0.3.3"
 net2 = "~0.2.23"
 quick-error = "~1.0.0"
