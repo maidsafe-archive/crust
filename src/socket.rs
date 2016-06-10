@@ -29,8 +29,8 @@ use mio::{Evented, EventSet, PollOpt, Poll, Token, EventLoop};
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
 
- /// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
- const MAX_MSG_AGE_SECS: u64 = 60;
+/// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+const MAX_MSG_AGE_SECS: u64 = 60;
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
 // (de)serialization.
@@ -137,23 +137,13 @@ impl Socket {
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
-        let mut expired_keys = Vec::new();
-        let _ = self.write_queue.iter()
-                    .all(|(&priority, ref queue)| {
-                        if priority != 0 && // Don't drop messages with priority 0.
-                           queue.front().map_or(false, |&(ref timestamp, _)| {
-                               timestamp.elapsed().as_secs() > MAX_MSG_AGE_SECS
-                           }) {
-                            debug!("Insufficient bandwidth. Dropping {} messages with priority {}.",
-                                   queue.len(),
-                                   priority);
-                            expired_keys.push(priority);
-                        }
-                        true
-                    });
-        for it in expired_keys.iter() {
-            let _ = self.write_queue.remove(&it);
-        }
+        let write_queue = mem::replace(&mut self.write_queue, BTreeMap::new());
+        self.write_queue = write_queue.into_iter()
+            .filter(|elt| {
+                elt.0 == 0 ||
+                elt.1.front().expect("Logic Error").0.elapsed().as_secs() <= MAX_MSG_AGE_SECS
+            })
+            .collect();
 
         if let Some((msg, priority)) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
@@ -176,7 +166,7 @@ impl Socket {
         }
 
         if self.current_write.is_none() {
-            let (key, (_time_stamp, data), empty) = match self.write_queue.iter_mut().next() {
+            let (key, (_, data), empty) = match self.write_queue.iter_mut().next() {
                 Some((key, queue)) => {
                     (*key, queue.pop_front().expect("Logic Error - Queue pop"), queue.is_empty())
                 }
@@ -188,20 +178,18 @@ impl Socket {
             self.current_write = Some(data);
         }
 
-        if let Some(data) = self.current_write.take() {
-            match self.stream.write(&data) {
-                Ok(bytes_txd) => {
-                    if bytes_txd < data.len() {
-                        self.current_write = Some(data[bytes_txd..].to_owned());
-                    }
+        let data = self.current_write.take().expect("Logic Error");
+        match self.stream.write(&data) {
+            Ok(bytes_txd) => {
+                if bytes_txd < data.len() {
+                    self.current_write = Some(data[bytes_txd..].to_owned());
                 }
-                Err(error) => {
-                    if error.kind() == ErrorKind::WouldBlock ||
-                       error.kind() == ErrorKind::Interrupted {
-                        self.current_write = Some(data);
-                    } else {
-                        return Err(From::from(error));
-                    }
+            }
+            Err(error) => {
+                if error.kind() == ErrorKind::WouldBlock || error.kind() == ErrorKind::Interrupted {
+                    self.current_write = Some(data);
+                } else {
+                    return Err(From::from(error));
                 }
             }
         }
