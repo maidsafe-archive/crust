@@ -25,12 +25,12 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use core::{Core, Priority};
 use error::CrustError;
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
-use mio::{Evented, EventSet, PollOpt, Poll, Token, EventLoop};
+use mio::{EventLoop, EventSet, Evented, Poll, PollOpt, Token};
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
 
- /// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
- const MAX_MSG_AGE_SECS: u64 = 60;
+/// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+const MAX_MSG_AGE_SECS: u64 = 60;
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
 // (de)serialization.
@@ -56,6 +56,10 @@ impl Socket {
             write_queue: BTreeMap::new(),
             current_write: None,
         }
+    }
+
+    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+        Ok(try!(self.stream.peer_addr()))
     }
 
     // Read message from the socket. Call this from inside the `ready` handler.
@@ -138,19 +142,20 @@ impl Socket {
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
         let mut expired_keys = Vec::new();
-        let _ = self.write_queue.iter()
-                    .all(|(&priority, ref queue)| {
-                        if priority != 0 && // Don't drop messages with priority 0.
+        let _ = self.write_queue
+            .iter()
+            .all(|(&priority, ref queue)| {
+                if priority != 0 && // Don't drop messages with priority 0.
                            queue.front().map_or(true, |&(ref timestamp, _)| {
                                timestamp.elapsed().as_secs() > MAX_MSG_AGE_SECS
                            }) {
-                            debug!("Insufficient bandwidth. Dropping {} messages with priority {}.",
-                                   queue.len(),
-                                   priority);
-                            expired_keys.push(priority);
-                        }
-                        true
-                    });
+                    debug!("Insufficient bandwidth. Dropping {} messages with priority {}.",
+                           queue.len(),
+                           priority);
+                    expired_keys.push(priority);
+                }
+                true
+            });
         for it in expired_keys.iter() {
             let _ = self.write_queue.remove(&it);
         }

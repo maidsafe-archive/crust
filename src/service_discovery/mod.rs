@@ -31,12 +31,12 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::collections::VecDeque;
 
-use core::{Core, Context, State};
+use core::{Context, Core, State};
 use static_contact_info::StaticContactInfo;
-use maidsafe_utilities::serialisation::{serialise, deserialise};
+use maidsafe_utilities::serialisation::{deserialise, serialise};
 
 use mio::udp::UdpSocket;
-use mio::{Token, EventLoop, EventSet, PollOpt};
+use mio::{EventLoop, EventSet, PollOpt, Token};
 
 #[derive(RustcEncodable, RustcDecodable)]
 enum DiscoveryMsg {
@@ -168,7 +168,8 @@ impl ServiceDiscovery {
                 // UDP is all or none so if anything is written we consider it written
                 Ok(Some(_)) => (),
                 Ok(None) => self.reply_to.push_front(peer_addr),
-                Err(ref e) if e.kind() == ErrorKind::Interrupted => {
+                Err(ref e) if e.kind() == ErrorKind::Interrupted ||
+                              e.kind() == ErrorKind::WouldBlock => {
                     self.reply_to
                         .push_front(peer_addr)
                 }
@@ -253,7 +254,7 @@ mod test {
     use std::str::FromStr;
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
-    use core::{CoreMessage, Core};
+    use core::{Core, CoreMessage};
     use static_contact_info::StaticContactInfo;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
 

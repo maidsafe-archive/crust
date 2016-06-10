@@ -15,16 +15,19 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+pub type NameHash = u64;
+
 use sodiumoxide::crypto::box_::PublicKey;
+use socket_addr;
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum Message {
     Heartbeat,
-    BootstrapRequest(PublicKey, u64),
+    BootstrapRequest(PublicKey, NameHash),
     BootstrapResponse(PublicKey),
-    // ExternalEndpointRequest,
-    // ExternalEndpointResponse(SocketAddr),
+    EchoAddrReq,
+    EchoAddrResp(socket_addr::SocketAddr),
     ChooseConnection,
-    Connect(PublicKey, u64),
+    Connect(PublicKey, NameHash),
     Data(Vec<u8>),
 }

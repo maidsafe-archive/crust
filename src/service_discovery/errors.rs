@@ -39,4 +39,3 @@ quick_error! {
         }
     }
 }
-

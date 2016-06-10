@@ -22,14 +22,15 @@ use std::time::Duration;
 
 use active_connection::ActiveConnection;
 use connect::ConnectionCandidate;
-use core::{Core, State, Priority};
+use core::{Core, Priority, State};
 use event::Event;
 use message::Message;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use peer_id::{self, PeerId};
 use socket::Socket;
-use service::{ConnectionId, ConnectionMap};
+use service::{ConnectionId, ConnectionMap, NameHash};
 use sodiumoxide::crypto::box_::PublicKey;
+use socket_addr;
 
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 
@@ -50,7 +51,7 @@ impl ExchangeMsg {
                  timeout_ms: Option<u64>,
                  socket: Socket,
                  our_pk: PublicKey,
-                 name_hash: u64,
+                 name_hash: NameHash,
                  cm: ConnectionMap,
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
@@ -83,11 +84,12 @@ impl ExchangeMsg {
     fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
-                self.handle_bootstrap_request(core, event_loop, their_public_key, name_hash)
+                self.handle_bootstrap_req(core, event_loop, their_public_key, name_hash)
             }
             Ok(Some(Message::Connect(their_public_key, name_hash))) => {
                 self.handle_connect(core, event_loop, their_public_key, name_hash)
             }
+            Ok(Some(Message::EchoAddrReq)) => self.handle_echo_addr_req(core, event_loop),
             Ok(Some(message)) => {
                 warn!("Unexpected message in direct connect: {:?}", message);
                 self.terminate(core, event_loop)
@@ -100,11 +102,11 @@ impl ExchangeMsg {
         }
     }
 
-    fn handle_bootstrap_request(&mut self,
-                                core: &mut Core,
-                                event_loop: &mut EventLoop<Core>,
-                                their_public_key: PublicKey,
-                                name_hash: u64) {
+    fn handle_bootstrap_req(&mut self,
+                            core: &mut Core,
+                            event_loop: &mut EventLoop<Core>,
+                            their_public_key: PublicKey,
+                            name_hash: NameHash) {
         let their_id = match self.get_peer_id(their_public_key, name_hash) {
             Ok(their_id) => their_id,
             Err(()) => return self.terminate(core, event_loop),
@@ -121,7 +123,7 @@ impl ExchangeMsg {
                       core: &mut Core,
                       event_loop: &mut EventLoop<Core>,
                       their_public_key: PublicKey,
-                      name_hash: u64) {
+                      name_hash: NameHash) {
         let their_id = match self.get_peer_id(their_public_key, name_hash) {
             Ok(their_id) => their_id,
             Err(()) => return self.terminate(core, event_loop),
@@ -135,7 +137,18 @@ impl ExchangeMsg {
                    Some((Message::Connect(our_pk, name_hash), 0)));
     }
 
-    fn get_peer_id(&self, their_public_key: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
+    fn handle_echo_addr_req(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        self.next_state = NextState::None;
+        if let Ok(peer_addr) = self.socket.as_ref().unwrap().peer_addr() {
+            self.write(core,
+                       event_loop,
+                       Some((Message::EchoAddrResp(socket_addr::SocketAddr(peer_addr)), 0)));
+        } else {
+            self.terminate(core, event_loop);
+        }
+    }
+
+    fn get_peer_id(&self, their_public_key: PublicKey, name_hash: NameHash) -> Result<PeerId, ()> {
         if self.our_pk == their_public_key {
             warn!("Accepted connection from ourselves");
             return Err(());
