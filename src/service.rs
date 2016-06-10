@@ -696,7 +696,7 @@ mod tests {
     #[test]
     #[ignore]
     fn sending_receiving_multiple_services() {
-        const NUM_SERVICES: usize = 10;
+        const NUM_SERVICES: usize = 15;
         const MSG_SIZE: usize = 20 * 1024;
         const NUM_MSGS: usize = 100;
 
