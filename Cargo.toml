@@ -42,12 +42,6 @@ test = false
 
 [[example]]
 bench = false
-name = "mapping_server"
-path = "examples/mapping_server.rs"
-test = true
-
-[[example]]
-bench = false
 name = "mapping_client"
 path = "examples/mapping_client.rs"
 test = true

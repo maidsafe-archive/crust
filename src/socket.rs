@@ -20,11 +20,11 @@ use core::{Core, Priority};
 use error::CrustError;
 use std::net::SocketAddr;
 use mio::tcp::{Shutdown, TcpStream};
-use std::collections::{VecDeque, HashMap};
+use std::collections::{HashMap, VecDeque};
 use rustc_serialize::{Decodable, Encodable};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use mio::{Evented, EventSet, PollOpt, Poll, Token, EventLoop};
+use mio::{EventLoop, EventSet, Evented, Poll, PollOpt, Token};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
@@ -51,6 +51,10 @@ impl Socket {
             write_queue: HashMap::with_capacity(4),
             current_write: None,
         }
+    }
+
+    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+        Ok(try!(self.stream.peer_addr()))
     }
 
     // Read message from the socket. Call this from inside the `ready` handler.

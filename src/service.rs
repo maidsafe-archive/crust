@@ -21,10 +21,10 @@ use net2;
 use socket_addr;
 use sodiumoxide;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
-use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
@@ -38,11 +38,13 @@ use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::mapping_context::MappingContext;
 use nat::punch_hole::PunchHole;
-use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
+use nat::rendezvous_info::{PrivRendezvousInfo, PubRendezvousInfo, gen_rendezvous_info};
 use peer_id::{self, PeerId};
 use service_discovery::ServiceDiscovery;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
+
+pub type NameHash = u64;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ConnectionId {
@@ -557,9 +559,9 @@ fn name_hash(network_name: &Option<String>) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::{hash_map, HashMap};
-    use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
-    use std::sync::{mpsc, Arc, Barrier};
+    use std::collections::{HashMap, hash_map};
+    use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+    use std::sync::{Arc, Barrier, mpsc};
     // use maidsafe_utilities::log;
     use std::sync::mpsc::Receiver;
     use std::thread::JoinHandle;

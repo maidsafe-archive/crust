@@ -29,8 +29,8 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use self::exchange_msg::ExchangeMsg;
-use service::ConnectionMap;
-use core::{Core, State, Context};
+use service::{ConnectionMap, NameHash};
+use core::{Context, Core, State};
 use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::mapping_context::MappingContext;
@@ -44,7 +44,7 @@ pub struct ConnectionListener {
     context: Context,
     event_tx: ::CrustEventSender,
     listener: TcpListener,
-    name_hash: u64,
+    name_hash: NameHash,
     our_pk: PublicKey,
     token: Token,
     timeout_ms: Option<u64>,
@@ -56,7 +56,7 @@ impl ConnectionListener {
                  handshake_timeout_ms: Option<u64>,
                  port: u16,
                  our_pk: PublicKey,
-                 name_hash: u64,
+                 name_hash: NameHash,
                  cm: ConnectionMap,
                  mapping_context: Arc<MappingContext>,
                  static_contact_info: Arc<Mutex<StaticContactInfo>>,
@@ -94,7 +94,7 @@ impl ConnectionListener {
                             mapped_addrs: Vec<socket_addr::SocketAddr>,
                             addr: SocketAddr,
                             our_pk: PublicKey,
-                            name_hash: u64,
+                            name_hash: NameHash,
                             cm: ConnectionMap,
                             static_contact_info: Arc<Mutex<StaticContactInfo>>,
                             event_tx: ::CrustEventSender)
@@ -196,24 +196,25 @@ mod test {
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
     use std::collections::HashMap;
-    use std::io::{Cursor, Write, Read};
+    use std::io::{Cursor, Read, Write};
     use std::net::SocketAddr as StdSocketAddr;
 
     use event::Event;
     use message::Message;
     use socket_addr::SocketAddr;
     use mio::{EventLoop, Sender};
-    use core::{CoreMessage, Core};
+    use core::{Core, CoreMessage};
     use rustc_serialize::Decodable;
     use nat::mapping_context::MappingContext;
     use static_contact_info::StaticContactInfo;
     use sodiumoxide::crypto::box_::{self, PublicKey};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
-    use byteorder::{WriteBytesExt, LittleEndian, ReadBytesExt};
+    use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
 
-    const NAME_HASH: u64 = 9876543210;
+    type NameHash = u64;
+    const NAME_HASH: NameHash = 9876543210;
 
     struct Listener {
         tx: Sender<CoreMessage>,
@@ -321,7 +322,7 @@ mod test {
         Ok(deserialise(&payload).expect("Could not deserialise."))
     }
 
-    fn bootstrap(name_hash: u64, pk: PublicKey, listener: Listener) {
+    fn bootstrap(name_hash: NameHash, pk: PublicKey, listener: Listener) {
         let mut us = connect_to_listener(&listener);
 
         let message = serialise(&Message::BootstrapRequest(pk, name_hash)).unwrap();
@@ -338,7 +339,7 @@ mod test {
         }
     }
 
-    fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
+    fn connect(name_hash: NameHash, pk: PublicKey, listener: Listener) {
         let mut us = connect_to_listener(&listener);
 
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
@@ -415,7 +416,6 @@ mod test {
     #[test]
     fn invalid_msg_exchange() {
         let listener = start_listener();
-
         let mut us = connect_to_listener(&listener);
 
         let message = serialise(&Message::Heartbeat).unwrap();
@@ -434,6 +434,34 @@ mod test {
     fn listener_timeout() {
         let listener = start_listener();
         let mut us = connect_to_listener(&listener);
+        let mut buf = [0; 512];
+        if cfg!(windows) {
+            assert!(us.read(&mut buf).is_err());
+        } else {
+            assert_eq!(0,
+                       us.read(&mut buf).expect("read should have returned EOF (0)"));
+        }
+    }
+
+    #[test]
+    fn stun_service() {
+        let listener = start_listener();
+        let mut us = connect_to_listener(&listener);
+
+        let message = serialise(&Message::EchoAddrReq).unwrap();
+        write(&mut us, message).expect("Could not write.");
+
+        let our_addr = match read(&mut us).expect("Could not read.") {
+            Message::EchoAddrResp(addr) => addr,
+            msg => panic!("Unexpected message: {:?}", msg),
+        };
+
+        // This will not work if we are behind a NAT and are using a true STUN service. In that
+        // case the following assertion should be commented out. Till then it is useful to have
+        // this testing for conformity on local host.
+        assert_eq!(our_addr.0,
+                   us.local_addr().expect("Could not obtain local addr"));
+
         let mut buf = [0; 512];
         if cfg!(windows) {
             assert!(us.read(&mut buf).is_err());
