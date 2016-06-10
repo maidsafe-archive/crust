@@ -57,6 +57,11 @@ extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate socket_addr;
 extern crate get_if_addrs;
+extern crate http_pull_parser;
+extern crate xml;
+extern crate xmltree;
+extern crate regex;
+extern crate url;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
@@ -87,6 +92,7 @@ mod service_discovery;
 mod socket;
 mod static_contact_info;
 pub mod nat;
+mod igd;
 
 
 /// Crust Observers will be informed of crust events on this
