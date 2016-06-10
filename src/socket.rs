@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::{VecDeque, HashMap};
+use std::collections::{BTreeMap, VecDeque};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use std::mem;
 use std::net::SocketAddr;
@@ -38,7 +38,7 @@ pub struct Socket {
     stream: TcpStream,
     read_buffer: Vec<u8>,
     read_len: usize,
-    write_queue: HashMap<Priority, VecDeque<(Instant, Vec<u8>)>>,
+    write_queue: BTreeMap<Priority, VecDeque<(Instant, Vec<u8>)>>,
     current_write: Option<Vec<u8>>,
 }
 
@@ -53,7 +53,7 @@ impl Socket {
             stream: stream,
             read_buffer: Vec::new(),
             read_len: 0,
-            write_queue: HashMap::with_capacity(4),
+            write_queue: BTreeMap::new(),
             current_write: None,
         }
     }
@@ -137,20 +137,23 @@ impl Socket {
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
-        let _ = self.write_queue.iter_mut()
-                    .skip_while(|&(&priority, ref queue)| {
-                        priority == 0 || // Don't drop messages with priority 0.
-                        queue.front().map_or(true, |&(ref timestamp, _)| {
-                            timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
-                        })
-                    })
-                    .all(|(priority, queue)| {
-                        debug!("Insufficient bandwidth. Dropped {} messages with priority {}.",
-                               queue.len(),
-                               priority);
-                        queue.clear();
+        let mut expired_keys = Vec::new();
+        let _ = self.write_queue.iter()
+                    .all(|(&priority, ref queue)| {
+                        if priority != 0 && // Don't drop messages with priority 0.
+                           queue.front().map_or(true, |&(ref timestamp, _)| {
+                               timestamp.elapsed().as_secs() > MAX_MSG_AGE_SECS
+                           }) {
+                            debug!("Insufficient bandwidth. Dropping {} messages with priority {}.",
+                                   queue.len(),
+                                   priority);
+                            expired_keys.push(priority);
+                        }
                         true
                     });
+        for it in expired_keys.iter() {
+            let _ = self.write_queue.remove(&it);
+        }
 
         if let Some((msg, priority)) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
