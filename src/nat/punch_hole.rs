@@ -10,15 +10,15 @@ use std::time::Duration;
 
 use rand;
 use net2;
-use mio::tcp::{TcpStream, TcpListener};
-use mio::{PollOpt, EventSet, Token, EventLoop, Timeout};
+use mio::tcp::{TcpListener, TcpStream};
+use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use mio::{TryAccept, TryRead, TryWrite};
-use byteorder::{ReadBytesExt, BigEndian};
+use byteorder::{BigEndian, ReadBytesExt};
 
-use core::{Core, Context};
+use core::{Context, Core};
 use core::state::State;
 use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr};
-use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo};
+use nat::rendezvous_info::{PrivRendezvousInfo, PubRendezvousInfo};
 
 const SECRET_LEN: usize = 4;
 const NONCE_LEN: usize = 8;
@@ -82,8 +82,9 @@ impl<F> PunchHole<F>
             Ok(_) => (),
             Err(e) => {
                 debug!("Error setting hole punch timeout: {:?}", e);
-                return Err(io::Error::new(io::ErrorKind::Other, "Error setting hole punch timeout"));
-            },
+                return Err(io::Error::new(io::ErrorKind::Other,
+                                          "Error setting hole punch timeout"));
+            }
         };
         let _ = core.insert_context(token, context);
 
@@ -95,7 +96,7 @@ impl<F> PunchHole<F>
                 Err(e) => {
                     debug!("TcpStream::connect_stream failed: {}", e);
                     continue;
-                },
+                }
             };
             try!(event_loop.register(&stream,
                                      token,
@@ -106,7 +107,7 @@ impl<F> PunchHole<F>
                 Err(e) => {
                     debug!("Error setting hole punch connect() timeout: {:?}", e);
                     continue;
-                },
+                }
             };
             let _ = core.insert_context(token, context);
             let writing_stream = WritingStream {
@@ -143,12 +144,22 @@ impl<F> PunchHole<F>
             .read_u32::<BigEndian>()
             .unwrap();
 
-        trace!("{:0x} PunchHole ready: Listener == {:?}", us, self.listener_token);
+        trace!("{:0x} PunchHole ready: Listener == {:?}",
+               us,
+               self.listener_token);
         for (i, (token, writing_stream)) in self.writing_streams.iter().enumerate() {
-            trace!("{:0x} PunchHole ready: WritingStream[{}] {:?} ({} bytes)", us, i, token, writing_stream.bytes_written);
+            trace!("{:0x} PunchHole ready: WritingStream[{}] {:?} ({} bytes)",
+                   us,
+                   i,
+                   token,
+                   writing_stream.bytes_written);
         }
         for (i, (token, reading_stream)) in self.reading_streams.iter().enumerate() {
-            trace!("{:0x} PunchHole ready: ReadingStream[{}] {:?} ({} bytes)", us, i, token, reading_stream.bytes_read);
+            trace!("{:0x} PunchHole ready: ReadingStream[{}] {:?} ({} bytes)",
+                   us,
+                   i,
+                   token,
+                   reading_stream.bytes_read);
         }
         trace!("{:0x} PunchHole ready: {:?} {:?}", us, token, event_set);
 
@@ -170,14 +181,14 @@ impl<F> PunchHole<F>
                         Err(e) => {
                             debug!("Error registering stream: {}", e);
                             return;
-                        },
+                        }
                     };
                     let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
                         Ok(timeout) => timeout,
                         Err(e) => {
                             debug!("Error registering timeout: {:?}", e);
                             return;
-                        },
+                        }
                     };
                     let writing_stream = WritingStream {
                         stream: stream,
@@ -205,7 +216,8 @@ impl<F> PunchHole<F>
                         if written < SECRET_LEN {
                             match writing_stream.stream.try_write(&self.our_secret[written..]) {
                                 Ok(Some(n)) => {
-                                    match writing_stream.stream.try_write(&writing_stream.nonce[..]) {
+                                    match writing_stream.stream
+                                        .try_write(&writing_stream.nonce[..]) {
                                         Ok(Some(m)) => Ok(Some(n + m)),
                                         Ok(None) => Ok(Some(n)),
                                         Err(e) => Err(e),
@@ -214,13 +226,15 @@ impl<F> PunchHole<F>
                                 x => x,
                             }
                         } else {
-                            writing_stream.stream.try_write(&writing_stream.nonce[(written - SECRET_LEN)..])
+                            writing_stream.stream
+                                .try_write(&writing_stream.nonce[(written - SECRET_LEN)..])
                         }
-                    },
+                    }
                     Err(e) => {
                         debug!("Error setting timeout on writing stream: {:?}", e);
-                        Err(io::Error::new(io::ErrorKind::Other, "Error setting timeout on writing stream"))
-                    },
+                        Err(io::Error::new(io::ErrorKind::Other,
+                                           "Error setting timeout on writing stream"))
+                    }
                 }
             };
             match res {
@@ -251,7 +265,9 @@ impl<F> PunchHole<F>
                 }
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_written += n;
-                    trace!("Wrote {} bytes. {} written total", n, oe.get_mut().bytes_written);
+                    trace!("Wrote {} bytes. {} written total",
+                           n,
+                           oe.get_mut().bytes_written);
                     let written = oe.get_mut().bytes_written;
                     if written >= SECRET_LEN + NONCE_LEN {
                         let writing_stream = oe.remove();
@@ -315,15 +331,17 @@ impl<F> PunchHole<F>
                 }
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_read += n;
-                    trace!("Read {} bytes. {} read in total", n, oe.get_mut().bytes_read);
+                    trace!("Read {} bytes. {} read in total",
+                           n,
+                           oe.get_mut().bytes_read);
                     let read = oe.get_mut().bytes_read;
                     if read >= SECRET_LEN + NONCE_LEN {
                         let reading_stream = oe.remove();
                         let recv_secret = &reading_stream.in_buff[..SECRET_LEN];
                         if recv_secret != self.their_secret {
                             warn!("Secret mismatch during hole punching: {:?} != {:?}",
-                                   recv_secret,
-                                   self.their_secret);
+                                  recv_secret,
+                                  self.their_secret);
                             let _ = core.remove_context(token);
                             match event_loop.deregister(&reading_stream.stream) {
                                 Ok(()) => (),
@@ -342,7 +360,9 @@ impl<F> PunchHole<F>
                             .unwrap();
                         let new_score = recv_nonce.wrapping_add(sent_nonce);
                         let old_score = self.best_stream.as_ref().map_or(0, |&(i, _, _)| i);
-                        trace!("Finshed reading. Stream score == {}, old score == {}", new_score, old_score);
+                        trace!("Finshed reading. Stream score == {}, old score == {}",
+                               new_score,
+                               old_score);
                         if new_score >= old_score {
                             trace!("Highest scoring stream so far");
                             self.best_stream = Some((new_score, reading_stream.stream, token));
@@ -353,13 +373,9 @@ impl<F> PunchHole<F>
         }
     }
 
-    fn maybe_terminate(&mut self,
-                       core: &mut Core,
-                       event_loop: &mut EventLoop<Core>)
-    {
-        if self.writing_streams.is_empty() && self.reading_streams.is_empty() && 
-           (self.timed_out || self.best_stream.is_some())
-        {
+    fn maybe_terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if self.writing_streams.is_empty() && self.reading_streams.is_empty() &&
+           (self.timed_out || self.best_stream.is_some()) {
             self.terminate(core, event_loop);
             return;
         }
@@ -378,11 +394,7 @@ impl<F> State for PunchHole<F>
         self.maybe_terminate(core, event_loop);
     }
 
-    fn timeout(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token)
-    {
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         if token == self.listener_token {
             debug!("Timed out waiting for more connections");
             self.timed_out = true;

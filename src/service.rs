@@ -140,7 +140,7 @@ impl Service {
 
         // Form our initial contact info
         let our_contact_info = Arc::new(Mutex::new(StaticContactInfo::default()));
-        let mapping_context = MappingContext::new();
+        let mapping_context = try!(MappingContext::new());
 
         let joiner =
             RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {

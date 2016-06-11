@@ -1,6 +1,6 @@
 use std::io;
 use std::net;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use net2;
 use get_if_addrs;

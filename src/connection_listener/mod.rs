@@ -70,7 +70,6 @@ impl ConnectionListener {
                                                                      handshake_timeout_ms,
                                                                      socket,
                                                                      mapped_addrs,
-                                                                     addr,
                                                                      our_pk,
                                                                      name_hash,
                                                                      cm,
@@ -92,7 +91,6 @@ impl ConnectionListener {
                             timeout_ms: Option<u64>,
                             socket: TcpBuilder,
                             mapped_addrs: Vec<socket_addr::SocketAddr>,
-                            addr: SocketAddr,
                             our_pk: PublicKey,
                             name_hash: NameHash,
                             cm: ConnectionMap,
@@ -105,7 +103,7 @@ impl ConnectionListener {
         let listener = try!(socket.listen(LISTENER_BACKLOG));
         let local_addr = try!(listener.local_addr());
 
-        let listener = try!(TcpListener::from_listener(listener, &addr));
+        let listener = try!(TcpListener::from_listener(listener, &local_addr));
         try!(event_loop.register(&listener,
                                  token,
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
@@ -244,7 +242,7 @@ mod test {
             ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
-        let mapping_context = Arc::new(MappingContext::new());
+        let mapping_context = Arc::new(MappingContext::new().expect("Could not get MC"));
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
             tcp_acceptors: Vec::new(),
             tcp_mapper_servers: Vec::new(),

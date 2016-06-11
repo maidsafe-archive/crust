@@ -23,7 +23,7 @@ use socket::Socket;
 use message::Message;
 use std::net::SocketAddr;
 use peer_id::{self, PeerId};
-use core::{Context, Core, State, Priority};
+use core::{Context, Core, Priority, State};
 use sodiumoxide::crypto::box_::PublicKey;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 

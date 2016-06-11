@@ -21,7 +21,7 @@ use std::rc::Rc;
 
 use active_connection::ActiveConnection;
 use service::{ConnectionId, ConnectionMap};
-use core::{Core, State, Priority};
+use core::{Core, Priority, State};
 use event::Event;
 use message::Message;
 use mio::{EventLoop, EventSet, Token};

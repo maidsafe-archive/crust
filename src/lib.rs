@@ -57,13 +57,13 @@ extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate socket_addr;
 extern crate get_if_addrs;
+extern crate crossbeam;
+extern crate igd;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
-#[cfg(test)]
-extern crate crossbeam;
 #[cfg(test)]
 extern crate void;
 
@@ -100,6 +100,6 @@ pub type Res<T> = Result<T, CrustError>;
 pub use event::Event;
 pub use error::CrustError;
 pub use peer_id::PeerId;
-pub use service::{Service, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo};
+pub use service::{ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo, Service};
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;

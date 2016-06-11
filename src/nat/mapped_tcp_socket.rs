@@ -10,14 +10,14 @@ use std::cell::RefCell;
 
 use net2;
 use mio::tcp::TcpStream;
-use mio::{PollOpt, EventSet, Token, EventLoop};
+use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::{TryRead, TryWrite};
 use socket_addr;
 use maidsafe_utilities::serialisation::deserialise;
 
-use core::{Core, Context};
+use core::{Context, Core};
 use core::state::State;
-use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr, expand_unspecified_addr};
+use nat::util::{expand_unspecified_addr, new_reusably_bound_tcp_socket, tcp_builder_local_addr};
 use nat::mapping_context::MappingContext;
 
 const REQUEST_MAGIC_CONSTANT: [u8; 4] = [b'E', b'C', b'H', b'O'];
@@ -64,9 +64,7 @@ impl<F> MappingTcpSocket<F>
         let mapped_addrs = try!(expand_unspecified_addr(local_addr));
         let mapped_addrs = mapped_addrs.into_iter().map(socket_addr::SocketAddr).collect();
 
-        let external_servers: Vec<SocketAddr> = mapping_context.tcp_mapping_servers()
-            .cloned()
-            .collect();
+        let external_servers = mapping_context.tcp_mapping_servers().clone();
         debug!("external_servers == {:?}", external_servers);
         if !external_servers.is_empty() {
             let mut writing_sockets = HashMap::new();

@@ -22,7 +22,7 @@ use std::io;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-use mio::{EventSet, PollOpt, Token, EventLoop};
+use mio::{EventLoop, EventSet, PollOpt, Token};
 
 use core::{Core, State};
 use error::CrustError;

@@ -7,7 +7,7 @@ extern crate rustc_serialize;
 extern crate log;
 
 use std::net;
-use std::net::{ToSocketAddrs, SocketAddrV4, Ipv4Addr};
+use std::net::{Ipv4Addr, SocketAddrV4, ToSocketAddrs};
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -29,7 +29,7 @@ fn main() {
     println!("This example allows you to connect to two hosts over TCP through NATs and \
               firewalls.");
 
-    let mut mapping_context = MappingContext::new();
+    let mut mapping_context = MappingContext::new().expect("Could not instantiate MC");
 
     // Now we can register a set of external hole punching servers that may be needed to complete
     // the hole punching.
@@ -75,7 +75,10 @@ fn main() {
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
     let mut core = Core::new();
     let mut event_loop = EventLoop::new().unwrap();
-    MappingTcpSocket::new(&mut core, &mut event_loop, &addr, &mapping_context,
+    MappingTcpSocket::new(&mut core,
+                          &mut event_loop,
+                          &addr,
+                          &mapping_context,
                           |core, event_loop, socket, addrs| {
         println!("Created a socket. It's endpoints are: {:#?}", addrs);
         let (our_priv_info, our_pub_info) = gen_rendezvous_info(addrs);
@@ -87,8 +90,10 @@ fn main() {
 
         let their_pub_info;
         loop {
-            println!("Paste the peer's pub rendezvous info below and when you are ready to initiate");
-            println!("the connection hit return. The peer must initiate their side of the connection");
+            println!("Paste the peer's pub rendezvous info below and when you are ready to \
+                      initiate");
+            println!("the connection hit return. The peer must initiate their side of the \
+                      connection");
             println!("at the same time.");
             println!("");
 
@@ -102,28 +107,32 @@ fn main() {
                     }
                     println!("IO error reading stdin: {}", e);
                     return;
-                },
+                }
             };
             match rustc_serialize::json::decode(&info_str) {
                 Ok(info) => {
                     their_pub_info = info;
                     break;
-                },
+                }
                 Err(e) => {
                     println!("Error decoding their public rendezvous info: {}", e);
                     println!("Push sure to paste their complete info all in one line.");
                 }
             }
-        };
+        }
 
-        let res = PunchHole::start(core, event_loop, socket, our_priv_info, their_pub_info,
-                                  |core, event_loop, stream_opt| {
+        let res = PunchHole::start(core,
+                                   event_loop,
+                                   socket,
+                                   our_priv_info,
+                                   their_pub_info,
+                                   |core, event_loop, stream_opt| {
             let (mut stream, token) = match stream_opt {
                 Some(x) => x,
                 None => {
                     println!("Failed to punch hole");
                     return;
-                },
+                }
             };
 
             println!("Connected! Sending hello");
@@ -133,27 +142,27 @@ fn main() {
                 Err(e) => {
                     println!("Error writing to socket: {}", e);
                     return;
-                },
+                }
             };
 
             MessageReader::start(core, event_loop, stream, token);
-            
-            /*
-            let token = core.get_new_token();
-            let context = core.get_new_context();
-            event_loop.register(&stream, token, EventSet::all(), PollOpt::edge());
-            core.insert_context(token, context.clone());
-            let client = Client { stream: stream };
-            core.insert_state(context, Rc::new(RefCell::new(client)));
-            */
+
+            // let token = core.get_new_token();
+            // let context = core.get_new_context();
+            // event_loop.register(&stream, token, EventSet::all(), PollOpt::edge());
+            // core.insert_context(token, context.clone());
+            // let client = Client { stream: stream };
+            // core.insert_state(context, Rc::new(RefCell::new(client)));
+            //
         });
         match res {
             Ok(()) => (),
             Err(e) => {
                 println!("Error starting hole punching: {}", e);
-            },
+            }
         }
-    }).unwrap();
+    })
+        .unwrap();
     event_loop.run(&mut core).unwrap();
 }
 
@@ -162,7 +171,10 @@ struct MessageReader {
 }
 
 impl MessageReader {
-    pub fn start(core: &mut Core, _event_loop: &mut EventLoop<Core>, stream: TcpStream, token: Token) {
+    pub fn start(core: &mut Core,
+                 _event_loop: &mut EventLoop<Core>,
+                 stream: TcpStream,
+                 token: Token) {
         let context = core.get_new_context();
         let _ = core.insert_context(token, context.clone());
         let _ = core.insert_state(context,

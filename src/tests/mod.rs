@@ -21,7 +21,7 @@ pub mod utils;
 use std::collections::HashSet;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
 use config_handler::Config;
 use event::Event;

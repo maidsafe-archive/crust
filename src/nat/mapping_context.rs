@@ -17,18 +17,51 @@
 
 //! Defines the `MappingContext` type
 
-use std::net::SocketAddr;
-use std::slice;
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::time::Duration;
+
+use crossbeam;
+use igd::{self, Gateway};
+use get_if_addrs::{self, IfAddr};
+use super::NatError;
 
 /// Keeps track of information about external mapping servers
+#[derive(Debug, Clone)]
 pub struct MappingContext {
+    our_ifv4s: Vec<(Ipv4Addr, Option<Gateway>)>,
+    our_ifv6s: Vec<Ipv6Addr>,
     tcp_mapping_servers: Vec<SocketAddr>,
 }
 
 impl MappingContext {
     /// Create a new `MappingContext`
-    pub fn new() -> MappingContext {
-        MappingContext { tcp_mapping_servers: Vec::new() }
+    pub fn new() -> Result<MappingContext, NatError> {
+        let ifs = try!(get_if_addrs::get_if_addrs());
+        let (mut ifv4s, mut ifv6s) = (Vec::with_capacity(5), Vec::with_capacity(5));
+        for interface in ifs {
+            match interface.addr {
+                IfAddr::V4(v4_addr) => ifv4s.push((v4_addr.ip, None)),
+                IfAddr::V6(v6_addr) => ifv6s.push(v6_addr.ip),
+            }
+        }
+
+        crossbeam::scope(|scope| {
+            let mut guards = Vec::with_capacity(ifv4s.len());
+            for ifv4 in &mut ifv4s {
+                if !ifv4.0.is_loopback() {
+                    guards.push(scope.spawn(move || {
+                        ifv4.1 = igd::search_gateway_from_timeout(ifv4.0, Duration::from_secs(1))
+                            .ok();
+                    }));
+                }
+            }
+        });
+
+        Ok(MappingContext {
+            our_ifv4s: ifv4s,
+            our_ifv6s: ifv6s,
+            tcp_mapping_servers: Vec::with_capacity(10),
+        })
     }
 
     /// Inform the context about external servers
@@ -39,16 +72,36 @@ impl MappingContext {
     }
 
     /// Iterate over the known servers
-    pub fn tcp_mapping_servers(&self) -> IterTcpMappingServers {
-        self.tcp_mapping_servers.iter()
+    pub fn tcp_mapping_servers(&self) -> &Vec<SocketAddr> {
+        &self.tcp_mapping_servers
     }
 }
 
-impl Default for MappingContext {
-    fn default() -> MappingContext {
-        MappingContext::new()
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    // Run with `cargo test igd -- --ignored` to find if IGD is available for you
+    #[test]
+    #[ignore]
+    fn igd_gateway_available() {
+        let mc = MappingContext::new().expect("Could not instantiate MC");
+        assert!(!mc.our_ifv4s.is_empty());
+
+        let mut loopback_found = false;
+        let mut non_loopback_found = false;
+
+        for ifv4 in mc.our_ifv4s {
+            if ifv4.0.is_loopback() {
+                loopback_found = true;
+                assert!(ifv4.1.is_none());
+            } else {
+                non_loopback_found = true;
+                assert!(ifv4.1.is_some());
+            }
+        }
+
+        assert!(loopback_found);
+        assert!(non_loopback_found);
     }
 }
-
-/// Iterator returned by `MappingContext::tcp_mapping_servers`
-pub type IterTcpMappingServers<'m> = slice::Iter<'m, SocketAddr>;
