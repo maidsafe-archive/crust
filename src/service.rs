@@ -82,7 +82,6 @@ impl PrivConnectionInfo {
         PubConnectionInfo {
             tcp_info: self.tcp_info.clone(),
             listeners: self.listeners.clone(),
-            // tcp_addrs: self.tcp_addrs.clone(),
             id: self.id,
         }
     }
