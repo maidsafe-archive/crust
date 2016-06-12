@@ -12,7 +12,7 @@ use rand;
 use net2;
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
-use mio::{TryAccept, TryRead, TryWrite};
+use mio::{TryRead, TryWrite};
 use byteorder::{BigEndian, ReadBytesExt};
 
 use core::{Context, Core};

@@ -300,9 +300,6 @@ impl Service {
             let their_listeners = their_connection_info.listeners;
             let listener_count = their_listeners.len();
             for (i, their_mapped_addr) in their_listeners.into_iter().enumerate() {
-                if their_mapped_addr.nat_restricted {
-                    continue;
-                }
                 let cm0 = cm.clone();
                 let cm1 = cm.clone();
                 let event_tx_clone = event_tx.clone();
@@ -362,85 +359,88 @@ impl Service {
                 });
             }
 
-            if let Some(tcp_socket) = our_connection_info.tcp_socket {
-                {
-                    let mut guard = cm.lock().unwrap();
-                    guard.entry(their_id)
-                        .or_insert(ConnectionId {
-                            active_connection: None,
-                            currently_handshaking: 0,
-                        })
-                        .currently_handshaking += 1;
-                }
-                let event_tx_rc = Rc::new(event_tx);
-                let connection_map_cloned = cm.clone();
-                let event_tx_rc_cloned = event_tx_rc.clone();
-                let res = PunchHole::start(core,
-                                           event_loop,
-                                           tcp_socket,
-                                           our_connection_info.priv_tcp_info,
-                                           their_connection_info.tcp_info,
-                                           move |core, event_loop, stream_opt| {
-                    match stream_opt {
-                        Some((stream, token)) => {
-                            let socket = Socket::wrap(stream);
-                            let event_tx = (&*event_tx_rc_cloned).clone();
-
-                            ConnectionCandidate::start(core,
-                                                       event_loop,
-                                                       token,
-                                                       socket,
-                                                       connection_map_cloned,
-                                                       our_id,
-                                                       their_id,
-                                                       event_tx);
-                        }
-                        None => {
-                            {
-                                let mut guard = connection_map_cloned.lock().unwrap();
-                                let remove = {
-                                    let conn_id = guard.get_mut(&their_id).expect("Logic Error");
-                                    conn_id.currently_handshaking -= 1;
-                                    conn_id.currently_handshaking == 0 &&
-                                    conn_id.active_connection.is_none()
-                                };
-                                if !remove {
-                                    // There is an active OR atleast 1 currently handshaking
-                                    // connection
-                                    return;
-                                }
-                                let _ = guard.remove(&their_id);
-                            }
-                            let error = io::Error::new(io::ErrorKind::Other,
-                                                       format!("Failed punching hole to peer: \
-                                                                {:?}",
-                                                               their_id));
-                            let event = Event::NewPeer(Err(From::from(error)), their_id);
-                            let _ = event_tx_rc_cloned.send(event);
-                        }
-                    }
-                });
-
-                if let Err(e) = res {
+            if false {
+                if let Some(tcp_socket) = our_connection_info.tcp_socket {
                     {
                         let mut guard = cm.lock().unwrap();
-                        let remove = {
-                            let conn_id = guard.get_mut(&their_id).expect("Logic Error");
-                            conn_id.currently_handshaking -= 1;
-                            conn_id.currently_handshaking == 0 &&
-                            conn_id.active_connection.is_none()
-                        };
-                        if !remove {
-                            // There is an active OR at least 1 currently handshaking connection
-                            return;
-                        }
-                        let _ = guard.remove(&their_id);
+                        guard.entry(their_id)
+                            .or_insert(ConnectionId {
+                                active_connection: None,
+                                currently_handshaking: 0,
+                            })
+                            .currently_handshaking += 1;
                     }
+                    let event_tx_rc = Rc::new(event_tx);
+                    let connection_map_cloned = cm.clone();
+                    let event_tx_rc_cloned = event_tx_rc.clone();
+                    let res = PunchHole::start(core,
+                                               event_loop,
+                                               tcp_socket,
+                                               our_connection_info.priv_tcp_info,
+                                               their_connection_info.tcp_info,
+                                               move |core, event_loop, stream_opt| {
+                        match stream_opt {
+                            Some((stream, token)) => {
+                                let socket = Socket::wrap(stream);
+                                let event_tx = (&*event_tx_rc_cloned).clone();
 
-                    if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
-                        let msg = format!("Io error starting hole-punching: {}", e);
-                        let error = io::Error::new(io::ErrorKind::Other, msg);
-                        let _ = event_tx.send(Event::NewPeer(Err(From::from(error)), their_id));
+                                ConnectionCandidate::start(core,
+                                                           event_loop,
+                                                           token,
+                                                           socket,
+                                                           connection_map_cloned,
+                                                           our_id,
+                                                           their_id,
+                                                           event_tx);
+                            }
+                            None => {
+                                {
+                                    let mut guard = connection_map_cloned.lock().unwrap();
+                                    let remove = {
+                                        let conn_id = guard.get_mut(&their_id)
+                                            .expect("Logic Error");
+                                        conn_id.currently_handshaking -= 1;
+                                        conn_id.currently_handshaking == 0 &&
+                                        conn_id.active_connection.is_none()
+                                    };
+                                    if !remove {
+                                        // There is an active OR atleast 1 currently handshaking
+                                        // connection
+                                        return;
+                                    }
+                                    let _ = guard.remove(&their_id);
+                                }
+                                let error = io::Error::new(io::ErrorKind::Other,
+                                                           format!("Failed punching hole to \
+                                                                    peer: {:?}",
+                                                                   their_id));
+                                let event = Event::NewPeer(Err(From::from(error)), their_id);
+                                let _ = event_tx_rc_cloned.send(event);
+                            }
+                        }
+                    });
+
+                    if let Err(e) = res {
+                        {
+                            let mut guard = cm.lock().unwrap();
+                            let remove = {
+                                let conn_id = guard.get_mut(&their_id).expect("Logic Error");
+                                conn_id.currently_handshaking -= 1;
+                                conn_id.currently_handshaking == 0 &&
+                                conn_id.active_connection.is_none()
+                            };
+                            if !remove {
+                                // There is an active OR at least 1 currently handshaking connection
+                                return;
+                            }
+                            let _ = guard.remove(&their_id);
+                        }
+
+                        if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                            let msg = format!("Io error starting hole-punching: {}", e);
+                            let error = io::Error::new(io::ErrorKind::Other, msg);
+                            let _ = event_tx.send(Event::NewPeer(Err(From::from(error)), their_id));
+                        }
                     }
                 }
             }
