@@ -34,7 +34,7 @@ use self::get_ext_addr::GetExtAddr;
 
 mod get_ext_addr;
 
-const TIMEOUT_SECS: u64 = 60;
+const TIMEOUT_SECS: u64 = 15;
 
 /// A state which represents the in-progress mapping of a tcp socket.
 pub struct MappingTcpSocket<F> {
