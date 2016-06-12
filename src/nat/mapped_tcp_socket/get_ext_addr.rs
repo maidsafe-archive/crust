@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
 use std::rc::Rc;
 use std::any::Any;
 use std::cell::RefCell;
 
+use nat::{NatError, util};
 use socket::Socket;
 use message::Message;
 use std::net::SocketAddr;
@@ -43,9 +43,14 @@ pub struct GetExtAddr {
 impl GetExtAddr {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
-                 socket: TcpStream,
+                 local_addr: SocketAddr,
+                 peer_stun: &SocketAddr,
                  finish: Finish)
-                 -> io::Result<Context> {
+                 -> Result<Context, NatError> {
+        let query_socket = try!(util::new_reusably_bound_tcp_socket(&local_addr));
+        let query_socket = try!(query_socket.to_tcp_stream());
+        let socket = try!(TcpStream::connect_stream(query_socket, peer_stun));
+
         let socket = Socket::wrap(socket);
         let token = core.get_new_token();
         let context = core.get_new_context();

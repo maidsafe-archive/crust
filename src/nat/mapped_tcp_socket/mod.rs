@@ -24,7 +24,6 @@ use std::time::Duration;
 
 use igd::PortMappingProtocol;
 use net2::TcpBuilder;
-use mio::tcp::TcpStream;
 use mio::{EventLoop, Timeout, Token};
 
 use core::{Context, Core, CoreMessage};
@@ -34,7 +33,7 @@ use self::get_ext_addr::GetExtAddr;
 
 mod get_ext_addr;
 
-const TIMEOUT_SECS: u64 = 15;
+const TIMEOUT_SECS: u64 = 3;
 
 /// A state which represents the in-progress mapping of a tcp socket.
 pub struct MappingTcpSocket<F> {
@@ -70,11 +69,11 @@ impl<F> MappingTcpSocket<F>
         // Ask IGD
         let mut igd_children = 0;
         for &(ref ip, ref gateway) in mc.ifv4s() {
-            let tx = event_loop.channel();
             let gateway = match *gateway {
                 Some(ref gateway) => gateway.clone(),
                 None => continue,
             };
+            let tx = event_loop.channel();
             let addr_igd = SocketAddrV4::new(*ip, addr.port());
             let _ = thread!("IGD-Address-Mapping", move || {
                 let res =
@@ -118,11 +117,7 @@ impl<F> MappingTcpSocket<F>
         }));
 
         // Ask Stuns
-        for peer_stun in mc.peer_listeners() {
-            let query_socket = try!(util::new_reusably_bound_tcp_socket(&addr));
-            let query_socket = try!(query_socket.to_tcp_stream());
-            let socket = try!(TcpStream::connect_stream(query_socket, &peer_stun));
-
+        for stun in mc.peer_listeners() {
             let self_weak = Rc::downgrade(&state);
             let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child_context, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -130,7 +125,7 @@ impl<F> MappingTcpSocket<F>
                 }
             };
 
-            if let Ok(child) = GetExtAddr::start(core, event_loop, socket, Box::new(handler)) {
+            if let Ok(child) = GetExtAddr::start(core, event_loop, addr, stun, Box::new(handler)) {
                 let _ = state.borrow_mut().stun_children.insert(child);
             }
         }
