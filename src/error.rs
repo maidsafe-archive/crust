@@ -19,6 +19,7 @@ use mio;
 use std::io;
 use std::sync::mpsc;
 
+use nat;
 use peer_id::PeerId;
 use core::CoreMessage;
 use service_discovery;
@@ -59,6 +60,11 @@ quick_error! {
             description("ServiceDiscovery error")
             from()
         }
+        /// Nat Traversal errors
+        Nat(err: nat::NatError) {
+            description("Nat Traversal module error")
+            from()
+        }
         /// Mio Timer errors
         MioTimer(err: mio::TimerError) {
             description("Mio timer error")
@@ -89,43 +95,3 @@ quick_error! {
         }
     }
 }
-
-impl From<CrustError> for io::Error {
-    fn from(err: CrustError) -> io::Error {
-        match err {
-            CrustError::Io(e) => e,
-            CrustError::MioNotify(e) => match e {
-                mio::NotifyError::Io(e) => e,
-                mio::NotifyError::Full(..)
-                    => io::Error::new(io::ErrorKind::Other, "Mio notify error \
-                                                             (channel full)"),
-                mio::NotifyError::Closed(..)
-                    => io::Error::new(io::ErrorKind::Other, "Mio notify error \
-                                                             (channel closed)"),
-            },
-            CrustError::ChannelRecv(e)
-                => io::Error::new(io::ErrorKind::Other, e),
-            CrustError::ConfigFileHandler(e)
-                => io::Error::new(io::ErrorKind::Other, e),
-            CrustError::ServiceDiscNotEnabled
-                => io::Error::new(io::ErrorKind::Other, "Service discovery not \
-                                                         enabled"),
-            CrustError::ServiceDisc(e)
-                => io::Error::new(io::ErrorKind::Other, e),
-            CrustError::MioTimer(e)
-                => io::Error::new(io::ErrorKind::Other, format!("Mio timer \
-                                                                 error: {:?}",
-                                                                 e)),
-            CrustError::PayloadSizeProhibitive
-                => io::Error::new(io::ErrorKind::Other, "Payload size \
-                                                         prohibitive"),
-            CrustError::PeerNotFound(peer_id)
-                => io::Error::new(io::ErrorKind::Other, format!("Peer not \
-                                                                 found: {:?}",
-                                                                 peer_id)),
-            CrustError::Serialisation(e)
-                => io::Error::new(io::ErrorKind::Other, e),
-        }
-    }
-}
-

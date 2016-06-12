@@ -12,27 +12,30 @@ version = "0.12.0"
 [dependencies]
 byteorder = "~0.5.1"
 config_file_handler = "~0.3.0"
+crossbeam = "~0.2.9"
+env_logger = "~0.3.3"
+get_if_addrs = "~0.4.0"
+igd = "~0.4.2"
 log = "~0.3.6"
 maidsafe_utilities = "~0.6.0"
-mio = { git = "https://github.com/carllerche/mio.git" }
 nat_traversal = "~0.3.3"
 net2 = "~0.2.23"
 quick-error = "~1.0.0"
 rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
-sodiumoxide = "~0.0.10"
 socket_addr = "~0.1.0"
-env_logger = "~0.3.3"
-get_if_addrs = "~0.4.0"
+sodiumoxide = "~0.0.10"
 
 [dependencies.clippy]
 optional = true
 version = "~0.0.64"
 
+[dependencies.mio]
+git = "https://github.com/carllerche/mio.git"
+
 [dev-dependencies]
 docopt = "~0.6.80"
 void = "~1.0.2"
-crossbeam = "~0.2.9"
 
 [[example]]
 bench = false
@@ -45,11 +48,6 @@ bench = false
 name = "mapping_client"
 path = "examples/mapping_client.rs"
 test = true
-
-[[test]]
-name = "send_and_receive"
-path = "tests/send_and_receive.rs"
-test = false
 
 [[example]]
 bench = false
@@ -79,4 +77,9 @@ test = false
 bench = false
 name = "simple_benchmark"
 path = "examples/simple_benchmark.rs"
+test = false
+
+[[test]]
+name = "send_and_receive"
+path = "tests/send_and_receive.rs"
 test = false

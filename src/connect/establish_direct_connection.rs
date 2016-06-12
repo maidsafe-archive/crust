@@ -22,10 +22,9 @@ use std::io;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-use mio::{EventSet, PollOpt, Token, EventLoop};
+use mio::{EventLoop, EventSet, PollOpt, Token};
 
 use core::{Core, State};
-use error::CrustError;
 use message::Message;
 use socket::Socket;
 
@@ -39,7 +38,7 @@ pub struct EstablishDirectConnection<F> {
 }
 
 impl<F> EstablishDirectConnection<F>
-    where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<(Token, Socket)>) + Any
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>, ::Res<(Token, Socket)>) + Any
 {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
@@ -50,12 +49,11 @@ impl<F> EstablishDirectConnection<F>
 
         let socket = match Socket::connect(&addr) {
             Ok(socket) => socket,
-            Err(CrustError::Io(error)) => {
-                error!("Failed to connect socket: {:?}", error);
-                finish(core, event_loop, Err(error));
+            Err(e) => {
+                error!("Failed to connect socket: {:?}", e);
+                finish(core, event_loop, Err(e));
                 return;
             }
-            Err(_) => unreachable!(),
         };
 
         let token = core.get_new_token();
@@ -63,7 +61,7 @@ impl<F> EstablishDirectConnection<F>
         if let Err(error) = event_loop.register(&socket, token, event_set, PollOpt::edge()) {
             error!("Failed to register socket: {:?}", error);
             let _ = socket.shutdown();
-            finish(core, event_loop, Err(error));
+            finish(core, event_loop, Err(From::from(error)));
             return;
         }
 
@@ -89,15 +87,9 @@ impl<F> EstablishDirectConnection<F>
             Some((Message::Connect(self.our_public_key, self.name_hash), 0))
         };
 
-        match self.socket
-            .as_mut()
-            .unwrap()
-            .write(event_loop, self.token, message) {
-            Ok(_) => (),
-            Err(error) => {
-                error!("Failed to write to socket: {:?}", error);
-                self.done(core, event_loop, Err(From::from(error)));
-            }
+        if let Err(e) = self.socket.as_mut().unwrap().write(event_loop, self.token, message) {
+            error!("Failed to write to socket: {:?}", e);
+            self.done(core, event_loop, Err(e));
         }
     }
 
@@ -110,13 +102,13 @@ impl<F> EstablishDirectConnection<F>
             Ok(Some(message)) => {
                 let error = io::Error::new(io::ErrorKind::Other,
                                            format!("Unexpected message: {:?}", message));
-                self.done(core, event_loop, Err(error));
+                self.done(core, event_loop, Err(From::from(error)));
             }
 
             Ok(None) => (),
-            Err(error) => {
-                error!("Failed to read from socket: {:?}", error);
-                self.done(core, event_loop, Err(From::from(error)));
+            Err(e) => {
+                error!("Failed to read from socket: {:?}", e);
+                self.done(core, event_loop, Err(e));
             }
         }
     }
@@ -128,13 +120,13 @@ impl<F> EstablishDirectConnection<F>
                       name_hash: u64) {
         if name_hash != self.name_hash {
             let error = io::Error::new(io::ErrorKind::Other, "Incompatible protocol version");
-            self.done(core, event_loop, Err(error));
+            self.done(core, event_loop, Err(From::from(error)));
             return;
         }
 
         if their_public_key == self.our_public_key {
             let error = io::Error::new(io::ErrorKind::Other, "Connecting to ourselves");
-            self.done(core, event_loop, Err(error));
+            self.done(core, event_loop, Err(From::from(error)));
             return;
         }
 
@@ -146,7 +138,7 @@ impl<F> EstablishDirectConnection<F>
     fn done(&mut self,
             core: &mut Core,
             event_loop: &mut EventLoop<Core>,
-            result: io::Result<(Token, Socket)>) {
+            result: ::Res<(Token, Socket)>) {
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
         }
@@ -163,7 +155,7 @@ impl<F> EstablishDirectConnection<F>
 }
 
 impl<F> State for EstablishDirectConnection<F>
-    where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<(Token, Socket)>) + Any
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>, ::Res<(Token, Socket)>) + Any
 {
     fn ready(&mut self,
              core: &mut Core,
@@ -179,10 +171,10 @@ impl<F> State for EstablishDirectConnection<F>
                 Err(e) => e,
             };
 
-            self.done(core, event_loop, Err(error));
+            self.done(core, event_loop, Err(From::from(error)));
         } else if event_set.is_hup() {
             let error = io::Error::new(io::ErrorKind::ConnectionAborted, "Connection aborted");
-            self.done(core, event_loop, Err(error));
+            self.done(core, event_loop, Err(From::from(error)));
         } else {
             if event_set.is_readable() {
                 self.readable(core, event_loop)
@@ -195,8 +187,8 @@ impl<F> State for EstablishDirectConnection<F>
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let result = Err(io::Error::new(io::ErrorKind::Other, "Connect cancelled"));
-        self.done(core, event_loop, result);
+        let result = io::Error::new(io::ErrorKind::Other, "Connect cancelled");
+        self.done(core, event_loop, Err(From::from(result)));
     }
 
     fn as_any(&mut self) -> &mut Any {

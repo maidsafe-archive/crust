@@ -23,14 +23,8 @@ use config_file_handler::{self, FileHandler};
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
 
-#[derive(RustcEncodable, RustcDecodable, Debug, Clone, Default, Eq, PartialEq)]
-pub struct Storage {
-    pub peer_stuns: Vec<socket_addr::SocketAddr>,
-    pub peer_acceptors: Vec<socket_addr::SocketAddr>,
-}
-
 pub struct Cache {
-    file_handler: FileHandler<Storage>,
+    file_handler: FileHandler<Vec<socket_addr::SocketAddr>>,
 }
 
 impl Cache {
@@ -73,8 +67,8 @@ impl Cache {
     //     Ok(())
     // }
 
-    pub fn read_file(&mut self) -> Storage {
-        self.file_handler.read_file().ok().unwrap_or_else(Storage::default)
+    pub fn read_file(&mut self) -> Vec<socket_addr::SocketAddr> {
+        self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 
     pub fn remove_peer_acceptor(&mut self, _peer: socket_addr::SocketAddr) {}

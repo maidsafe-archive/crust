@@ -1,4 +1,4 @@
-// Copyright 2015 MaidSafe.net limited.
+// Copyright 2016 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -15,16 +15,33 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use socket_addr::SocketAddr;
+use std::io;
 
-/// This struct contains information needed to Bootstrap and for echo-server services
-#[derive(RustcEncodable, RustcDecodable, Debug, Default, Clone, PartialEq, Eq, Hash)]
-pub struct StaticContactInfo {
-    /// This will contain both local and global addresses. Local addresses will be useful on LAN
-    /// when someone wants to bootstrap off us and we haven't yet obtained our global address. In
-    /// that case the list will contain only the local addresses that the process calling
-    /// seek_peers() will get and use.
-    pub tcp_acceptors: Vec<SocketAddr>,
-    /// TCP mapper server addresses
-    pub tcp_mapper_servers: Vec<SocketAddr>,
+use mio;
+use core::CoreMessage;
+
+quick_error! {
+    /// Nat Traversal specific error
+    #[derive(Debug)]
+    pub enum NatError {
+        /// IO error
+        Io(e: io::Error) {
+            description("Io error during nat traversal")
+            display("Io error during nat traversal: {}", e)
+            cause(e)
+            from()
+        }
+        /// Mio Timer errors
+        MioTimer(err: mio::TimerError) {
+            description("Mio timer error")
+            from()
+        }
+        /// Mio notify errors
+        MioNotify(err: mio::NotifyError<CoreMessage>) {
+            description("Mio notify error")
+            display("Mio notify error: {}", err)
+            cause(err)
+            from()
+        }
+    }
 }

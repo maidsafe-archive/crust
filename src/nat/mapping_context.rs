@@ -17,38 +17,105 @@
 
 //! Defines the `MappingContext` type
 
-use std::net::SocketAddr;
-use std::slice;
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::time::Duration;
+
+use crossbeam;
+use igd::{self, Gateway};
+use get_if_addrs::{self, IfAddr};
+use nat::MappedAddr;
+use super::NatError;
 
 /// Keeps track of information about external mapping servers
+#[derive(Debug, Clone)]
 pub struct MappingContext {
-    tcp_mapping_servers: Vec<SocketAddr>,
+    our_ifv4s: Vec<(Ipv4Addr, Option<Gateway>)>,
+    our_ifv6s: Vec<Ipv6Addr>,
+    peer_listeners: Vec<SocketAddr>,
 }
 
 impl MappingContext {
     /// Create a new `MappingContext`
-    pub fn new() -> MappingContext {
-        MappingContext { tcp_mapping_servers: Vec::new() }
+    pub fn new() -> Result<MappingContext, NatError> {
+        let ifs = try!(get_if_addrs::get_if_addrs());
+        let (mut ifv4s, mut ifv6s) = (Vec::with_capacity(5), Vec::with_capacity(5));
+        for interface in ifs {
+            match interface.addr {
+                IfAddr::V4(v4_addr) => ifv4s.push((v4_addr.ip, None)),
+                IfAddr::V6(v6_addr) => ifv6s.push(v6_addr.ip),
+            }
+        }
+
+        crossbeam::scope(|scope| {
+            let mut guards = Vec::with_capacity(ifv4s.len());
+            for ifv4 in &mut ifv4s {
+                if !ifv4.0.is_loopback() {
+                    guards.push(scope.spawn(move || {
+                        ifv4.1 = igd::search_gateway_from_timeout(ifv4.0, Duration::from_secs(1))
+                            .ok();
+                    }));
+                }
+            }
+        });
+
+        Ok(MappingContext {
+            our_ifv4s: ifv4s,
+            our_ifv6s: ifv6s,
+            peer_listeners: Vec::with_capacity(10),
+        })
     }
 
     /// Inform the context about external servers
-    pub fn add_tcp_mapping_servers<S>(&mut self, servers: S)
-        where S: IntoIterator<Item = SocketAddr>
-    {
-        self.tcp_mapping_servers.extend(servers)
+    pub fn add_peer_listeners(&mut self, potential_peers: Vec<MappedAddr>) {
+        let listeners = potential_peers.iter()
+            .filter(|elt| elt.global() && !elt.nat_restricted)
+            .map(|elt| elt.addr.0)
+            .collect::<Vec<_>>();
+        self.peer_listeners.extend(listeners);
+    }
+
+    /// Add without sanity check. Caller is responsible for not providing a nat restricted address
+    /// or not providing a non-global address etc
+    pub fn add_peer_listeners_no_check(&mut self, listeners: Vec<SocketAddr>) {
+        self.peer_listeners.extend(listeners);
+    }
+
+    /// Get v4 interfaces
+    pub fn ifv4s(&self) -> &Vec<(Ipv4Addr, Option<Gateway>)> {
+        &self.our_ifv4s
     }
 
     /// Iterate over the known servers
-    pub fn tcp_mapping_servers(&self) -> IterTcpMappingServers {
-        self.tcp_mapping_servers.iter()
+    pub fn peer_listeners(&self) -> &Vec<SocketAddr> {
+        &self.peer_listeners
     }
 }
 
-impl Default for MappingContext {
-    fn default() -> MappingContext {
-        MappingContext::new()
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    // Run with `cargo test igd -- --ignored` to find if IGD is available for you
+    #[test]
+    #[ignore]
+    fn igd_gateway_available() {
+        let mc = MappingContext::new().expect("Could not instantiate MC");
+        assert!(!mc.our_ifv4s.is_empty());
+
+        let mut loopback_found = false;
+        let mut non_loopback_found = false;
+
+        for ifv4 in mc.our_ifv4s {
+            if ifv4.0.is_loopback() {
+                loopback_found = true;
+                assert!(ifv4.1.is_none());
+            } else {
+                non_loopback_found = true;
+                assert!(ifv4.1.is_some());
+            }
+        }
+
+        assert!(loopback_found);
+        assert!(non_loopback_found);
     }
 }
-
-/// Iterator returned by `MappingContext::tcp_mapping_servers`
-pub type IterTcpMappingServers<'m> = slice::Iter<'m, SocketAddr>;

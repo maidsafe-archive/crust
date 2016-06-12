@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use mio::{Token, EventLoop, EventSet, Handler};
+use mio::{EventLoop, EventSet, Handler, Token};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;

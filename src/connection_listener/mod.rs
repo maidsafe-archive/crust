@@ -20,11 +20,11 @@ mod exchange_msg;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
 use net2::TcpBuilder;
-use socket_addr;
+// use socket_addr;
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+// use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
@@ -32,10 +32,8 @@ use self::exchange_msg::ExchangeMsg;
 use service::{ConnectionMap, NameHash};
 use core::{Context, Core, State};
 use event::Event;
-use nat::mapped_tcp_socket::MappingTcpSocket;
-use nat::mapping_context::MappingContext;
+use nat::{MappedAddr, MappingContext, MappingTcpSocket};
 use socket::Socket;
-use static_contact_info::StaticContactInfo;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -59,29 +57,28 @@ impl ConnectionListener {
                  name_hash: NameHash,
                  cm: ConnectionMap,
                  mapping_context: Arc<MappingContext>,
-                 static_contact_info: Arc<Mutex<StaticContactInfo>>,
+                 our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
+                 context: Context,
                  event_tx: ::CrustEventSender) {
-        let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
         let event_tx_0 = event_tx.clone();
-
         let finish = move |core: &mut Core, el: &mut EventLoop<Core>, socket, mapped_addrs| {
             if let Err(e) = ConnectionListener::handle_mapped_socket(core,
                                                                      el,
                                                                      handshake_timeout_ms,
                                                                      socket,
                                                                      mapped_addrs,
-                                                                     addr,
                                                                      our_pk,
                                                                      name_hash,
                                                                      cm,
-                                                                     static_contact_info,
+                                                                     our_listeners,
+                                                                     context,
                                                                      event_tx.clone()) {
                 error!("TCP Listener failed to handle mapped socket: {:?}", e);
                 let _ = event_tx.send(Event::ListenerFailed);
             }
         };
 
-        if let Err(e) = MappingTcpSocket::new(core, event_loop, &addr, &mapping_context, finish) {
+        if let Err(e) = MappingTcpSocket::start(core, event_loop, port, &mapping_context, finish) {
             error!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
@@ -91,30 +88,26 @@ impl ConnectionListener {
                             event_loop: &mut EventLoop<Core>,
                             timeout_ms: Option<u64>,
                             socket: TcpBuilder,
-                            mapped_addrs: Vec<socket_addr::SocketAddr>,
-                            addr: SocketAddr,
+                            mapped_addrs: Vec<MappedAddr>,
                             our_pk: PublicKey,
                             name_hash: NameHash,
                             cm: ConnectionMap,
-                            static_contact_info: Arc<Mutex<StaticContactInfo>>,
+                            our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
+                            context: Context,
                             event_tx: ::CrustEventSender)
                             -> ::Res<()> {
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         let listener = try!(socket.listen(LISTENER_BACKLOG));
         let local_addr = try!(listener.local_addr());
 
-        let listener = try!(TcpListener::from_listener(listener, &addr));
+        let listener = try!(TcpListener::from_listener(listener, &local_addr));
         try!(event_loop.register(&listener,
                                  token,
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
                                  PollOpt::edge()));
 
-        static_contact_info.lock()
-            .unwrap()
-            .tcp_acceptors
-            .extend(mapped_addrs);
+        *our_listeners.lock().unwrap() = mapped_addrs;
 
         let state = ConnectionListener {
             cm: cm,
@@ -203,10 +196,9 @@ mod test {
     use message::Message;
     use socket_addr::SocketAddr;
     use mio::{EventLoop, Sender};
-    use core::{Core, CoreMessage};
+    use core::{Context, Core, CoreMessage};
     use rustc_serialize::Decodable;
-    use nat::mapping_context::MappingContext;
-    use static_contact_info::StaticContactInfo;
+    use nat::MappingContext;
     use sodiumoxide::crypto::box_::{self, PublicKey};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -219,7 +211,7 @@ mod test {
     struct Listener {
         tx: Sender<CoreMessage>,
         pk: PublicKey,
-        acceptor: SocketAddr,
+        addr: SocketAddr,
         event_rx: mpsc::Receiver<Event>,
         _raii_joiner: RaiiThreadJoiner,
     }
@@ -236,7 +228,7 @@ mod test {
         let mut el = EventLoop::new().expect("Could not spawn el");
         let tx = el.channel();
         let raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
-            el.run(&mut Core::new()).expect("Could not run el");
+            el.run(&mut Core::with_context_counter(1)).expect("Could not run el");
         }));
 
         let (event_tx, event_rx) = mpsc::channel();
@@ -244,13 +236,10 @@ mod test {
             ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
-        let mapping_context = Arc::new(MappingContext::new());
-        let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
-            tcp_acceptors: Vec::new(),
-            tcp_mapper_servers: Vec::new(),
-        }));
+        let mapping_context = Arc::new(MappingContext::new().expect("Could not get MC"));
+        let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
 
-        let our_static_contact_info = static_contact_info.clone();
+        let listeners_clone = listeners.clone();
         let (pk, _) = box_::gen_keypair();
         tx.send(CoreMessage::new(move |core, el| {
                 ConnectionListener::start(core,
@@ -261,7 +250,8 @@ mod test {
                                           NAME_HASH,
                                           cm,
                                           mapping_context,
-                                          our_static_contact_info,
+                                          listeners_clone,
+                                          Context(0),
                                           crust_sender);
             }))
             .expect("Could not send to tx");
@@ -273,21 +263,19 @@ mod test {
             }
         }
 
-        let acceptor = static_contact_info.lock()
-            .expect("Failed to lock static_contact_info")
-            .tcp_acceptors[0];
+        let addr = listeners.lock().unwrap()[0].addr;
 
         Listener {
             tx: tx,
             pk: pk,
-            acceptor: acceptor,
+            addr: addr,
             event_rx: event_rx,
             _raii_joiner: raii_joiner,
         }
     }
 
     fn connect_to_listener(listener: &Listener) -> TcpStream {
-        let listener_addr = StdSocketAddr::new(listener.acceptor.ip(), listener.acceptor.port());
+        let listener_addr = StdSocketAddr::new(listener.addr.ip(), listener.addr.port());
         let stream = TcpStream::connect(listener_addr).expect("Could not connect to listener");
         stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000)))
             .expect("Could not set read timeout.");

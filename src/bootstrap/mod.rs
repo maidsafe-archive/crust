@@ -41,7 +41,6 @@ use socket::Socket;
 use self::cache::Cache;
 use self::try_peer::TryPeer;
 use service_discovery::ServiceDiscovery;
-use static_contact_info::StaticContactInfo;
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;
 const MAX_CONTACTS_EXPECTED: usize = 1500;
@@ -77,14 +76,10 @@ impl Bootstrap {
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
+
         let mut cache = try!(Cache::new(&config.bootstrap_cache_name));
-
-        let cached_peers = cache.read_file().peer_acceptors;
-        peers.extend(cached_peers);
-
-        for it in config.hard_coded_contacts.iter().cloned() {
-            peers.extend(it.tcp_acceptors);
-        }
+        peers.extend(cache.read_file());
+        peers.extend(config.hard_coded_contacts.clone());
 
         let token = core.get_new_token();
         let bs_timeout_token = core.get_new_token();
@@ -212,8 +207,8 @@ impl State for Bootstrap {
 
         let rx = self.sd_meta.take().expect("Logic Error").rx;
 
-        while let Ok(contact) = rx.try_recv() {
-            self.peers.extend(contact.tcp_acceptors);
+        while let Ok(listeners) = rx.try_recv() {
+            self.peers.extend(listeners);
         }
 
         self.begin_bootstrap(core, event_loop);
@@ -236,7 +231,7 @@ impl State for Bootstrap {
 }
 
 struct ServiceDiscMeta {
-    rx: Receiver<StaticContactInfo>,
+    rx: Receiver<Vec<socket_addr::SocketAddr>>,
     timeout: Timeout,
 }
 
@@ -244,7 +239,7 @@ fn seek_peers(core: &mut Core,
               event_loop: &mut EventLoop<Core>,
               service_discovery_context: Context,
               token: Token)
-              -> ::Res<(Receiver<StaticContactInfo>, Timeout)> {
+              -> ::Res<(Receiver<Vec<socket_addr::SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_context) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()

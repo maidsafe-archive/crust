@@ -21,13 +21,12 @@ pub mod utils;
 use std::collections::HashSet;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
 use config_handler::Config;
 use event::Event;
 use service::Service;
 use socket_addr::SocketAddr;
-use static_contact_info::StaticContactInfo;
 
 pub use self::utils::{gen_config, get_event_sender, timebomb};
 
@@ -36,11 +35,8 @@ fn localhost(port: u16) -> SocketAddr {
     SocketAddr(StdSocketAddr::new(unwrap_result!(IpAddr::from_str("127.0.0.1")), port))
 }
 
-fn localhost_contact_info(port: u16) -> StaticContactInfo {
-    StaticContactInfo {
-        tcp_acceptors: vec![localhost(port)],
-        tcp_mapper_servers: vec![],
-    }
+fn localhost_contact_info(port: u16) -> SocketAddr {
+    localhost(port)
 }
 
 fn gen_service_discovery_port() -> u16 {
@@ -134,10 +130,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let invalid_address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![StaticContactInfo {
-                                           tcp_acceptors: vec![invalid_address, valid_address],
-                                           tcp_mapper_servers: vec![],
-                                       }];
+    config1.hard_coded_contacts = vec![invalid_address, valid_address];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
@@ -168,10 +161,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     let address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
     let mut config = gen_config();
-    config.hard_coded_contacts = vec![StaticContactInfo {
-                                          tcp_acceptors: vec![address],
-                                          tcp_mapper_servers: vec![],
-                                      }];
+    config.hard_coded_contacts = vec![address];
 
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
@@ -351,10 +341,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 
     // Spin up normal service that will connect to the above guy.
     let mut config = gen_config();
-    config.hard_coded_contacts = vec![StaticContactInfo {
-                                          tcp_acceptors: vec![address],
-                                          tcp_mapper_servers: vec![],
-                                      }];
+    config.hard_coded_contacts = vec![address];
 
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));

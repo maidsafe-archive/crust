@@ -18,7 +18,7 @@
 use std::any::Any;
 use std::time::Duration;
 
-use core::{Core, Context, State, Priority};
+use core::{Context, Core, Priority, State};
 use service::{ConnectionId, ConnectionMap};
 use event::Event;
 use message::Message;

@@ -19,54 +19,51 @@ use std::rc::Rc;
 use std::any::Any;
 use std::cell::RefCell;
 
+use nat::{NatError, util};
 use socket::Socket;
 use message::Message;
 use std::net::SocketAddr;
-use peer_id::{self, PeerId};
 use core::{Context, Core, Priority, State};
-use sodiumoxide::crypto::box_::PublicKey;
 use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::tcp::TcpStream;
 
-// TODO(Spandan) Result contains socket address too as currently due to bug in mio we are unable to
-// obtain peer address from a connected socket. Track https://github.com/carllerche/mio/issues/397
-// and remove this once that is solved.
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,
                             Context,
-                            Result<(Socket, SocketAddr, Token, PeerId), SocketAddr>)>;
+                            Result<SocketAddr, ()>)>;
 
-pub struct TryPeer {
+pub struct GetExtAddr {
     token: Token,
     context: Context,
-    peer: SocketAddr,
-    socket: Option<Socket>,
+    socket: Socket,
     request: Option<(Message, Priority)>,
     finish: Finish,
 }
 
-impl TryPeer {
+impl GetExtAddr {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
-                 peer: SocketAddr,
-                 our_pk: PublicKey,
-                 name_hash: u64,
+                 local_addr: SocketAddr,
+                 peer_stun: &SocketAddr,
                  finish: Finish)
-                 -> ::Res<Context> {
-        let socket = try!(Socket::connect(&peer));
+                 -> Result<Context, NatError> {
+        let query_socket = try!(util::new_reusably_bound_tcp_socket(&local_addr));
+        let query_socket = try!(query_socket.to_tcp_stream());
+        let socket = try!(TcpStream::connect_stream(query_socket, peer_stun));
 
+        let socket = Socket::wrap(socket);
         let token = core.get_new_token();
         let context = core.get_new_context();
 
-        let state = TryPeer {
+        let state = GetExtAddr {
             token: token,
             context: context,
-            peer: peer,
-            socket: Some(socket),
-            request: Some((Message::BootstrapRequest(our_pk, name_hash), 0)),
+            socket: socket,
+            request: Some((Message::EchoAddrReq, 0)),
             finish: finish,
         };
 
-        try!(event_loop.register(state.socket.as_ref().expect("Logic Error"),
+        try!(event_loop.register(&state.socket,
                                  token,
                                  EventSet::error() | EventSet::hup() | EventSet::writable(),
                                  PollOpt::edge()));
@@ -81,22 +78,17 @@ impl TryPeer {
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        if self.socket.as_mut().unwrap().write(event_loop, self.token, msg).is_err() {
+        if self.socket.write(event_loop, self.token, msg).is_err() {
             self.handle_error(core, event_loop);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        match self.socket.as_mut().unwrap().read::<Message>() {
-            Ok(Some(Message::BootstrapResponse(peer_pk))) => {
-                let _ = core.remove_context(self.token);
-                let _ = core.remove_state(self.context);
+        match self.socket.read::<Message>() {
+            Ok(Some(Message::EchoAddrResp(ext_addr))) => {
+                self.terminate(core, event_loop);
                 let context = self.context;
-                let data = (self.socket.take().expect("Logic Error"),
-                            self.peer,
-                            self.token,
-                            peer_id::new(peer_pk));
-                (*self.finish)(core, event_loop, context, Ok(data));
+                (*self.finish)(core, event_loop, context, Ok(ext_addr.0))
             }
             Ok(None) => (),
             Ok(Some(_)) | Err(_) => self.handle_error(core, event_loop),
@@ -106,12 +98,11 @@ impl TryPeer {
     fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         self.terminate(core, event_loop);
         let context = self.context;
-        let peer = self.peer;
-        (*self.finish)(core, event_loop, context, Err(peer));
+        (*self.finish)(core, event_loop, context, Err(()));
     }
 }
 
-impl State for TryPeer {
+impl State for GetExtAddr {
     fn ready(&mut self,
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
@@ -133,7 +124,7 @@ impl State for TryPeer {
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
-        let _ = event_loop.deregister(&self.socket.take().expect("Logic Error"));
+        let _ = event_loop.deregister(&self.socket);
     }
 
     fn as_any(&mut self) -> &mut Any {
