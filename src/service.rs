@@ -55,7 +55,7 @@ const BOOTSTRAP_CONTEXT: Context = Context(0);
 const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
 const LISTENER_CONTEXT: Context = Context(2);
 
-const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
+const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
