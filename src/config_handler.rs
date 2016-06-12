@@ -20,13 +20,11 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use socket_addr::SocketAddr;
-use static_contact_info::StaticContactInfo;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub hard_coded_contacts: Vec<StaticContactInfo>,
+    pub hard_coded_contacts: Vec<SocketAddr>,
     pub tcp_acceptor_port: Option<u16>,
-    pub tcp_mapper_servers: Vec<SocketAddr>,
     pub service_discovery_port: Option<u16>,
     pub bootstrap_cache_name: Option<String>,
     pub network_name: Option<String>,
@@ -35,9 +33,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            hard_coded_contacts: vec![], // No hardcoded endpoints
+            hard_coded_contacts: vec![],
             tcp_acceptor_port: None,
-            tcp_mapper_servers: vec![],
             service_discovery_port: None,
             bootstrap_cache_name: None,
             network_name: None,
@@ -60,7 +57,7 @@ pub fn read_config_file() -> ::Res<Config> {
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
 #[allow(unused)]
-pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>) -> ::Res<PathBuf> {
+pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<PathBuf> {
     use std::io::Write;
 
     let mut config = Config::default();

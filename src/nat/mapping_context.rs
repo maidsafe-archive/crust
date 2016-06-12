@@ -23,6 +23,7 @@ use std::time::Duration;
 use crossbeam;
 use igd::{self, Gateway};
 use get_if_addrs::{self, IfAddr};
+use nat::MappedAddr;
 use super::NatError;
 
 /// Keeps track of information about external mapping servers
@@ -30,7 +31,7 @@ use super::NatError;
 pub struct MappingContext {
     our_ifv4s: Vec<(Ipv4Addr, Option<Gateway>)>,
     our_ifv6s: Vec<Ipv6Addr>,
-    tcp_mapping_servers: Vec<SocketAddr>,
+    peer_listeners: Vec<SocketAddr>,
 }
 
 impl MappingContext {
@@ -60,20 +61,33 @@ impl MappingContext {
         Ok(MappingContext {
             our_ifv4s: ifv4s,
             our_ifv6s: ifv6s,
-            tcp_mapping_servers: Vec::with_capacity(10),
+            peer_listeners: Vec::with_capacity(10),
         })
     }
 
     /// Inform the context about external servers
-    pub fn add_tcp_mapping_servers<S>(&mut self, servers: S)
-        where S: IntoIterator<Item = SocketAddr>
-    {
-        self.tcp_mapping_servers.extend(servers)
+    pub fn add_peer_listeners(&mut self, potential_peers: Vec<MappedAddr>) {
+        let listeners = potential_peers.iter()
+            .filter(|elt| elt.global() && !elt.nat_restricted)
+            .map(|elt| elt.addr.0)
+            .collect::<Vec<_>>();
+        self.peer_listeners.extend(listeners);
+    }
+
+    /// Add without sanity check. Caller is responsible for not providing a nat restricted address
+    /// or not providing a non-global address etc
+    pub fn add_peer_listeners_no_check(&mut self, listeners: Vec<SocketAddr>) {
+        self.peer_listeners.extend(listeners);
+    }
+
+    /// Get v4 interfaces
+    pub fn ifv4s(&self) -> &Vec<(Ipv4Addr, Option<Gateway>)> {
+        &self.our_ifv4s
     }
 
     /// Iterate over the known servers
-    pub fn tcp_mapping_servers(&self) -> &Vec<SocketAddr> {
-        &self.tcp_mapping_servers
+    pub fn peer_listeners(&self) -> &Vec<SocketAddr> {
+        &self.peer_listeners
     }
 }
 

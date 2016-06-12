@@ -85,7 +85,7 @@ mod peer_id;
 mod service;
 mod service_discovery;
 mod socket;
-mod static_contact_info;
+/// Nat traversal
 pub mod nat;
 
 
@@ -102,4 +102,3 @@ pub use error::CrustError;
 pub use peer_id::PeerId;
 pub use service::{ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo, Service};
 pub use socket_addr::SocketAddr;
-pub use static_contact_info::StaticContactInfo;

@@ -17,6 +17,9 @@
 
 use std::io;
 
+use mio;
+use core::CoreMessage;
+
 quick_error! {
     /// Nat Traversal specific error
     #[derive(Debug)]
@@ -26,6 +29,18 @@ quick_error! {
             description("Io error during nat traversal")
             display("Io error during nat traversal: {}", e)
             cause(e)
+            from()
+        }
+        /// Mio Timer errors
+        MioTimer(err: mio::TimerError) {
+            description("Mio timer error")
+            from()
+        }
+        /// Mio notify errors
+        MioNotify(err: mio::NotifyError<CoreMessage>) {
+            description("Mio notify error")
+            display("Mio notify error: {}", err)
+            cause(err)
             from()
         }
     }

@@ -6,16 +6,15 @@ extern crate rustc_serialize;
 #[macro_use]
 extern crate log;
 
-use std::net;
-use std::net::{Ipv4Addr, SocketAddrV4, ToSocketAddrs};
+use std::net::ToSocketAddrs;
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
 
 use crust::core::Core;
 use crust::core::state::State;
-use crust::nat::mapped_tcp_socket::MappingTcpSocket;
-use crust::nat::mapping_context::MappingContext;
+use crust::nat::MappingTcpSocket;
+use crust::nat::MappingContext;
 use crust::nat::punch_hole::PunchHole;
 use crust::nat::rendezvous_info::gen_rendezvous_info;
 use mio::{EventLoop, EventSet, Token};
@@ -69,17 +68,17 @@ fn main() {
             }
         };
         println!("Registering address: {:#?}", addr);
-        mapping_context.add_tcp_mapping_servers(Some(addr.0));
+        mapping_context.add_peer_listeners_no_check(vec![addr.0]);
     }
 
-    let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
     let mut core = Core::new();
     let mut event_loop = EventLoop::new().unwrap();
-    MappingTcpSocket::new(&mut core,
-                          &mut event_loop,
-                          &addr,
-                          &mapping_context,
-                          |core, event_loop, socket, addrs| {
+    MappingTcpSocket::start(&mut core,
+                            &mut event_loop,
+                            0,
+                            &mapping_context,
+                            |core, event_loop, socket, addrs| {
+        let addrs = addrs.into_iter().map(|elt| elt.addr).collect();
         println!("Created a socket. It's endpoints are: {:#?}", addrs);
         let (our_priv_info, our_pub_info) = gen_rendezvous_info(addrs);
 

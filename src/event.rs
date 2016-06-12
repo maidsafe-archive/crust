@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
 use std::net::SocketAddr;
 
 use peer_id::PeerId;
@@ -39,7 +38,7 @@ pub enum Event {
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
     /// Invoked when a connection to a new peer is established.
-    NewPeer(io::Result<()>, PeerId),
+    NewPeer(::Res<()>, PeerId),
     /// Invoked when a peer is lost or having read/write error.
     LostPeer(PeerId),
     /// Invoked when a new message is received.  Passes the message.

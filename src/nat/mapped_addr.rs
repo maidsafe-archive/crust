@@ -15,14 +15,46 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::net::{self, IpAddr};
 use socket_addr;
 
 /// Socket Address that is publicly accessible if nat_restricted is false.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, RustcEncodable, RustcDecodable)]
 pub struct MappedAddr {
     /// Address
-    addrs: socket_addr::SocketAddr,
+    pub addr: socket_addr::SocketAddr,
     /// If nat_restricted is true then this can be accessible only via hole punch otherwise it can
     /// be directly accessed.
-    nat_restricted: bool,
+    pub nat_restricted: bool,
+    global: bool,
+}
+
+impl MappedAddr {
+    /// Constructor
+    pub fn new(addr: net::SocketAddr, nat_restricted: bool) -> MappedAddr {
+        let global = if let IpAddr::V4(addr_v4) = addr.ip() {
+            // TODO(Spandan) Currently is_global() is unstable
+            !(addr_v4.is_loopback() || addr_v4.is_private() || addr_v4.is_link_local() ||
+              addr_v4.is_multicast() || addr_v4.is_broadcast() ||
+              addr_v4.is_documentation() || addr_v4.octets() == [0, 0, 0, 0])
+        } else {
+            false // TODO(Spandan) Rust itself is unstable while dealing with Ipv6 right now
+        };
+
+        MappedAddr {
+            addr: socket_addr::SocketAddr(addr),
+            nat_restricted: nat_restricted,
+            global: global,
+        }
+    }
+
+    /// Enquire if it's a global address
+    pub fn global(&self) -> bool {
+        self.global
+    }
+
+    /// Get net::SocketAddr
+    pub fn addr(&self) -> &net::SocketAddr {
+        &self.addr.0
+    }
 }
