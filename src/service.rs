@@ -602,6 +602,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn rendezvous_connect_two_peers() {
         maidsafe_utilities::log::init(true).unwrap();
         timebomb(Duration::from_secs(30), || {
