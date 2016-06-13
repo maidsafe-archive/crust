@@ -16,16 +16,12 @@
 // relating to use of the SAFE Network Software.
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use mio::{EventLoop, EventSet, Handler, Token};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-pub use self::state::Priority;
-pub use self::state::State;
-
-/// State Trait
-pub mod state;
+use mio::{EventLoop, EventSet, Handler, Token};
+use common::State;
 
 /// The type of messages passed to core.
 pub type CoreMessage = Closure;

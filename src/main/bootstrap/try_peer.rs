@@ -15,17 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::rc::Rc;
 use std::any::Any;
 use std::cell::RefCell;
+use std::rc::Rc;
 
-use socket::Socket;
-use message::Message;
-use std::net::SocketAddr;
-use peer_id::{self, PeerId};
-use core::{Context, Core, Priority, State};
-use sodiumoxide::crypto::box_::PublicKey;
+use common::{Context, Core, Message, Priority, Socket, State};
+use main::peer_id::{self, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Token};
+use sodiumoxide::crypto::box_::PublicKey;
+use std::net::SocketAddr;
 
 // TODO(Spandan) Result contains socket address too as currently due to bug in mio we are unable to
 // obtain peer address from a connected socket. Track https://github.com/carllerche/mio/issues/397

@@ -31,7 +31,8 @@ optional = true
 version = "~0.0.64"
 
 [dependencies.mio]
-git = "https://github.com/carllerche/mio.git"
+git = "https://github.com/ustulation/mio.git"
+branch = "fix-crash-windows"
 
 [dev-dependencies]
 docopt = "~0.6.80"
@@ -42,12 +43,6 @@ bench = false
 name = "simple_demo"
 path = "examples/simple_demo.rs"
 test = false
-
-[[example]]
-bench = false
-name = "mapping_client"
-path = "examples/mapping_client.rs"
-test = true
 
 [[example]]
 bench = false

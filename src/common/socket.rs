@@ -22,18 +22,15 @@ use std::net::SocketAddr;
 use std::time::Instant;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use core::{Core, Priority};
-use error::CrustError;
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
-use mio::{EventLoop, EventSet, Evented, Poll, PollOpt, Token};
+use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
+use common::{CommonError, Core, Priority, Result};
 
-/// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
 const MAX_MSG_AGE_SECS: u64 = 60;
 
-// Wrapper over raw TcpStream, which automatically handles buffering and
-// (de)serialization.
 pub struct Socket {
     stream: TcpStream,
     read_buffer: Vec<u8>,
@@ -43,7 +40,7 @@ pub struct Socket {
 }
 
 impl Socket {
-    pub fn connect(addr: &SocketAddr) -> ::Res<Self> {
+    pub fn connect(addr: &SocketAddr) -> Result<Self> {
         let stream = try!(TcpStream::connect(addr));
         Ok(Self::wrap(stream))
     }
@@ -58,7 +55,7 @@ impl Socket {
         }
     }
 
-    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+    pub fn peer_addr(&self) -> Result<SocketAddr> {
         Ok(try!(self.stream.peer_addr()))
     }
 
@@ -69,9 +66,7 @@ impl Socket {
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
-    pub fn read<T: Decodable>(&mut self) -> ::Res<Option<T>> {
-        // If there is something in the read buffer already, retrieve it without
-        // hitting the socket at all.
+    pub fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
         if let Some(message) = try!(self.read_from_buffer()) {
             return Ok(Some(message));
         }
@@ -95,11 +90,9 @@ impl Socket {
         }
     }
 
-    fn read_from_buffer<T: Decodable>(&mut self) -> ::Res<Option<T>> {
-        // TODO: use some kind of ring buffer here.
+    fn read_from_buffer<T: Decodable>(&mut self) -> Result<Option<T>> {
         let u32_size = mem::size_of::<u32>();
 
-        // The length of the message is encoded in the first 4 bytes:
         if self.read_len == 0 {
             if self.read_buffer.len() < u32_size {
                 return Ok(None);
@@ -109,14 +102,12 @@ impl Socket {
                 .read_u32::<LittleEndian>()) as usize;
 
             if self.read_len > ::MAX_PAYLOAD_SIZE {
-                return Err(CrustError::PayloadSizeProhibitive);
+                return Err(CommonError::PayloadSizeProhibitive);
             }
 
             self.read_buffer = self.read_buffer[u32_size..].to_owned();
         }
 
-        // There is not enough data in the read buffer, signal the caller to
-        // call `read` again in the next ready handler.
         if self.read_len > self.read_buffer.len() {
             return Ok(None);
         }
@@ -140,7 +131,7 @@ impl Socket {
                                el: &mut EventLoop<Core>,
                                token: Token,
                                msg: Option<(T, Priority)>)
-                               -> ::Res<bool> {
+                               -> Result<bool> {
         let mut expired_keys = Vec::new();
         let _ = self.write_queue
             .iter()
@@ -163,14 +154,10 @@ impl Socket {
         if let Some((msg, priority)) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
-            // Preallocate space for the message length at the beginning of the
-            // data buffer.
             let _ = data.write_u32::<LittleEndian>(0);
 
-            // Serialize the message into the rest of the data buffer.
             try!(serialise_into(&msg, &mut data));
 
-            // Rewind the cursor to write the actual length to the beginning.
             let len = data.position() - mem::size_of::<u32>() as u64;
             data.set_position(0);
             try!(data.write_u32::<LittleEndian>(len as u32));
@@ -224,19 +211,18 @@ impl Socket {
         Ok(done)
     }
 
-    /// Shut down the socket (both reading and writing).
-    pub fn shutdown(&self) -> ::Res<()> {
+    pub fn shutdown(&self) -> Result<()> {
         Ok(try!(self.stream.shutdown(Shutdown::Both)))
     }
 
-    pub fn take_socket_error(&self) -> io::Result<()> {
-        self.stream.take_socket_error()
+    pub fn take_socket_error(&self) -> Result<()> {
+        Ok(try!(self.stream.take_socket_error()))
     }
 }
 
 impl Evented for Socket {
     fn register(&self,
-                selector: &Poll,
+                selector: &mut Selector,
                 token: Token,
                 interest: EventSet,
                 opts: PollOpt)
@@ -245,7 +231,7 @@ impl Evented for Socket {
     }
 
     fn reregister(&self,
-                  selector: &Poll,
+                  selector: &mut Selector,
                   token: Token,
                   interest: EventSet,
                   opts: PollOpt)
@@ -253,9 +239,7 @@ impl Evented for Socket {
         self.stream.reregister(selector, token, interest, opts)
     }
 
-    fn deregister(&self, selector: &Poll) -> io::Result<()> {
+    fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
         self.stream.deregister(selector)
     }
 }
-
-// TODO: write unit tests for Socket

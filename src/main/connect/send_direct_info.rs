@@ -1,13 +1,13 @@
 use std::io;
 use std::any::Any;
 
-use mio::tcp::TcpStream;
-use mio::{Token, EventSet, PollOpt, EventLoop};
 use mio::TryWrite;
-use maidsafe_utilities::serialisation::serialise_into;
+use mio::tcp::TcpStream;
+use mio::{EventLoop, EventSet, PollOpt, Token};
 
-use core::{State, Core, Context};
-use peer_id::PeerId;
+use common::{Context, Core, State};
+use maidsafe_utilities::serialisation::serialise_into;
+use main::PeerId;
 
 struct SendDirectInfo<F> {
     stream: Option<TcpStream>,
@@ -18,7 +18,10 @@ struct SendDirectInfo<F> {
 }
 
 impl<F> SendDirectInfo<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<(Token, Context, TcpStream)>, PeerId) + Any
+    where F: FnOnce(&mut Core,
+                    &mut EventLoop<Core>,
+                    io::Result<(Token, Context, TcpStream)>,
+                    PeerId) + Any
 {
     fn start(core: &mut Core,
              event_loop: &mut EventLoop<Core>,
@@ -26,8 +29,7 @@ impl<F> SendDirectInfo<F>
              context: Context,
              stream: TcpStream,
              peer_id: PeerId,
-             finish: F)
-    {
+             finish: F) {
         let mut out_buff = Vec::new();
         serialise_into(&peer_id, &mut out_buff);
 
@@ -36,18 +38,15 @@ impl<F> SendDirectInfo<F>
                 if n == out_buff.len() {
                     finish(core, event_loop, Ok(token, context, stream), peer_id);
                     return;
-                }
-                else {
+                } else {
                     n
                 }
-            },
-            Ok(None) => {
-                0
-            },
+            }
+            Ok(None) => 0,
             Err(e) => {
                 finish(core, event_loop, Err(e), peer_id);
                 return;
-            },
+            }
         };
 
         let state = SendDirectInfo {
@@ -62,14 +61,16 @@ impl<F> SendDirectInfo<F>
 }
 
 impl<F> State for SendDirectInfo<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<(Token, Context, TcpStream)>, PeerId) + Any
+    where F: FnOnce(&mut Core,
+                    &mut EventLoop<Core>,
+                    io::Result<(Token, Context, TcpStream)>,
+                    PeerId) + Any
 {
     fn ready(&mut self,
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             event_set: EventSet)
-    {
+             event_set: EventSet) {
         if event_set.is_error() {
             let _ = core.remove_state(self.context);
             let _ = core.remove_context(token);
@@ -85,8 +86,7 @@ impl<F> State for SendDirectInfo<F>
                 Err(e) => e,
             };
             finish(core, event_loop, Err(error), self.peer_id);
-        }
-        else if event_set.is_writable() {
+        } else if event_set.is_writable() {
             let res = {
                 let stream = self.stream.as_ref().unwrap();
                 stream.try_write(&self.out_buff[self.bytes_written..]);
@@ -97,16 +97,16 @@ impl<F> State for SendDirectInfo<F>
                         let _ = core.remove_state(self.context);
                         let stream = self.stream.take().unwrap();
                         let finish = self.finish.take().unwrap();
-                        finish(core, event_loop, Ok((self.token, self.context, stream)), self.peer_id);
+                        finish(core,
+                               event_loop,
+                               Ok((self.token, self.context, stream)),
+                               self.peer_id);
                         return;
-                    }
-                    else {
+                    } else {
                         n
                     }
-                },
-                Ok(None) => {
-                    0
-                },
+                }
+                Ok(None) => 0,
                 Err(e) => {
                     let _ = core.remove_state(self.context);
                     let _ = core.remove_context(self.token);
@@ -117,11 +117,10 @@ impl<F> State for SendDirectInfo<F>
                     let finish = self.finish.take().unwrap();
                     finish(core, event_loop, Err(e), self.peer_id);
                     return;
-                },
+                }
             };
             self.bytes_written += bytes_written;
-        }
-        else if event_set.is_hup() {
+        } else if event_set.is_hup() {
             let _ = core.remove_state(self.context);
             let _ = core.remove_context(token);
 
@@ -140,5 +139,3 @@ impl<F> State for SendDirectInfo<F>
         self
     }
 }
-
-

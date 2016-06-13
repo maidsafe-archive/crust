@@ -15,28 +15,25 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::collections::HashSet;
 use std::any::Any;
-use std::rc::Rc;
+use std::collections::HashSet;
 use std::cell::RefCell;
-use std::time::Duration;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::rc::Rc;
 
+use common::{Context, Core, CoreMessage, State};
 use igd::PortMappingProtocol;
-use net2::TcpBuilder;
 use mio::{EventLoop, Timeout, Token};
-
-use core::{Context, Core, CoreMessage};
-use core::state::State;
 use nat::{MappedAddr, MappingContext, NatError, util};
+use net2::TcpBuilder;
 use self::get_ext_addr::GetExtAddr;
 
 mod get_ext_addr;
 
-const TIMEOUT_SECS: u64 = 3;
+const TIMEOUT_MS: u64 = 3 * 1000;
 
 /// A state which represents the in-progress mapping of a tcp socket.
-pub struct MappingTcpSocket<F> {
+pub struct MappedTcpSocket<F> {
     token: Token,
     context: Context,
     socket: Option<TcpBuilder>,
@@ -47,7 +44,7 @@ pub struct MappingTcpSocket<F> {
     finish: Option<F>,
 }
 
-impl<F> MappingTcpSocket<F>
+impl<F> MappedTcpSocket<F>
     where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<MappedAddr>) + Any
 {
     /// Start mapping a tcp socket
@@ -90,7 +87,7 @@ impl<F> MappingTcpSocket<F>
 
                     let mut state = state.borrow_mut();
                     let mapping_tcp_sock = match state.as_any()
-                        .downcast_mut::<MappingTcpSocket<F>>() {
+                        .downcast_mut::<MappedTcpSocket<F>>() {
                         Some(mapping_sock) => mapping_sock,
                         None => return,
                     };
@@ -105,14 +102,14 @@ impl<F> MappingTcpSocket<F>
             .map(|&(ip, _)| MappedAddr::new(SocketAddr::new(IpAddr::V4(ip), addr.port()), false))
             .collect();
 
-        let state = Rc::new(RefCell::new(MappingTcpSocket {
+        let state = Rc::new(RefCell::new(MappedTcpSocket {
             token: token,
             context: context,
             socket: Some(socket),
             igd_children: igd_children,
             stun_children: HashSet::with_capacity(mc.peer_listeners().len()),
             mapped_addrs: mapped_addrs,
-            timeout: try!(event_loop.timeout(token, Duration::from_secs(TIMEOUT_SECS))),
+            timeout: try!(event_loop.timeout_ms(token, TIMEOUT_MS)),
             finish: Some(finish),
         }));
 
@@ -128,6 +125,10 @@ impl<F> MappingTcpSocket<F>
             if let Ok(child) = GetExtAddr::start(core, event_loop, addr, stun, Box::new(handler)) {
                 let _ = state.borrow_mut().stun_children.insert(child);
             }
+        }
+
+        if state.borrow().stun_children.is_empty() && state.borrow().igd_children == 0 {
+            return Ok(state.borrow_mut().terminate(core, event_loop));
         }
 
         let _ = core.insert_context(token, context);
@@ -146,7 +147,7 @@ impl<F> MappingTcpSocket<F>
             self.mapped_addrs.push(MappedAddr::new(our_ext_addr, true));
         }
         if self.stun_children.is_empty() && self.igd_children == 0 {
-            let _ = self.terminate(core, event_loop);
+            self.terminate(core, event_loop);
         }
     }
 
@@ -157,7 +158,7 @@ impl<F> MappingTcpSocket<F>
         self.igd_children -= 1;
         self.mapped_addrs.push(MappedAddr::new(our_ext_addr, false));
         if self.stun_children.is_empty() && self.igd_children == 0 {
-            let _ = self.terminate(core, event_loop);
+            self.terminate(core, event_loop);
         }
     }
 
@@ -173,7 +174,7 @@ impl<F> MappingTcpSocket<F>
     }
 }
 
-impl<F> State for MappingTcpSocket<F>
+impl<F> State for MappedTcpSocket<F>
     where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<MappedAddr>) + Any
 {
     fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: Token) {
@@ -184,7 +185,7 @@ impl<F> State for MappingTcpSocket<F>
         self.terminate_children(core, event_loop);
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
-        let _ = event_loop.clear_timeout(&self.timeout);
+        let _ = event_loop.clear_timeout(self.timeout);
 
         let socket = self.socket.take().expect("Logic Error");
         let mapped_addrs = self.mapped_addrs.drain(..).collect();

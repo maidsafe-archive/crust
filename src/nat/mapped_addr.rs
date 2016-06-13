@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::{self, IpAddr};
+
 use socket_addr;
 
 /// Socket Address that is publicly accessible if nat_restricted is false.
@@ -49,11 +50,13 @@ impl MappedAddr {
     }
 
     /// Enquire if it's a global address
+    #[allow(unused)]
     pub fn global(&self) -> bool {
         self.global
     }
 
     /// Get net::SocketAddr
+    #[allow(unused)]
     pub fn addr(&self) -> &net::SocketAddr {
         &self.addr.0
     }

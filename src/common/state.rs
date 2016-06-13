@@ -18,8 +18,8 @@
 
 use std::any::Any;
 
-use core::Core;
 use mio::{EventLoop, EventSet, Handler, Token};
+use super::Core;
 
 /// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be
 /// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to

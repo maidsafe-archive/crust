@@ -18,17 +18,11 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::Duration;
 
-use active_connection::ActiveConnection;
-use connect::ConnectionCandidate;
-use core::{Core, Priority, State};
-use event::Event;
-use message::Message;
+use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
+use main::peer_id;
+use common::{Core, Message, NameHash, Priority, Socket, State};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
-use peer_id::{self, PeerId};
-use socket::Socket;
-use service::{ConnectionId, ConnectionMap, NameHash};
 use sodiumoxide::crypto::box_::PublicKey;
 use socket_addr;
 
@@ -60,8 +54,8 @@ impl ExchangeMsg {
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(event_loop.register(&socket, token, event_set, PollOpt::edge()));
 
-        let timeout = try!(event_loop.timeout(token,
-                     Duration::from_millis(timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS))));
+        let timeout =
+            try!(event_loop.timeout_ms(token, timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
 
         let state = ExchangeMsg {
             cm: cm,
@@ -203,7 +197,7 @@ impl ExchangeMsg {
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
         }
-        let _ = event_loop.clear_timeout(&self.timeout);
+        let _ = event_loop.clear_timeout(self.timeout);
 
         let our_id = peer_id::new(self.our_pk);
 
@@ -274,7 +268,7 @@ impl State for ExchangeMsg {
             _ => (),
         }
 
-        let _ = event_loop.clear_timeout(&self.timeout);
+        let _ = event_loop.clear_timeout(self.timeout);
         let _ = event_loop.deregister(&self.socket.take().expect("Logic Error"));
     }
 

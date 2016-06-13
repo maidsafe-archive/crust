@@ -1,24 +1,20 @@
 //! Implements tcp hole punching
 
-use std::io;
-use std::io::Cursor;
-use std::collections::{HashMap, hash_map};
 use std::any::Any;
-use std::rc::Rc;
 use std::cell::RefCell;
-use std::time::Duration;
+use std::collections::{HashMap, hash_map};
+use std::io::{self, Cursor};
+use std::rc::Rc;
 
-use rand;
-use net2;
+use common::{Context, Core, State};
+use byteorder::{BigEndian, ReadBytesExt};
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use mio::{TryRead, TryWrite};
-use byteorder::{BigEndian, ReadBytesExt};
-
-use core::{Context, Core};
-use core::state::State;
-use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr};
 use nat::rendezvous_info::{PrivRendezvousInfo, PubRendezvousInfo};
+use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr};
+use net2;
+use rand;
 
 const SECRET_LEN: usize = 4;
 const NONCE_LEN: usize = 8;
@@ -77,8 +73,8 @@ impl<F> PunchHole<F>
         try!(event_loop.register(&listener,
                                  token,
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                 PollOpt::level()));
-        match event_loop.timeout(token, Duration::from_millis(5000)) {
+                                 PollOpt::edge()));
+        match event_loop.timeout_ms(token, 5000) {
             Ok(_) => (),
             Err(e) => {
                 debug!("Error setting hole punch timeout: {:?}", e);
@@ -101,8 +97,8 @@ impl<F> PunchHole<F>
             try!(event_loop.register(&stream,
                                      token,
                                      EventSet::writable() | EventSet::error() | EventSet::hup(),
-                                     PollOpt::level()));
-            let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
+                                     PollOpt::edge()));
+            let timeout = match event_loop.timeout_ms(token, 4000) {
                 Ok(timeout) => timeout,
                 Err(e) => {
                     debug!("Error setting hole punch connect() timeout: {:?}", e);
@@ -176,14 +172,14 @@ impl<F> PunchHole<F>
                                               token,
                                               EventSet::writable() | EventSet::error() |
                                               EventSet::hup(),
-                                              PollOpt::level()) {
+                                              PollOpt::edge()) {
                         Ok(()) => (),
                         Err(e) => {
                             debug!("Error registering stream: {}", e);
                             return;
                         }
                     };
-                    let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
+                    let timeout = match event_loop.timeout_ms(token, 4000) {
                         Ok(timeout) => timeout,
                         Err(e) => {
                             debug!("Error registering timeout: {:?}", e);
@@ -208,8 +204,8 @@ impl<F> PunchHole<F>
             trace!("PunchHole writer ready");
             let res = {
                 let writing_stream = oe.get_mut();
-                let _ = event_loop.clear_timeout(&writing_stream.timeout);
-                match event_loop.timeout(token, Duration::from_millis(4000)) {
+                let _ = event_loop.clear_timeout(writing_stream.timeout);
+                match event_loop.timeout_ms(token, 4000) {
                     Ok(timeout) => {
                         writing_stream.timeout = timeout;
                         let written = writing_stream.bytes_written;
@@ -271,12 +267,12 @@ impl<F> PunchHole<F>
                     let written = oe.get_mut().bytes_written;
                     if written >= SECRET_LEN + NONCE_LEN {
                         let writing_stream = oe.remove();
-                        let _ = event_loop.clear_timeout(&writing_stream.timeout);
+                        let _ = event_loop.clear_timeout(writing_stream.timeout);
                         match event_loop.reregister(&writing_stream.stream,
                                                     token,
                                                     EventSet::readable() | EventSet::error() |
                                                     EventSet::hup(),
-                                                    PollOpt::level()) {
+                                                    PollOpt::edge()) {
                             Ok(()) => (),
                             Err(e) => {
                                 debug!("Error reregistering stream: {}", e);

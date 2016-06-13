@@ -48,14 +48,3 @@ pub fn gen_rendezvous_info(endpoints: Vec<SocketAddr>) -> (PrivRendezvousInfo, P
     };
     (priv_info, pub_info)
 }
-
-/// Decompose a `PubRendezvousInfo` into parts
-pub fn decompose(info: PubRendezvousInfo) -> (Vec<SocketAddr>, [u8; 4]) {
-    let PubRendezvousInfo { endpoints, secret } = info;
-    (endpoints, secret)
-}
-
-/// Get the secret of a `PrivRendezvousInfo`
-pub fn get_priv_secret(info: PrivRendezvousInfo) -> [u8; 4] {
-    info.secret
-}

@@ -17,8 +17,8 @@
 
 use std::io;
 
+use common::CoreMessage;
 use mio;
-use core::CoreMessage;
 
 quick_error! {
     /// Nat Traversal specific error
