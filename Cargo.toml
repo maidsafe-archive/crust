@@ -18,7 +18,7 @@ get_if_addrs = "~0.4.0"
 igd = "~0.4.2"
 log = "~0.3.6"
 maidsafe_utilities = "~0.6.0"
-nat_traversal = "~0.3.3"
+mio = { git = "https://github.com/ustulation/mio.git", branch = "fix-crash-windows" }
 net2 = "~0.2.23"
 quick-error = "~1.0.0"
 rand = "~0.3.14"
@@ -29,9 +29,6 @@ sodiumoxide = "~0.0.10"
 [dependencies.clippy]
 optional = true
 version = "~0.0.64"
-
-[dependencies.mio]
-git = "https://github.com/carllerche/mio.git"
 
 [dev-dependencies]
 docopt = "~0.6.80"

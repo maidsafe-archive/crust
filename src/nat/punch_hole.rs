@@ -6,7 +6,6 @@ use std::collections::{HashMap, hash_map};
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::time::Duration;
 
 use rand;
 use net2;
@@ -78,7 +77,7 @@ impl<F> PunchHole<F>
                                  token,
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
                                  PollOpt::level()));
-        match event_loop.timeout(token, Duration::from_millis(5000)) {
+        match event_loop.timeout_ms(token, 5000) {
             Ok(_) => (),
             Err(e) => {
                 debug!("Error setting hole punch timeout: {:?}", e);
@@ -102,7 +101,7 @@ impl<F> PunchHole<F>
                                      token,
                                      EventSet::writable() | EventSet::error() | EventSet::hup(),
                                      PollOpt::level()));
-            let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
+            let timeout = match event_loop.timeout_ms(token, 4000) {
                 Ok(timeout) => timeout,
                 Err(e) => {
                     debug!("Error setting hole punch connect() timeout: {:?}", e);
@@ -166,7 +165,7 @@ impl<F> PunchHole<F>
         if token == self.listener_token {
             match self.listener.accept() {
                 Err(e) => {
-                    warn!("Error accepting connection during hole punching: {}", e);
+                    debug!("Error accepting connection during hole punching: {}", e);
                     return;
                 }
                 Ok(None) => return,
@@ -183,7 +182,7 @@ impl<F> PunchHole<F>
                             return;
                         }
                     };
-                    let timeout = match event_loop.timeout(token, Duration::from_millis(4000)) {
+                    let timeout = match event_loop.timeout_ms(token, 4000) {
                         Ok(timeout) => timeout,
                         Err(e) => {
                             debug!("Error registering timeout: {:?}", e);
@@ -208,8 +207,8 @@ impl<F> PunchHole<F>
             trace!("PunchHole writer ready");
             let res = {
                 let writing_stream = oe.get_mut();
-                let _ = event_loop.clear_timeout(&writing_stream.timeout);
-                match event_loop.timeout(token, Duration::from_millis(4000)) {
+                let _ = event_loop.clear_timeout(writing_stream.timeout);
+                match event_loop.timeout_ms(token, 4000) {
                     Ok(timeout) => {
                         writing_stream.timeout = timeout;
                         let written = writing_stream.bytes_written;
@@ -239,7 +238,7 @@ impl<F> PunchHole<F>
             };
             match res {
                 Err(e) => {
-                    warn!("Error writing stream during hole punching: {}", e);
+                    debug!("Error writing stream during hole punching: {}", e);
                     let writing_stream = oe.remove();
                     match event_loop.deregister(&writing_stream.stream) {
                         Ok(()) => (),
@@ -248,11 +247,10 @@ impl<F> PunchHole<F>
                     let _ = core.remove_context(token);
                 }
                 Ok(None) => {
-                    info!("Writer retured with None");
                     return;
                 }
                 Ok(Some(0)) => {
-                    info!("Writer disconnected");
+                    debug!("Writer disconnected");
                     let writing_stream = oe.remove();
                     let _ = core.remove_context(token);
                     match event_loop.deregister(&writing_stream.stream) {
@@ -271,12 +269,12 @@ impl<F> PunchHole<F>
                     let written = oe.get_mut().bytes_written;
                     if written >= SECRET_LEN + NONCE_LEN {
                         let writing_stream = oe.remove();
-                        let _ = event_loop.clear_timeout(&writing_stream.timeout);
+                        let _ = event_loop.clear_timeout(writing_stream.timeout);
                         match event_loop.reregister(&writing_stream.stream,
                                                     token,
                                                     EventSet::readable() | EventSet::error() |
                                                     EventSet::hup(),
-                                                    PollOpt::level()) {
+                                                    PollOpt::edge()) {
                             Ok(()) => (),
                             Err(e) => {
                                 debug!("Error reregistering stream: {}", e);
@@ -307,24 +305,24 @@ impl<F> PunchHole<F>
             };
             match res {
                 Err(e) => {
-                    warn!("Error reading stream during hole punching: {}", e);
+                    debug!("Error reading stream during hole punching: {}", e);
                     let reading_stream = oe.remove();
                     match event_loop.deregister(&reading_stream.stream) {
                         Ok(()) => (),
-                        Err(e) => warn!("Error deregistering socket: {}", e),
+                        Err(e) => debug!("Error deregistering socket: {}", e),
                     };
                     let _ = core.remove_context(token);
                     return;
                 }
                 Ok(None) => (),
                 Ok(Some(0)) => {
-                    info!("Reader disconnected");
+                    debug!("Reader disconnected");
                     let reading_stream = oe.remove();
                     let _ = core.remove_context(token);
                     match event_loop.deregister(&reading_stream.stream) {
                         Ok(()) => (),
                         Err(e) => {
-                            warn!("Error deregistering stream: {}", e);
+                            debug!("Error deregistering stream: {}", e);
                             return;
                         }
                     };
@@ -346,7 +344,7 @@ impl<F> PunchHole<F>
                             match event_loop.deregister(&reading_stream.stream) {
                                 Ok(()) => (),
                                 Err(e) => {
-                                    warn!("Error deregistering socket: {}", e);
+                                    debug!("Error deregistering socket: {}", e);
                                     return;
                                 }
                             };
