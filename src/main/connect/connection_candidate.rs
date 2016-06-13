@@ -19,14 +19,9 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use active_connection::ActiveConnection;
-use service::{ConnectionId, ConnectionMap};
-use core::{Core, Priority, State};
-use event::Event;
-use message::Message;
+use common::{Core, Message, Priority, Socket, State};
+use main::{ActiveConnection, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, Token};
-use peer_id::PeerId;
-use socket::Socket;
 
 pub struct ConnectionCandidate {
     cm: ConnectionMap,

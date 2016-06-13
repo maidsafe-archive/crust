@@ -14,32 +14,31 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
+// Defines `Core`, the mio handler and the core of the event loop.
 
 use std::io;
 
-use common::CoreMessage;
-use mio;
+use maidsafe_utilities::serialisation::SerialisationError;
 
 quick_error! {
-    /// Nat Traversal specific error
+    /// Common module specific error
     #[derive(Debug)]
-    pub enum NatError {
+    pub enum CommonError {
         /// IO error
         Io(e: io::Error) {
-            description("Io error during nat traversal")
-            display("Io error during nat traversal: {}", e)
+            description("Io error")
+            display("Io error: {}", e)
             cause(e)
             from()
         }
-        /// Mio Timer errors
-        MioTimer(err: mio::TimerError) {
-            description("Mio timer error")
-            from()
+        /// Size of a message to send or about to be read is too large
+        PayloadSizeProhibitive {
+            description("Payload is too large")
         }
-        /// Mio notify errors
-        MioNotify(err: mio::NotifyError<CoreMessage>) {
-            description("Mio notify error")
-            display("Mio notify error: {}", err)
+        /// Serialisation error
+        Serialisation(err: SerialisationError) {
+            description("Serialisation error")
+            display("Serialisation error: {}", err)
             cause(err)
             from()
         }

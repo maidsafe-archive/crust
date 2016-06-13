@@ -17,8 +17,8 @@
 
 use std::net::SocketAddr;
 
-use peer_id::PeerId;
-use service::ConnectionInfoResult;
+use super::PeerId;
+use super::ConnectionInfoResult;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.

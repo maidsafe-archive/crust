@@ -14,36 +14,23 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
+// Defines `Core`, the mio handler and the core of the event loop.
 
-use rand::{Rand, Rng};
-use std::fmt;
-use sodiumoxide::crypto::box_::{self, PublicKey};
+pub use self::error::CommonError;
+pub use self::core::{Context, Core, CoreMessage};
+pub use self::message::Message;
+pub use self::socket::Socket;
+pub use self::state::State;
 
-/// An identifier of a peer node.
-#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
-pub struct PeerId(PublicKey);
+// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be
+// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to
+// allow higher priority messages through.
+pub type Priority = u8;
+pub type NameHash = u64;
+pub type Result<T> = ::std::result::Result<T, CommonError>;
 
-impl fmt::Debug for PeerId {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter,
-               "PeerId({:02x}{:02x}..)",
-               (self.0).0[0],
-               (self.0).0[1])
-    }
-}
-
-impl fmt::Display for PeerId {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "{:02x}{:02x}..", (self.0).0[0], (self.0).0[1])
-    }
-}
-
-pub fn new(pub_key: PublicKey) -> PeerId {
-    PeerId(pub_key)
-}
-
-impl Rand for PeerId {
-    fn rand<R: Rng>(_rng: &mut R) -> PeerId {
-        PeerId(box_::gen_keypair().0)
-    }
-}
+mod core;
+mod error;
+mod message;
+mod socket;
+mod state;

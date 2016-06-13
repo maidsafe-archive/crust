@@ -16,8 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::net;
-use std::net::{IpAddr, SocketAddr};
+use std::net::{self, IpAddr, SocketAddr};
 
 use net2::TcpBuilder;
 

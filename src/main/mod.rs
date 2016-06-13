@@ -15,19 +15,28 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub type NameHash = u64;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
-use sodiumoxide::crypto::box_::PublicKey;
-use socket_addr;
+pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
+pub use self::bootstrap::Bootstrap;
+pub use self::config_handler::Config;
+pub use self::connect::{ConnectionCandidate, EstablishDirectConnection};
+pub use self::connection_listener::ConnectionListener;
+pub use self::event::Event;
+pub use self::error::CrustError;
+pub use self::peer_id::PeerId;
+pub use self::service::{ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo,
+                        Service};
 
-#[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
-pub enum Message {
-    Heartbeat,
-    BootstrapRequest(PublicKey, NameHash),
-    BootstrapResponse(PublicKey),
-    EchoAddrReq,
-    EchoAddrResp(socket_addr::SocketAddr),
-    ChooseConnection,
-    Connect(PublicKey, NameHash),
-    Data(Vec<u8>),
-}
+pub type ConnectionMap = Arc<Mutex<HashMap<PeerId, ConnectionId>>>;
+
+mod active_connection;
+mod bootstrap;
+mod config_handler;
+mod connect;
+mod connection_listener;
+mod event;
+mod error;
+mod peer_id;
+mod service;

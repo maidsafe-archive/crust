@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio;
 use std::io;
 use std::sync::mpsc;
 
-use nat;
-use peer_id::PeerId;
-use core::CoreMessage;
-use service_discovery;
+use common::{self, CoreMessage};
 use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
+use main::PeerId;
+use mio;
+use nat;
+use service_discovery;
 
 quick_error! {
     /// Crust's universal error type.
@@ -70,9 +70,10 @@ quick_error! {
             description("Mio timer error")
             from()
         }
-        /// Size of a message to send is too large
-        PayloadSizeProhibitive {
-            description("Payload is too large")
+        /// Common module errors
+        Common(err: common::CommonError) {
+            description("Common module error")
+            from()
         }
         /// Mio notify errors
         MioNotify(err: mio::NotifyError<CoreMessage>) {

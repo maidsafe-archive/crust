@@ -15,17 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::rc::Rc;
 use std::any::Any;
 use std::cell::RefCell;
+use std::rc::Rc;
 
-use nat::{NatError, util};
-use socket::Socket;
-use message::Message;
-use std::net::SocketAddr;
-use core::{Context, Core, Priority, State};
-use mio::{EventLoop, EventSet, PollOpt, Token};
+use common::{Context, Core, Message, Priority, Socket, State};
 use mio::tcp::TcpStream;
+use mio::{EventLoop, EventSet, PollOpt, Token};
+use nat::{NatError, util};
+use std::net::SocketAddr;
 
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,

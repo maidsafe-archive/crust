@@ -71,34 +71,17 @@ extern crate void;
 #[macro_use]
 mod tests;
 
-mod connect;
-mod active_connection;
-mod bootstrap;
-mod config_handler;
-mod connection_listener;
-/// Core Event Loop
-pub mod core;
-mod error;
-mod event;
-mod message;
-mod peer_id;
-mod service;
+mod main;
+mod common;
 mod service_discovery;
-mod socket;
-/// Nat traversal
-pub mod nat;
+mod nat;
 
+pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
+               PubConnectionInfo, Service};
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-
 /// Allowed max `data_len` for read/write is 2MB
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 /// Crust result type
 pub type Res<T> = Result<T, CrustError>;
-
-pub use event::Event;
-pub use error::CrustError;
-pub use peer_id::PeerId;
-pub use service::{ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo, Service};
-pub use socket_addr::SocketAddr;

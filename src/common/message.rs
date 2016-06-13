@@ -15,33 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
+use socket_addr;
+use sodiumoxide::crypto::box_::PublicKey;
+use common::NameHash;
 
-use common::CoreMessage;
-use mio;
-
-quick_error! {
-    /// Nat Traversal specific error
-    #[derive(Debug)]
-    pub enum NatError {
-        /// IO error
-        Io(e: io::Error) {
-            description("Io error during nat traversal")
-            display("Io error during nat traversal: {}", e)
-            cause(e)
-            from()
-        }
-        /// Mio Timer errors
-        MioTimer(err: mio::TimerError) {
-            description("Mio timer error")
-            from()
-        }
-        /// Mio notify errors
-        MioNotify(err: mio::NotifyError<CoreMessage>) {
-            description("Mio notify error")
-            display("Mio notify error: {}", err)
-            cause(err)
-            from()
-        }
-    }
+#[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
+pub enum Message {
+    Heartbeat,
+    BootstrapRequest(PublicKey, NameHash),
+    BootstrapResponse(PublicKey),
+    EchoAddrReq,
+    EchoAddrResp(socket_addr::SocketAddr),
+    ChooseConnection,
+    Connect(PublicKey, NameHash),
+    Data(Vec<u8>),
 }

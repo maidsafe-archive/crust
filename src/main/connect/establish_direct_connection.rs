@@ -15,18 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
 use std::io;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
+use common::{Core, Message, Socket, State};
 use mio::{EventLoop, EventSet, PollOpt, Token};
-
-use core::{Core, State};
-use message::Message;
-use socket::Socket;
+use sodiumoxide::crypto::box_::PublicKey;
 
 pub struct EstablishDirectConnection<F> {
     finish: Option<F>,
@@ -51,7 +48,7 @@ impl<F> EstablishDirectConnection<F>
             Ok(socket) => socket,
             Err(e) => {
                 error!("Failed to connect socket: {:?}", e);
-                finish(core, event_loop, Err(e));
+                finish(core, event_loop, Err(From::from(e)));
                 return;
             }
         };
@@ -89,7 +86,7 @@ impl<F> EstablishDirectConnection<F>
 
         if let Err(e) = self.socket.as_mut().unwrap().write(event_loop, self.token, message) {
             error!("Failed to write to socket: {:?}", e);
-            self.done(core, event_loop, Err(e));
+            self.done(core, event_loop, Err(From::from(e)));
         }
     }
 
@@ -108,7 +105,7 @@ impl<F> EstablishDirectConnection<F>
             Ok(None) => (),
             Err(e) => {
                 error!("Failed to read from socket: {:?}", e);
-                self.done(core, event_loop, Err(e));
+                self.done(core, event_loop, Err(From::from(e)));
             }
         }
     }
@@ -167,7 +164,7 @@ impl<F> State for EstablishDirectConnection<F>
                 .as_ref()
                 .unwrap()
                 .take_socket_error() {
-                Ok(()) => io::Error::new(io::ErrorKind::Other, "Unknown error"),
+                Ok(()) => From::from(io::Error::new(io::ErrorKind::Other, "Unknown error")),
                 Err(e) => e,
             };
 

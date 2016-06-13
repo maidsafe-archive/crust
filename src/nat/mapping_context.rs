@@ -66,10 +66,11 @@ impl MappingContext {
     }
 
     /// Inform the context about external servers
+    #[allow(unused)]
     pub fn add_peer_listeners(&mut self, potential_peers: Vec<MappedAddr>) {
         let listeners = potential_peers.iter()
             .filter(|elt| elt.global() && !elt.nat_restricted)
-            .map(|elt| elt.addr.0)
+            .map(|elt| elt.addr())
             .collect::<Vec<_>>();
         self.peer_listeners.extend(listeners);
     }

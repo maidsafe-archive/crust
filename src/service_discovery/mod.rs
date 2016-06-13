@@ -19,22 +19,22 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use rand;
-use std::u16;
-use std::rc::Rc;
 use std::any::Any;
-use std::str::FromStr;
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::mpsc::Sender;
-use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
+use std::u16;
 
-use socket_addr;
-use nat::MappedAddr;
-use core::{Context, Core, State};
+use common::{Context, Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
+use nat::MappedAddr;
+use rand;
+use socket_addr;
 
 use mio::udp::UdpSocket;
 use mio::{EventLoop, EventSet, PollOpt, Token};
@@ -254,15 +254,16 @@ mod test {
     use super::*;
 
     use std::net;
-    use std::thread;
-    use mio::EventLoop;
-    use std::sync::mpsc;
     use std::str::FromStr;
-    use nat::MappedAddr;
-    use std::time::Duration;
+    use std::sync::mpsc;
     use std::sync::{Arc, Mutex};
-    use core::{Context, Core, CoreMessage};
+    use std::thread;
+    use std::time::Duration;
+
+    use common::{Context, Core, CoreMessage};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use mio::EventLoop;
+    use nat::MappedAddr;
 
     #[test]
     fn service_discovery() {

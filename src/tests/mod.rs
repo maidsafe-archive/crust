@@ -17,18 +17,15 @@
 
 #[macro_use]
 pub mod utils;
+pub use self::utils::{gen_config, get_event_sender, timebomb};
 
 use std::collections::HashSet;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
-use config_handler::Config;
-use event::Event;
-use service::Service;
+use main::{Config, Event, Service};
 use socket_addr::SocketAddr;
-
-pub use self::utils::{gen_config, get_event_sender, timebomb};
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
@@ -200,16 +197,14 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
-    use mio::{EventLoop, EventSet, PollOpt, Token};
-    use mio::tcp::TcpListener;
-    use sodiumoxide::crypto::box_;
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    use core::{Context, Core, State};
-    use message::Message;
-    use socket::Socket;
+    use common::{Context, Core, Message, Socket, State};
+    use mio::tcp::TcpListener;
+    use mio::{EventLoop, EventSet, PollOpt, Token};
+    use sodiumoxide::crypto::box_;
 
     pub struct Listen(TcpListener);
 
@@ -311,14 +306,14 @@ mod broken_peer {
 #[test]
 #[ignore]
 fn drop_peer_when_no_message_received_within_inactivity_period() {
+    use std::thread;
+
+    use common::{Core, CoreMessage};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use mio::EventLoop;
     use mio::tcp::TcpListener;
-    use sodiumoxide;
-    use std::thread;
-
-    use core::{Core, CoreMessage};
     use self::broken_peer;
+    use sodiumoxide;
 
     sodiumoxide::init();
 
@@ -361,7 +356,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_period() {
     use std::thread;
     use std::time::Duration;
-    use active_connection::INACTIVITY_TIMEOUT_MS;
+    use main::INACTIVITY_TIMEOUT_MS;
 
     let config0 = gen_config();
     let (event_tx0, event_rx0) = get_event_sender();

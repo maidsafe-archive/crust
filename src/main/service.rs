@@ -15,11 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop};
-use net2;
-use sodiumoxide;
-use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
@@ -27,29 +22,26 @@ use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use bootstrap::Bootstrap;
-use config_handler::{self, Config};
-use connect::{ConnectionCandidate, EstablishDirectConnection};
-use connection_listener::ConnectionListener;
-use core::{Context, Core, CoreMessage, Priority};
-use error::CrustError;
-use event::Event;
-use nat::{MappedAddr, MappingContext, MappingTcpSocket};
+use common::{CommonError, Context, Core, CoreMessage, Priority, Socket};
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use mio::{self, EventLoop};
+use nat::{MappedAddr, MappedTcpSocket, MappingContext};
 use nat::punch_hole::PunchHole;
 use nat::rendezvous_info::{PrivRendezvousInfo, PubRendezvousInfo, gen_rendezvous_info};
-use peer_id::{self, PeerId};
+use net2;
 use service_discovery::ServiceDiscovery;
-use socket::Socket;
-
-pub type NameHash = u64;
+use sodiumoxide;
+use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
+use main::config_handler::{self, Config};
+use main::peer_id;
+use main::{Bootstrap, ConnectionCandidate, ConnectionListener, ConnectionMap, CrustError,
+           EstablishDirectConnection, Event, PeerId};
 
 #[derive(Debug, Clone, Copy)]
 pub struct ConnectionId {
     pub active_connection: Option<Context>,
     pub currently_handshaking: usize,
 }
-
-pub type ConnectionMap = Arc<Mutex<HashMap<PeerId, ConnectionId>>>;
 
 const BOOTSTRAP_CONTEXT: Context = Context(0);
 const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
@@ -108,7 +100,7 @@ pub struct Service {
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     is_service_discovery_running: bool,
-    mapping_context: Arc<MappingContext>,
+    mc: Arc<MappingContext>,
     mio_tx: mio::Sender<CoreMessage>,
     name_hash: u64,
     our_keys: (PublicKey, SecretKey),
@@ -136,8 +128,8 @@ impl Service {
 
         // Form our initial contact info
         let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
-        let mut mapping_context = try!(MappingContext::new());
-        mapping_context.add_peer_listeners_no_check(config.hard_coded_contacts
+        let mut mc = try!(MappingContext::new());
+        mc.add_peer_listeners_no_check(config.hard_coded_contacts
             .iter()
             .map(|elt| elt.0)
             .collect());
@@ -153,7 +145,7 @@ impl Service {
             config: config,
             event_tx: event_tx,
             is_service_discovery_running: false,
-            mapping_context: Arc::new(mapping_context),
+            mc: Arc::new(mc),
             mio_tx: mio_tx,
             name_hash: name_hash,
             our_keys: our_keys,
@@ -244,7 +236,7 @@ impl Service {
     /// explicitly.
     pub fn start_listening_tcp(&mut self) -> ::Res<()> {
         let cm = self.cm.clone();
-        let mapping_context = self.mapping_context.clone();
+        let mc = self.mc.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
         let our_public_key = self.our_keys.0;
         let name_hash = self.name_hash;
@@ -260,7 +252,7 @@ impl Service {
                                           our_public_key,
                                           name_hash,
                                           cm,
-                                          mapping_context,
+                                          mc,
                                           our_listeners,
                                           LISTENER_CONTEXT,
                                           event_tx);
@@ -470,7 +462,7 @@ impl Service {
         // TODO(Spandan) This is wrong. Correct size can only be obtained post serialisation of
         // enum in which this will be put
         if msg.len() > ::MAX_PAYLOAD_SIZE {
-            return Err(CrustError::PayloadSizeProhibitive);
+            return Err(From::from(CommonError::PayloadSizeProhibitive));
         }
 
         let context = match self.cm.lock().unwrap().get(&peer_id) {
@@ -491,14 +483,10 @@ impl Service {
         let event_tx = self.event_tx.clone();
         let our_pub_key = self.our_keys.0;
         let our_listeners = self.our_listeners.lock().unwrap().clone();
-        let mapping_context = self.mapping_context.clone();
+        let mc = self.mc.clone();
         if let Err(e) = self.post(move |mut core, mut event_loop| {
             let event_tx_clone = event_tx.clone();
-            match MappingTcpSocket::start(core,
-                                          event_loop,
-                                          0,
-                                          &mapping_context,
-                                          move |_, _, socket, addrs| {
+            match MappedTcpSocket::start(core, event_loop, 0, &mc, move |_, _, socket, addrs| {
                 // TODO(Spandan) remove this way of doing things altogether
                 let addrs = addrs.into_iter().map(|elt| elt.addr).collect();
                 let event_tx = event_tx_clone;
@@ -569,16 +557,16 @@ fn name_hash(network_name: &Option<String>) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use std::collections::{HashMap, hash_map};
     use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
-    use std::sync::{Arc, Barrier, mpsc};
-    // use maidsafe_utilities::log;
     use std::sync::mpsc::Receiver;
+    use std::sync::{Arc, Barrier, mpsc};
     use std::thread::JoinHandle;
     use std::time::Duration;
     use maidsafe_utilities;
 
-    use event::Event;
+    use main::Event;
     use tests::{get_event_sender, timebomb};
 
     #[test]
@@ -724,7 +712,7 @@ mod tests {
         impl TestNode {
             fn new(index: usize) -> (TestNode, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
-                let config = unwrap_result!(::config_handler::read_config_file());
+                let config = unwrap_result!(::main::config_handler::read_config_file());
                 let mut service = unwrap_result!(Service::with_config(event_sender, config));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());

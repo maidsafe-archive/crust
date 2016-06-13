@@ -17,8 +17,8 @@
 
 pub use self::error::NatError;
 pub use self::mapped_addr::MappedAddr;
+pub use self::mapped_tcp_socket::MappedTcpSocket;
 pub use self::mapping_context::MappingContext;
-pub use self::mapped_tcp_socket::MappingTcpSocket;
 
 mod error;
 mod mapped_addr;
@@ -26,5 +26,5 @@ mod mapped_tcp_socket;
 mod mapping_context;
 mod util;
 
-pub mod rendezvous_info;
 pub mod punch_hole;
+pub mod rendezvous_info;

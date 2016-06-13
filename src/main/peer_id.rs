@@ -15,33 +15,36 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
+use std::fmt;
 
-use common::CoreMessage;
-use mio;
+use sodiumoxide::crypto::box_::{self, PublicKey};
+use rand::{Rand, Rng};
 
-quick_error! {
-    /// Nat Traversal specific error
-    #[derive(Debug)]
-    pub enum NatError {
-        /// IO error
-        Io(e: io::Error) {
-            description("Io error during nat traversal")
-            display("Io error during nat traversal: {}", e)
-            cause(e)
-            from()
-        }
-        /// Mio Timer errors
-        MioTimer(err: mio::TimerError) {
-            description("Mio timer error")
-            from()
-        }
-        /// Mio notify errors
-        MioNotify(err: mio::NotifyError<CoreMessage>) {
-            description("Mio notify error")
-            display("Mio notify error: {}", err)
-            cause(err)
-            from()
-        }
+/// An identifier of a peer node.
+#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
+pub struct PeerId(PublicKey);
+
+impl fmt::Debug for PeerId {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter,
+               "PeerId({:02x}{:02x}..)",
+               (self.0).0[0],
+               (self.0).0[1])
+    }
+}
+
+impl fmt::Display for PeerId {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "{:02x}{:02x}..", (self.0).0[0], (self.0).0[1])
+    }
+}
+
+pub fn new(pub_key: PublicKey) -> PeerId {
+    PeerId(pub_key)
+}
+
+impl Rand for PeerId {
+    fn rand<R: Rng>(_rng: &mut R) -> PeerId {
+        PeerId(box_::gen_keypair().0)
     }
 }

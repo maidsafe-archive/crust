@@ -17,23 +17,19 @@
 
 mod exchange_msg;
 
-use mio::{EventLoop, EventSet, PollOpt, Token};
-use mio::tcp::TcpListener;
-use net2::TcpBuilder;
-// use socket_addr;
-use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
-// use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use common::{Context, Core, NameHash, Socket, State};
+use main::{ConnectionMap, Event};
+use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::tcp::TcpListener;
+use nat::{MappedAddr, MappedTcpSocket, MappingContext};
+use net2::TcpBuilder;
+use sodiumoxide::crypto::box_::PublicKey;
 use self::exchange_msg::ExchangeMsg;
-use service::{ConnectionMap, NameHash};
-use core::{Context, Core, State};
-use event::Event;
-use nat::{MappedAddr, MappingContext, MappingTcpSocket};
-use socket::Socket;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -56,7 +52,7 @@ impl ConnectionListener {
                  our_pk: PublicKey,
                  name_hash: NameHash,
                  cm: ConnectionMap,
-                 mapping_context: Arc<MappingContext>,
+                 mc: Arc<MappingContext>,
                  our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
                  context: Context,
                  event_tx: ::CrustEventSender) {
@@ -78,7 +74,7 @@ impl ConnectionListener {
             }
         };
 
-        if let Err(e) = MappingTcpSocket::start(core, event_loop, port, &mapping_context, finish) {
+        if let Err(e) = MappedTcpSocket::start(core, event_loop, port, &mc, finish) {
             error!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
@@ -183,29 +179,27 @@ mod test {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
 
-    use std::mem;
-    use std::sync::mpsc;
-    use std::net::TcpStream;
-    use std::time::Duration;
-    use std::sync::{Arc, Mutex};
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
+    use std::mem;
     use std::net::SocketAddr as StdSocketAddr;
+    use std::net::TcpStream;
+    use std::sync::mpsc;
+    use std::sync::{Arc, Mutex};
+    use std::time::Duration;
 
-    use event::Event;
-    use message::Message;
-    use socket_addr::SocketAddr;
-    use mio::{EventLoop, Sender};
-    use core::{Context, Core, CoreMessage};
-    use rustc_serialize::Decodable;
-    use nat::MappingContext;
-    use sodiumoxide::crypto::box_::{self, PublicKey};
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+    use common::{Context, Core, CoreMessage, Message, NameHash};
+    use main::{Event, peer_id};
+    use mio::{EventLoop, Sender};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use nat::MappingContext;
+    use socket_addr::SocketAddr;
+    use sodiumoxide::crypto::box_::{self, PublicKey};
+    use rustc_serialize::Decodable;
 
-    type NameHash = u64;
     const NAME_HASH: NameHash = 9876543210;
 
     struct Listener {
@@ -236,7 +230,7 @@ mod test {
             ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
-        let mapping_context = Arc::new(MappingContext::new().expect("Could not get MC"));
+        let mc = Arc::new(MappingContext::new().expect("Could not get MC"));
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
 
         let listeners_clone = listeners.clone();
@@ -249,7 +243,7 @@ mod test {
                                           pk,
                                           NAME_HASH,
                                           cm,
-                                          mapping_context,
+                                          mc,
                                           listeners_clone,
                                           Context(0),
                                           crust_sender);
@@ -322,7 +316,7 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, ::peer_id::new(pk)),
+            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, peer_id::new(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }
@@ -333,12 +327,12 @@ mod test {
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut us, message).expect("Could not write.");
 
-        let our_id = ::peer_id::new(pk);
+        let our_id = peer_id::new(pk);
         let their_id = match read(&mut us).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
-                ::peer_id::new(peer_pk)
+                peer_id::new(peer_pk)
             }
             msg => panic!("Unexpected message: {:?}", msg),
         };
@@ -350,7 +344,7 @@ mod test {
 
         match listener.event_rx.recv().expect("Could not read event channel") {
             Event::NewPeer(res, peer_id) => {
-                assert_eq!(peer_id, ::peer_id::new(pk));
+                assert_eq!(peer_id, peer_id::new(pk));
                 assert!(res.is_ok());
             }
             event => panic!("Unexpected event notification: {:?}", event),
