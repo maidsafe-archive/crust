@@ -20,7 +20,6 @@ use std::collections::HashSet;
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::time::Duration;
 
 use igd::PortMappingProtocol;
 use net2::TcpBuilder;
@@ -112,7 +111,7 @@ impl<F> MappingTcpSocket<F>
             igd_children: igd_children,
             stun_children: HashSet::with_capacity(mc.peer_listeners().len()),
             mapped_addrs: mapped_addrs,
-            timeout: try!(event_loop.timeout(token, Duration::from_secs(TIMEOUT_SECS))),
+            timeout: try!(event_loop.timeout_ms(token, TIMEOUT_SECS * 1000)),
             finish: Some(finish),
         }));
 
@@ -184,7 +183,7 @@ impl<F> State for MappingTcpSocket<F>
         self.terminate_children(core, event_loop);
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
-        let _ = event_loop.clear_timeout(&self.timeout);
+        let _ = event_loop.clear_timeout(self.timeout);
 
         let socket = self.socket.take().expect("Logic Error");
         let mapped_addrs = self.mapped_addrs.drain(..).collect();

@@ -28,7 +28,6 @@ use std::mem;
 use std::net;
 use std::rc::{Rc, Weak};
 use std::sync::mpsc::{self, Receiver};
-use std::time::Duration;
 
 use active_connection::ActiveConnection;
 use config_handler::Config;
@@ -83,8 +82,7 @@ impl Bootstrap {
 
         let token = core.get_new_token();
         let bs_timeout_token = core.get_new_token();
-        let bs_timeout = try!(event_loop.timeout(bs_timeout_token,
-                                                 Duration::from_millis(BOOTSTRAP_TIMEOUT_MS)));
+        let bs_timeout = try!(event_loop.timeout_ms(bs_timeout_token, BOOTSTRAP_TIMEOUT_MS));
 
         let sd_meta = match seek_peers(core, event_loop, service_discovery_context, token) {
             Ok((rx, timeout)) => {
@@ -217,11 +215,11 @@ impl State for Bootstrap {
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         self.terminate_children(core, event_loop);
         if let Some(sd_meta) = self.sd_meta.take() {
-            let _ = event_loop.clear_timeout(&sd_meta.timeout);
+            let _ = event_loop.clear_timeout(sd_meta.timeout);
         }
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
-        let _ = event_loop.clear_timeout(&self.bs_timeout);
+        let _ = event_loop.clear_timeout(self.bs_timeout);
         let _ = core.remove_context(self.bs_timeout_token);
     }
 
@@ -249,8 +247,7 @@ fn seek_peers(core: &mut Core,
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
         try!(state.seek_peers());
-        let timeout =
-            try!(event_loop.timeout(token, Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS)));
+        let timeout = try!(event_loop.timeout_ms(token, SERVICE_DISCOVERY_TIMEOUT_MS));
 
         Ok((rx, timeout))
     } else {

@@ -25,7 +25,7 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use core::{Core, Priority};
 use error::CrustError;
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
-use mio::{EventLoop, EventSet, Evented, Poll, PollOpt, Token};
+use mio::{EventLoop, EventSet, Evented, Selector, PollOpt, Token};
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
 
@@ -236,7 +236,7 @@ impl Socket {
 
 impl Evented for Socket {
     fn register(&self,
-                selector: &Poll,
+                selector: &mut Selector,
                 token: Token,
                 interest: EventSet,
                 opts: PollOpt)
@@ -245,7 +245,7 @@ impl Evented for Socket {
     }
 
     fn reregister(&self,
-                  selector: &Poll,
+                  selector: &mut Selector,
                   token: Token,
                   interest: EventSet,
                   opts: PollOpt)
@@ -253,7 +253,7 @@ impl Evented for Socket {
         self.stream.reregister(selector, token, interest, opts)
     }
 
-    fn deregister(&self, selector: &Poll) -> io::Result<()> {
+    fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
         self.stream.deregister(selector)
     }
 }
