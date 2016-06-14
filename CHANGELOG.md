@@ -1,5 +1,23 @@
 # CRUST - Change Log
 
+## [0.15.0]
+- Integrate with mio
+   - This currently uses a temporary mio fork (`tmp_mio`) [with windows bug fix](https://github.com/carllerche/mio/pull/401).
+   - Redesign with State Pattern.
+- Bring number of persistent threads in crust to 1.
+   - Previously we would have multiple threads _per connection_ leading to huge number of context switches which was inefficient. It was not uncommon to see more than 200 threads for a little over 60 connections (Routing Table size > 60).
+   - Now in many of our tests where cpu would constantly hover around 100%, we have cpu now calm at around 1-5% and peaks to 30% temporarily only during peak stress (Lot of churn and data exchange).
+- Make all system calls async.
+   - Switch from application level concurrency primitives to operating system level concurrency.
+   - Now with event based mechanism, when kernel is not ready for some state we steal that opportunity to have it service some other state it is ready for which keeps the event pipeline hot and optimal.
+- Attempt bootstrapping in parallel.
+   - This increases the speed of bootstrap process. Previously the sequential bootstrap meant we went to next potential peer only if the currently attempted one failed.
+- Remove some of the 1st party dependant crates and move it in as modules.
+- Cleaned out crust config file removing deprecated options.
+- Integrate stun service into connection listeners instead of having them as separate peers.
+- Crust API updates to rename OurConnectionInfo, TheirConnectionInfo to PrivConnectionInfo and PubConnectionInfo.
+- Support bootstrap blacklist.
+
 ## [0.14.0]
 - Depend on maidsafe_utilities 0.6.0.
 - Fix endianness issue.

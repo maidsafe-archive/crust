@@ -1,9 +1,0 @@
-{
-  "msg_to_send": "hello from node-0",
-  "start_listening": true,
-  "start_service_discovery": false,
-  "service_runs": 2,
-  "output_report_path": "/tmp/report-0.json",
-  "max_wait_before_restart_service_secs": 1,
-  "max_msgs_per_sec": 10
-}
