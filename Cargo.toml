@@ -7,14 +7,12 @@ license = "GPL-3.0/MaidSafe.net Commercial License 1.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.14.0"
+version = "0.15.0"
 
 [dependencies]
 byteorder = "~0.5.1"
-clippy = {version = "~0.0.68", optional = true}
 config_file_handler = "~0.3.0"
 crossbeam = "~0.2.9"
-env_logger = "~0.3.3"
 get_if_addrs = "~0.4.0"
 igd = "~0.4.2"
 log = "~0.3.6"
@@ -27,47 +25,9 @@ socket_addr = "~0.1.0"
 sodiumoxide = "~0.0.10"
 tmp_mio = "~0.5.2"
 
+[dependencies.clippy]
+optional = true
+version = "~0.0.76"
+
 [dev-dependencies]
-docopt = "~0.6.80"
 void = "~1.0.2"
-
-[[example]]
-bench = false
-name = "simple_demo"
-path = "examples/simple_demo.rs"
-test = false
-
-[[example]]
-bench = false
-name = "simple_sender"
-path = "examples/simple_sender.rs"
-test = false
-
-[[example]]
-bench = false
-name = "simple_receiver"
-path = "examples/simple_receiver.rs"
-test = false
-
-[[example]]
-bench = false
-name = "crust_peer"
-path = "examples/crust_peer.rs"
-test = false
-
-[[example]]
-bench = false
-name = "reporter"
-path = "examples/reporter.rs"
-test = false
-
-[[example]]
-bench = false
-name = "simple_benchmark"
-path = "examples/simple_benchmark.rs"
-test = false
-
-[[test]]
-name = "send_and_receive"
-path = "tests/send_and_receive.rs"
-test = false
