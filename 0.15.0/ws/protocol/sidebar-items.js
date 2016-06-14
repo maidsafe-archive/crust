@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["CloseCode","Status code used to indicate why an endpoint is closing the WebSocket connection."],["OpCode","Operation codes as part of rfc6455."]]});

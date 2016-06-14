@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ParseResult",""],["Sign",""]],"fn":[["parse_decimal","Check if the input string is a valid floating point number and if so, locate the integral part, the fractional part, and the exponent in it. Does not handle signs."]],"struct":[["Decimal","The interesting parts of a decimal string."]]});

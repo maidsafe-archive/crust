@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Compiler","A compiler translates a regular expression AST to a sequence of instructions. The sequence of instructions represents an NFA."]]});

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/num_cpus-0.2.12/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/num_cpus-0.2.13/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -157,6 +157,7 @@
 <span id="113">113</span>
 <span id="114">114</span>
 <span id="115">115</span>
+<span id="116">116</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Replaces the deprecated functionality of std::os::num_cpus.</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>test</span>, <span class='ident'>deny</span>(<span class='ident'>warnings</span>))]</span>
@@ -255,6 +256,7 @@
         <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>,
         <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>,
         <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>,
+        <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;solaris&quot;</span>,
     )
 )]</span>
 <span class='kw'>fn</span> <span class='ident'>get_num_cpus</span>() <span class='op'>-&gt;</span> <span class='ident'>usize</span> {

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["open","The `open()` function decrypts the ciphertext `c` using the key pair `(pk, sk)` and returns the decrypted message."],["seal","The `seal()` function encrypts a message `m` for a recipient whose public key is `pk`. It returns the ciphertext whose length is `SEALBYTES + m.len()`."]]});
