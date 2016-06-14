@@ -18,21 +18,17 @@ get_if_addrs = "~0.4.0"
 igd = "~0.4.2"
 log = "~0.3.6"
 maidsafe_utilities = "~0.6.0"
-nat_traversal = "~0.3.3"
 net2 = "~0.2.23"
 quick-error = "~1.0.0"
 rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
 socket_addr = "~0.1.0"
 sodiumoxide = "~0.0.10"
+tmp_mio = "~0.5.2"
 
 [dependencies.clippy]
 optional = true
 version = "~0.0.64"
-
-[dependencies.mio]
-git = "https://github.com/ustulation/mio.git"
-branch = "fix-crash-windows"
 
 [dev-dependencies]
 docopt = "~0.6.80"

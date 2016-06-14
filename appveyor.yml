@@ -5,7 +5,7 @@ environment:
     - RUST_VERSION: stable
 branches:
   only:
-    - async
+    - master
 
 clone_depth: 50
 

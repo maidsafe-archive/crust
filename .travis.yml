@@ -9,10 +9,13 @@ rust:
 # - beta
   - stable
   - nightly
+matrix:
+  allow_failures:
+    - rust: nightly
 sudo: false
 branches:
   only:
-    - async
+    - master
 cache:
   cargo: true
   directories:

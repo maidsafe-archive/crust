@@ -50,7 +50,7 @@ extern crate config_file_handler;
 extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
-extern crate mio;
+extern crate tmp_mio as mio;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
