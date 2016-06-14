@@ -1,16 +1,17 @@
 [package]
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
-documentation = "http://maidsafe.net/crust/latest"
+documentation = "http://docs.maidsafe.net/crust/latest"
 homepage = "http://maidsafe.net"
-license = "GPL-3.0"
+license = "GPL-3.0/MaidSafe.net Commercial License 1.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.12.0"
+version = "0.14.0"
 
 [dependencies]
 byteorder = "~0.5.1"
+clippy = {version = "~0.0.68", optional = true}
 config_file_handler = "~0.3.0"
 crossbeam = "~0.2.9"
 env_logger = "~0.3.3"
@@ -25,10 +26,6 @@ rustc-serialize = "~0.3.19"
 socket_addr = "~0.1.0"
 sodiumoxide = "~0.0.10"
 tmp_mio = "~0.5.2"
-
-[dependencies.clippy]
-optional = true
-version = "~0.0.64"
 
 [dev-dependencies]
 docopt = "~0.6.80"
