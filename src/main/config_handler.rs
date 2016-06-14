@@ -1,4 +1,4 @@
-// Copyright 2015 MaidSafe.net limited.
+// Copyright 2016 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use static_contact_info::StaticContactInfo;
-use config_file_handler::FileHandler;
-use config_file_handler;
+use config_file_handler::{self, FileHandler};
+use std::ffi::OsString;
+use std::path::PathBuf;
+
 use socket_addr::SocketAddr;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub hard_coded_contacts: Vec<StaticContactInfo>,
+    pub hard_coded_contacts: Vec<SocketAddr>,
     pub tcp_acceptor_port: Option<u16>,
-    pub tcp_mapper_servers: Vec<SocketAddr>,
     pub service_discovery_port: Option<u16>,
     pub bootstrap_cache_name: Option<String>,
     pub network_name: Option<String>,
@@ -33,9 +33,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            hard_coded_contacts: vec![], // No hardcoded endpoints
+            hard_coded_contacts: vec![],
             tcp_acceptor_port: None,
-            tcp_mapper_servers: vec![],
             service_discovery_port: None,
             bootstrap_cache_name: None,
             network_name: None,
@@ -44,7 +43,7 @@ impl Default for Config {
 }
 
 /// Reads the default crust config file.
-pub fn read_config_file() -> Result<Config, ::error::Error> {
+pub fn read_config_file() -> ::Res<Config> {
     let file_handler = try!(FileHandler::new(&try!(get_file_name())));
     let cfg = try!(file_handler.read_file());
     Ok(cfg)
@@ -57,8 +56,8 @@ pub fn read_config_file() -> Result<Config, ::error::Error> {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>)
-                         -> Result<::std::path::PathBuf, ::error::Error> {
+#[allow(unused)]
+pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<PathBuf> {
     use std::io::Write;
 
     let mut config = Config::default();
@@ -77,7 +76,7 @@ pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>)
     Ok(config_path)
 }
 
-fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
+fn get_file_name() -> ::Res<OsString> {
     let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".crust.config");
     Ok(name)
@@ -97,18 +96,18 @@ mod test {
         let mut file = match ::std::fs::File::open(path) {
             Ok(file) => file,
             Err(what) => {
-                panic!(format!("Error opening sample.config: {:?}", what));
+                panic!(format!("CrustError opening sample.config: {:?}", what));
             }
         };
 
         let mut encoded_contents = String::new();
 
         if let Err(what) = file.read_to_string(&mut encoded_contents) {
-            panic!(format!("Error reading sample.config: {:?}", what));
+            panic!(format!("CrustError reading sample.config: {:?}", what));
         }
 
         if let Err(what) = json::decode::<Config>(&encoded_contents) {
-            panic!(format!("Error parsing sample.config: {:?}", what));
+            panic!(format!("CrustError parsing sample.config: {:?}", what));
         }
     }
 }

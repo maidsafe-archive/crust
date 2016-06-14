@@ -15,36 +15,28 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use rand::{Rand, Rng};
-use std::fmt;
-use sodiumoxide::crypto::box_;
-use sodiumoxide::crypto::box_::PublicKey;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
-/// An identifier of a peer node.
-#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
-pub struct PeerId(PublicKey);
+pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
+pub use self::bootstrap::Bootstrap;
+pub use self::config_handler::Config;
+pub use self::connect::{ConnectionCandidate, EstablishDirectConnection};
+pub use self::connection_listener::ConnectionListener;
+pub use self::event::Event;
+pub use self::error::CrustError;
+pub use self::peer_id::PeerId;
+pub use self::service::{ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo,
+                        Service};
 
-impl fmt::Debug for PeerId {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter,
-               "PeerId({:02x}{:02x}..)",
-               (self.0).0[0],
-               (self.0).0[1])
-    }
-}
+pub type ConnectionMap = Arc<Mutex<HashMap<PeerId, ConnectionId>>>;
 
-impl fmt::Display for PeerId {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "{:02x}{:02x}..", (self.0).0[0], (self.0).0[1])
-    }
-}
-
-pub fn new_id(pub_key: PublicKey) -> PeerId {
-    PeerId(pub_key)
-}
-
-impl Rand for PeerId {
-    fn rand<R: Rng>(_rng: &mut R) -> PeerId {
-        PeerId(box_::gen_keypair().0)
-    }
-}
+mod active_connection;
+mod bootstrap;
+mod config_handler;
+mod connect;
+mod connection_listener;
+mod event;
+mod error;
+mod peer_id;
+mod service;

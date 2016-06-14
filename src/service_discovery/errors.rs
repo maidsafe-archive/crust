@@ -1,4 +1,4 @@
-// Copyright 2015 MaidSafe.net limited.
+// Copyright 2016 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -15,26 +15,27 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::io;
+use std::net::AddrParseError;
+use maidsafe_utilities::serialisation::SerialisationError;
 
-/// Replacements for std::net functions behind the ip feature gate.
-/// TODO: when ip becomes stable, remove this.
-
-pub mod v4 {
-    use std::net::Ipv4Addr;
-
-    pub fn is_unspecified(a: &Ipv4Addr) -> bool {
-        a.octets() == [0, 0, 0, 0]
-    }
-}
-
-pub mod v6 {
-    use std::net::Ipv6Addr;
-
-    pub fn is_unique_local(a: &Ipv6Addr) -> bool {
-        (a.segments()[0] & 0xfe00) == 0xfc00
-    }
-
-    pub fn is_unicast_link_local(a: &Ipv6Addr) -> bool {
-        (a.segments()[0] & 0xffc0) == 0xfe80
+quick_error! {
+    #[derive(Debug)]
+    pub enum ServiceDiscoveryError {
+        Io(e: io::Error) {
+            description("Io error during service discovery")
+            display("Io error during service discovery: {}", e)
+            from()
+        }
+        AddrParse(e: AddrParseError) {
+            description("Error parsing address for service discovery")
+            display("Error parsing address for service discovery: {}", e)
+            from()
+        }
+        Serialisation(e: SerialisationError) {
+            description("Serialisation error during service discovery")
+            display("Serialisation error during service discovery: {}", e)
+            from()
+        }
     }
 }

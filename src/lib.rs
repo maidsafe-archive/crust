@@ -1,4 +1,4 @@
-// Copyright 2015 MaidSafe.net limited.
+// Copyright 2016 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -39,60 +39,49 @@
 
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
+#![cfg_attr(feature="clippy", deny(clippy))]
 #![cfg_attr(feature="clippy", allow(use_debug))]
+// TODO: Fix these lints and remove these exceptions.
+#![cfg_attr(feature="clippy", allow(cyclomatic_complexity, single_match, too_many_arguments))]
 
-extern crate itertools;
+extern crate byteorder;
+extern crate config_file_handler;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate maidsafe_utilities;
+extern crate tmp_mio as mio;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
-#[macro_use]
-extern crate maidsafe_utilities;
+extern crate sodiumoxide;
 extern crate socket_addr;
 extern crate get_if_addrs;
-extern crate sodiumoxide;
-extern crate config_file_handler;
-extern crate service_discovery;
-extern crate nat_traversal;
-#[cfg(test)]
-extern crate void;
-#[cfg(test)]
 extern crate crossbeam;
-extern crate byteorder;
-extern crate bincode;
+extern crate igd;
 
-#[allow(unused_extern_crates)]
 // Needed because the crate is only used for macros
+#[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
+#[cfg(test)]
+extern crate void;
+
+#[cfg(test)]
+#[macro_use]
+mod tests;
+
+mod main;
+mod common;
+mod service_discovery;
+mod nat;
+
+pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
+               PubConnectionInfo, Service};
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-pub use config_handler::{read_config_file, write_config_file};
-pub use service::{ConnectionInfoResult, OurConnectionInfo, Service, TheirConnectionInfo,
-                  DEFAULT_BEACON_PORT};
-pub use event::Event;
-pub use endpoint::{Endpoint, Protocol};
-pub use socket_addr::SocketAddr;
-pub use static_contact_info::StaticContactInfo;
-pub use error::Error;
-pub use peer_id::PeerId;
-
-mod error;
-mod service;
-mod bootstrap;
-mod connection;
-mod listener_message;
-mod endpoint;
-mod bootstrap_handler;
-mod config_handler;
-mod util;
-mod tcp_connections;
-mod sender_receiver;
-mod static_contact_info;
-mod event;
-mod socket_utils;
-mod ip_info;
-mod peer_id;
+/// Allowed max `data_len` for read/write is 2MB
+pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+/// Crust result type
+pub type Res<T> = Result<T, CrustError>;

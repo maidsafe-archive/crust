@@ -61,7 +61,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Instant, Duration};
 use std::collections::{BTreeMap, HashMap};
 
-use crust::{Service, Protocol, Endpoint, ConnectionInfoResult, SocketAddr, OurConnectionInfo,
+use crust::{Service, Protocol, Endpoint, ConnectionInfoResult, SocketAddr, PrivConnectionInfo,
             PeerId};
 
 static USAGE: &'static str = "
@@ -131,7 +131,7 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
     nodes: HashMap<usize, PeerId>,
-    our_connection_infos: BTreeMap<u32, OurConnectionInfo>,
+    our_connection_infos: BTreeMap<u32, PrivConnectionInfo>,
     performance_start: Instant,
     performance_interval: Duration,
     received_msgs: u32,
@@ -374,7 +374,7 @@ fn main() {
                                     }
                                 };
                                 println!("Prepared connection info with id {}", result_token);
-                                let their_info = info.to_their_connection_info();
+                                let their_info = info.to_pub_connection_info();
                                 let info_json = unwrap_result!(json::encode(&their_info));
                                 println!("Share this info with the peer you want to connect to:");
                                 println!("{}", info_json);

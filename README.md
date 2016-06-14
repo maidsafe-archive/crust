@@ -34,26 +34,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 [libsodium](https://github.com/jedisct1/libsodium) is a native dependency, and can be installed by following the instructions [for Windows](https://github.com/maidsafe/QA/blob/master/Documentation/Install%20libsodium%20for%20Windows.md) or [for OS X and Linux](https://github.com/maidsafe/QA/blob/master/Documentation/Install%20libsodium%20for%20OS%20X%20or%20Linux.md).
 
-## Todo Items
-
-## Future work
-
-- [ ] [MAID-1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
-- [ ] Utp Networking
-  - [ ] Utp live port and backup random port selection
-  - [ ] Create send/rcv channel from routing to connections object
-  - [ ] Implement test for basic "hello world" two way communication
-  - [ ] Add connection established/lost messages to be passed to routing (via channel)
-  - [ ] Benchmark tx/rv number of packets
-  - [ ] Benchmark tx/rc Bytes per second
-  - [ ] NAT traversal  [See here for tcp NAT traversal](http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf)
-- [ ] Benchmark tx/rv number of packets
-- [ ] Benchmark tx/rc Bytes per second
-- [ ] Implement NAT hole punch (udp) for reliable udp
-- [ ] Tcp hole punching as per paper
-- [ ] Tracer tcp (TCP with magic in clear [unencrypted])
-- [ ] Wireshark module for tracer TCP
-
 ## License
 
 Licensed under either of
