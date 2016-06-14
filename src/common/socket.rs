@@ -131,24 +131,25 @@ impl Socket {
                                el: &mut EventLoop<Core>,
                                token: Token,
                                msg: Option<(T, Priority)>)
-                               -> Result<bool> {
-        let mut expired_keys = Vec::new();
-        let _ = self.write_queue
+                               -> ::Res<bool> {
+        let expired_keys: Vec<u8> = self.write_queue
             .iter()
-            .all(|(&priority, ref queue)| {
-                if priority != 0 && // Don't drop messages with priority 0.
-                           queue.front().map_or(true, |&(ref timestamp, _)| {
-                               timestamp.elapsed().as_secs() > MAX_MSG_AGE_SECS
-                           }) {
-                    debug!("Insufficient bandwidth. Dropping {} messages with priority {}.",
-                           queue.len(),
-                           priority);
-                    expired_keys.push(priority);
-                }
-                true
-            });
-        for it in expired_keys.iter() {
-            let _ = self.write_queue.remove(&it);
+            .skip_while(|&(&priority, ref queue)| {
+                priority == 0 || // Don't drop messages with priority 0.
+                queue.front().map_or(false, |&(ref timestamp, _)| {
+                    timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
+                })
+            })
+            .map(|(&priority, _)| priority)
+            .collect();
+        let dropped_msgs: usize = expired_keys.iter()
+            .filter_map(|priority| self.write_queue.remove(priority))
+            .map(|queue| queue.len())
+            .fold(0, |s, len| s + len); // TODO: Use `sum` once that's stable.
+        if dropped_msgs > 0 {
+            debug!("Insufficient bandwidth. Dropping {} messages with priority >= {}.",
+                   dropped_msgs,
+                   expired_keys[0]);
         }
 
         if let Some((msg, priority)) = msg {
