@@ -32,9 +32,11 @@ pub type Result<T> = ::std::result::Result<T, CommonError>;
 
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 
+pub mod get_if_addrs;
 mod core;
 mod error;
 mod message;
 mod socket;
 mod socket_addr;
 mod state;
+
