@@ -196,7 +196,7 @@ mod test {
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use nat::MappingContext;
-    use socket_addr::SocketAddr;
+    use common::socket_addr::SocketAddr;
     use sodiumoxide::crypto::box_::{self, PublicKey};
     use rustc_serialize::Decodable;
 

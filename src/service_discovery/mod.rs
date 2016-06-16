@@ -30,11 +30,10 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::u16;
 
-use common::{Context, Core, State};
+use common::{Context, Core, State, socket_addr};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use nat::MappedAddr;
 use rand;
-use socket_addr;
 
 use mio::udp::UdpSocket;
 use mio::{EventLoop, EventSet, PollOpt, Token};

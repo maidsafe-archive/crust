@@ -34,7 +34,7 @@ use self::cache::Cache;
 use self::try_peer::TryPeer;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide::crypto::box_::PublicKey;
-use socket_addr;
+use common::socket_addr;
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;
 const MAX_CONTACTS_EXPECTED: usize = 1500;
