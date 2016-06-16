@@ -695,9 +695,8 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn sending_receiving_multiple_services() {
-        const NUM_SERVICES: usize = 10;
+        const NUM_SERVICES: usize = 30;
         const MSG_SIZE: usize = 20 * 1024;
         const NUM_MSGS: usize = 100;
 
@@ -744,6 +743,7 @@ mod tests {
                 }
             }
 
+            #[allow(unsafe_code)]
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> JoinHandle<()> {
                 thread!("run!", move || {
                     for (our_ci, their_ci) in self.our_cis
@@ -770,9 +770,12 @@ mod tests {
                     for their_id in their_ids.keys() {
                         for n in 0..NUM_MSGS {
                             let mut msg = Vec::with_capacity(MSG_SIZE);
-                            for _ in 0..MSG_SIZE {
-                                msg.push(n as u8);
+                            unsafe { msg.set_len(MSG_SIZE); };
+                            let n = n as u8;
+                            for x in &mut msg {
+                                *x = n;
                             }
+                            //msg.extend((0..255u8).cycle().take(MSG_SIZE));
                             let _ = self.service.send(*their_id, msg, 0);
                         }
                     }

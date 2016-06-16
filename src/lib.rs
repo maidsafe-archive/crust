@@ -56,9 +56,10 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate socket_addr;
-extern crate get_if_addrs;
 extern crate crossbeam;
 extern crate igd;
+extern crate c_linked_list;
+extern crate libc;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
@@ -66,6 +67,9 @@ extern crate igd;
 extern crate quick_error;
 #[cfg(test)]
 extern crate void;
+#[cfg(windows)]
+extern crate winapi;
+
 
 #[cfg(test)]
 #[macro_use]

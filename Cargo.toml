@@ -13,7 +13,6 @@ version = "0.15.0"
 byteorder = "~0.5.1"
 config_file_handler = "~0.3.0"
 crossbeam = "~0.2.9"
-get_if_addrs = "~0.4.0"
 igd = "~0.4.2"
 log = "~0.3.6"
 maidsafe_utilities = "~0.6.0"
@@ -24,6 +23,8 @@ rustc-serialize = "~0.3.19"
 socket_addr = "~0.1.0"
 sodiumoxide = "~0.0.10"
 tmp_mio = "~0.5.2"
+c_linked_list = "~1.1.0"
+libc = "0.2"
 
 [dependencies.clippy]
 optional = true
