@@ -25,7 +25,7 @@ use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 
 use main::{Config, Event, Service};
-use socket_addr::SocketAddr;
+use common::socket_addr::SocketAddr;
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;

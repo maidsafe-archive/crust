@@ -55,7 +55,6 @@ extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
-extern crate socket_addr;
 extern crate get_if_addrs;
 extern crate crossbeam;
 extern crate igd;

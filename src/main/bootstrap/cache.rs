@@ -17,7 +17,7 @@
 
 use std::ffi::OsString;
 
-use socket_addr;
+use common::socket_addr;
 use config_file_handler::{self, FileHandler};
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
