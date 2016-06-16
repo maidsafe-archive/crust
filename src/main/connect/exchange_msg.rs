@@ -25,9 +25,6 @@ use mio::{EventLoop, EventSet, PollOpt, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 use std::net::SocketAddr;
 
-// TODO(Spandan) Result contains socket address too as currently due to bug in mio we are unable to
-// obtain peer address from a connected socket. Track https://github.com/carllerche/mio/issues/397
-// and remove this once that is solved.
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,
                             Context,
