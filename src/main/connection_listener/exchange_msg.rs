@@ -221,6 +221,7 @@ impl ExchangeMsg {
                                            self.cm.clone(),
                                            our_id,
                                            their_id,
+                                           false,
                                            self.event_tx.clone());
             }
             NextState::None => self.terminate(core, event_loop),

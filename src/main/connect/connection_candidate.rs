@@ -19,17 +19,19 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use common::{Core, Message, Priority, Socket, State};
+use common::{Context, Core, Message, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, Token};
 
 pub struct ConnectionCandidate {
+    token: Token,
+    context: Context,
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     socket: Option<Socket>,
     their_id: PeerId,
     our_id: PeerId,
-    token: Token,
+    notify_err: bool,
 }
 
 impl ConnectionCandidate {
@@ -40,17 +42,20 @@ impl ConnectionCandidate {
                  cm: ConnectionMap,
                  our_id: PeerId,
                  their_id: PeerId,
+                 notify_err: bool,
                  event_tx: ::CrustEventSender) {
+        let context = core.get_new_context();
         let state = Rc::new(RefCell::new(ConnectionCandidate {
+            token: token,
+            context: context,
             cm: cm,
             event_tx: event_tx,
             socket: Some(socket),
             their_id: their_id,
             our_id: our_id,
-            token: token,
+            notify_err: notify_err,
         }));
 
-        let context = core.get_new_context();
         let _ = core.insert_context(token, context);
         let _ = core.insert_state(context, state.clone());
 
@@ -97,21 +102,20 @@ impl ConnectionCandidate {
     }
 
     fn finish(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Some(context) = core.remove_context(self.token) {
-            let _ = core.remove_state(context);
-        }
+        let _ = core.remove_context(self.token);
+        let _ = core.remove_state(self.context);
 
         let socket = self.socket.take().unwrap();
 
-        ActiveConnection::start(core,
-                                event_loop,
-                                self.token,
-                                socket,
-                                self.cm.clone(),
-                                self.their_id,
-                                self.our_id,
-                                Event::NewPeer(Ok(()), self.their_id),
-                                self.event_tx.clone());
+        // ActiveConnection::start(core,
+        //                         event_loop,
+        //                         self.token,
+        //                         socket,
+        //                         self.cm.clone(),
+        //                         self.their_id,
+        //                         self.our_id,
+        //                         Event::NewPeer(Ok(()), self.their_id),
+        //                         self.event_tx.clone());
     }
 }
 
@@ -133,15 +137,11 @@ impl State for ConnectionCandidate {
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Some(socket) = self.socket.take() {
-            if let Err(error) = event_loop.deregister(&socket) {
-                debug!("Failed to deregister socket: {:?}", error);
-            }
-        }
+        let socket = self.socket.take().expect("Logic Error");
 
-        if let Some(context) = core.remove_context(self.token) {
-            let _ = core.remove_state(context);
-        }
+        let _ = event_loop.deregister(&socket);
+        let _ = core.remove_context(self.token);
+        let _ = core.remove_state(self.context);
 
         {
             let mut guard = self.cm.lock().unwrap();
@@ -152,6 +152,9 @@ impl State for ConnectionCandidate {
             };
             if remove {
                 let _ = guard.remove(&self.their_id);
+                if self.notify_err {
+                    // let _ = self.event_tx.send(Event::FailedPeer(self.their_id));
+                }
             }
         }
     }

@@ -343,8 +343,8 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::NewPeer(res, peer_id) => {
-                assert_eq!(peer_id, peer_id::new(pk));
+            Event::NewPeer(res) => {
+                assert_eq!(res.expect("NewPeer Error"), peer_id::new(pk));
                 assert!(res.is_ok());
             }
             event => panic!("Unexpected event notification: {:?}", event),

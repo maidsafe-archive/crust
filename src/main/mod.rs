@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex};
 pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
 pub use self::bootstrap::Bootstrap;
 pub use self::config_handler::Config;
-pub use self::connect::{ConnectionCandidate, EstablishDirectConnection};
+pub use self::connect::{Connect, ConnectionCandidate};
 pub use self::connection_listener::ConnectionListener;
 pub use self::event::Event;
 pub use self::error::CrustError;

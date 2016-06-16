@@ -56,7 +56,6 @@ impl MappedAddr {
     }
 
     /// Get net::SocketAddr
-    #[allow(unused)]
     pub fn addr(&self) -> &net::SocketAddr {
         &self.addr.0
     }

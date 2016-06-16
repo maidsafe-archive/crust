@@ -22,7 +22,7 @@ use rand::{Rand, Rng};
 
 /// An identifier of a peer node.
 #[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
-pub struct PeerId(PublicKey);
+pub struct PeerId(pub PublicKey);
 
 impl fmt::Debug for PeerId {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

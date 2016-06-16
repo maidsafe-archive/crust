@@ -174,6 +174,7 @@ impl Bootstrap {
         }
 
         if self.children.is_empty() {
+            self.terminate(core, event_loop);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }
     }
