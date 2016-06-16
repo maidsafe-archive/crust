@@ -89,11 +89,12 @@ impl Ifv6Addr {
 
 #[cfg(not(windows))]
 mod getifaddrs_posix {
-    use c_linked_list::CLinkedListMut;
-    use common::get_if_addrs::{Interface, IfAddr, Ifv4Addr, Ifv6Addr};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::{mem, io};
     use std::ffi::CStr;
+
+    use c_linked_list::CLinkedListMut;
+    use common::get_if_addrs::{Interface, IfAddr, Ifv4Addr, Ifv6Addr};
     use libc::{AF_INET, AF_INET6};
     use libc::getifaddrs as posix_getifaddrs;
     use libc::freeifaddrs as posix_freeifaddrs;
@@ -227,11 +228,12 @@ pub fn get_if_addrs() -> io::Result<Vec<Interface>> {
 
 #[cfg(windows)]
 mod getifaddrs_windows {
-    use super::c_linked_list::CLinkedListConst;
-    use super::{Interface, IfAddr, Ifv4Addr, Ifv6Addr};
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
     use std::{io, ptr};
     use std::ffi::CStr;
+
+    use c_linked_list::CLinkedListConst;
+    use common::get_if_addrs::{Interface, IfAddr, Ifv4Addr, Ifv6Addr};
     use libc::{c_void, c_char, c_ulong, size_t, c_int};
     use libc;
     use winapi::{DWORD, AF_INET, AF_INET6, sockaddr_in6, ERROR_SUCCESS};
