@@ -25,7 +25,7 @@ use main::peer_id;
 use common::{Context, Core, Message, NameHash, Priority, Socket, State};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
-use socket_addr;
+use common::socket_addr;
 
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 

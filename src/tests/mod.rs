@@ -28,7 +28,7 @@ use std::time::Duration;
 
 use main::{Config, Event, Service};
 use mio;
-use socket_addr::SocketAddr;
+use common::socket_addr::SocketAddr;
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;

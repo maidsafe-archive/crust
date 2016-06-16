@@ -17,7 +17,7 @@
 
 use std::net::{self, IpAddr};
 
-use socket_addr;
+use common::socket_addr;
 
 /// Socket Address that is publicly accessible if nat_restricted is false.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, RustcEncodable, RustcDecodable)]
