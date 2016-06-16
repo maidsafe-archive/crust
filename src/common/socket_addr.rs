@@ -1,8 +1,9 @@
+use std::fmt;
 use std::net;
 use std::ops::Deref;
 use std::str::FromStr;
-use std::fmt;
-use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
+
+use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 /// Wrapper around `std::net::SocketAddr` to enable it to be encoded and decoded.
