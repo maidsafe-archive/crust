@@ -17,7 +17,6 @@
 
 use std::net::TcpStream;
 
-use common::{Context, Core, Socket, State};
 use mio::tcp::TcpListener;
 use nat::{NatError, util};
 use net2::TcpBuilder;

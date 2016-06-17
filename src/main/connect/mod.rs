@@ -23,17 +23,16 @@ mod exchange_msg;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
-use std::io::{self, ErrorKind};
 use std::rc::{Rc, Weak};
 
 use common::{Context, Core, NameHash, Socket, State};
-use main::{ActiveConnection, ConnectionListener, ConnectionMap, CrustError, Event, PeerId,
-           PrivConnectionInfo, PubConnectionInfo};
+use main::{ActiveConnection, ConnectionMap, Event, PeerId, PrivConnectionInfo, PubConnectionInfo};
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use nat;
 use self::exchange_msg::ExchangeMsg;
-use sodiumoxide::crypto::box_::PublicKey;
+
+const TIMEOUT_MS: u64 = 60 * 1000;
 
 pub struct Connect {
     token: Token,
@@ -56,11 +55,12 @@ impl Connect {
                  their_ci: PubConnectionInfo,
                  cm: ConnectionMap,
                  our_nh: NameHash,
-                 event_tx: ::CrustEventSender) {
+                 event_tx: ::CrustEventSender)
+                 -> ::Res<()> {
         let their_id = their_ci.id;
 
         if their_ci.listeners.is_empty() && our_ci.tcp_socket.is_none() {
-            let _ = event_tx.send(Event::NewPeer(Err(their_ci.id)));
+            let _ = event_tx.send(Event::NewPeer(Err(their_id)));
         }
 
         let token = core.get_new_token();
@@ -69,7 +69,7 @@ impl Connect {
         let state = Rc::new(RefCell::new(Connect {
             token: token,
             context: context,
-            timeout: el.timeout_ms(token, 60000).expect("CHANGE ME =========="),
+            timeout: try!(el.timeout_ms(token, TIMEOUT_MS)),
             cm: cm,
             our_nh: our_nh,
             our_id: our_ci.id,
@@ -79,6 +79,7 @@ impl Connect {
             children: HashSet::with_capacity(their_ci.listeners.len()),
             event_tx: event_tx,
         }));
+
         let weak_self = Rc::downgrade(&state);
         state.borrow_mut().weak = Some(weak_self);
 
@@ -92,6 +93,10 @@ impl Connect {
                 their_ci.tcp_info.endpoints.into_iter().map(|elt| elt.0).collect::<Vec<_>>();
             if let Ok((listener, nat_sockets)) = nat::get_sockets(mapped_socket,
                                                                   their_addrs.len()) {
+                try!(el.register(&listener,
+                                 token,
+                                 EventSet::readable() | EventSet::error() | EventSet::hup(),
+                                 PollOpt::edge()));
                 state.borrow_mut().listener = Some(listener);
                 sockets.extend(nat_sockets.into_iter()
                     .zip(their_addrs)
@@ -104,13 +109,18 @@ impl Connect {
         for socket in sockets {
             state.borrow_mut().exchange_msg(core, el, socket);
         }
+
+        let _ = core.insert_context(token, context);
+        let _ = core.insert_state(context, state);
+
+        Ok(())
     }
 
     fn exchange_msg(&mut self, core: &mut Core, el: &mut EventLoop<Core>, socket: Socket) {
-        let self_weak = self.weak.take().expect("Logic Err").clone();
-        let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
+        let self_weak = self.weak.as_ref().expect("Logic Err").clone();
+        let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
-                self_rc.borrow_mut().handle_exchange_msg(core, el, child, self_weak.clone(), res);
+                self_rc.borrow_mut().handle_exchange_msg(core, el, child, res);
             }
         };
 
@@ -121,7 +131,7 @@ impl Connect {
                                               self.their_id,
                                               self.our_nh,
                                               self.cm.clone(),
-                                              Box::new(finish)) {
+                                              Box::new(handler)) {
             let _ = self.children.insert(child);
         }
     }
@@ -139,19 +149,26 @@ impl Connect {
                            core: &mut Core,
                            el: &mut EventLoop<Core>,
                            child: Context,
-                           self_weak: Weak<RefCell<Self>>,
                            res: Option<(Socket, Token)>) {
         let _ = self.children.remove(&child);
         if let Some((socket, token)) = res {
-            let _finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
+            let self_weak = self.weak.as_ref().expect("Logic Err").clone();
+            let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_connection_candidate(core, el, child, res);
                 }
             };
 
-            // if let Ok(child) = ConnectionCandidate::start() {
-            //     let _ = self.children.insert(child);
-            // }
+            if let Ok(child) = ConnectionCandidate::start(core,
+                                                          el,
+                                                          token,
+                                                          socket,
+                                                          self.cm.clone(),
+                                                          self.our_id,
+                                                          self.their_id,
+                                                          Box::new(handler)) {
+                let _ = self.children.insert(child);
+            }
         }
 
         if self.children.is_empty() {
@@ -172,8 +189,8 @@ impl Connect {
                                     token,
                                     socket,
                                     self.cm.clone(),
-                                    self.their_id,
                                     self.our_id,
+                                    self.their_id,
                                     Event::NewPeer(Ok(self.their_id)),
                                     self.event_tx.clone());
         }
@@ -192,8 +209,10 @@ impl Connect {
 }
 
 impl State for Connect {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token, es: EventSet) {
-        self.accept(core, el);
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: Token, es: EventSet) {
+        if !es.is_error() && !es.is_hup() && es.is_readable() {
+            self.accept(core, el);
+        }
     }
 
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token) {
@@ -213,7 +232,6 @@ impl State for Connect {
 
 
         if !self.cm.lock().unwrap().contains_key(&self.their_id) {
-            let error = io::Error::new(ErrorKind::Other, "Could not connect");
             let _ = self.event_tx.send(Event::NewPeer(Err(self.their_id)));
         }
     }

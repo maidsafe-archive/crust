@@ -38,8 +38,8 @@ pub struct ActiveConnection {
     context: Context,
     socket: Socket,
     cm: ConnectionMap,
-    their_id: PeerId,
     our_id: PeerId,
+    their_id: PeerId,
     event_tx: ::CrustEventSender,
     heartbeat: Heartbeat,
 }
@@ -50,8 +50,8 @@ impl ActiveConnection {
                  token: Token,
                  socket: Socket,
                  cm: ConnectionMap,
-                 their_id: PeerId,
                  our_id: PeerId,
+                 their_id: PeerId,
                  event: Event,
                  event_tx: ::CrustEventSender) {
         debug!("Entered state ActiveConnection: {:?} -> {:?}",
@@ -75,8 +75,8 @@ impl ActiveConnection {
             context: context,
             socket: socket,
             cm: cm,
-            their_id: their_id,
             our_id: our_id,
+            their_id: their_id,
             event_tx: event_tx,
             heartbeat: heartbeat,
         }));

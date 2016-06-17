@@ -24,7 +24,7 @@ use std::time::Instant;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
-use mio::tcp::{Shutdown, TcpStream};
+use mio::tcp::TcpStream;
 use rustc_serialize::{Decodable, Encodable};
 use common::{CommonError, Core, Priority, Result};
 
@@ -210,14 +210,6 @@ impl Socket {
         try!(el.reregister(self, token, event_set, PollOpt::edge()));
 
         Ok(done)
-    }
-
-    pub fn shutdown(&self) -> Result<()> {
-        Ok(try!(self.stream.shutdown(Shutdown::Both)))
-    }
-
-    pub fn take_socket_error(&self) -> Result<()> {
-        Ok(try!(self.stream.take_socket_error()))
     }
 }
 

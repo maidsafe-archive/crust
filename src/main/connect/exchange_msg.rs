@@ -17,13 +17,12 @@
 
 use std::any::Any;
 use std::cell::RefCell;
+use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
 use common::{Context, Core, Message, NameHash, Priority, Socket, State};
-use main::{self, ConnectionId, ConnectionMap, PeerId};
+use main::{ConnectionId, ConnectionMap, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Token};
-use sodiumoxide::crypto::box_::PublicKey;
-use std::net::SocketAddr;
 
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,
@@ -140,6 +139,14 @@ impl State for ExchangeMsg {
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
         let _ = el.deregister(&self.socket.take().expect("Logic Error"));
+
+        let mut guard = self.cm.lock().unwrap();
+        if let Entry::Occupied(mut oe) = guard.entry(self.expected_id) {
+            oe.get_mut().currently_handshaking -= 1;
+            if oe.get().currently_handshaking == 0 && oe.get().active_connection.is_none() {
+                let _ = oe.remove();
+            }
+        }
     }
 
     fn as_any(&mut self) -> &mut Any {
