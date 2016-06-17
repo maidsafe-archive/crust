@@ -15,9 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::connection_candidate::ConnectionCandidate;
-
-mod connection_candidate;
 mod exchange_msg;
 
 use std::any::Any;
@@ -26,7 +23,8 @@ use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 
 use common::{Context, Core, NameHash, Socket, State};
-use main::{ActiveConnection, ConnectionMap, Event, PeerId, PrivConnectionInfo, PubConnectionInfo};
+use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, Event, PeerId,
+           PrivConnectionInfo, PubConnectionInfo};
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use nat;
