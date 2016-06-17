@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
-use common::{Context, Core, Message, Priority, Socket, State};
+use common::{Context, Core, Message, NameHash, Priority, Socket, State};
 use main::{ConnectionId, ConnectionMap, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Token};
 
@@ -29,85 +29,88 @@ pub type Finish = Box<FnMut(&mut Core,
                             Context,
                             Option<(Socket, Token)>)>;
 
-pub struct ConnectionCandidate {
+pub struct ExchangeMsg {
     token: Token,
     context: Context,
-    cm: ConnectionMap,
+    expected_id: PeerId,
+    expected_nh: NameHash,
     socket: Option<Socket>,
-    their_id: PeerId,
+    cm: ConnectionMap,
     msg: Option<(Message, Priority)>,
     finish: Finish,
 }
 
-impl ConnectionCandidate {
+impl ExchangeMsg {
     pub fn start(core: &mut Core,
                  el: &mut EventLoop<Core>,
-                 token: Token,
                  socket: Socket,
-                 cm: ConnectionMap,
                  our_id: PeerId,
-                 their_id: PeerId,
+                 expected_id: PeerId,
+                 name_hash: u64,
+                 cm: ConnectionMap,
                  finish: Finish)
                  -> ::Res<Context> {
-        if our_id > their_id {
-            try!(el.reregister(&socket,
-                               token,
-                               EventSet::writable() | EventSet::error() | EventSet::hup(),
-                               PollOpt::edge()));
+        let token = core.get_new_token();
+        let context = core.get_new_context();
+
+        try!(el.register(&socket,
+                         token,
+                         EventSet::error() | EventSet::hup() | EventSet::writable(),
+                         PollOpt::edge()));
+
+        {
+            let mut guard = cm.lock().unwrap();
+            guard.entry(expected_id)
+                .or_insert(ConnectionId {
+                    active_connection: None,
+                    currently_handshaking: 0,
+                })
+                .currently_handshaking += 1;
         }
 
-        let context = core.get_new_context();
-        let state = Rc::new(RefCell::new(ConnectionCandidate {
+        let state = ExchangeMsg {
             token: token,
             context: context,
-            cm: cm,
+            expected_id: expected_id,
+            expected_nh: name_hash,
             socket: Some(socket),
-            their_id: their_id,
-            msg: Some((Message::ChooseConnection, 0)),
+            cm: cm,
+            msg: Some((Message::Connect(our_id.0, name_hash), 0)),
             finish: finish,
-        }));
+        };
 
         let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, state.clone());
+        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
 
         Ok(context)
-    }
-
-    fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match self.socket.as_mut().unwrap().read::<Message>() {
-            Ok(Some(Message::ChooseConnection)) => self.done(core, el),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, el),
-            Ok(None) => (),
-        }
     }
 
     fn write(&mut self,
              core: &mut Core,
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        let terminate = match self.cm.lock().unwrap().get(&self.their_id) {
-            Some(&ConnectionId { active_connection: Some(_), .. }) => true,
-            _ => false,
-        };
-        if terminate {
-            return self.handle_error(core, el);
-        }
-
-        match self.socket.as_mut().unwrap().write(el, self.token, msg) {
-            Ok(true) => self.done(core, el),
-            Ok(false) => (),
-            Err(_) => self.handle_error(core, el),
+        if self.socket.as_mut().unwrap().write(el, self.token, msg).is_err() {
+            self.handle_error(core, el);
         }
     }
 
-    fn done(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
-        let token = self.token;
-        let context = self.context;
-        let socket = self.socket.take().expect("Logic Error");
+    fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        match self.socket.as_mut().unwrap().read::<Message>() {
+            Ok(Some(Message::Connect(their_pk, name_hash))) => {
+                if their_pk != self.expected_id.0 || name_hash != self.expected_nh {
+                    return self.handle_error(core, el);
+                }
+                let _ = core.remove_context(self.token);
+                let _ = core.remove_state(self.context);
+                let token = self.token;
+                let context = self.context;
+                let socket = self.socket.take().expect("Logic Error");
 
-        (*self.finish)(core, el, context, Some((socket, token)));
+                (*self.finish)(core, el, context, Some((socket, token)));
+            }
+            Ok(None) => (),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, el),
+        }
     }
 
     fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
@@ -117,21 +120,18 @@ impl ConnectionCandidate {
     }
 }
 
-impl State for ConnectionCandidate {
-    fn ready(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
-            return self.handle_error(core, el);
-        }
-        if event_set.is_readable() {
-            self.read(core, el);
-        }
-        if event_set.is_writable() {
-            let msg = self.msg.take();
-            self.write(core, el, msg);
+impl State for ExchangeMsg {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token, es: EventSet) {
+        if es.is_error() || es.is_hup() {
+            self.handle_error(core, el);
+        } else {
+            if es.is_writable() {
+                let req = self.msg.take();
+                self.write(core, el, req);
+            }
+            if es.is_readable() {
+                self.receive_response(core, el)
+            }
         }
     }
 
@@ -141,7 +141,7 @@ impl State for ConnectionCandidate {
         let _ = el.deregister(&self.socket.take().expect("Logic Error"));
 
         let mut guard = self.cm.lock().unwrap();
-        if let Entry::Occupied(mut oe) = guard.entry(self.their_id) {
+        if let Entry::Occupied(mut oe) = guard.entry(self.expected_id) {
             oe.get_mut().currently_handshaking -= 1;
             if oe.get().currently_handshaking == 0 && oe.get().active_connection.is_none() {
                 let _ = oe.remove();

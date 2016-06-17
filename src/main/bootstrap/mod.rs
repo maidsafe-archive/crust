@@ -131,9 +131,9 @@ impl Bootstrap {
         }
 
         for peer in peers {
-            let self_weak_cloned = self.self_weak.as_ref().expect("Logic Error").clone();
+            let self_weak = self.self_weak.as_ref().expect("Logic Error").clone();
             let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child_context, res| {
-                if let Some(self_rc) = self_weak_cloned.upgrade() {
+                if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_result(core, el, child_context, res)
                 }
             };
@@ -163,8 +163,8 @@ impl Bootstrap {
                                                token,
                                                socket,
                                                self.cm.clone(),
-                                               peer_id,
                                                peer_id::new(self.our_pk),
+                                               peer_id,
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
             }
@@ -174,6 +174,7 @@ impl Bootstrap {
         }
 
         if self.children.is_empty() {
+            self.terminate(core, event_loop);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }
     }
