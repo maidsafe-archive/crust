@@ -57,7 +57,7 @@
     fn <a href='#tymethod.try_lock_shared' class='fnname'>try_lock_shared</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
     fn <a href='#tymethod.try_lock_exclusive' class='fnname'>try_lock_exclusive</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
     fn <a href='#tymethod.unlock' class='fnname'>unlock</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
-}</pre><div class='docblock'><p>Extension trait for <code>File</code> providing duplication and locking methods.</p>
+}</pre><div class='docblock'><p>Extension trait for <code>std::fs::File</code> which provides allocation, duplication and locking methods.</p>
 
 <h2 id='notes-on-file-locks' class='section-header'><a href='#notes-on-file-locks'>Notes on File Locks</a></h2>
 <p>This library provides whole-file locks in both shared (read) and exclusive

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["punch_hole","Implements tcp hole punching"],["rendezvous_info","`nat_traversal` NAT traversal utilities."]]});
+initSidebarItems({"mod":[["rendezvous_info","`nat_traversal` NAT traversal utilities."]]});

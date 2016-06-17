@@ -130,8 +130,8 @@
     <span class='ident'>ListenerFailed</span>,
     <span class='doccomment'>/// Invoked as a result to the call of `Service::prepare_contact_info`.</span>
     <span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span>),
-    <span class='doccomment'>/// Invoked when a connection to a new peer is established.</span>
-    <span class='ident'>NewPeer</span>(::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>, <span class='ident'>PeerId</span>),
+    <span class='doccomment'>/// Invoked when connection to a new peer has been established or has failed.</span>
+    <span class='ident'>NewPeer</span>(<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PeerId</span>, <span class='ident'>PeerId</span><span class='op'>&gt;</span>),
     <span class='doccomment'>/// Invoked when a peer is lost or having read/write error.</span>
     <span class='ident'>LostPeer</span>(<span class='ident'>PeerId</span>),
     <span class='doccomment'>/// Invoked when a new message is received.  Passes the message.</span>

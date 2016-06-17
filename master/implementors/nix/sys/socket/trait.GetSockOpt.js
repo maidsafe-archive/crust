@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['nix'] = [];implementors['mio'] = [];implementors['tmp_mio'] = [];
+implementors['nix'] = [];implementors['tmp_mio'] = [];implementors['mio'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

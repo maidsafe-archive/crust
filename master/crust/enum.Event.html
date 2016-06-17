@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1060' class='srclink' href='../src/crust/src/main/event.rs.html#26-48' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1151' class='srclink' href='../src/crust/src/main/event.rs.html#26-48' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Event {
     BootstrapAccept(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     BootstrapConnect(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>),
@@ -55,7 +55,7 @@
     ListenerStarted(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>),
     ListenerFailed,
     ConnectionInfoPrepared(<a class='struct' href='../crust/struct.ConnectionInfoResult.html' title='crust::ConnectionInfoResult'>ConnectionInfoResult</a>),
-    NewPeer(<a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;, <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
+    NewPeer(<a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>&gt;),
     LostPeer(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     NewMessage(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
     WriteMsgSizeProhibitive(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
@@ -69,7 +69,7 @@ of this module.</p>
 the listening port.</p>
 </div></td><td></td></tr><tr><td id='variant.ListenerFailed'><code>ListenerFailed</code></td><td><div class='docblock'><p>Invoked when listener failed to start.</p>
 </div></td><td></td></tr><tr><td id='variant.ConnectionInfoPrepared'><code>ConnectionInfoPrepared</code></td><td><div class='docblock'><p>Invoked as a result to the call of <code>Service::prepare_contact_info</code>.</p>
-</div></td><td></td></tr><tr><td id='variant.NewPeer'><code>NewPeer</code></td><td><div class='docblock'><p>Invoked when a connection to a new peer is established.</p>
+</div></td><td></td></tr><tr><td id='variant.NewPeer'><code>NewPeer</code></td><td><div class='docblock'><p>Invoked when connection to a new peer has been established or has failed.</p>
 </div></td><td></td></tr><tr><td id='variant.LostPeer'><code>LostPeer</code></td><td><div class='docblock'><p>Invoked when a peer is lost or having read/write error.</p>
 </div></td><td></td></tr><tr><td id='variant.NewMessage'><code>NewMessage</code></td><td><div class='docblock'><p>Invoked when a new message is received.  Passes the message.</p>
 </div></td><td></td></tr><tr><td id='variant.WriteMsgSizeProhibitive'><code>WriteMsgSizeProhibitive</code></td><td><div class='docblock'><p>Invoked when trying to sending a too large data.</p>

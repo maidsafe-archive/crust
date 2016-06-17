@@ -47,9 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-820' class='srclink' href='../../src/net2/unix.rs.html#27-34' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-867' class='srclink' href='../../src/net2/unix.rs.html#35-45' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait UnixUdpBuilderExt {
     fn <a href='#tymethod.reuse_port' class='fnname'>reuse_port</a>(&amp;self, reuse: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;&amp;Self&gt;;
+    fn <a href='#tymethod.get_reuse_port' class='fnname'>get_reuse_port</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
 }</pre><div class='docblock'><p>Unix-specific extensions for the <code>UdpBuilder</code> type in this library.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
@@ -59,6 +60,7 @@
 <p>This indicates that futher calls to <code>bind</code> may allow reuse of local
 addresses. For IPv4 sockets this means that a socket may bind even when
 there&#39;s a socket already listening on this port.</p>
+</div><h3 id='tymethod.get_reuse_port' class='method stab '><code>fn <a href='#tymethod.get_reuse_port' class='fnname'>get_reuse_port</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Check the value of the <code>SO_REUSEPORT</code> option on this socket.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>

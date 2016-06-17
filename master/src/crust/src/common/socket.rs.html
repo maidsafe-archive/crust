@@ -280,14 +280,6 @@
 <span id="236">236</span>
 <span id="237">237</span>
 <span id="238">238</span>
-<span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
-<span id="243">243</span>
-<span id="244">244</span>
-<span id="245">245</span>
-<span id="246">246</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -315,7 +307,7 @@
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>LittleEndian</span>, <span class='ident'>ReadBytesExt</span>, <span class='ident'>WriteBytesExt</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise_from</span>, <span class='ident'>serialise_into</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Evented</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Selector</span>, <span class='ident'>Token</span>};
-<span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::{<span class='ident'>Shutdown</span>, <span class='ident'>TcpStream</span>};
+<span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::<span class='ident'>TcpStream</span>;
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>::{<span class='ident'>Decodable</span>, <span class='ident'>Encodable</span>};
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>CommonError</span>, <span class='ident'>Core</span>, <span class='ident'>Priority</span>, <span class='prelude-ty'>Result</span>};
 
@@ -501,14 +493,6 @@
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>el</span>.<span class='ident'>reregister</span>(<span class='self'>self</span>, <span class='ident'>token</span>, <span class='ident'>event_set</span>, <span class='ident'>PollOpt</span>::<span class='ident'>edge</span>()));
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>done</span>)
-    }
-
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shutdown</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>stream</span>.<span class='ident'>shutdown</span>(<span class='ident'>Shutdown</span>::<span class='ident'>Both</span>)))
-    }
-
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>take_socket_error</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>stream</span>.<span class='ident'>take_socket_error</span>()))
     }
 }
 

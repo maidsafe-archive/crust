@@ -846,8 +846,8 @@
         }
 
         <span class='kw'>match</span> <span class='ident'>listener</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not read event channel&quot;</span>) {
-            <span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='ident'>res</span>, <span class='ident'>peer_id</span>) <span class='op'>=&gt;</span> {
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_id</span>, <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>pk</span>));
+            <span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='ident'>res</span>) <span class='op'>=&gt;</span> {
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>expect</span>(<span class='string'>&quot;NewPeer Error&quot;</span>), <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>pk</span>));
                 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>is_ok</span>());
             }
             <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected event notification: {:?}&quot;</span>, <span class='ident'>event</span>),

@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-22' class='srclink' href='../src/net2/tcp.rs.html#23-25' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-19' class='srclink' href='../src/net2/tcp.rs.html#23-25' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct TcpBuilder {
     // some fields omitted
 }</pre><div class='docblock'><p>An &quot;in progress&quot; TCP socket which has not yet been connected or listened.</p>
@@ -115,6 +115,8 @@ etc.</p>
 <p>This indicates that futher calls to <code>bind</code> may allow reuse of local
 addresses. For IPv4 sockets this means that a socket may bind even when
 there&#39;s a socket already listening on this port.</p>
+</div><h4 id='method.get_reuse_address' class='method'><code>fn <a href='#method.get_reuse_address' class='fnname'>get_reuse_address</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h4>
+<div class='docblock'><p>Check the <code>SO_REUSEADDR</code> option on this socket.</p>
 </div><h4 id='method.take_error' class='method'><code>fn <a href='#method.take_error' class='fnname'>take_error</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>&gt;&gt;</code></h4>
 <div class='docblock'><p>Get the value of the <code>SO_ERROR</code> option on this socket.</p>
 
@@ -125,6 +127,7 @@ calls.</p>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/sys/ext/io/trait.FromRawFd.html' title='std::sys::ext::io::FromRawFd'>FromRawFd</a> for <a class='struct' href='../net2/struct.TcpBuilder.html' title='net2::TcpBuilder'>TcpBuilder</a></code></h3><div class='impl-items'><h4 id='method.from_raw_fd' class='method'><code>unsafe fn <a href='https://doc.rust-lang.org/nightly/std/sys/ext/io/trait.FromRawFd.html#tymethod.from_raw_fd' class='fnname'>from_raw_fd</a>(fd: <a class='type' href='../libc/type.c_int.html' title='libc::c_int'>c_int</a>) -&gt; <a class='struct' href='../net2/struct.TcpBuilder.html' title='net2::TcpBuilder'>TcpBuilder</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/sys/ext/io/trait.AsRawFd.html' title='std::sys::ext::io::AsRawFd'>AsRawFd</a> for <a class='struct' href='../net2/struct.TcpBuilder.html' title='net2::TcpBuilder'>TcpBuilder</a></code></h3><div class='impl-items'><h4 id='method.as_raw_fd' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/sys/ext/io/trait.AsRawFd.html#tymethod.as_raw_fd' class='fnname'>as_raw_fd</a>(&amp;self) -&gt; <a class='type' href='../libc/type.c_int.html' title='libc::c_int'>c_int</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../net2/unix/trait.UnixTcpBuilderExt.html' title='net2::unix::UnixTcpBuilderExt'>UnixTcpBuilderExt</a> for <a class='struct' href='../net2/struct.TcpBuilder.html' title='net2::TcpBuilder'>TcpBuilder</a></code></h3><div class='impl-items'><h4 id='method.reuse_port' class='method'><code>fn <a href='../net2/unix/trait.UnixTcpBuilderExt.html#tymethod.reuse_port' class='fnname'>reuse_port</a>(&amp;self, reuse: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;&amp;Self&gt;</code></h4>
+<h4 id='method.get_reuse_port' class='method'><code>fn <a href='../net2/unix/trait.UnixTcpBuilderExt.html#tymethod.get_reuse_port' class='fnname'>get_reuse_port</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 

@@ -381,8 +381,8 @@
     <span class='ident'>context</span>: <span class='ident'>Context</span>,
     <span class='ident'>socket</span>: <span class='ident'>Socket</span>,
     <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
-    <span class='ident'>their_id</span>: <span class='ident'>PeerId</span>,
     <span class='ident'>our_id</span>: <span class='ident'>PeerId</span>,
+    <span class='ident'>their_id</span>: <span class='ident'>PeerId</span>,
     <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>,
     <span class='ident'>heartbeat</span>: <span class='ident'>Heartbeat</span>,
 }
@@ -393,8 +393,8 @@
                  <span class='ident'>token</span>: <span class='ident'>Token</span>,
                  <span class='ident'>socket</span>: <span class='ident'>Socket</span>,
                  <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
-                 <span class='ident'>their_id</span>: <span class='ident'>PeerId</span>,
                  <span class='ident'>our_id</span>: <span class='ident'>PeerId</span>,
+                 <span class='ident'>their_id</span>: <span class='ident'>PeerId</span>,
                  <span class='ident'>event</span>: <span class='ident'>Event</span>,
                  <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) {
         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Entered state ActiveConnection: {:?} -&gt; {:?}&quot;</span>,
@@ -418,8 +418,8 @@
             <span class='ident'>context</span>: <span class='ident'>context</span>,
             <span class='ident'>socket</span>: <span class='ident'>socket</span>,
             <span class='ident'>cm</span>: <span class='ident'>cm</span>,
-            <span class='ident'>their_id</span>: <span class='ident'>their_id</span>,
             <span class='ident'>our_id</span>: <span class='ident'>our_id</span>,
+            <span class='ident'>their_id</span>: <span class='ident'>their_id</span>,
             <span class='ident'>event_tx</span>: <span class='ident'>event_tx</span>,
             <span class='ident'>heartbeat</span>: <span class='ident'>heartbeat</span>,
         }));

@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1518' class='srclink' href='../src/crust/src/main/service.rs.html#98-109' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1604' class='srclink' href='../src/crust/src/main/service.rs.html#102-113' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager.</p>
@@ -72,7 +72,7 @@ failure</p>
 explicitly.</p>
 </div><h4 id='method.stop_tcp_listener' class='method'><code>fn <a href='#method.stop_tcp_listener' class='fnname'>stop_tcp_listener</a>(&amp;mut self) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Stops Listener explicitly and stops accepting TCP connections.</p>
-</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_connection_info: <a class='struct' href='../crust/struct.PrivConnectionInfo.html' title='crust::PrivConnectionInfo'>PrivConnectionInfo</a>, their_connection_info: <a class='struct' href='../crust/struct.PubConnectionInfo.html' title='crust::PubConnectionInfo'>PubConnectionInfo</a>) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_ci: <a class='struct' href='../crust/struct.PrivConnectionInfo.html' title='crust::PrivConnectionInfo'>PrivConnectionInfo</a>, their_ci: <a class='struct' href='../crust/struct.PubConnectionInfo.html' title='crust::PubConnectionInfo'>PubConnectionInfo</a>) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Connect to peer</p>
 </div><h4 id='method.disconnect' class='method'><code>fn <a href='#method.disconnect' class='fnname'>disconnect</a>(&amp;self, peer_id: <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Disconnect from the given peer and returns whether there was a connection at all.</p>
