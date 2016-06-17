@@ -56,9 +56,11 @@ impl Connect {
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
         let their_id = their_ci.id;
+        let their_direct = their_ci.for_direct;
+        let their_hole_punch = their_ci.for_hole_punch;
 
-        if their_ci.listeners.is_empty() && our_ci.tcp_socket.is_none() {
-            let _ = event_tx.send(Event::NewPeer(Err(their_id)));
+        if their_direct.is_empty() && their_hole_punch.is_empty() {
+            let _ = event_tx.send(Event::ConnectFailure(their_id));
         }
 
         let token = core.get_new_token();
@@ -74,34 +76,29 @@ impl Connect {
             their_id: their_id,
             weak: None,
             listener: None,
-            children: HashSet::with_capacity(their_ci.listeners.len()),
+            children: HashSet::with_capacity(their_direct.len() + their_hole_punch.len()),
             event_tx: event_tx,
         }));
 
         let weak_self = Rc::downgrade(&state);
         state.borrow_mut().weak = Some(weak_self);
 
-        let mut sockets = their_ci.listeners
-            .into_iter()
-            .filter_map(|elt| Socket::connect(elt.addr()).ok())
+        let mut sockets = their_direct.into_iter()
+            .filter_map(|elt| Socket::connect(&elt).ok())
             .collect::<Vec<_>>();
 
-        if let Some(mapped_socket) = our_ci.tcp_socket {
-            let their_addrs =
-                their_ci.tcp_info.endpoints.into_iter().map(|elt| elt.0).collect::<Vec<_>>();
-            if let Ok((listener, nat_sockets)) = nat::get_sockets(mapped_socket,
-                                                                  their_addrs.len()) {
-                try!(el.register(&listener,
-                                 token,
-                                 EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                 PollOpt::edge()));
-                state.borrow_mut().listener = Some(listener);
-                sockets.extend(nat_sockets.into_iter()
-                    .zip(their_addrs)
-                    .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
-                    .map(|elt| Socket::wrap(elt))
-                    .collect::<Vec<_>>());
-            }
+        if let Ok((listener, nat_sockets)) = nat::get_sockets(our_ci.hole_punch_socket,
+                                                              their_hole_punch.len()) {
+            try!(el.register(&listener,
+                             token,
+                             EventSet::readable() | EventSet::error() | EventSet::hup(),
+                             PollOpt::edge()));
+            state.borrow_mut().listener = Some(listener);
+            sockets.extend(nat_sockets.into_iter()
+                .zip(their_hole_punch.into_iter().map(|elt| elt.0))
+                .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
+                .map(|elt| Socket::wrap(elt))
+                .collect::<Vec<_>>());
         }
 
         for socket in sockets {
@@ -189,7 +186,7 @@ impl Connect {
                                     self.cm.clone(),
                                     self.our_id,
                                     self.their_id,
-                                    Event::NewPeer(Ok(self.their_id)),
+                                    Event::ConnectSuccess(self.their_id),
                                     self.event_tx.clone());
         }
     }
@@ -230,7 +227,7 @@ impl State for Connect {
 
 
         if !self.cm.lock().unwrap().contains_key(&self.their_id) {
-            let _ = self.event_tx.send(Event::NewPeer(Err(self.their_id)));
+            let _ = self.event_tx.send(Event::ConnectFailure(self.their_id));
         }
     }
 

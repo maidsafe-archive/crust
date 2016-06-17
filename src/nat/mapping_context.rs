@@ -31,7 +31,7 @@ use super::NatError;
 pub struct MappingContext {
     our_ifv4s: Vec<(Ipv4Addr, Option<Gateway>)>,
     our_ifv6s: Vec<Ipv6Addr>,
-    peer_listeners: Vec<SocketAddr>,
+    peer_stuns: Vec<SocketAddr>,
 }
 
 impl MappingContext {
@@ -61,7 +61,7 @@ impl MappingContext {
         Ok(MappingContext {
             our_ifv4s: ifv4s,
             our_ifv6s: ifv6s,
-            peer_listeners: Vec::with_capacity(10),
+            peer_stuns: Vec::with_capacity(10),
         })
     }
 
@@ -69,16 +69,16 @@ impl MappingContext {
     #[allow(unused)]
     pub fn add_peer_listeners(&mut self, potential_peers: Vec<MappedAddr>) {
         let listeners = potential_peers.iter()
-            .filter(|elt| elt.global() && !elt.nat_restricted)
+            .filter(|elt| elt.global())
             .map(|elt| elt.addr())
             .collect::<Vec<_>>();
-        self.peer_listeners.extend(listeners);
+        self.peer_stuns.extend(listeners);
     }
 
     /// Add without sanity check. Caller is responsible for not providing a nat restricted address
     /// or not providing a non-global address etc
     pub fn add_peer_listeners_no_check(&mut self, listeners: Vec<SocketAddr>) {
-        self.peer_listeners.extend(listeners);
+        self.peer_stuns.extend(listeners);
     }
 
     /// Get v4 interfaces
@@ -87,8 +87,8 @@ impl MappingContext {
     }
 
     /// Iterate over the known servers
-    pub fn peer_listeners(&self) -> &Vec<SocketAddr> {
-        &self.peer_listeners
+    pub fn peer_stuns(&self) -> &Vec<SocketAddr> {
+        &self.peer_stuns
     }
 }
 

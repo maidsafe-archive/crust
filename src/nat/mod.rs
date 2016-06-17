@@ -27,5 +27,3 @@ mod mapped_tcp_socket;
 mod mapping_context;
 mod punch_hole;
 mod util;
-
-pub mod rendezvous_info;

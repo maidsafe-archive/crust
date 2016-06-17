@@ -32,7 +32,6 @@ use std::u16;
 
 use common::{self, Context, Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use nat::MappedAddr;
 use rand;
 
 use mio::udp::UdpSocket;
@@ -52,7 +51,7 @@ pub struct ServiceDiscovery {
     remote_addr: SocketAddr,
     listen: bool,
     read_buf: [u8; 1024],
-    our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
+    our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
     seek_peers_req: Vec<u8>,
     reply_to: VecDeque<SocketAddr>,
     observers: Vec<Sender<Vec<common::SocketAddr>>>,
@@ -62,7 +61,7 @@ pub struct ServiceDiscovery {
 impl ServiceDiscovery {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
-                 our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
+                 our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                  context: Context,
                  port: u16)
                  -> Result<(), ServiceDiscoveryError> {
@@ -162,8 +161,7 @@ impl ServiceDiscovery {
             .lock()
             .unwrap()
             .iter()
-            .filter(|elt| !elt.nat_restricted)
-            .map(|elt| elt.addr)
+            .map(|elt| common::SocketAddr(*elt))
             .collect();
         let resp = DiscoveryMsg::Response(our_current_listeners);
 
@@ -262,7 +260,6 @@ mod test {
     use common::{Context, Core, CoreMessage};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use mio::EventLoop;
-    use nat::MappedAddr;
 
     #[test]
     fn service_discovery() {
@@ -274,8 +271,7 @@ mod test {
         }));
 
         let addr = net::SocketAddr::from_str("138.139.140.150:54321").unwrap();
-        let mapped_addr = MappedAddr::new(addr, false);
-        let listeners_0 = Arc::new(Mutex::new(vec![mapped_addr]));
+        let listeners_0 = Arc::new(Mutex::new(vec![addr]));
         let listeners_0_clone = listeners_0.clone();
 
         // ServiceDiscovery-0
@@ -342,8 +338,8 @@ mod test {
         }
 
         let peer_listeners = rx.recv().unwrap();
-        assert_eq!(peer_listeners,
-                   listeners_0.lock().unwrap().iter().map(|elt| elt.addr).collect::<Vec<_>>());
+        assert_eq!(peer_listeners.into_iter().map(|elt| elt.0).collect::<Vec<_>>(),
+                   *listeners_0.lock().unwrap());
 
         tx0.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el0");
         tx1.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el1");

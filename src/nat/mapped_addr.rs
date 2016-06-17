@@ -24,15 +24,12 @@ use common;
 pub struct MappedAddr {
     /// Address
     pub addr: common::SocketAddr,
-    /// If nat_restricted is true then this can be accessible only via hole punch otherwise it can
-    /// be directly accessed.
-    pub nat_restricted: bool,
     global: bool,
 }
 
 impl MappedAddr {
     /// Constructor
-    pub fn new(addr: net::SocketAddr, nat_restricted: bool) -> MappedAddr {
+    pub fn new(addr: net::SocketAddr) -> MappedAddr {
         let global = if let IpAddr::V4(addr_v4) = addr.ip() {
             // TODO(Spandan) Currently is_global() is unstable
             !(addr_v4.is_loopback() || addr_v4.is_private() || addr_v4.is_link_local() ||
@@ -44,13 +41,11 @@ impl MappedAddr {
 
         MappedAddr {
             addr: common::SocketAddr(addr),
-            nat_restricted: nat_restricted,
             global: global,
         }
     }
 
     /// Enquire if it's a global address
-    #[allow(unused)]
     pub fn global(&self) -> bool {
         self.global
     }

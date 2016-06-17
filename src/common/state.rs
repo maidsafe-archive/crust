@@ -18,20 +18,14 @@
 
 use std::any::Any;
 
+use common::Core;
 use mio::{EventLoop, EventSet, Handler, Token};
-use super::Core;
 
-/// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be
-/// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to
-/// allow higher priority messages through.
 pub type Priority = u8;
 
-/// A trait for state machines
 pub trait State {
-    /// Return the state as an `Any`
     fn as_any(&mut self) -> &mut Any;
 
-    /// Run when the machine is ready to execute.
     fn ready(&mut self,
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
@@ -39,17 +33,14 @@ pub trait State {
              _event_set: EventSet) {
     }
 
-    /// Terminate the state machine
     fn terminate(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>) {}
 
-    /// Timeout
     fn timeout(&mut self,
                _core: &mut Core,
                _event_loop: &mut EventLoop<Core>,
                _token: <Core as Handler>::Timeout) {
     }
 
-    /// Write some data
     fn write(&mut self,
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,

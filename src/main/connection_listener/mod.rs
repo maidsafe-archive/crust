@@ -19,6 +19,7 @@ mod exchange_msg;
 
 use std::any::Any;
 use std::cell::RefCell;
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
@@ -28,8 +29,8 @@ use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedAddr, MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
-use sodiumoxide::crypto::box_::PublicKey;
 use self::exchange_msg::ExchangeMsg;
+use sodiumoxide::crypto::box_::PublicKey;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -53,7 +54,7 @@ impl ConnectionListener {
                  name_hash: NameHash,
                  cm: ConnectionMap,
                  mc: Arc<MappingContext>,
-                 our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
+                 our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                  context: Context,
                  event_tx: ::CrustEventSender) {
         let event_tx_0 = event_tx.clone();
@@ -88,7 +89,7 @@ impl ConnectionListener {
                             our_pk: PublicKey,
                             name_hash: NameHash,
                             cm: ConnectionMap,
-                            our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
+                            our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                             context: Context,
                             event_tx: ::CrustEventSender)
                             -> ::Res<()> {
@@ -103,7 +104,7 @@ impl ConnectionListener {
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
                                  PollOpt::edge()));
 
-        *our_listeners.lock().unwrap() = mapped_addrs;
+        *our_listeners.lock().unwrap() = mapped_addrs.into_iter().map(|elt| *elt.addr()).collect();
 
         let state = ConnectionListener {
             cm: cm,
@@ -256,7 +257,7 @@ mod test {
             }
         }
 
-        let addr = listeners.lock().unwrap()[0].addr;
+        let addr = common::SocketAddr(listeners.lock().unwrap()[0]);
 
         Listener {
             tx: tx,
@@ -342,10 +343,7 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::NewPeer(res) => {
-                assert_eq!(res.expect("NewPeer Error"), peer_id::new(pk));
-                assert!(res.is_ok());
-            }
+            Event::ConnectSuccess(id) => assert_eq!(id, peer_id::new(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }

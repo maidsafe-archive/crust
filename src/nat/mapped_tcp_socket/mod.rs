@@ -99,7 +99,7 @@ impl<F> MappedTcpSocket<F>
 
         let mapped_addrs = mc.ifv4s()
             .iter()
-            .map(|&(ip, _)| MappedAddr::new(SocketAddr::new(IpAddr::V4(ip), addr.port()), false))
+            .map(|&(ip, _)| MappedAddr::new(SocketAddr::new(IpAddr::V4(ip), addr.port())))
             .collect();
 
         let state = Rc::new(RefCell::new(MappedTcpSocket {
@@ -107,14 +107,14 @@ impl<F> MappedTcpSocket<F>
             context: context,
             socket: Some(socket),
             igd_children: igd_children,
-            stun_children: HashSet::with_capacity(mc.peer_listeners().len()),
+            stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
             mapped_addrs: mapped_addrs,
             timeout: try!(event_loop.timeout_ms(token, TIMEOUT_MS)),
             finish: Some(finish),
         }));
 
         // Ask Stuns
-        for stun in mc.peer_listeners() {
+        for stun in mc.peer_stuns() {
             let self_weak = Rc::downgrade(&state);
             let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child_context, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -144,7 +144,7 @@ impl<F> MappedTcpSocket<F>
                         res: Result<SocketAddr, ()>) {
         let _ = self.stun_children.remove(&child);
         if let Ok(our_ext_addr) = res {
-            self.mapped_addrs.push(MappedAddr::new(our_ext_addr, true));
+            self.mapped_addrs.push(MappedAddr::new(our_ext_addr));
         }
         if self.stun_children.is_empty() && self.igd_children == 0 {
             self.terminate(core, event_loop);
@@ -156,7 +156,7 @@ impl<F> MappedTcpSocket<F>
                        event_loop: &mut EventLoop<Core>,
                        our_ext_addr: SocketAddr) {
         self.igd_children -= 1;
-        self.mapped_addrs.push(MappedAddr::new(our_ext_addr, false));
+        self.mapped_addrs.push(MappedAddr::new(our_ext_addr));
         if self.stun_children.is_empty() && self.igd_children == 0 {
             self.terminate(core, event_loop);
         }

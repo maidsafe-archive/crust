@@ -27,6 +27,3 @@ tmp_mio = "~0.5.2"
 [dependencies.clippy]
 optional = true
 version = "~0.0.76"
-
-[dev-dependencies]
-void = "~1.0.2"

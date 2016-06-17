@@ -113,4 +113,3 @@ impl Decodable for SocketAddrV6 {
         }
     }
 }
-
