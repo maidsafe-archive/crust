@@ -180,6 +180,32 @@ fn bootstrap_with_blacklist() {
 }
 
 #[test]
+fn bootstrap_fails_only_blacklisted_contact() {
+    use std::net::TcpListener;
+
+    let blacklisted_listener = unwrap_result!(TcpListener::bind("127.0.0.1:0"));
+    let blacklisted_address = SocketAddr(unwrap_result!(blacklisted_listener.local_addr()));
+
+    let mut config = gen_config();
+    config.hard_coded_contacts = vec![blacklisted_address];
+    let (event_tx, event_rx) = get_event_sender();
+    let mut service = unwrap_result!(Service::with_config(event_tx, config));
+
+    let mut blacklist = HashSet::new();
+    blacklist.insert(*blacklisted_address);
+    unwrap_result!(service.start_bootstrap(blacklist));
+
+    expect_event!(event_rx, Event::BootstrapFailed);
+
+    let blacklisted_listener = unwrap_result!(
+            mio::tcp::TcpListener::from_listener(blacklisted_listener, &*blacklisted_address)
+    );
+    thread::sleep(Duration::from_secs(5));
+    let stream_opt = unwrap_result!(mio::TryAccept::accept(&blacklisted_listener));
+    assert!(stream_opt.is_none())
+}
+
+#[test]
 fn bootstrap_fails_if_there_are_no_contacts() {
     let config = gen_config();
     let (event_tx, event_rx) = get_event_sender();
