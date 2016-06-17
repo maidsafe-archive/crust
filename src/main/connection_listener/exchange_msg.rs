@@ -20,12 +20,11 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
+use common::{self, Context, Core, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use main::peer_id;
-use common::{Context, Core, Message, NameHash, Priority, Socket, State};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
-use socket_addr;
 
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 
@@ -134,7 +133,7 @@ impl ExchangeMsg {
         if let Ok(peer_addr) = self.socket.as_ref().unwrap().peer_addr() {
             self.write(core,
                        el,
-                       Some((Message::EchoAddrResp(socket_addr::SocketAddr(peer_addr)), 0)));
+                       Some((Message::EchoAddrResp(common::SocketAddr(peer_addr)), 0)));
         } else {
             self.terminate(core, el);
         }

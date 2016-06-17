@@ -17,13 +17,13 @@
 
 use std::net::{self, IpAddr};
 
-use socket_addr;
+use common;
 
 /// Socket Address that is publicly accessible if nat_restricted is false.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, RustcEncodable, RustcDecodable)]
 pub struct MappedAddr {
     /// Address
-    pub addr: socket_addr::SocketAddr,
+    pub addr: common::SocketAddr,
     /// If nat_restricted is true then this can be accessible only via hole punch otherwise it can
     /// be directly accessed.
     pub nat_restricted: bool,
@@ -43,7 +43,7 @@ impl MappedAddr {
         };
 
         MappedAddr {
-            addr: socket_addr::SocketAddr(addr),
+            addr: common::SocketAddr(addr),
             nat_restricted: nat_restricted,
             global: global,
         }

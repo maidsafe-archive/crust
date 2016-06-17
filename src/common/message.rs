@@ -15,9 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use socket_addr;
+use common::{self, NameHash};
 use sodiumoxide::crypto::box_::PublicKey;
-use common::NameHash;
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum Message {
@@ -25,7 +24,7 @@ pub enum Message {
     BootstrapRequest(PublicKey, NameHash),
     BootstrapResponse(PublicKey),
     EchoAddrReq,
-    EchoAddrResp(socket_addr::SocketAddr),
+    EchoAddrResp(common::SocketAddr),
     ChooseConnection,
     Connect(PublicKey, NameHash),
     Data(Vec<u8>),

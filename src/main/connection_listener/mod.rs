@@ -189,14 +189,13 @@ mod test {
     use std::time::Duration;
 
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{Context, Core, CoreMessage, Message, NameHash};
+    use common::{self, Context, Core, CoreMessage, Message, NameHash};
     use main::{Event, peer_id};
     use mio::{EventLoop, Sender};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use nat::MappingContext;
-    use socket_addr::SocketAddr;
     use sodiumoxide::crypto::box_::{self, PublicKey};
     use rustc_serialize::Decodable;
 
@@ -205,7 +204,7 @@ mod test {
     struct Listener {
         tx: Sender<CoreMessage>,
         pk: PublicKey,
-        addr: SocketAddr,
+        addr: common::SocketAddr,
         event_rx: mpsc::Receiver<Event>,
         _raii_joiner: RaiiThreadJoiner,
     }

@@ -18,7 +18,7 @@
 //! # `nat_traversal`
 //! NAT traversal utilities.
 
-use socket_addr::SocketAddr;
+use common::SocketAddr;
 use rand;
 
 /// Info exchanged by both parties before performing a rendezvous connection.

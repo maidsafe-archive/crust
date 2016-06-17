@@ -30,11 +30,10 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::u16;
 
-use common::{Context, Core, State};
+use common::{self, Context, Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use nat::MappedAddr;
 use rand;
-use socket_addr;
 
 use mio::udp::UdpSocket;
 use mio::{EventLoop, EventSet, PollOpt, Token};
@@ -44,7 +43,7 @@ enum DiscoveryMsg {
     Request {
         guid: u64,
     },
-    Response(Vec<socket_addr::SocketAddr>),
+    Response(Vec<common::SocketAddr>),
 }
 
 pub struct ServiceDiscovery {
@@ -56,7 +55,7 @@ pub struct ServiceDiscovery {
     our_listeners: Arc<Mutex<Vec<MappedAddr>>>,
     seek_peers_req: Vec<u8>,
     reply_to: VecDeque<SocketAddr>,
-    observers: Vec<Sender<Vec<socket_addr::SocketAddr>>>,
+    observers: Vec<Sender<Vec<common::SocketAddr>>>,
     guid: u64,
 }
 
@@ -112,7 +111,7 @@ impl ServiceDiscovery {
     }
 
     /// Register service discovery observer
-    pub fn register_observer(&mut self, obs: Sender<Vec<socket_addr::SocketAddr>>) {
+    pub fn register_observer(&mut self, obs: Sender<Vec<common::SocketAddr>>) {
         self.observers.push(obs);
     }
 

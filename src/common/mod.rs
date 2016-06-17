@@ -20,6 +20,7 @@ pub use self::error::CommonError;
 pub use self::core::{Context, Core, CoreMessage};
 pub use self::message::Message;
 pub use self::socket::Socket;
+pub use self::socket_addr::SocketAddr;
 pub use self::state::State;
 
 // Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be
@@ -34,3 +35,5 @@ mod error;
 mod message;
 mod socket;
 mod state;
+mod socket_addr;
+
