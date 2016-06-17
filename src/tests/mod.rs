@@ -23,8 +23,11 @@ use std::collections::HashSet;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+use std::thread;
+use std::time::Duration;
 
 use main::{Config, Event, Service};
+use mio;
 use socket_addr::SocketAddr;
 
 fn localhost(port: u16) -> SocketAddr {
@@ -138,6 +141,42 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
     assert_eq!(peer_id1, service1.id());
+}
+
+#[test]
+fn bootstrap_with_blacklist() {
+    use std::net::TcpListener;
+
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap_result!(Service::with_config(event_tx0, Config::default()));
+    unwrap_result!(service0.start_listening_tcp());
+    let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    let valid_address = localhost(port);
+
+    let blacklisted_listener = unwrap_result!(TcpListener::bind("127.0.0.1:0"));
+    let blacklisted_address = SocketAddr(unwrap_result!(blacklisted_listener.local_addr()));
+
+    let mut config1 = gen_config();
+    config1.hard_coded_contacts = vec![blacklisted_address, valid_address];
+
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
+    let mut blacklist = HashSet::new();
+    blacklist.insert(*blacklisted_address);
+    unwrap_result!(service1.start_bootstrap(blacklist));
+
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
+    assert_eq!(peer_id0, service0.id());
+
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    assert_eq!(peer_id1, service1.id());
+
+    let blacklisted_listener = unwrap_result!(
+            mio::tcp::TcpListener::from_listener(blacklisted_listener, &*blacklisted_address)
+    );
+    thread::sleep(Duration::from_secs(5));
+    let stream_opt = unwrap_result!(mio::TryAccept::accept(&blacklisted_listener));
+    assert!(stream_opt.is_none())
 }
 
 #[test]
