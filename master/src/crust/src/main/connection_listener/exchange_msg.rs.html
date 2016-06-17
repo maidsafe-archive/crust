@@ -341,7 +341,6 @@
 <span id="297">297</span>
 <span id="298">298</span>
 <span id="299">299</span>
-<span id="300">300</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -365,12 +364,11 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>hash_map</span>::<span class='ident'>Entry</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>Message</span>, <span class='ident'>NameHash</span>, <span class='ident'>Priority</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ActiveConnection</span>, <span class='ident'>ConnectionCandidate</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>peer_id</span>;
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>Message</span>, <span class='ident'>NameHash</span>, <span class='ident'>Priority</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>;
 
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>EXCHANGE_MSG_TIMEOUT_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>10</span> <span class='op'>*</span> <span class='number'>60</span> <span class='op'>*</span> <span class='number'>1000</span>;
 
@@ -479,7 +477,7 @@
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>peer_addr</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>().<span class='ident'>peer_addr</span>() {
             <span class='self'>self</span>.<span class='ident'>write</span>(<span class='ident'>core</span>,
                        <span class='ident'>el</span>,
-                       <span class='prelude-val'>Some</span>((<span class='ident'>Message</span>::<span class='ident'>EchoAddrResp</span>(<span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>peer_addr</span>)), <span class='number'>0</span>)));
+                       <span class='prelude-val'>Some</span>((<span class='ident'>Message</span>::<span class='ident'>EchoAddrResp</span>(<span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>peer_addr</span>)), <span class='number'>0</span>)));
         } <span class='kw'>else</span> {
             <span class='self'>self</span>.<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
         }

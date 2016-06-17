@@ -124,13 +124,13 @@
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='self'>self</span>, <span class='ident'>IpAddr</span>};
 
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>;
+<span class='kw'>use</span> <span class='ident'>common</span>;
 
 <span class='doccomment'>/// Socket Address that is publicly accessible if nat_restricted is false.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Hash</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>MappedAddr</span> {
     <span class='doccomment'>/// Address</span>
-    <span class='kw'>pub</span> <span class='ident'>addr</span>: <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>,
+    <span class='kw'>pub</span> <span class='ident'>addr</span>: <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>,
     <span class='doccomment'>/// If nat_restricted is true then this can be accessible only via hole punch otherwise it can</span>
     <span class='doccomment'>/// be directly accessed.</span>
     <span class='kw'>pub</span> <span class='ident'>nat_restricted</span>: <span class='ident'>bool</span>,
@@ -150,7 +150,7 @@
         };
 
         <span class='ident'>MappedAddr</span> {
-            <span class='ident'>addr</span>: <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>addr</span>),
+            <span class='ident'>addr</span>: <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>addr</span>),
             <span class='ident'>nat_restricted</span>: <span class='ident'>nat_restricted</span>,
             <span class='ident'>global</span>: <span class='ident'>global</span>,
         }

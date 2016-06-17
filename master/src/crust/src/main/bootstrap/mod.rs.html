@@ -292,7 +292,6 @@
 <span id="248">248</span>
 <span id="249">249</span>
 <span id="250">250</span>
-<span id="251">251</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -324,13 +323,12 @@
 
 <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>peer_id</span>;
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ActiveConnection</span>, <span class='ident'>Config</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>cache</span>::<span class='ident'>Cache</span>;
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>try_peer</span>::<span class='ident'>TryPeer</span>;
 <span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>;
 
 <span class='kw'>const</span> <span class='ident'>BOOTSTRAP_TIMEOUT_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>10000</span>;
 <span class='kw'>const</span> <span class='ident'>MAX_CONTACTS_EXPECTED</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1500</span>;
@@ -340,7 +338,7 @@
     <span class='ident'>token</span>: <span class='ident'>Token</span>,
     <span class='ident'>context</span>: <span class='ident'>Context</span>,
     <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
-    <span class='ident'>peers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='ident'>peers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='ident'>blacklist</span>: <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='ident'>net</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='ident'>name_hash</span>: <span class='ident'>u64</span>,
     <span class='ident'>our_pk</span>: <span class='ident'>PublicKey</span>,
@@ -465,7 +463,7 @@
                                                <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>());
             }
             <span class='prelude-val'>Err</span>(<span class='ident'>bad_peer</span>) <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>remove_peer_acceptor</span>(<span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>bad_peer</span>));
+                <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>remove_peer_acceptor</span>(<span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>bad_peer</span>));
             }
         }
 
@@ -520,7 +518,7 @@
 }
 
 <span class='kw'>struct</span> <span class='ident'>ServiceDiscMeta</span> {
-    <span class='ident'>rx</span>: <span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>rx</span>: <span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>timeout</span>: <span class='ident'>Timeout</span>,
 }
 
@@ -528,7 +526,7 @@
               <span class='ident'>event_loop</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>,
               <span class='ident'>service_discovery_context</span>: <span class='ident'>Context</span>,
               <span class='ident'>token</span>: <span class='ident'>Token</span>)
-              <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>(<span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>, <span class='ident'>Timeout</span>)<span class='op'>&gt;</span> {
+              <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>(<span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>, <span class='ident'>Timeout</span>)<span class='op'>&gt;</span> {
     <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>service_discovery_context</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>as_any</span>()

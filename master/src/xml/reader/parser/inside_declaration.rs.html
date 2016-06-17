@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/parser/inside_declaration.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.1.26/src/reader/parser/inside_declaration.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>inside_declaration.rs.html -- source</title>
@@ -190,9 +190,6 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
 </pre><pre class='rust '>
 
 <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>XmlVersion</span>;
@@ -200,30 +197,27 @@
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>;
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{
-    <span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>DeclarationSubstate</span>, <span class='ident'>QualifiedNameTarget</span>,
-    <span class='ident'>DEFAULT_VERSION</span>, <span class='ident'>DEFAULT_ENCODING</span>
-};
+<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>DeclarationSubstate</span>, <span class='ident'>QualifiedNameTarget</span>, <span class='ident'>DEFAULT_VERSION</span>, <span class='ident'>DEFAULT_ENCODING</span>};
 
 <span class='kw'>impl</span> <span class='ident'>PullParser</span> {
     <span class='comment'>// TODO: remove redundancy via macros or extra methods</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_declaration</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>, <span class='ident'>s</span>: <span class='ident'>DeclarationSubstate</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_declaration</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>, <span class='ident'>s</span>: <span class='ident'>DeclarationSubstate</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span> {
         <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>unexpected_token</span>(
-            (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>this</span>:<span class='ident'>expr</span>; <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> (<span class='prelude-val'>Some</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>this</span>.<span class='ident'>error</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected token inside XML declaration: {}&quot;</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>))));
+            (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>this</span>:<span class='ident'>expr</span>; <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> (<span class='prelude-val'>Some</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>this</span>.<span class='ident'>error</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected token inside XML declaration: {}&quot;</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>.<span class='ident'>to_string</span>()))));
             (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> (<span class='macro'>unexpected_token</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>));
         );
 
         <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-        <span class='kw'>fn</span> <span class='ident'>emit_start_document</span>(<span class='ident'>this</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>PullParser</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
+        <span class='kw'>fn</span> <span class='ident'>emit_start_document</span>(<span class='ident'>this</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>PullParser</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span> {
             <span class='ident'>this</span>.<span class='ident'>parsed_declaration</span> <span class='op'>=</span> <span class='boolval'>true</span>;
             <span class='kw'>let</span> <span class='ident'>version</span> <span class='op'>=</span> <span class='ident'>this</span>.<span class='ident'>data</span>.<span class='ident'>take_version</span>();
             <span class='kw'>let</span> <span class='ident'>encoding</span> <span class='op'>=</span> <span class='ident'>this</span>.<span class='ident'>data</span>.<span class='ident'>take_encoding</span>();
             <span class='kw'>let</span> <span class='ident'>standalone</span> <span class='op'>=</span> <span class='ident'>this</span>.<span class='ident'>data</span>.<span class='ident'>take_standalone</span>();
-            <span class='ident'>this</span>.<span class='ident'>into_state_emit</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>, <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>StartDocument</span> {
+            <span class='ident'>this</span>.<span class='ident'>into_state_emit</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>, <span class='ident'>XmlEvent</span>::<span class='ident'>StartDocument</span> {
                 <span class='ident'>version</span>: <span class='ident'>version</span>.<span class='ident'>unwrap_or</span>(<span class='ident'>DEFAULT_VERSION</span>),
-                <span class='ident'>encoding</span>: <span class='ident'>encoding</span>.<span class='ident'>unwrap_or</span>(<span class='ident'>DEFAULT_ENCODING</span>.<span class='ident'>into</span>()),
+                <span class='ident'>encoding</span>: <span class='ident'>encoding</span>.<span class='ident'>unwrap_or</span>(<span class='ident'>DEFAULT_ENCODING</span>.<span class='ident'>to_string</span>()),
                 <span class='ident'>standalone</span>: <span class='ident'>standalone</span>
-            }))
+            })
         }
 
         <span class='kw'>match</span> <span class='ident'>s</span> {
@@ -332,7 +326,7 @@
                     <span class='ident'>this</span>.<span class='ident'>data</span>.<span class='ident'>standalone</span> <span class='op'>=</span> <span class='ident'>standalone</span>;
                     <span class='ident'>this</span>.<span class='ident'>into_state_continue</span>(<span class='ident'>State</span>::<span class='ident'>InsideDeclaration</span>(<span class='ident'>DeclarationSubstate</span>::<span class='ident'>AfterStandaloneDeclValue</span>))
                 } <span class='kw'>else</span> {
-                    <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='ident'>this</span>; <span class='string'>&quot;Invalid standalone declaration value: {}&quot;</span>, <span class='ident'>value</span>))
+                    <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='ident'>this</span>; <span class='string'>&quot;Invalid standalone declaration value: {}&quot;</span>, <span class='ident'>value</span>.<span class='ident'>to_string</span>()))
                 }
             }),
 

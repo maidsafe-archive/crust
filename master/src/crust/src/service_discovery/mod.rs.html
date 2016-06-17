@@ -393,7 +393,6 @@
 <span id="349">349</span>
 <span id="350">350</span>
 <span id="351">351</span>
-<span id="352">352</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -427,11 +426,10 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>u16</span>;
 
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>State</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>serialise</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>::<span class='ident'>MappedAddr</span>;
 <span class='kw'>use</span> <span class='ident'>rand</span>;
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>;
 
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>udp</span>::<span class='ident'>UdpSocket</span>;
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Token</span>};
@@ -441,7 +439,7 @@
     <span class='ident'>Request</span> {
         <span class='ident'>guid</span>: <span class='ident'>u64</span>,
     },
-    <span class='ident'>Response</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>),
+    <span class='ident'>Response</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>),
 }
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ServiceDiscovery</span> {
@@ -453,7 +451,7 @@
     <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
     <span class='ident'>seek_peers_req</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
     <span class='ident'>reply_to</span>: <span class='ident'>VecDeque</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-    <span class='ident'>observers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+    <span class='ident'>observers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
     <span class='ident'>guid</span>: <span class='ident'>u64</span>,
 }
 
@@ -509,7 +507,7 @@
     }
 
     <span class='doccomment'>/// Register service discovery observer</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_observer</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>obs</span>: <span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>register_observer</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>obs</span>: <span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>observers</span>.<span class='ident'>push</span>(<span class='ident'>obs</span>);
     }
 

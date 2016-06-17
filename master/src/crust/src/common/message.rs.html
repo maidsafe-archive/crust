@@ -73,7 +73,6 @@
 <span id="29">29</span>
 <span id="30">30</span>
 <span id="31">31</span>
-<span id="32">32</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -92,9 +91,8 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>;
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>NameHash</span>};
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
-<span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>NameHash</span>;
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Message</span> {
@@ -102,7 +100,7 @@
     <span class='ident'>BootstrapRequest</span>(<span class='ident'>PublicKey</span>, <span class='ident'>NameHash</span>),
     <span class='ident'>BootstrapResponse</span>(<span class='ident'>PublicKey</span>),
     <span class='ident'>EchoAddrReq</span>,
-    <span class='ident'>EchoAddrResp</span>(<span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>),
+    <span class='ident'>EchoAddrResp</span>(<span class='ident'>common</span>::<span class='ident'>SocketAddr</span>),
     <span class='ident'>ChooseConnection</span>,
     <span class='ident'>Connect</span>(<span class='ident'>PublicKey</span>, <span class='ident'>NameHash</span>),
     <span class='ident'>Data</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),

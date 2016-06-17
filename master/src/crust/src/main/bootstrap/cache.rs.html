@@ -177,14 +177,14 @@
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsString</span>;
 
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>;
+<span class='kw'>use</span> <span class='ident'>common</span>;
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>::{<span class='self'>self</span>, <span class='ident'>FileHandler</span>};
 
 <span class='kw'>const</span> <span class='ident'>_ENABLE_BOOTSTRAP_CACHE</span>: <span class='ident'>bool</span> <span class='op'>=</span> <span class='boolval'>false</span>;
 <span class='kw'>const</span> <span class='ident'>_MAX_BOOTSTRAP_CACHE_CONTACTS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1500</span>;
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Cache</span> {
-    <span class='ident'>file_handler</span>: <span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>file_handler</span>: <span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Cache</span> {
@@ -227,11 +227,11 @@
     <span class='comment'>//     Ok(())</span>
     <span class='comment'>// }</span>
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_file</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_file</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>file_handler</span>.<span class='ident'>read_file</span>().<span class='ident'>ok</span>().<span class='ident'>unwrap_or_else</span>(<span class='op'>||</span> <span class='macro'>vec</span><span class='macro'>!</span>[])
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_peer_acceptor</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_peer</span>: <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>) {}
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove_peer_acceptor</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_peer</span>: <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>) {}
 
     <span class='comment'>// fn duration_between_updates() -&gt; Duration {</span>
     <span class='comment'>//     Duration::from_secs(4 * 60 * 60)</span>
