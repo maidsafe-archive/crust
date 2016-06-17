@@ -90,6 +90,8 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -130,8 +132,10 @@
     <span class='ident'>ListenerFailed</span>,
     <span class='doccomment'>/// Invoked as a result to the call of `Service::prepare_contact_info`.</span>
     <span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span>),
-    <span class='doccomment'>/// Invoked when connection to a new peer has been established or has failed.</span>
-    <span class='ident'>NewPeer</span>(<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PeerId</span>, <span class='ident'>PeerId</span><span class='op'>&gt;</span>),
+    <span class='doccomment'>/// Invoked when connection to a new peer has been established.</span>
+    <span class='ident'>ConnectSuccess</span>(<span class='ident'>PeerId</span>),
+    <span class='doccomment'>/// Invoked when connection to a new peer has failed.</span>
+    <span class='ident'>ConnectFailure</span>(<span class='ident'>PeerId</span>),
     <span class='doccomment'>/// Invoked when a peer is lost or having read/write error.</span>
     <span class='ident'>LostPeer</span>(<span class='ident'>PeerId</span>),
     <span class='doccomment'>/// Invoked when a new message is received.  Passes the message.</span>

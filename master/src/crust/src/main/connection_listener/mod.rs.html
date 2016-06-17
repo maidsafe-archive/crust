@@ -497,8 +497,6 @@
 <span id="453">453</span>
 <span id="454">454</span>
 <span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -521,6 +519,7 @@
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
@@ -530,8 +529,8 @@
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::<span class='ident'>TcpListener</span>;
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedAddr</span>, <span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>exchange_msg</span>::<span class='ident'>ExchangeMsg</span>;
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
 
 <span class='kw'>const</span> <span class='ident'>LISTENER_BACKLOG</span>: <span class='ident'>i32</span> <span class='op'>=</span> <span class='number'>100</span>;
 
@@ -555,7 +554,7 @@
                  <span class='ident'>name_hash</span>: <span class='ident'>NameHash</span>,
                  <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
                  <span class='ident'>mc</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;</span>,
-                 <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+                 <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
                  <span class='ident'>context</span>: <span class='ident'>Context</span>,
                  <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) {
         <span class='kw'>let</span> <span class='ident'>event_tx_0</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
@@ -590,7 +589,7 @@
                             <span class='ident'>our_pk</span>: <span class='ident'>PublicKey</span>,
                             <span class='ident'>name_hash</span>: <span class='ident'>NameHash</span>,
                             <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
-                            <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+                            <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
                             <span class='ident'>context</span>: <span class='ident'>Context</span>,
                             <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                             <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
@@ -605,7 +604,7 @@
                                  <span class='ident'>EventSet</span>::<span class='ident'>readable</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>error</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>hup</span>(),
                                  <span class='ident'>PollOpt</span>::<span class='ident'>edge</span>()));
 
-        <span class='op'>*</span><span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>mapped_addrs</span>;
+        <span class='op'>*</span><span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>mapped_addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='op'>*</span><span class='ident'>elt</span>.<span class='ident'>addr</span>()).<span class='ident'>collect</span>();
 
         <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>ConnectionListener</span> {
             <span class='ident'>cm</span>: <span class='ident'>cm</span>,
@@ -758,7 +757,7 @@
             }
         }
 
-        <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='ident'>listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>()[<span class='number'>0</span>].<span class='ident'>addr</span>;
+        <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>()[<span class='number'>0</span>]);
 
         <span class='ident'>Listener</span> {
             <span class='ident'>tx</span>: <span class='ident'>tx</span>,
@@ -844,10 +843,7 @@
         }
 
         <span class='kw'>match</span> <span class='ident'>listener</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not read event channel&quot;</span>) {
-            <span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='ident'>res</span>) <span class='op'>=&gt;</span> {
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>expect</span>(<span class='string'>&quot;NewPeer Error&quot;</span>), <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>pk</span>));
-                <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>is_ok</span>());
-            }
+            <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>pk</span>)),
             <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected event notification: {:?}&quot;</span>, <span class='ident'>event</span>),
         }
     }

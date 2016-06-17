@@ -714,20 +714,6 @@
 <span id="670">670</span>
 <span id="671">671</span>
 <span id="672">672</span>
-<span id="673">673</span>
-<span id="674">674</span>
-<span id="675">675</span>
-<span id="676">676</span>
-<span id="677">677</span>
-<span id="678">678</span>
-<span id="679">679</span>
-<span id="680">680</span>
-<span id="681">681</span>
-<span id="682">682</span>
-<span id="683">683</span>
-<span id="684">684</span>
-<span id="685">685</span>
-<span id="686">686</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -751,11 +737,10 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>};
-<span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedAddr</span>, <span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
-<span class='kw'>use</span> <span class='ident'>nat</span>::<span class='ident'>rendezvous_info</span>::{<span class='ident'>PrivRendezvousInfo</span>, <span class='ident'>PubRendezvousInfo</span>, <span class='ident'>gen_rendezvous_info</span>};
+<span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>;
 <span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
@@ -791,21 +776,19 @@
     <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
     <span class='kw'>pub</span> <span class='ident'>id</span>: <span class='ident'>PeerId</span>,
     <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>tcp_info</span>: <span class='ident'>PubRendezvousInfo</span>,
+    <span class='kw'>pub</span> <span class='ident'>for_direct</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>priv_tcp_info</span>: <span class='ident'>PrivRendezvousInfo</span>,
+    <span class='kw'>pub</span> <span class='ident'>for_hole_punch</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>tcp_socket</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span><span class='op'>&gt;</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>listeners</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>hole_punch_socket</span>: <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>PrivConnectionInfo</span> {
     <span class='doccomment'>/// Convert our connection info to theirs so that we can give it to peer.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_pub_connection_info</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PubConnectionInfo</span> {
         <span class='ident'>PubConnectionInfo</span> {
-            <span class='ident'>tcp_info</span>: <span class='self'>self</span>.<span class='ident'>tcp_info</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>listeners</span>: <span class='self'>self</span>.<span class='ident'>listeners</span>.<span class='ident'>clone</span>(),
+            <span class='ident'>for_hole_punch</span>: <span class='self'>self</span>.<span class='ident'>for_hole_punch</span>.<span class='ident'>clone</span>(),
+            <span class='ident'>for_direct</span>: <span class='self'>self</span>.<span class='ident'>for_direct</span>.<span class='ident'>clone</span>(),
             <span class='ident'>id</span>: <span class='self'>self</span>.<span class='ident'>id</span>,
         }
     }
@@ -815,11 +798,11 @@
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PubConnectionInfo</span> {
     <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>tcp_info</span>: <span class='ident'>PubRendezvousInfo</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>listeners</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
     <span class='kw'>pub</span> <span class='ident'>id</span>: <span class='ident'>PeerId</span>,
+    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
+    <span class='kw'>pub</span> <span class='ident'>for_hole_punch</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
+    <span class='kw'>pub</span> <span class='ident'>for_direct</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>PubConnectionInfo</span> {
@@ -834,12 +817,11 @@
     <span class='ident'>config</span>: <span class='ident'>Config</span>,
     <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
     <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>,
-    <span class='ident'>is_service_discovery_running</span>: <span class='ident'>bool</span>,
     <span class='ident'>mc</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;</span>,
     <span class='ident'>mio_tx</span>: <span class='ident'>mio</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>CoreMessage</span><span class='op'>&gt;</span>,
     <span class='ident'>name_hash</span>: <span class='ident'>u64</span>,
     <span class='ident'>our_keys</span>: (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>),
-    <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+    <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
     <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
 }
 
@@ -879,7 +861,6 @@
             <span class='ident'>cm</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>HashMap</span>::<span class='ident'>new</span>())),
             <span class='ident'>config</span>: <span class='ident'>config</span>,
             <span class='ident'>event_tx</span>: <span class='ident'>event_tx</span>,
-            <span class='ident'>is_service_discovery_running</span>: <span class='boolval'>false</span>,
             <span class='ident'>mc</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>mc</span>),
             <span class='ident'>mio_tx</span>: <span class='ident'>mio_tx</span>,
             <span class='ident'>name_hash</span>: <span class='ident'>name_hash</span>,
@@ -891,24 +872,18 @@
 
     <span class='doccomment'>/// Starts listening for beacon broadcasts.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>start_service_discovery</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>is_service_discovery_running</span> {
-            <span class='kw'>return</span>;
-        } <span class='kw'>else</span> {
-            <span class='self'>self</span>.<span class='ident'>is_service_discovery_running</span> <span class='op'>=</span> <span class='boolval'>true</span>;
-        }
-
         <span class='kw'>let</span> <span class='ident'>our_listeners</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_listeners</span>.<span class='ident'>clone</span>();
-        <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>config</span>
-            .<span class='ident'>service_discovery_port</span>
-            .<span class='ident'>unwrap_or</span>(<span class='ident'>SERVICE_DISCOVERY_DEFAULT_PORT</span>);
+        <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>service_discovery_port</span>.<span class='ident'>unwrap_or</span>(<span class='ident'>SERVICE_DISCOVERY_DEFAULT_PORT</span>);
 
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
-                                                    <span class='ident'>el</span>,
-                                                    <span class='ident'>our_listeners</span>,
-                                                    <span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>,
-                                                    <span class='ident'>port</span>) {
-                <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Could not start ServiceDiscovery: {:?}&quot;</span>, <span class='ident'>e</span>);
+            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>).<span class='ident'>is_none</span>() {
+                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
+                                                        <span class='ident'>el</span>,
+                                                        <span class='ident'>our_listeners</span>,
+                                                        <span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>,
+                                                        <span class='ident'>port</span>) {
+                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Could not start ServiceDiscovery: {:?}&quot;</span>, <span class='ident'>e</span>);
+                }
             }
         });
     }
@@ -916,20 +891,21 @@
     <span class='doccomment'>/// Enable listening and responding to peers searching for us. This will allow others finding us</span>
     <span class='doccomment'>/// by interrogating the network.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_service_discovery_listen</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>listen</span>: <span class='ident'>bool</span>) {
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>is_service_discovery_running</span> {
-            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
-                <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>)
-                    .<span class='ident'>expect</span>(<span class='string'>&quot;ServiceDiscovery not found&quot;</span>);
-                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
-
-                <span class='kw'>let</span> <span class='ident'>service_discovery</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>state</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>() {
-                    <span class='prelude-val'>Some</span>(<span class='ident'>b</span>) <span class='op'>=&gt;</span> <span class='ident'>b</span>,
-                    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;&amp;ServiceDiscovery isn&#39;t a ServiceDiscovery!&quot;</span>),
-                };
-
-                <span class='ident'>service_discovery</span>.<span class='ident'>set_listen</span>(<span class='ident'>listen</span>);
-            });
-        }
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
+            <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>) {
+                <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=&gt;</span> <span class='ident'>state</span>,
+                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span>,
+            };
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
+            <span class='kw'>let</span> <span class='ident'>service_discovery</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>state</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>() {
+                <span class='prelude-val'>Some</span>(<span class='ident'>sd</span>) <span class='op'>=&gt;</span> <span class='ident'>sd</span>,
+                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
+                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Context reserved for ServiceDiscovery has something else.&quot;</span>);
+                    <span class='kw'>return</span>;
+                }
+            };
+            <span class='ident'>service_discovery</span>.<span class='ident'>set_listen</span>(<span class='ident'>listen</span>);
+        });
     }
 
     <span class='doccomment'>/// Start the bootstrapping procedure. It will auto terminate after indicating success or</span>
@@ -963,7 +939,9 @@
     <span class='doccomment'>/// Stop the bootstraping procedure explicitly</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>stop_bootstrap</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='ident'>core</span>.<span class='ident'>terminate_state</span>(<span class='ident'>el</span>, <span class='ident'>BOOTSTRAP_CONTEXT</span>);
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>BOOTSTRAP_CONTEXT</span>) {
+                <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
+            }
         })
     }
 
@@ -1056,23 +1034,22 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>result_token</span>: <span class='ident'>u32</span>) {
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>our_pub_key</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>;
-        <span class='kw'>let</span> <span class='ident'>our_listeners</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>our_listeners</span> <span class='op'>=</span>
+            <span class='self'>self</span>.<span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='op'>*</span><span class='ident'>e</span>)).<span class='ident'>collect</span>();
         <span class='kw'>let</span> <span class='ident'>mc</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>mc</span>.<span class='ident'>clone</span>();
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
             <span class='kw'>let</span> <span class='ident'>event_tx_clone</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
             <span class='kw'>match</span> <span class='ident'>MappedTcpSocket</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='number'>0</span>, <span class='kw-2'>&amp;</span><span class='ident'>mc</span>, <span class='kw'>move</span> <span class='op'>|</span>_, _, <span class='ident'>socket</span>, <span class='ident'>addrs</span><span class='op'>|</span> {
-                <span class='comment'>// TODO(Spandan) remove this way of doing things altogether</span>
-                <span class='kw'>let</span> <span class='ident'>addrs</span> <span class='op'>=</span> <span class='ident'>addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>addr</span>).<span class='ident'>collect</span>();
+                <span class='kw'>let</span> <span class='ident'>hole_punch_addrs</span> <span class='op'>=</span>
+                    <span class='ident'>addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>filter</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>global</span>()).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>addr</span>).<span class='ident'>collect</span>();
                 <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='ident'>event_tx_clone</span>;
-                <span class='kw'>let</span> (<span class='ident'>our_priv_tcp_info</span>, <span class='ident'>our_pub_tcp_info</span>) <span class='op'>=</span> <span class='ident'>gen_rendezvous_info</span>(<span class='ident'>addrs</span>);
                 <span class='kw'>let</span> <span class='ident'>event</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
                     <span class='ident'>result_token</span>: <span class='ident'>result_token</span>,
                     <span class='ident'>result</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>PrivConnectionInfo</span> {
                         <span class='ident'>id</span>: <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>our_pub_key</span>),
-                        <span class='ident'>tcp_info</span>: <span class='ident'>our_pub_tcp_info</span>,
-                        <span class='ident'>priv_tcp_info</span>: <span class='ident'>our_priv_tcp_info</span>,
-                        <span class='ident'>tcp_socket</span>: <span class='prelude-val'>Some</span>(<span class='ident'>socket</span>),
-                        <span class='ident'>listeners</span>: <span class='ident'>our_listeners</span>,
+                        <span class='ident'>for_direct</span>: <span class='ident'>our_listeners</span>,
+                        <span class='ident'>for_hole_punch</span>: <span class='ident'>hole_punch_addrs</span>,
+                        <span class='ident'>hole_punch_socket</span>: <span class='ident'>socket</span>,
                     }),
                 });
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>event</span>);
@@ -1204,13 +1181,8 @@
         }
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>connect</span>(<span class='ident'>priv_info_1</span>, <span class='ident'>pub_info_0</span>));
 
-        <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>, <span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='ident'>res</span>) <span class='op'>=&gt;</span> {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>res</span>), <span class='ident'>service_1</span>.<span class='ident'>id</span>());
-        });
-
-        <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>, <span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='ident'>res</span>) <span class='op'>=&gt;</span> {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>res</span>), <span class='ident'>service_0</span>.<span class='ident'>id</span>());
-        });
+        <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>, <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>service_1</span>.<span class='ident'>id</span>()));
+        <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>, <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>service_0</span>.<span class='ident'>id</span>()));
     }
 
     <span class='kw'>fn</span> <span class='ident'>exchange_messages</span>(<span class='ident'>service_0</span>: <span class='kw-2'>&amp;</span><span class='ident'>Service</span>,
@@ -1322,11 +1294,11 @@
                     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>their_ids</span> <span class='op'>=</span> <span class='ident'>HashMap</span>::<span class='ident'>new</span>();
                     <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>NUM_SERVICES</span> <span class='op'>-</span> <span class='number'>1</span> {
                         <span class='kw'>let</span> <span class='ident'>their_id</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
-                            <span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>their_id</span>)) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
-                            <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected NewPeer message. Got message {:?}&quot;</span>, <span class='ident'>m</span>),
+                            <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
+                            <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected ConnectSuccess message. Got message {:?}&quot;</span>, <span class='ident'>m</span>),
                         };
                         <span class='kw'>match</span> <span class='ident'>their_ids</span>.<span class='ident'>insert</span>(<span class='ident'>their_id</span>, <span class='number'>0u32</span>) {
-                            <span class='prelude-val'>Some</span>(_) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received two NewPeer events for same peer!&quot;</span>),
+                            <span class='prelude-val'>Some</span>(_) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received two ConnectSuccess events for same peer!&quot;</span>),
                             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> (),
                         };
                     }

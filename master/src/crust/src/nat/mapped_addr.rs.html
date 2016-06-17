@@ -99,11 +99,6 @@
 <span id="55">55</span>
 <span id="56">56</span>
 <span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -131,15 +126,12 @@
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>MappedAddr</span> {
     <span class='doccomment'>/// Address</span>
     <span class='kw'>pub</span> <span class='ident'>addr</span>: <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>,
-    <span class='doccomment'>/// If nat_restricted is true then this can be accessible only via hole punch otherwise it can</span>
-    <span class='doccomment'>/// be directly accessed.</span>
-    <span class='kw'>pub</span> <span class='ident'>nat_restricted</span>: <span class='ident'>bool</span>,
     <span class='ident'>global</span>: <span class='ident'>bool</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>MappedAddr</span> {
     <span class='doccomment'>/// Constructor</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>addr</span>: <span class='ident'>net</span>::<span class='ident'>SocketAddr</span>, <span class='ident'>nat_restricted</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>MappedAddr</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>addr</span>: <span class='ident'>net</span>::<span class='ident'>SocketAddr</span>) <span class='op'>-&gt;</span> <span class='ident'>MappedAddr</span> {
         <span class='kw'>let</span> <span class='ident'>global</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>IpAddr</span>::<span class='ident'>V4</span>(<span class='ident'>addr_v4</span>) <span class='op'>=</span> <span class='ident'>addr</span>.<span class='ident'>ip</span>() {
             <span class='comment'>// TODO(Spandan) Currently is_global() is unstable</span>
             <span class='op'>!</span>(<span class='ident'>addr_v4</span>.<span class='ident'>is_loopback</span>() <span class='op'>||</span> <span class='ident'>addr_v4</span>.<span class='ident'>is_private</span>() <span class='op'>||</span> <span class='ident'>addr_v4</span>.<span class='ident'>is_link_local</span>() <span class='op'>||</span>
@@ -151,13 +143,11 @@
 
         <span class='ident'>MappedAddr</span> {
             <span class='ident'>addr</span>: <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>addr</span>),
-            <span class='ident'>nat_restricted</span>: <span class='ident'>nat_restricted</span>,
             <span class='ident'>global</span>: <span class='ident'>global</span>,
         }
     }
 
     <span class='doccomment'>/// Enquire if it&#39;s a global address</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>global</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='self'>self</span>.<span class='ident'>global</span>
     }

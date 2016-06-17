@@ -305,11 +305,11 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Instant</span>;
 
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>LittleEndian</span>, <span class='ident'>ReadBytesExt</span>, <span class='ident'>WriteBytesExt</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>CommonError</span>, <span class='ident'>Core</span>, <span class='ident'>Priority</span>, <span class='prelude-ty'>Result</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise_from</span>, <span class='ident'>serialise_into</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Evented</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Selector</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::<span class='ident'>TcpStream</span>;
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>::{<span class='ident'>Decodable</span>, <span class='ident'>Encodable</span>};
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>CommonError</span>, <span class='ident'>Core</span>, <span class='ident'>Priority</span>, <span class='prelude-ty'>Result</span>};
 
 <span class='comment'>// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.</span>
 <span class='kw'>const</span> <span class='ident'>MAX_MSG_AGE_SECS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>60</span>;

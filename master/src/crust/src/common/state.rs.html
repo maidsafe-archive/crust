@@ -92,15 +92,6 @@
 <span id="48">48</span>
 <span id="49">49</span>
 <span id="50">50</span>
-<span id="51">51</span>
-<span id="52">52</span>
-<span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -122,20 +113,14 @@
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
 
+<span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>Core</span>;
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Handler</span>, <span class='ident'>Token</span>};
-<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Core</span>;
 
-<span class='doccomment'>/// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be</span>
-<span class='doccomment'>/// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to</span>
-<span class='doccomment'>/// allow higher priority messages through.</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Priority</span> <span class='op'>=</span> <span class='ident'>u8</span>;
 
-<span class='doccomment'>/// A trait for state machines</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>State</span> {
-    <span class='doccomment'>/// Return the state as an `Any`</span>
     <span class='kw'>fn</span> <span class='ident'>as_any</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Any</span>;
 
-    <span class='doccomment'>/// Run when the machine is ready to execute.</span>
     <span class='kw'>fn</span> <span class='ident'>ready</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
              <span class='ident'>_core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>,
              <span class='ident'>_event_loop</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>,
@@ -143,17 +128,14 @@
              <span class='ident'>_event_set</span>: <span class='ident'>EventSet</span>) {
     }
 
-    <span class='doccomment'>/// Terminate the state machine</span>
     <span class='kw'>fn</span> <span class='ident'>terminate</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>_event_loop</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) {}
 
-    <span class='doccomment'>/// Timeout</span>
     <span class='kw'>fn</span> <span class='ident'>timeout</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
                <span class='ident'>_core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>,
                <span class='ident'>_event_loop</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>,
                <span class='ident'>_token</span>: <span class='op'>&lt;</span><span class='ident'>Core</span> <span class='kw'>as</span> <span class='ident'>Handler</span><span class='op'>&gt;</span>::<span class='ident'>Timeout</span>) {
     }
 
-    <span class='doccomment'>/// Write some data</span>
     <span class='kw'>fn</span> <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
              <span class='ident'>_core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>,
              <span class='ident'>_event_loop</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>,
