@@ -20,9 +20,9 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
+use common::{self, Context, Core, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use main::peer_id;
-use common::{self, Context, Core, Message, NameHash, Priority, Socket, State};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 

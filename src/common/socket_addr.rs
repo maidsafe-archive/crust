@@ -3,7 +3,7 @@ use std::net;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
+use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 /// Wrapper around `std::net::SocketAddr` to enable it to be encoded and decoded.
