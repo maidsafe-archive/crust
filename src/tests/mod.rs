@@ -26,9 +26,9 @@ use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::thread;
 use std::time::Duration;
 
+use common::SocketAddr;
 use main::{Config, Event, Service};
 use mio;
-use common::socket_addr::SocketAddr;
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;

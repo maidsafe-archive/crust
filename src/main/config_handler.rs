@@ -19,7 +19,7 @@ use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use common::socket_addr::SocketAddr;
+use common::SocketAddr;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
