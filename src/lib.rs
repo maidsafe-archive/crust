@@ -44,27 +44,24 @@
 // TODO: Fix these lints and remove these exceptions.
 #![cfg_attr(feature="clippy", allow(cyclomatic_complexity, single_match, too_many_arguments))]
 
-extern crate byteorder;
-extern crate config_file_handler;
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
-extern crate tmp_mio as mio;
+#[allow(unused_extern_crates)]
+#[macro_use]
+extern crate quick_error;
+
+extern crate byteorder;
+extern crate config_file_handler;
+extern crate crossbeam;
+extern crate get_if_addrs;
+extern crate igd;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
-extern crate get_if_addrs;
-extern crate crossbeam;
-extern crate igd;
-
-// Needed because the crate is only used for macros
-#[allow(unused_extern_crates)]
-#[macro_use]
-extern crate quick_error;
-#[cfg(test)]
-extern crate void;
+extern crate tmp_mio as mio;
 
 #[cfg(test)]
 #[macro_use]

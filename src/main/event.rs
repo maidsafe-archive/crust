@@ -37,8 +37,10 @@ pub enum Event {
     ListenerFailed,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
-    /// Invoked when connection to a new peer has been established or has failed.
-    NewPeer(Result<PeerId, PeerId>),
+    /// Invoked when connection to a new peer has been established.
+    ConnectSuccess(PeerId),
+    /// Invoked when connection to a new peer has failed.
+    ConnectFailure(PeerId),
     /// Invoked when a peer is lost or having read/write error.
     LostPeer(PeerId),
     /// Invoked when a new message is received.  Passes the message.

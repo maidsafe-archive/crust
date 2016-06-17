@@ -23,7 +23,6 @@ use std::time::Duration;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::{Config, Event};
-use void::Void;
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
@@ -64,7 +63,7 @@ pub fn timebomb<R, F>(dur: Duration, f: F) -> R
 {
     crossbeam::scope(|scope| {
         let thread_handle = thread::current();
-        let (done_tx, done_rx) = mpsc::channel::<Void>();
+        let (done_tx, done_rx) = mpsc::channel::<()>();
         let jh = scope.spawn(move || {
             let ret = f();
             drop(done_tx);
@@ -73,8 +72,8 @@ pub fn timebomb<R, F>(dur: Duration, f: F) -> R
         });
         thread::park_timeout(dur);
         match done_rx.try_recv() {
-            Ok(x) => match x {},
             Err(mpsc::TryRecvError::Empty) => panic!("Timed out!"),
+            Ok(()) |
             Err(mpsc::TryRecvError::Disconnected) => jh.join(),
         }
     })

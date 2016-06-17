@@ -17,8 +17,8 @@
 
 use std::fmt;
 
-use sodiumoxide::crypto::box_::{self, PublicKey};
 use rand::{Rand, Rng};
+use sodiumoxide::crypto::box_::{self, PublicKey};
 
 /// An identifier of a peer node.
 #[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]

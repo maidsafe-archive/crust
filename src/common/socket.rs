@@ -22,11 +22,11 @@ use std::net::SocketAddr;
 use std::time::Instant;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use common::{CommonError, Core, Priority, Result};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
 use mio::tcp::TcpStream;
 use rustc_serialize::{Decodable, Encodable};
-use common::{CommonError, Core, Priority, Result};
 
 // Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
 const MAX_MSG_AGE_SECS: u64 = 60;

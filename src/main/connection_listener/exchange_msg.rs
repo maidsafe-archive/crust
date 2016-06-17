@@ -221,7 +221,7 @@ impl ExchangeMsg {
                                                 cm.clone(),
                                                 our_id,
                                                 their_id,
-                                                Event::NewPeer(Ok(their_id)),
+                                                Event::ConnectSuccess(their_id),
                                                 event_tx.clone());
                     }
                 };
