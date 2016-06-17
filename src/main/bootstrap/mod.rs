@@ -28,13 +28,12 @@ use std::sync::mpsc::{self, Receiver};
 
 use main::peer_id;
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
-use common::{Context, Core, Socket, State};
+use common::{self, Context, Core, Socket, State};
 use mio::{EventLoop, Timeout, Token};
 use self::cache::Cache;
 use self::try_peer::TryPeer;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide::crypto::box_::PublicKey;
-use common::socket_addr;
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;
 const MAX_CONTACTS_EXPECTED: usize = 1500;
@@ -44,7 +43,7 @@ pub struct Bootstrap {
     token: Token,
     context: Context,
     cm: ConnectionMap,
-    peers: Vec<socket_addr::SocketAddr>,
+    peers: Vec<common::SocketAddr>,
     blacklist: HashSet<net::SocketAddr>,
     name_hash: u64,
     our_pk: PublicKey,
@@ -169,7 +168,7 @@ impl Bootstrap {
                                                self.event_tx.clone());
             }
             Err(bad_peer) => {
-                self.cache.remove_peer_acceptor(socket_addr::SocketAddr(bad_peer));
+                self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
             }
         }
 
@@ -224,7 +223,7 @@ impl State for Bootstrap {
 }
 
 struct ServiceDiscMeta {
-    rx: Receiver<Vec<socket_addr::SocketAddr>>,
+    rx: Receiver<Vec<common::SocketAddr>>,
     timeout: Timeout,
 }
 
@@ -232,7 +231,7 @@ fn seek_peers(core: &mut Core,
               event_loop: &mut EventLoop<Core>,
               service_discovery_context: Context,
               token: Token)
-              -> ::Res<(Receiver<Vec<socket_addr::SocketAddr>>, Timeout)> {
+              -> ::Res<(Receiver<Vec<common::SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_context) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()

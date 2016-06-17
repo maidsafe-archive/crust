@@ -17,14 +17,14 @@
 
 use std::ffi::OsString;
 
-use common::socket_addr;
+use common;
 use config_file_handler::{self, FileHandler};
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
 
 pub struct Cache {
-    file_handler: FileHandler<Vec<socket_addr::SocketAddr>>,
+    file_handler: FileHandler<Vec<common::SocketAddr>>,
 }
 
 impl Cache {
@@ -67,11 +67,11 @@ impl Cache {
     //     Ok(())
     // }
 
-    pub fn read_file(&mut self) -> Vec<socket_addr::SocketAddr> {
+    pub fn read_file(&mut self) -> Vec<common::SocketAddr> {
         self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 
-    pub fn remove_peer_acceptor(&mut self, _peer: socket_addr::SocketAddr) {}
+    pub fn remove_peer_acceptor(&mut self, _peer: common::SocketAddr) {}
 
     // fn duration_between_updates() -> Duration {
     //     Duration::from_secs(4 * 60 * 60)
