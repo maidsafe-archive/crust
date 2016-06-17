@@ -50,7 +50,7 @@
                </span><a id='src-29788' class='srclink' href='https://doc.rust-lang.org/nightly/core/iter/trait.Step.html?gotosrc=29788' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Step: <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialOrd.html' title='bitflags::__core::cmp::PartialOrd'>PartialOrd</a>&lt;Self&gt; {
     fn <a href='#tymethod.step' class='fnname'>step</a>(&amp;self, by: &amp;Self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;Self&gt;;
-    fn <a href='#tymethod.steps_between' class='fnname'>steps_between</a>(start: &amp;Self, end: &amp;Self, by: &amp;Self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>&gt;;
+    fn <a href='#tymethod.steps_between' class='fnname'>steps_between</a>(start: &amp;Self, end: &amp;Self, by: &amp;Self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;usize&gt;;
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>step_trait</code>)<p>: likely to be replaced by finer-grained traits</p>
 </em></div><div class='docblock'><p>Objects that can be stepped over in both directions.</p>
 
@@ -61,7 +61,7 @@ two <code>Step</code> objects.</p>
             <div class='methods'>
         <h3 id='tymethod.step' class='method stab unstable'><code>fn <a href='#tymethod.step' class='fnname'>step</a>(&amp;self, by: &amp;Self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;Self&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>step_trait</code>)<p>: likely to be replaced by finer-grained traits</p>
 </em></div><div class='docblock'><p>Steps <code>self</code> if possible.</p>
-</div><h3 id='tymethod.steps_between' class='method stab unstable'><code>fn <a href='#tymethod.steps_between' class='fnname'>steps_between</a>(start: &amp;Self, end: &amp;Self, by: &amp;Self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>step_trait</code>)<p>: likely to be replaced by finer-grained traits</p>
+</div><h3 id='tymethod.steps_between' class='method stab unstable'><code>fn <a href='#tymethod.steps_between' class='fnname'>steps_between</a>(start: &amp;Self, end: &amp;Self, by: &amp;Self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;usize&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>step_trait</code>)<p>: likely to be replaced by finer-grained traits</p>
 </em></div><div class='docblock'><p>Returns the number of steps between two step objects. The count is
 inclusive of <code>start</code> and exclusive of <code>end</code>.</p>
 
@@ -70,16 +70,16 @@ without overflow.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i16.html'>i16</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i8.html'>i8</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a></code></li>
+    <li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for i64</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for u64</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for i32</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for i16</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for i8</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for isize</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for u32</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for u16</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for u8</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/iter/trait.Step.html' title='bitflags::__core::iter::Step'>Step</a> for usize</code></li>
 </ul><script type="text/javascript" async
                          src="../../../implementors/core/iter/trait.Step.js">
                  </script></section>

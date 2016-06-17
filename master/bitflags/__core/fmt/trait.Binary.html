@@ -49,7 +49,7 @@
                    </a>
                </span><a id='src-35506' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html?gotosrc=35506' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Binary {
-    fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;(), <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
 }</pre><div class='docblock'><p>Format trait for the <code>b</code> character.</p>
 
 <p>The <code>Binary</code> trait should format its output as a number in binary.</p>
@@ -88,20 +88,20 @@
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.fmt' class='method stab '><code>fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Formats the value using the given formatter.</p>
+        <h3 id='tymethod.fmt' class='method stab '><code>fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;(), <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i16.html'>i16</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i8.html'>i8</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a></code></li>
+    <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for u64</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for i64</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for u32</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for i32</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for u16</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for i16</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for u8</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for i8</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for usize</code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Binary.html' title='bitflags::__core::fmt::Binary'>Binary</a> for isize</code></li>
 </ul><script type="text/javascript" async
                          src="../../../implementors/core/fmt/trait.Binary.js">
                  </script></section>

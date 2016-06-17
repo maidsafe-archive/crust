@@ -49,8 +49,8 @@
                    </a>
                </span><a id='src-30538' class='srclink' href='https://doc.rust-lang.org/nightly/core/raw/struct.Slice.html?gotosrc=30538' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Slice&lt;T&gt; {
-    pub data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>,
-    pub len: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>,
+    pub data: *const T,
+    pub len: usize,
 }</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
 </em></div><div class='docblock'><p>The representation of a slice like <code>&amp;[T]</code>.</p>
 

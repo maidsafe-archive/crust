@@ -282,8 +282,6 @@
 <span id="238">238</span>
 <span id="239">239</span>
 <span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -302,9 +300,6 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>connection_candidate</span>::<span class='ident'>ConnectionCandidate</span>;
-
-<span class='kw'>mod</span> <span class='ident'>connection_candidate</span>;
 <span class='kw'>mod</span> <span class='ident'>exchange_msg</span>;
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
@@ -313,7 +308,8 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::{<span class='ident'>Rc</span>, <span class='ident'>Weak</span>};
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>NameHash</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
-<span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ActiveConnection</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
+<span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ActiveConnection</span>, <span class='ident'>ConnectionCandidate</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>,
+           <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::{<span class='ident'>TcpListener</span>, <span class='ident'>TcpStream</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>;

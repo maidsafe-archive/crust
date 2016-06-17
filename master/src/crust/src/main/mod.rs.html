@@ -84,6 +84,8 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -108,7 +110,8 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>active_connection</span>::{<span class='ident'>ActiveConnection</span>, <span class='ident'>INACTIVITY_TIMEOUT_MS</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>bootstrap</span>::<span class='ident'>Bootstrap</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>config_handler</span>::<span class='ident'>Config</span>;
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>connect</span>::{<span class='ident'>Connect</span>, <span class='ident'>ConnectionCandidate</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>connect</span>::<span class='ident'>Connect</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>connection_candidate</span>::<span class='ident'>ConnectionCandidate</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>connection_listener</span>::<span class='ident'>ConnectionListener</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>event</span>::<span class='ident'>Event</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>error</span>::<span class='ident'>CrustError</span>;
@@ -122,6 +125,7 @@
 <span class='kw'>mod</span> <span class='ident'>bootstrap</span>;
 <span class='kw'>mod</span> <span class='ident'>config_handler</span>;
 <span class='kw'>mod</span> <span class='ident'>connect</span>;
+<span class='kw'>mod</span> <span class='ident'>connection_candidate</span>;
 <span class='kw'>mod</span> <span class='ident'>connection_listener</span>;
 <span class='kw'>mod</span> <span class='ident'>event</span>;
 <span class='kw'>mod</span> <span class='ident'>error</span>;
