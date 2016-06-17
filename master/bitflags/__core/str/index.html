@@ -47,10 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-31998' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/index.html?gotosrc=31998' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>String manipulation</p>
+               </span><a id='src-3121' class='srclink' href='https://doc.rust-lang.org/nightly/collections/str/index.html?gotosrc=3121' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Unicode string slices.</p>
 
-<p>For more details, see std::str</p>
+<p><em><a href="../../std/primitive.str.html">See also the <code>str</code> primitive type</a>.</em></p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                        <tr class='unstable module-item'>
@@ -81,6 +81,13 @@ Use with the <code>std::iter</code> module.</p>
                                   title='bitflags::__core::str::Chars'>Chars</a></td>
                            <td class='docblock short'>
                                 <p>Iterator for the char (representing <em>Unicode Scalar Values</em>) of a string</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.EncodeUtf16.html'
+                                  title='bitflags::__core::str::EncodeUtf16'>EncodeUtf16</a></td>
+                           <td class='docblock short'>
+                                <p>External iterator for a string&#39;s UTF-16 code units.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -175,6 +182,14 @@ Use with the <code>std::iter</code> module.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='struct' href='struct.SplitWhitespace.html'
+                                  title='bitflags::__core::str::SplitWhitespace'>SplitWhitespace</a></td>
+                           <td class='docblock short'>
+                                <p>An iterator over the non-whitespace substrings of a string,
+separated by any amount of whitespace.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='struct' href='struct.Utf8Error.html'
                                   title='bitflags::__core::str::Utf8Error'>Utf8Error</a></td>
                            <td class='docblock short'>
@@ -215,13 +230,13 @@ string.</p>
                                 <p>Converts a slice of bytes to a string slice without checking
 that the string contains valid UTF-8.</p>
                            </td>
-                       </tr>
-                       <tr class='unstable module-item'>
-                           <td><a class='fn' href='fn.next_code_point.html'
-                                  title='bitflags::__core::str::next_code_point'>next_code_point</a></td>
+                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                       <tr class='unstable deprecated module-item'>
+                           <td><a class='type' href='type.Utf16Units.html'
+                                  title='bitflags::__core::str::Utf16Units'>Utf16Units</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>Reads the next code point out of a byte iterator (assuming a
-UTF-8-like encoding).</p>
+                               [<em class='stab unstable deprecated'>Deprecated</em>] 
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>

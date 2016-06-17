@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.1.26/src/reader/parser/inside_comment.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/parser/inside_comment.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>inside_comment.rs.html -- source</title>
@@ -78,23 +78,23 @@
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>;
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>PullParser</span>, <span class='ident'>State</span>};
+<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>};
 
 <span class='kw'>impl</span> <span class='ident'>PullParser</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_comment</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_comment</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='ident'>t</span> {
             <span class='comment'>// Double dash is illegal inside a comment</span>
             <span class='ident'>Token</span>::<span class='ident'>Chunk</span>(<span class='kw-2'>ref</span> <span class='ident'>s</span>) <span class='kw'>if</span> <span class='kw-2'>&amp;</span><span class='ident'>s</span>[..] <span class='op'>==</span> <span class='string'>&quot;--&quot;</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected token inside a comment: --&quot;</span>)),
 
             <span class='ident'>Token</span>::<span class='ident'>CommentEnd</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>ignore_comments</span> <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>enable_errors</span>();
+                <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>outside_comment</span>();
                 <span class='self'>self</span>.<span class='ident'>into_state_continue</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>)
             }
 
             <span class='ident'>Token</span>::<span class='ident'>CommentEnd</span> <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>enable_errors</span>();
+                <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>outside_comment</span>();
                 <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>take_buf</span>();
-                <span class='self'>self</span>.<span class='ident'>into_state_emit</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>, <span class='ident'>XmlEvent</span>::<span class='ident'>Comment</span>(<span class='ident'>data</span>))
+                <span class='self'>self</span>.<span class='ident'>into_state_emit</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>, <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Comment</span>(<span class='ident'>data</span>)))
             }
 
             _ <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>ignore_comments</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,  <span class='comment'>// Do not modify buffer if ignoring the comment</span>

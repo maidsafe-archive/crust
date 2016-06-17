@@ -48,7 +48,7 @@
                        [<span class='inner'>&#x2212;</span>]
                    </a>
                </span><a id='src-31879' class='srclink' href='https://doc.rust-lang.org/nightly/core/slice/fn.from_raw_parts_mut.html?gotosrc=31879' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe fn from_raw_parts_mut&lt;T&gt;(p: *mut T, len: usize) -&gt; &amp;'a mut [T]</pre><span class="since">1.0.0</span><div class='docblock'><p>Performs the same functionality as <code>from_raw_parts</code>, except that a mutable
+<pre class='rust fn'>pub unsafe fn from_raw_parts_mut&lt;T&gt;(p: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a mut [T]</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Performs the same functionality as <code>from_raw_parts</code>, except that a mutable
 slice is returned.</p>
 
 <p>This function is unsafe for the same reasons as <code>from_raw_parts</code>, as well

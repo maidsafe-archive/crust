@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.1.26/src/reader/parser/inside_doctype.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/parser/inside_doctype.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>inside_doctype.rs.html -- source</title>
@@ -58,15 +58,13 @@
 <span id="14">14</span>
 <span id="15">15</span>
 <span id="16">16</span>
-<span id="17">17</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>;
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>PullParser</span>, <span class='ident'>State</span>};
+<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>};
 
 <span class='kw'>impl</span> <span class='ident'>PullParser</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_doctype</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_doctype</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='ident'>t</span> {
             <span class='ident'>Token</span>::<span class='ident'>TagEnd</span> <span class='op'>=&gt;</span> {
                 <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>enable_errors</span>();
