@@ -204,7 +204,7 @@ impl Connect {
 }
 
 impl State for Connect {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: Token, es: EventSet) {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
         if !es.is_error() && !es.is_hup() && es.is_readable() {
             self.accept(core, el);
         }

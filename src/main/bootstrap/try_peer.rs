@@ -44,7 +44,7 @@ pub struct TryPeer {
 
 impl TryPeer {
     pub fn start(core: &mut Core,
-                 event_loop: &mut EventLoop<Core>,
+                 el: &mut EventLoop<Core>,
                  peer: SocketAddr,
                  our_pk: PublicKey,
                  name_hash: u64,
@@ -64,10 +64,10 @@ impl TryPeer {
             finish: finish,
         };
 
-        try!(event_loop.register(state.socket.as_ref().expect("Logic Error"),
-                                 token,
-                                 EventSet::error() | EventSet::hup() | EventSet::writable(),
-                                 PollOpt::edge()));
+        try!(el.register(state.socket.as_ref().expect("Logic Error"),
+                         token,
+                         EventSet::error() | EventSet::hup() | EventSet::writable(),
+                         PollOpt::edge()));
 
         let _ = core.insert_context(token, context);
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
@@ -77,14 +77,14 @@ impl TryPeer {
 
     fn write(&mut self,
              core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
+             el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        if self.socket.as_mut().unwrap().write(event_loop, self.token, msg).is_err() {
-            self.handle_error(core, event_loop);
+        if self.socket.as_mut().unwrap().write(el, self.token, msg).is_err() {
+            self.handle_error(core, el);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapResponse(peer_pk))) => {
                 let _ = core.remove_context(self.token);
@@ -94,44 +94,40 @@ impl TryPeer {
                             self.peer,
                             self.token,
                             peer_id::new(peer_pk));
-                (*self.finish)(core, event_loop, context, Ok(data));
+                (*self.finish)(core, el, context, Ok(data));
             }
             Ok(None) => (),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, event_loop),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, el),
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.terminate(core, event_loop);
+    fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        self.terminate(core, el);
         let context = self.context;
         let peer = self.peer;
-        (*self.finish)(core, event_loop, context, Err(peer));
+        (*self.finish)(core, el, context, Err(peer));
     }
 }
 
 impl State for TryPeer {
-    fn ready(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
-            self.handle_error(core, event_loop);
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
+            self.handle_error(core, el);
         } else {
-            if event_set.is_writable() {
+            if es.is_writable() {
                 let req = self.request.take();
-                self.write(core, event_loop, req);
+                self.write(core, el, req);
             }
-            if event_set.is_readable() {
-                self.receive_response(core, event_loop)
+            if es.is_readable() {
+                self.receive_response(core, el)
             }
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
-        let _ = event_loop.deregister(&self.socket.take().expect("Logic Error"));
+        let _ = el.deregister(&self.socket.take().expect("Logic Error"));
     }
 
     fn as_any(&mut self) -> &mut Any {

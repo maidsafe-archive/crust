@@ -60,7 +60,7 @@ pub struct ServiceDiscovery {
 
 impl ServiceDiscovery {
     pub fn start(core: &mut Core,
-                 event_loop: &mut EventLoop<Core>,
+                 el: &mut EventLoop<Core>,
                  our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                  context: Context,
                  port: u16)
@@ -86,10 +86,10 @@ impl ServiceDiscovery {
             guid: guid,
         };
 
-        try!(event_loop.register(&service_discovery.socket,
-                                 service_discovery.token,
-                                 EventSet::error() | EventSet::hup() | EventSet::readable(),
-                                 PollOpt::edge()));
+        try!(el.register(&service_discovery.socket,
+                         service_discovery.token,
+                         EventSet::error() | EventSet::hup() | EventSet::readable(),
+                         PollOpt::edge()));
 
         let _ = core.insert_context(token, context);
         let _ = core.insert_state(context, Rc::new(RefCell::new(service_discovery)));
@@ -114,14 +114,14 @@ impl ServiceDiscovery {
         self.observers.push(obs);
     }
 
-    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
             Ok(Some((bytes_rxd, peer_addr))) => (bytes_rxd, peer_addr),
             Ok(None) => return,
             Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
             Err(e) => {
                 warn!("ServiceDiscovery error in read: {:?}", e);
-                self.terminate(core, event_loop);
+                self.terminate(core, el);
                 return;
             }
         };
@@ -138,7 +138,7 @@ impl ServiceDiscovery {
             DiscoveryMsg::Request { guid } => {
                 if self.listen && self.guid != guid {
                     self.reply_to.push_back(peer_addr);
-                    self.write(core, event_loop)
+                    self.write(core, el)
                 }
             }
             DiscoveryMsg::Response(peer_listeners) => {
@@ -147,16 +147,14 @@ impl ServiceDiscovery {
         }
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Err(e) = self.write_impl(event_loop) {
+    fn write(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        if let Err(e) = self.write_impl(el) {
             warn!("Error in ServiceDiscovery write: {:?}", e);
-            self.terminate(core, event_loop);
+            self.terminate(core, el);
         }
     }
 
-    fn write_impl(&mut self,
-                  event_loop: &mut EventLoop<Core>)
-                  -> Result<(), ServiceDiscoveryError> {
+    fn write_impl(&mut self, el: &mut EventLoop<Core>) -> Result<(), ServiceDiscoveryError> {
         let our_current_listeners = self.our_listeners
             .lock()
             .unwrap()
@@ -181,36 +179,32 @@ impl ServiceDiscovery {
             }
         }
 
-        let event_set = if self.reply_to.is_empty() {
+        let es = if self.reply_to.is_empty() {
             EventSet::error() | EventSet::hup() | EventSet::readable()
         } else {
             EventSet::error() | EventSet::hup() | EventSet::readable() | EventSet::writable()
         };
 
-        Ok(try!(event_loop.reregister(&self.socket, self.token, event_set, PollOpt::edge())))
+        Ok(try!(el.reregister(&self.socket, self.token, es, PollOpt::edge())))
     }
 }
 
 impl State for ServiceDiscovery {
-    fn ready(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             _: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
-            self.terminate(core, event_loop);
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
+            self.terminate(core, el);
         } else {
-            if event_set.is_readable() {
-                self.read(core, event_loop);
+            if es.is_readable() {
+                self.read(core, el);
             }
-            if event_set.is_writable() {
-                self.write(core, event_loop);
+            if es.is_writable() {
+                self.write(core, el);
             }
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Err(e) = event_loop.deregister(&self.socket) {
+    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        if let Err(e) = el.deregister(&self.socket) {
             warn!("Error deregistering ServiceDiscovery: {:?}", e);
         }
         if let Some(context) = core.remove_context(self.token) {

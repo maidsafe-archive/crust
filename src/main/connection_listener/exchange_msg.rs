@@ -53,8 +53,8 @@ impl ExchangeMsg {
         let token = core.get_new_token();
         let context = core.get_new_context();
 
-        let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
-        try!(el.register(&socket, token, event_set, PollOpt::edge()));
+        let es = EventSet::error() | EventSet::hup() | EventSet::readable();
+        try!(el.register(&socket, token, es, PollOpt::edge()));
 
         let timeout = try!(el.timeout_ms(CoreTimerId::new(token, 0),
                                          timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
@@ -244,18 +244,14 @@ impl ExchangeMsg {
 }
 
 impl State for ExchangeMsg {
-    fn ready(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
             self.terminate(core, el);
         } else {
-            if event_set.is_readable() {
+            if es.is_readable() {
                 self.read(core, el)
             }
-            if event_set.is_writable() {
+            if es.is_writable() {
                 self.write(core, el, None)
             }
         }

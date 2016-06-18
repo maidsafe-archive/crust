@@ -101,7 +101,7 @@ impl Handler for Core {
 
     fn ready(&mut self, el: &mut EventLoop<Self>, token: Token, es: EventSet) {
         if let Some(state) = self.get_context(token).and_then(|c| self.get_state(c)) {
-            state.borrow_mut().ready(self, el, token, es);
+            state.borrow_mut().ready(self, el, es);
         }
     }
 

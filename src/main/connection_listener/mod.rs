@@ -47,7 +47,7 @@ pub struct ConnectionListener {
 
 impl ConnectionListener {
     pub fn start(core: &mut Core,
-                 event_loop: &mut EventLoop<Core>,
+                 el: &mut EventLoop<Core>,
                  handshake_timeout_ms: Option<u64>,
                  port: u16,
                  our_pk: PublicKey,
@@ -75,14 +75,14 @@ impl ConnectionListener {
             }
         };
 
-        if let Err(e) = MappedTcpSocket::start(core, event_loop, port, &mc, finish) {
+        if let Err(e) = MappedTcpSocket::start(core, el, port, &mc, finish) {
             error!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
     }
 
     fn handle_mapped_socket(core: &mut Core,
-                            event_loop: &mut EventLoop<Core>,
+                            el: &mut EventLoop<Core>,
                             timeout_ms: Option<u64>,
                             socket: TcpBuilder,
                             mapped_addrs: Vec<MappedAddr>,
@@ -99,10 +99,10 @@ impl ConnectionListener {
         let local_addr = try!(listener.local_addr());
 
         let listener = try!(TcpListener::from_listener(listener, &local_addr));
-        try!(event_loop.register(&listener,
-                                 token,
-                                 EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                 PollOpt::edge()));
+        try!(el.register(&listener,
+                         token,
+                         EventSet::readable() | EventSet::error() | EventSet::hup(),
+                         PollOpt::edge()));
 
         *our_listeners.lock().unwrap() = mapped_addrs.into_iter().map(|elt| *elt.addr()).collect();
 
@@ -125,12 +125,12 @@ impl ConnectionListener {
         Ok(())
     }
 
-    fn accept(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn accept(&self, core: &mut Core, el: &mut EventLoop<Core>) {
         loop {
             match self.listener.accept() {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
-                                                       event_loop,
+                                                       el,
                                                        self.timeout_ms.clone(),
                                                        Socket::wrap(socket),
                                                        self.our_pk,
@@ -151,21 +151,17 @@ impl ConnectionListener {
 }
 
 impl State for ConnectionListener {
-    fn ready(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
-            self.terminate(core, event_loop);
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
+            self.terminate(core, el);
             let _ = self.event_tx.send(Event::ListenerFailed);
-        } else if event_set.is_readable() {
-            self.accept(core, event_loop);
+        } else if es.is_readable() {
+            self.accept(core, el);
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = event_loop.deregister(&self.listener);
+    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        let _ = el.deregister(&self.listener);
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
     }
@@ -214,7 +210,7 @@ mod test {
         fn drop(&mut self) {
             self.tx
                 .send(CoreMessage::new(|_, el| el.shutdown()))
-                .expect("Could not send shutdown to event_loop");
+                .expect("Could not send shutdown to el");
         }
     }
 

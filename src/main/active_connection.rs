@@ -150,18 +150,14 @@ impl ActiveConnection {
 }
 
 impl State for ActiveConnection {
-    fn ready(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
             self.terminate(core, el);
         } else {
-            if event_set.is_writable() {
+            if es.is_writable() {
                 self.write(core, el, None);
             }
-            if event_set.is_readable() {
+            if es.is_readable() {
                 self.read(core, el);
             }
         }

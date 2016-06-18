@@ -19,19 +19,14 @@
 use std::any::Any;
 
 use common::Core;
-use mio::{EventLoop, EventSet, Token};
+use mio::{EventLoop, EventSet};
 
 pub type Priority = u8;
 
 pub trait State {
     fn as_any(&mut self) -> &mut Any;
 
-    fn ready(&mut self,
-             _core: &mut Core,
-             _el: &mut EventLoop<Core>,
-             _token: Token,
-             _es: EventSet) {
-    }
+    fn ready(&mut self, _core: &mut Core, _el: &mut EventLoop<Core>, _es: EventSet) {}
 
     fn terminate(&mut self, _core: &mut Core, _el: &mut EventLoop<Core>) {}
 

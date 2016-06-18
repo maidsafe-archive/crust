@@ -121,7 +121,7 @@ impl ExchangeMsg {
 }
 
 impl State for ExchangeMsg {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token, es: EventSet) {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
         if es.is_error() || es.is_hup() {
             self.handle_error(core, el);
         } else {
