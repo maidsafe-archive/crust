@@ -21,7 +21,7 @@ use std::cell::RefCell;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::rc::Rc;
 
-use common::{Context, Core, CoreMessage, State};
+use common::{Context, Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
 use mio::{EventLoop, Timeout, Token};
 use nat::{MappedAddr, MappingContext, NatError, util};
@@ -49,7 +49,7 @@ impl<F> MappedTcpSocket<F>
 {
     /// Start mapping a tcp socket
     pub fn start(core: &mut Core,
-                 event_loop: &mut EventLoop<Core>,
+                 el: &mut EventLoop<Core>,
                  port: u16,
                  mc: &MappingContext,
                  finish: F)
@@ -70,7 +70,7 @@ impl<F> MappedTcpSocket<F>
                 Some(ref gateway) => gateway.clone(),
                 None => continue,
             };
-            let tx = event_loop.channel();
+            let tx = el.channel();
             let addr_igd = SocketAddrV4::new(*ip, addr.port());
             let _ = thread!("IGD-Address-Mapping", move || {
                 let res =
@@ -109,7 +109,7 @@ impl<F> MappedTcpSocket<F>
             igd_children: igd_children,
             stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
             mapped_addrs: mapped_addrs,
-            timeout: try!(event_loop.timeout_ms(token, TIMEOUT_MS)),
+            timeout: try!(el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)),
             finish: Some(finish),
         }));
 
@@ -122,13 +122,13 @@ impl<F> MappedTcpSocket<F>
                 }
             };
 
-            if let Ok(child) = GetExtAddr::start(core, event_loop, addr, stun, Box::new(handler)) {
+            if let Ok(child) = GetExtAddr::start(core, el, addr, stun, Box::new(handler)) {
                 let _ = state.borrow_mut().stun_children.insert(child);
             }
         }
 
         if state.borrow().stun_children.is_empty() && state.borrow().igd_children == 0 {
-            return Ok(state.borrow_mut().terminate(core, event_loop));
+            return Ok(state.borrow_mut().terminate(core, el));
         }
 
         let _ = core.insert_context(token, context);
@@ -139,7 +139,7 @@ impl<F> MappedTcpSocket<F>
 
     fn handle_stun_resp(&mut self,
                         core: &mut Core,
-                        event_loop: &mut EventLoop<Core>,
+                        el: &mut EventLoop<Core>,
                         child: Context,
                         res: Result<SocketAddr, ()>) {
         let _ = self.stun_children.remove(&child);
@@ -147,29 +147,29 @@ impl<F> MappedTcpSocket<F>
             self.mapped_addrs.push(MappedAddr::new(our_ext_addr));
         }
         if self.stun_children.is_empty() && self.igd_children == 0 {
-            self.terminate(core, event_loop);
+            self.terminate(core, el);
         }
     }
 
     fn handle_igd_resp(&mut self,
                        core: &mut Core,
-                       event_loop: &mut EventLoop<Core>,
+                       el: &mut EventLoop<Core>,
                        our_ext_addr: SocketAddr) {
         self.igd_children -= 1;
         self.mapped_addrs.push(MappedAddr::new(our_ext_addr));
         if self.stun_children.is_empty() && self.igd_children == 0 {
-            self.terminate(core, event_loop);
+            self.terminate(core, el);
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn terminate_children(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         for context in self.stun_children.drain() {
             let child = match core.get_state(context) {
                 Some(state) => state,
                 None => continue,
             };
 
-            child.borrow_mut().terminate(core, event_loop);
+            child.borrow_mut().terminate(core, el);
         }
     }
 }
@@ -177,19 +177,19 @@ impl<F> MappedTcpSocket<F>
 impl<F> State for MappedTcpSocket<F>
     where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<MappedAddr>) + Any
 {
-    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: Token) {
-        return self.terminate(core, event_loop);
+    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: u8) {
+        return self.terminate(core, el);
     }
 
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.terminate_children(core, event_loop);
+    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        self.terminate_children(core, el);
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
-        let _ = event_loop.clear_timeout(self.timeout);
+        let _ = el.clear_timeout(self.timeout);
 
         let socket = self.socket.take().expect("Logic Error");
         let mapped_addrs = self.mapped_addrs.drain(..).collect();
-        (self.finish.take().unwrap())(core, event_loop, socket, mapped_addrs);
+        (self.finish.take().unwrap())(core, el, socket, mapped_addrs);
     }
 
     fn as_any(&mut self) -> &mut Any {

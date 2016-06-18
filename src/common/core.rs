@@ -23,8 +23,13 @@ use std::rc::Rc;
 use common::State;
 use mio::{EventLoop, EventSet, Handler, Token};
 
-pub type CoreMessage = Closure;
-pub type CoreTimeout = Closure;
+pub struct CoreMessage(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
+
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
+pub struct CoreTimerId {
+    pub state_id: Token,
+    pub timer_id: u8,
+}
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
 pub struct Context(pub usize);
@@ -81,34 +86,32 @@ impl Core {
         self.states.remove(&context)
     }
 
-    pub fn get_context(&self, token: Token) -> Option<Context> {
-        self.contexts.get(&token).cloned()
+    pub fn get_context(&self, key: Token) -> Option<Context> {
+        self.contexts.get(&key).cloned()
     }
 
-    pub fn get_state(&self, token: Context) -> Option<Rc<RefCell<State>>> {
-        self.states.get(&token).cloned()
+    pub fn get_state(&self, key: Context) -> Option<Rc<RefCell<State>>> {
+        self.states.get(&key).cloned()
     }
 }
 
 impl Handler for Core {
-    type Timeout = Token;
+    type Timeout = CoreTimerId;
     type Message = CoreMessage;
 
-    fn ready(&mut self, event_loop: &mut EventLoop<Self>, token: Token, events: EventSet) {
-        match self.get_context(token).and_then(|c| self.get_state(c)) {
-            Some(state) => state.borrow_mut().ready(self, event_loop, token, events),
-            None => (),
+    fn ready(&mut self, el: &mut EventLoop<Self>, token: Token, es: EventSet) {
+        if let Some(state) = self.get_context(token).and_then(|c| self.get_state(c)) {
+            state.borrow_mut().ready(self, el, token, es);
         }
     }
 
-    fn notify(&mut self, event_loop: &mut EventLoop<Self>, msg: Self::Message) {
-        msg.invoke(self, event_loop)
+    fn notify(&mut self, el: &mut EventLoop<Self>, msg: Self::Message) {
+        msg.invoke(self, el)
     }
 
-    fn timeout(&mut self, event_loop: &mut EventLoop<Self>, token: Token) {
-        match self.get_context(token).and_then(|c| self.get_state(c)) {
-            Some(state) => state.borrow_mut().timeout(self, event_loop, token),
-            None => (),
+    fn timeout(&mut self, el: &mut EventLoop<Self>, timeout: Self::Timeout) {
+        if let Some(state) = self.get_context(timeout.state_id).and_then(|c| self.get_state(c)) {
+            state.borrow_mut().timeout(self, el, timeout.timer_id);
         }
     }
 }
@@ -119,19 +122,26 @@ impl Default for Core {
     }
 }
 
-pub struct Closure(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
-
-impl Closure {
+impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        Closure(Box::new(move |a0: &mut Core, a1: &mut EventLoop<Core>| {
+        CoreMessage(Box::new(move |core: &mut Core, el: &mut EventLoop<Core>| {
             if let Some(f) = f.take() {
-                f(a0, a1)
+                f(core, el)
             }
         }))
     }
 
-    fn invoke(mut self, a0: &mut Core, a1: &mut EventLoop<Core>) {
-        (self.0)(a0, a1)
+    fn invoke(mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        (self.0)(core, el)
+    }
+}
+
+impl CoreTimerId {
+    pub fn new(state_id: Token, timer_id: u8) -> Self {
+        CoreTimerId {
+            state_id: state_id,
+            timer_id: timer_id,
+        }
     }
 }

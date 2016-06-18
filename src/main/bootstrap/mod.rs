@@ -28,7 +28,7 @@ use std::sync::mpsc::{self, Receiver};
 
 use main::peer_id;
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
-use common::{self, Context, Core, Socket, State};
+use common::{self, Context, Core, CoreTimerId, Socket, State};
 use mio::{EventLoop, Timeout, Token};
 use self::cache::Cache;
 use self::try_peer::TryPeer;
@@ -36,8 +36,10 @@ use service_discovery::ServiceDiscovery;
 use sodiumoxide::crypto::box_::PublicKey;
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;
-const MAX_CONTACTS_EXPECTED: usize = 1500;
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 1000;
+const BOOTSTRAP_TIMER_ID: u8 = 0;
+const SERVICE_DISCOVERY_TIMER_ID: u8 = 1;
+const MAX_CONTACTS_EXPECTED: usize = 1500;
 
 pub struct Bootstrap {
     token: Token,
@@ -49,7 +51,7 @@ pub struct Bootstrap {
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
     sd_meta: Option<ServiceDiscMeta>,
-    bs_timeout_token: Token,
+    bs_timer: CoreTimerId,
     bs_timeout: Timeout,
     cache: Cache,
     children: HashSet<Context>,
@@ -75,8 +77,8 @@ impl Bootstrap {
         peers.extend(config.hard_coded_contacts.clone());
 
         let token = core.get_new_token();
-        let bs_timeout_token = core.get_new_token();
-        let bs_timeout = try!(event_loop.timeout_ms(bs_timeout_token, BOOTSTRAP_TIMEOUT_MS));
+        let bs_timer = CoreTimerId::new(token, BOOTSTRAP_TIMER_ID);
+        let bs_timeout = try!(event_loop.timeout_ms(bs_timer, BOOTSTRAP_TIMEOUT_MS));
         let sd_meta = match seek_peers(core, event_loop, service_discovery_context, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
@@ -101,7 +103,7 @@ impl Bootstrap {
             our_pk: our_pk,
             event_tx: event_tx,
             sd_meta: sd_meta,
-            bs_timeout_token: bs_timeout_token,
+            bs_timer: bs_timer,
             bs_timeout: bs_timeout,
             cache: cache,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
@@ -111,7 +113,6 @@ impl Bootstrap {
         state.borrow_mut().self_weak = Some(Rc::downgrade(&state));
 
         let _ = core.insert_context(token, bootstrap_context);
-        let _ = core.insert_context(bs_timeout_token, bootstrap_context);
         let _ = core.insert_state(bootstrap_context, state.clone());
 
         if state.borrow().sd_meta.is_none() {
@@ -191,8 +192,8 @@ impl Bootstrap {
 }
 
 impl State for Bootstrap {
-    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        if token == self.bs_timeout_token {
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, timer_id: u8) {
+        if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, event_loop);
         }
@@ -214,7 +215,6 @@ impl State for Bootstrap {
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
         let _ = event_loop.clear_timeout(self.bs_timeout);
-        let _ = core.remove_context(self.bs_timeout_token);
     }
 
     fn as_any(&mut self) -> &mut Any {
@@ -241,7 +241,9 @@ fn seek_peers(core: &mut Core,
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
         try!(state.seek_peers());
-        let timeout = try!(event_loop.timeout_ms(token, SERVICE_DISCOVERY_TIMEOUT_MS));
+        let timeout =
+            try!(event_loop.timeout_ms(CoreTimerId::new(token, SERVICE_DISCOVERY_TIMER_ID),
+                                       SERVICE_DISCOVERY_TIMEOUT_MS));
 
         Ok((rx, timeout))
     } else {

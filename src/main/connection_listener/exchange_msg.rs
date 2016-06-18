@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
-use common::{self, Context, Core, Message, NameHash, Priority, Socket, State};
+use common::{self, Context, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use main::peer_id;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
@@ -56,7 +56,8 @@ impl ExchangeMsg {
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(el.register(&socket, token, event_set, PollOpt::edge()));
 
-        let timeout = try!(el.timeout_ms(token, timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
+        let timeout = try!(el.timeout_ms(CoreTimerId::new(token, 0),
+                                         timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
 
         let state = ExchangeMsg {
             token: token,
@@ -282,7 +283,7 @@ impl State for ExchangeMsg {
         let _ = el.deregister(&self.socket.take().expect("Logic Error"));
     }
 
-    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token) {
+    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {
         debug!("Exchange message timed out. Terminating direct connection request.");
         self.terminate(core, el)
     }

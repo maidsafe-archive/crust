@@ -22,7 +22,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 
-use common::{Context, Core, NameHash, Socket, State};
+use common::{Context, Core, CoreTimerId, NameHash, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, Event, PeerId,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::tcp::{TcpListener, TcpStream};
@@ -69,7 +69,7 @@ impl Connect {
         let state = Rc::new(RefCell::new(Connect {
             token: token,
             context: context,
-            timeout: try!(el.timeout_ms(token, TIMEOUT_MS)),
+            timeout: try!(el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)),
             cm: cm,
             our_nh: our_nh,
             our_id: our_ci.id,
@@ -210,7 +210,7 @@ impl State for Connect {
         }
     }
 
-    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token) {
+    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, el);
     }
