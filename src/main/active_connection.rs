@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
-use common::{Context, Core, CoreTimerId, Message, Priority, Socket, State};
+use common::{Core, CoreTimerId, Message, Priority, Socket, State};
 use main::{ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, Timeout, Token};
 
@@ -36,7 +36,6 @@ const HEARTBEAT_PERIOD_MS: u64 = 300;
 
 pub struct ActiveConnection {
     token: Token,
-    context: Context,
     socket: Socket,
     cm: ConnectionMap,
     our_id: PeerId,
@@ -70,10 +69,8 @@ impl ActiveConnection {
             }
         };
 
-        let context = core.get_new_context();
         let state = Rc::new(RefCell::new(ActiveConnection {
             token: token,
-            context: context,
             socket: socket,
             cm: cm,
             our_id: our_id,
@@ -82,8 +79,7 @@ impl ActiveConnection {
             heartbeat: heartbeat,
         }));
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, state.clone());
+        let _ = core.insert_state(token, state.clone());
 
         let mut state_mut = state.borrow_mut();
         {
@@ -93,7 +89,7 @@ impl ActiveConnection {
                 currently_handshaking: 1,
             });
             conn_id.currently_handshaking -= 1;
-            conn_id.active_connection = Some(context);
+            conn_id.active_connection = Some(token);
         }
         let _ = state_mut.event_tx.send(event);
         state_mut.read(core, el);
@@ -175,9 +171,7 @@ impl State for ActiveConnection {
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         self.heartbeat.terminate(el);
         let _ = el.deregister(&self.socket);
-
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
 
         {
             let mut guard = self.cm.lock().unwrap();

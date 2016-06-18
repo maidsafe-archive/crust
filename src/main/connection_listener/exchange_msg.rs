@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
-use common::{self, Context, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
+use common::{self, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use main::peer_id;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
@@ -30,7 +30,6 @@ pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 
 pub struct ExchangeMsg {
     token: Token,
-    context: Context,
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     name_hash: u64,
@@ -51,7 +50,6 @@ impl ExchangeMsg {
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         let es = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(el.register(&socket, token, es, PollOpt::edge()));
@@ -61,7 +59,6 @@ impl ExchangeMsg {
 
         let state = ExchangeMsg {
             token: token,
-            context: context,
             cm: cm,
             event_tx: event_tx,
             name_hash: name_hash,
@@ -71,8 +68,7 @@ impl ExchangeMsg {
             timeout: timeout,
         };
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 
         Ok(())
     }
@@ -192,8 +188,7 @@ impl ExchangeMsg {
     }
 
     fn done(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
         let _ = el.clear_timeout(self.timeout);
 
         let our_id = peer_id::new(self.our_pk);
@@ -213,8 +208,8 @@ impl ExchangeMsg {
             }
             NextState::ConnectionCandidate(their_id) => {
                 let cm = self.cm.clone();
-                let handler = move |core: &mut Core, el: &mut EventLoop<Core>, _, res| {
-                    if let Some((socket, token)) = res {
+                let handler = move |core: &mut Core, el: &mut EventLoop<Core>, token, res| {
+                    if let Some(socket) = res {
                         ActiveConnection::start(core,
                                                 el,
                                                 token,
@@ -258,8 +253,7 @@ impl State for ExchangeMsg {
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
 
         match self.next_state {
             NextState::ConnectionCandidate(their_id) |

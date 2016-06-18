@@ -20,9 +20,9 @@ use std::hash::{Hash, Hasher, SipHasher};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
-use common::{self, Context, Core, CoreMessage, Priority};
+use common::{self, Core, CoreMessage, Priority};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop};
+use mio::{self, EventLoop, Token};
 use nat::{MappedTcpSocket, MappingContext};
 use net2;
 use service_discovery::ServiceDiscovery;
@@ -34,13 +34,13 @@ use main::{Bootstrap, Connect, ConnectionListener, ConnectionMap, CrustError, Ev
 
 #[derive(Debug, Clone, Copy)]
 pub struct ConnectionId {
-    pub active_connection: Option<Context>,
+    pub active_connection: Option<Token>,
     pub currently_handshaking: usize,
 }
 
-const BOOTSTRAP_CONTEXT: Context = Context(0);
-const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
-const LISTENER_CONTEXT: Context = Context(2);
+const BOOTSTRAP_TOKEN: Token = Token(0);
+const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
+const LISTENER_TOKEN: Token = Token(2);
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -136,7 +136,7 @@ impl Service {
 
         let joiner =
             RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
-                let mut core = Core::with_context_counter(3);
+                let mut core = Core::with_token_counter(3);
                 el.run(&mut core).expect("EventLoop failed to run");
             }));
 
@@ -159,11 +159,11 @@ impl Service {
         let port = self.config.service_discovery_port.unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
         let _ = self.post(move |core, el| {
-            if core.get_state(SERVICE_DISCOVERY_CONTEXT).is_none() {
+            if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
                 if let Err(e) = ServiceDiscovery::start(core,
                                                         el,
                                                         our_listeners,
-                                                        SERVICE_DISCOVERY_CONTEXT,
+                                                        SERVICE_DISCOVERY_TOKEN,
                                                         port) {
                     warn!("Could not start ServiceDiscovery: {:?}", e);
                 }
@@ -175,7 +175,7 @@ impl Service {
     /// by interrogating the network.
     pub fn set_service_discovery_listen(&self, listen: bool) {
         let _ = self.post(move |core, _| {
-            let state = match core.get_state(SERVICE_DISCOVERY_CONTEXT) {
+            let state = match core.get_state(SERVICE_DISCOVERY_TOKEN) {
                 Some(state) => state,
                 None => return,
             };
@@ -183,7 +183,7 @@ impl Service {
             let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
                 Some(sd) => sd,
                 None => {
-                    warn!("Context reserved for ServiceDiscovery has something else.");
+                    warn!("Token reserved for ServiceDiscovery has something else.");
                     return;
                 }
             };
@@ -201,7 +201,7 @@ impl Service {
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, el| {
-            if core.get_state(BOOTSTRAP_CONTEXT).is_none() {
+            if core.get_state(BOOTSTRAP_TOKEN).is_none() {
                 if let Err(e) = Bootstrap::start(core,
                                                  el,
                                                  name_hash,
@@ -209,8 +209,8 @@ impl Service {
                                                  cm,
                                                  &config,
                                                  blacklist,
-                                                 BOOTSTRAP_CONTEXT,
-                                                 SERVICE_DISCOVERY_CONTEXT,
+                                                 BOOTSTRAP_TOKEN,
+                                                 SERVICE_DISCOVERY_TOKEN,
                                                  event_tx.clone()) {
                     error!("Could not bootstrap: {:?}", e);
                     let _ = event_tx.send(Event::BootstrapFailed);
@@ -222,7 +222,7 @@ impl Service {
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
         self.post(move |mut core, mut el| {
-            if let Some(state) = core.get_state(BOOTSTRAP_CONTEXT) {
+            if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
                 state.borrow_mut().terminate(core, el);
             }
         })
@@ -240,7 +240,7 @@ impl Service {
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, el| {
-            if core.get_state(LISTENER_CONTEXT).is_none() {
+            if core.get_state(LISTENER_TOKEN).is_none() {
                 ConnectionListener::start(core,
                                           el,
                                           None,
@@ -250,7 +250,7 @@ impl Service {
                                           cm,
                                           mc,
                                           our_listeners,
-                                          LISTENER_CONTEXT,
+                                          LISTENER_TOKEN,
                                           event_tx);
             }
         })
@@ -259,7 +259,7 @@ impl Service {
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
         self.post(move |core, el| {
-            if let Some(state) = core.get_state(LISTENER_CONTEXT) {
+            if let Some(state) = core.get_state(LISTENER_TOKEN) {
                 state.borrow_mut().terminate(core, el);
             }
         })
@@ -284,13 +284,13 @@ impl Service {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_id: PeerId) -> bool {
-        let context = match self.cm.lock().unwrap().get(&peer_id) {
-            Some(&ConnectionId { active_connection: Some(context), .. }) => context,
+        let token = match self.cm.lock().unwrap().get(&peer_id) {
+            Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return false,
         };
 
         let _ = self.post(move |mut core, mut el| {
-            if let Some(state) = core.get_state(context) {
+            if let Some(state) = core.get_state(token) {
                 state.borrow_mut().terminate(&mut core, &mut el);
             }
         });
@@ -300,13 +300,13 @@ impl Service {
 
     /// sending data to a peer(according to it's u64 peer_id)
     pub fn send(&self, peer_id: PeerId, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
-        let context = match self.cm.lock().unwrap().get(&peer_id) {
-            Some(&ConnectionId { active_connection: Some(context), .. }) => context,
+        let token = match self.cm.lock().unwrap().get(&peer_id) {
+            Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return Err(CrustError::PeerNotFound(peer_id)),
         };
 
         self.post(move |mut core, mut el| {
-            if let Some(state) = core.get_state(context) {
+            if let Some(state) = core.get_state(token) {
                 state.borrow_mut().write(&mut core, &mut el, msg, priority);
             }
         })

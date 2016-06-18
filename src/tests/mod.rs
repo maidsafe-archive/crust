@@ -240,7 +240,7 @@ mod broken_peer {
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    use common::{Context, Core, Message, Socket, State};
+    use common::{Core, Message, Socket, State};
     use mio::tcp::TcpListener;
     use mio::{EventLoop, EventSet, PollOpt, Token};
     use sodiumoxide::crypto::box_;
@@ -249,14 +249,12 @@ mod broken_peer {
 
     impl Listen {
         pub fn start(core: &mut Core, el: &mut EventLoop<Core>, listener: TcpListener) {
-            let context = core.get_new_context();
             let token = core.get_new_token();
-            let _ = core.insert_context(token, context);
 
             unwrap_result!(el.register(&listener, token, EventSet::readable(), PollOpt::edge()));
 
             let state = Listen(listener, token);
-            let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+            let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
         }
     }
 
@@ -267,9 +265,7 @@ mod broken_peer {
                     unwrap_result!(el.deregister(&self.0));
 
                     let socket = Socket::wrap(socket);
-                    let context = core.get_context(self.1).unwrap();
-
-                    Connection::start(core, el, context, self.1, socket);
+                    Connection::start(core, el, self.1, socket);
                 }
 
                 None => {
@@ -289,18 +285,14 @@ mod broken_peer {
     struct Connection(Socket, Token);
 
     impl Connection {
-        fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
-                 context: Context,
-                 token: Token,
-                 socket: Socket) {
+        fn start(core: &mut Core, el: &mut EventLoop<Core>, token: Token, socket: Socket) {
             unwrap_result!(el.register(&socket,
-                                               token,
-                                               EventSet::readable(),
-                                               PollOpt::edge()));
+                                       token,
+                                       EventSet::readable(),
+                                       PollOpt::edge()));
 
             let state = Connection(socket, token);
-            let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+            let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
         }
     }
 

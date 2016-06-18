@@ -19,7 +19,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use common::{Context, Core, Message, Priority, Socket, State};
+use common::{Core, Message, Priority, Socket, State};
 use mio::tcp::TcpStream;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use nat::{NatError, util};
@@ -27,12 +27,11 @@ use std::net::SocketAddr;
 
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,
-                            Context,
+                            Token,
                             Result<SocketAddr, ()>)>;
 
 pub struct GetExtAddr {
     token: Token,
-    context: Context,
     socket: Socket,
     request: Option<(Message, Priority)>,
     finish: Finish,
@@ -44,18 +43,16 @@ impl GetExtAddr {
                  local_addr: SocketAddr,
                  peer_stun: &SocketAddr,
                  finish: Finish)
-                 -> Result<Context, NatError> {
+                 -> Result<Token, NatError> {
         let query_socket = try!(util::new_reusably_bound_tcp_socket(&local_addr));
         let query_socket = try!(query_socket.to_tcp_stream());
         let socket = try!(TcpStream::connect_stream(query_socket, peer_stun));
 
         let socket = Socket::wrap(socket);
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         let state = GetExtAddr {
             token: token,
-            context: context,
             socket: socket,
             request: Some((Message::EchoAddrReq, 0)),
             finish: finish,
@@ -66,10 +63,9 @@ impl GetExtAddr {
                          EventSet::error() | EventSet::hup() | EventSet::writable(),
                          PollOpt::edge()));
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 
-        Ok(context)
+        Ok(token)
     }
 
     fn write(&mut self,
@@ -85,8 +81,8 @@ impl GetExtAddr {
         match self.socket.read::<Message>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, el);
-                let context = self.context;
-                (*self.finish)(core, el, context, Ok(ext_addr.0))
+                let token = self.token;
+                (*self.finish)(core, el, token, Ok(ext_addr.0))
             }
             Ok(None) => (),
             Ok(Some(_)) | Err(_) => self.handle_error(core, el),
@@ -95,8 +91,8 @@ impl GetExtAddr {
 
     fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         self.terminate(core, el);
-        let context = self.context;
-        (*self.finish)(core, el, context, Err(()));
+        let token = self.token;
+        (*self.finish)(core, el, token, Err(()));
     }
 }
 
@@ -116,8 +112,7 @@ impl State for GetExtAddr {
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
         let _ = el.deregister(&self.socket);
     }
 

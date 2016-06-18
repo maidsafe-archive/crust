@@ -22,7 +22,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 
-use common::{Context, Core, CoreTimerId, NameHash, Socket, State};
+use common::{Core, CoreTimerId, NameHash, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, Event, PeerId,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::tcp::{TcpListener, TcpStream};
@@ -34,7 +34,6 @@ const TIMEOUT_MS: u64 = 60 * 1000;
 
 pub struct Connect {
     token: Token,
-    context: Context,
     timeout: Timeout,
     cm: ConnectionMap,
     our_nh: NameHash,
@@ -42,7 +41,7 @@ pub struct Connect {
     their_id: PeerId,
     weak: Option<Weak<RefCell<Connect>>>,
     listener: Option<TcpListener>,
-    children: HashSet<Context>,
+    children: HashSet<Token>,
     event_tx: ::CrustEventSender,
 }
 
@@ -64,11 +63,9 @@ impl Connect {
         }
 
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         let state = Rc::new(RefCell::new(Connect {
             token: token,
-            context: context,
             timeout: try!(el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)),
             cm: cm,
             our_nh: our_nh,
@@ -105,8 +102,7 @@ impl Connect {
             state.borrow_mut().exchange_msg(core, el, socket);
         }
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(token, state);
 
         Ok(())
     }
@@ -143,10 +139,10 @@ impl Connect {
     fn handle_exchange_msg(&mut self,
                            core: &mut Core,
                            el: &mut EventLoop<Core>,
-                           child: Context,
-                           res: Option<(Socket, Token)>) {
+                           child: Token,
+                           res: Option<Socket>) {
         let _ = self.children.remove(&child);
-        if let Some((socket, token)) = res {
+        if let Some(socket) = res {
             let self_weak = self.weak.as_ref().expect("Logic Err").clone();
             let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -156,7 +152,7 @@ impl Connect {
 
             if let Ok(child) = ConnectionCandidate::start(core,
                                                           el,
-                                                          token,
+                                                          child,
                                                           socket,
                                                           self.cm.clone(),
                                                           self.our_id,
@@ -174,14 +170,14 @@ impl Connect {
     fn handle_connection_candidate(&mut self,
                                    core: &mut Core,
                                    el: &mut EventLoop<Core>,
-                                   child: Context,
-                                   res: Option<(Socket, Token)>) {
+                                   child: Token,
+                                   res: Option<Socket>) {
         let _ = self.children.remove(&child);
-        if let Some((socket, token)) = res {
+        if let Some(socket) = res {
             self.terminate(core, el);
             ActiveConnection::start(core,
                                     el,
-                                    token,
+                                    child,
                                     socket,
                                     self.cm.clone(),
                                     self.our_id,
@@ -189,11 +185,15 @@ impl Connect {
                                     Event::ConnectSuccess(self.their_id),
                                     self.event_tx.clone());
         }
+
+        if self.children.is_empty() {
+            self.terminate(core, el);
+        }
     }
 
     fn terminate_children(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        for context in self.children.drain() {
-            let child = match core.get_state(context) {
+        for child in self.children.drain() {
+            let child = match core.get_state(child) {
                 Some(state) => state,
                 None => continue,
             };
@@ -222,8 +222,7 @@ impl State for Connect {
             let _ = el.deregister(&listener);
         }
         let _ = el.clear_timeout(self.timeout);
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
 
 
         if !self.cm.lock().unwrap().contains_key(&self.their_id) {

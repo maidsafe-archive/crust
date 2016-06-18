@@ -21,7 +21,7 @@ use std::cell::RefCell;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::rc::Rc;
 
-use common::{Context, Core, CoreMessage, CoreTimerId, State};
+use common::{Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
 use mio::{EventLoop, Timeout, Token};
 use nat::{MappedAddr, MappingContext, NatError, util};
@@ -35,10 +35,9 @@ const TIMEOUT_MS: u64 = 3 * 1000;
 /// A state which represents the in-progress mapping of a tcp socket.
 pub struct MappedTcpSocket<F> {
     token: Token,
-    context: Context,
     socket: Option<TcpBuilder>,
     igd_children: usize,
-    stun_children: HashSet<Context>,
+    stun_children: HashSet<Token>,
     mapped_addrs: Vec<MappedAddr>,
     timeout: Timeout,
     finish: Option<F>,
@@ -55,7 +54,6 @@ impl<F> MappedTcpSocket<F>
                  finish: F)
                  -> Result<(), NatError> {
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         // TODO(Spandan) Ipv6 is not supported in Listener so dealing only with ipv4 right now
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
@@ -80,7 +78,7 @@ impl<F> MappedTcpSocket<F>
                     Err(_) => return,
                 };
                 let _ = tx.send(CoreMessage::new(move |core, el| {
-                    let state = match core.get_state(context) {
+                    let state = match core.get_state(token) {
                         Some(state) => state,
                         None => return,
                     };
@@ -104,7 +102,6 @@ impl<F> MappedTcpSocket<F>
 
         let state = Rc::new(RefCell::new(MappedTcpSocket {
             token: token,
-            context: context,
             socket: Some(socket),
             igd_children: igd_children,
             stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
@@ -116,9 +113,9 @@ impl<F> MappedTcpSocket<F>
         // Ask Stuns
         for stun in mc.peer_stuns() {
             let self_weak = Rc::downgrade(&state);
-            let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child_context, res| {
+            let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc.borrow_mut().handle_stun_resp(core, el, child_context, res)
+                    self_rc.borrow_mut().handle_stun_resp(core, el, child_token, res)
                 }
             };
 
@@ -131,8 +128,7 @@ impl<F> MappedTcpSocket<F>
             return Ok(state.borrow_mut().terminate(core, el));
         }
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(token, state);
 
         Ok(())
     }
@@ -140,7 +136,7 @@ impl<F> MappedTcpSocket<F>
     fn handle_stun_resp(&mut self,
                         core: &mut Core,
                         el: &mut EventLoop<Core>,
-                        child: Context,
+                        child: Token,
                         res: Result<SocketAddr, ()>) {
         let _ = self.stun_children.remove(&child);
         if let Ok(our_ext_addr) = res {
@@ -163,8 +159,8 @@ impl<F> MappedTcpSocket<F>
     }
 
     fn terminate_children(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        for context in self.stun_children.drain() {
-            let child = match core.get_state(context) {
+        for token in self.stun_children.drain() {
+            let child = match core.get_state(token) {
                 Some(state) => state,
                 None => continue,
             };
@@ -183,8 +179,7 @@ impl<F> State for MappedTcpSocket<F>
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         self.terminate_children(core, el);
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
         let _ = el.clear_timeout(self.timeout);
 
         let socket = self.socket.take().expect("Logic Error");

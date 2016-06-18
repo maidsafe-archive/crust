@@ -30,7 +30,7 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::u16;
 
-use common::{self, Context, Core, State};
+use common::{self, Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use rand;
 
@@ -62,11 +62,9 @@ impl ServiceDiscovery {
     pub fn start(core: &mut Core,
                  el: &mut EventLoop<Core>,
                  our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-                 context: Context,
+                 token: Token,
                  port: u16)
                  -> Result<(), ServiceDiscoveryError> {
-        let token = core.get_new_token();
-
         let udp_socket = try!(get_socket(port));
         try!(udp_socket.set_broadcast(true));
 
@@ -87,12 +85,11 @@ impl ServiceDiscovery {
         };
 
         try!(el.register(&service_discovery.socket,
-                         service_discovery.token,
+                         token,
                          EventSet::error() | EventSet::hup() | EventSet::readable(),
                          PollOpt::edge()));
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(service_discovery)));
+        let _ = core.insert_state(token, Rc::new(RefCell::new(service_discovery)));
 
         Ok(())
     }
@@ -204,12 +201,8 @@ impl State for ServiceDiscovery {
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        if let Err(e) = el.deregister(&self.socket) {
-            warn!("Error deregistering ServiceDiscovery: {:?}", e);
-        }
-        if let Some(context) = core.remove_context(self.token) {
-            let _ = core.remove_state(context);
-        }
+        let _ = el.deregister(&self.socket);
+        let _ = core.remove_state(self.token);
     }
 
     fn as_any(&mut self) -> &mut Any {
@@ -251,9 +244,9 @@ mod test {
     use std::thread;
     use std::time::Duration;
 
-    use common::{Context, Core, CoreMessage};
+    use common::{Core, CoreMessage};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
-    use mio::EventLoop;
+    use mio::{EventLoop, Token};
 
     #[test]
     fn service_discovery() {
@@ -270,16 +263,16 @@ mod test {
 
         // ServiceDiscovery-0
         {
-            let context_0 = Context(0);
+            let token_0 = Token(0);
             tx0.send(CoreMessage::new(move |core, el| {
-                    ServiceDiscovery::start(core, el, listeners_0_clone, context_0, 65530)
+                    ServiceDiscovery::start(core, el, listeners_0_clone, token_0, 65530)
                         .expect("Could not spawn ServiceDiscovery_0");
                 }))
                 .expect("Could not send to tx0");
 
             // Start listening for peers
             tx0.send(CoreMessage::new(move |core, _| {
-                    let state = core.get_state(context_0).unwrap();
+                    let state = core.get_state(token_0).unwrap();
                     let mut inner = state.borrow_mut();
                     inner.as_any().downcast_mut::<ServiceDiscovery>().unwrap().set_listen(true);
                 }))
@@ -300,16 +293,16 @@ mod test {
         // ServiceDiscovery-1
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
-            let context_1 = Context(0);
+            let token_1 = Token(0);
             tx1.send(CoreMessage::new(move |core, el| {
-                    ServiceDiscovery::start(core, el, listeners_1, context_1, 65530)
+                    ServiceDiscovery::start(core, el, listeners_1, token_1, 65530)
                         .expect("Could not spawn ServiceDiscovery_1");
                 }))
                 .expect("Could not send to tx1");
 
             // Register observer
             tx1.send(CoreMessage::new(move |core, _| {
-                    let state = core.get_state(context_1).unwrap();
+                    let state = core.get_state(token_1).unwrap();
                     let mut inner = state.borrow_mut();
                     inner.as_any()
                         .downcast_mut::<ServiceDiscovery>()
@@ -320,7 +313,7 @@ mod test {
 
             // Seek peers
             tx1.send(CoreMessage::new(move |core, _| {
-                    let state = core.get_state(context_1).unwrap();
+                    let state = core.get_state(token_1).unwrap();
                     let mut inner = state.borrow_mut();
                     inner.as_any()
                         .downcast_mut::<ServiceDiscovery>()

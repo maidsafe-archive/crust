@@ -31,66 +31,41 @@ pub struct CoreTimerId {
     pub timer_id: u8,
 }
 
-#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
-pub struct Context(pub usize);
-
 pub struct Core {
     token_counter: usize,
-    context_counter: usize,
-    contexts: HashMap<Token, Context>,
-    states: HashMap<Context, Rc<RefCell<State>>>,
+    states: HashMap<Token, Rc<RefCell<State>>>,
 }
 
 impl Core {
     pub fn new() -> Self {
-        Self::with_context_counter(0)
+        Self::with_token_counter(0)
     }
 
-    pub fn with_context_counter(context_counter: usize) -> Self {
+    pub fn with_token_counter(token_counter: usize) -> Self {
         Core {
-            token_counter: 0,
-            context_counter: context_counter,
-            contexts: HashMap::new(),
+            token_counter: token_counter,
             states: HashMap::new(),
         }
     }
 
     pub fn get_new_token(&mut self) -> Token {
         let next = Token(self.token_counter);
-        self.token_counter = self.token_counter.wrapping_add(1);
+        self.token_counter += 1;
         next
-    }
-
-    pub fn get_new_context(&mut self) -> Context {
-        let next = Context(self.context_counter);
-        self.context_counter = self.context_counter.wrapping_add(1);
-        next
-    }
-
-    pub fn insert_context(&mut self, token: Token, context: Context) -> Option<Context> {
-        self.contexts.insert(token, context)
     }
 
     pub fn insert_state(&mut self,
-                        context: Context,
+                        token: Token,
                         state: Rc<RefCell<State>>)
                         -> Option<Rc<RefCell<State>>> {
-        self.states.insert(context, state)
+        self.states.insert(token, state)
     }
 
-    pub fn remove_context(&mut self, token: Token) -> Option<Context> {
-        self.contexts.remove(&token)
+    pub fn remove_state(&mut self, token: Token) -> Option<Rc<RefCell<State>>> {
+        self.states.remove(&token)
     }
 
-    pub fn remove_state(&mut self, context: Context) -> Option<Rc<RefCell<State>>> {
-        self.states.remove(&context)
-    }
-
-    pub fn get_context(&self, key: Token) -> Option<Context> {
-        self.contexts.get(&key).cloned()
-    }
-
-    pub fn get_state(&self, key: Context) -> Option<Rc<RefCell<State>>> {
+    pub fn get_state(&self, key: Token) -> Option<Rc<RefCell<State>>> {
         self.states.get(&key).cloned()
     }
 }
@@ -100,7 +75,7 @@ impl Handler for Core {
     type Message = CoreMessage;
 
     fn ready(&mut self, el: &mut EventLoop<Self>, token: Token, es: EventSet) {
-        if let Some(state) = self.get_context(token).and_then(|c| self.get_state(c)) {
+        if let Some(state) = self.get_state(token) {
             state.borrow_mut().ready(self, el, es);
         }
     }
@@ -110,7 +85,7 @@ impl Handler for Core {
     }
 
     fn timeout(&mut self, el: &mut EventLoop<Self>, timeout: Self::Timeout) {
-        if let Some(state) = self.get_context(timeout.state_id).and_then(|c| self.get_state(c)) {
+        if let Some(state) = self.get_state(timeout.state_id) {
             state.borrow_mut().timeout(self, el, timeout.timer_id);
         }
     }

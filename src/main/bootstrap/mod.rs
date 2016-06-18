@@ -28,7 +28,7 @@ use std::sync::mpsc::{self, Receiver};
 
 use main::peer_id;
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
-use common::{self, Context, Core, CoreTimerId, Socket, State};
+use common::{self, Core, CoreTimerId, Socket, State};
 use mio::{EventLoop, Timeout, Token};
 use self::cache::Cache;
 use self::try_peer::TryPeer;
@@ -43,7 +43,6 @@ const MAX_CONTACTS_EXPECTED: usize = 1500;
 
 pub struct Bootstrap {
     token: Token,
-    context: Context,
     cm: ConnectionMap,
     peers: Vec<common::SocketAddr>,
     blacklist: HashSet<net::SocketAddr>,
@@ -54,7 +53,7 @@ pub struct Bootstrap {
     bs_timer: CoreTimerId,
     bs_timeout: Timeout,
     cache: Cache,
-    children: HashSet<Context>,
+    children: HashSet<Token>,
     self_weak: Option<Weak<RefCell<Bootstrap>>>,
 }
 
@@ -66,8 +65,8 @@ impl Bootstrap {
                  cm: ConnectionMap,
                  config: &Config,
                  blacklist: HashSet<net::SocketAddr>,
-                 bootstrap_context: Context,
-                 service_discovery_context: Context,
+                 token: Token,
+                 service_discovery_token: Token,
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
@@ -76,10 +75,9 @@ impl Bootstrap {
         peers.extend(cache.read_file());
         peers.extend(config.hard_coded_contacts.clone());
 
-        let token = core.get_new_token();
         let bs_timer = CoreTimerId::new(token, BOOTSTRAP_TIMER_ID);
         let bs_timeout = try!(event_loop.timeout_ms(bs_timer, BOOTSTRAP_TIMEOUT_MS));
-        let sd_meta = match seek_peers(core, event_loop, service_discovery_context, token) {
+        let sd_meta = match seek_peers(core, event_loop, service_discovery_token, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
                     rx: rx,
@@ -95,7 +93,6 @@ impl Bootstrap {
 
         let state = Rc::new(RefCell::new(Bootstrap {
             token: token,
-            context: bootstrap_context,
             cm: cm,
             peers: peers,
             blacklist: blacklist,
@@ -112,8 +109,7 @@ impl Bootstrap {
 
         state.borrow_mut().self_weak = Some(Rc::downgrade(&state));
 
-        let _ = core.insert_context(token, bootstrap_context);
-        let _ = core.insert_state(bootstrap_context, state.clone());
+        let _ = core.insert_state(token, state.clone());
 
         if state.borrow().sd_meta.is_none() {
             state.borrow_mut().begin_bootstrap(core, event_loop);
@@ -132,9 +128,9 @@ impl Bootstrap {
 
         for peer in peers {
             let self_weak = self.self_weak.as_ref().expect("Logic Error").clone();
-            let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child_context, res| {
+            let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc.borrow_mut().handle_result(core, el, child_context, res)
+                    self_rc.borrow_mut().handle_result(core, el, child, res)
                 }
             };
 
@@ -152,15 +148,15 @@ impl Bootstrap {
     fn handle_result(&mut self,
                      core: &mut Core,
                      event_loop: &mut EventLoop<Core>,
-                     child_context: Context,
-                     res: Result<(Socket, net::SocketAddr, Token, PeerId), net::SocketAddr>) {
-        let _ = self.children.remove(&child_context);
+                     child: Token,
+                     res: Result<(Socket, net::SocketAddr, PeerId), net::SocketAddr>) {
+        let _ = self.children.remove(&child);
         match res {
-            Ok((socket, peer_addr, token, peer_id)) => {
+            Ok((socket, peer_addr, peer_id)) => {
                 self.terminate(core, event_loop);
                 return ActiveConnection::start(core,
                                                event_loop,
-                                               token,
+                                               child,
                                                socket,
                                                self.cm.clone(),
                                                peer_id::new(self.our_pk),
@@ -180,8 +176,8 @@ impl Bootstrap {
     }
 
     fn terminate_children(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        for context in self.children.drain() {
-            let child = match core.get_state(context) {
+        for child in self.children.drain() {
+            let child = match core.get_state(child) {
                 Some(state) => state,
                 None => continue,
             };
@@ -212,8 +208,7 @@ impl State for Bootstrap {
         if let Some(sd_meta) = self.sd_meta.take() {
             let _ = event_loop.clear_timeout(sd_meta.timeout);
         }
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
         let _ = event_loop.clear_timeout(self.bs_timeout);
     }
 
@@ -229,10 +224,10 @@ struct ServiceDiscMeta {
 
 fn seek_peers(core: &mut Core,
               event_loop: &mut EventLoop<Core>,
-              service_discovery_context: Context,
+              service_discovery_token: Token,
               token: Token)
               -> ::Res<(Receiver<Vec<common::SocketAddr>>, Timeout)> {
-    if let Some(state) = core.get_state(service_discovery_context) {
+    if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()
             .downcast_mut::<ServiceDiscovery>()
