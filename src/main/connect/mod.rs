@@ -22,8 +22,8 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 
-use common::{Context, Core, NameHash, Socket, State};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, Event, PeerId,
+use common::{Core, CoreTimerId, NameHash, Socket, State};
+use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PeerId,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
@@ -34,7 +34,6 @@ const TIMEOUT_MS: u64 = 60 * 1000;
 
 pub struct Connect {
     token: Token,
-    context: Context,
     timeout: Timeout,
     cm: ConnectionMap,
     our_nh: NameHash,
@@ -42,7 +41,7 @@ pub struct Connect {
     their_id: PeerId,
     weak: Option<Weak<RefCell<Connect>>>,
     listener: Option<TcpListener>,
-    children: HashSet<Context>,
+    children: HashSet<Token>,
     event_tx: ::CrustEventSender,
 }
 
@@ -61,15 +60,14 @@ impl Connect {
 
         if their_direct.is_empty() && their_hole_punch.is_empty() {
             let _ = event_tx.send(Event::ConnectFailure(their_id));
+            return Err(CrustError::InsufficientConnectionInfo);
         }
 
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         let state = Rc::new(RefCell::new(Connect {
             token: token,
-            context: context,
-            timeout: try!(el.timeout_ms(token, TIMEOUT_MS)),
+            timeout: try!(el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)),
             cm: cm,
             our_nh: our_nh,
             our_id: our_ci.id,
@@ -105,8 +103,7 @@ impl Connect {
             state.borrow_mut().exchange_msg(core, el, socket);
         }
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(token, state);
 
         Ok(())
     }
@@ -129,6 +126,62 @@ impl Connect {
                                               Box::new(handler)) {
             let _ = self.children.insert(child);
         }
+        self.maybe_terminate(core, el);
+    }
+
+    fn handle_exchange_msg(&mut self,
+                           core: &mut Core,
+                           el: &mut EventLoop<Core>,
+                           child: Token,
+                           res: Option<Socket>) {
+        let _ = self.children.remove(&child);
+        if let Some(socket) = res {
+            let self_weak = self.weak.as_ref().expect("Logic Err").clone();
+            let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
+                if let Some(self_rc) = self_weak.upgrade() {
+                    self_rc.borrow_mut().handle_connection_candidate(core, el, child, res);
+                }
+            };
+
+            if let Ok(child) = ConnectionCandidate::start(core,
+                                                          el,
+                                                          child,
+                                                          socket,
+                                                          self.cm.clone(),
+                                                          self.our_id,
+                                                          self.their_id,
+                                                          Box::new(handler)) {
+                let _ = self.children.insert(child);
+            }
+        }
+        self.maybe_terminate(core, el);
+    }
+
+    fn handle_connection_candidate(&mut self,
+                                   core: &mut Core,
+                                   el: &mut EventLoop<Core>,
+                                   child: Token,
+                                   res: Option<Socket>) {
+        let _ = self.children.remove(&child);
+        if let Some(socket) = res {
+            self.terminate(core, el);
+            return ActiveConnection::start(core,
+                                           el,
+                                           child,
+                                           socket,
+                                           self.cm.clone(),
+                                           self.our_id,
+                                           self.their_id,
+                                           Event::ConnectSuccess(self.their_id),
+                                           self.event_tx.clone());
+        }
+        self.maybe_terminate(core, el);
+    }
+
+    fn maybe_terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        if self.children.is_empty() {
+            self.terminate(core, el);
+        }
     }
 
     fn accept(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
@@ -140,60 +193,9 @@ impl Connect {
         }
     }
 
-    fn handle_exchange_msg(&mut self,
-                           core: &mut Core,
-                           el: &mut EventLoop<Core>,
-                           child: Context,
-                           res: Option<(Socket, Token)>) {
-        let _ = self.children.remove(&child);
-        if let Some((socket, token)) = res {
-            let self_weak = self.weak.as_ref().expect("Logic Err").clone();
-            let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
-                if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc.borrow_mut().handle_connection_candidate(core, el, child, res);
-                }
-            };
-
-            if let Ok(child) = ConnectionCandidate::start(core,
-                                                          el,
-                                                          token,
-                                                          socket,
-                                                          self.cm.clone(),
-                                                          self.our_id,
-                                                          self.their_id,
-                                                          Box::new(handler)) {
-                let _ = self.children.insert(child);
-            }
-        }
-
-        if self.children.is_empty() {
-            self.terminate(core, el);
-        }
-    }
-
-    fn handle_connection_candidate(&mut self,
-                                   core: &mut Core,
-                                   el: &mut EventLoop<Core>,
-                                   child: Context,
-                                   res: Option<(Socket, Token)>) {
-        let _ = self.children.remove(&child);
-        if let Some((socket, token)) = res {
-            self.terminate(core, el);
-            ActiveConnection::start(core,
-                                    el,
-                                    token,
-                                    socket,
-                                    self.cm.clone(),
-                                    self.our_id,
-                                    self.their_id,
-                                    Event::ConnectSuccess(self.their_id),
-                                    self.event_tx.clone());
-        }
-    }
-
     fn terminate_children(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        for context in self.children.drain() {
-            let child = match core.get_state(context) {
+        for child in self.children.drain() {
+            let child = match core.get_state(child) {
                 Some(state) => state,
                 None => continue,
             };
@@ -204,13 +206,13 @@ impl Connect {
 }
 
 impl State for Connect {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: Token, es: EventSet) {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
         if !es.is_error() && !es.is_hup() && es.is_readable() {
             self.accept(core, el);
         }
     }
 
-    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token) {
+    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, el);
     }
@@ -222,9 +224,7 @@ impl State for Connect {
             let _ = el.deregister(&listener);
         }
         let _ = el.clear_timeout(self.timeout);
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
-
+        let _ = core.remove_state(self.token);
 
         if !self.cm.lock().unwrap().contains_key(&self.their_id) {
             let _ = self.event_tx.send(Event::ConnectFailure(self.their_id));

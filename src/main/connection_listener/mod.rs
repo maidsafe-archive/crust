@@ -23,7 +23,7 @@ use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use common::{Context, Core, NameHash, Socket, State};
+use common::{Core, NameHash, Socket, State};
 use main::{ConnectionMap, Event};
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
@@ -35,19 +35,18 @@ use sodiumoxide::crypto::box_::PublicKey;
 const LISTENER_BACKLOG: i32 = 100;
 
 pub struct ConnectionListener {
+    token: Token,
     cm: ConnectionMap,
-    context: Context,
     event_tx: ::CrustEventSender,
     listener: TcpListener,
     name_hash: NameHash,
     our_pk: PublicKey,
-    token: Token,
     timeout_ms: Option<u64>,
 }
 
 impl ConnectionListener {
     pub fn start(core: &mut Core,
-                 event_loop: &mut EventLoop<Core>,
+                 el: &mut EventLoop<Core>,
                  handshake_timeout_ms: Option<u64>,
                  port: u16,
                  our_pk: PublicKey,
@@ -55,7 +54,7 @@ impl ConnectionListener {
                  cm: ConnectionMap,
                  mc: Arc<MappingContext>,
                  our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-                 context: Context,
+                 token: Token,
                  event_tx: ::CrustEventSender) {
         let event_tx_0 = event_tx.clone();
         let finish = move |core: &mut Core, el: &mut EventLoop<Core>, socket, mapped_addrs| {
@@ -68,21 +67,21 @@ impl ConnectionListener {
                                                                      name_hash,
                                                                      cm,
                                                                      our_listeners,
-                                                                     context,
+                                                                     token,
                                                                      event_tx.clone()) {
                 error!("TCP Listener failed to handle mapped socket: {:?}", e);
                 let _ = event_tx.send(Event::ListenerFailed);
             }
         };
 
-        if let Err(e) = MappedTcpSocket::start(core, event_loop, port, &mc, finish) {
+        if let Err(e) = MappedTcpSocket::start(core, el, port, &mc, finish) {
             error!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
     }
 
     fn handle_mapped_socket(core: &mut Core,
-                            event_loop: &mut EventLoop<Core>,
+                            el: &mut EventLoop<Core>,
                             timeout_ms: Option<u64>,
                             socket: TcpBuilder,
                             mapped_addrs: Vec<MappedAddr>,
@@ -90,47 +89,42 @@ impl ConnectionListener {
                             name_hash: NameHash,
                             cm: ConnectionMap,
                             our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-                            context: Context,
+                            token: Token,
                             event_tx: ::CrustEventSender)
                             -> ::Res<()> {
-        let token = core.get_new_token();
-
         let listener = try!(socket.listen(LISTENER_BACKLOG));
         let local_addr = try!(listener.local_addr());
 
         let listener = try!(TcpListener::from_listener(listener, &local_addr));
-        try!(event_loop.register(&listener,
-                                 token,
-                                 EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                 PollOpt::edge()));
+        try!(el.register(&listener,
+                         token,
+                         EventSet::readable() | EventSet::error() | EventSet::hup(),
+                         PollOpt::edge()));
 
         *our_listeners.lock().unwrap() = mapped_addrs.into_iter().map(|elt| *elt.addr()).collect();
 
         let state = ConnectionListener {
+            token: token,
             cm: cm,
-            context: context,
             event_tx: event_tx.clone(),
             listener: listener,
             name_hash: name_hash,
             our_pk: our_pk,
-            token: token,
             timeout_ms: timeout_ms,
         };
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
-
+        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
         let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
 
         Ok(())
     }
 
-    fn accept(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn accept(&self, core: &mut Core, el: &mut EventLoop<Core>) {
         loop {
             match self.listener.accept() {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
-                                                       event_loop,
+                                                       el,
                                                        self.timeout_ms.clone(),
                                                        Socket::wrap(socket),
                                                        self.our_pk,
@@ -151,23 +145,18 @@ impl ConnectionListener {
 }
 
 impl State for ConnectionListener {
-    fn ready(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
-            self.terminate(core, event_loop);
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
+            self.terminate(core, el);
             let _ = self.event_tx.send(Event::ListenerFailed);
-        } else if event_set.is_readable() {
-            self.accept(core, event_loop);
+        } else if es.is_readable() {
+            self.accept(core, el);
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = event_loop.deregister(&self.listener);
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        let _ = el.deregister(&self.listener);
+        let _ = core.remove_state(self.token);
     }
 
     fn as_any(&mut self) -> &mut Any {
@@ -190,9 +179,9 @@ mod test {
     use std::time::Duration;
 
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, Context, Core, CoreMessage, Message, NameHash};
-    use main::{Event, peer_id};
-    use mio::{EventLoop, Sender};
+    use common::{self, Core, CoreMessage, Message, NameHash};
+    use main::{Event, PeerId};
+    use mio::{EventLoop, Sender, Token};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -214,7 +203,7 @@ mod test {
         fn drop(&mut self) {
             self.tx
                 .send(CoreMessage::new(|_, el| el.shutdown()))
-                .expect("Could not send shutdown to event_loop");
+                .expect("Could not send shutdown to el");
         }
     }
 
@@ -222,7 +211,7 @@ mod test {
         let mut el = EventLoop::new().expect("Could not spawn el");
         let tx = el.channel();
         let raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
-            el.run(&mut Core::with_context_counter(1)).expect("Could not run el");
+            el.run(&mut Core::with_token_counter(1)).expect("Could not run el");
         }));
 
         let (event_tx, event_rx) = mpsc::channel();
@@ -245,7 +234,7 @@ mod test {
                                           cm,
                                           mc,
                                           listeners_clone,
-                                          Context(0),
+                                          Token(0),
                                           crust_sender);
             }))
             .expect("Could not send to tx");
@@ -316,7 +305,7 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, peer_id::new(pk)),
+            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, PeerId(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }
@@ -327,12 +316,12 @@ mod test {
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut us, message).expect("Could not write.");
 
-        let our_id = peer_id::new(pk);
+        let our_id = PeerId(pk);
         let their_id = match read(&mut us).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
-                peer_id::new(peer_pk)
+                PeerId(peer_pk)
             }
             msg => panic!("Unexpected message: {:?}", msg),
         };
@@ -343,7 +332,7 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::ConnectSuccess(id) => assert_eq!(id, peer_id::new(pk)),
+            Event::ConnectSuccess(id) => assert_eq!(id, PeerId(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }

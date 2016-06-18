@@ -20,18 +20,14 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
-use common::{Context, Core, Message, NameHash, Priority, Socket, State};
+use common::{Core, Message, NameHash, Priority, Socket, State};
 use main::{ConnectionId, ConnectionMap, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Token};
 
-pub type Finish = Box<FnMut(&mut Core,
-                            &mut EventLoop<Core>,
-                            Context,
-                            Option<(Socket, Token)>)>;
+pub type Finish = Box<FnMut(&mut Core, &mut EventLoop<Core>, Token, Option<Socket>)>;
 
 pub struct ExchangeMsg {
     token: Token,
-    context: Context,
     expected_id: PeerId,
     expected_nh: NameHash,
     socket: Option<Socket>,
@@ -49,9 +45,8 @@ impl ExchangeMsg {
                  name_hash: u64,
                  cm: ConnectionMap,
                  finish: Finish)
-                 -> ::Res<Context> {
+                 -> ::Res<Token> {
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
         try!(el.register(&socket,
                          token,
@@ -70,7 +65,6 @@ impl ExchangeMsg {
 
         let state = ExchangeMsg {
             token: token,
-            context: context,
             expected_id: expected_id,
             expected_nh: name_hash,
             socket: Some(socket),
@@ -79,10 +73,9 @@ impl ExchangeMsg {
             finish: finish,
         };
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 
-        Ok(context)
+        Ok(token)
     }
 
     fn write(&mut self,
@@ -100,13 +93,11 @@ impl ExchangeMsg {
                 if their_pk != self.expected_id.0 || name_hash != self.expected_nh {
                     return self.handle_error(core, el);
                 }
-                let _ = core.remove_context(self.token);
-                let _ = core.remove_state(self.context);
+                let _ = core.remove_state(self.token);
                 let token = self.token;
-                let context = self.context;
                 let socket = self.socket.take().expect("Logic Error");
 
-                (*self.finish)(core, el, context, Some((socket, token)));
+                (*self.finish)(core, el, token, Some(socket));
             }
             Ok(None) => (),
             Ok(Some(_)) | Err(_) => self.handle_error(core, el),
@@ -115,13 +106,13 @@ impl ExchangeMsg {
 
     fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         self.terminate(core, el);
-        let context = self.context;
-        (*self.finish)(core, el, context, None);
+        let token = self.token;
+        (*self.finish)(core, el, token, None);
     }
 }
 
 impl State for ExchangeMsg {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token, es: EventSet) {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
         if es.is_error() || es.is_hup() {
             self.handle_error(core, el);
         } else {
@@ -136,8 +127,7 @@ impl State for ExchangeMsg {
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
         let _ = el.deregister(&self.socket.take().expect("Logic Error"));
 
         let mut guard = self.cm.lock().unwrap();

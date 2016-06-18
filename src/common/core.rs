@@ -23,115 +23,94 @@ use std::rc::Rc;
 use common::State;
 use mio::{EventLoop, EventSet, Handler, Token};
 
-pub type CoreMessage = Closure;
-pub type CoreTimeout = Closure;
+pub struct CoreMessage(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
-pub struct Context(pub usize);
+pub struct CoreTimerId {
+    pub state_id: Token,
+    pub timer_id: u8,
+}
 
 pub struct Core {
     token_counter: usize,
-    context_counter: usize,
-    contexts: HashMap<Token, Context>,
-    states: HashMap<Context, Rc<RefCell<State>>>,
+    states: HashMap<Token, Rc<RefCell<State>>>,
 }
 
 impl Core {
     pub fn new() -> Self {
-        Self::with_context_counter(0)
+        Self::with_token_counter(0)
     }
 
-    pub fn with_context_counter(context_counter: usize) -> Self {
+    pub fn with_token_counter(token_counter: usize) -> Self {
         Core {
-            token_counter: 0,
-            context_counter: context_counter,
-            contexts: HashMap::new(),
+            token_counter: token_counter,
             states: HashMap::new(),
         }
     }
 
     pub fn get_new_token(&mut self) -> Token {
         let next = Token(self.token_counter);
-        self.token_counter = self.token_counter.wrapping_add(1);
+        self.token_counter += 1;
         next
-    }
-
-    pub fn get_new_context(&mut self) -> Context {
-        let next = Context(self.context_counter);
-        self.context_counter = self.context_counter.wrapping_add(1);
-        next
-    }
-
-    pub fn insert_context(&mut self, token: Token, context: Context) -> Option<Context> {
-        self.contexts.insert(token, context)
     }
 
     pub fn insert_state(&mut self,
-                        context: Context,
+                        token: Token,
                         state: Rc<RefCell<State>>)
                         -> Option<Rc<RefCell<State>>> {
-        self.states.insert(context, state)
+        self.states.insert(token, state)
     }
 
-    pub fn remove_context(&mut self, token: Token) -> Option<Context> {
-        self.contexts.remove(&token)
+    pub fn remove_state(&mut self, token: Token) -> Option<Rc<RefCell<State>>> {
+        self.states.remove(&token)
     }
 
-    pub fn remove_state(&mut self, context: Context) -> Option<Rc<RefCell<State>>> {
-        self.states.remove(&context)
-    }
-
-    pub fn get_context(&self, token: Token) -> Option<Context> {
-        self.contexts.get(&token).cloned()
-    }
-
-    pub fn get_state(&self, token: Context) -> Option<Rc<RefCell<State>>> {
-        self.states.get(&token).cloned()
+    pub fn get_state(&self, key: Token) -> Option<Rc<RefCell<State>>> {
+        self.states.get(&key).cloned()
     }
 }
 
 impl Handler for Core {
-    type Timeout = Token;
+    type Timeout = CoreTimerId;
     type Message = CoreMessage;
 
-    fn ready(&mut self, event_loop: &mut EventLoop<Self>, token: Token, events: EventSet) {
-        match self.get_context(token).and_then(|c| self.get_state(c)) {
-            Some(state) => state.borrow_mut().ready(self, event_loop, token, events),
-            None => (),
+    fn ready(&mut self, el: &mut EventLoop<Self>, token: Token, es: EventSet) {
+        if let Some(state) = self.get_state(token) {
+            state.borrow_mut().ready(self, el, es);
         }
     }
 
-    fn notify(&mut self, event_loop: &mut EventLoop<Self>, msg: Self::Message) {
-        msg.invoke(self, event_loop)
+    fn notify(&mut self, el: &mut EventLoop<Self>, msg: Self::Message) {
+        msg.invoke(self, el)
     }
 
-    fn timeout(&mut self, event_loop: &mut EventLoop<Self>, token: Token) {
-        match self.get_context(token).and_then(|c| self.get_state(c)) {
-            Some(state) => state.borrow_mut().timeout(self, event_loop, token),
-            None => (),
+    fn timeout(&mut self, el: &mut EventLoop<Self>, timeout: Self::Timeout) {
+        if let Some(state) = self.get_state(timeout.state_id) {
+            state.borrow_mut().timeout(self, el, timeout.timer_id);
         }
     }
 }
 
-impl Default for Core {
-    fn default() -> Core {
-        Core::new()
-    }
-}
-
-pub struct Closure(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
-
-impl Closure {
+impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        Closure(Box::new(move |a0: &mut Core, a1: &mut EventLoop<Core>| {
+        CoreMessage(Box::new(move |core: &mut Core, el: &mut EventLoop<Core>| {
             if let Some(f) = f.take() {
-                f(a0, a1)
+                f(core, el)
             }
         }))
     }
 
-    fn invoke(mut self, a0: &mut Core, a1: &mut EventLoop<Core>) {
-        (self.0)(a0, a1)
+    fn invoke(mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        (self.0)(core, el)
+    }
+}
+
+impl CoreTimerId {
+    pub fn new(state_id: Token, timer_id: u8) -> Self {
+        CoreTimerId {
+            state_id: state_id,
+            timer_id: timer_id,
+        }
     }
 }

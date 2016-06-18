@@ -20,9 +20,8 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
-use common::{self, Context, Core, Message, NameHash, Priority, Socket, State};
+use common::{self, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
-use main::peer_id;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -30,7 +29,6 @@ pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 
 pub struct ExchangeMsg {
     token: Token,
-    context: Context,
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     name_hash: u64,
@@ -51,16 +49,15 @@ impl ExchangeMsg {
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
         let token = core.get_new_token();
-        let context = core.get_new_context();
 
-        let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
-        try!(el.register(&socket, token, event_set, PollOpt::edge()));
+        let es = EventSet::error() | EventSet::hup() | EventSet::readable();
+        try!(el.register(&socket, token, es, PollOpt::edge()));
 
-        let timeout = try!(el.timeout_ms(token, timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
+        let timeout = try!(el.timeout_ms(CoreTimerId::new(token, 0),
+                                         timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
 
         let state = ExchangeMsg {
             token: token,
-            context: context,
             cm: cm,
             event_tx: event_tx,
             name_hash: name_hash,
@@ -70,8 +67,7 @@ impl ExchangeMsg {
             timeout: timeout,
         };
 
-        let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 
         Ok(())
     }
@@ -150,7 +146,7 @@ impl ExchangeMsg {
             return Err(());
         }
 
-        let their_id = peer_id::new(their_public_key);
+        let their_id = PeerId(their_public_key);
 
         {
             let mut guard = self.cm.lock().unwrap();
@@ -191,11 +187,10 @@ impl ExchangeMsg {
     }
 
     fn done(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
         let _ = el.clear_timeout(self.timeout);
 
-        let our_id = peer_id::new(self.our_pk);
+        let our_id = PeerId(self.our_pk);
         let event_tx = self.event_tx.clone();
 
         match self.next_state {
@@ -212,8 +207,8 @@ impl ExchangeMsg {
             }
             NextState::ConnectionCandidate(their_id) => {
                 let cm = self.cm.clone();
-                let handler = move |core: &mut Core, el: &mut EventLoop<Core>, _, res| {
-                    if let Some((socket, token)) = res {
+                let handler = move |core: &mut Core, el: &mut EventLoop<Core>, token, res| {
+                    if let Some(socket) = res {
                         ActiveConnection::start(core,
                                                 el,
                                                 token,
@@ -225,17 +220,14 @@ impl ExchangeMsg {
                                                 event_tx.clone());
                     }
                 };
-                if ConnectionCandidate::start(core,
-                                              el,
-                                              self.token,
-                                              self.socket.take().unwrap(),
-                                              self.cm.clone(),
-                                              our_id,
-                                              their_id,
-                                              Box::new(handler))
-                    .is_err() {
-                    self.terminate(core, el);
-                }
+                let _ = ConnectionCandidate::start(core,
+                                                   el,
+                                                   self.token,
+                                                   self.socket.take().unwrap(),
+                                                   self.cm.clone(),
+                                                   our_id,
+                                                   their_id,
+                                                   Box::new(handler));
             }
             NextState::None => self.terminate(core, el),
         }
@@ -243,26 +235,21 @@ impl ExchangeMsg {
 }
 
 impl State for ExchangeMsg {
-    fn ready(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
+    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
+        if es.is_error() || es.is_hup() {
             self.terminate(core, el);
         } else {
-            if event_set.is_readable() {
+            if es.is_readable() {
                 self.read(core, el)
             }
-            if event_set.is_writable() {
+            if es.is_writable() {
                 self.write(core, el, None)
             }
         }
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
+        let _ = core.remove_state(self.token);
 
         match self.next_state {
             NextState::ConnectionCandidate(their_id) |
@@ -282,7 +269,7 @@ impl State for ExchangeMsg {
         let _ = el.deregister(&self.socket.take().expect("Logic Error"));
     }
 
-    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _token: Token) {
+    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {
         debug!("Exchange message timed out. Terminating direct connection request.");
         self.terminate(core, el)
     }

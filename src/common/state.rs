@@ -19,31 +19,22 @@
 use std::any::Any;
 
 use common::Core;
-use mio::{EventLoop, EventSet, Handler, Token};
+use mio::{EventLoop, EventSet};
 
 pub type Priority = u8;
 
 pub trait State {
     fn as_any(&mut self) -> &mut Any;
 
-    fn ready(&mut self,
-             _core: &mut Core,
-             _event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             _event_set: EventSet) {
-    }
+    fn ready(&mut self, _core: &mut Core, _el: &mut EventLoop<Core>, _es: EventSet) {}
 
-    fn terminate(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>) {}
+    fn terminate(&mut self, _core: &mut Core, _el: &mut EventLoop<Core>) {}
 
-    fn timeout(&mut self,
-               _core: &mut Core,
-               _event_loop: &mut EventLoop<Core>,
-               _token: <Core as Handler>::Timeout) {
-    }
+    fn timeout(&mut self, _core: &mut Core, _el: &mut EventLoop<Core>, _timer_id: u8) {}
 
     fn write(&mut self,
              _core: &mut Core,
-             _event_loop: &mut EventLoop<Core>,
+             _el: &mut EventLoop<Core>,
              _data: Vec<u8>,
              _priority: Priority) {
     }
