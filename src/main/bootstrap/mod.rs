@@ -26,7 +26,6 @@ use std::net;
 use std::rc::{Rc, Weak};
 use std::sync::mpsc::{self, Receiver};
 
-use main::peer_id;
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use common::{self, Core, CoreTimerId, Socket, State};
 use mio::{EventLoop, Timeout, Token};
@@ -59,7 +58,7 @@ pub struct Bootstrap {
 
 impl Bootstrap {
     pub fn start(core: &mut Core,
-                 event_loop: &mut EventLoop<Core>,
+                 el: &mut EventLoop<Core>,
                  name_hash: u64,
                  our_pk: PublicKey,
                  cm: ConnectionMap,
@@ -76,8 +75,8 @@ impl Bootstrap {
         peers.extend(config.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimerId::new(token, BOOTSTRAP_TIMER_ID);
-        let bs_timeout = try!(event_loop.timeout_ms(bs_timer, BOOTSTRAP_TIMEOUT_MS));
-        let sd_meta = match seek_peers(core, event_loop, service_discovery_token, token) {
+        let bs_timeout = try!(el.timeout_ms(bs_timer, BOOTSTRAP_TIMEOUT_MS));
+        let sd_meta = match seek_peers(core, el, service_discovery_token, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
                     rx: rx,
@@ -86,7 +85,7 @@ impl Bootstrap {
             }
             Err(CrustError::ServiceDiscNotEnabled) => None,
             Err(e) => {
-                error!("Failed to seek peers using service discovery: {:?}", e);
+                warn!("Failed to seek peers using service discovery: {:?}", e);
                 return Err(e);
             }
         };
@@ -112,18 +111,18 @@ impl Bootstrap {
         let _ = core.insert_state(token, state.clone());
 
         if state.borrow().sd_meta.is_none() {
-            state.borrow_mut().begin_bootstrap(core, event_loop);
+            state.borrow_mut().begin_bootstrap(core, el);
         }
 
         Ok(())
     }
 
-    fn begin_bootstrap(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn begin_bootstrap(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
         peers.retain(|addr| !self.blacklist.contains(&addr.0));
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
-            return self.terminate(core, event_loop);
+            return self.terminate(core, el);
         }
 
         for peer in peers {
@@ -135,7 +134,7 @@ impl Bootstrap {
             };
 
             if let Ok(child) = TryPeer::start(core,
-                                              event_loop,
+                                              el,
                                               *peer,
                                               self.our_pk,
                                               self.name_hash,
@@ -143,23 +142,24 @@ impl Bootstrap {
                 let _ = self.children.insert(child);
             }
         }
+        self.maybe_terminate(core, el);
     }
 
     fn handle_result(&mut self,
                      core: &mut Core,
-                     event_loop: &mut EventLoop<Core>,
+                     el: &mut EventLoop<Core>,
                      child: Token,
                      res: Result<(Socket, net::SocketAddr, PeerId), net::SocketAddr>) {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_addr, peer_id)) => {
-                self.terminate(core, event_loop);
+                self.terminate(core, el);
                 return ActiveConnection::start(core,
-                                               event_loop,
+                                               el,
                                                child,
                                                socket,
                                                self.cm.clone(),
-                                               peer_id::new(self.our_pk),
+                                               PeerId(self.our_pk),
                                                peer_id,
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
@@ -168,30 +168,33 @@ impl Bootstrap {
                 self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
             }
         }
+        self.maybe_terminate(core, el);
+    }
 
+    fn maybe_terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         if self.children.is_empty() {
-            self.terminate(core, event_loop);
+            self.terminate(core, el);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn terminate_children(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
                 None => continue,
             };
 
-            child.borrow_mut().terminate(core, event_loop);
+            child.borrow_mut().terminate(core, el);
         }
     }
 }
 
 impl State for Bootstrap {
-    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
-            return self.terminate(core, event_loop);
+            return self.terminate(core, el);
         }
 
         let rx = self.sd_meta.take().expect("Logic Error").rx;
@@ -200,16 +203,16 @@ impl State for Bootstrap {
             self.peers.extend(listeners);
         }
 
-        self.begin_bootstrap(core, event_loop);
+        self.begin_bootstrap(core, el);
     }
 
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.terminate_children(core, event_loop);
+    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        self.terminate_children(core, el);
         if let Some(sd_meta) = self.sd_meta.take() {
-            let _ = event_loop.clear_timeout(sd_meta.timeout);
+            let _ = el.clear_timeout(sd_meta.timeout);
         }
         let _ = core.remove_state(self.token);
-        let _ = event_loop.clear_timeout(self.bs_timeout);
+        let _ = el.clear_timeout(self.bs_timeout);
     }
 
     fn as_any(&mut self) -> &mut Any {
@@ -223,7 +226,7 @@ struct ServiceDiscMeta {
 }
 
 fn seek_peers(core: &mut Core,
-              event_loop: &mut EventLoop<Core>,
+              el: &mut EventLoop<Core>,
               service_discovery_token: Token,
               token: Token)
               -> ::Res<(Receiver<Vec<common::SocketAddr>>, Timeout)> {
@@ -236,9 +239,8 @@ fn seek_peers(core: &mut Core,
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
         try!(state.seek_peers());
-        let timeout =
-            try!(event_loop.timeout_ms(CoreTimerId::new(token, SERVICE_DISCOVERY_TIMER_ID),
-                                       SERVICE_DISCOVERY_TIMEOUT_MS));
+        let timeout = try!(el.timeout_ms(CoreTimerId::new(token, SERVICE_DISCOVERY_TIMER_ID),
+                                         SERVICE_DISCOVERY_TIMEOUT_MS));
 
         Ok((rx, timeout))
     } else {

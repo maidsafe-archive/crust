@@ -22,7 +22,7 @@ use std::net::SocketAddr;
 use std::time::Instant;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use common::{CommonError, Core, Priority, Result};
+use common::{CommonError, Core, MAX_PAYLOAD_SIZE, Priority, Result};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
 use mio::tcp::TcpStream;
@@ -101,7 +101,7 @@ impl Socket {
             self.read_len = try!(Cursor::new(&self.read_buffer)
                 .read_u32::<LittleEndian>()) as usize;
 
-            if self.read_len > ::MAX_PAYLOAD_SIZE {
+            if self.read_len > MAX_PAYLOAD_SIZE {
                 return Err(CommonError::PayloadSizeProhibitive);
             }
 

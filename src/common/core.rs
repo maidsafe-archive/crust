@@ -91,12 +91,6 @@ impl Handler for Core {
     }
 }
 
-impl Default for Core {
-    fn default() -> Core {
-        Core::new()
-    }
-}
-
 impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);

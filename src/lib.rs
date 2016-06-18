@@ -77,7 +77,5 @@ pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionIn
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-/// Allowed max `data_len` for read/write is 2MB
-pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 /// Crust result type
 pub type Res<T> = Result<T, CrustError>;

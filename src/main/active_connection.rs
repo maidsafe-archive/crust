@@ -188,7 +188,6 @@ impl State for ActiveConnection {
 
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, timer_id: u8) {
         match self.heartbeat.timeout(el, timer_id) {
-            HeartbeatAction::None => (),
             HeartbeatAction::Send => self.write(core, el, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {
                 // TODO Disabling heartbeat for now to make testing easier
@@ -232,19 +231,16 @@ impl Heartbeat {
     }
 
     fn timeout(&self, el: &mut EventLoop<Core>, timer_id: u8) -> HeartbeatAction {
-        // if timer_id == self.recv_timer.timer_id {
-        //     return HeartbeatAction::Terminate;
-        // }
-        if timer_id == self.send_timer.timer_id {
-            return if let Err(error) = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS) {
+        if timer_id == self.recv_timer.timer_id {
+            HeartbeatAction::Terminate
+        } else {
+            if let Err(error) = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS) {
                 warn!("Failed to reschedule heartbeat send timer: {:?}", error);
                 HeartbeatAction::Terminate
             } else {
                 HeartbeatAction::Send
-            };
+            }
         }
-
-        HeartbeatAction::None
     }
 
     fn reset_receive(&mut self, el: &mut EventLoop<Core>) -> ::Res<()> {
@@ -266,10 +262,6 @@ impl Heartbeat {
 }
 
 enum HeartbeatAction {
-    // Do nothing
-    None,
-    // Send heartbeat message to the peer
     Send,
-    // Terminate the connection
     Terminate,
 }

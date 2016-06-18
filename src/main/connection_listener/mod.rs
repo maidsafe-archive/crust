@@ -114,7 +114,6 @@ impl ConnectionListener {
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
-
         let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
 
         Ok(())
@@ -181,7 +180,7 @@ mod test {
 
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
     use common::{self, Core, CoreMessage, Message, NameHash};
-    use main::{Event, peer_id};
+    use main::{Event, PeerId};
     use mio::{EventLoop, Sender, Token};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -306,7 +305,7 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, peer_id::new(pk)),
+            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, PeerId(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }
@@ -317,12 +316,12 @@ mod test {
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut us, message).expect("Could not write.");
 
-        let our_id = peer_id::new(pk);
+        let our_id = PeerId(pk);
         let their_id = match read(&mut us).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
-                peer_id::new(peer_pk)
+                PeerId(peer_pk)
             }
             msg => panic!("Unexpected message: {:?}", msg),
         };
@@ -333,7 +332,7 @@ mod test {
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
-            Event::ConnectSuccess(id) => assert_eq!(id, peer_id::new(pk)),
+            Event::ConnectSuccess(id) => assert_eq!(id, PeerId(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }

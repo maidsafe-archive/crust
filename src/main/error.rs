@@ -60,6 +60,10 @@ quick_error! {
             description("ServiceDiscovery error")
             from()
         }
+        /// ServiceDiscovery not enabled yet
+        InsufficientConnectionInfo {
+            description("Not enough information to initiate connection to peer")
+        }
         /// Nat Traversal errors
         Nat(err: nat::NatError) {
             description("Nat Traversal module error")

@@ -30,6 +30,8 @@ pub type NameHash = u64;
 pub type Priority = u8;
 pub type Result<T> = ::std::result::Result<T, CommonError>;
 
+pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+
 mod core;
 mod error;
 mod message;

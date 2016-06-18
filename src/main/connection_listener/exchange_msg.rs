@@ -22,7 +22,6 @@ use std::rc::Rc;
 
 use common::{self, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
-use main::peer_id;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -147,7 +146,7 @@ impl ExchangeMsg {
             return Err(());
         }
 
-        let their_id = peer_id::new(their_public_key);
+        let their_id = PeerId(their_public_key);
 
         {
             let mut guard = self.cm.lock().unwrap();
@@ -191,7 +190,7 @@ impl ExchangeMsg {
         let _ = core.remove_state(self.token);
         let _ = el.clear_timeout(self.timeout);
 
-        let our_id = peer_id::new(self.our_pk);
+        let our_id = PeerId(self.our_pk);
         let event_tx = self.event_tx.clone();
 
         match self.next_state {
@@ -221,17 +220,14 @@ impl ExchangeMsg {
                                                 event_tx.clone());
                     }
                 };
-                if ConnectionCandidate::start(core,
-                                              el,
-                                              self.token,
-                                              self.socket.take().unwrap(),
-                                              self.cm.clone(),
-                                              our_id,
-                                              their_id,
-                                              Box::new(handler))
-                    .is_err() {
-                    self.terminate(core, el);
-                }
+                let _ = ConnectionCandidate::start(core,
+                                                   el,
+                                                   self.token,
+                                                   self.socket.take().unwrap(),
+                                                   self.cm.clone(),
+                                                   our_id,
+                                                   their_id,
+                                                   Box::new(handler));
             }
             NextState::None => self.terminate(core, el),
         }

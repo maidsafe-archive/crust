@@ -23,7 +23,7 @@ use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 
 use common::{Core, CoreTimerId, NameHash, Socket, State};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, Event, PeerId,
+use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PeerId,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
@@ -60,6 +60,7 @@ impl Connect {
 
         if their_direct.is_empty() && their_hole_punch.is_empty() {
             let _ = event_tx.send(Event::ConnectFailure(their_id));
+            return Err(CrustError::InsufficientConnectionInfo);
         }
 
         let token = core.get_new_token();
@@ -125,15 +126,7 @@ impl Connect {
                                               Box::new(handler)) {
             let _ = self.children.insert(child);
         }
-    }
-
-    fn accept(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        loop {
-            match self.listener.as_ref().unwrap().accept() {
-                Ok(Some((socket, _))) => self.exchange_msg(core, el, Socket::wrap(socket)),
-                Ok(None) | Err(_) => return,
-            }
-        }
+        self.maybe_terminate(core, el);
     }
 
     fn handle_exchange_msg(&mut self,
@@ -161,10 +154,7 @@ impl Connect {
                 let _ = self.children.insert(child);
             }
         }
-
-        if self.children.is_empty() {
-            self.terminate(core, el);
-        }
+        self.maybe_terminate(core, el);
     }
 
     fn handle_connection_candidate(&mut self,
@@ -175,19 +165,31 @@ impl Connect {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
             self.terminate(core, el);
-            ActiveConnection::start(core,
-                                    el,
-                                    child,
-                                    socket,
-                                    self.cm.clone(),
-                                    self.our_id,
-                                    self.their_id,
-                                    Event::ConnectSuccess(self.their_id),
-                                    self.event_tx.clone());
+            return ActiveConnection::start(core,
+                                           el,
+                                           child,
+                                           socket,
+                                           self.cm.clone(),
+                                           self.our_id,
+                                           self.their_id,
+                                           Event::ConnectSuccess(self.their_id),
+                                           self.event_tx.clone());
         }
+        self.maybe_terminate(core, el);
+    }
 
+    fn maybe_terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         if self.children.is_empty() {
             self.terminate(core, el);
+        }
+    }
+
+    fn accept(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+        loop {
+            match self.listener.as_ref().unwrap().accept() {
+                Ok(Some((socket, _))) => self.exchange_msg(core, el, Socket::wrap(socket)),
+                Ok(None) | Err(_) => return,
+            }
         }
     }
 
@@ -223,7 +225,6 @@ impl State for Connect {
         }
         let _ = el.clear_timeout(self.timeout);
         let _ = core.remove_state(self.token);
-
 
         if !self.cm.lock().unwrap().contains_key(&self.their_id) {
             let _ = self.event_tx.send(Event::ConnectFailure(self.their_id));

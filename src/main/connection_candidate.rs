@@ -45,23 +45,27 @@ impl ConnectionCandidate {
                  their_id: PeerId,
                  finish: Finish)
                  -> ::Res<Token> {
-        if our_id > their_id {
-            try!(el.reregister(&socket,
-                               token,
-                               EventSet::writable() | EventSet::error() | EventSet::hup(),
-                               PollOpt::edge()));
-        }
-
-        let state = ConnectionCandidate {
+        let state = Rc::new(RefCell::new(ConnectionCandidate {
             token: token,
             cm: cm,
             socket: Some(socket),
             their_id: their_id,
             msg: Some((Message::ChooseConnection, 0)),
             finish: finish,
-        };
+        }));
 
-        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(token, state.clone());
+
+        if our_id > their_id {
+            if let Err(e) = el.reregister(state.borrow().socket.as_ref().expect("Logic Error"),
+                                          token,
+                                          EventSet::writable() | EventSet::error() |
+                                          EventSet::hup(),
+                                          PollOpt::edge()) {
+                state.borrow_mut().terminate(core, el);
+                return Err(From::from(e));
+            }
+        }
 
         Ok(token)
     }

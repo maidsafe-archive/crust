@@ -26,9 +26,9 @@ pub use self::connection_candidate::ConnectionCandidate;
 pub use self::connection_listener::ConnectionListener;
 pub use self::event::Event;
 pub use self::error::CrustError;
-pub use self::peer_id::PeerId;
-pub use self::service::{ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo,
-                        Service};
+pub use self::service::Service;
+pub use self::types::{ConnectionId, ConnectionInfoResult, PeerId, PrivConnectionInfo,
+                      PubConnectionInfo};
 
 pub type ConnectionMap = Arc<Mutex<HashMap<PeerId, ConnectionId>>>;
 
@@ -40,5 +40,5 @@ mod connection_candidate;
 mod connection_listener;
 mod event;
 mod error;
-mod peer_id;
 mod service;
+mod types;

@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use common::{Core, Message, Priority, Socket, State};
-use main::peer_id::{self, PeerId};
+use main::PeerId;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 use std::net::SocketAddr;
@@ -84,8 +84,7 @@ impl TryPeer {
             Ok(Some(Message::BootstrapResponse(peer_pk))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let data =
-                    (self.socket.take().expect("Logic Error"), self.peer, peer_id::new(peer_pk));
+                let data = (self.socket.take().expect("Logic Error"), self.peer, PeerId(peer_pk));
                 (*self.finish)(core, el, token, Ok(data));
             }
             Ok(None) => (),
