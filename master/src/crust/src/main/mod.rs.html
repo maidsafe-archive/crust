@@ -115,9 +115,9 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>connection_listener</span>::<span class='ident'>ConnectionListener</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>event</span>::<span class='ident'>Event</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>error</span>::<span class='ident'>CrustError</span>;
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>peer_id</span>::<span class='ident'>PeerId</span>;
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>service</span>::{<span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>,
-                        <span class='ident'>Service</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>service</span>::<span class='ident'>Service</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>types</span>::{<span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>,
+                      <span class='ident'>PubConnectionInfo</span>};
 
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>ConnectionMap</span> <span class='op'>=</span> <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>PeerId</span>, <span class='ident'>ConnectionId</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>;
 
@@ -129,8 +129,8 @@
 <span class='kw'>mod</span> <span class='ident'>connection_listener</span>;
 <span class='kw'>mod</span> <span class='ident'>event</span>;
 <span class='kw'>mod</span> <span class='ident'>error</span>;
-<span class='kw'>mod</span> <span class='ident'>peer_id</span>;
 <span class='kw'>mod</span> <span class='ident'>service</span>;
+<span class='kw'>mod</span> <span class='ident'>types</span>;
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

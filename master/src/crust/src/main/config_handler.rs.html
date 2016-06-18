@@ -173,11 +173,11 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>config_file_handler</span>::{<span class='self'>self</span>, <span class='ident'>FileHandler</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsString</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>PathBuf</span>;
 
 <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>;
+<span class='kw'>use</span> <span class='ident'>config_file_handler</span>::{<span class='self'>self</span>, <span class='ident'>FileHandler</span>};
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>, <span class='ident'>RustcDecodable</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Config</span> {

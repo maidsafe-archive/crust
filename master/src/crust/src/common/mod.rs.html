@@ -80,6 +80,8 @@
 <span id="36">36</span>
 <span id="37">37</span>
 <span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -99,7 +101,7 @@
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 <span class='comment'>// Defines `Core`, the mio handler and the core of the event loop.</span>
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>core</span>::{<span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>core</span>::{<span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>CoreTimerId</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>error</span>::<span class='ident'>CommonError</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>message</span>::<span class='ident'>Message</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>socket</span>::<span class='ident'>Socket</span>;
@@ -107,11 +109,13 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>state</span>::<span class='ident'>State</span>;
 
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>NameHash</span> <span class='op'>=</span> <span class='ident'>u64</span>;
-<span class='comment'>// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be</span>
-<span class='comment'>// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to</span>
-<span class='comment'>// allow higher priority messages through.</span>
+<span class='doccomment'>/// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be</span>
+<span class='doccomment'>/// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to</span>
+<span class='doccomment'>/// allow higher priority messages through.</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Priority</span> <span class='op'>=</span> <span class='ident'>u8</span>;
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>result</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>CommonError</span><span class='op'>&gt;</span>;
+
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MAX_PAYLOAD_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>2</span> <span class='op'>*</span> <span class='number'>1024</span> <span class='op'>*</span> <span class='number'>1024</span>;
 
 <span class='kw'>mod</span> <span class='ident'>core</span>;
 <span class='kw'>mod</span> <span class='ident'>error</span>;

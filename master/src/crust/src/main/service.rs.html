@@ -655,65 +655,6 @@
 <span id="611">611</span>
 <span id="612">612</span>
 <span id="613">613</span>
-<span id="614">614</span>
-<span id="615">615</span>
-<span id="616">616</span>
-<span id="617">617</span>
-<span id="618">618</span>
-<span id="619">619</span>
-<span id="620">620</span>
-<span id="621">621</span>
-<span id="622">622</span>
-<span id="623">623</span>
-<span id="624">624</span>
-<span id="625">625</span>
-<span id="626">626</span>
-<span id="627">627</span>
-<span id="628">628</span>
-<span id="629">629</span>
-<span id="630">630</span>
-<span id="631">631</span>
-<span id="632">632</span>
-<span id="633">633</span>
-<span id="634">634</span>
-<span id="635">635</span>
-<span id="636">636</span>
-<span id="637">637</span>
-<span id="638">638</span>
-<span id="639">639</span>
-<span id="640">640</span>
-<span id="641">641</span>
-<span id="642">642</span>
-<span id="643">643</span>
-<span id="644">644</span>
-<span id="645">645</span>
-<span id="646">646</span>
-<span id="647">647</span>
-<span id="648">648</span>
-<span id="649">649</span>
-<span id="650">650</span>
-<span id="651">651</span>
-<span id="652">652</span>
-<span id="653">653</span>
-<span id="654">654</span>
-<span id="655">655</span>
-<span id="656">656</span>
-<span id="657">657</span>
-<span id="658">658</span>
-<span id="659">659</span>
-<span id="660">660</span>
-<span id="661">661</span>
-<span id="662">662</span>
-<span id="663">663</span>
-<span id="664">664</span>
-<span id="665">665</span>
-<span id="666">666</span>
-<span id="667">667</span>
-<span id="668">668</span>
-<span id="669">669</span>
-<span id="670">670</span>
-<span id="671">671</span>
-<span id="672">672</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -737,81 +678,22 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Context</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
-<span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>};
+<span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
-<span class='kw'>use</span> <span class='ident'>net2</span>;
 <span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='self'>self</span>, <span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>config_handler</span>::{<span class='self'>self</span>, <span class='ident'>Config</span>};
-<span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>peer_id</span>;
-<span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Bootstrap</span>, <span class='ident'>Connect</span>, <span class='ident'>ConnectionListener</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
+<span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Bootstrap</span>, <span class='ident'>Connect</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>ConnectionListener</span>,
+           <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
 
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ConnectionId</span> {
-    <span class='kw'>pub</span> <span class='ident'>active_connection</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Context</span><span class='op'>&gt;</span>,
-    <span class='kw'>pub</span> <span class='ident'>currently_handshaking</span>: <span class='ident'>usize</span>,
-}
-
-<span class='kw'>const</span> <span class='ident'>BOOTSTRAP_CONTEXT</span>: <span class='ident'>Context</span> <span class='op'>=</span> <span class='ident'>Context</span>(<span class='number'>0</span>);
-<span class='kw'>const</span> <span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>: <span class='ident'>Context</span> <span class='op'>=</span> <span class='ident'>Context</span>(<span class='number'>1</span>);
-<span class='kw'>const</span> <span class='ident'>LISTENER_CONTEXT</span>: <span class='ident'>Context</span> <span class='op'>=</span> <span class='ident'>Context</span>(<span class='number'>2</span>);
+<span class='kw'>const</span> <span class='ident'>BOOTSTRAP_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>0</span>);
+<span class='kw'>const</span> <span class='ident'>SERVICE_DISCOVERY_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>1</span>);
+<span class='kw'>const</span> <span class='ident'>LISTENER_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>2</span>);
 
 <span class='kw'>const</span> <span class='ident'>SERVICE_DISCOVERY_DEFAULT_PORT</span>: <span class='ident'>u16</span> <span class='op'>=</span> <span class='number'>5484</span>;
-
-<span class='doccomment'>/// The result of a `Service::prepare_contact_info` call.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ConnectionInfoResult</span> {
-    <span class='doccomment'>/// The token that was passed to `prepare_connection_info`.</span>
-    <span class='kw'>pub</span> <span class='ident'>result_token</span>: <span class='ident'>u32</span>,
-    <span class='doccomment'>/// The new contact info, if successful.</span>
-    <span class='kw'>pub</span> <span class='ident'>result</span>: ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='ident'>PrivConnectionInfo</span><span class='op'>&gt;</span>,
-}
-
-<span class='doccomment'>/// Contact info generated by a call to `Service::prepare_contact_info`.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PrivConnectionInfo</span> {
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>id</span>: <span class='ident'>PeerId</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>for_direct</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>for_hole_punch</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>hole_punch_socket</span>: <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>,
-}
-
-<span class='kw'>impl</span> <span class='ident'>PrivConnectionInfo</span> {
-    <span class='doccomment'>/// Convert our connection info to theirs so that we can give it to peer.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_pub_connection_info</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PubConnectionInfo</span> {
-        <span class='ident'>PubConnectionInfo</span> {
-            <span class='ident'>for_hole_punch</span>: <span class='self'>self</span>.<span class='ident'>for_hole_punch</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>for_direct</span>: <span class='self'>self</span>.<span class='ident'>for_direct</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>id</span>: <span class='self'>self</span>.<span class='ident'>id</span>,
-        }
-    }
-}
-
-<span class='doccomment'>/// Contact info used to connect to another peer.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PubConnectionInfo</span> {
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>id</span>: <span class='ident'>PeerId</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>for_hole_punch</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-    <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-    <span class='kw'>pub</span> <span class='ident'>for_direct</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-}
-
-<span class='kw'>impl</span> <span class='ident'>PubConnectionInfo</span> {
-    <span class='doccomment'>/// Returns the `PeerId` of the node that created this connection info.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>id</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PeerId</span> {
-        <span class='self'>self</span>.<span class='ident'>id</span>
-    }
-}
-
 <span class='doccomment'>/// A structure representing a connection manager.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Service</span> {
     <span class='ident'>config</span>: <span class='ident'>Config</span>,
@@ -840,7 +722,7 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>EventLoop</span>::<span class='ident'>new</span>());
         <span class='kw'>let</span> <span class='ident'>mio_tx</span> <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>channel</span>();
         <span class='kw'>let</span> <span class='ident'>our_keys</span> <span class='op'>=</span> <span class='ident'>box_</span>::<span class='ident'>gen_keypair</span>();
-        <span class='kw'>let</span> <span class='ident'>our_id</span> <span class='op'>=</span> <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>our_keys</span>.<span class='number'>0</span>);
+        <span class='kw'>let</span> <span class='ident'>our_id</span> <span class='op'>=</span> <span class='ident'>PeerId</span>(<span class='ident'>our_keys</span>.<span class='number'>0</span>);
         <span class='kw'>let</span> <span class='ident'>name_hash</span> <span class='op'>=</span> <span class='ident'>name_hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>config</span>.<span class='ident'>network_name</span>);
 
         <span class='comment'>// Form our initial contact info</span>
@@ -853,7 +735,7 @@
 
         <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span>
             <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Crust {:?} event loop&quot;</span>, <span class='ident'>our_id</span>), <span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>core</span> <span class='op'>=</span> <span class='ident'>Core</span>::<span class='ident'>with_context_counter</span>(<span class='number'>3</span>);
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>core</span> <span class='op'>=</span> <span class='ident'>Core</span>::<span class='ident'>with_token_counter</span>(<span class='number'>3</span>);
                 <span class='ident'>el</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>core</span>).<span class='ident'>expect</span>(<span class='string'>&quot;EventLoop failed to run&quot;</span>);
             }));
 
@@ -876,11 +758,11 @@
         <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>service_discovery_port</span>.<span class='ident'>unwrap_or</span>(<span class='ident'>SERVICE_DISCOVERY_DEFAULT_PORT</span>);
 
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>).<span class='ident'>is_none</span>() {
+            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_TOKEN</span>).<span class='ident'>is_none</span>() {
                 <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
                                                         <span class='ident'>el</span>,
                                                         <span class='ident'>our_listeners</span>,
-                                                        <span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>,
+                                                        <span class='ident'>SERVICE_DISCOVERY_TOKEN</span>,
                                                         <span class='ident'>port</span>) {
                     <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Could not start ServiceDiscovery: {:?}&quot;</span>, <span class='ident'>e</span>);
                 }
@@ -892,7 +774,7 @@
     <span class='doccomment'>/// by interrogating the network.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_service_discovery_listen</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>listen</span>: <span class='ident'>bool</span>) {
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
-            <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>) {
+            <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_TOKEN</span>) {
                 <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=&gt;</span> <span class='ident'>state</span>,
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span>,
             };
@@ -900,7 +782,7 @@
             <span class='kw'>let</span> <span class='ident'>service_discovery</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>state</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>() {
                 <span class='prelude-val'>Some</span>(<span class='ident'>sd</span>) <span class='op'>=&gt;</span> <span class='ident'>sd</span>,
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
-                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Context reserved for ServiceDiscovery has something else.&quot;</span>);
+                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Token reserved for ServiceDiscovery has something else.&quot;</span>);
                     <span class='kw'>return</span>;
                 }
             };
@@ -918,7 +800,7 @@
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
 
         <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>BOOTSTRAP_CONTEXT</span>).<span class='ident'>is_none</span>() {
+            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>BOOTSTRAP_TOKEN</span>).<span class='ident'>is_none</span>() {
                 <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='ident'>Bootstrap</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
                                                  <span class='ident'>el</span>,
                                                  <span class='ident'>name_hash</span>,
@@ -926,8 +808,8 @@
                                                  <span class='ident'>cm</span>,
                                                  <span class='kw-2'>&amp;</span><span class='ident'>config</span>,
                                                  <span class='ident'>blacklist</span>,
-                                                 <span class='ident'>BOOTSTRAP_CONTEXT</span>,
-                                                 <span class='ident'>SERVICE_DISCOVERY_CONTEXT</span>,
+                                                 <span class='ident'>BOOTSTRAP_TOKEN</span>,
+                                                 <span class='ident'>SERVICE_DISCOVERY_TOKEN</span>,
                                                  <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()) {
                     <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Could not bootstrap: {:?}&quot;</span>, <span class='ident'>e</span>);
                     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>BootstrapFailed</span>);
@@ -939,7 +821,7 @@
     <span class='doccomment'>/// Stop the bootstraping procedure explicitly</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>stop_bootstrap</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>BOOTSTRAP_CONTEXT</span>) {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>BOOTSTRAP_TOKEN</span>) {
                 <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
             }
         })
@@ -957,7 +839,7 @@
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
 
         <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>LISTENER_CONTEXT</span>).<span class='ident'>is_none</span>() {
+            <span class='kw'>if</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>LISTENER_TOKEN</span>).<span class='ident'>is_none</span>() {
                 <span class='ident'>ConnectionListener</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
                                           <span class='ident'>el</span>,
                                           <span class='prelude-val'>None</span>,
@@ -967,7 +849,7 @@
                                           <span class='ident'>cm</span>,
                                           <span class='ident'>mc</span>,
                                           <span class='ident'>our_listeners</span>,
-                                          <span class='ident'>LISTENER_CONTEXT</span>,
+                                          <span class='ident'>LISTENER_TOKEN</span>,
                                           <span class='ident'>event_tx</span>);
             }
         })
@@ -976,7 +858,7 @@
     <span class='doccomment'>/// Stops Listener explicitly and stops accepting TCP connections.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>stop_tcp_listener</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>LISTENER_CONTEXT</span>) {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>LISTENER_TOKEN</span>) {
                 <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
             }
         })
@@ -1001,13 +883,13 @@
 
     <span class='doccomment'>/// Disconnect from the given peer and returns whether there was a connection at all.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disconnect</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='ident'>PeerId</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>let</span> <span class='ident'>context</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
-            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>context</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>context</span>,
+        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
+            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>token</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>token</span>,
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='boolval'>false</span>,
         };
 
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>context</span>) {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token</span>) {
                 <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>terminate</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>el</span>);
             }
         });
@@ -1017,13 +899,13 @@
 
     <span class='doccomment'>/// sending data to a peer(according to it&#39;s u64 peer_id)</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='ident'>PeerId</span>, <span class='ident'>msg</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>priority</span>: <span class='ident'>Priority</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>context</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
-            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>context</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>context</span>,
+        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
+            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>token</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>token</span>,
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>CrustError</span>::<span class='ident'>PeerNotFound</span>(<span class='ident'>peer_id</span>)),
         };
 
         <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
-            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>context</span>) {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token</span>) {
                 <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>el</span>, <span class='ident'>msg</span>, <span class='ident'>priority</span>);
             }
         })
@@ -1046,7 +928,7 @@
                 <span class='kw'>let</span> <span class='ident'>event</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
                     <span class='ident'>result_token</span>: <span class='ident'>result_token</span>,
                     <span class='ident'>result</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>PrivConnectionInfo</span> {
-                        <span class='ident'>id</span>: <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='ident'>our_pub_key</span>),
+                        <span class='ident'>id</span>: <span class='ident'>PeerId</span>(<span class='ident'>our_pub_key</span>),
                         <span class='ident'>for_direct</span>: <span class='ident'>our_listeners</span>,
                         <span class='ident'>for_hole_punch</span>: <span class='ident'>hole_punch_addrs</span>,
                         <span class='ident'>hole_punch_socket</span>: <span class='ident'>socket</span>,
@@ -1081,7 +963,7 @@
 
     <span class='doccomment'>/// Returns our ID.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>id</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PeerId</span> {
-        <span class='ident'>peer_id</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>)
+        <span class='ident'>PeerId</span>(<span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>post</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
@@ -1115,9 +997,9 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>, <span class='ident'>mpsc</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>::{<span class='self'>self</span>, <span class='ident'>JoinHandle</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
-    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
 
-    <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>Event</span>;
+    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
+    <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Event</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
     <span class='kw'>use</span> <span class='ident'>tests</span>::{<span class='ident'>get_event_sender</span>, <span class='ident'>timebomb</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>

@@ -305,7 +305,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Instant</span>;
 
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>LittleEndian</span>, <span class='ident'>ReadBytesExt</span>, <span class='ident'>WriteBytesExt</span>};
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>CommonError</span>, <span class='ident'>Core</span>, <span class='ident'>Priority</span>, <span class='prelude-ty'>Result</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>CommonError</span>, <span class='ident'>Core</span>, <span class='ident'>MAX_PAYLOAD_SIZE</span>, <span class='ident'>Priority</span>, <span class='prelude-ty'>Result</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise_from</span>, <span class='ident'>serialise_into</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Evented</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Selector</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::<span class='ident'>TcpStream</span>;
@@ -384,7 +384,7 @@
             <span class='self'>self</span>.<span class='ident'>read_len</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>read_buffer</span>)
                 .<span class='ident'>read_u32</span>::<span class='op'>&lt;</span><span class='ident'>LittleEndian</span><span class='op'>&gt;</span>()) <span class='kw'>as</span> <span class='ident'>usize</span>;
 
-            <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>read_len</span> <span class='op'>&gt;</span> ::<span class='ident'>MAX_PAYLOAD_SIZE</span> {
+            <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>read_len</span> <span class='op'>&gt;</span> <span class='ident'>MAX_PAYLOAD_SIZE</span> {
                 <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>CommonError</span>::<span class='ident'>PayloadSizeProhibitive</span>);
             }
 
