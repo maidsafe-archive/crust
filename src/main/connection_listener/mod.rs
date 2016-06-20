@@ -27,7 +27,7 @@ use common::{Core, NameHash, Socket, State};
 use main::{ConnectionMap, Event};
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
-use nat::{MappedAddr, MappedTcpSocket, MappingContext};
+use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
 use self::exchange_msg::ExchangeMsg;
 use sodiumoxide::crypto::box_::PublicKey;
@@ -84,7 +84,7 @@ impl ConnectionListener {
                             el: &mut EventLoop<Core>,
                             timeout_ms: Option<u64>,
                             socket: TcpBuilder,
-                            mapped_addrs: Vec<MappedAddr>,
+                            mapped_addrs: Vec<SocketAddr>,
                             our_pk: PublicKey,
                             name_hash: NameHash,
                             cm: ConnectionMap,
@@ -101,7 +101,7 @@ impl ConnectionListener {
                          EventSet::readable() | EventSet::error() | EventSet::hup(),
                          PollOpt::edge()));
 
-        *our_listeners.lock().unwrap() = mapped_addrs.into_iter().map(|elt| *elt.addr()).collect();
+        *our_listeners.lock().unwrap() = mapped_addrs.into_iter().collect();
 
         let state = ConnectionListener {
             token: token,
