@@ -1,1 +1,1 @@
-initSidebarItems({});
+initSidebarItems({"mod":[["get_if_addrs",""]]});

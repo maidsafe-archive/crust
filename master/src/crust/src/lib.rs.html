@@ -123,6 +123,10 @@
 <span id="79">79</span>
 <span id="80">80</span>
 <span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -179,15 +183,19 @@
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>quick_error</span>;
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>byteorder</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>c_linked_list</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>config_file_handler</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>crossbeam</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>get_if_addrs</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>igd</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>net2</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rand</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>sodiumoxide</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>tmp_mio</span> <span class='kw'>as</span> <span class='ident'>mio</span>;
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
