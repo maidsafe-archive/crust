@@ -74,6 +74,7 @@ mod nat;
 
 pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
+pub use common::Priority;
 
 /// Used to receive events from a `Service`.
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
