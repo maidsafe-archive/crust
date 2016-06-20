@@ -516,7 +516,7 @@
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::<span class='ident'>TcpListener</span>;
-<span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedAddr</span>, <span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
+<span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>exchange_msg</span>::<span class='ident'>ExchangeMsg</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
@@ -573,7 +573,7 @@
                             <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>,
                             <span class='ident'>timeout_ms</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span>,
                             <span class='ident'>socket</span>: <span class='ident'>TcpBuilder</span>,
-                            <span class='ident'>mapped_addrs</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedAddr</span><span class='op'>&gt;</span>,
+                            <span class='ident'>mapped_addrs</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
                             <span class='ident'>our_pk</span>: <span class='ident'>PublicKey</span>,
                             <span class='ident'>name_hash</span>: <span class='ident'>NameHash</span>,
                             <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
@@ -590,7 +590,7 @@
                          <span class='ident'>EventSet</span>::<span class='ident'>readable</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>error</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>hup</span>(),
                          <span class='ident'>PollOpt</span>::<span class='ident'>edge</span>()));
 
-        <span class='op'>*</span><span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>mapped_addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='op'>*</span><span class='ident'>elt</span>.<span class='ident'>addr</span>()).<span class='ident'>collect</span>();
+        <span class='op'>*</span><span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>mapped_addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>collect</span>();
 
         <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>ConnectionListener</span> {
             <span class='ident'>token</span>: <span class='ident'>token</span>,

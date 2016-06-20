@@ -664,6 +664,8 @@
 <span id="620">620</span>
 <span id="621">621</span>
 <span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -697,6 +699,7 @@
 <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>config_handler</span>::{<span class='self'>self</span>, <span class='ident'>Config</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Bootstrap</span>, <span class='ident'>Connect</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>ConnectionListener</span>,
            <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
+<span class='kw'>use</span> <span class='ident'>nat</span>;
 
 <span class='kw'>const</span> <span class='ident'>BOOTSTRAP_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>0</span>);
 <span class='kw'>const</span> <span class='ident'>SERVICE_DISCOVERY_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>1</span>);
@@ -739,10 +742,9 @@
         <span class='comment'>// Form our initial contact info</span>
         <span class='kw'>let</span> <span class='ident'>our_listeners</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='number'>5</span>)));
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>mc</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>MappingContext</span>::<span class='ident'>new</span>());
-        <span class='ident'>mc</span>.<span class='ident'>add_peer_listeners_no_check</span>(<span class='ident'>config</span>.<span class='ident'>hard_coded_contacts</span>
+        <span class='ident'>mc</span>.<span class='ident'>add_peer_stuns</span>(<span class='ident'>config</span>.<span class='ident'>hard_coded_contacts</span>
             .<span class='ident'>iter</span>()
-            .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='number'>0</span>)
-            .<span class='ident'>collect</span>());
+            .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='number'>0</span>));
 
         <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span>
             <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Crust {:?} event loop&quot;</span>, <span class='ident'>our_id</span>), <span class='kw'>move</span> <span class='op'>||</span> {
@@ -940,8 +942,10 @@
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
             <span class='kw'>let</span> <span class='ident'>event_tx_clone</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
             <span class='kw'>match</span> <span class='ident'>MappedTcpSocket</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='number'>0</span>, <span class='kw-2'>&amp;</span><span class='ident'>mc</span>, <span class='kw'>move</span> <span class='op'>|</span>_, _, <span class='ident'>socket</span>, <span class='ident'>addrs</span><span class='op'>|</span> {
-                <span class='kw'>let</span> <span class='ident'>hole_punch_addrs</span> <span class='op'>=</span>
-                    <span class='ident'>addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>filter</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>global</span>()).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>addr</span>).<span class='ident'>collect</span>();
+                <span class='kw'>let</span> <span class='ident'>hole_punch_addrs</span> <span class='op'>=</span> <span class='ident'>addrs</span>.<span class='ident'>into_iter</span>()
+                    .<span class='ident'>filter</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>nat</span>::<span class='ident'>ip_addr_is_global</span>(<span class='kw-2'>&amp;</span><span class='ident'>elt</span>.<span class='ident'>ip</span>()))
+                    .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>elt</span>))
+                    .<span class='ident'>collect</span>();
                 <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='ident'>event_tx_clone</span>;
                 <span class='kw'>let</span> <span class='ident'>event</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
                     <span class='ident'>result_token</span>: <span class='ident'>result_token</span>,

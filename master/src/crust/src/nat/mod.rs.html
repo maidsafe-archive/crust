@@ -70,7 +70,6 @@
 <span id="26">26</span>
 <span id="27">27</span>
 <span id="28">28</span>
-<span id="29">29</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -90,13 +89,12 @@
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>error</span>::<span class='ident'>NatError</span>;
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>mapped_addr</span>::<span class='ident'>MappedAddr</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>mapped_tcp_socket</span>::<span class='ident'>MappedTcpSocket</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>mapping_context</span>::<span class='ident'>MappingContext</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>punch_hole</span>::<span class='ident'>get_sockets</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>util</span>::<span class='ident'>ip_addr_is_global</span>;
 
 <span class='kw'>mod</span> <span class='ident'>error</span>;
-<span class='kw'>mod</span> <span class='ident'>mapped_addr</span>;
 <span class='kw'>mod</span> <span class='ident'>mapped_tcp_socket</span>;
 <span class='kw'>mod</span> <span class='ident'>mapping_context</span>;
 <span class='kw'>mod</span> <span class='ident'>punch_hole</span>;
