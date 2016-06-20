@@ -89,7 +89,8 @@ pub struct PrivConnectionInfo {
 }
 
 impl PrivConnectionInfo {
-    /// Convert our connection info to theirs so that we can give it to peer.
+    /// Use private connection info to create public connection info that can be shared with the
+    /// peer.
     pub fn to_pub_connection_info(&self) -> PubConnectionInfo {
         PubConnectionInfo {
             for_hole_punch: self.for_hole_punch.clone(),
