@@ -24,7 +24,7 @@ use std::rc::Rc;
 use common::{Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
 use mio::{EventLoop, Timeout, Token};
-use nat::{MappedAddr, MappingContext, NatError, util};
+use nat::{MappingContext, NatError, util};
 use net2::TcpBuilder;
 use self::get_ext_addr::GetExtAddr;
 
@@ -38,13 +38,13 @@ pub struct MappedTcpSocket<F> {
     socket: Option<TcpBuilder>,
     igd_children: usize,
     stun_children: HashSet<Token>,
-    mapped_addrs: Vec<MappedAddr>,
+    mapped_addrs: Vec<SocketAddr>,
     timeout: Timeout,
     finish: Option<F>,
 }
 
 impl<F> MappedTcpSocket<F>
-    where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<MappedAddr>) + Any
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<SocketAddr>) + Any
 {
     /// Start mapping a tcp socket
     pub fn start(core: &mut Core,
@@ -97,7 +97,7 @@ impl<F> MappedTcpSocket<F>
 
         let mapped_addrs = mc.ifv4s()
             .iter()
-            .map(|&(ip, _)| MappedAddr::new(SocketAddr::new(IpAddr::V4(ip), addr.port())))
+            .map(|&(ip, _)| SocketAddr::new(IpAddr::V4(ip), addr.port()))
             .collect();
 
         let state = Rc::new(RefCell::new(MappedTcpSocket {
@@ -140,7 +140,7 @@ impl<F> MappedTcpSocket<F>
                         res: Result<SocketAddr, ()>) {
         let _ = self.stun_children.remove(&child);
         if let Ok(our_ext_addr) = res {
-            self.mapped_addrs.push(MappedAddr::new(our_ext_addr));
+            self.mapped_addrs.push(our_ext_addr);
         }
         if self.stun_children.is_empty() && self.igd_children == 0 {
             self.terminate(core, el);
@@ -152,7 +152,7 @@ impl<F> MappedTcpSocket<F>
                        el: &mut EventLoop<Core>,
                        our_ext_addr: SocketAddr) {
         self.igd_children -= 1;
-        self.mapped_addrs.push(MappedAddr::new(our_ext_addr));
+        self.mapped_addrs.push(our_ext_addr);
         if self.stun_children.is_empty() && self.igd_children == 0 {
             self.terminate(core, el);
         }
@@ -171,7 +171,7 @@ impl<F> MappedTcpSocket<F>
 }
 
 impl<F> State for MappedTcpSocket<F>
-    where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<MappedAddr>) + Any
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<SocketAddr>) + Any
 {
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: u8) {
         return self.terminate(core, el);

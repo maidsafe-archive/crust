@@ -16,14 +16,13 @@
 // relating to use of the SAFE Network Software.
 
 pub use self::error::NatError;
-pub use self::mapped_addr::MappedAddr;
 pub use self::mapped_tcp_socket::MappedTcpSocket;
 pub use self::mapping_context::MappingContext;
 pub use self::punch_hole::get_sockets;
 
+pub mod util;
 mod error;
-mod mapped_addr;
 mod mapped_tcp_socket;
 mod mapping_context;
 mod punch_hole;
-mod util;
+
