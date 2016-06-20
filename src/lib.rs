@@ -76,6 +76,7 @@ mod common;
 mod service_discovery;
 mod nat;
 
+pub use common::Priority;
 pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
 
