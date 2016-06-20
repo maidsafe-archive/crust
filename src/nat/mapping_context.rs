@@ -23,7 +23,7 @@ use std::time::Duration;
 use common::get_if_addrs::{self, IfAddr};
 use crossbeam;
 use igd::{self, Gateway};
-use nat::MappedAddr;
+use nat;
 use super::NatError;
 
 /// Keeps track of information about external mapping servers
@@ -65,19 +65,10 @@ impl MappingContext {
         })
     }
 
-    /// Inform the context about external servers
-    #[allow(unused)]
-    pub fn add_peer_listeners(&mut self, potential_peers: Vec<MappedAddr>) {
-        let listeners = potential_peers.iter()
-            .filter(|elt| elt.global())
-            .map(|elt| elt.addr())
-            .collect::<Vec<_>>();
-        self.peer_stuns.extend(listeners);
-    }
-
-    /// Add without sanity check. Caller is responsible for not providing a nat restricted address
-    /// or not providing a non-global address etc
-    pub fn add_peer_listeners_no_check(&mut self, listeners: Vec<SocketAddr>) {
+    /// Inform the context about external "STUN" servers. Note that crust does not actually use
+    /// STUN but a custom STUN-like protocol.
+    pub fn add_peer_stuns<A: IntoIterator<Item = SocketAddr>>(&mut self, stun_addrs: A) {
+        let listeners = stun_addrs.into_iter().filter(|elt| nat::ip_addr_is_global(&elt.ip()));
         self.peer_stuns.extend(listeners);
     }
 

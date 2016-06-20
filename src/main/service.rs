@@ -30,6 +30,7 @@ use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use main::config_handler::{self, Config};
 use main::{Bootstrap, Connect, ConnectionId, ConnectionInfoResult, ConnectionListener,
            ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo};
+use nat;
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -70,10 +71,9 @@ impl Service {
         // Form our initial contact info
         let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let mut mc = try!(MappingContext::new());
-        mc.add_peer_listeners_no_check(config.hard_coded_contacts
+        mc.add_peer_stuns(config.hard_coded_contacts
             .iter()
-            .map(|elt| elt.0)
-            .collect());
+            .map(|elt| elt.0));
 
         let joiner =
             RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
@@ -264,8 +264,10 @@ impl Service {
         if let Err(e) = self.post(move |mut core, mut el| {
             let event_tx_clone = event_tx.clone();
             match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
-                let hole_punch_addrs =
-                    addrs.into_iter().filter(|elt| elt.global()).map(|elt| elt.addr).collect();
+                let hole_punch_addrs = addrs.into_iter()
+                    .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
+                    .map(|elt| common::SocketAddr(elt))
+                    .collect();
                 let event_tx = event_tx_clone;
                 let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                     result_token: result_token,
