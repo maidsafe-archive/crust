@@ -655,6 +655,15 @@
 <span id="611">611</span>
 <span id="612">612</span>
 <span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -694,7 +703,8 @@
 <span class='kw'>const</span> <span class='ident'>LISTENER_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>2</span>);
 
 <span class='kw'>const</span> <span class='ident'>SERVICE_DISCOVERY_DEFAULT_PORT</span>: <span class='ident'>u16</span> <span class='op'>=</span> <span class='number'>5484</span>;
-<span class='doccomment'>/// A structure representing a connection manager.</span>
+<span class='doccomment'>/// A structure representing a connection manager. This is the main object through which crust is</span>
+<span class='doccomment'>/// used.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Service</span> {
     <span class='ident'>config</span>: <span class='ident'>Config</span>,
     <span class='ident'>cm</span>: <span class='ident'>ConnectionMap</span>,
@@ -708,7 +718,8 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>Service</span> {
-    <span class='doccomment'>/// Constructs a service.</span>
+    <span class='doccomment'>/// Construct a service. `event_tx` is the sending half of the channel which crust will send</span>
+    <span class='doccomment'>/// notifications on.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_tx</span>, <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>config_handler</span>::<span class='ident'>read_config_file</span>()))
     }
@@ -770,8 +781,8 @@
         });
     }
 
-    <span class='doccomment'>/// Enable listening and responding to peers searching for us. This will allow others finding us</span>
-    <span class='doccomment'>/// by interrogating the network.</span>
+    <span class='doccomment'>/// Enable (or disable) listening and responding to peers searching for us. This can be used to</span>
+    <span class='doccomment'>/// allow others to discover us on the local network.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_service_discovery_listen</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>listen</span>: <span class='ident'>bool</span>) {
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
             <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_TOKEN</span>) {
@@ -791,7 +802,7 @@
     }
 
     <span class='doccomment'>/// Start the bootstrapping procedure. It will auto terminate after indicating success or</span>
-    <span class='doccomment'>/// failure</span>
+    <span class='doccomment'>/// failure via the event channel.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>start_bootstrap</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>blacklist</span>: <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>our_pk</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>;
@@ -864,7 +875,12 @@
         })
     }
 
-    <span class='doccomment'>/// Connect to peer</span>
+    <span class='doccomment'>/// Connect to a peer. To call this method you must follow these steps:</span>
+    <span class='doccomment'>///  * Generate a `PrivConnectionInfo` via `Service::prepare_connection_info`.</span>
+    <span class='doccomment'>///  * Create a `PubConnectionInfo` via `PrivConnectionInfo::to_pub_connection_info`.</span>
+    <span class='doccomment'>///  * Swap `PubConnectionInfo`s out-of-band with the peer you are connecting to.</span>
+    <span class='doccomment'>///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`</span>
+    <span class='doccomment'>///    obtained from the peer</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>our_ci</span>: <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>their_ci</span>: <span class='ident'>PubConnectionInfo</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>contains_key</span>(<span class='kw-2'>&amp;</span><span class='ident'>their_ci</span>.<span class='ident'>id</span>) {
             <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Already connected OR already in process of connecting to {:?}&quot;</span>,
@@ -897,7 +913,7 @@
         <span class='boolval'>true</span>
     }
 
-    <span class='doccomment'>/// sending data to a peer(according to it&#39;s u64 peer_id)</span>
+    <span class='doccomment'>/// Send data to a peer.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='ident'>PeerId</span>, <span class='ident'>msg</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>priority</span>: <span class='ident'>Priority</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>token</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>token</span>,
@@ -911,7 +927,9 @@
         })
     }
 
-    <span class='doccomment'>/// Lookup a mapped udp socket based on result_token</span>
+    <span class='doccomment'>/// Generate connection info. The connection info is returned via the `ConnectionInfoPrepared`</span>
+    <span class='doccomment'>/// event on the event channel. Calling this method is the first step of connecting to another</span>
+    <span class='doccomment'>/// peer, see `Service::connect` for more info.</span>
     <span class='comment'>// TODO: immediate return in case of sender.send() returned with NotificationError</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>result_token</span>: <span class='ident'>u32</span>) {
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();

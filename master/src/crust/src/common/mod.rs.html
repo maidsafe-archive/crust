@@ -111,9 +111,9 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>state</span>::<span class='ident'>State</span>;
 
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>NameHash</span> <span class='op'>=</span> <span class='ident'>u64</span>;
-<span class='doccomment'>/// Priority of a message to be sent by Crust. Priority 0 being the highest and will _not_ be</span>
-<span class='doccomment'>/// dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to</span>
-<span class='doccomment'>/// allow higher priority messages through.</span>
+<span class='doccomment'>/// Priority of a message to be sent by Crust. Priority 0 is the highest and will _not_ be dropped.</span>
+<span class='doccomment'>/// Priority 255 is hence the least important and will be preempted/dropped if need be to allow</span>
+<span class='doccomment'>/// higher priority messages through.</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Priority</span> <span class='op'>=</span> <span class='ident'>u8</span>;
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>result</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>CommonError</span><span class='op'>&gt;</span>;
 

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["get_if_addrs",""]]});
+initSidebarItems({"mod":[["get_if_addrs",""]],"type":[["Priority","Priority of a message to be sent by Crust. Priority 0 is the highest and will _not_ be dropped. Priority 255 is hence the least important and will be preempted/dropped if need be to allow higher priority messages through."]]});

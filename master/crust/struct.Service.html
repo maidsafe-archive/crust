@@ -47,12 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1380' class='srclink' href='../src/crust/src/main/service.rs.html#40-50' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1380' class='srclink' href='../src/crust/src/main/service.rs.html#41-51' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
-}</pre><div class='docblock'><p>A structure representing a connection manager.</p>
+}</pre><div class='docblock'><p>A structure representing a connection manager. This is the main object through which crust is
+used.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_tx: <a class='type' href='../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;Self&gt;</code></h4>
-<div class='docblock'><p>Constructs a service.</p>
+<div class='docblock'><p>Construct a service. <code>event_tx</code> is the sending half of the channel which crust will send
+notifications on.</p>
 </div><h4 id='method.with_config' class='method'><code>fn <a href='#method.with_config' class='fnname'>with_config</a>(event_tx: <a class='type' href='../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>, config: Config) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a>&gt;</code></h4>
 <div class='docblock'><p>Constructs a service with the given config. User needs to create an asynchronous channel,
 and provide the sender half to this method. Receiver will receive all <code>Event</code>s from this
@@ -60,11 +62,11 @@ library.</p>
 </div><h4 id='method.start_service_discovery' class='method'><code>fn <a href='#method.start_service_discovery' class='fnname'>start_service_discovery</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Starts listening for beacon broadcasts.</p>
 </div><h4 id='method.set_service_discovery_listen' class='method'><code>fn <a href='#method.set_service_discovery_listen' class='fnname'>set_service_discovery_listen</a>(&amp;self, listen: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>)</code></h4>
-<div class='docblock'><p>Enable listening and responding to peers searching for us. This will allow others finding us
-by interrogating the network.</p>
+<div class='docblock'><p>Enable (or disable) listening and responding to peers searching for us. This can be used to
+allow others to discover us on the local network.</p>
 </div><h4 id='method.start_bootstrap' class='method'><code>fn <a href='#method.start_bootstrap' class='fnname'>start_bootstrap</a>(&amp;mut self, blacklist: <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/set/struct.HashSet.html' title='std::collections::hash::set::HashSet'>HashSet</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>&gt;) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Start the bootstrapping procedure. It will auto terminate after indicating success or
-failure</p>
+failure via the event channel.</p>
 </div><h4 id='method.stop_bootstrap' class='method'><code>fn <a href='#method.stop_bootstrap' class='fnname'>stop_bootstrap</a>(&amp;mut self) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Stop the bootstraping procedure explicitly</p>
 </div><h4 id='method.start_listening_tcp' class='method'><code>fn <a href='#method.start_listening_tcp' class='fnname'>start_listening_tcp</a>(&amp;mut self) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
@@ -73,13 +75,20 @@ explicitly.</p>
 </div><h4 id='method.stop_tcp_listener' class='method'><code>fn <a href='#method.stop_tcp_listener' class='fnname'>stop_tcp_listener</a>(&amp;mut self) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Stops Listener explicitly and stops accepting TCP connections.</p>
 </div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_ci: <a class='struct' href='../crust/struct.PrivConnectionInfo.html' title='crust::PrivConnectionInfo'>PrivConnectionInfo</a>, their_ci: <a class='struct' href='../crust/struct.PubConnectionInfo.html' title='crust::PubConnectionInfo'>PubConnectionInfo</a>) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
-<div class='docblock'><p>Connect to peer</p>
+<div class='docblock'><p>Connect to a peer. To call this method you must follow these steps:
+* Generate a <code>PrivConnectionInfo</code> via <code>Service::prepare_connection_info</code>.
+* Create a <code>PubConnectionInfo</code> via <code>PrivConnectionInfo::to_pub_connection_info</code>.
+* Swap <code>PubConnectionInfo</code>s out-of-band with the peer you are connecting to.
+* Call <code>Service::connect</code> using your <code>PrivConnectionInfo</code> and the <code>PubConnectionInfo</code>
+  obtained from the peer</p>
 </div><h4 id='method.disconnect' class='method'><code>fn <a href='#method.disconnect' class='fnname'>disconnect</a>(&amp;self, peer_id: <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Disconnect from the given peer and returns whether there was a connection at all.</p>
-</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, peer_id: <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, msg: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;, priority: Priority) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
-<div class='docblock'><p>sending data to a peer(according to it&#39;s u64 peer_id)</p>
+</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, peer_id: <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, msg: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;, priority: <a class='type' href='../crust/type.Priority.html' title='crust::Priority'>Priority</a>) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send data to a peer.</p>
 </div><h4 id='method.prepare_connection_info' class='method'><code>fn <a href='#method.prepare_connection_info' class='fnname'>prepare_connection_info</a>(&amp;self, result_token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></h4>
-<div class='docblock'><p>Lookup a mapped udp socket based on result_token</p>
+<div class='docblock'><p>Generate connection info. The connection info is returned via the <code>ConnectionInfoPrepared</code>
+event on the event channel. Calling this method is the first step of connecting to another
+peer, see <code>Service::connect</code> for more info.</p>
 </div><h4 id='method.is_connected' class='method'><code>fn <a href='#method.is_connected' class='fnname'>is_connected</a>(&amp;self, peer_id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Check if we are connected to the given peer</p>
 </div><h4 id='method.id' class='method'><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a></code></h4>

@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/crust/src/lib.rs.html#18-85' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/crust/src/lib.rs.html#18-86' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id='crust' class='section-header'><a href='#crust'>crust</a></h1>
 <p>Reliable peer-to-peer network connections in Rust with NAT traversal.</p>
@@ -85,7 +85,8 @@
                            <td><a class='struct' href='struct.Service.html'
                                   title='crust::Service'>Service</a></td>
                            <td class='docblock short'>
-                                <p>A structure representing a connection manager.</p>
+                                <p>A structure representing a connection manager. This is the main object through which crust is
+used.</p>
                            </td>
                        </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
@@ -109,14 +110,23 @@ of this module.</p>
                            <td><a class='type' href='type.CrustEventSender.html'
                                   title='crust::CrustEventSender'>CrustEventSender</a></td>
                            <td class='docblock short'>
-                                <p>Crust Observers will be informed of crust events on this</p>
+                                <p>Used to receive events from a <code>Service</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='type' href='type.Priority.html'
+                                  title='crust::Priority'>Priority</a></td>
+                           <td class='docblock short'>
+                                <p>Priority of a message to be sent by Crust. Priority 0 is the highest and will <em>not</em> be dropped.
+Priority 255 is hence the least important and will be preempted/dropped if need be to allow
+higher priority messages through.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='type' href='type.Res.html'
                                   title='crust::Res'>Res</a></td>
                            <td class='docblock short'>
-                                <p>Crust result type</p>
+                                <p>Crust&#39;s result type</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>

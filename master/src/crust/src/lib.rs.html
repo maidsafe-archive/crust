@@ -127,6 +127,8 @@
 <span id="83">83</span>
 <span id="84">84</span>
 <span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -206,13 +208,15 @@
 <span class='kw'>mod</span> <span class='ident'>service_discovery</span>;
 <span class='kw'>mod</span> <span class='ident'>nat</span>;
 
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>Priority</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ConnectionInfoResult</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>,
                <span class='ident'>PubConnectionInfo</span>, <span class='ident'>Service</span>};
 
-<span class='doccomment'>/// Crust Observers will be informed of crust events on this</span>
+<span class='doccomment'>/// Used to receive events from a `Service`.</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>CrustEventSender</span> <span class='op'>=</span> ::<span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::<span class='ident'>MaidSafeObserver</span><span class='op'>&lt;</span><span class='ident'>Event</span><span class='op'>&gt;</span>;
-<span class='doccomment'>/// Crust result type</span>
+<span class='doccomment'>/// Crust&#39;s result type</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>Res</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>CrustError</span><span class='op'>&gt;</span>;
+
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

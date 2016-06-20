@@ -163,6 +163,7 @@
 <span id="119">119</span>
 <span id="120">120</span>
 <span id="121">121</span>
+<span id="122">122</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -255,7 +256,8 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>PrivConnectionInfo</span> {
-    <span class='doccomment'>/// Convert our connection info to theirs so that we can give it to peer.</span>
+    <span class='doccomment'>/// Use private connection info to create public connection info that can be shared with the</span>
+    <span class='doccomment'>/// peer.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_pub_connection_info</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PubConnectionInfo</span> {
         <span class='ident'>PubConnectionInfo</span> {
             <span class='ident'>for_hole_punch</span>: <span class='self'>self</span>.<span class='ident'>for_hole_punch</span>.<span class='ident'>clone</span>(),

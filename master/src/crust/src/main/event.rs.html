@@ -121,7 +121,7 @@
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Event</span> {
     <span class='doccomment'>/// Invoked when a bootstrap peer connects to us</span>
     <span class='ident'>BootstrapAccept</span>(<span class='ident'>PeerId</span>),
-    <span class='doccomment'>/// Invoked when we get a bootstrap connection to a new peer.</span>
+    <span class='doccomment'>/// Invoked when we bootstrap to a new peer.</span>
     <span class='ident'>BootstrapConnect</span>(<span class='ident'>PeerId</span>, <span class='ident'>SocketAddr</span>),
     <span class='doccomment'>/// Invoked when we failed to connect to all bootstrap contacts.</span>
     <span class='ident'>BootstrapFailed</span>,
@@ -136,9 +136,9 @@
     <span class='ident'>ConnectSuccess</span>(<span class='ident'>PeerId</span>),
     <span class='doccomment'>/// Invoked when connection to a new peer has failed.</span>
     <span class='ident'>ConnectFailure</span>(<span class='ident'>PeerId</span>),
-    <span class='doccomment'>/// Invoked when a peer is lost or having read/write error.</span>
+    <span class='doccomment'>/// Invoked when a peer disconnects or can no longer be contacted.</span>
     <span class='ident'>LostPeer</span>(<span class='ident'>PeerId</span>),
-    <span class='doccomment'>/// Invoked when a new message is received.  Passes the message.</span>
+    <span class='doccomment'>/// Invoked when a new message is received. Passes the message.</span>
     <span class='ident'>NewMessage</span>(<span class='ident'>PeerId</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
     <span class='doccomment'>/// Invoked when trying to sending a too large data.</span>
     <span class='ident'>WriteMsgSizeProhibitive</span>(<span class='ident'>PeerId</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
