@@ -20,9 +20,9 @@
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::time::Duration;
 
+use common::get_if_addrs::{self, IfAddr};
 use crossbeam;
 use igd::{self, Gateway};
-use get_if_addrs::{self, IfAddr};
 use nat::MappedAddr;
 use super::NatError;
 

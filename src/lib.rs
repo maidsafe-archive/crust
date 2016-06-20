@@ -53,15 +53,19 @@ extern crate maidsafe_utilities;
 extern crate quick_error;
 
 extern crate byteorder;
+extern crate c_linked_list;
 extern crate config_file_handler;
 extern crate crossbeam;
-extern crate get_if_addrs;
 extern crate igd;
+extern crate libc;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate tmp_mio as mio;
+
+#[cfg(windows)]
+extern crate winapi;
 
 #[cfg(test)]
 #[macro_use]
