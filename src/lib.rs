@@ -76,10 +76,12 @@ mod common;
 mod service_discovery;
 mod nat;
 
+pub use common::Priority;
 pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
 
-/// Crust Observers will be informed of crust events on this
+/// Used to receive events from a `Service`.
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-/// Crust result type
+/// Crust's result type
 pub type Res<T> = Result<T, CrustError>;
+

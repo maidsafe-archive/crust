@@ -26,7 +26,7 @@ use super::ConnectionInfoResult;
 pub enum Event {
     /// Invoked when a bootstrap peer connects to us
     BootstrapAccept(PeerId),
-    /// Invoked when we get a bootstrap connection to a new peer.
+    /// Invoked when we bootstrap to a new peer.
     BootstrapConnect(PeerId, SocketAddr),
     /// Invoked when we failed to connect to all bootstrap contacts.
     BootstrapFailed,
@@ -41,9 +41,9 @@ pub enum Event {
     ConnectSuccess(PeerId),
     /// Invoked when connection to a new peer has failed.
     ConnectFailure(PeerId),
-    /// Invoked when a peer is lost or having read/write error.
+    /// Invoked when a peer disconnects or can no longer be contacted.
     LostPeer(PeerId),
-    /// Invoked when a new message is received.  Passes the message.
+    /// Invoked when a new message is received. Passes the message.
     NewMessage(PeerId, Vec<u8>),
     /// Invoked when trying to sending a too large data.
     WriteMsgSizeProhibitive(PeerId, Vec<u8>),

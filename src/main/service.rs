@@ -36,7 +36,8 @@ const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
 const LISTENER_TOKEN: Token = Token(2);
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
-/// A structure representing a connection manager.
+/// A structure representing a connection manager. This is the main object through which crust is
+/// used.
 pub struct Service {
     config: Config,
     cm: ConnectionMap,
@@ -50,7 +51,8 @@ pub struct Service {
 }
 
 impl Service {
-    /// Constructs a service.
+    /// Construct a service. `event_tx` is the sending half of the channel which crust will send
+    /// notifications on.
     pub fn new(event_tx: ::CrustEventSender) -> ::Res<Self> {
         Service::with_config(event_tx, try!(config_handler::read_config_file()))
     }
@@ -112,8 +114,8 @@ impl Service {
         });
     }
 
-    /// Enable listening and responding to peers searching for us. This will allow others finding us
-    /// by interrogating the network.
+    /// Enable (or disable) listening and responding to peers searching for us. This can be used to
+    /// allow others to discover us on the local network.
     pub fn set_service_discovery_listen(&self, listen: bool) {
         let _ = self.post(move |core, _| {
             let state = match core.get_state(SERVICE_DISCOVERY_TOKEN) {
@@ -133,7 +135,7 @@ impl Service {
     }
 
     /// Start the bootstrapping procedure. It will auto terminate after indicating success or
-    /// failure
+    /// failure via the event channel.
     pub fn start_bootstrap(&mut self, blacklist: HashSet<SocketAddr>) -> ::Res<()> {
         let config = self.config.clone();
         let our_pk = self.our_keys.0;
@@ -206,7 +208,12 @@ impl Service {
         })
     }
 
-    /// Connect to peer
+    /// Connect to a peer. To call this method you must follow these steps:
+    ///  * Generate a `PrivConnectionInfo` via `Service::prepare_connection_info`.
+    ///  * Create a `PubConnectionInfo` via `PrivConnectionInfo::to_pub_connection_info`.
+    ///  * Swap `PubConnectionInfo`s out-of-band with the peer you are connecting to.
+    ///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`
+    ///    obtained from the peer
     pub fn connect(&self, our_ci: PrivConnectionInfo, their_ci: PubConnectionInfo) -> ::Res<()> {
         if self.cm.lock().unwrap().contains_key(&their_ci.id) {
             warn!("Already connected OR already in process of connecting to {:?}",
@@ -239,7 +246,7 @@ impl Service {
         true
     }
 
-    /// sending data to a peer(according to it's u64 peer_id)
+    /// Send data to a peer.
     pub fn send(&self, peer_id: PeerId, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
         let token = match self.cm.lock().unwrap().get(&peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
@@ -253,7 +260,9 @@ impl Service {
         })
     }
 
-    /// Lookup a mapped udp socket based on result_token
+    /// Generate connection info. The connection info is returned via the `ConnectionInfoPrepared`
+    /// event on the event channel. Calling this method is the first step of connecting to another
+    /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
         let event_tx = self.event_tx.clone();
