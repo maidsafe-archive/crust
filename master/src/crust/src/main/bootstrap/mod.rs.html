@@ -504,7 +504,7 @@
             <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>listeners</span>) <span class='op'>=</span> <span class='ident'>rx</span>.<span class='ident'>try_recv</span>() {
                 <span class='self'>self</span>.<span class='ident'>peers</span>.<span class='ident'>extend</span>(<span class='ident'>listeners</span>);
             }
-        } <span class='kw'>else</span> {
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>rx</span>.<span class='ident'>try_recv</span>().<span class='ident'>is_ok</span>() {
             <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Another instance of Crust is already running on this LAN. Only one is \
                     allowed in this version of Crust.&quot;</span>);
             <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>BootstrapFailed</span>);
