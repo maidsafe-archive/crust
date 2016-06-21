@@ -203,13 +203,11 @@ impl State for Bootstrap {
             while let Ok(listeners) = rx.try_recv() {
                 self.peers.extend(listeners);
             }
-        } else {
-            if let Ok(_) = rx.try_recv() {
-                error!("Another instance of Crust is already running on this LAN. Only one is \
-                        allowed in this version of Crust.");
-                let _ = self.event_tx.send(Event::BootstrapFailed);
-                return self.terminate(core, el);
-            }
+        } else if rx.try_recv().is_ok() {
+            error!("Another instance of Crust is already running on this LAN. Only one is \
+                    allowed in this version of Crust.");
+            let _ = self.event_tx.send(Event::BootstrapFailed);
+            return self.terminate(core, el);
         }
 
         self.begin_bootstrap(core, el);
