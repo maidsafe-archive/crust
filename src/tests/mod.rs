@@ -350,7 +350,6 @@ mod broken_peer {
 }
 
 #[test]
-#[ignore]
 fn drop_peer_when_no_message_received_within_inactivity_period() {
     use std::thread;
 

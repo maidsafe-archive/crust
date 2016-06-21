@@ -25,7 +25,7 @@ use main::{ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, Timeout, Token};
 
 #[cfg(not(test))]
-pub const INACTIVITY_TIMEOUT_MS: u64 = 60_000;
+pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
 #[cfg(not(test))]
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
 
@@ -190,14 +190,9 @@ impl State for ActiveConnection {
         match self.heartbeat.timeout(el, timer_id) {
             HeartbeatAction::Send => self.write(core, el, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {
-                // TODO Disabling heartbeat for now to make testing easier
-                // debug!("Dropping connection to {:?} due to peer inactivity",
-                //        self.their_id);
-                error!("{:?} - This connection to {:?} would have been dropped due to peer \
-                        inactivity. Ignoring right now.",
-                       self.our_id,
+                debug!("Dropping connection to {:?} due to peer inactivity",
                        self.their_id);
-                // self.terminate(core, el);
+                self.terminate(core, el);
             }
         }
     }
