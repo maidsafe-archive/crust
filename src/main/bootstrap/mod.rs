@@ -199,8 +199,15 @@ impl State for Bootstrap {
 
         let rx = self.sd_meta.take().expect("Logic Error").rx;
 
-        while let Ok(listeners) = rx.try_recv() {
-            self.peers.extend(listeners);
+        if cfg!(test) {
+            while let Ok(listeners) = rx.try_recv() {
+                self.peers.extend(listeners);
+            }
+        } else {
+            error!("Another instance of Crust is already running on this LAN. Only one is \
+                    allowed in this version of Crust.");
+            let _ = self.event_tx.send(Event::BootstrapFailed);
+            return self.terminate(core, el);
         }
 
         self.begin_bootstrap(core, el);
