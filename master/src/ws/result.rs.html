@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/result.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/result.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>result.rs.html -- source</title>
@@ -283,7 +283,7 @@
     <span class='doccomment'>/// Indicates a failure to parse an HTTP message.</span>
     <span class='doccomment'>/// This kind of error should only occur during a WebSocket Handshake, and a HTTP 500 response</span>
     <span class='doccomment'>/// will be generated.</span>
-    <span class='ident'>Parse</span>(<span class='ident'>httparse</span>::<span class='ident'>Error</span>),
+    <span class='ident'>Http</span>(<span class='ident'>httparse</span>::<span class='ident'>Error</span>),
     <span class='doccomment'>/// Indicates a failure to send a command on the internal EventLoop channel. This means that</span>
     <span class='doccomment'>/// the WebSocket is overloaded and the Connection will disconnect.</span>
     <span class='ident'>Queue</span>(<span class='ident'>mio</span>::<span class='ident'>NotifyError</span><span class='op'>&lt;</span><span class='ident'>Command</span><span class='op'>&gt;</span>),
@@ -353,7 +353,7 @@
             <span class='ident'>Kind</span>::<span class='ident'>Protocol</span>          <span class='op'>=&gt;</span> <span class='string'>&quot;WebSocket Protocol Error&quot;</span>,
             <span class='ident'>Kind</span>::<span class='ident'>Encoding</span>(<span class='kw-2'>ref</span> <span class='ident'>err</span>) <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>description</span>(),
             <span class='ident'>Kind</span>::<span class='ident'>Io</span>(<span class='kw-2'>ref</span> <span class='ident'>err</span>)       <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>description</span>(),
-            <span class='ident'>Kind</span>::<span class='ident'>Parse</span>(_)          <span class='op'>=&gt;</span> <span class='string'>&quot;Unable to parse HTTP&quot;</span>,
+            <span class='ident'>Kind</span>::<span class='ident'>Http</span>(_)          <span class='op'>=&gt;</span> <span class='string'>&quot;Unable to parse HTTP&quot;</span>,
             <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;ssl&quot;</span>)]</span>
             <span class='ident'>Kind</span>::<span class='ident'>Ssl</span>(<span class='kw-2'>ref</span> <span class='ident'>err</span>)      <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>description</span>(),
             <span class='ident'>Kind</span>::<span class='ident'>Queue</span>(_)          <span class='op'>=&gt;</span> <span class='string'>&quot;Unable to send signal on event loop&quot;</span>,
@@ -393,7 +393,7 @@
             <span class='ident'>httparse</span>::<span class='ident'>Error</span>::<span class='ident'>Version</span> <span class='op'>=&gt;</span> <span class='string'>&quot;Invalid byte in HTTP version.&quot;</span>,
         };
 
-        <span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>Kind</span>::<span class='ident'>Parse</span>(<span class='ident'>err</span>), <span class='ident'>details</span>)
+        <span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>Kind</span>::<span class='ident'>Http</span>(<span class='ident'>err</span>), <span class='ident'>details</span>)
     }
 
 }

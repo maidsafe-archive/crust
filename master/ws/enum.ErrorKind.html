@@ -54,7 +54,7 @@
     Protocol,
     Encoding(<a class='struct' href='https://doc.rust-lang.org/nightly/core/str/struct.Utf8Error.html' title='core::str::Utf8Error'>Utf8Error</a>),
     Io(<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>),
-    Parse(<a class='enum' href='../httparse/enum.Error.html' title='httparse::Error'>Error</a>),
+    Http(<a class='enum' href='../httparse/enum.Error.html' title='httparse::Error'>Error</a>),
     Queue(<a class='enum' href='../mio/notify/enum.NotifyError.html' title='mio::notify::NotifyError'>NotifyError</a>&lt;Command&gt;),
     Timer(<a class='struct' href='../mio/timer/struct.TimerError.html' title='mio::timer::TimerError'>TimerError</a>),
     Custom(<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>StdError</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a>&gt;),
@@ -74,7 +74,7 @@ The WebSocket will automatically attempt to send a Invalid Frame Payload Data (1
 code.</p>
 </div></td><td></td></tr><tr><td id='variant.Io'><code>Io</code></td><td><div class='docblock'><p>Indicates an underlying IO Error.
 This kind of error will result in a WebSocket Connection disconnecting.</p>
-</div></td><td></td></tr><tr><td id='variant.Parse'><code>Parse</code></td><td><div class='docblock'><p>Indicates a failure to parse an HTTP message.
+</div></td><td></td></tr><tr><td id='variant.Http'><code>Http</code></td><td><div class='docblock'><p>Indicates a failure to parse an HTTP message.
 This kind of error should only occur during a WebSocket Handshake, and a HTTP 500 response
 will be generated.</p>
 </div></td><td></td></tr><tr><td id='variant.Queue'><code>Queue</code></td><td><div class='docblock'><p>Indicates a failure to send a command on the internal EventLoop channel. This means that

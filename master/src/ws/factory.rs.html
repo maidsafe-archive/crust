@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/factory.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/factory.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>factory.rs.html -- source</title>
@@ -395,7 +395,7 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_impl_factory</span>() {
+    <span class='kw'>fn</span> <span class='ident'>impl_factory</span>() {
 
         <span class='kw'>struct</span> <span class='ident'>X</span>;
 
@@ -416,7 +416,7 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_closure_factory</span>() {
+    <span class='kw'>fn</span> <span class='ident'>closure_factory</span>() {
         <span class='kw'>let</span> <span class='ident'>event_loop</span> <span class='op'>=</span> <span class='ident'>mio</span>::<span class='ident'>EventLoop</span>::<span class='op'>&lt;</span><span class='ident'>S</span><span class='op'>&gt;</span>::<span class='ident'>new</span>().<span class='ident'>unwrap</span>();
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>factory</span> <span class='op'>=</span> <span class='op'>|</span>_<span class='op'>|</span> {

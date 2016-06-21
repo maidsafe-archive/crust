@@ -304,11 +304,6 @@
 <span id="260">260</span>
 <span id="261">261</span>
 <span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -337,7 +332,7 @@
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>test</span>))]</span>
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INACTIVITY_TIMEOUT_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>60_000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INACTIVITY_TIMEOUT_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>120_000</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>test</span>))]</span>
 <span class='kw'>const</span> <span class='ident'>HEARTBEAT_PERIOD_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>20_000</span>;
 
@@ -502,14 +497,9 @@
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>heartbeat</span>.<span class='ident'>timeout</span>(<span class='ident'>el</span>, <span class='ident'>timer_id</span>) {
             <span class='ident'>HeartbeatAction</span>::<span class='ident'>Send</span> <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>write</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='prelude-val'>Some</span>((<span class='ident'>Message</span>::<span class='ident'>Heartbeat</span>, <span class='number'>0</span>))),
             <span class='ident'>HeartbeatAction</span>::<span class='ident'>Terminate</span> <span class='op'>=&gt;</span> {
-                <span class='comment'>// TODO Disabling heartbeat for now to make testing easier</span>
-                <span class='comment'>// debug!(&quot;Dropping connection to {:?} due to peer inactivity&quot;,</span>
-                <span class='comment'>//        self.their_id);</span>
-                <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;{:?} - This connection to {:?} would have been dropped due to peer \
-                        inactivity. Ignoring right now.&quot;</span>,
-                       <span class='self'>self</span>.<span class='ident'>our_id</span>,
+                <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Dropping connection to {:?} due to peer inactivity&quot;</span>,
                        <span class='self'>self</span>.<span class='ident'>their_id</span>);
-                <span class='comment'>// self.terminate(core, el);</span>
+                <span class='self'>self</span>.<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
             }
         }
     }

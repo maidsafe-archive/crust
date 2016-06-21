@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1870' class='srclink' href='../src/ws/communication.rs.html#47-50' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1862' class='srclink' href='../src/ws/communication.rs.html#47-50' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Sender {
     // some fields omitted
 }</pre><div class='docblock'><p>A representation of the output of the WebSocket connection. Use this to send messages to the
@@ -59,13 +59,11 @@ other endpoint.</p>
 </div><h4 id='method.broadcast' class='method'><code>fn <a href='#method.broadcast' class='fnname'>broadcast</a>&lt;M&gt;(&amp;self, msg: M) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where M: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='../ws/enum.Message.html' title='ws::Message'>Message</a>&gt;</span></code></h4>
 <div class='docblock'><p>Send a message to the endpoints of all connections.</p>
 
-<p>Be careful with this method because it
-does not discriminate between client and server connections, only connections that are not
-part of <em>this</em> side of the WebSocket. If your WebSocket is only functioning as a server,
-then usage is simple, however if you have a WebSocket that is listening for
-connections and is also connected to another WebSocket, this method will broadcast a
-message to all the clients connected and to the server at the other end of the single
-client connection.</p>
+<p>Be careful with this method. It does not discriminate between client and server connections.
+If your WebSocket is only functioning as a server, then usage is simple, this method will
+send a copy of the message to each connected client. However, if you have a WebSocket that
+is listening for connections and is also connected to another WebSocket, this method will
+broadcast a copy of the message to all the clients connected and to that WebSocket server.</p>
 </div><h4 id='method.close' class='method'><code>fn <a href='#method.close' class='fnname'>close</a>(&amp;self, code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Send a close code to the other endpoint.</p>
 </div><h4 id='method.close_with_reason' class='method'><code>fn <a href='#method.close_with_reason' class='fnname'>close_with_reason</a>&lt;S&gt;(&amp;self, code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>, reason: S) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</span></code></h4>

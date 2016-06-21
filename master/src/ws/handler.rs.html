@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/handler.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/handler.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>handler.rs.html -- source</title>
@@ -397,6 +397,10 @@
 <span id="353">353</span>
 <span id="354">354</span>
 <span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>url</span>;
 <span class='kw'>use</span> <span class='ident'>log</span>::<span class='ident'>LogLevel</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>ErrorLevel</span>;
@@ -482,8 +486,8 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// ```ignore</span>
     <span class='doccomment'>/// let mut res = try!(Response::from_request(req));</span>
-    <span class='doccomment'>/// if req.extensions.contains(&quot;myextension&quot;) {</span>
-    <span class='doccomment'>///     res.add_extension(&quot;myextension&quot;)</span>
+    <span class='doccomment'>/// if try!(req.extensions()).iter().find(|&amp;&amp;ext| ext.contains(&quot;myextension-name&quot;)).is_some() {</span>
+    <span class='doccomment'>///     res.add_extension(&quot;myextension-name&quot;)</span>
     <span class='doccomment'>/// }</span>
     <span class='doccomment'>/// Ok(res)</span>
     <span class='doccomment'>/// ```</span>
@@ -630,6 +634,10 @@
     <span class='doccomment'>/// that it will not be sent. You can use this approach to merge multiple frames into a single</span>
     <span class='doccomment'>/// frame before sending the message.</span>
     <span class='doccomment'>///</span>
+    <span class='doccomment'>/// For messages, this method will be called with a single complete, final frame before any</span>
+    <span class='doccomment'>/// fragmentation is performed. Automatic fragmentation will be performed on the returned</span>
+    <span class='doccomment'>/// frame, if any, based on the `fragment_size` setting.</span>
+    <span class='doccomment'>///</span>
     <span class='doccomment'>/// By default this method simply ensures that no reserved bits are set.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>on_send_frame</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>frame</span>: <span class='ident'>Frame</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Frame</span><span class='op'>&gt;&gt;</span> {
@@ -708,7 +716,7 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_handler</span>() {
+    <span class='kw'>fn</span> <span class='ident'>handler</span>() {
         <span class='kw'>struct</span> <span class='ident'>H</span>;
 
         <span class='kw'>impl</span> <span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>H</span> {
@@ -744,7 +752,7 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_closure_handler</span>() {
+    <span class='kw'>fn</span> <span class='ident'>closure_handler</span>() {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>close</span> <span class='op'>=</span> <span class='op'>|</span><span class='ident'>msg</span><span class='op'>|</span> {
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>msg</span>, <span class='ident'>message</span>::<span class='ident'>Message</span>::<span class='ident'>Binary</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]));
             <span class='prelude-val'>Ok</span>(())

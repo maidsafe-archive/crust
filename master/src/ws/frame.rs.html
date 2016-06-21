@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/frame.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/frame.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>frame.rs.html -- source</title>
@@ -527,6 +527,8 @@
 <span id="483">483</span>
 <span id="484">484</span>
 <span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>transmute</span>;
@@ -619,6 +621,12 @@
         <span class='self'>self</span>.<span class='ident'>opcode</span>
     }
 
+    <span class='doccomment'>/// Test whether this is a control frame.</span>
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_control</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='self'>self</span>.<span class='ident'>opcode</span>.<span class='ident'>is_control</span>()
+    }
+
     <span class='doccomment'>/// Get a reference to the frame&#39;s payload.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>payload</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
@@ -649,7 +657,6 @@
     }
 
     <span class='doccomment'>/// Set the first reserved bit.</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_rsv1</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>has_rsv1</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Frame</span> {
         <span class='self'>self</span>.<span class='ident'>rsv1</span> <span class='op'>=</span> <span class='ident'>has_rsv1</span>;
@@ -657,7 +664,6 @@
     }
 
     <span class='doccomment'>/// Set the second reserved bit.</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_rsv2</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>has_rsv2</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Frame</span> {
         <span class='self'>self</span>.<span class='ident'>rsv2</span> <span class='op'>=</span> <span class='ident'>has_rsv2</span>;
@@ -665,10 +671,9 @@
     }
 
     <span class='doccomment'>/// Set the third reserved bit.</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_rsv3</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>has_rsv3</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Frame</span> {
-        <span class='self'>self</span>.<span class='ident'>rsv1</span> <span class='op'>=</span> <span class='ident'>has_rsv3</span>;
+        <span class='self'>self</span>.<span class='ident'>rsv3</span> <span class='op'>=</span> <span class='ident'>has_rsv3</span>;
         <span class='self'>self</span>
     }
 
@@ -984,7 +989,6 @@
 final: {}
 reserved: {} {} {}
 opcode: {}
-mask: {}
 length: {}
 payload length: {}
 payload: 0x{}
@@ -994,7 +998,7 @@ payload: 0x{}
             <span class='self'>self</span>.<span class='ident'>rsv2</span>,
             <span class='self'>self</span>.<span class='ident'>rsv3</span>,
             <span class='self'>self</span>.<span class='ident'>opcode</span>,
-            <span class='self'>self</span>.<span class='ident'>mask</span>.<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>mask</span><span class='op'>|</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>mask</span>)).<span class='ident'>unwrap_or</span>(<span class='string'>&quot;NONE&quot;</span>.<span class='ident'>into</span>()),
+            <span class='comment'>// self.mask.map(|mask| format!(&quot;{:?}&quot;, mask)).unwrap_or(&quot;NONE&quot;.into()),</span>
             <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='self'>self</span>.<span class='ident'>payload</span>.<span class='ident'>len</span>(),
             <span class='self'>self</span>.<span class='ident'>payload</span>.<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>byte</span><span class='op'>|</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:x}&quot;</span>, <span class='ident'>byte</span>)).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>())
@@ -1007,7 +1011,7 @@ payload: 0x{}
     <span class='kw'>use</span> <span class='ident'>protocol</span>::<span class='ident'>OpCode</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_display_frame</span>() {
+    <span class='kw'>fn</span> <span class='ident'>display_frame</span>() {
         <span class='kw'>let</span> <span class='ident'>f</span> <span class='op'>=</span> <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='string'>&quot;hi there&quot;</span>.<span class='ident'>into</span>(), <span class='ident'>OpCode</span>::<span class='ident'>Text</span>, <span class='boolval'>true</span>);
         <span class='kw'>let</span> <span class='ident'>view</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>f</span>);
         <span class='ident'>view</span>.<span class='ident'>contains</span>(<span class='string'>&quot;payload:&quot;</span>);

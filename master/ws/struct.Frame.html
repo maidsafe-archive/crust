@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-951' class='srclink' href='../src/ws/frame.rs.html#27-37' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-940' class='srclink' href='../src/ws/frame.rs.html#27-37' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Frame {
     // some fields omitted
 }</pre><div class='docblock'><p>A struct representing a WebSocket frame.</p>
@@ -64,6 +64,8 @@ This is the length of the header + the length of the payload.</p>
 <div class='docblock'><p>Test whether the third reserved bit is set.</p>
 </div><h4 id='method.opcode' class='method'><code>fn <a href='#method.opcode' class='fnname'>opcode</a>(&amp;self) -&gt; <a class='enum' href='../ws/enum.OpCode.html' title='ws::OpCode'>OpCode</a></code></h4>
 <div class='docblock'><p>Get the OpCode of the frame.</p>
+</div><h4 id='method.is_control' class='method'><code>fn <a href='#method.is_control' class='fnname'>is_control</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Test whether this is a control frame.</p>
 </div><h4 id='method.payload' class='method'><code>fn <a href='#method.payload' class='fnname'>payload</a>(&amp;self) -&gt; &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code></h4>
 <div class='docblock'><p>Get a reference to the frame&#39;s payload.</p>
 </div><h4 id='method.set_final' class='method'><code>fn <a href='#method.set_final' class='fnname'>set_final</a>(&amp;mut self, is_final: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>

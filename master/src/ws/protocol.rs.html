@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/protocol.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/protocol.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>protocol.rs.html -- source</title>
@@ -261,6 +261,18 @@
 <span id="217">217</span>
 <span id="218">218</span>
 <span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>convert</span>::{<span class='ident'>Into</span>, <span class='ident'>From</span>};
@@ -283,6 +295,18 @@
     <span class='ident'>Pong</span>,
     <span class='doccomment'>/// Indicates an invalid opcode was received.</span>
     <span class='ident'>Bad</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>OpCode</span> {
+
+    <span class='doccomment'>/// Test whether the opcode indicates a control frame.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_control</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>Text</span> <span class='op'>|</span> <span class='ident'>Binary</span> <span class='op'>|</span> <span class='ident'>Continue</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
+        }
+    }
+
 }
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>OpCode</span> {
@@ -351,7 +375,7 @@
     <span class='doccomment'>/// receives a binary message).</span>
     <span class='ident'>Unsupported</span>,
     <span class='doccomment'>/// Indicates that no status code was included in a closing frame. This</span>
-    <span class='doccomment'>/// close code makes it possible to use a single method, `on_close` to </span>
+    <span class='doccomment'>/// close code makes it possible to use a single method, `on_close` to</span>
     <span class='doccomment'>/// handle even cases where no close code was provided.</span>
     <span class='ident'>Status</span>,
     <span class='doccomment'>/// Indicates an abnormal closure. If the abnormal closure was due to an</span>
@@ -456,26 +480,26 @@
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_opcode_from_u8</span>() {
+    <span class='kw'>fn</span> <span class='ident'>opcode_from_u8</span>() {
         <span class='kw'>let</span> <span class='ident'>byte</span> <span class='op'>=</span> <span class='number'>2u8</span>;
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>OpCode</span>::<span class='ident'>from</span>(<span class='ident'>byte</span>), <span class='ident'>OpCode</span>::<span class='ident'>Binary</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_opcode_into_u8</span>() {
+    <span class='kw'>fn</span> <span class='ident'>opcode_into_u8</span>() {
         <span class='kw'>let</span> <span class='ident'>text</span> <span class='op'>=</span> <span class='ident'>OpCode</span>::<span class='ident'>Text</span>;
         <span class='kw'>let</span> <span class='ident'>byte</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='ident'>text</span>.<span class='ident'>into</span>();
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>byte</span>, <span class='number'>1u8</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_closecode_from_u16</span>() {
+    <span class='kw'>fn</span> <span class='ident'>closecode_from_u16</span>() {
         <span class='kw'>let</span> <span class='ident'>byte</span> <span class='op'>=</span> <span class='number'>1008u16</span>;
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>CloseCode</span>::<span class='ident'>from</span>(<span class='ident'>byte</span>), <span class='ident'>CloseCode</span>::<span class='ident'>Policy</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_closecode_into_u16</span>() {
+    <span class='kw'>fn</span> <span class='ident'>closecode_into_u16</span>() {
         <span class='kw'>let</span> <span class='ident'>text</span> <span class='op'>=</span> <span class='ident'>CloseCode</span>::<span class='ident'>Away</span>;
         <span class='kw'>let</span> <span class='ident'>byte</span>: <span class='ident'>u16</span> <span class='op'>=</span> <span class='ident'>text</span>.<span class='ident'>into</span>();
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>byte</span>, <span class='number'>1001u16</span>);

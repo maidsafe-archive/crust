@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1728' class='srclink' href='../src/ws/protocol.rs.html#74-139' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1720' class='srclink' href='../src/ws/protocol.rs.html#86-151' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum CloseCode {
     Normal,
     Away,
@@ -76,7 +76,7 @@ because it has received a type of data it cannot accept (e.g., an
 endpoint that understands only text data MAY send this if it
 receives a binary message).</p>
 </div></td><td></td></tr><tr><td id='variant.Status'><code>Status</code></td><td><div class='docblock'><p>Indicates that no status code was included in a closing frame. This
-close code makes it possible to use a single method, <code>on_close</code> to 
+close code makes it possible to use a single method, <code>on_close</code> to
 handle even cases where no close code was provided.</p>
 </div></td><td></td></tr><tr><td id='variant.Abnormal'><code>Abnormal</code></td><td><div class='docblock'><p>Indicates an abnormal closure. If the abnormal closure was due to an
 error, this close code will not be used. Instead, the <code>on_error</code> method

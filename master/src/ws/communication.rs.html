@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/communication.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/communication.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>communication.rs.html -- source</title>
@@ -222,8 +222,6 @@
 <span id="178">178</span>
 <span id="179">179</span>
 <span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>convert</span>::<span class='ident'>Into</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Cow</span>;
@@ -306,13 +304,11 @@
 
     <span class='doccomment'>/// Send a message to the endpoints of all connections.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Be careful with this method because it</span>
-    <span class='doccomment'>/// does not discriminate between client and server connections, only connections that are not</span>
-    <span class='doccomment'>/// part of *this* side of the WebSocket. If your WebSocket is only functioning as a server,</span>
-    <span class='doccomment'>/// then usage is simple, however if you have a WebSocket that is listening for</span>
-    <span class='doccomment'>/// connections and is also connected to another WebSocket, this method will broadcast a</span>
-    <span class='doccomment'>/// message to all the clients connected and to the server at the other end of the single</span>
-    <span class='doccomment'>/// client connection.</span>
+    <span class='doccomment'>/// Be careful with this method. It does not discriminate between client and server connections.</span>
+    <span class='doccomment'>/// If your WebSocket is only functioning as a server, then usage is simple, this method will</span>
+    <span class='doccomment'>/// send a copy of the message to each connected client. However, if you have a WebSocket that</span>
+    <span class='doccomment'>/// is listening for connections and is also connected to another WebSocket, this method will</span>
+    <span class='doccomment'>/// broadcast a copy of the message to all the clients connected and to that WebSocket server.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>broadcast</span><span class='op'>&lt;</span><span class='ident'>M</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>msg</span>: <span class='ident'>M</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>M</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>message</span>::<span class='ident'>Message</span><span class='op'>&gt;</span>

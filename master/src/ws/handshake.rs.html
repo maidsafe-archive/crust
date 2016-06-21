@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.4.8/src/handshake.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/handshake.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>handshake.rs.html -- source</title>
@@ -696,6 +696,9 @@
 <span id="652">652</span>
 <span id="653">653</span>
 <span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
@@ -782,7 +785,7 @@
     <span class='doccomment'>/// The socket address of the other endpoint. This address may</span>
     <span class='doccomment'>/// be an intermediary such as a proxy server.</span>
     <span class='kw'>pub</span> <span class='ident'>peer_addr</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-    <span class='doccomment'>/// The socket address of this endpoint.</span>
+    <span class='doccomment'>/// The socket address of this enpoint.</span>
     <span class='kw'>pub</span> <span class='ident'>local_addr</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
 }
 
@@ -1040,7 +1043,10 @@
         };
 
         <span class='kw'>let</span> <span class='ident'>req</span> <span class='op'>=</span> <span class='ident'>Request</span> {
-            <span class='ident'>path</span>: <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}{}&quot;</span>, <span class='ident'>url</span>.<span class='ident'>path</span>(), <span class='ident'>query</span>),
+            <span class='ident'>path</span>: <span class='macro'>format</span><span class='macro'>!</span>(
+                <span class='string'>&quot;{}{}&quot;</span>,
+                <span class='ident'>url</span>.<span class='ident'>path</span>(),
+                <span class='ident'>query</span>),
             <span class='ident'>method</span>: <span class='string'>&quot;GET&quot;</span>.<span class='ident'>to_owned</span>(),
             <span class='ident'>headers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[
                 (<span class='string'>&quot;Connection&quot;</span>.<span class='ident'>into</span>(), <span class='string'>&quot;Upgrade&quot;</span>.<span class='ident'>into</span>()),
@@ -1307,7 +1313,7 @@
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_remote_addr_x_forwarded_for</span>() {
+    <span class='kw'>fn</span> <span class='ident'>remote_addr_x_forwarded_for</span>() {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='number'>2048</span>);
         <span class='macro'>write</span><span class='macro'>!</span>(
             <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>,
@@ -1330,7 +1336,7 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_remote_addr_forwarded</span>() {
+    <span class='kw'>fn</span> <span class='ident'>remote_addr_forwarded</span>() {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='number'>2048</span>);
         <span class='macro'>write</span><span class='macro'>!</span>(
             <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>,

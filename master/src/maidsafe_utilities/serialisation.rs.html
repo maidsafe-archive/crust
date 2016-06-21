@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.6.0/src/serialisation.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.7.0/src/serialisation.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>serialisation.rs.html -- source</title>
@@ -426,13 +426,13 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>serialised_data</span>, <span class='ident'>buffer</span>);
 
         <span class='comment'>// Try to deserialise data above default limit with size limit specified</span>
-        <span class='kw'>let</span> <span class='ident'>deserialised_data_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>,
+        <span class='kw'>let</span> <span class='ident'>deserialised_data_0</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>,
                                                                         <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
-        <span class='kw'>let</span> <span class='ident'>deserialised_data_1</span> <span class='op'>=</span>
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data_0</span>);
+        <span class='kw'>let</span> <span class='ident'>deserialised_data_1</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span>
             <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_from_with_limit</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>buffer</span>),
                                                        <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
-
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>deserialised_data_0</span>, <span class='ident'>deserialised_data_1</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data_1</span>);
     }
 }
 </pre>

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SeededRng","A fast pseudorandom number generator that allows seeding and prints the seed when the thread in which it is created panics."]]});
