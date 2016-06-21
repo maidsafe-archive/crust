@@ -204,10 +204,12 @@ impl State for Bootstrap {
                 self.peers.extend(listeners);
             }
         } else {
-            error!("Another instance of Crust is already running on this LAN. Only one is \
-                    allowed in this version of Crust.");
-            let _ = self.event_tx.send(Event::BootstrapFailed);
-            return self.terminate(core, el);
+            if let Ok(_) = rx.try_recv() {
+                error!("Another instance of Crust is already running on this LAN. Only one is \
+                        allowed in this version of Crust.");
+                let _ = self.event_tx.send(Event::BootstrapFailed);
+                return self.terminate(core, el);
+            }
         }
 
         self.begin_bootstrap(core, el);
