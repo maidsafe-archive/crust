@@ -134,6 +134,35 @@ impl Service {
         });
     }
 
+    // TODO temp remove
+    /// Check if we have peers on LAN
+    pub fn has_peers_on_lan(&self) -> bool {
+        use std::sync::mpsc;
+        use std::time::Duration;
+        use std::thread;
+
+        let (obs, rx) = mpsc::channel();
+        let _ = self.post(move |core, _| {
+            let state = match core.get_state(SERVICE_DISCOVERY_TOKEN) {
+                Some(state) => state,
+                None => return,
+            };
+            let mut state = state.borrow_mut();
+            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+                Some(sd) => sd,
+                None => {
+                    warn!("Token reserved for ServiceDiscovery has something else.");
+                    return;
+                }
+            };
+            service_discovery.register_observer(obs);
+            let _ = service_discovery.seek_peers();
+        });
+
+        thread::sleep(Duration::from_secs(1));
+        rx.try_recv().is_ok()
+    }
+
     /// Start the bootstrapping procedure. It will auto terminate after indicating success or
     /// failure via the event channel.
     pub fn start_bootstrap(&mut self, blacklist: HashSet<SocketAddr>) -> ::Res<()> {
