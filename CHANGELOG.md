@@ -1,5 +1,14 @@
 # CRUST - Change Log
 
+## [0.16.0]
+- Do not drop messages with Priority value below 2
+- Pull in socket_addr and get_if_addrs crate
+- Refactor to have hole punch and direct connects take the same code route - update NAT Traversal logic
+- Refactor timeout type so that we dont need the indirect mapping of token <-> context and context <-> state
+- Bug fixes
+- Alphabetize imports and use rustfmt.toml which is committed
+- Add temporary function for routing to determine if there are other instances of Crust running on LAN and take actions based on it
+
 ## [0.15.0]
 - Integrate with mio
    - This currently uses a temporary mio fork (`tmp_mio`) [with windows bug fix](https://github.com/carllerche/mio/pull/401).
