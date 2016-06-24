@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.7.0/src/log/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.8.0/src/log/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -723,9 +723,10 @@
 <span class='doccomment'>//! #[macro_use]</span>
 <span class='doccomment'>//! extern crate log;</span>
 <span class='doccomment'>//! #[macro_use]</span>
+<span class='doccomment'>//! extern crate unwrap;</span>
 <span class='doccomment'>//! extern crate maidsafe_utilities;</span>
 <span class='doccomment'>//! use std::thread;</span>
-<span class='doccomment'>//! use maidsafe_utilities::thread::RaiiThreadJoiner;</span>
+<span class='doccomment'>//! use maidsafe_utilities::thread::Joiner;</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! mod my_mod {</span>
 <span class='doccomment'>//!     pub fn show_warning() {</span>
@@ -734,15 +735,15 @@
 <span class='doccomment'>//! }</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! fn main() {</span>
-<span class='doccomment'>//!     unwrap_result!(maidsafe_utilities::log::init(true));</span>
+<span class='doccomment'>//!     unwrap!(maidsafe_utilities::log::init(true));</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!     my_mod::show_warning();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!     let unnamed = thread::spawn(move || info!(&quot;Message in unnamed thread&quot;));</span>
 <span class='doccomment'>//!     let _ = unnamed.join();</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//!     let _named = RaiiThreadJoiner::new(thread!(&quot;Worker&quot;,</span>
-<span class='doccomment'>//!                                                move || error!(&quot;Message in named thread&quot;)));</span>
+<span class='doccomment'>//!     let _named = maidsafe_utilities::thread::named(&quot;Worker&quot;,</span>
+<span class='doccomment'>//!                                      move || error!(&quot;Message in named thread&quot;));</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!     // WARN 16:10:44.989712300 &lt;main&gt; [example::my_mod main.rs:10] A warning</span>
 <span class='doccomment'>//!     // INFO 16:10:44.990716600 &lt;unnamed&gt; [example main.rs:19] Message in unnamed thread</span>
@@ -791,7 +792,7 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;Logger already initialised&quot;</span>.<span class='ident'>to_owned</span>());
 
     <span class='ident'>INITIALISE_LOGGER</span>.<span class='ident'>call_once</span>(<span class='op'>||</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config_path</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>current_exe</span>());
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config_path</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>current_exe</span>());
         <span class='ident'>config_path</span>.<span class='ident'>set_file_name</span>(<span class='ident'>CONFIG_FILE</span>);
 
         <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>config_path</span>.<span class='ident'>is_file</span>() {
@@ -1040,7 +1041,7 @@
         <span class='string'>&quot;%l %d{%H:%M:%S.%f} [%M #FS#%f#FE#:%L] %m&quot;</span>
     };
 
-    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>PatternLayout</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
+    <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>PatternLayout</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
 }
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -1121,7 +1122,7 @@
     <span class='kw'>use</span> <span class='ident'>ws</span>;
     <span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>Message</span>, <span class='ident'>Handler</span>};
     <span class='kw'>use</span> <span class='ident'>logger</span>::<span class='ident'>LogLevelFilter</span>;
-    <span class='kw'>use</span> <span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
+    <span class='kw'>use</span> <span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_parse_loggers</span>() {
@@ -1188,12 +1189,12 @@
         <span class='kw'>let</span> (<span class='ident'>tx</span>, <span class='ident'>rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
 
         <span class='comment'>// Start Log Message Server</span>
-        <span class='kw'>let</span> <span class='ident'>_raii_joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;LogMessageServer&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+        <span class='kw'>let</span> <span class='ident'>_raii_joiner</span> <span class='op'>=</span> <span class='ident'>Joiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;LogMessageServer&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
 
-            <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>TcpListener</span>::<span class='ident'>bind</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>));
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>tx</span>.<span class='ident'>send</span>(()));
-            <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>stream</span>, _) <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>listener</span>.<span class='ident'>accept</span>());
+            <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>TcpListener</span>::<span class='ident'>bind</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>));
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx</span>.<span class='ident'>send</span>(()));
+            <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>stream</span>, _) <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>listener</span>.<span class='ident'>accept</span>());
 
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>log_msgs</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='ident'>MSG_COUNT</span>);
 
@@ -1202,7 +1203,7 @@
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>search_frm_index</span> <span class='op'>=</span> <span class='number'>0</span>;
 
             <span class='kw'>while</span> <span class='ident'>log_msgs</span>.<span class='ident'>len</span>() <span class='op'>&lt;</span> <span class='ident'>MSG_COUNT</span> {
-                <span class='kw'>let</span> <span class='ident'>bytes_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>scratch_buf</span>));
+                <span class='kw'>let</span> <span class='ident'>bytes_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>scratch_buf</span>));
                 <span class='kw'>if</span> <span class='ident'>bytes_rxd</span> <span class='op'>==</span> <span class='number'>0</span> {
                     <span class='macro'>unreachable</span><span class='macro'>!</span>(<span class='string'>&quot;Should not have encountered shutdown yet&quot;</span>);
                 }
@@ -1211,8 +1212,7 @@
 
                 <span class='kw'>while</span> <span class='ident'>read_buf</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='ident'>search_frm_index</span> <span class='op'>&gt;=</span> <span class='ident'>MSG_TERMINATOR</span>.<span class='ident'>len</span>() {
                     <span class='kw'>if</span> <span class='ident'>read_buf</span>[<span class='ident'>search_frm_index</span>..].<span class='ident'>starts_with</span>(<span class='kw-2'>&amp;</span><span class='ident'>MSG_TERMINATOR</span>) {
-                        <span class='ident'>log_msgs</span>.<span class='ident'>push</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(
-                                <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>read_buf</span>[..<span class='ident'>search_frm_index</span>]))
+                        <span class='ident'>log_msgs</span>.<span class='ident'>push</span>(<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>read_buf</span>[..<span class='ident'>search_frm_index</span>]))
                             .<span class='ident'>to_owned</span>());
                         <span class='ident'>read_buf</span> <span class='op'>=</span> <span class='ident'>read_buf</span>.<span class='ident'>split_off</span>(<span class='ident'>search_frm_index</span> <span class='op'>+</span> <span class='ident'>MSG_TERMINATOR</span>.<span class='ident'>len</span>());
                         <span class='ident'>search_frm_index</span> <span class='op'>=</span> <span class='number'>0</span>;
@@ -1228,9 +1228,9 @@
             }
         }));
 
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
 
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>init_to_server</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>, <span class='boolval'>true</span>, <span class='boolval'>false</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_server</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>, <span class='boolval'>true</span>, <span class='boolval'>false</span>));
 
         <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
         <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;This is message 0&quot;</span>);
@@ -1265,18 +1265,18 @@
 
             <span class='kw'>impl</span> <span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>Server</span> {
                 <span class='kw'>fn</span> <span class='ident'>on_message</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>msg</span>: <span class='ident'>Message</span>) <span class='op'>-&gt;</span> <span class='ident'>ws</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-                    <span class='kw'>let</span> <span class='ident'>text</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>msg</span>.<span class='ident'>as_text</span>());
+                    <span class='kw'>let</span> <span class='ident'>text</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>msg</span>.<span class='ident'>as_text</span>());
                     <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>text</span>.<span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;This is message {}&quot;</span>, <span class='self'>self</span>.<span class='ident'>count</span>)[..]));
                     <span class='self'>self</span>.<span class='ident'>count</span> <span class='op'>+=</span> <span class='number'>1</span>;
                     <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>count</span> <span class='op'>==</span> <span class='ident'>MSG_COUNT</span> {
-                        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>tx</span>.<span class='ident'>send</span>(()));
+                        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>tx</span>.<span class='ident'>send</span>(()));
                     }
 
                     <span class='prelude-val'>Ok</span>(())
                 }
             }
 
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>ws</span>::<span class='ident'>listen</span>(<span class='string'>&quot;127.0.0.1:44444&quot;</span>, <span class='op'>|</span>_<span class='op'>|</span> {
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>ws</span>::<span class='ident'>listen</span>(<span class='string'>&quot;127.0.0.1:44444&quot;</span>, <span class='op'>|</span>_<span class='op'>|</span> {
                 <span class='ident'>Server</span> {
                     <span class='ident'>tx</span>: <span class='ident'>tx</span>.<span class='ident'>clone</span>(),
                     <span class='ident'>count</span>: <span class='number'>0</span>,
@@ -1287,7 +1287,7 @@
         <span class='comment'>// Allow sometime for server to start listening</span>
         <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>100</span>));
 
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>init_to_web_socket</span>(<span class='string'>&quot;ws://127.0.0.1:44444&quot;</span>, <span class='boolval'>false</span>, <span class='boolval'>false</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_web_socket</span>(<span class='string'>&quot;ws://127.0.0.1:44444&quot;</span>, <span class='boolval'>false</span>, <span class='boolval'>false</span>));
 
         <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
         <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;This is message 0&quot;</span>);
@@ -1302,7 +1302,7 @@
         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
         <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;This is message 2&quot;</span>);
 
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
     }
 }
 </pre>

@@ -1,1 +1,1 @@
-initSidebarItems({"macro":[["quick_error!","Main macro that does all the work"]]});
+initSidebarItems({"macro":[["quick_error!","Main macro that does all the work"]],"struct":[["Context",""]],"trait":[["ResultExt",""]]});

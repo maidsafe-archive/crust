@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-81' class='srclink' href='../../src/maidsafe_utilities/event_sender.rs.html#122-126' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-94' class='srclink' href='../../src/maidsafe_utilities/event_sender.rs.html#120-124' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct EventSender&lt;Category, EventSubset&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>This structure is coded to achieve event-subsetting. Receivers in Rust are blocking. One cannot
@@ -107,7 +107,7 @@ not permitted to. Also a single thread listens to many receivers. All problems s
                                                   <span class='ident'>EventCategory</span>::<span class='ident'>Network</span>,
                                                   <span class='ident'>category_tx</span>);
 
-    <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;EventListenerThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+    <span class='kw'>let</span> <span class='ident'>_joiner</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;EventListenerThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
         <span class='kw'>for</span> <span class='ident'>it</span> <span class='kw'>in</span> <span class='ident'>category_rx</span>.<span class='ident'>iter</span>() {
             <span class='kw'>match</span> <span class='ident'>it</span> {
                 <span class='ident'>EventCategory</span>::<span class='ident'>Network</span> <span class='op'>=&gt;</span> {
@@ -129,8 +129,6 @@ not permitted to. Also a single thread listens to many receivers. All problems s
             }
         }
     });
-
-    <span class='kw'>let</span> <span class='ident'>_raii_joiner</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='ident'>joiner</span>);
 
     <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>nw_event_sender</span>.<span class='ident'>send</span>(<span class='ident'>NetworkEvent</span>::<span class='ident'>Connected</span>).<span class='ident'>is_ok</span>());
     <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>ui_event_sender</span>.<span class='ident'>send</span>(<span class='ident'>UiEvent</span>::<span class='ident'>CreateDirectory</span>).<span class='ident'>is_ok</span>());

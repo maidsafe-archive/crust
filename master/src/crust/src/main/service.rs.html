@@ -666,6 +666,35 @@
 <span id="622">622</span>
 <span id="623">623</span>
 <span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -801,6 +830,35 @@
             };
             <span class='ident'>service_discovery</span>.<span class='ident'>set_listen</span>(<span class='ident'>listen</span>);
         });
+    }
+
+    <span class='comment'>// TODO temp remove</span>
+    <span class='doccomment'>/// Check if we have peers on LAN</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>has_peers_on_lan</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
+        <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
+        <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
+
+        <span class='kw'>let</span> (<span class='ident'>obs</span>, <span class='ident'>rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
+            <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>SERVICE_DISCOVERY_TOKEN</span>) {
+                <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=&gt;</span> <span class='ident'>state</span>,
+                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span>,
+            };
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
+            <span class='kw'>let</span> <span class='ident'>service_discovery</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>state</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>() {
+                <span class='prelude-val'>Some</span>(<span class='ident'>sd</span>) <span class='op'>=&gt;</span> <span class='ident'>sd</span>,
+                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
+                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Token reserved for ServiceDiscovery has something else.&quot;</span>);
+                    <span class='kw'>return</span>;
+                }
+            };
+            <span class='ident'>service_discovery</span>.<span class='ident'>register_observer</span>(<span class='ident'>obs</span>);
+            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>service_discovery</span>.<span class='ident'>seek_peers</span>();
+        });
+
+        <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>1</span>));
+        <span class='ident'>rx</span>.<span class='ident'>try_recv</span>().<span class='ident'>is_ok</span>()
     }
 
     <span class='doccomment'>/// Start the bootstrapping procedure. It will auto terminate after indicating success or</span>

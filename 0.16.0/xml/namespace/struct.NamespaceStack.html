@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `NamespaceStack` struct in crate `xml`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, NamespaceStack">
+
+    <title>xml::namespace::NamespaceStack - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>xml</a>::<wbr><a href='index.html'>namespace</a></p><script>window.sidebarCurrent = {name: 'NamespaceStack', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>xml</a>::<wbr><a href='index.html'>namespace</a>::<wbr><a class='struct' href=''>NamespaceStack</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-615' class='srclink' href='../../src/xml/namespace.rs.html#186' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct NamespaceStack(pub <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>&gt;);</pre><div class='docblock'><p>Namespace stack is a sequence of namespaces.</p>
+
+<p>Namespace stack is used to represent cumulative namespace consisting of
+combined namespaces from nested elements.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'><h4 id='method.empty' class='method'><code>fn <a href='#method.empty' class='fnname'>empty</a>() -&gt; <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h4>
+<div class='docblock'><p>Returns an empty namespace stack.</p>
+</div><h4 id='method.default' class='method'><code>fn <a href='#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h4>
+<div class='docblock'><p>Returns a namespace stack with default items in it.</p>
+
+<p>Default items are the following:</p>
+
+<ul>
+<li><code>xml</code> → <code>http://www.w3.org/XML/1998/namespace</code>;</li>
+<li><code>xmlns</code> → <code>http://www.w3.org/2000/xmlns/</code>.</li>
+</ul>
+</div><h4 id='method.push_empty' class='method'><code>fn <a href='#method.push_empty' class='fnname'>push_empty</a>(&amp;mut self) -&gt; &amp;mut <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h4>
+<div class='docblock'><p>Adds an empty namespace to the top of this stack.</p>
+</div><h4 id='method.pop' class='method'><code>fn <a href='#method.pop' class='fnname'>pop</a>(&amp;mut self) -&gt; <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h4>
+<div class='docblock'><p>Removes the topmost namespace in this stack.</p>
+
+<p>Panics if the stack is empty.</p>
+</div><h4 id='method.try_pop' class='method'><code>fn <a href='#method.try_pop' class='fnname'>try_pop</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>&gt;</code></h4>
+<div class='docblock'><p>Removes the topmost namespace in this stack.</p>
+
+<p>Returns <code>Some(namespace)</code> if this stack is not empty and <code>None</code> otherwise.</p>
+</div><h4 id='method.peek_mut' class='method'><code>fn <a href='#method.peek_mut' class='fnname'>peek_mut</a>(&amp;mut self) -&gt; &amp;mut <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h4>
+<div class='docblock'><p>Borrows the topmost namespace mutably, leaving the stack intact.</p>
+
+<p>Panics if the stack is empty.</p>
+</div><h4 id='method.peek' class='method'><code>fn <a href='#method.peek' class='fnname'>peek</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h4>
+<div class='docblock'><p>Borrows the topmost namespace immutably, leaving the stack intact.</p>
+
+<p>Panics if the stack is empty.</p>
+</div><h4 id='method.put_checked' class='method'><code>fn <a href='#method.put_checked' class='fnname'>put_checked</a>&lt;P, U&gt;(&amp;mut self, prefix: P, uri: U) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;, U: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</span></code></h4>
+<div class='docblock'><p>Puts a mapping into the topmost namespace if this stack does not already contain one.</p>
+
+<p>Returns a boolean flag indicating whether the insertion has completed successfully.
+Note that both key and value are matched and the mapping is inserted if either
+namespace prefix is not already mapped, or if it is mapped, but to a different URI.</p>
+
+<h1 id='parameters' class='section-header'><a href='#parameters'>Parameters</a></h1>
+<ul>
+<li><code>prefix</code> --- namespace prefix;</li>
+<li><code>uri</code>    --- namespace URI.</li>
+</ul>
+
+<h1 id='return-value' class='section-header'><a href='#return-value'>Return value</a></h1>
+<p><code>true</code> if <code>prefix</code> has been inserted successfully; <code>false</code> if the <code>prefix</code>
+was already present in the namespace stack.</p>
+</div><h4 id='method.put' class='method'><code>fn <a href='#method.put' class='fnname'>put</a>&lt;P, U&gt;(&amp;mut self, prefix: P, uri: U) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;, U: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</span></code></h4>
+<div class='docblock'><p>Puts a mapping into the topmost namespace in this stack.</p>
+
+<p>This method does not override a mapping in the topmost namespace if it is
+already present, however, it does not depend on other namespaces in the stack,
+so it is possible to put a mapping which is present in lower namespaces.</p>
+
+<p>Returns a boolean flag indicating whether the insertion has completed successfully.</p>
+
+<h1 id='parameters-1' class='section-header'><a href='#parameters-1'>Parameters</a></h1>
+<ul>
+<li><code>prefix</code> --- namespace prefix;</li>
+<li><code>uri</code>    --- namespace URI.</li>
+</ul>
+
+<h1 id='return-value-1' class='section-header'><a href='#return-value-1'>Return value</a></h1>
+<p><code>true</code> if <code>prefix</code> has been inserted successfully; <code>false</code> if the <code>prefix</code>
+was already present in the namespace.</p>
+</div><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>&lt;'a, P: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;(&amp;'a self, prefix: &amp;P) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></h4>
+<div class='docblock'><p>Performs a search for the given prefix in the whole stack.</p>
+
+<p>This method walks the stack from top to bottom, querying each namespace
+in order for the given prefix. If none of the namespaces contains the prefix,
+<code>None</code> is returned.</p>
+
+<h1 id='parameters-2' class='section-header'><a href='#parameters-2'>Parameters</a></h1>
+<ul>
+<li><code>prefix</code> --- namespace prefix.</li>
+</ul>
+</div><h4 id='method.squash' class='method'><code>fn <a href='#method.squash' class='fnname'>squash</a>(&amp;self) -&gt; <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h4>
+<div class='docblock'><p>Combines this stack of namespaces into a single namespace.</p>
+
+<p>Namespaces are combined in left-to-right order, that is, rightmost namespace
+elements take priority over leftmost ones.</p>
+</div><h4 id='method.checked_target' class='method'><code>fn <a href='#method.checked_target' class='fnname'>checked_target</a>(&amp;mut self) -&gt; <a class='struct' href='../../xml/namespace/struct.CheckedTarget.html' title='xml::namespace::CheckedTarget'>CheckedTarget</a></code></h4>
+<div class='docblock'><p>Returns an object which implements <code>Extend</code> using <code>put_checked()</code> instead of <code>put()</code>.</p>
+
+<p>See <code>CheckedTarget</code> for more information.</p>
+</div><h4 id='method.iter' class='method'><code>fn <a href='#method.iter' class='fnname'>iter</a>(&amp;self) -&gt; <a class='struct' href='../../xml/namespace/struct.NamespaceStackMappings.html' title='xml::namespace::NamespaceStackMappings'>NamespaceStackMappings</a></code></h4>
+<div class='docblock'><p>Returns an iterator over all mappings in this namespace stack.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a> for &amp;'a <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'><h4 id='associatedtype.Item' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#associatedtype.Item' class='type'>Item</a> = <a class='type' href='../../xml/namespace/type.UriMapping.html' title='xml::namespace::UriMapping'>UriMapping</a>&lt;'a&gt;</code></h4>
+<h4 id='associatedtype.IntoIter' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#associatedtype.IntoIter' class='type'>IntoIter</a> = <a class='struct' href='../../xml/namespace/struct.NamespaceStackMappings.html' title='xml::namespace::NamespaceStackMappings'>NamespaceStackMappings</a>&lt;'a&gt;</code></h4>
+<h4 id='method.into_iter' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html#tymethod.into_iter' class='fnname'>into_iter</a>(self) -&gt; Self::<a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIter</a></code></h4>
+</div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Extend.html' title='core::iter::Extend'>Extend</a>&lt;<a class='type' href='../../xml/namespace/type.UriMapping.html' title='xml::namespace::UriMapping'>UriMapping</a>&lt;'a&gt;&gt; for <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'><h4 id='method.extend' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/trait.Extend.html#tymethod.extend' class='fnname'>extend</a>&lt;T&gt;(&amp;mut self, iterable: T) <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=<a class='type' href='../../xml/namespace/type.UriMapping.html' title='xml::namespace::UriMapping'>UriMapping</a>&lt;'a&gt;&gt;</span></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../xml/namespace/struct.NamespaceStack.html' title='xml::namespace::NamespaceStack'>NamespaceStack</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "xml";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

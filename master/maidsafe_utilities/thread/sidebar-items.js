@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["RaiiThreadJoiner","A RAII style thread joiner. The destruction of an instance of this type will block until the thread it is managing has joined."]]});
+initSidebarItems({"fn":[["named","This function is intended to be used in all cases where we want to spawn a new thread with a given name and panic if we fail to create the thread."]],"struct":[["Joiner","A RAII style thread joiner. The destruction of an instance of this type will block until the thread it is managing has joined."]],"type":[["RaiiThreadJoiner","Deprecated name for `Joiner`"]]});

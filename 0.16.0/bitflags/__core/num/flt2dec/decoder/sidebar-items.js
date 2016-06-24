@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["FullDecoded","Decoded unsigned value."]],"fn":[["decode","Returns a sign (true when negative) and `FullDecoded` value from given floating point number."]],"struct":[["Decoded","Decoded unsigned finite value, such that:"]],"trait":[["DecodableFloat","A floating point type which can be `decode`d."]]});

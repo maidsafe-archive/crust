@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-851' class='srclink' href='../src/maidsafe_utilities/thread.rs.html#62-67' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-823' class='srclink' href='../src/maidsafe_utilities/thread.rs.html#74-79' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>thread</span> {
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>thread_name</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>entry_point</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> { ... };
@@ -63,7 +63,7 @@ and if that is not possible then panic out.</p>
 
 <span class='kw'>let</span> <span class='ident'>sleep_duration_ms</span> <span class='op'>=</span> <span class='number'>500</span>;
 <span class='kw'>let</span> <span class='ident'>_raii_joiner</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>
-                                     ::<span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;ManagedThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+                                     ::<span class='ident'>Joiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;ManagedThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
     <span class='ident'>std</span>::<span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='ident'>sleep_duration_ms</span>));
 }));</pre>
 </div></section>

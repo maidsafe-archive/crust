@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.7.0/src/serialisation.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.8.0/src/serialisation.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>serialisation.rs.html -- source</title>
@@ -236,8 +236,6 @@
 <span id="192">192</span>
 <span id="193">193</span>
 <span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -357,9 +355,8 @@
     <span class='kw'>fn</span> <span class='ident'>serialise_deserialise</span>() {
         <span class='kw'>let</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0u8</span>, <span class='number'>1</span>, <span class='number'>3</span>, <span class='number'>9</span>], <span class='macro'>vec</span><span class='macro'>!</span>[<span class='op'>-</span><span class='number'>1i64</span>, <span class='number'>888</span>, <span class='op'>-</span><span class='number'>8765</span>], <span class='string'>&quot;Some-String&quot;</span>.<span class='ident'>to_owned</span>());
 
-        <span class='kw'>let</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>));
-        <span class='kw'>let</span> <span class='ident'>deserialised_data</span>: (<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>i64</span><span class='op'>&gt;</span>, <span class='ident'>String</span>) <span class='op'>=</span>
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>));
+        <span class='kw'>let</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>));
+        <span class='kw'>let</span> <span class='ident'>deserialised_data</span>: (<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>i64</span><span class='op'>&gt;</span>, <span class='ident'>String</span>) <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data</span>);
     }
 
@@ -367,11 +364,11 @@
     <span class='kw'>fn</span> <span class='ident'>serialise_into_deserialise_from</span>() {
         <span class='kw'>let</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0u8</span>, <span class='number'>1</span>, <span class='number'>3</span>, <span class='number'>9</span>], <span class='macro'>vec</span><span class='macro'>!</span>[<span class='op'>-</span><span class='number'>1i64</span>, <span class='number'>888</span>, <span class='op'>-</span><span class='number'>8765</span>], <span class='string'>&quot;Some-String&quot;</span>.<span class='ident'>to_owned</span>());
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise_into</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised_data</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise_into</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised_data</span>));
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>serialised</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>serialised_data</span>);
         <span class='kw'>let</span> <span class='ident'>deserialised_data</span>: (<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>i64</span><span class='op'>&gt;</span>, <span class='ident'>String</span>) <span class='op'>=</span>
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised</span>));
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised</span>));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data</span>);
     }
 
@@ -383,14 +380,14 @@
         };
         <span class='comment'>// Test with data which is at limit</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='number'>1u64</span>..(<span class='ident'>upper_limit</span> <span class='op'>/</span> <span class='number'>8</span>)).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>));
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>deserialised_data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>deserialised_data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>));
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>original_data</span> <span class='op'>==</span> <span class='ident'>deserialised_data</span>);
 
         <span class='ident'>serialised_data</span>.<span class='ident'>clear</span>();
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise_into</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised_data</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise_into</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised_data</span>));
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>serialised</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>serialised_data</span>);
-        <span class='ident'>deserialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised</span>));
+        <span class='ident'>deserialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised</span>));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data</span>);
 
         <span class='comment'>// Try to serialise data above limit</span>
@@ -406,7 +403,7 @@
         }
 
         <span class='comment'>// Try to deserialise data above limit</span>
-        <span class='kw'>let</span> <span class='ident'>excessive</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>encode</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
+        <span class='kw'>let</span> <span class='ident'>excessive</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>encode</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>SerialisationError</span>::<span class='ident'>Deserialise</span>(<span class='ident'>DecodingError</span>::<span class='ident'>SizeLimit</span>)) <span class='op'>=</span>
                <span class='ident'>deserialise</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>excessive</span>) {} <span class='kw'>else</span> {
             <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected size limit error.&quot;</span>);
@@ -418,20 +415,19 @@
         }
 
         <span class='comment'>// Try to serialise data above default limit with size limit specified</span>
-        <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
+        <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
 
         <span class='ident'>buffer</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='ident'>serialised_data</span>.<span class='ident'>len</span>());
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise_into_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise_into_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>serialised_data</span>, <span class='ident'>buffer</span>);
 
         <span class='comment'>// Try to deserialise data above default limit with size limit specified</span>
-        <span class='kw'>let</span> <span class='ident'>deserialised_data_0</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>,
-                                                                        <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
+        <span class='kw'>let</span> <span class='ident'>deserialised_data_0</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise_with_limit</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_data</span>,
+                                                                           <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data_0</span>);
         <span class='kw'>let</span> <span class='ident'>deserialised_data_1</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span>
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>deserialise_from_with_limit</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>buffer</span>),
-                                                       <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise_from_with_limit</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>buffer</span>), <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>original_data</span>, <span class='ident'>deserialised_data_1</span>);
     }
 }

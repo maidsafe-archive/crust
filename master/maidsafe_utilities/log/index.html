@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-128' class='srclink' href='../../src/maidsafe_utilities/log/mod.rs.html#18-631' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-141' class='srclink' href='../../src/maidsafe_utilities/log/mod.rs.html#18-631' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Allows initialising the <code>env_logger</code> with a standard message format.
 These functions can initialise logging for output to stdout only, or to a file and stdout.  For
 more fine-grained control, create a file called <code>log.toml</code> in the root directory of the project,
@@ -76,9 +76,10 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>unwrap</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>maidsafe_utilities</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
-<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
+<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
 
 <span class='kw'>mod</span> <span class='ident'>my_mod</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>show_warning</span>() {
@@ -87,15 +88,15 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
 }
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>));
+    <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>));
 
     <span class='ident'>my_mod</span>::<span class='ident'>show_warning</span>();
 
     <span class='kw'>let</span> <span class='ident'>unnamed</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;Message in unnamed thread&quot;</span>));
     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>unnamed</span>.<span class='ident'>join</span>();
 
-    <span class='kw'>let</span> <span class='ident'>_named</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Worker&quot;</span>,
-                                               <span class='kw'>move</span> <span class='op'>||</span> <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Message in named thread&quot;</span>)));
+    <span class='kw'>let</span> <span class='ident'>_named</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;Worker&quot;</span>,
+                                     <span class='kw'>move</span> <span class='op'>||</span> <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Message in named thread&quot;</span>));
 
     <span class='comment'>// WARN 16:10:44.989712300 &lt;main&gt; [example::my_mod main.rs:10] A warning</span>
     <span class='comment'>// INFO 16:10:44.990716600 &lt;unnamed&gt; [example main.rs:19] Message in unnamed thread</span>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `VerboseUnwrap` trait in crate `unwrap`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, VerboseUnwrap">
+
+    <title>unwrap::VerboseUnwrap - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>unwrap</a></p><script>window.sidebarCurrent = {name: 'VerboseUnwrap', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>unwrap</a>::<wbr><a class='trait' href=''>VerboseUnwrap</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-5' class='srclink' href='../src/unwrap/lib.rs.html#7-29' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait VerboseUnwrap {
+    type <a href='#associatedtype.Wrapped' class='type'>Wrapped</a>;
+    fn <a href='#tymethod.verbose_unwrap' class='fnname'>verbose_unwrap</a>(self, message: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Arguments.html' title='core::fmt::Arguments'>Arguments</a>&gt;, module_path: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, file: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, line_number: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, column: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; Self::<a class='trait' href='../unwrap/trait.VerboseUnwrap.html' title='unwrap::VerboseUnwrap'>Wrapped</a>;
+}</pre><div class='docblock'><p>Types which can be unwrapped and which may want to print a verbose error message when they are
+unwrapped incorrectly. This trait is implemented for <code>Result</code> and <code>Option</code> as a replacement for
+their inherent <code>unwrap</code> methods. This trait is intended to be used via this crate&#39;s <code>unwrap!</code>
+macro.</p>
+</div>
+            <h2 id='associated-types'>Associated Types</h2>
+            <div class='methods'>
+        <h3 id='associatedtype.Wrapped' class='method stab '><code>type <a href='#associatedtype.Wrapped' class='type'>Wrapped</a></code></h3><div class='docblock'><p>The wrapped type.</p>
+</div></div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.verbose_unwrap' class='method stab '><code>fn <a href='#tymethod.verbose_unwrap' class='fnname'>verbose_unwrap</a>(self, message: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Arguments.html' title='core::fmt::Arguments'>Arguments</a>&gt;, module_path: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, file: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, line_number: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, column: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; Self::<a class='trait' href='../unwrap/trait.VerboseUnwrap.html' title='unwrap::VerboseUnwrap'>Wrapped</a></code></h3><div class='docblock'><p>Unwrap the value into it&#39;s inner type or panicks with an error message when the value
+cannot be unwrapped. This method is intended to be called via this crate&#39;s <code>unwrap!</code> macro.</p>
+
+<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
+<p>When the value cannot be unwrapped. Eg. on an <code>Err</code> or <code>None</code> value.</p>
+
+<h1 id='arguments' class='section-header'><a href='#arguments'>Arguments</a></h1>
+<p>These arguments are used to print a useful diagnostic when the method panicks.</p>
+
+<ul>
+<li><code>message</code>: An optional message, printed alongside the rest of the info.</li>
+<li><code>module_path</code>: The module path where this method is being called from. Eg.
+<code>my_crate::my_module::my_function</code></li>
+<li><code>file</code>: The filename where this method is being called from.</li>
+<li><code>line_number</code>: The line number where this method is being called from.</li>
+<li><code>column</code>: The column number where this method is being called from</li>
+</ul>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl&lt;T, E: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a>&gt; <a class='trait' href='../unwrap/trait.VerboseUnwrap.html' title='unwrap::VerboseUnwrap'>VerboseUnwrap</a> for <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, E&gt;</code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../unwrap/trait.VerboseUnwrap.html' title='unwrap::VerboseUnwrap'>VerboseUnwrap</a> for <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</code></li>
+</ul><script type="text/javascript" async
+                         src="../implementors/unwrap/trait.VerboseUnwrap.js">
+                 </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "unwrap";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

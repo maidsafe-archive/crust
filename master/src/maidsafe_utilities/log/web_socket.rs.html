@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.7.0/src/log/web_socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.8.0/src/log/web_socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>web_socket.rs.html -- source</title>
@@ -166,11 +166,11 @@
 <span class='kw'>use</span> <span class='ident'>ws</span>;
 <span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>CloseCode</span>, <span class='ident'>Handshake</span>, <span class='ident'>Handler</span>, <span class='ident'>Message</span>};
 
-<span class='kw'>use</span> <span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
+<span class='kw'>use</span> <span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>WebSocket</span> {
     <span class='ident'>ws_tx</span>: <span class='ident'>ws</span>::<span class='ident'>Sender</span>,
-    <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
+    <span class='ident'>_raii_joiner</span>: <span class='ident'>Joiner</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>WebSocket</span> {
@@ -203,7 +203,7 @@
             <span class='kw'>match</span> <span class='ident'>ws</span>::<span class='ident'>connect</span>(<span class='ident'>url</span>, <span class='op'>|</span><span class='ident'>ws_tx</span><span class='op'>|</span> {
                 <span class='ident'>Client</span> {
                     <span class='ident'>ws_tx</span>: <span class='ident'>ws_tx</span>,
-                    <span class='ident'>tx</span>: <span class='macro'>unwrap_option</span><span class='macro'>!</span>(<span class='ident'>tx_opt</span>.<span class='ident'>take</span>(), <span class='string'>&quot;Logic Error! Report as bug.&quot;</span>),
+                    <span class='ident'>tx</span>: <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx_opt</span>.<span class='ident'>take</span>(), <span class='string'>&quot;Logic Error! Report as bug.&quot;</span>),
                 }
             }) {
                 <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> (),
@@ -217,7 +217,7 @@
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>ws_tx</span>)) <span class='op'>=&gt;</span> {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>WebSocket</span> {
                     <span class='ident'>ws_tx</span>: <span class='ident'>ws_tx</span>,
-                    <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='ident'>joiner</span>),
+                    <span class='ident'>_raii_joiner</span>: <span class='ident'>Joiner</span>::<span class='ident'>new</span>(<span class='ident'>joiner</span>),
                 })
             }
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Err</span>(<span class='ident'>e</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>),
