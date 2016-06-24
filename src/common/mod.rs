@@ -24,13 +24,16 @@ pub use self::socket_addr::SocketAddr;
 pub use self::state::State;
 
 pub type NameHash = u64;
-/// Priority of a message to be sent by Crust. Priority 0 is the highest and will _not_ be dropped.
-/// Priority 255 is hence the least important and will be preempted/dropped if need be to allow
-/// higher priority messages through.
+/// Priority of a message to be sent by Crust. A lower value means a higher priority, so Priority 0
+/// is the highest one. Low-priority messages will be preempted if need be to allow higher priority
+/// messages through. Messages with a value `>= MSG_DROP_PRIORITY` will even be dropped, if
+/// bandwidth is insufficient.
 pub type Priority = u8;
 pub type Result<T> = ::std::result::Result<T, CommonError>;
 
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+/// Minimum priority for droppable messages. Messages with lower values will never be dropped.
+pub const MSG_DROP_PRIORITY: u8 = 2;
 
 pub mod get_if_addrs;
 mod core;
@@ -39,4 +42,3 @@ mod message;
 mod socket;
 mod socket_addr;
 mod state;
-

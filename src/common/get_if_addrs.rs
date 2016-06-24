@@ -40,7 +40,7 @@ pub struct Ifv6Addr {
     /// The netmask of the interface.
     pub netmask: Ipv6Addr,
     /// The broadcast address of the interface.
-    pub broadcast: Option<Ipv6Addr>
+    pub broadcast: Option<Ipv6Addr>,
 }
 
 impl Interface {
@@ -90,11 +90,11 @@ impl Ifv6Addr {
 #[cfg(not(windows))]
 mod getifaddrs_posix {
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-    use std::{mem, io};
+    use std::{io, mem};
     use std::ffi::CStr;
 
     use c_linked_list::CLinkedListMut;
-    use common::get_if_addrs::{Interface, IfAddr, Ifv4Addr, Ifv6Addr};
+    use common::get_if_addrs::{IfAddr, Ifv4Addr, Ifv6Addr, Interface};
     use libc::{AF_INET, AF_INET6};
     use libc::getifaddrs as posix_getifaddrs;
     use libc::freeifaddrs as posix_freeifaddrs;
@@ -168,7 +168,9 @@ mod getifaddrs_posix {
             if ifaddr.ifa_addr.is_null() {
                 continue;
             }
-            let name = unsafe { CStr::from_ptr(ifaddr.ifa_name as *const _) }.to_string_lossy().into_owned();
+            let name = unsafe { CStr::from_ptr(ifaddr.ifa_name as *const _) }
+                .to_string_lossy()
+                .into_owned();
             let addr = match sockaddr_to_ipaddr(ifaddr.ifa_addr) {
                 None => continue,
                 Some(IpAddr::V4(ipv4_addr)) => {
@@ -177,10 +179,12 @@ mod getifaddrs_posix {
                         _ => Ipv4Addr::new(0, 0, 0, 0),
                     };
                     let broadcast = match (ifaddr.ifa_flags & 2) != 0 {
-                        true => match do_broadcast(ifaddr) {
-                            Some(IpAddr::V4(broadcast)) => Some(broadcast),
-                            _ => None,
-                        },
+                        true => {
+                            match do_broadcast(ifaddr) {
+                                Some(IpAddr::V4(broadcast)) => Some(broadcast),
+                                _ => None,
+                            }
+                        }
                         false => None,
                     };
                     IfAddr::V4(Ifv4Addr {
@@ -188,17 +192,19 @@ mod getifaddrs_posix {
                         netmask: netmask,
                         broadcast: broadcast,
                     })
-                },
+                }
                 Some(IpAddr::V6(ipv6_addr)) => {
                     let netmask = match sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
                         Some(IpAddr::V6(netmask)) => netmask,
                         _ => Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0),
                     };
                     let broadcast = match (ifaddr.ifa_flags & 2) != 0 {
-                        true => match do_broadcast(ifaddr) {
-                            Some(IpAddr::V6(broadcast)) => Some(broadcast),
-                            _ => None,
-                        },
+                        true => {
+                            match do_broadcast(ifaddr) {
+                                Some(IpAddr::V6(broadcast)) => Some(broadcast),
+                                _ => None,
+                            }
+                        }
                         false => None,
                     };
                     IfAddr::V6(Ifv6Addr {
@@ -206,7 +212,7 @@ mod getifaddrs_posix {
                         netmask: netmask,
                         broadcast: broadcast,
                     })
-                },
+                }
             };
             ret.push(Interface {
                 name: name,
@@ -233,10 +239,10 @@ mod getifaddrs_windows {
     use std::ffi::CStr;
 
     use c_linked_list::CLinkedListConst;
-    use common::get_if_addrs::{Interface, IfAddr, Ifv4Addr, Ifv6Addr};
-    use libc::{c_void, c_char, c_ulong, size_t, c_int};
+    use common::get_if_addrs::{IfAddr, Ifv4Addr, Ifv6Addr, Interface};
+    use libc::{c_char, c_int, c_ulong, c_void, size_t};
     use libc;
-    use winapi::{DWORD, AF_INET, AF_INET6, sockaddr_in6, ERROR_SUCCESS};
+    use winapi::{AF_INET, AF_INET6, DWORD, ERROR_SUCCESS, sockaddr_in6};
     use winapi::SOCKADDR as sockaddr;
     use winapi::SOCKADDR_IN as sockaddr_in;
 
@@ -352,17 +358,16 @@ mod getifaddrs_windows {
                 if ifaddrs.is_null() {
                     panic!("Failed to allocate buffer in get_if_addrs()");
                 }
-                let retcode =
-                    GetAdaptersAddresses(0,
-                                         // GAA_FLAG_SKIP_ANYCAST       |
-                                         // GAA_FLAG_SKIP_MULTICAST     |
-                                         // GAA_FLAG_SKIP_DNS_SERVER    |
-                                         // GAA_FLAG_INCLUDE_PREFIX     |
-                                         // GAA_FLAG_SKIP_FRIENDLY_NAME
-                                         0x3e,
-                                         ptr::null(),
-                                         ifaddrs,
-                                         &mut buffersize);
+                let retcode = GetAdaptersAddresses(0,
+                                                   // GAA_FLAG_SKIP_ANYCAST       |
+                                                   // GAA_FLAG_SKIP_MULTICAST     |
+                                                   // GAA_FLAG_SKIP_DNS_SERVER    |
+                                                   // GAA_FLAG_INCLUDE_PREFIX     |
+                                                   // GAA_FLAG_SKIP_FRIENDLY_NAME
+                                                   0x3e,
+                                                   ptr::null(),
+                                                   ifaddrs,
+                                                   &mut buffersize);
                 match retcode {
                     ERROR_SUCCESS => break,
                     111 => {
@@ -376,8 +381,12 @@ mod getifaddrs_windows {
         }
 
         for ifaddr in unsafe { CLinkedListConst::from_ptr(ifaddrs, |a| a.next) }.iter() {
-            for addr in unsafe { CLinkedListConst::from_ptr(ifaddr.first_unicast_address, |a| a.next) }.iter() {
-                let name = unsafe { CStr::from_ptr(ifaddr.adapter_name) }.to_string_lossy().into_owned();
+            for addr in unsafe {
+                    CLinkedListConst::from_ptr(ifaddr.first_unicast_address, |a| a.next)
+                }
+                .iter() {
+                let name =
+                    unsafe { CStr::from_ptr(ifaddr.adapter_name) }.to_string_lossy().into_owned();
 
                 let addr = match sockaddr_to_ipaddr(addr.address.lp_socket_address) {
                     None => continue,
@@ -385,7 +394,10 @@ mod getifaddrs_windows {
                         let mut item_netmask = Ipv4Addr::new(0, 0, 0, 0);
                         let mut item_broadcast = None;
                         // Search prefixes for a prefix matching addr
-                        'prefixloopv4: for prefix in unsafe { CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next) }.iter() {
+                        'prefixloopv4: for prefix in unsafe {
+                                CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next)
+                            }
+                            .iter() {
                             let ipprefix = sockaddr_to_ipaddr(prefix.address.lp_socket_address);
                             match ipprefix {
                                 Some(IpAddr::V4(ref a)) => {
@@ -418,20 +430,23 @@ mod getifaddrs_windows {
                                                                         broadcast[2],
                                                                         broadcast[3]));
                                     break 'prefixloopv4;
-                                },
+                                }
                                 _ => continue,
                             };
-                        };
+                        }
                         IfAddr::V4(Ifv4Addr {
                             ip: ipv4_addr,
                             netmask: item_netmask,
                             broadcast: item_broadcast,
                         })
-                    },
+                    }
                     Some(IpAddr::V6(ipv6_addr)) => {
                         let mut item_netmask = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0);
                         // Search prefixes for a prefix matching addr
-                        'prefixloopv6: for prefix in unsafe { CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next) }.iter() {
+                        'prefixloopv6: for prefix in unsafe {
+                                CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next)
+                            }
+                            .iter() {
                             let ipprefix = sockaddr_to_ipaddr(prefix.address.lp_socket_address);
                             match ipprefix {
                                 Some(IpAddr::V6(ref a)) => {
@@ -471,7 +486,7 @@ mod getifaddrs_windows {
                             netmask: item_netmask,
                             broadcast: None,
                         })
-                    },
+                    }
                 };
                 ret.push(Interface {
                     name: name,
@@ -503,7 +518,7 @@ mod test {
     use std::thread;
     use std::time::Duration;
 
-    fn list_system_interfaces (cmd: &str, arg: &str) -> String {
+    fn list_system_interfaces(cmd: &str, arg: &str) -> String {
         let start_cmd = if arg == "" {
             Command::new(cmd).stdout(Stdio::piped()).spawn()
         } else {
@@ -525,43 +540,52 @@ mod test {
     #[cfg(windows)]
     fn list_system_addrs() -> Vec<IpAddr> {
         use std::net::Ipv6Addr;
-        list_system_interfaces("ipconfig", "").lines().filter_map(|line| {
-            println!("{}", line);
-            if line.contains("Address") && !line.contains("Link-local") {
-                let addr_s : Vec<&str> = line.split(" : ").collect();
-                if line.contains("IPv6") {
-                    return Some(IpAddr::V6(Ipv6Addr::from_str(addr_s[1]).ok().unwrap()));
-                } else if line.contains("IPv4") {
-                    return Some(IpAddr::V4(Ipv4Addr::from_str(addr_s[1]).ok().unwrap()));
+        list_system_interfaces("ipconfig", "")
+            .lines()
+            .filter_map(|line| {
+                println!("{}", line);
+                if line.contains("Address") && !line.contains("Link-local") {
+                    let addr_s: Vec<&str> = line.split(" : ").collect();
+                    if line.contains("IPv6") {
+                        return Some(IpAddr::V6(Ipv6Addr::from_str(addr_s[1]).ok().unwrap()));
+                    } else if line.contains("IPv4") {
+                        return Some(IpAddr::V4(Ipv4Addr::from_str(addr_s[1]).ok().unwrap()));
+                    }
                 }
-            }
-            None
-        }).collect()
+                None
+            })
+            .collect()
     }
 
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "nacl"))]
     fn list_system_addrs() -> Vec<IpAddr> {
-        list_system_interfaces("ip", "addr").lines().filter_map(|line| {
-            println!("{}", line);
-            if line.contains("inet ") {
-                let addr_s : Vec<&str> = line.split_whitespace().collect();
-                let addr : Vec<&str> = addr_s[1].split("/").collect();
-                return Some(IpAddr::V4(Ipv4Addr::from_str(addr[0]).ok().unwrap()));
-            }
-            None
-        }).collect()
+        list_system_interfaces("ip", "addr")
+            .lines()
+            .filter_map(|line| {
+                println!("{}", line);
+                if line.contains("inet ") {
+                    let addr_s: Vec<&str> = line.split_whitespace().collect();
+                    let addr: Vec<&str> = addr_s[1].split("/").collect();
+                    return Some(IpAddr::V4(Ipv4Addr::from_str(addr[0]).ok().unwrap()));
+                }
+                None
+            })
+            .collect()
     }
 
     #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "ios"))]
     fn list_system_addrs() -> Vec<IpAddr> {
-        list_system_interfaces("ifconfig", "").lines().filter_map(|line| {
-            println!("{}", line);
-            if line.contains("inet ") {
-                let addr_s : Vec<&str> = line.split_whitespace().collect();
-                return Some(IpAddr::V4(Ipv4Addr::from_str(addr_s[1]).ok().unwrap()));
-            }
-            None
-        }).collect()
+        list_system_interfaces("ifconfig", "")
+            .lines()
+            .filter_map(|line| {
+                println!("{}", line);
+                if line.contains("inet ") {
+                    let addr_s: Vec<&str> = line.split_whitespace().collect();
+                    return Some(IpAddr::V4(Ipv4Addr::from_str(addr_s[1]).ok().unwrap()));
+                }
+                None
+            })
+            .collect()
     }
 
     #[test]
@@ -572,9 +596,10 @@ mod test {
         // at least one loop back address
         assert!(1 <= ifaces.iter().filter(|interface| interface.is_loopback()).count());
         // one address of IpV4(127.0.0.1)
-        assert!(1 == ifaces.iter().filter(|interface| {
-            interface.addr.ip() == IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))
-        }).count());
+        assert!(1 ==
+                ifaces.iter()
+            .filter(|interface| interface.addr.ip() == IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)))
+            .count());
 
         // each system address shall be listed
         let system_addrs = list_system_addrs();
@@ -591,4 +616,3 @@ mod test {
         }
     }
 }
-
