@@ -1,6 +1,6 @@
 # CRUST - Change Log
 
-## [0.15.1]
+## [0.16.0]
 - Do not drop messages with Priority value below 2
 - Pull in socket_addr and get_if_addrs crate
 - Refactor to have hole punch and direct connects take the same code route - update NAT Traversal logic
