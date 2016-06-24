@@ -76,7 +76,7 @@ mod common;
 mod service_discovery;
 mod nat;
 
-pub use common::Priority;
+pub use common::{MSG_DROP_PRIORITY, Priority};
 pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
 
@@ -84,4 +84,3 @@ pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionIn
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 /// Crust's result type
 pub type Res<T> = Result<T, CrustError>;
-
