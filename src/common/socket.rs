@@ -28,8 +28,10 @@ use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
 use mio::tcp::TcpStream;
 use rustc_serialize::{Decodable, Encodable};
 
-// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+/// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
 const MAX_MSG_AGE_SECS: u64 = 60;
+/// Minimum priority for droppable messages. Messages with lower values will never be dropped.
+pub const MSG_DROP_PRIORITY: u8 = 2;
 
 pub struct Socket {
     stream: TcpStream,
@@ -135,7 +137,7 @@ impl Socket {
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
             .skip_while(|&(&priority, ref queue)| {
-                priority == 0 || // Don't drop messages with priority 0.
+                priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
                 queue.front().map_or(false, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
                 })
