@@ -327,21 +327,21 @@ mod getifaddrs_windows {
                 return None;
             }
             Some(IpAddr::V6(Ipv6Addr::new(((sa.sin6_addr.s6_addr[0] as u16 & 255) << 8) |
-                                          sa.sin6_addr.s6_addr[0] as u16,
-                                          ((sa.sin6_addr.s6_addr[1] as u16 & 255) << 8) |
                                           sa.sin6_addr.s6_addr[1] as u16,
                                           ((sa.sin6_addr.s6_addr[2] as u16 & 255) << 8) |
-                                          sa.sin6_addr.s6_addr[2] as u16,
-                                          ((sa.sin6_addr.s6_addr[3] as u16 & 255) << 8) |
                                           sa.sin6_addr.s6_addr[3] as u16,
                                           ((sa.sin6_addr.s6_addr[4] as u16 & 255) << 8) |
-                                          sa.sin6_addr.s6_addr[4] as u16,
-                                          ((sa.sin6_addr.s6_addr[5] as u16 & 255) << 8) |
                                           sa.sin6_addr.s6_addr[5] as u16,
                                           ((sa.sin6_addr.s6_addr[6] as u16 & 255) << 8) |
-                                          sa.sin6_addr.s6_addr[6] as u16,
-                                          ((sa.sin6_addr.s6_addr[7] as u16 & 255) << 8) |
-                                          sa.sin6_addr.s6_addr[7] as u16)))
+                                          sa.sin6_addr.s6_addr[7] as u16,
+                                          ((sa.sin6_addr.s6_addr[8] as u16 & 255) << 8) |
+                                          sa.sin6_addr.s6_addr[9] as u16,
+                                          ((sa.sin6_addr.s6_addr[10] as u16 & 255) << 8) |
+                                          sa.sin6_addr.s6_addr[11] as u16,
+                                          ((sa.sin6_addr.s6_addr[12] as u16 & 255) << 8) |
+                                          sa.sin6_addr.s6_addr[13] as u16,
+                                          ((sa.sin6_addr.s6_addr[14] as u16 & 255) << 8) |
+                                          sa.sin6_addr.s6_addr[15] as u16)))
         } else {
             None
         }
