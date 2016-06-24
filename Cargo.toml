@@ -7,7 +7,7 @@ license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.15.0"
+version = "0.15.1"
 
 [dependencies]
 byteorder = "~0.5.1"
@@ -17,17 +17,21 @@ crossbeam = "~0.2.9"
 igd = "~0.4.2"
 libc = "~0.2.12"
 log = "~0.3.6"
-maidsafe_utilities = "~0.7.0"
+maidsafe_utilities = "~0.8.0"
 net2 = "~0.2.23"
-quick-error = "~1.0.0"
+quick-error = "~1.1.0"
 rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
 sodiumoxide = "~0.0.10"
 tmp_mio = "~0.5.2"
 
-[target.'cfg(target_os = "windows")'.dependencies]
-winapi = "0.2"
-
 [dependencies.clippy]
 optional = true
 version = "~0.0.76"
+
+[target]
+
+[target."cfg(target_os = \"windows\")"]
+
+[target."cfg(target_os = \"windows\")".dependencies]
+winapi = "0.2"
