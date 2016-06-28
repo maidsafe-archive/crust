@@ -29,6 +29,9 @@ use mio::tcp::TcpStream;
 use rustc_serialize::{Decodable, Encodable};
 
 // Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+#[cfg(test)]
+pub const MAX_MSG_AGE_SECS: u64 = 60;
+#[cfg(not(test))]
 const MAX_MSG_AGE_SECS: u64 = 60;
 
 pub struct Socket {
@@ -210,6 +213,11 @@ impl Socket {
         try!(el.reregister(self, token, event_set, PollOpt::edge()));
 
         Ok(done)
+    }
+
+    #[cfg(test)]
+    pub fn take_socket_error(&self) -> io::Result<()> {
+        self.stream.take_socket_error()
     }
 }
 

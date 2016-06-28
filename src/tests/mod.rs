@@ -433,3 +433,252 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
         _ => (),
     }
 }
+
+#[test]
+/// Properties that message prioritisation needs to maintain:
+///
+/// 1. Priority 0 should never be dropped.
+/// 2. For rest if msg is expired, drop all subsequent messages in all
+///    subsequent queues (even if the subsequent queues have msgs that
+///    haven't yet expired).
+fn message_prioritisation() {
+    use std::any::Any;
+    use std::cell::{Cell, RefCell};
+    use std::rc::Rc;
+
+    use common::{Core, CoreTimerId, State, Socket, MAX_MSG_AGE_SECS};
+    use mio::EventLoop;
+    use mio::{EventSet, PollOpt, Token};
+    use mio::tcp::TcpListener;
+
+    struct Listen {
+        listener: TcpListener,
+        token: Token,
+        counter: Cell<u32>,
+    }
+
+    impl Listen {
+        pub fn start(core: &mut Core, el: &mut EventLoop<Core>,
+                     counter: Cell<u32>)
+                     -> StdSocketAddr {
+            let listener = unwrap_result!(TcpListener::bind(&"127.0.0.1:0"
+                                                            .parse().unwrap()));
+            let addr = {
+                let port = listener.local_addr().unwrap().port();
+                format!("127.0.0.1:{}", port).parse().unwrap()
+            };
+            let token = core.get_new_token();
+
+            unwrap_result!(el.register(&listener, token, EventSet::readable(),
+                                       PollOpt::edge()));
+
+            let state = Listen {
+                listener: listener,
+                token: token,
+                counter: counter,
+            };
+
+            let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
+            addr
+        }
+    }
+
+    impl State for Listen {
+        fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>,
+                 _: EventSet) {
+            println!("ARE YOU READYYYYYY?");
+            match unwrap_result!(self.listener.accept()) {
+                Some((socket, _)) => {
+                    unwrap_result!(el.deregister(&self.listener));
+
+                    let socket = Socket::wrap(socket);
+                    ConnectionB::start(core, el, socket, self.counter.clone());
+                }
+
+                None => {
+                    unwrap_result!(el.register(&self.listener,
+                                               self.token,
+                                               EventSet::readable(),
+                                               PollOpt::edge()));
+                }
+            }
+        }
+
+        fn as_any(&mut self) -> &mut Any {
+            self
+        }
+    }
+
+    struct ConnectionA {
+        socket: Socket,
+        token: Token,
+        counter: Cell<u32>,
+        data_sent: bool,
+    }
+
+    impl ConnectionA {
+        pub fn start(core: &mut Core, el: &mut EventLoop<Core>,
+                     addr: StdSocketAddr, counter: Cell<u32>) {
+            let socket = unwrap_result!(Socket::connect(&addr));
+            let token = core.get_new_token();
+
+            unwrap_result!(el.register(&socket, token, EventSet::all(),
+                                       PollOpt::all()));
+
+            let state = ConnectionA {
+                socket: socket,
+                token: token,
+                counter: counter,
+                data_sent: false,
+            };
+            let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
+
+            let timer_id = CoreTimerId {
+                state_id: self.token, timer_id: 1
+            };
+            let ms = MAX_MSG_AGE_SECS * 1000 * 3 + 4000;
+            let _ = unwrap_result!(el.timeout_ms(timer_id, ms));
+        }
+    }
+
+    impl State for ConnectionA {
+        fn ready(&mut self, _core: &mut Core, el: &mut EventLoop<Core>,
+                 es: EventSet) {
+            if es.is_writable() {
+                if self.data_sent {
+                    let _ = unwrap_result!(self.socket
+                                           .write::<Vec<u32>>(el, self.token,
+                                                              None));
+                } else {
+                    let m = (0..1024).collect::<Vec<u32>>();
+                    let m1 = {
+                        let mut m = m.clone();
+                        *unwrap_option!(m.get_mut(0), "") = 1;
+                        m
+                    };
+                    let _ = unwrap_result!(self.socket
+                                           .write(el, self.token,
+                                                  Some((m1.clone(), 1))));
+                    let mut count = 1;
+                    loop {
+                        let x = unwrap_result!(self.socket
+                                               .write(el, self.token,
+                                                      Some((m.clone(), 0))));
+                        count += 1;
+                        if x == false {
+                            break;
+                        }
+                    }
+                    let _ = unwrap_result!(self.socket.write(el, self.token,
+                                                             Some((m1, 1))));
+                    let _ = unwrap_result!(self.socket.write(el, self.token,
+                                                             Some((m, 0))));
+                    self.counter.set(count);
+                    self.data_sent = true;
+
+                    unwrap_result!(el.deregister(&self.socket));
+                    let timer_id = CoreTimerId {
+                        state_id: self.token, timer_id: 0
+                    };
+                    let ms = MAX_MSG_AGE_SECS * 1000 + 3000;
+                    let _ = unwrap_result!(el.timeout_ms(timer_id, ms));
+                    println!("timeout scheduled");
+                }
+            }
+            if es.is_error() {
+                panic!("ConnectionA's socket errored: {:?}",
+                       self.socket.take_socket_error());
+            }
+        }
+
+        fn timeout(&mut self, _core: &mut Core, el: &mut EventLoop<Core>,
+                   timer_id: u8) {
+            match timer_id {
+                0 => (),
+                1 => panic!("Test is taking too long. Aborting..."),
+                _ => unreachable!(),
+            }
+            unwrap_result!(el.register(&self.socket, self.token,
+                                       EventSet::all(), PollOpt::edge()));
+            println!("timeout reached");
+        }
+
+        fn as_any(&mut self) -> &mut Any {
+            self
+        }
+    }
+
+    struct ConnectionB {
+        socket: Socket,
+        token: Token,
+        counter: Cell<u32>,
+        msgs_read: u32,
+    }
+
+    impl ConnectionB {
+        pub fn start(core: &mut Core, el: &mut EventLoop<Core>,
+                     socket: Socket, counter: Cell<u32>) {
+            let token = core.get_new_token();
+
+            unwrap_result!(el.register(&socket, token, EventSet::all(),
+                                       PollOpt::edge()));
+
+            let state = ConnectionB {
+                socket: socket,
+                token: token,
+                counter: counter,
+                msgs_read: 0,
+            };
+
+            let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
+        }
+    }
+
+    impl State for ConnectionB {
+        fn ready(&mut self, _core: &mut Core, el: &mut EventLoop<Core>,
+                 es: EventSet) {
+            if es.is_readable() {
+                while let Some(msg)
+                    = unwrap_result!(self.socket.read::<Vec<u32>>()) {
+                        let priority_0 = *unwrap_option!(msg.get(0), "") == 0;
+                        if self.msgs_read != 0 {
+                            assert!(priority_0);
+                            self.msgs_read += 1;
+                        }
+                        if self.counter.get() != 0
+                            && self.msgs_read == self.counter.get() {
+                                let timer_id = CoreTimerId {
+                                    state_id: self.token, timer_id: 0
+                                };
+                                let ms = MAX_MSG_AGE_SECS * 1000 * 2;
+                                let _ = unwrap_result!(el.timeout_ms(timer_id,
+                                                                     ms));
+                                return;
+                        }
+                }
+                println!("UPDATE {} {}", self.msgs_read, self.counter.get());
+            }
+            unwrap_result!(el.reregister(&self.socket, self.token,
+                                         EventSet::all(), PollOpt::edge()));
+        }
+
+        fn timeout(&mut self, _core: &mut Core, el: &mut EventLoop<Core>,
+                   timer_id: u8) {
+            assert_eq!(timer_id, 0);
+            el.shutdown();
+        }
+
+        fn as_any(&mut self) -> &mut Any {
+            self
+        }
+    }
+
+    let mut el = EventLoop::new().unwrap();
+    let mut core = Core::new();
+    let counter = Cell::new(0);
+    {
+        let addr = Listen::start(&mut core, &mut el, counter.clone());
+        ConnectionA::start(&mut core, &mut el, addr, counter);
+    }
+    unwrap_result!(el.run(&mut core));
+}

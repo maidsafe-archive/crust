@@ -23,6 +23,9 @@ pub use self::socket::Socket;
 pub use self::socket_addr::SocketAddr;
 pub use self::state::State;
 
+#[cfg(test)]
+pub use self::socket::MAX_MSG_AGE_SECS;
+
 pub type NameHash = u64;
 /// Priority of a message to be sent by Crust. Priority 0 is the highest and will _not_ be dropped.
 /// Priority 255 is hence the least important and will be preempted/dropped if need be to allow
