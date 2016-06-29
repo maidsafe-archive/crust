@@ -304,7 +304,7 @@ impl Service {
             match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
                 let hole_punch_addrs = addrs.into_iter()
                     .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
-                    .map(|elt| common::SocketAddr(elt))
+                    .map(common::SocketAddr)
                     .collect();
                 let event_tx = event_tx_clone;
                 let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
@@ -388,15 +388,15 @@ mod tests {
     fn direct_connect_two_peers() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let mut service_0 = unwrap_result!(Service::new(event_tx_0));
+            let mut service_0 = unwrap!(Service::new(event_tx_0));
 
-            unwrap_result!(service_0.start_listening_tcp());
+            unwrap!(service_0.start_listening_tcp());
             expect_event!(event_rx_0, Event::ListenerStarted(_));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let mut service_1 = unwrap_result!(Service::new(event_tx_1));
+            let mut service_1 = unwrap!(Service::new(event_tx_1));
 
-            unwrap_result!(service_1.start_listening_tcp());
+            unwrap!(service_1.start_listening_tcp());
             expect_event!(event_rx_1, Event::ListenerStarted(_));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
@@ -410,10 +410,10 @@ mod tests {
         maidsafe_utilities::log::init(true).unwrap();
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let service_0 = unwrap_result!(Service::new(event_tx_0));
+            let service_0 = unwrap!(Service::new(event_tx_0));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let service_1 = unwrap_result!(Service::new(event_tx_1));
+            let service_1 = unwrap!(Service::new(event_tx_1));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
             debug!("Exchanging messages ...");
@@ -434,16 +434,16 @@ mod tests {
         let conn_info_result_1 =
             expect_event!(event_rx_1, Event::ConnectionInfoPrepared(result) => result);
 
-        let priv_info_0 = unwrap_result!(conn_info_result_0.result);
-        let priv_info_1 = unwrap_result!(conn_info_result_1.result);
+        let priv_info_0 = unwrap!(conn_info_result_0.result);
+        let priv_info_1 = unwrap!(conn_info_result_1.result);
         let pub_info_0 = priv_info_0.to_pub_connection_info();
         let pub_info_1 = priv_info_1.to_pub_connection_info();
 
-        unwrap_result!(service_0.connect(priv_info_0, pub_info_1));
+        unwrap!(service_0.connect(priv_info_0, pub_info_1));
         if cfg!(windows) {
             thread::sleep(Duration::from_millis(100));
         }
-        unwrap_result!(service_1.connect(priv_info_1, pub_info_0));
+        unwrap!(service_1.connect(priv_info_1, pub_info_0));
 
         expect_event!(event_rx_0, Event::ConnectSuccess(id) => assert_eq!(id, service_1.id()));
         expect_event!(event_rx_1, Event::ConnectSuccess(id) => assert_eq!(id, service_0.id()));
@@ -464,8 +464,8 @@ mod tests {
         let data_1: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
         let send_1 = data_1.clone();
 
-        unwrap_result!(service_0.send(id_1, data_0, 0));
-        unwrap_result!(service_1.send(id_0, data_1, 0));
+        unwrap!(service_0.send(id_1, data_0, 0));
+        unwrap!(service_1.send(id_0, data_1, 0));
 
         let recv_1 = expect_event!(event_rx_0, Event::NewMessage(id, recv) => {
             assert_eq!(id, id_1);
@@ -489,10 +489,10 @@ mod tests {
 
         service.prepare_connection_info(token);
 
-        match unwrap_result!(event_rx.recv()) {
+        match unwrap!(event_rx.recv()) {
             Event::ConnectionInfoPrepared(cir) => {
                 assert_eq!(cir.result_token, token);
-                unwrap_result!(cir.result)
+                unwrap!(cir.result)
             }
             event => panic!("Received unexpected event: {:?}", event),
         }
@@ -516,11 +516,11 @@ mod tests {
         impl TestNode {
             fn new(index: usize) -> (TestNode, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
-                let config = unwrap_result!(::main::config_handler::read_config_file());
-                let mut service = unwrap_result!(Service::with_config(event_sender, config));
+                let config = unwrap!(::main::config_handler::read_config_file());
+                let mut service = unwrap!(Service::with_config(event_sender, config));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());
-                match unwrap_result!(event_rx.recv()) {
+                match unwrap!(event_rx.recv()) {
                     Event::ListenerStarted(_) => (),
                     m => panic!("Unexpected event: {:?}", m),
                 }
@@ -557,7 +557,7 @@ mod tests {
                     }
                     let mut their_ids = HashMap::new();
                     for _ in 0..NUM_SERVICES - 1 {
-                        let their_id = match unwrap_result!(self.event_rx.recv()) {
+                        let their_id = match unwrap!(self.event_rx.recv()) {
                             Event::ConnectSuccess(their_id) => their_id,
                             m => panic!("Expected ConnectSuccess message. Got message {:?}", m),
                         };
@@ -582,7 +582,7 @@ mod tests {
                     }
 
                     for _ in 0..((NUM_SERVICES - 1) * NUM_MSGS) {
-                        match unwrap_result!(self.event_rx.recv()) {
+                        match unwrap!(self.event_rx.recv()) {
                             Event::NewMessage(their_id, msg) => {
                                 let n = msg[0];
                                 assert_eq!(msg.len(), MSG_SIZE);
@@ -646,7 +646,7 @@ mod tests {
         let timeout_ms = 10000 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
         timebomb(Duration::from_millis(timeout_ms), move || {
             for thread in threads {
-                unwrap_result!(thread.join());
+                unwrap!(thread.join());
             }
         });
     }

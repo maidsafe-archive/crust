@@ -167,7 +167,7 @@ impl ExchangeMsg {
              msg: Option<(Message, Priority)>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_id) = self.next_state {
-            let terminate = match self.cm.lock().unwrap().get(&their_id).map(|elt| *elt) {
+            let terminate = match self.cm.lock().unwrap().get(&their_id).cloned() {
                 Some(ConnectionId { active_connection: Some(_), .. }) => true,
                 _ => false,
             };

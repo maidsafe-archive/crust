@@ -28,14 +28,14 @@ use main::{Config, Event};
 // given pattern.
 macro_rules! expect_event {
     ($rx:expr, $pattern:pat) => {
-        match unwrap_result!($rx.recv()) {
+        match unwrap!($rx.recv()) {
             $pattern => (),
             e => panic!("unexpected event {:?}", e),
         }
     };
 
     ($rx:expr, $pattern:pat => $arm:expr) => {
-        match unwrap_result!($rx.recv()) {
+        match unwrap!($rx.recv()) {
             $pattern => $arm,
             e => panic!("unexpected event {:?}", e),
         }

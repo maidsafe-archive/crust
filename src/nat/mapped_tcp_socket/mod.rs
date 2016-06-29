@@ -174,7 +174,7 @@ impl<F> State for MappedTcpSocket<F>
     where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<SocketAddr>) + Any
 {
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: u8) {
-        return self.terminate(core, el);
+        self.terminate(core, el)
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
