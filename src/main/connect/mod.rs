@@ -95,7 +95,7 @@ impl Connect {
             sockets.extend(nat_sockets.into_iter()
                 .zip(their_hole_punch.into_iter().map(|elt| elt.0))
                 .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
-                .map(|elt| Socket::wrap(elt))
+                .map(Socket::wrap)
                 .collect::<Vec<_>>());
         }
 

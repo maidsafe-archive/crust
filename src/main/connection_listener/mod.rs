@@ -125,7 +125,7 @@ impl ConnectionListener {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
                                                        el,
-                                                       self.timeout_ms.clone(),
+                                                       self.timeout_ms,
                                                        Socket::wrap(socket),
                                                        self.our_pk,
                                                        self.name_hash,
@@ -182,6 +182,7 @@ mod test {
     use common::{self, Core, CoreMessage, Message, NameHash};
     use main::{Event, PeerId};
     use mio::{EventLoop, Sender, Token};
+    use maidsafe_utilities;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -210,9 +211,9 @@ mod test {
     fn start_listener() -> Listener {
         let mut el = EventLoop::new().expect("Could not spawn el");
         let tx = el.channel();
-        let raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
+        let raii_joiner = maidsafe_utilities::thread::named("EL", move || {
             el.run(&mut Core::with_token_counter(1)).expect("Could not run el");
-        }));
+        });
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
@@ -268,7 +269,7 @@ mod test {
 
     fn write(stream: &mut TcpStream, message: Vec<u8>) -> ::Res<()> {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
-        unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
+        unwrap!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
         try!(stream.write_all(&size_vec));
         try!(stream.write_all(&message));
