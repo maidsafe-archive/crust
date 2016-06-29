@@ -70,6 +70,12 @@ impl Core {
     }
 }
 
+impl Default for Core {
+    fn default() -> Core {
+        Core::new()
+    }
+}
+
 impl Handler for Core {
     type Timeout = CoreTimerId;
     type Message = CoreMessage;

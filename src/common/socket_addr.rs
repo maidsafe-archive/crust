@@ -82,7 +82,7 @@ impl Decodable for SocketAddrV4 {
     }
 }
 
-/// Utility struct of SocketAddrV6 for hole punching
+/// Wrapper for `SocketAddrV6` which implements `Encodable`/`Decodable`.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct SocketAddrV6(pub net::SocketAddrV6);
 

@@ -304,7 +304,7 @@ impl Service {
             match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
                 let hole_punch_addrs = addrs.into_iter()
                     .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
-                    .map(|elt| common::SocketAddr(elt))
+                    .map(common::SocketAddr)
                     .collect();
                 let event_tx = event_tx_clone;
                 let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {

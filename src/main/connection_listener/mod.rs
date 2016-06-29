@@ -125,7 +125,7 @@ impl ConnectionListener {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
                                                        el,
-                                                       self.timeout_ms.clone(),
+                                                       self.timeout_ms,
                                                        Socket::wrap(socket),
                                                        self.our_pk,
                                                        self.name_hash,
