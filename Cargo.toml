@@ -24,6 +24,7 @@ rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
 sodiumoxide = "~0.0.10"
 tmp_mio = "~0.5.2"
+unwrap = "~1.1.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = "0.2"

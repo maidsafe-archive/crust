@@ -268,7 +268,7 @@ mod test {
 
     fn write(stream: &mut TcpStream, message: Vec<u8>) -> ::Res<()> {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
-        unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
+        unwrap!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
         try!(stream.write_all(&size_vec));
         try!(stream.write_all(&message));
