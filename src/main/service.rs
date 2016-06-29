@@ -21,6 +21,7 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
 use common::{self, Core, CoreMessage, Priority};
+use maidsafe_utilities;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use mio::{self, EventLoop, Token};
 use nat::{MappedTcpSocket, MappingContext};
@@ -78,10 +79,10 @@ impl Service {
             .map(|elt| elt.0));
 
         let joiner =
-            RaiiThreadJoiner::new(thread!(format!("Crust {:?} event loop", our_id), move || {
+            maidsafe_utilities::thread::named(format!("Crust {:?} event loop", our_id), move || {
                 let mut core = Core::with_token_counter(3);
                 el.run(&mut core).expect("EventLoop failed to run");
-            }));
+            });
 
         Ok(Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
@@ -377,10 +378,11 @@ mod tests {
     use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
     use std::sync::mpsc::Receiver;
     use std::sync::{Arc, Barrier, mpsc};
-    use std::thread::{self, JoinHandle};
+    use std::thread;
     use std::time::Duration;
 
     use maidsafe_utilities;
+    use maidsafe_utilities::thread::Joiner;
     use main::{Event, PrivConnectionInfo, PubConnectionInfo};
     use tests::{get_event_sender, timebomb};
 
@@ -548,8 +550,8 @@ mod tests {
                 }
             }
 
-            fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> JoinHandle<()> {
-                thread!("run!", move || {
+            fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> Joiner {
+                maidsafe_utilities::thread::named("run!", move || {
                     for (our_ci, their_ci) in self.our_cis
                         .into_iter()
                         .zip(self.connection_id_rx.into_iter()) {
@@ -645,9 +647,7 @@ mod tests {
         // TODO(canndrew): drop this limit
         let timeout_ms = 10000 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
         timebomb(Duration::from_millis(timeout_ms), move || {
-            for thread in threads {
-                unwrap!(thread.join());
-            }
+            drop(threads);
         });
     }
 }

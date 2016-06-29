@@ -182,6 +182,7 @@ mod test {
     use common::{self, Core, CoreMessage, Message, NameHash};
     use main::{Event, PeerId};
     use mio::{EventLoop, Sender, Token};
+    use maidsafe_utilities;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -210,9 +211,9 @@ mod test {
     fn start_listener() -> Listener {
         let mut el = EventLoop::new().expect("Could not spawn el");
         let tx = el.channel();
-        let raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
+        let raii_joiner = maidsafe_utilities::thread::named("EL", move || {
             el.run(&mut Core::with_token_counter(1)).expect("Could not run el");
-        }));
+        });
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =

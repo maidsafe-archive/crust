@@ -23,6 +23,7 @@ use std::rc::Rc;
 
 use common::{Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
+use maidsafe_utilities::thread;
 use mio::{EventLoop, Timeout, Token};
 use nat::{MappingContext, NatError, util};
 use net2::TcpBuilder;
@@ -70,7 +71,7 @@ impl<F> MappedTcpSocket<F>
             };
             let tx = el.channel();
             let addr_igd = SocketAddrV4::new(*ip, addr.port());
-            let _ = thread!("IGD-Address-Mapping", move || {
+            let _ = thread::named("IGD-Address-Mapping", move || {
                 let res =
                     gateway.get_any_address(PortMappingProtocol::TCP, addr_igd, 0, "MaidSafeNat");
                 let ext_addr = match res {

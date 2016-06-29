@@ -245,7 +245,7 @@ mod test {
     use std::time::Duration;
 
     use common::{Core, CoreMessage};
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use maidsafe_utilities;
     use mio::{EventLoop, Token};
 
     #[test]
@@ -253,9 +253,9 @@ mod test {
         // EventLoop-0
         let mut el0 = EventLoop::new().expect("Could not spawn el0");
         let tx0 = el0.channel();
-        let _raii_joiner_0 = RaiiThreadJoiner::new(thread!("EL0", move || {
+        let _raii_joiner_0 = maidsafe_utilities::thread::named("EL0", move || {
             el0.run(&mut Core::new()).expect("Could not run el0");
-        }));
+        });
 
         let addr = net::SocketAddr::from_str("138.139.140.150:54321").unwrap();
         let listeners_0 = Arc::new(Mutex::new(vec![addr]));
@@ -284,9 +284,9 @@ mod test {
         // EventLoop-1
         let mut el1 = EventLoop::new().expect("Could not spawn el1");
         let tx1 = el1.channel();
-        let _raii_joiner_1 = RaiiThreadJoiner::new(thread!("EL1", move || {
+        let _raii_joiner_1 = maidsafe_utilities::thread::named("EL1", move || {
             el1.run(&mut Core::new()).expect("Could not run el1");
-        }));
+        });
 
         let (tx, rx) = mpsc::channel();
 
