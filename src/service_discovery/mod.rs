@@ -152,9 +152,8 @@ impl ServiceDiscovery {
     }
 
     fn write_impl(&mut self, el: &mut EventLoop<Core>) -> Result<(), ServiceDiscoveryError> {
-        let our_current_listeners = self.our_listeners
-            .lock()
-            .unwrap()
+        let our_current_listeners = unwrap!(self.our_listeners
+                .lock())
             .iter()
             .map(|elt| common::SocketAddr(*elt))
             .collect();
@@ -251,41 +250,40 @@ mod test {
     #[test]
     fn service_discovery() {
         // EventLoop-0
-        let mut el0 = EventLoop::new().expect("Could not spawn el0");
+        let mut el0 = unwrap!(EventLoop::new(), "Could not spawn el0");
         let tx0 = el0.channel();
         let _raii_joiner_0 = maidsafe_utilities::thread::named("EL0", move || {
-            el0.run(&mut Core::new()).expect("Could not run el0");
+            unwrap!(el0.run(&mut Core::new()), "Could not run el0");
         });
 
-        let addr = net::SocketAddr::from_str("138.139.140.150:54321").unwrap();
+        let addr = unwrap!(net::SocketAddr::from_str("138.139.140.150:54321"));
         let listeners_0 = Arc::new(Mutex::new(vec![addr]));
         let listeners_0_clone = listeners_0.clone();
 
         // ServiceDiscovery-0
         {
             let token_0 = Token(0);
-            tx0.send(CoreMessage::new(move |core, el| {
-                    ServiceDiscovery::start(core, el, listeners_0_clone, token_0, 65530)
-                        .expect("Could not spawn ServiceDiscovery_0");
-                }))
-                .expect("Could not send to tx0");
+            unwrap!(tx0.send(CoreMessage::new(move |core, el| {
+                unwrap!(ServiceDiscovery::start(core, el, listeners_0_clone, token_0, 65530),
+                        "Could not spawn ServiceDiscovery_0");
+            })),
+                    "Could not send to tx0");
 
             // Start listening for peers
-            tx0.send(CoreMessage::new(move |core, _| {
-                    let state = core.get_state(token_0).unwrap();
-                    let mut inner = state.borrow_mut();
-                    inner.as_any().downcast_mut::<ServiceDiscovery>().unwrap().set_listen(true);
-                }))
-                .unwrap();
+            unwrap!(tx0.send(CoreMessage::new(move |core, _| {
+                let state = unwrap!(core.get_state(token_0));
+                let mut inner = state.borrow_mut();
+                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>()).set_listen(true);
+            })));
         }
 
         thread::sleep(Duration::from_millis(100));
 
         // EventLoop-1
-        let mut el1 = EventLoop::new().expect("Could not spawn el1");
+        let mut el1 = unwrap!(EventLoop::new(), "Could not spawn el1");
         let tx1 = el1.channel();
         let _raii_joiner_1 = maidsafe_utilities::thread::named("EL1", move || {
-            el1.run(&mut Core::new()).expect("Could not run el1");
+            unwrap!(el1.run(&mut Core::new()), "Could not run el1");
         });
 
         let (tx, rx) = mpsc::channel();
@@ -294,41 +292,38 @@ mod test {
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(0);
-            tx1.send(CoreMessage::new(move |core, el| {
-                    ServiceDiscovery::start(core, el, listeners_1, token_1, 65530)
-                        .expect("Could not spawn ServiceDiscovery_1");
-                }))
-                .expect("Could not send to tx1");
+            unwrap!(tx1.send(CoreMessage::new(move |core, el| {
+                        unwrap!(ServiceDiscovery::start(core, el, listeners_1, token_1, 65530),
+                                "Could not spawn ServiceDiscovery_1");
+                    })),
+                    "Could not send to tx1");
 
             // Register observer
-            tx1.send(CoreMessage::new(move |core, _| {
-                    let state = core.get_state(token_1).unwrap();
-                    let mut inner = state.borrow_mut();
-                    inner.as_any()
-                        .downcast_mut::<ServiceDiscovery>()
-                        .unwrap()
-                        .register_observer(tx);
-                }))
-                .unwrap();
+            unwrap!(tx1.send(CoreMessage::new(move |core, _| {
+                let state = unwrap!(core.get_state(token_1));
+                let mut inner = state.borrow_mut();
+                unwrap!(inner.as_any()
+                        .downcast_mut::<ServiceDiscovery>())
+                    .register_observer(tx);
+            })));
 
             // Seek peers
-            tx1.send(CoreMessage::new(move |core, _| {
-                    let state = core.get_state(token_1).unwrap();
-                    let mut inner = state.borrow_mut();
-                    inner.as_any()
-                        .downcast_mut::<ServiceDiscovery>()
-                        .unwrap()
-                        .seek_peers()
-                        .unwrap();
-                }))
-                .expect("Could not send to tx1");
+            unwrap!(tx1.send(CoreMessage::new(move |core, _| {
+                        let state = unwrap!(core.get_state(token_1));
+                        let mut inner = state.borrow_mut();
+                        let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
+                        unwrap!(sd.seek_peers());
+                    })),
+                    "Could not send to tx1");
         }
 
-        let peer_listeners = rx.recv().unwrap();
+        let peer_listeners = unwrap!(rx.recv());
         assert_eq!(peer_listeners.into_iter().map(|elt| elt.0).collect::<Vec<_>>(),
-                   *listeners_0.lock().unwrap());
+                   *unwrap!(listeners_0.lock()));
 
-        tx0.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el0");
-        tx1.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el1");
+        unwrap!(tx0.send(CoreMessage::new(move |_, el| el.shutdown())),
+                "Could not shutdown el0");
+        unwrap!(tx1.send(CoreMessage::new(move |_, el| el.shutdown())),
+                "Could not shutdown el1");
     }
 }

@@ -91,7 +91,7 @@ mod test {
     #[test]
     #[ignore]
     fn igd_gateway_available() {
-        let mc = MappingContext::new().expect("Could not instantiate MC");
+        let mc = unwrap!(MappingContext::new(), "Could not instantiate MC");
         assert!(!mc.our_ifv4s.is_empty());
 
         let mut loopback_found = false;

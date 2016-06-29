@@ -126,7 +126,7 @@ impl Bootstrap {
         }
 
         for peer in peers {
-            let self_weak = self.self_weak.as_ref().expect("Logic Error").clone();
+            let self_weak = unwrap!(self.self_weak.as_ref()).clone();
             let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_result(core, el, child, res)
@@ -197,7 +197,7 @@ impl State for Bootstrap {
             return self.terminate(core, el);
         }
 
-        let rx = self.sd_meta.take().expect("Logic Error").rx;
+        let rx = unwrap!(self.sd_meta.take()).rx;
 
         while let Ok(listeners) = rx.try_recv() {
             self.peers.extend(listeners);
@@ -232,9 +232,8 @@ fn seek_peers(core: &mut Core,
               -> ::Res<(Receiver<Vec<common::SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let mut state = state.as_any()
-            .downcast_mut::<ServiceDiscovery>()
-            .expect("Cast failure");
+        let mut state = unwrap!(state.as_any()
+            .downcast_mut::<ServiceDiscovery>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);

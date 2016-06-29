@@ -170,9 +170,7 @@ impl Socket {
 
         if self.current_write.is_none() {
             let (key, (_time_stamp, data), empty) = match self.write_queue.iter_mut().next() {
-                Some((key, queue)) => {
-                    (*key, queue.pop_front().expect("Logic Error - Queue pop"), queue.is_empty())
-                }
+                Some((key, queue)) => (*key, unwrap!(queue.pop_front()), queue.is_empty()),
                 None => return Ok(true),
             };
             if empty {

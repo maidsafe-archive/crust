@@ -81,7 +81,7 @@ impl Service {
         let joiner =
             maidsafe_utilities::thread::named(format!("Crust {:?} event loop", our_id), move || {
                 let mut core = Core::with_token_counter(3);
-                el.run(&mut core).expect("EventLoop failed to run");
+                unwrap!(el.run(&mut core), "EventLoop failed to run");
             });
 
         Ok(Service {
@@ -245,7 +245,7 @@ impl Service {
     ///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`
     ///    obtained from the peer
     pub fn connect(&self, our_ci: PrivConnectionInfo, their_ci: PubConnectionInfo) -> ::Res<()> {
-        if self.cm.lock().unwrap().contains_key(&their_ci.id) {
+        if unwrap!(self.cm.lock()).contains_key(&their_ci.id) {
             warn!("Already connected OR already in process of connecting to {:?}",
                   their_ci.id);
             return Ok(());
@@ -262,7 +262,7 @@ impl Service {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_id: PeerId) -> bool {
-        let token = match self.cm.lock().unwrap().get(&peer_id) {
+        let token = match unwrap!(self.cm.lock()).get(&peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return false,
         };
@@ -278,7 +278,7 @@ impl Service {
 
     /// Send data to a peer.
     pub fn send(&self, peer_id: PeerId, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
-        let token = match self.cm.lock().unwrap().get(&peer_id) {
+        let token = match unwrap!(self.cm.lock()).get(&peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return Err(CrustError::PeerNotFound(peer_id)),
         };
@@ -298,7 +298,7 @@ impl Service {
         let event_tx = self.event_tx.clone();
         let our_pub_key = self.our_keys.0;
         let our_listeners =
-            self.our_listeners.lock().unwrap().iter().map(|e| common::SocketAddr(*e)).collect();
+            unwrap!(self.our_listeners.lock()).iter().map(|e| common::SocketAddr(*e)).collect();
         let mc = self.mc.clone();
         if let Err(e) = self.post(move |mut core, mut el| {
             let event_tx_clone = event_tx.clone();
@@ -338,7 +338,7 @@ impl Service {
 
     /// Check if we are connected to the given peer
     pub fn is_connected(&self, peer_id: &PeerId) -> bool {
-        match self.cm.lock().unwrap().get(peer_id) {
+        match unwrap!(self.cm.lock()).get(peer_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
         }
@@ -409,7 +409,7 @@ mod tests {
     #[test]
     #[ignore]
     fn rendezvous_connect_two_peers() {
-        maidsafe_utilities::log::init(true).unwrap();
+        unwrap!(maidsafe_utilities::log::init(true));
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
             let service_0 = unwrap!(Service::new(event_tx_0));

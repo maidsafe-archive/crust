@@ -371,8 +371,8 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         unwrap!(el.run(&mut core));
     }));
 
-    let bind_addr = StdSocketAddr::from_str("127.0.0.1:0").expect("Could not parse addr");
-    let listener = TcpListener::bind(&bind_addr).expect("Could not bind listener");
+    let bind_addr = unwrap!(StdSocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
+    let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
     let address = SocketAddr(unwrap!(listener.local_addr()));
 
     unwrap!(mio_tx.send(CoreMessage::new(|core, el| {

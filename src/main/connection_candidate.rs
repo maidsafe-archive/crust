@@ -57,7 +57,7 @@ impl ConnectionCandidate {
         let _ = core.insert_state(token, state.clone());
 
         if our_id > their_id {
-            if let Err(e) = el.reregister(state.borrow().socket.as_ref().expect("Logic Error"),
+            if let Err(e) = el.reregister(unwrap!(state.borrow().socket.as_ref()),
                                           token,
                                           EventSet::writable() | EventSet::error() |
                                           EventSet::hup(),
@@ -71,7 +71,7 @@ impl ConnectionCandidate {
     }
 
     fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match self.socket.as_mut().unwrap().read::<Message>() {
+        match unwrap!(self.socket.as_mut()).read::<Message>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, el),
             Ok(Some(_)) | Err(_) => self.handle_error(core, el),
             Ok(None) => (),
@@ -82,7 +82,7 @@ impl ConnectionCandidate {
              core: &mut Core,
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        let terminate = match self.cm.lock().unwrap().get(&self.their_id) {
+        let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
         };
@@ -90,7 +90,7 @@ impl ConnectionCandidate {
             return self.handle_error(core, el);
         }
 
-        match self.socket.as_mut().unwrap().write(el, self.token, msg) {
+        match unwrap!(self.socket.as_mut()).write(el, self.token, msg) {
             Ok(true) => self.done(core, el),
             Ok(false) => (),
             Err(_) => self.handle_error(core, el),
@@ -100,7 +100,7 @@ impl ConnectionCandidate {
     fn done(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
         let token = self.token;
-        let socket = self.socket.take().expect("Logic Error");
+        let socket = unwrap!(self.socket.take());
 
         (*self.finish)(core, el, token, Some(socket));
     }
@@ -128,9 +128,9 @@ impl State for ConnectionCandidate {
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket.take().expect("Logic Error"));
+        let _ = el.deregister(&unwrap!(self.socket.take()));
 
-        let mut guard = self.cm.lock().unwrap();
+        let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.their_id) {
             oe.get_mut().currently_handshaking -= 1;
             if oe.get().currently_handshaking == 0 && oe.get().active_connection.is_none() {

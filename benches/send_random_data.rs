@@ -50,7 +50,7 @@ use crust::*;
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::log::init;
 
-use std::sync::mpsc::{channel, Receiver};
+use std::sync::mpsc::{Receiver, channel};
 
 pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
@@ -61,7 +61,8 @@ pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 }
 
 fn wait_for_connection(category_receiver: &Receiver<MaidSafeEventCategory>,
-                       crust_receiver: &Receiver<Event>) -> Connection {
+                       crust_receiver: &Receiver<Event>)
+                       -> Connection {
     match unwrap!(category_receiver.recv()) {
         MaidSafeEventCategory::CrustEvent => {
             let event = match crust_receiver.recv() {
@@ -71,10 +72,10 @@ fn wait_for_connection(category_receiver: &Receiver<MaidSafeEventCategory>,
 
             match event {
                 crust::Event::OnConnect(Ok((_endpoint, connection)), _token) => return connection,
-                crust::Event::OnAccept(_endpoint, connection)  => return connection,
+                crust::Event::OnAccept(_endpoint, connection) => return connection,
                 _ => panic!("Unexpected event"),
             }
-        },
+        }
         _ => panic!("Unexpected event"),
     }
 }
@@ -112,23 +113,22 @@ fn send_random_data(b: &mut Bencher) {
         loop {
             let event = match s1_rx.recv() {
                 Ok(event) => event,
-                Err(_)    => panic!("Service #1 closed connection"),
+                Err(_) => panic!("Service #1 closed connection"),
             };
 
             match event {
                 crust::Event::NewMessage(_, _bytes) => {
                     break;
-                },
+                }
                 crust::Event::LostPeer(_) => {
                     break;
-                },
+                }
                 _ => {
                     panic!("Unexpected event: {:?}", event);
-                },
+                }
             }
         }
     });
 
     b.bytes = data_len as u64;
 }
-

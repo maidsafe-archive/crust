@@ -73,7 +73,7 @@ impl ExchangeMsg {
     }
 
     fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match self.socket.as_mut().unwrap().read::<Message>() {
+        match unwrap!(self.socket.as_mut()).read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
                 self.handle_bootstrap_req(core, el, their_public_key, name_hash)
             }
@@ -126,7 +126,7 @@ impl ExchangeMsg {
 
     fn handle_echo_addr_req(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         self.next_state = NextState::None;
-        if let Ok(peer_addr) = self.socket.as_ref().unwrap().peer_addr() {
+        if let Ok(peer_addr) = unwrap!(self.socket.as_ref()).peer_addr() {
             self.write(core,
                        el,
                        Some((Message::EchoAddrResp(common::SocketAddr(peer_addr)), 0)));
@@ -149,7 +149,7 @@ impl ExchangeMsg {
         let their_id = PeerId(their_public_key);
 
         {
-            let mut guard = self.cm.lock().unwrap();
+            let mut guard = unwrap!(self.cm.lock());
             guard.entry(their_id)
                 .or_insert(ConnectionId {
                     active_connection: None,
@@ -167,7 +167,7 @@ impl ExchangeMsg {
              msg: Option<(Message, Priority)>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_id) = self.next_state {
-            let terminate = match self.cm.lock().unwrap().get(&their_id).cloned() {
+            let terminate = match unwrap!(self.cm.lock()).get(&their_id).cloned() {
                 Some(ConnectionId { active_connection: Some(_), .. }) => true,
                 _ => false,
             };
@@ -176,7 +176,7 @@ impl ExchangeMsg {
             }
         }
 
-        match self.socket.as_mut().unwrap().write(el, self.token, msg) {
+        match unwrap!(self.socket.as_mut()).write(el, self.token, msg) {
             Ok(true) => self.done(core, el),
             Ok(false) => (),
             Err(e) => {
@@ -198,7 +198,7 @@ impl ExchangeMsg {
                 ActiveConnection::start(core,
                                         el,
                                         self.token,
-                                        self.socket.take().unwrap(),
+                                        unwrap!(self.socket.take()),
                                         self.cm.clone(),
                                         our_id,
                                         their_id,
@@ -223,7 +223,7 @@ impl ExchangeMsg {
                 let _ = ConnectionCandidate::start(core,
                                                    el,
                                                    self.token,
-                                                   self.socket.take().unwrap(),
+                                                   unwrap!(self.socket.take()),
                                                    self.cm.clone(),
                                                    our_id,
                                                    their_id,
@@ -254,7 +254,7 @@ impl State for ExchangeMsg {
         match self.next_state {
             NextState::ConnectionCandidate(their_id) |
             NextState::ActiveConnection(their_id) => {
-                let mut guard = self.cm.lock().unwrap();
+                let mut guard = unwrap!(self.cm.lock());
                 if let Entry::Occupied(mut oe) = guard.entry(their_id) {
                     oe.get_mut().currently_handshaking -= 1;
                     if oe.get().currently_handshaking == 0 && oe.get().active_connection.is_none() {
@@ -266,7 +266,7 @@ impl State for ExchangeMsg {
         }
 
         let _ = el.clear_timeout(self.timeout);
-        let _ = el.deregister(&self.socket.take().expect("Logic Error"));
+        let _ = el.deregister(&unwrap!(self.socket.take()));
     }
 
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {

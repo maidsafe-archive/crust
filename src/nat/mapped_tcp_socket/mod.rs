@@ -183,9 +183,9 @@ impl<F> State for MappedTcpSocket<F>
         let _ = core.remove_state(self.token);
         let _ = el.clear_timeout(self.timeout);
 
-        let socket = self.socket.take().expect("Logic Error");
+        let socket = unwrap!(self.socket.take());
         let mapped_addrs = self.mapped_addrs.drain(..).collect();
-        (self.finish.take().unwrap())(core, el, socket, mapped_addrs);
+        (unwrap!(self.finish.take()))(core, el, socket, mapped_addrs);
     }
 
     fn as_any(&mut self) -> &mut Any {
