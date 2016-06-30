@@ -101,7 +101,7 @@ impl ConnectionListener {
                          EventSet::readable() | EventSet::error() | EventSet::hup(),
                          PollOpt::edge()));
 
-        *our_listeners.lock().unwrap() = mapped_addrs.into_iter().collect();
+        *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
 
         let state = ConnectionListener {
             token: token,
@@ -125,7 +125,7 @@ impl ConnectionListener {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
                                                        el,
-                                                       self.timeout_ms.clone(),
+                                                       self.timeout_ms,
                                                        Socket::wrap(socket),
                                                        self.our_pk,
                                                        self.name_hash,
@@ -182,6 +182,7 @@ mod test {
     use common::{self, Core, CoreMessage, Message, NameHash};
     use main::{Event, PeerId};
     use mio::{EventLoop, Sender, Token};
+    use maidsafe_utilities;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -201,43 +202,43 @@ mod test {
 
     impl Drop for Listener {
         fn drop(&mut self) {
-            self.tx
-                .send(CoreMessage::new(|_, el| el.shutdown()))
-                .expect("Could not send shutdown to el");
+            unwrap!(self.tx
+                        .send(CoreMessage::new(|_, el| el.shutdown())),
+                    "Could not send shutdown to el");
         }
     }
 
     fn start_listener() -> Listener {
-        let mut el = EventLoop::new().expect("Could not spawn el");
+        let mut el = unwrap!(EventLoop::new(), "Could not spawn el");
         let tx = el.channel();
-        let raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
-            el.run(&mut Core::with_token_counter(1)).expect("Could not run el");
-        }));
+        let raii_joiner = maidsafe_utilities::thread::named("EL", move || {
+            unwrap!(el.run(&mut Core::with_token_counter(1)), "Could not run el");
+        });
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
             ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
-        let mc = Arc::new(MappingContext::new().expect("Could not get MC"));
+        let mc = Arc::new(unwrap!(MappingContext::new(), "Could not get MC"));
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
 
         let listeners_clone = listeners.clone();
         let (pk, _) = box_::gen_keypair();
-        tx.send(CoreMessage::new(move |core, el| {
-                ConnectionListener::start(core,
-                                          el,
-                                          Some(5000),
-                                          0,
-                                          pk,
-                                          NAME_HASH,
-                                          cm,
-                                          mc,
-                                          listeners_clone,
-                                          Token(0),
-                                          crust_sender);
-            }))
-            .expect("Could not send to tx");
+        unwrap!(tx.send(CoreMessage::new(move |core, el| {
+            ConnectionListener::start(core,
+                                      el,
+                                      Some(5000),
+                                      0,
+                                      pk,
+                                      NAME_HASH,
+                                      cm,
+                                      mc,
+                                      listeners_clone,
+                                      Token(0),
+                                      crust_sender);
+        })),
+                "Could not send to tx");
 
         for it in event_rx.iter() {
             match it {
@@ -246,7 +247,7 @@ mod test {
             }
         }
 
-        let addr = common::SocketAddr(listeners.lock().unwrap()[0]);
+        let addr = common::SocketAddr(unwrap!(listeners.lock())[0]);
 
         Listener {
             tx: tx,
@@ -259,16 +260,17 @@ mod test {
 
     fn connect_to_listener(listener: &Listener) -> TcpStream {
         let listener_addr = StdSocketAddr::new(listener.addr.ip(), listener.addr.port());
-        let stream = TcpStream::connect(listener_addr).expect("Could not connect to listener");
-        stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000)))
-            .expect("Could not set read timeout.");
+        let stream = unwrap!(TcpStream::connect(listener_addr),
+                             "Could not connect to listener");
+        unwrap!(stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000)))
+            , "Could not set read timeout.");
 
         stream
     }
 
     fn write(stream: &mut TcpStream, message: Vec<u8>) -> ::Res<()> {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
-        unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
+        unwrap!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
         try!(stream.write_all(&size_vec));
         try!(stream.write_all(&message));
@@ -290,21 +292,21 @@ mod test {
         }
         try!(stream.read_exact(&mut payload));
 
-        Ok(deserialise(&payload).expect("Could not deserialise."))
+        Ok(unwrap!(deserialise(&payload), "Could not deserialise."))
     }
 
     fn bootstrap(name_hash: NameHash, pk: PublicKey, listener: Listener) {
         let mut us = connect_to_listener(&listener);
 
-        let message = serialise(&Message::BootstrapRequest(pk, name_hash)).unwrap();
-        write(&mut us, message).expect("Could not write.");
+        let message = unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash)));
+        unwrap!(write(&mut us, message), "Could not write.");
 
-        match read(&mut us).expect("Could not read.") {
+        match unwrap!(read(&mut us), "Could not read.") {
             Message::BootstrapResponse(peer_pk) => assert_eq!(peer_pk, listener.pk),
             msg => panic!("Unexpected message: {:?}", msg),
         }
 
-        match listener.event_rx.recv().expect("Could not read event channel") {
+        match unwrap!(listener.event_rx.recv(), "Could not read event channel") {
             Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, PeerId(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
@@ -313,11 +315,11 @@ mod test {
     fn connect(name_hash: NameHash, pk: PublicKey, listener: Listener) {
         let mut us = connect_to_listener(&listener);
 
-        let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
-        write(&mut us, message).expect("Could not write.");
+        let message = unwrap!(serialise(&Message::Connect(pk, name_hash)));
+        unwrap!(write(&mut us, message), "Could not write.");
 
         let our_id = PeerId(pk);
-        let their_id = match read(&mut us).expect("Could not read.") {
+        let their_id = match unwrap!(read(&mut us), "Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
@@ -327,11 +329,11 @@ mod test {
         };
 
         if our_id > their_id {
-            let message = serialise(&Message::ChooseConnection).unwrap();
-            write(&mut us, message).expect("Could not write.");
+            let message = unwrap!(serialise(&Message::ChooseConnection));
+            unwrap!(write(&mut us, message), "Could not write.");
         }
 
-        match listener.event_rx.recv().expect("Could not read event channel") {
+        match unwrap!(listener.event_rx.recv(), "Could not read event channel") {
             Event::ConnectSuccess(id) => assert_eq!(id, PeerId(pk)),
             event => panic!("Unexpected event notification: {:?}", event),
         }
@@ -386,15 +388,15 @@ mod test {
         let listener = start_listener();
         let mut us = connect_to_listener(&listener);
 
-        let message = serialise(&Message::Heartbeat).unwrap();
-        write(&mut us, message).expect("Could not write.");
+        let message = unwrap!(serialise(&Message::Heartbeat));
+        unwrap!(write(&mut us, message), "Could not write.");
 
         let mut buf = [0; 512];
         if cfg!(windows) {
             assert!(us.read(&mut buf).is_err());
         } else {
             assert_eq!(0,
-                       us.read(&mut buf).expect("read should have returned EOF (0)"));
+                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
         }
     }
 
@@ -407,7 +409,7 @@ mod test {
             assert!(us.read(&mut buf).is_err());
         } else {
             assert_eq!(0,
-                       us.read(&mut buf).expect("read should have returned EOF (0)"));
+                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
         }
     }
 
@@ -419,10 +421,10 @@ mod test {
         let listener = start_listener();
         let mut us = connect_to_listener(&listener);
 
-        let message = serialise(&Message::EchoAddrReq).unwrap();
-        write(&mut us, message).expect("Could not write.");
+        let message = unwrap!(serialise(&Message::EchoAddrReq));
+        unwrap!(write(&mut us, message), "Could not write.");
 
-        let our_addr = match read(&mut us).expect("Could not read.") {
+        let our_addr = match unwrap!(read(&mut us), "Could not read.") {
             Message::EchoAddrResp(addr) => addr,
             msg => panic!("Unexpected message: {:?}", msg),
         };
@@ -431,14 +433,14 @@ mod test {
         // case the following assertion should be commented out. Till then it is useful to have
         // this testing for conformity on local host.
         assert_eq!(our_addr.0,
-                   us.local_addr().expect("Could not obtain local addr"));
+                   unwrap!(us.local_addr(), "Could not obtain local addr"));
 
         let mut buf = [0; 512];
         if cfg!(windows) {
             assert!(us.read(&mut buf).is_err());
         } else {
             assert_eq!(0,
-                       us.read(&mut buf).expect("read should have returned EOF (0)"));
+                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
         }
     }
 }

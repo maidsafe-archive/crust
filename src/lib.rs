@@ -63,6 +63,9 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate tmp_mio as mio;
+#[allow(unused_extern_crates)]
+#[macro_use]
+extern crate unwrap;
 
 #[cfg(windows)]
 extern crate winapi;

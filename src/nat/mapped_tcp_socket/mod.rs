@@ -23,6 +23,7 @@ use std::rc::Rc;
 
 use common::{Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
+use maidsafe_utilities::thread;
 use mio::{EventLoop, Timeout, Token};
 use nat::{MappingContext, NatError, util};
 use net2::TcpBuilder;
@@ -70,7 +71,7 @@ impl<F> MappedTcpSocket<F>
             };
             let tx = el.channel();
             let addr_igd = SocketAddrV4::new(*ip, addr.port());
-            let _ = thread!("IGD-Address-Mapping", move || {
+            let _ = thread::named("IGD-Address-Mapping", move || {
                 let res =
                     gateway.get_any_address(PortMappingProtocol::TCP, addr_igd, 0, "MaidSafeNat");
                 let ext_addr = match res {
@@ -174,7 +175,7 @@ impl<F> State for MappedTcpSocket<F>
     where F: FnOnce(&mut Core, &mut EventLoop<Core>, TcpBuilder, Vec<SocketAddr>) + Any
 {
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: u8) {
-        return self.terminate(core, el);
+        self.terminate(core, el)
     }
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
@@ -182,9 +183,9 @@ impl<F> State for MappedTcpSocket<F>
         let _ = core.remove_state(self.token);
         let _ = el.clear_timeout(self.timeout);
 
-        let socket = self.socket.take().expect("Logic Error");
+        let socket = unwrap!(self.socket.take());
         let mapped_addrs = self.mapped_addrs.drain(..).collect();
-        (self.finish.take().unwrap())(core, el, socket, mapped_addrs);
+        (unwrap!(self.finish.take()))(core, el, socket, mapped_addrs);
     }
 
     fn as_any(&mut self) -> &mut Any {

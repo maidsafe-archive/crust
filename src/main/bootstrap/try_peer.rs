@@ -60,7 +60,7 @@ impl TryPeer {
             finish: finish,
         };
 
-        try!(el.register(state.socket.as_ref().expect("Logic Error"),
+        try!(el.register(unwrap!(state.socket.as_ref()),
                          token,
                          EventSet::error() | EventSet::hup() | EventSet::writable(),
                          PollOpt::edge()));
@@ -74,17 +74,17 @@ impl TryPeer {
              core: &mut Core,
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        if self.socket.as_mut().unwrap().write(el, self.token, msg).is_err() {
+        if unwrap!(self.socket.as_mut()).write(el, self.token, msg).is_err() {
             self.handle_error(core, el);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match self.socket.as_mut().unwrap().read::<Message>() {
+        match unwrap!(self.socket.as_mut()).read::<Message>() {
             Ok(Some(Message::BootstrapResponse(peer_pk))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let data = (self.socket.take().expect("Logic Error"), self.peer, PeerId(peer_pk));
+                let data = (unwrap!(self.socket.take()), self.peer, PeerId(peer_pk));
                 (*self.finish)(core, el, token, Ok(data));
             }
             Ok(None) => (),
@@ -117,7 +117,7 @@ impl State for TryPeer {
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket.take().expect("Logic Error"));
+        let _ = el.deregister(&unwrap!(self.socket.take()));
     }
 
     fn as_any(&mut self) -> &mut Any {

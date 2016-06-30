@@ -54,7 +54,7 @@ impl ExchangeMsg {
                          PollOpt::edge()));
 
         {
-            let mut guard = cm.lock().unwrap();
+            let mut guard = unwrap!(cm.lock());
             guard.entry(expected_id)
                 .or_insert(ConnectionId {
                     active_connection: None,
@@ -82,20 +82,20 @@ impl ExchangeMsg {
              core: &mut Core,
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        if self.socket.as_mut().unwrap().write(el, self.token, msg).is_err() {
+        if unwrap!(self.socket.as_mut()).write(el, self.token, msg).is_err() {
             self.handle_error(core, el);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match self.socket.as_mut().unwrap().read::<Message>() {
+        match unwrap!(self.socket.as_mut()).read::<Message>() {
             Ok(Some(Message::Connect(their_pk, name_hash))) => {
                 if their_pk != self.expected_id.0 || name_hash != self.expected_nh {
                     return self.handle_error(core, el);
                 }
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let socket = self.socket.take().expect("Logic Error");
+                let socket = unwrap!(self.socket.take());
 
                 (*self.finish)(core, el, token, Some(socket));
             }
@@ -128,9 +128,9 @@ impl State for ExchangeMsg {
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket.take().expect("Logic Error"));
+        let _ = el.deregister(&unwrap!(self.socket.take()));
 
-        let mut guard = self.cm.lock().unwrap();
+        let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.expected_id) {
             oe.get_mut().currently_handshaking -= 1;
             if oe.get().currently_handshaking == 0 && oe.get().active_connection.is_none() {

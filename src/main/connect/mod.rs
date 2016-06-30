@@ -95,7 +95,7 @@ impl Connect {
             sockets.extend(nat_sockets.into_iter()
                 .zip(their_hole_punch.into_iter().map(|elt| elt.0))
                 .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
-                .map(|elt| Socket::wrap(elt))
+                .map(Socket::wrap)
                 .collect::<Vec<_>>());
         }
 
@@ -109,7 +109,7 @@ impl Connect {
     }
 
     fn exchange_msg(&mut self, core: &mut Core, el: &mut EventLoop<Core>, socket: Socket) {
-        let self_weak = self.weak.as_ref().expect("Logic Err").clone();
+        let self_weak = unwrap!(self.weak.as_ref()).clone();
         let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
                 self_rc.borrow_mut().handle_exchange_msg(core, el, child, res);
@@ -136,7 +136,7 @@ impl Connect {
                            res: Option<Socket>) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            let self_weak = self.weak.as_ref().expect("Logic Err").clone();
+            let self_weak = unwrap!(self.weak.as_ref()).clone();
             let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_connection_candidate(core, el, child, res);
@@ -186,7 +186,7 @@ impl Connect {
 
     fn accept(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         loop {
-            match self.listener.as_ref().unwrap().accept() {
+            match unwrap!(self.listener.as_ref()).accept() {
                 Ok(Some((socket, _))) => self.exchange_msg(core, el, Socket::wrap(socket)),
                 Ok(None) | Err(_) => return,
             }
@@ -226,7 +226,7 @@ impl State for Connect {
         let _ = el.clear_timeout(self.timeout);
         let _ = core.remove_state(self.token);
 
-        if !self.cm.lock().unwrap().contains_key(&self.their_id) {
+        if !unwrap!(self.cm.lock()).contains_key(&self.their_id) {
             let _ = self.event_tx.send(Event::ConnectFailure(self.their_id));
         }
     }

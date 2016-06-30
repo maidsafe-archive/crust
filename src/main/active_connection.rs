@@ -83,7 +83,7 @@ impl ActiveConnection {
 
         let mut state_mut = state.borrow_mut();
         {
-            let mut guard = state_mut.cm.lock().unwrap();
+            let mut guard = unwrap!(state_mut.cm.lock());
             let conn_id = guard.entry(their_id).or_insert(ConnectionId {
                 active_connection: None,
                 currently_handshaking: 1,
@@ -174,7 +174,7 @@ impl State for ActiveConnection {
         let _ = core.remove_state(self.token);
 
         {
-            let mut guard = self.cm.lock().unwrap();
+            let mut guard = unwrap!(self.cm.lock());
             if let Entry::Occupied(mut oe) = guard.entry(self.their_id) {
                 oe.get_mut().active_connection = None;
                 if oe.get().currently_handshaking == 0 {
