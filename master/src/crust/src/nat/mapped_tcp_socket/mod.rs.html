@@ -235,6 +235,7 @@
 <span id="191">191</span>
 <span id="192">192</span>
 <span id="193">193</span>
+<span id="194">194</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -261,6 +262,7 @@
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>CoreTimerId</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>igd</span>::<span class='ident'>PortMappingProtocol</span>;
+<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>;
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappingContext</span>, <span class='ident'>NatError</span>, <span class='ident'>util</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
@@ -308,7 +310,7 @@
             };
             <span class='kw'>let</span> <span class='ident'>tx</span> <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>channel</span>();
             <span class='kw'>let</span> <span class='ident'>addr_igd</span> <span class='op'>=</span> <span class='ident'>SocketAddrV4</span>::<span class='ident'>new</span>(<span class='op'>*</span><span class='ident'>ip</span>, <span class='ident'>addr</span>.<span class='ident'>port</span>());
-            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;IGD-Address-Mapping&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;IGD-Address-Mapping&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                 <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span>
                     <span class='ident'>gateway</span>.<span class='ident'>get_any_address</span>(<span class='ident'>PortMappingProtocol</span>::<span class='ident'>TCP</span>, <span class='ident'>addr_igd</span>, <span class='number'>0</span>, <span class='string'>&quot;MaidSafeNat&quot;</span>);
                 <span class='kw'>let</span> <span class='ident'>ext_addr</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>res</span> {
@@ -412,7 +414,7 @@
     <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>, <span class='ident'>TcpBuilder</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>) <span class='op'>+</span> <span class='ident'>Any</span>
 {
     <span class='kw'>fn</span> <span class='ident'>timeout</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>, _: <span class='ident'>u8</span>) {
-        <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
+        <span class='self'>self</span>.<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>terminate</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) {
@@ -420,9 +422,9 @@
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>remove_state</span>(<span class='self'>self</span>.<span class='ident'>token</span>);
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>clear_timeout</span>(<span class='self'>self</span>.<span class='ident'>timeout</span>);
 
-        <span class='kw'>let</span> <span class='ident'>socket</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>socket</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>());
         <span class='kw'>let</span> <span class='ident'>mapped_addrs</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>mapped_addrs</span>.<span class='ident'>drain</span>(..).<span class='ident'>collect</span>();
-        (<span class='self'>self</span>.<span class='ident'>finish</span>.<span class='ident'>take</span>().<span class='ident'>unwrap</span>())(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>socket</span>, <span class='ident'>mapped_addrs</span>);
+        (<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>finish</span>.<span class='ident'>take</span>()))(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>socket</span>, <span class='ident'>mapped_addrs</span>);
     }
 
     <span class='kw'>fn</span> <span class='ident'>as_any</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Any</span> {

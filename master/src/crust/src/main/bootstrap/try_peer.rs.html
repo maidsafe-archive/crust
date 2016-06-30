@@ -231,7 +231,7 @@
             <span class='ident'>finish</span>: <span class='ident'>finish</span>,
         };
 
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>el</span>.<span class='ident'>register</span>(<span class='ident'>state</span>.<span class='ident'>socket</span>.<span class='ident'>as_ref</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error&quot;</span>),
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>el</span>.<span class='ident'>register</span>(<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>state</span>.<span class='ident'>socket</span>.<span class='ident'>as_ref</span>()),
                          <span class='ident'>token</span>,
                          <span class='ident'>EventSet</span>::<span class='ident'>error</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>hup</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>writable</span>(),
                          <span class='ident'>PollOpt</span>::<span class='ident'>edge</span>()));
@@ -245,17 +245,17 @@
              <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>,
              <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>,
              <span class='ident'>msg</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>Message</span>, <span class='ident'>Priority</span>)<span class='op'>&gt;</span>) {
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_mut</span>().<span class='ident'>unwrap</span>().<span class='ident'>write</span>(<span class='ident'>el</span>, <span class='self'>self</span>.<span class='ident'>token</span>, <span class='ident'>msg</span>).<span class='ident'>is_err</span>() {
+        <span class='kw'>if</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_mut</span>()).<span class='ident'>write</span>(<span class='ident'>el</span>, <span class='self'>self</span>.<span class='ident'>token</span>, <span class='ident'>msg</span>).<span class='ident'>is_err</span>() {
             <span class='self'>self</span>.<span class='ident'>handle_error</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
         }
     }
 
     <span class='kw'>fn</span> <span class='ident'>receive_response</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) {
-        <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_mut</span>().<span class='ident'>unwrap</span>().<span class='ident'>read</span>::<span class='op'>&lt;</span><span class='ident'>Message</span><span class='op'>&gt;</span>() {
+        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_mut</span>()).<span class='ident'>read</span>::<span class='op'>&lt;</span><span class='ident'>Message</span><span class='op'>&gt;</span>() {
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>Message</span>::<span class='ident'>BootstrapResponse</span>(<span class='ident'>peer_pk</span>))) <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>remove_state</span>(<span class='self'>self</span>.<span class='ident'>token</span>);
                 <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>token</span>;
-                <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error&quot;</span>), <span class='self'>self</span>.<span class='ident'>peer</span>, <span class='ident'>PeerId</span>(<span class='ident'>peer_pk</span>));
+                <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> (<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>()), <span class='self'>self</span>.<span class='ident'>peer</span>, <span class='ident'>PeerId</span>(<span class='ident'>peer_pk</span>));
                 (<span class='op'>*</span><span class='self'>self</span>.<span class='ident'>finish</span>)(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>token</span>, <span class='prelude-val'>Ok</span>(<span class='ident'>data</span>));
             }
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>) <span class='op'>=&gt;</span> (),
@@ -288,7 +288,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>terminate</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>remove_state</span>(<span class='self'>self</span>.<span class='ident'>token</span>);
-        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>deregister</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error&quot;</span>));
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>deregister</span>(<span class='kw-2'>&amp;</span><span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>()));
     }
 
     <span class='kw'>fn</span> <span class='ident'>as_any</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Any</span> {

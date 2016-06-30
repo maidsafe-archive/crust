@@ -486,6 +486,8 @@
 <span id="442">442</span>
 <span id="443">443</span>
 <span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -590,7 +592,7 @@
                          <span class='ident'>EventSet</span>::<span class='ident'>readable</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>error</span>() <span class='op'>|</span> <span class='ident'>EventSet</span>::<span class='ident'>hup</span>(),
                          <span class='ident'>PollOpt</span>::<span class='ident'>edge</span>()));
 
-        <span class='op'>*</span><span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>mapped_addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>collect</span>();
+        <span class='op'>*</span><span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>our_listeners</span>.<span class='ident'>lock</span>()) <span class='op'>=</span> <span class='ident'>mapped_addrs</span>.<span class='ident'>into_iter</span>().<span class='ident'>collect</span>();
 
         <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>ConnectionListener</span> {
             <span class='ident'>token</span>: <span class='ident'>token</span>,
@@ -614,7 +616,7 @@
                 <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>((<span class='ident'>socket</span>, _))) <span class='op'>=&gt;</span> {
                     <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='ident'>ExchangeMsg</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
                                                        <span class='ident'>el</span>,
-                                                       <span class='self'>self</span>.<span class='ident'>timeout_ms</span>.<span class='ident'>clone</span>(),
+                                                       <span class='self'>self</span>.<span class='ident'>timeout_ms</span>,
                                                        <span class='ident'>Socket</span>::<span class='ident'>wrap</span>(<span class='ident'>socket</span>),
                                                        <span class='self'>self</span>.<span class='ident'>our_pk</span>,
                                                        <span class='self'>self</span>.<span class='ident'>name_hash</span>,
@@ -671,6 +673,7 @@
     <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Message</span>, <span class='ident'>NameHash</span>};
     <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
     <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Sender</span>, <span class='ident'>Token</span>};
+    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::<span class='ident'>MaidSafeEventCategory</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>serialise</span>};
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
@@ -690,43 +693,43 @@
 
     <span class='kw'>impl</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>Listener</span> {
         <span class='kw'>fn</span> <span class='ident'>drop</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
-            <span class='self'>self</span>.<span class='ident'>tx</span>
-                .<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='op'>|</span>_, <span class='ident'>el</span><span class='op'>|</span> <span class='ident'>el</span>.<span class='ident'>shutdown</span>()))
-                .<span class='ident'>expect</span>(<span class='string'>&quot;Could not send shutdown to el&quot;</span>);
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>tx</span>
+                        .<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='op'>|</span>_, <span class='ident'>el</span><span class='op'>|</span> <span class='ident'>el</span>.<span class='ident'>shutdown</span>())),
+                    <span class='string'>&quot;Could not send shutdown to el&quot;</span>);
         }
     }
 
     <span class='kw'>fn</span> <span class='ident'>start_listener</span>() <span class='op'>-&gt;</span> <span class='ident'>Listener</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el</span> <span class='op'>=</span> <span class='ident'>EventLoop</span>::<span class='ident'>new</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not spawn el&quot;</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>EventLoop</span>::<span class='ident'>new</span>(), <span class='string'>&quot;Could not spawn el&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>tx</span> <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>channel</span>();
-        <span class='kw'>let</span> <span class='ident'>raii_joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;EL&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='ident'>el</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>::<span class='ident'>with_token_counter</span>(<span class='number'>1</span>)).<span class='ident'>expect</span>(<span class='string'>&quot;Could not run el&quot;</span>);
-        }));
+        <span class='kw'>let</span> <span class='ident'>raii_joiner</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;EL&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>el</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>::<span class='ident'>with_token_counter</span>(<span class='number'>1</span>)), <span class='string'>&quot;Could not run el&quot;</span>);
+        });
 
         <span class='kw'>let</span> (<span class='ident'>event_tx</span>, <span class='ident'>event_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
         <span class='kw'>let</span> <span class='ident'>crust_sender</span> <span class='op'>=</span>
             ::<span class='ident'>CrustEventSender</span>::<span class='ident'>new</span>(<span class='ident'>event_tx</span>, <span class='ident'>MaidSafeEventCategory</span>::<span class='ident'>Crust</span>, <span class='ident'>mpsc</span>::<span class='ident'>channel</span>().<span class='number'>0</span>);
 
         <span class='kw'>let</span> <span class='ident'>cm</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>HashMap</span>::<span class='ident'>new</span>()));
-        <span class='kw'>let</span> <span class='ident'>mc</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>MappingContext</span>::<span class='ident'>new</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not get MC&quot;</span>));
+        <span class='kw'>let</span> <span class='ident'>mc</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>MappingContext</span>::<span class='ident'>new</span>(), <span class='string'>&quot;Could not get MC&quot;</span>));
         <span class='kw'>let</span> <span class='ident'>listeners</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='number'>5</span>)));
 
         <span class='kw'>let</span> <span class='ident'>listeners_clone</span> <span class='op'>=</span> <span class='ident'>listeners</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> (<span class='ident'>pk</span>, _) <span class='op'>=</span> <span class='ident'>box_</span>::<span class='ident'>gen_keypair</span>();
-        <span class='ident'>tx</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-                <span class='ident'>ConnectionListener</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
-                                          <span class='ident'>el</span>,
-                                          <span class='prelude-val'>Some</span>(<span class='number'>5000</span>),
-                                          <span class='number'>0</span>,
-                                          <span class='ident'>pk</span>,
-                                          <span class='ident'>NAME_HASH</span>,
-                                          <span class='ident'>cm</span>,
-                                          <span class='ident'>mc</span>,
-                                          <span class='ident'>listeners_clone</span>,
-                                          <span class='ident'>Token</span>(<span class='number'>0</span>),
-                                          <span class='ident'>crust_sender</span>);
-            }))
-            .<span class='ident'>expect</span>(<span class='string'>&quot;Could not send to tx&quot;</span>);
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
+            <span class='ident'>ConnectionListener</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
+                                      <span class='ident'>el</span>,
+                                      <span class='prelude-val'>Some</span>(<span class='number'>5000</span>),
+                                      <span class='number'>0</span>,
+                                      <span class='ident'>pk</span>,
+                                      <span class='ident'>NAME_HASH</span>,
+                                      <span class='ident'>cm</span>,
+                                      <span class='ident'>mc</span>,
+                                      <span class='ident'>listeners_clone</span>,
+                                      <span class='ident'>Token</span>(<span class='number'>0</span>),
+                                      <span class='ident'>crust_sender</span>);
+        })),
+                <span class='string'>&quot;Could not send to tx&quot;</span>);
 
         <span class='kw'>for</span> <span class='ident'>it</span> <span class='kw'>in</span> <span class='ident'>event_rx</span>.<span class='ident'>iter</span>() {
             <span class='kw'>match</span> <span class='ident'>it</span> {
@@ -735,7 +738,7 @@
             }
         }
 
-        <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>()[<span class='number'>0</span>]);
+        <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>listeners</span>.<span class='ident'>lock</span>())[<span class='number'>0</span>]);
 
         <span class='ident'>Listener</span> {
             <span class='ident'>tx</span>: <span class='ident'>tx</span>,
@@ -748,16 +751,17 @@
 
     <span class='kw'>fn</span> <span class='ident'>connect_to_listener</span>(<span class='ident'>listener</span>: <span class='kw-2'>&amp;</span><span class='ident'>Listener</span>) <span class='op'>-&gt;</span> <span class='ident'>TcpStream</span> {
         <span class='kw'>let</span> <span class='ident'>listener_addr</span> <span class='op'>=</span> <span class='ident'>StdSocketAddr</span>::<span class='ident'>new</span>(<span class='ident'>listener</span>.<span class='ident'>addr</span>.<span class='ident'>ip</span>(), <span class='ident'>listener</span>.<span class='ident'>addr</span>.<span class='ident'>port</span>());
-        <span class='kw'>let</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='ident'>TcpStream</span>::<span class='ident'>connect</span>(<span class='ident'>listener_addr</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not connect to listener&quot;</span>);
-        <span class='ident'>stream</span>.<span class='ident'>set_read_timeout</span>(<span class='prelude-val'>Some</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='ident'>EXCHANGE_MSG_TIMEOUT_MS</span> <span class='op'>+</span> <span class='number'>1000</span>)))
-            .<span class='ident'>expect</span>(<span class='string'>&quot;Could not set read timeout.&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>TcpStream</span>::<span class='ident'>connect</span>(<span class='ident'>listener_addr</span>),
+                             <span class='string'>&quot;Could not connect to listener&quot;</span>);
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>set_read_timeout</span>(<span class='prelude-val'>Some</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='ident'>EXCHANGE_MSG_TIMEOUT_MS</span> <span class='op'>+</span> <span class='number'>1000</span>)))
+            , <span class='string'>&quot;Could not set read timeout.&quot;</span>);
 
         <span class='ident'>stream</span>
     }
 
     <span class='kw'>fn</span> <span class='ident'>write</span>(<span class='ident'>stream</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>TcpStream</span>, <span class='ident'>message</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>size_vec</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>u32</span><span class='op'>&gt;</span>());
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>size_vec</span>.<span class='ident'>write_u32</span>::<span class='op'>&lt;</span><span class='ident'>LittleEndian</span><span class='op'>&gt;</span>(<span class='ident'>message</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>u32</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>size_vec</span>.<span class='ident'>write_u32</span>::<span class='op'>&lt;</span><span class='ident'>LittleEndian</span><span class='op'>&gt;</span>(<span class='ident'>message</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>u32</span>));
 
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>write_all</span>(<span class='kw-2'>&amp;</span><span class='ident'>size_vec</span>));
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>write_all</span>(<span class='kw-2'>&amp;</span><span class='ident'>message</span>));
@@ -779,21 +783,21 @@
         }
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>read_exact</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>payload</span>));
 
-        <span class='prelude-val'>Ok</span>(<span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>payload</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not deserialise.&quot;</span>))
+        <span class='prelude-val'>Ok</span>(<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>payload</span>), <span class='string'>&quot;Could not deserialise.&quot;</span>))
     }
 
     <span class='kw'>fn</span> <span class='ident'>bootstrap</span>(<span class='ident'>name_hash</span>: <span class='ident'>NameHash</span>, <span class='ident'>pk</span>: <span class='ident'>PublicKey</span>, <span class='ident'>listener</span>: <span class='ident'>Listener</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>us</span> <span class='op'>=</span> <span class='ident'>connect_to_listener</span>(<span class='kw-2'>&amp;</span><span class='ident'>listener</span>);
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>BootstrapRequest</span>(<span class='ident'>pk</span>, <span class='ident'>name_hash</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not write.&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>BootstrapRequest</span>(<span class='ident'>pk</span>, <span class='ident'>name_hash</span>)));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>), <span class='string'>&quot;Could not write.&quot;</span>);
 
-        <span class='kw'>match</span> <span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not read.&quot;</span>) {
+        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>), <span class='string'>&quot;Could not read.&quot;</span>) {
             <span class='ident'>Message</span>::<span class='ident'>BootstrapResponse</span>(<span class='ident'>peer_pk</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_pk</span>, <span class='ident'>listener</span>.<span class='ident'>pk</span>),
             <span class='ident'>msg</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected message: {:?}&quot;</span>, <span class='ident'>msg</span>),
         }
 
-        <span class='kw'>match</span> <span class='ident'>listener</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not read event channel&quot;</span>) {
+        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>listener</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>(), <span class='string'>&quot;Could not read event channel&quot;</span>) {
             <span class='ident'>Event</span>::<span class='ident'>BootstrapAccept</span>(<span class='ident'>peer_id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_id</span>, <span class='ident'>PeerId</span>(<span class='ident'>pk</span>)),
             <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected event notification: {:?}&quot;</span>, <span class='ident'>event</span>),
         }
@@ -802,11 +806,11 @@
     <span class='kw'>fn</span> <span class='ident'>connect</span>(<span class='ident'>name_hash</span>: <span class='ident'>NameHash</span>, <span class='ident'>pk</span>: <span class='ident'>PublicKey</span>, <span class='ident'>listener</span>: <span class='ident'>Listener</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>us</span> <span class='op'>=</span> <span class='ident'>connect_to_listener</span>(<span class='kw-2'>&amp;</span><span class='ident'>listener</span>);
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>Connect</span>(<span class='ident'>pk</span>, <span class='ident'>name_hash</span>)).<span class='ident'>unwrap</span>();
-        <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not write.&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>Connect</span>(<span class='ident'>pk</span>, <span class='ident'>name_hash</span>)));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>), <span class='string'>&quot;Could not write.&quot;</span>);
 
         <span class='kw'>let</span> <span class='ident'>our_id</span> <span class='op'>=</span> <span class='ident'>PeerId</span>(<span class='ident'>pk</span>);
-        <span class='kw'>let</span> <span class='ident'>their_id</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not read.&quot;</span>) {
+        <span class='kw'>let</span> <span class='ident'>their_id</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>), <span class='string'>&quot;Could not read.&quot;</span>) {
             <span class='ident'>Message</span>::<span class='ident'>Connect</span>(<span class='ident'>peer_pk</span>, <span class='ident'>peer_hash</span>) <span class='op'>=&gt;</span> {
                 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_pk</span>, <span class='ident'>listener</span>.<span class='ident'>pk</span>);
                 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_hash</span>, <span class='ident'>NAME_HASH</span>);
@@ -816,11 +820,11 @@
         };
 
         <span class='kw'>if</span> <span class='ident'>our_id</span> <span class='op'>&gt;</span> <span class='ident'>their_id</span> {
-            <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>ChooseConnection</span>).<span class='ident'>unwrap</span>();
-            <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not write.&quot;</span>);
+            <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>ChooseConnection</span>));
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>), <span class='string'>&quot;Could not write.&quot;</span>);
         }
 
-        <span class='kw'>match</span> <span class='ident'>listener</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not read event channel&quot;</span>) {
+        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>listener</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>(), <span class='string'>&quot;Could not read event channel&quot;</span>) {
             <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>PeerId</span>(<span class='ident'>pk</span>)),
             <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected event notification: {:?}&quot;</span>, <span class='ident'>event</span>),
         }
@@ -875,15 +879,15 @@
         <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='ident'>start_listener</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>us</span> <span class='op'>=</span> <span class='ident'>connect_to_listener</span>(<span class='kw-2'>&amp;</span><span class='ident'>listener</span>);
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>Heartbeat</span>).<span class='ident'>unwrap</span>();
-        <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not write.&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>Heartbeat</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>), <span class='string'>&quot;Could not write.&quot;</span>);
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>512</span>];
         <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>windows</span>) {
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>is_err</span>());
         } <span class='kw'>else</span> {
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>0</span>,
-                       <span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>expect</span>(<span class='string'>&quot;read should have returned EOF (0)&quot;</span>));
+                       <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>), <span class='string'>&quot;read should have returned EOF (0)&quot;</span>));
         }
     }
 
@@ -896,7 +900,7 @@
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>is_err</span>());
         } <span class='kw'>else</span> {
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>0</span>,
-                       <span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>expect</span>(<span class='string'>&quot;read should have returned EOF (0)&quot;</span>));
+                       <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>), <span class='string'>&quot;read should have returned EOF (0)&quot;</span>));
         }
     }
 
@@ -908,10 +912,10 @@
         <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='ident'>start_listener</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>us</span> <span class='op'>=</span> <span class='ident'>connect_to_listener</span>(<span class='kw-2'>&amp;</span><span class='ident'>listener</span>);
 
-        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>EchoAddrReq</span>).<span class='ident'>unwrap</span>();
-        <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not write.&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>Message</span>::<span class='ident'>EchoAddrReq</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>, <span class='ident'>message</span>), <span class='string'>&quot;Could not write.&quot;</span>);
 
-        <span class='kw'>let</span> <span class='ident'>our_addr</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>).<span class='ident'>expect</span>(<span class='string'>&quot;Could not read.&quot;</span>) {
+        <span class='kw'>let</span> <span class='ident'>our_addr</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>us</span>), <span class='string'>&quot;Could not read.&quot;</span>) {
             <span class='ident'>Message</span>::<span class='ident'>EchoAddrResp</span>(<span class='ident'>addr</span>) <span class='op'>=&gt;</span> <span class='ident'>addr</span>,
             <span class='ident'>msg</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected message: {:?}&quot;</span>, <span class='ident'>msg</span>),
         };
@@ -920,14 +924,14 @@
         <span class='comment'>// case the following assertion should be commented out. Till then it is useful to have</span>
         <span class='comment'>// this testing for conformity on local host.</span>
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>our_addr</span>.<span class='number'>0</span>,
-                   <span class='ident'>us</span>.<span class='ident'>local_addr</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not obtain local addr&quot;</span>));
+                   <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>local_addr</span>(), <span class='string'>&quot;Could not obtain local addr&quot;</span>));
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>512</span>];
         <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>windows</span>) {
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>is_err</span>());
         } <span class='kw'>else</span> {
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>0</span>,
-                       <span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>expect</span>(<span class='string'>&quot;read should have returned EOF (0)&quot;</span>));
+                       <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>us</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>), <span class='string'>&quot;read should have returned EOF (0)&quot;</span>));
         }
     }
 }

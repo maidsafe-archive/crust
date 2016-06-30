@@ -719,6 +719,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
+<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
@@ -776,10 +777,10 @@
             .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='number'>0</span>));
 
         <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span>
-            <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Crust {:?} event loop&quot;</span>, <span class='ident'>our_id</span>), <span class='kw'>move</span> <span class='op'>||</span> {
+            <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Crust {:?} event loop&quot;</span>, <span class='ident'>our_id</span>), <span class='kw'>move</span> <span class='op'>||</span> {
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>core</span> <span class='op'>=</span> <span class='ident'>Core</span>::<span class='ident'>with_token_counter</span>(<span class='number'>3</span>);
-                <span class='ident'>el</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>core</span>).<span class='ident'>expect</span>(<span class='string'>&quot;EventLoop failed to run&quot;</span>);
-            }));
+                <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>el</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>core</span>), <span class='string'>&quot;EventLoop failed to run&quot;</span>);
+            });
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>Service</span> {
             <span class='ident'>cm</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>HashMap</span>::<span class='ident'>new</span>())),
@@ -942,7 +943,7 @@
     <span class='doccomment'>///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`</span>
     <span class='doccomment'>///    obtained from the peer</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>our_ci</span>: <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>their_ci</span>: <span class='ident'>PubConnectionInfo</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>contains_key</span>(<span class='kw-2'>&amp;</span><span class='ident'>their_ci</span>.<span class='ident'>id</span>) {
+        <span class='kw'>if</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>()).<span class='ident'>contains_key</span>(<span class='kw-2'>&amp;</span><span class='ident'>their_ci</span>.<span class='ident'>id</span>) {
             <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Already connected OR already in process of connecting to {:?}&quot;</span>,
                   <span class='ident'>their_ci</span>.<span class='ident'>id</span>);
             <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(());
@@ -959,7 +960,7 @@
 
     <span class='doccomment'>/// Disconnect from the given peer and returns whether there was a connection at all.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disconnect</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='ident'>PeerId</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
+        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>()).<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>token</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>token</span>,
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='boolval'>false</span>,
         };
@@ -975,7 +976,7 @@
 
     <span class='doccomment'>/// Send data to a peer.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='ident'>PeerId</span>, <span class='ident'>msg</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>priority</span>: <span class='ident'>Priority</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
+        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>()).<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>token</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>token</span>,
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>CrustError</span>::<span class='ident'>PeerNotFound</span>(<span class='ident'>peer_id</span>)),
         };
@@ -995,14 +996,14 @@
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>our_pub_key</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>;
         <span class='kw'>let</span> <span class='ident'>our_listeners</span> <span class='op'>=</span>
-            <span class='self'>self</span>.<span class='ident'>our_listeners</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='op'>*</span><span class='ident'>e</span>)).<span class='ident'>collect</span>();
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>our_listeners</span>.<span class='ident'>lock</span>()).<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='op'>*</span><span class='ident'>e</span>)).<span class='ident'>collect</span>();
         <span class='kw'>let</span> <span class='ident'>mc</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>mc</span>.<span class='ident'>clone</span>();
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
             <span class='kw'>let</span> <span class='ident'>event_tx_clone</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
             <span class='kw'>match</span> <span class='ident'>MappedTcpSocket</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='number'>0</span>, <span class='kw-2'>&amp;</span><span class='ident'>mc</span>, <span class='kw'>move</span> <span class='op'>|</span>_, _, <span class='ident'>socket</span>, <span class='ident'>addrs</span><span class='op'>|</span> {
                 <span class='kw'>let</span> <span class='ident'>hole_punch_addrs</span> <span class='op'>=</span> <span class='ident'>addrs</span>.<span class='ident'>into_iter</span>()
                     .<span class='ident'>filter</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>nat</span>::<span class='ident'>ip_addr_is_global</span>(<span class='kw-2'>&amp;</span><span class='ident'>elt</span>.<span class='ident'>ip</span>()))
-                    .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>elt</span>))
+                    .<span class='ident'>map</span>(<span class='ident'>common</span>::<span class='ident'>SocketAddr</span>)
                     .<span class='ident'>collect</span>();
                 <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='ident'>event_tx_clone</span>;
                 <span class='kw'>let</span> <span class='ident'>event</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
@@ -1035,7 +1036,7 @@
 
     <span class='doccomment'>/// Check if we are connected to the given peer</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_connected</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='kw-2'>&amp;</span><span class='ident'>PeerId</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>get</span>(<span class='ident'>peer_id</span>) {
+        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>()).<span class='ident'>get</span>(<span class='ident'>peer_id</span>) {
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(_), .. }) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
             _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
         }
@@ -1075,10 +1076,11 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>ATOMIC_USIZE_INIT</span>, <span class='ident'>AtomicUsize</span>, <span class='ident'>Ordering</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Receiver</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>, <span class='ident'>mpsc</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>::{<span class='self'>self</span>, <span class='ident'>JoinHandle</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
+    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
     <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Event</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
     <span class='kw'>use</span> <span class='ident'>tests</span>::{<span class='ident'>get_event_sender</span>, <span class='ident'>timebomb</span>};
 
@@ -1086,15 +1088,15 @@
     <span class='kw'>fn</span> <span class='ident'>direct_connect_two_peers</span>() {
         <span class='ident'>timebomb</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>30</span>), <span class='op'>||</span> {
             <span class='kw'>let</span> (<span class='ident'>event_tx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_0</span>));
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_0</span>));
 
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>start_listening_tcp</span>());
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>start_listening_tcp</span>());
             <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>, <span class='ident'>Event</span>::<span class='ident'>ListenerStarted</span>(_));
 
             <span class='kw'>let</span> (<span class='ident'>event_tx_1</span>, <span class='ident'>event_rx_1</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_1</span>));
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_1</span>));
 
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_tcp</span>());
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_tcp</span>());
             <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>, <span class='ident'>Event</span>::<span class='ident'>ListenerStarted</span>(_));
 
             <span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='ident'>service_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>service_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_1</span>);
@@ -1105,13 +1107,13 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='attribute'>#[<span class='ident'>ignore</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>rendezvous_connect_two_peers</span>() {
-        <span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>));
         <span class='ident'>timebomb</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>30</span>), <span class='op'>||</span> {
             <span class='kw'>let</span> (<span class='ident'>event_tx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-            <span class='kw'>let</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_0</span>));
+            <span class='kw'>let</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_0</span>));
 
             <span class='kw'>let</span> (<span class='ident'>event_tx_1</span>, <span class='ident'>event_rx_1</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-            <span class='kw'>let</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_1</span>));
+            <span class='kw'>let</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_1</span>));
 
             <span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='ident'>service_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>service_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_1</span>);
             <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Exchanging messages ...&quot;</span>);
@@ -1132,16 +1134,16 @@
         <span class='kw'>let</span> <span class='ident'>conn_info_result_1</span> <span class='op'>=</span>
             <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>, <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>result</span>) <span class='op'>=&gt;</span> <span class='ident'>result</span>);
 
-        <span class='kw'>let</span> <span class='ident'>priv_info_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>conn_info_result_0</span>.<span class='ident'>result</span>);
-        <span class='kw'>let</span> <span class='ident'>priv_info_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>conn_info_result_1</span>.<span class='ident'>result</span>);
+        <span class='kw'>let</span> <span class='ident'>priv_info_0</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>conn_info_result_0</span>.<span class='ident'>result</span>);
+        <span class='kw'>let</span> <span class='ident'>priv_info_1</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>conn_info_result_1</span>.<span class='ident'>result</span>);
         <span class='kw'>let</span> <span class='ident'>pub_info_0</span> <span class='op'>=</span> <span class='ident'>priv_info_0</span>.<span class='ident'>to_pub_connection_info</span>();
         <span class='kw'>let</span> <span class='ident'>pub_info_1</span> <span class='op'>=</span> <span class='ident'>priv_info_1</span>.<span class='ident'>to_pub_connection_info</span>();
 
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>connect</span>(<span class='ident'>priv_info_0</span>, <span class='ident'>pub_info_1</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>connect</span>(<span class='ident'>priv_info_0</span>, <span class='ident'>pub_info_1</span>));
         <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>windows</span>) {
             <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>100</span>));
         }
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>connect</span>(<span class='ident'>priv_info_1</span>, <span class='ident'>pub_info_0</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>connect</span>(<span class='ident'>priv_info_1</span>, <span class='ident'>pub_info_0</span>));
 
         <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>, <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>service_1</span>.<span class='ident'>id</span>()));
         <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>, <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>service_0</span>.<span class='ident'>id</span>()));
@@ -1162,8 +1164,8 @@
         <span class='kw'>let</span> <span class='ident'>data_1</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>iter</span>::<span class='ident'>repeat</span>(()).<span class='ident'>take</span>(<span class='number'>32</span>).<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='ident'>rand</span>::<span class='ident'>random</span>()).<span class='ident'>collect</span>();
         <span class='kw'>let</span> <span class='ident'>send_1</span> <span class='op'>=</span> <span class='ident'>data_1</span>.<span class='ident'>clone</span>();
 
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='ident'>id_1</span>, <span class='ident'>data_0</span>, <span class='number'>0</span>));
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='ident'>id_0</span>, <span class='ident'>data_1</span>, <span class='number'>0</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='ident'>id_1</span>, <span class='ident'>data_0</span>, <span class='number'>0</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='ident'>id_0</span>, <span class='ident'>data_1</span>, <span class='number'>0</span>));
 
         <span class='kw'>let</span> <span class='ident'>recv_1</span> <span class='op'>=</span> <span class='macro'>expect_event</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>, <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>id</span>, <span class='ident'>recv</span>) <span class='op'>=&gt;</span> {
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>id_1</span>);
@@ -1187,10 +1189,10 @@
 
         <span class='ident'>service</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>token</span>);
 
-        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
+        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
             <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
                 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>token</span>);
-                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
+                <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
             }
             <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
         }
@@ -1214,11 +1216,11 @@
         <span class='kw'>impl</span> <span class='ident'>TestNode</span> {
             <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>index</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> (<span class='ident'>TestNode</span>, <span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>PubConnectionInfo</span><span class='op'>&gt;</span>) {
                 <span class='kw'>let</span> (<span class='ident'>event_sender</span>, <span class='ident'>event_rx</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-                <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(::<span class='ident'>main</span>::<span class='ident'>config_handler</span>::<span class='ident'>read_config_file</span>());
-                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender</span>, <span class='ident'>config</span>));
+                <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(::<span class='ident'>main</span>::<span class='ident'>config_handler</span>::<span class='ident'>read_config_file</span>());
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender</span>, <span class='ident'>config</span>));
                 <span class='comment'>// Start listener so that the test works without hole punching.</span>
                 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>service</span>.<span class='ident'>start_listening_tcp</span>().<span class='ident'>is_ok</span>());
-                <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
+                <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
                     <span class='ident'>Event</span>::<span class='ident'>ListenerStarted</span>(_) <span class='op'>=&gt;</span> (),
                     <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Unexpected event: {:?}&quot;</span>, <span class='ident'>m</span>),
                 }
@@ -1246,8 +1248,8 @@
                 }
             }
 
-            <span class='kw'>fn</span> <span class='ident'>run</span>(<span class='self'>self</span>, <span class='ident'>send_barrier</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Barrier</span><span class='op'>&gt;</span>, <span class='ident'>drop_barrier</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Barrier</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>JoinHandle</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-                <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;run!&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+            <span class='kw'>fn</span> <span class='ident'>run</span>(<span class='self'>self</span>, <span class='ident'>send_barrier</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Barrier</span><span class='op'>&gt;</span>, <span class='ident'>drop_barrier</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Barrier</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Joiner</span> {
+                <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;run!&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                     <span class='kw'>for</span> (<span class='ident'>our_ci</span>, <span class='ident'>their_ci</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>our_cis</span>
                         .<span class='ident'>into_iter</span>()
                         .<span class='ident'>zip</span>(<span class='self'>self</span>.<span class='ident'>connection_id_rx</span>.<span class='ident'>into_iter</span>()) {
@@ -1255,7 +1257,7 @@
                     }
                     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>their_ids</span> <span class='op'>=</span> <span class='ident'>HashMap</span>::<span class='ident'>new</span>();
                     <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>NUM_SERVICES</span> <span class='op'>-</span> <span class='number'>1</span> {
-                        <span class='kw'>let</span> <span class='ident'>their_id</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
+                        <span class='kw'>let</span> <span class='ident'>their_id</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
                             <span class='ident'>Event</span>::<span class='ident'>ConnectSuccess</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
                             <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected ConnectSuccess message. Got message {:?}&quot;</span>, <span class='ident'>m</span>),
                         };
@@ -1280,7 +1282,7 @@
                     }
 
                     <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..((<span class='ident'>NUM_SERVICES</span> <span class='op'>-</span> <span class='number'>1</span>) <span class='op'>*</span> <span class='ident'>NUM_MSGS</span>) {
-                        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
+                        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
                             <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_id</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> {
                                 <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>msg</span>[<span class='number'>0</span>];
                                 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>msg</span>.<span class='ident'>len</span>(), <span class='ident'>MSG_SIZE</span>);
@@ -1343,9 +1345,7 @@
         <span class='comment'>// TODO(canndrew): drop this limit</span>
         <span class='kw'>let</span> <span class='ident'>timeout_ms</span> <span class='op'>=</span> <span class='number'>10000</span> <span class='op'>*</span> (<span class='ident'>NUM_MSGS</span> <span class='op'>*</span> (<span class='ident'>NUM_SERVICES</span> <span class='op'>*</span> (<span class='ident'>NUM_SERVICES</span> <span class='op'>-</span> <span class='number'>1</span>)) <span class='op'>/</span> <span class='number'>2</span>) <span class='kw'>as</span> <span class='ident'>u64</span>;
         <span class='ident'>timebomb</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='ident'>timeout_ms</span>), <span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='kw'>for</span> <span class='ident'>thread</span> <span class='kw'>in</span> <span class='ident'>threads</span> {
-                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>thread</span>.<span class='ident'>join</span>());
-            }
+            <span class='ident'>drop</span>(<span class='ident'>threads</span>);
         });
     }
 }

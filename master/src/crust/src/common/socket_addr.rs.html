@@ -242,7 +242,7 @@
     }
 }
 
-<span class='doccomment'>/// Utility struct of SocketAddrV6 for hole punching</span>
+<span class='doccomment'>/// Wrapper for `SocketAddrV6` which implements `Encodable`/`Decodable`.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SocketAddrV6</span>(<span class='kw'>pub</span> <span class='ident'>net</span>::<span class='ident'>SocketAddrV6</span>);
 

@@ -278,8 +278,6 @@
 <span id="234">234</span>
 <span id="235">235</span>
 <span id="236">236</span>
-<span id="237">237</span>
-<span id="238">238</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -453,9 +451,7 @@
 
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>current_write</span>.<span class='ident'>is_none</span>() {
             <span class='kw'>let</span> (<span class='ident'>key</span>, (<span class='ident'>_time_stamp</span>, <span class='ident'>data</span>), <span class='ident'>empty</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>write_queue</span>.<span class='ident'>iter_mut</span>().<span class='ident'>next</span>() {
-                <span class='prelude-val'>Some</span>((<span class='ident'>key</span>, <span class='ident'>queue</span>)) <span class='op'>=&gt;</span> {
-                    (<span class='op'>*</span><span class='ident'>key</span>, <span class='ident'>queue</span>.<span class='ident'>pop_front</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error - Queue pop&quot;</span>), <span class='ident'>queue</span>.<span class='ident'>is_empty</span>())
-                }
+                <span class='prelude-val'>Some</span>((<span class='ident'>key</span>, <span class='ident'>queue</span>)) <span class='op'>=&gt;</span> (<span class='op'>*</span><span class='ident'>key</span>, <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>queue</span>.<span class='ident'>pop_front</span>()), <span class='ident'>queue</span>.<span class='ident'>is_empty</span>()),
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>),
             };
             <span class='kw'>if</span> <span class='ident'>empty</span> {
