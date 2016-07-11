@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.16.1]
+- Fix sodiumoxide to v0.0.10 as the new released v0.0.12 does not support rustc-serializable types anymore and breaks builds
+
 ## [0.16.0]
 - Do not drop messages with Priority value below 2
 - Pull in socket_addr and get_if_addrs crate
