@@ -48,7 +48,7 @@
                        [<span class='inner'>&#x2212;</span>]
                    </a>
                </span><a id='src-312' class='srclink' href='../src/httparse/lib.rs.html#318' title='goto source code'>[src]</a></span></h1>
-<pre class='rust const'>pub const EMPTY_HEADER: <a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'static&gt;<code> = </code><code>Header { name: "", value: b"" }</code></pre><div class='docblock'><p>An empty header, useful for constructing a <code>Header</code> array to pass in for
+<pre class='rust const'>pub const EMPTY_HEADER: <a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'static&gt;<code> = </code><code>Header{name: &quot;&quot;, value: b&quot;&quot;,}</code></pre><div class='docblock'><p>An empty header, useful for constructing a <code>Header</code> array to pass in for
 parsing.</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
@@ -77,6 +77,8 @@ parsing.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

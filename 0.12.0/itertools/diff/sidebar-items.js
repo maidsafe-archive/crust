@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Diff","A type returned by the `diff_with` function."]],"fn":[["diff_with","Compares every element yielded by both `i` and `j` with the given function in lock-step and returns a `Diff` which describes how `j` differs from `i`."]]});

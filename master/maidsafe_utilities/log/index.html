@@ -88,7 +88,7 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
 }
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>));
+    <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolvalue'>true</span>));
 
     <span class='ident'>my_mod</span>::<span class='ident'>show_warning</span>();
 
@@ -173,6 +173,8 @@ filters should be present in web-servers to manipulate the output/view.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

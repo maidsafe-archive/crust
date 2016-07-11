@@ -205,7 +205,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>SocketAddr</span> {
     <span class='doccomment'>/// Construct new from `IpAddr` and port.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>ip</span>: <span class='ident'>net</span>::<span class='ident'>IpAddr</span>, <span class='ident'>port</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>ip</span>: <span class='ident'>net</span>::<span class='ident'>IpAddr</span>, <span class='ident'>port</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>SocketAddr</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>new</span>(<span class='ident'>ip</span>, <span class='ident'>port</span>))
     }
 }
@@ -242,7 +242,7 @@
     }
 }
 
-<span class='doccomment'>/// Utility struct of SocketAddrV6 for hole punching</span>
+<span class='doccomment'>/// Wrapper for `SocketAddrV6` which implements `Encodable`/`Decodable`.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SocketAddrV6</span>(<span class='kw'>pub</span> <span class='ident'>net</span>::<span class='ident'>SocketAddrV6</span>);
 
@@ -297,6 +297,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

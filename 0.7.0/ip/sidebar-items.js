@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["IpAddr","An IP address, either an IPv4 or IPv6 address."]]});

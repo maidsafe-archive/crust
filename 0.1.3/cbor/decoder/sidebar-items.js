@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Decoder","Read CBOR data items into Rust values from the underlying reader `R`."]]});

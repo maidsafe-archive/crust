@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/header/common/cookie.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/cookie.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>cookie.rs.html -- source</title>
@@ -292,7 +292,7 @@
     <span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>Headers</span>;
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cookie_pair</span> <span class='op'>=</span> <span class='ident'>CookiePair</span>::<span class='ident'>new</span>(<span class='string'>&quot;foo&quot;</span>.<span class='ident'>to_owned</span>(), <span class='string'>&quot;bar&quot;</span>.<span class='ident'>to_owned</span>());
-    <span class='ident'>cookie_pair</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+    <span class='ident'>cookie_pair</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
     <span class='ident'>cookie_pair</span>.<span class='ident'>path</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;/p&quot;</span>.<span class='ident'>to_owned</span>());
     <span class='kw'>let</span> <span class='ident'>cookie_header</span> <span class='op'>=</span> <span class='ident'>Cookie</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
         <span class='ident'>cookie_pair</span>,
@@ -339,6 +339,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

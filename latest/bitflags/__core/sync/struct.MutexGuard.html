@@ -43,20 +43,32 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='struct' href=''>MutexGuard</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='struct' href=''>MutexGuard</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-10212' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mutex/struct.MutexGuard.html?gotosrc=10212' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-10165' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mutex/struct.MutexGuard.html?gotosrc=10165' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>#[must_use]
 pub struct MutexGuard&lt;'a, T&gt; <span class='where'>where T: 'a + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     // some fields omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>An RAII implementation of a &quot;scoped lock&quot; of a mutex. When this structure is
+}</pre><div class='docblock'><p>An RAII implementation of a &quot;scoped lock&quot; of a mutex. When this structure is
 dropped (falls out of scope), the lock will be unlocked.</p>
 
 <p>The data protected by the mutex can be access through this guard via its
 <code>Deref</code> and <code>DerefMut</code> implementations</p>
-</div></section>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a, T&gt; !<a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.MutexGuard.html' title='bitflags::__core::sync::MutexGuard'>MutexGuard</a>&lt;'a, T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl&lt;'mutex, T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.MutexGuard.html' title='bitflags::__core::sync::MutexGuard'>MutexGuard</a>&lt;'mutex, T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Target' class='type'><code>type <a href='../../../bitflags/__core/ops/trait.Deref.html#associatedtype.Target' class='type'>Target</a> = T</code></h4>
+<div class='docblock'><p>The resulting type after dereferencing</p>
+</div><h4 id='method.deref' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Deref.html#tymethod.deref' class='fnname'>deref</a>(&amp;self) -&gt; &amp;T</code></h4>
+<div class='docblock'><p>The method called to dereference a value</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'mutex, T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.DerefMut.html' title='bitflags::__core::ops::DerefMut'>DerefMut</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.MutexGuard.html' title='bitflags::__core::sync::MutexGuard'>MutexGuard</a>&lt;'mutex, T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.deref_mut' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.DerefMut.html#tymethod.deref_mut' class='fnname'>deref_mut</a>(&amp;mut self) -&gt; &amp;mut T</code></h4>
+<div class='docblock'><p>The method called to mutably dereference a value</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.MutexGuard.html' title='bitflags::__core::sync::MutexGuard'>MutexGuard</a>&lt;'a, T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>A method called when the value goes out of scope. <a href="../../../bitflags/__core/ops/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -79,6 +91,8 @@ dropped (falls out of scope), the lock will be unlocked.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

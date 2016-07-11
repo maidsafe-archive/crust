@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["PadUsing","An iterator adaptor that pads a sequence to a minimum length by filling missing elements using a closure."]]});

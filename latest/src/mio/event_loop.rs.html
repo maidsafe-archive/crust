@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/mio-0.5.1/src/event_loop.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/mio-0.5.1/src/event_loop.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>event_loop.rs.html -- source</title>
@@ -588,7 +588,7 @@
     <span class='doccomment'>/// loop&#39;s notification channel before a send will fail.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// The default value for this is 4096.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>notify_capacity</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>capacity</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>notify_capacity</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>capacity</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>notify_capacity</span> <span class='op'>=</span> <span class='ident'>capacity</span>;
         <span class='self'>self</span>
     }
@@ -597,22 +597,22 @@
     <span class='doccomment'>/// the event loop.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// The default value for this is 256.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>messages_per_tick</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>messages</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>messages_per_tick</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>messages</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>messages_per_tick</span> <span class='op'>=</span> <span class='ident'>messages</span>;
         <span class='self'>self</span>
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>timer_tick_ms</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ms</span>: <span class='ident'>u64</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>timer_tick_ms</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ms</span>: <span class='ident'>u64</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>timer_tick_ms</span> <span class='op'>=</span> <span class='ident'>ms</span>;
         <span class='self'>self</span>
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>timer_wheel_size</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>size</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>timer_wheel_size</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>size</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>timer_wheel_size</span> <span class='op'>=</span> <span class='ident'>size</span>;
         <span class='self'>self</span>
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>timer_capacity</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cap</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>timer_capacity</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cap</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>timer_capacity</span> <span class='op'>=</span> <span class='ident'>cap</span>;
         <span class='self'>self</span>
     }
@@ -665,7 +665,7 @@
         <span class='ident'>timer</span>.<span class='ident'>setup</span>();
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>EventLoop</span> {
-            <span class='ident'>run</span>: <span class='boolval'>true</span>,
+            <span class='ident'>run</span>: <span class='boolvalue'>true</span>,
             <span class='ident'>poll</span>: <span class='ident'>poll</span>,
             <span class='ident'>timer</span>: <span class='ident'>timer</span>,
             <span class='ident'>notify</span>: <span class='ident'>notify</span>,
@@ -767,7 +767,7 @@
     <span class='doccomment'>/// Tells the event loop to exit after it is done handling all events in the</span>
     <span class='doccomment'>/// current iteration.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shutdown</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
-        <span class='self'>self</span>.<span class='ident'>run</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+        <span class='self'>self</span>.<span class='ident'>run</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
     }
 
     <span class='doccomment'>/// Indicates whether the event loop is currently running. If it&#39;s not it has either</span>
@@ -793,7 +793,7 @@
     <span class='doccomment'>/// Keep spinning the event loop indefinitely, and notify the handler whenever</span>
     <span class='doccomment'>/// any of the registered handles are ready.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>handler</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>H</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>run</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+        <span class='self'>self</span>.<span class='ident'>run</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
 
         <span class='kw'>while</span> <span class='self'>self</span>.<span class='ident'>run</span> {
             <span class='comment'>// Execute ticks as long as the event loop is running</span>
@@ -819,7 +819,7 @@
         <span class='comment'>// Check the notify channel for any pending messages. If there are any,</span>
         <span class='comment'>// avoid blocking when polling for IO events. Messages will be</span>
         <span class='comment'>// processed after IO events.</span>
-        <span class='ident'>messages</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>notify</span>.<span class='ident'>check</span>(<span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>messages_per_tick</span>, <span class='boolval'>true</span>);
+        <span class='ident'>messages</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>notify</span>.<span class='ident'>check</span>(<span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>messages_per_tick</span>, <span class='boolvalue'>true</span>);
         <span class='kw'>let</span> <span class='ident'>pending</span> <span class='op'>=</span> <span class='ident'>messages</span> <span class='op'>&gt;</span> <span class='number'>0</span>;
 
         <span class='kw'>if</span> <span class='ident'>pending</span> {
@@ -845,7 +845,7 @@
             <span class='comment'>// Indicate that the sleep period is over, also grab any additional</span>
             <span class='comment'>// messages</span>
             <span class='kw'>let</span> <span class='ident'>remaining</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>messages_per_tick</span> <span class='op'>-</span> <span class='ident'>messages</span>;
-            <span class='ident'>messages</span> <span class='op'>+=</span> <span class='self'>self</span>.<span class='ident'>notify</span>.<span class='ident'>check</span>(<span class='ident'>remaining</span>, <span class='boolval'>false</span>);
+            <span class='ident'>messages</span> <span class='op'>+=</span> <span class='self'>self</span>.<span class='ident'>notify</span>.<span class='ident'>check</span>(<span class='ident'>remaining</span>, <span class='boolvalue'>false</span>);
         }
 
         <span class='self'>self</span>.<span class='ident'>io_process</span>(<span class='ident'>handler</span>, <span class='ident'>events</span>);
@@ -969,7 +969,7 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::<span class='ident'>AtomicIsize</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>EventLoop</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>EventLoop</span>;
     <span class='kw'>use</span> {<span class='ident'>unix</span>, <span class='ident'>Handler</span>, <span class='ident'>Token</span>, <span class='ident'>TryRead</span>, <span class='ident'>TryWrite</span>, <span class='ident'>EventSet</span>, <span class='ident'>PollOpt</span>};
     <span class='kw'>use</span> <span class='ident'>bytes</span>::{<span class='ident'>Buf</span>, <span class='ident'>SliceBuf</span>, <span class='ident'>ByteBuf</span>};
 
@@ -1039,7 +1039,7 @@
     <span class='kw'>impl</span> <span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>BrokenPipeHandler</span> {
         <span class='kw'>type</span> <span class='ident'>Timeout</span> <span class='op'>=</span> ();
         <span class='kw'>type</span> <span class='ident'>Message</span> <span class='op'>=</span> ();
-        <span class='kw'>fn</span> <span class='ident'>ready</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span>, <span class='ident'>token</span>: <span class='ident'>Token</span>, _: <span class='ident'>EventSet</span>) {
+        <span class='kw'>fn</span> <span class='ident'>ready</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='self'>Self</span><span class='op'>&gt;</span>, <span class='ident'>token</span>: <span class='ident'>Token</span>, _: <span class='ident'>EventSet</span>) {
             <span class='kw'>if</span> <span class='ident'>token</span> <span class='op'>==</span> <span class='ident'>Token</span>(<span class='number'>1</span>) {
                 <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received ready() on a closed pipe.&quot;</span>);
             }
@@ -1083,6 +1083,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

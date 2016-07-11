@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/mio-0.5.1/src/event.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/mio-0.5.1/src/event.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>event.rs.html -- source</title>
@@ -458,7 +458,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>PollOpt</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>one</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>one</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
         <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> [
             (<span class='ident'>PollOpt</span>::<span class='ident'>edge</span>(), <span class='string'>&quot;Edge-Triggered&quot;</span>),
             (<span class='ident'>PollOpt</span>::<span class='ident'>level</span>(), <span class='string'>&quot;Level-Triggered&quot;</span>),
@@ -469,7 +469,7 @@
                 <span class='kw'>if</span> <span class='ident'>one</span> { <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot; | &quot;</span>)) }
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;{}&quot;</span>, <span class='ident'>msg</span>));
 
-                <span class='ident'>one</span> <span class='op'>=</span> <span class='boolval'>true</span>
+                <span class='ident'>one</span> <span class='op'>=</span> <span class='boolvalue'>true</span>
             }
         }
 
@@ -601,7 +601,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>EventSet</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>one</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>one</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
         <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> [
             (<span class='ident'>EventSet</span>::<span class='ident'>readable</span>(), <span class='string'>&quot;Readable&quot;</span>),
             (<span class='ident'>EventSet</span>::<span class='ident'>writable</span>(), <span class='string'>&quot;Writable&quot;</span>),
@@ -613,7 +613,7 @@
                 <span class='kw'>if</span> <span class='ident'>one</span> { <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot; | &quot;</span>)) }
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;{}&quot;</span>, <span class='ident'>msg</span>));
 
-                <span class='ident'>one</span> <span class='op'>=</span> <span class='boolval'>true</span>
+                <span class='ident'>one</span> <span class='op'>=</span> <span class='boolvalue'>true</span>
             }
         }
 
@@ -667,6 +667,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

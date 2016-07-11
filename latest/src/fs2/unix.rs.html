@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/fs2-0.2.5/src/unix.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/fs2-0.2.5/src/unix.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>unix.rs.html -- source</title>
@@ -419,7 +419,7 @@
     <span class='kw'>fn</span> <span class='ident'>duplicate_new_fd</span>() {
         <span class='kw'>let</span> <span class='ident'>tempdir</span> <span class='op'>=</span> <span class='ident'>tempdir</span>::<span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;fs2&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>tempdir</span>.<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;fs2&quot;</span>);
-        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>file2</span> <span class='op'>=</span> <span class='ident'>file1</span>.<span class='ident'>duplicate</span>().<span class='ident'>unwrap</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>file1</span>.<span class='ident'>as_raw_fd</span>() <span class='op'>!=</span> <span class='ident'>file2</span>.<span class='ident'>as_raw_fd</span>());
     }
@@ -434,7 +434,7 @@
 
         <span class='kw'>let</span> <span class='ident'>tempdir</span> <span class='op'>=</span> <span class='ident'>tempdir</span>::<span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;fs2&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>tempdir</span>.<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;fs2&quot;</span>);
-        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>file2</span> <span class='op'>=</span> <span class='ident'>file1</span>.<span class='ident'>duplicate</span>().<span class='ident'>unwrap</span>();
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>flags</span>(<span class='kw-2'>&amp;</span><span class='ident'>file1</span>), <span class='ident'>flags</span>(<span class='kw-2'>&amp;</span><span class='ident'>file2</span>));
@@ -446,8 +446,8 @@
     <span class='kw'>fn</span> <span class='ident'>lock_replace</span>() {
         <span class='kw'>let</span> <span class='ident'>tempdir</span> <span class='op'>=</span> <span class='ident'>tempdir</span>::<span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;fs2&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>tempdir</span>.<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;fs2&quot;</span>);
-        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
-        <span class='kw'>let</span> <span class='ident'>file2</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>file2</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
 
         <span class='comment'>// Creating a shared lock will drop an exclusive lock.</span>
         <span class='ident'>file1</span>.<span class='ident'>lock_exclusive</span>().<span class='ident'>unwrap</span>();
@@ -466,9 +466,9 @@
     <span class='kw'>fn</span> <span class='ident'>lock_duplicate</span>() {
         <span class='kw'>let</span> <span class='ident'>tempdir</span> <span class='op'>=</span> <span class='ident'>tempdir</span>::<span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;fs2&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>tempdir</span>.<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;fs2&quot;</span>);
-        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>file1</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>file2</span> <span class='op'>=</span> <span class='ident'>file1</span>.<span class='ident'>duplicate</span>().<span class='ident'>unwrap</span>();
-        <span class='kw'>let</span> <span class='ident'>file3</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>file3</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>unwrap</span>();
 
         <span class='comment'>// Create a lock through fd1, then replace it through fd2.</span>
         <span class='ident'>file1</span>.<span class='ident'>lock_shared</span>().<span class='ident'>unwrap</span>();
@@ -505,6 +505,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

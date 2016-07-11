@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-725' class='srclink' href='../../../src/solicit/http/connection.rs.html#109-120' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-729' class='srclink' href='../../../src/solicit/http/connection.rs.html#109-120' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct HttpConnection&lt;S, R&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a></span> {
     pub receiver: R,
     pub sender: S,
@@ -71,7 +71,8 @@ content within the frames.</p>
                              <td id='structfield.sender'><code>sender</code></td><td><div class='docblock'><p>The instance handling the writing of frames.</p>
 </div></td></tr><tr class='stab '>
                              <td id='structfield.scheme'><code>scheme</code></td><td><div class='docblock'><p>The scheme of the connection</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;S, R&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(sender: S, receiver: R, scheme: <a class='enum' href='../../../solicit/http/enum.HttpScheme.html' title='solicit::http::HttpScheme'>HttpScheme</a>) -&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt;</code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;S, R&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a></span></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-835' class='srclink' href='../../../src/solicit/http/connection.rs.html#244-508' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(sender: S, receiver: R, scheme: <a class='enum' href='../../../solicit/http/enum.HttpScheme.html' title='solicit::http::HttpScheme'>HttpScheme</a>) -&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>HttpConnection</code> that will use the given sender and receiver instances
 for writing and reading frames, respectively.</p>
 </div><h4 id='method.with_stream' class='method'><code>fn <a href='#method.with_stream' class='fnname'>with_stream</a>&lt;TS&gt;(stream: TS, scheme: <a class='enum' href='../../../solicit/http/enum.HttpScheme.html' title='solicit::http::HttpScheme'>HttpScheme</a>) -&gt; <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;TS, TS&gt; <span class='where'>where TS: <a class='trait' href='../../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a></span></code></h4>
@@ -160,6 +161,8 @@ propagated.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

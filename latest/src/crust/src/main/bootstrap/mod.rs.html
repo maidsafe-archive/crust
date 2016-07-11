@@ -290,7 +290,6 @@
 <span id="246">246</span>
 <span id="247">247</span>
 <span id="248">248</span>
-<span id="249">249</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -420,7 +419,7 @@
         }
 
         <span class='kw'>for</span> <span class='ident'>peer</span> <span class='kw'>in</span> <span class='ident'>peers</span> {
-            <span class='kw'>let</span> <span class='ident'>self_weak</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>self_weak</span>.<span class='ident'>as_ref</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error&quot;</span>).<span class='ident'>clone</span>();
+            <span class='kw'>let</span> <span class='ident'>self_weak</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>self_weak</span>.<span class='ident'>as_ref</span>()).<span class='ident'>clone</span>();
             <span class='kw'>let</span> <span class='ident'>finish</span> <span class='op'>=</span> <span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>, <span class='ident'>child</span>, <span class='ident'>res</span><span class='op'>|</span> {
                 <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>self_rc</span>) <span class='op'>=</span> <span class='ident'>self_weak</span>.<span class='ident'>upgrade</span>() {
                     <span class='ident'>self_rc</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>handle_result</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>child</span>, <span class='ident'>res</span>)
@@ -491,7 +490,7 @@
             <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>terminate</span>(<span class='ident'>core</span>, <span class='ident'>el</span>);
         }
 
-        <span class='kw'>let</span> <span class='ident'>rx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>sd_meta</span>.<span class='ident'>take</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Logic Error&quot;</span>).<span class='ident'>rx</span>;
+        <span class='kw'>let</span> <span class='ident'>rx</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>sd_meta</span>.<span class='ident'>take</span>()).<span class='ident'>rx</span>;
 
         <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>listeners</span>) <span class='op'>=</span> <span class='ident'>rx</span>.<span class='ident'>try_recv</span>() {
             <span class='self'>self</span>.<span class='ident'>peers</span>.<span class='ident'>extend</span>(<span class='ident'>listeners</span>);
@@ -526,9 +525,8 @@
               <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span>(<span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>common</span>::<span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span>, <span class='ident'>Timeout</span>)<span class='op'>&gt;</span> {
     <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>state</span>) <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>service_discovery_token</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>as_any</span>()
-            .<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>()
-            .<span class='ident'>expect</span>(<span class='string'>&quot;Cast failure&quot;</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>state</span>.<span class='ident'>as_any</span>()
+            .<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>());
 
         <span class='kw'>let</span> (<span class='ident'>obs</span>, <span class='ident'>rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
         <span class='ident'>state</span>.<span class='ident'>register_observer</span>(<span class='ident'>obs</span>);
@@ -565,6 +563,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

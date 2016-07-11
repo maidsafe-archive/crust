@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rand-0.3.14/src/isaac.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.3.14/src/isaac.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>isaac.rs.html -- source</title>
@@ -722,7 +722,7 @@
     <span class='doccomment'>/// fixed seed.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_unseeded</span>() <span class='op'>-&gt;</span> <span class='ident'>IsaacRng</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rng</span> <span class='op'>=</span> <span class='ident'>EMPTY</span>;
-        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='boolval'>false</span>);
+        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='boolvalue'>false</span>);
         <span class='ident'>rng</span>
     }
 
@@ -894,7 +894,7 @@
         <span class='self'>self</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='self'>self</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='boolval'>true</span>);
+        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
     }
 
     <span class='doccomment'>/// Create an ISAAC random number generator with a seed. This can</span>
@@ -923,7 +923,7 @@
         <span class='ident'>ret</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='ident'>ret</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='boolval'>true</span>);
+        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
         <span class='kw'>return</span> <span class='ident'>ret</span>;
     }
 }
@@ -963,7 +963,7 @@
     <span class='doccomment'>/// default fixed seed.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_unseeded</span>() <span class='op'>-&gt;</span> <span class='ident'>Isaac64Rng</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rng</span> <span class='op'>=</span> <span class='ident'>EMPTY_64</span>;
-        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='boolval'>false</span>);
+        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='boolvalue'>false</span>);
         <span class='ident'>rng</span>
     }
 
@@ -1137,7 +1137,7 @@
         <span class='self'>self</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='self'>self</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='boolval'>true</span>);
+        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
     }
 
     <span class='doccomment'>/// Create an ISAAC random number generator with a seed. This can</span>
@@ -1166,7 +1166,7 @@
         <span class='ident'>ret</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='ident'>ret</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='boolval'>true</span>);
+        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
         <span class='kw'>return</span> <span class='ident'>ret</span>;
     }
 }
@@ -1175,7 +1175,7 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='kw'>use</span> {<span class='ident'>Rng</span>, <span class='ident'>SeedableRng</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>IsaacRng</span>, <span class='ident'>Isaac64Rng</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>IsaacRng</span>, <span class='ident'>Isaac64Rng</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_rng_32_rand_seeded</span>() {
@@ -1313,6 +1313,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

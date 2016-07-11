@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Charset","A Mime charset."]]});

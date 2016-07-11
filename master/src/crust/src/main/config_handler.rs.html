@@ -246,7 +246,7 @@
     <span class='kw'>fn</span> <span class='ident'>parse_sample_config_file</span>() {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
-        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Config</span>;
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Config</span>;
         <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>;
 
         <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;installer/sample.config&quot;</span>).<span class='ident'>to_path_buf</span>();
@@ -293,6 +293,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

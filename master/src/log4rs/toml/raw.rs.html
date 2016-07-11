@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/log4rs-0.3.3/src/toml/raw.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/log4rs-0.3.3/src/toml/raw.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>raw.rs.html -- source</title>
@@ -826,7 +826,7 @@
     <span class='kw'>use</span> <span class='ident'>toml_parser</span>::<span class='ident'>Value</span>;
     <span class='kw'>use</span> <span class='ident'>log</span>::<span class='ident'>LogLevelFilter</span>;
 
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_basic</span>() {
@@ -897,7 +897,7 @@ additive = false
                     <span class='ident'>name</span>: <span class='string'>&quot;foo::bar::baz&quot;</span>.<span class='ident'>to_owned</span>(),
                     <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>::<span class='ident'>Warn</span>,
                     <span class='ident'>appenders</span>: <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>&quot;baz&quot;</span>.<span class='ident'>to_owned</span>()]),
-                    <span class='ident'>additive</span>: <span class='prelude-val'>Some</span>(<span class='boolval'>false</span>)
+                    <span class='ident'>additive</span>: <span class='prelude-val'>Some</span>(<span class='boolvalue'>false</span>)
                 },
             ]
         };
@@ -929,6 +929,8 @@ additive = false
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a class='mod' href=''>atomic</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a class='mod' href=''>atomic</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-27684' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/index.html?gotosrc=27684' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-29505' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/index.html?gotosrc=29505' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Atomic types</p>
 
 <p>Atomic types provide primitive shared-memory communication between
@@ -64,8 +64,9 @@ the memory barrier for that operation. These orderings are the
 same as <a href="http://llvm.org/docs/LangRef.html#memory-model-for-concurrent-operations">LLVM atomic orderings</a>.</p>
 
 <p>Atomic variables are safe to share between threads (they implement <code>Sync</code>)
-but they do not themselves provide the mechanism for sharing. The most
-common way to share an atomic variable is to put it into an <code>Arc</code> (an
+but they do not themselves provide the mechanism for sharing and follow the
+<a href="../../../std/thread/index.html#the-threading-model">threading model</a> of rust.
+The most common way to share an atomic variable is to put it into an <code>Arc</code> (an
 atomically-reference-counted shared pointer).</p>
 
 <p>Most atomic types may be stored in static variables, initialized using
@@ -84,12 +85,16 @@ are often used for lazy global initialization.</p>
     <span class='kw'>let</span> <span class='ident'>spinlock</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicUsize</span>::<span class='ident'>new</span>(<span class='number'>1</span>));
 
     <span class='kw'>let</span> <span class='ident'>spinlock_clone</span> <span class='op'>=</span> <span class='ident'>spinlock</span>.<span class='ident'>clone</span>();
-    <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span><span class='op'>||</span> {
+    <span class='kw'>let</span> <span class='ident'>thread</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span><span class='op'>||</span> {
         <span class='ident'>spinlock_clone</span>.<span class='ident'>store</span>(<span class='number'>0</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
     });
 
     <span class='comment'>// Wait for the other thread to release the lock</span>
     <span class='kw'>while</span> <span class='ident'>spinlock</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>) <span class='op'>!=</span> <span class='number'>0</span> {}
+
+    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>panic</span>) <span class='op'>=</span> <span class='ident'>thread</span>.<span class='ident'>join</span>() {
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Thread had an error: {:?}&quot;</span>, <span class='ident'>panic</span>);
+    }
 }</pre>
 
 <p>Keep a global count of live threads:</p>
@@ -114,7 +119,7 @@ are often used for lazy global initialization.</p>
                            <td><a class='struct' href='struct.AtomicIsize.html'
                                   title='bitflags::__core::sync::atomic::AtomicIsize'>AtomicIsize</a></td>
                            <td class='docblock short'>
-                                <p>A signed integer type which can be safely shared between threads.</p>
+                                <p>An integer type which can be safely shared between threads.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -128,7 +133,63 @@ are often used for lazy global initialization.</p>
                            <td><a class='struct' href='struct.AtomicUsize.html'
                                   title='bitflags::__core::sync::atomic::AtomicUsize'>AtomicUsize</a></td>
                            <td class='docblock short'>
-                                <p>An unsigned integer type which can be safely shared between threads.</p>
+                                <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicI16.html'
+                                  title='bitflags::__core::sync::atomic::AtomicI16'>AtomicI16</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicI32.html'
+                                  title='bitflags::__core::sync::atomic::AtomicI32'>AtomicI32</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicI64.html'
+                                  title='bitflags::__core::sync::atomic::AtomicI64'>AtomicI64</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicI8.html'
+                                  title='bitflags::__core::sync::atomic::AtomicI8'>AtomicI8</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicU16.html'
+                                  title='bitflags::__core::sync::atomic::AtomicU16'>AtomicU16</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicU32.html'
+                                  title='bitflags::__core::sync::atomic::AtomicU32'>AtomicU32</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicU64.html'
+                                  title='bitflags::__core::sync::atomic::AtomicU64'>AtomicU64</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.AtomicU8.html'
+                                  title='bitflags::__core::sync::atomic::AtomicU8'>AtomicU8</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An integer type which can be safely shared between threads.</p>
                            </td>
                        </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
@@ -151,14 +212,70 @@ are often used for lazy global initialization.</p>
                            <td><a class='constant' href='constant.ATOMIC_ISIZE_INIT.html'
                                   title='bitflags::__core::sync::atomic::ATOMIC_ISIZE_INIT'>ATOMIC_ISIZE_INIT</a></td>
                            <td class='docblock short'>
-                                <p>An <code>AtomicIsize</code> initialized to <code>0</code>.</p>
+                                <p>An atomic integer initialized to <code>0</code>.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='constant' href='constant.ATOMIC_USIZE_INIT.html'
                                   title='bitflags::__core::sync::atomic::ATOMIC_USIZE_INIT'>ATOMIC_USIZE_INIT</a></td>
                            <td class='docblock short'>
-                                <p>An <code>AtomicUsize</code> initialized to <code>0</code>.</p>
+                                <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_I16_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_I16_INIT'>ATOMIC_I16_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_I32_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_I32_INIT'>ATOMIC_I32_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_I64_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_I64_INIT'>ATOMIC_I64_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_I8_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_I8_INIT'>ATOMIC_I8_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_U16_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_U16_INIT'>ATOMIC_U16_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_U32_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_U32_INIT'>ATOMIC_U32_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_U64_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_U64_INIT'>ATOMIC_U64_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable module-item'>
+                           <td><a class='constant' href='constant.ATOMIC_U8_INIT.html'
+                                  title='bitflags::__core::sync::atomic::ATOMIC_U8_INIT'>ATOMIC_U8_INIT</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>An atomic integer initialized to <code>0</code>.</p>
                            </td>
                        </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
@@ -191,6 +308,8 @@ are often used for lazy global initialization.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

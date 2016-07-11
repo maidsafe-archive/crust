@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/url-0.2.38/src/format.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/url-0.2.38/src/format.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>format.rs.html -- source</title>
@@ -199,7 +199,7 @@
 <span class='doccomment'>//! You can use `&lt;formatter&gt;.to_string()`, as the formatters implement `fmt::Display`.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Formatter</span>};
-<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Url</span>;
+<span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Url</span>;
 
 <span class='doccomment'>/// Formatter and serializer for URL path data.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PathFormatter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>T</span>:<span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
@@ -270,8 +270,8 @@
 <span class='doccomment'>/// Formatting Tests</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>Url</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>PathFormatter</span>, <span class='ident'>UserInfoFormatter</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='kw'>super</span>::<span class='ident'>Url</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>PathFormatter</span>, <span class='ident'>UserInfoFormatter</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>path_formatting</span>() {
@@ -349,6 +349,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

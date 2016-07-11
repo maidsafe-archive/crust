@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["ETag","`ETag` header, defined in RFC7232"]]});

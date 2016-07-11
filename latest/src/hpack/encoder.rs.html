@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hpack-0.2.0/src/encoder.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hpack-0.2.0/src/encoder.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>encoder.rs.html -- source</title>
@@ -482,8 +482,8 @@
 <span class='doccomment'>//! ```</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>num</span>::<span class='ident'>Wrapping</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>STATIC_TABLE</span>;
-<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>HeaderTable</span>;
+<span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>STATIC_TABLE</span>;
+<span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>HeaderTable</span>;
 
 
 <span class='doccomment'>/// Encode an integer to the representation defined by HPACK.</span>
@@ -587,16 +587,16 @@
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
                     <span class='comment'>// The name of the header is in no tables: need to encode</span>
                     <span class='comment'>// it with both a literal name and value.</span>
-                    <span class='self'>self</span>.<span class='ident'>encode_literal</span>(<span class='ident'>header</span>, <span class='boolval'>true</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>encoded</span>);
+                    <span class='self'>self</span>.<span class='ident'>encode_literal</span>(<span class='ident'>header</span>, <span class='boolvalue'>true</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>encoded</span>);
                     <span class='self'>self</span>.<span class='ident'>header_table</span>.<span class='ident'>add_header</span>(<span class='ident'>header</span>.<span class='number'>0</span>.<span class='ident'>clone</span>(), <span class='ident'>header</span>.<span class='number'>1</span>.<span class='ident'>clone</span>());
                 },
-                <span class='prelude-val'>Some</span>((<span class='ident'>index</span>, <span class='boolval'>false</span>)) <span class='op'>=&gt;</span> {
+                <span class='prelude-val'>Some</span>((<span class='ident'>index</span>, <span class='boolvalue'>false</span>)) <span class='op'>=&gt;</span> {
                     <span class='comment'>// The name of the header is at the given index, but the</span>
                     <span class='comment'>// value does not match the current one: need to encode</span>
                     <span class='comment'>// only the value as a literal.</span>
-                    <span class='self'>self</span>.<span class='ident'>encode_indexed_name</span>((<span class='ident'>index</span>, <span class='kw-2'>&amp;</span><span class='ident'>header</span>.<span class='number'>1</span>), <span class='boolval'>false</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>encoded</span>);
+                    <span class='self'>self</span>.<span class='ident'>encode_indexed_name</span>((<span class='ident'>index</span>, <span class='kw-2'>&amp;</span><span class='ident'>header</span>.<span class='number'>1</span>), <span class='boolvalue'>false</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>encoded</span>);
                 },
-                <span class='prelude-val'>Some</span>((<span class='ident'>index</span>, <span class='boolval'>true</span>)) <span class='op'>=&gt;</span> {
+                <span class='prelude-val'>Some</span>((<span class='ident'>index</span>, <span class='boolvalue'>true</span>)) <span class='op'>=&gt;</span> {
                     <span class='comment'>// The full header was found in one of the tables, so we</span>
                     <span class='comment'>// just encode the index.</span>
                     <span class='self'>self</span>.<span class='ident'>encode_indexed</span>(<span class='ident'>index</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>encoded</span>);
@@ -676,10 +676,10 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>encode_integer</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Encoder</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>encode_integer</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Encoder</span>;
 
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>Decoder</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='kw'>super</span>::<span class='ident'>Decoder</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_encode_integer</span>() {
@@ -705,7 +705,7 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>decoder</span> <span class='op'>=</span> <span class='ident'>Decoder</span>::<span class='ident'>new</span>();
         <span class='kw'>match</span> <span class='ident'>decoder</span>.<span class='ident'>decode</span>(<span class='ident'>buf</span>).<span class='ident'>ok</span>() {
             <span class='prelude-val'>Some</span>(<span class='ident'>h</span>) <span class='op'>=&gt;</span> <span class='ident'>h</span> <span class='op'>==</span> <span class='op'>*</span><span class='ident'>headers</span>,
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
         }
     }
 
@@ -849,6 +849,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

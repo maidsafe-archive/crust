@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Name","Represents a qualified XML name."],["OwnedName","An owned variant of `Name`."]]});

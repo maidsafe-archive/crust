@@ -371,11 +371,6 @@
 <span id="327">327</span>
 <span id="328">328</span>
 <span id="329">329</span>
-<span id="330">330</span>
-<span id="331">331</span>
-<span id="332">332</span>
-<span id="333">333</span>
-<span id="334">334</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -445,7 +440,7 @@
                  <span class='ident'>port</span>: <span class='ident'>u16</span>)
                  <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>ServiceDiscoveryError</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>udp_socket</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_socket</span>(<span class='ident'>port</span>));
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>udp_socket</span>.<span class='ident'>set_broadcast</span>(<span class='boolval'>true</span>));
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>udp_socket</span>.<span class='ident'>set_broadcast</span>(<span class='boolvalue'>true</span>));
 
         <span class='kw'>let</span> <span class='ident'>guid</span> <span class='op'>=</span> <span class='ident'>rand</span>::<span class='ident'>random</span>();
         <span class='kw'>let</span> <span class='ident'>remote_addr</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='kw-2'>&amp;</span><span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;255.255.255.255:{}&quot;</span>, <span class='ident'>port</span>)));
@@ -454,7 +449,7 @@
             <span class='ident'>token</span>: <span class='ident'>token</span>,
             <span class='ident'>socket</span>: <span class='ident'>udp_socket</span>,
             <span class='ident'>remote_addr</span>: <span class='ident'>remote_addr</span>,
-            <span class='ident'>listen</span>: <span class='boolval'>false</span>,
+            <span class='ident'>listen</span>: <span class='boolvalue'>false</span>,
             <span class='ident'>read_buf</span>: [<span class='number'>0</span>; <span class='number'>1024</span>],
             <span class='ident'>our_listeners</span>: <span class='ident'>our_listeners</span>,
             <span class='ident'>seek_peers_req</span>: <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>DiscoveryMsg</span>::<span class='ident'>Request</span> { <span class='ident'>guid</span>: <span class='ident'>guid</span> })),
@@ -531,9 +526,8 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>write_impl</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>ServiceDiscoveryError</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>our_current_listeners</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_listeners</span>
-            .<span class='ident'>lock</span>()
-            .<span class='ident'>unwrap</span>()
+        <span class='kw'>let</span> <span class='ident'>our_current_listeners</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>our_listeners</span>
+                .<span class='ident'>lock</span>())
             .<span class='ident'>iter</span>()
             .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='op'>*</span><span class='ident'>elt</span>))
             .<span class='ident'>collect</span>();
@@ -614,7 +608,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
@@ -624,48 +618,47 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
     <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>};
-    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
+    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
     <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Token</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>service_discovery</span>() {
         <span class='comment'>// EventLoop-0</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el0</span> <span class='op'>=</span> <span class='ident'>EventLoop</span>::<span class='ident'>new</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not spawn el0&quot;</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el0</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>EventLoop</span>::<span class='ident'>new</span>(), <span class='string'>&quot;Could not spawn el0&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>tx0</span> <span class='op'>=</span> <span class='ident'>el0</span>.<span class='ident'>channel</span>();
-        <span class='kw'>let</span> <span class='ident'>_raii_joiner_0</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;EL0&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='ident'>el0</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>::<span class='ident'>new</span>()).<span class='ident'>expect</span>(<span class='string'>&quot;Could not run el0&quot;</span>);
-        }));
+        <span class='kw'>let</span> <span class='ident'>_raii_joiner_0</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;EL0&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>el0</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>::<span class='ident'>new</span>()), <span class='string'>&quot;Could not run el0&quot;</span>);
+        });
 
-        <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;138.139.140.150:54321&quot;</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;138.139.140.150:54321&quot;</span>));
         <span class='kw'>let</span> <span class='ident'>listeners_0</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>addr</span>]));
         <span class='kw'>let</span> <span class='ident'>listeners_0_clone</span> <span class='op'>=</span> <span class='ident'>listeners_0</span>.<span class='ident'>clone</span>();
 
         <span class='comment'>// ServiceDiscovery-0</span>
         {
             <span class='kw'>let</span> <span class='ident'>token_0</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>0</span>);
-            <span class='ident'>tx0</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-                    <span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>listeners_0_clone</span>, <span class='ident'>token_0</span>, <span class='number'>65530</span>)
-                        .<span class='ident'>expect</span>(<span class='string'>&quot;Could not spawn ServiceDiscovery_0&quot;</span>);
-                }))
-                .<span class='ident'>expect</span>(<span class='string'>&quot;Could not send to tx0&quot;</span>);
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx0</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
+                <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>listeners_0_clone</span>, <span class='ident'>token_0</span>, <span class='number'>65530</span>),
+                        <span class='string'>&quot;Could not spawn ServiceDiscovery_0&quot;</span>);
+            })),
+                    <span class='string'>&quot;Could not send to tx0&quot;</span>);
 
             <span class='comment'>// Start listening for peers</span>
-            <span class='ident'>tx0</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
-                    <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token_0</span>).<span class='ident'>unwrap</span>();
-                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
-                    <span class='ident'>inner</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>().<span class='ident'>set_listen</span>(<span class='boolval'>true</span>);
-                }))
-                .<span class='ident'>unwrap</span>();
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx0</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
+                <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token_0</span>));
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
+                <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>inner</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>()).<span class='ident'>set_listen</span>(<span class='boolvalue'>true</span>);
+            })));
         }
 
         <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>100</span>));
 
         <span class='comment'>// EventLoop-1</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el1</span> <span class='op'>=</span> <span class='ident'>EventLoop</span>::<span class='ident'>new</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not spawn el1&quot;</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el1</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>EventLoop</span>::<span class='ident'>new</span>(), <span class='string'>&quot;Could not spawn el1&quot;</span>);
         <span class='kw'>let</span> <span class='ident'>tx1</span> <span class='op'>=</span> <span class='ident'>el1</span>.<span class='ident'>channel</span>();
-        <span class='kw'>let</span> <span class='ident'>_raii_joiner_1</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;EL1&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='ident'>el1</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>::<span class='ident'>new</span>()).<span class='ident'>expect</span>(<span class='string'>&quot;Could not run el1&quot;</span>);
-        }));
+        <span class='kw'>let</span> <span class='ident'>_raii_joiner_1</span> <span class='op'>=</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;EL1&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>el1</span>.<span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>::<span class='ident'>new</span>()), <span class='string'>&quot;Could not run el1&quot;</span>);
+        });
 
         <span class='kw'>let</span> (<span class='ident'>tx</span>, <span class='ident'>rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
 
@@ -673,42 +666,39 @@
         {
             <span class='kw'>let</span> <span class='ident'>listeners_1</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[]));
             <span class='kw'>let</span> <span class='ident'>token_1</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>0</span>);
-            <span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
-                    <span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>listeners_1</span>, <span class='ident'>token_1</span>, <span class='number'>65530</span>)
-                        .<span class='ident'>expect</span>(<span class='string'>&quot;Could not spawn ServiceDiscovery_1&quot;</span>);
-                }))
-                .<span class='ident'>expect</span>(<span class='string'>&quot;Could not send to tx1&quot;</span>);
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, <span class='ident'>el</span><span class='op'>|</span> {
+                        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>ServiceDiscovery</span>::<span class='ident'>start</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>listeners_1</span>, <span class='ident'>token_1</span>, <span class='number'>65530</span>),
+                                <span class='string'>&quot;Could not spawn ServiceDiscovery_1&quot;</span>);
+                    })),
+                    <span class='string'>&quot;Could not send to tx1&quot;</span>);
 
             <span class='comment'>// Register observer</span>
-            <span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
-                    <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token_1</span>).<span class='ident'>unwrap</span>();
-                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
-                    <span class='ident'>inner</span>.<span class='ident'>as_any</span>()
-                        .<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>()
-                        .<span class='ident'>unwrap</span>()
-                        .<span class='ident'>register_observer</span>(<span class='ident'>tx</span>);
-                }))
-                .<span class='ident'>unwrap</span>();
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
+                <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token_1</span>));
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
+                <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>inner</span>.<span class='ident'>as_any</span>()
+                        .<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>())
+                    .<span class='ident'>register_observer</span>(<span class='ident'>tx</span>);
+            })));
 
             <span class='comment'>// Seek peers</span>
-            <span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
-                    <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token_1</span>).<span class='ident'>unwrap</span>();
-                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
-                    <span class='ident'>inner</span>.<span class='ident'>as_any</span>()
-                        .<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>()
-                        .<span class='ident'>unwrap</span>()
-                        .<span class='ident'>seek_peers</span>()
-                        .<span class='ident'>unwrap</span>();
-                }))
-                .<span class='ident'>expect</span>(<span class='string'>&quot;Could not send to tx1&quot;</span>);
+            <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>core</span>, _<span class='op'>|</span> {
+                        <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>core</span>.<span class='ident'>get_state</span>(<span class='ident'>token_1</span>));
+                        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>();
+                        <span class='kw'>let</span> <span class='ident'>sd</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>inner</span>.<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ServiceDiscovery</span><span class='op'>&gt;</span>());
+                        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>sd</span>.<span class='ident'>seek_peers</span>());
+                    })),
+                    <span class='string'>&quot;Could not send to tx1&quot;</span>);
         }
 
-        <span class='kw'>let</span> <span class='ident'>peer_listeners</span> <span class='op'>=</span> <span class='ident'>rx</span>.<span class='ident'>recv</span>().<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>peer_listeners</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_listeners</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='number'>0</span>).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>(),
-                   <span class='op'>*</span><span class='ident'>listeners_0</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>());
+                   <span class='op'>*</span><span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>listeners_0</span>.<span class='ident'>lock</span>()));
 
-        <span class='ident'>tx0</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span>_, <span class='ident'>el</span><span class='op'>|</span> <span class='ident'>el</span>.<span class='ident'>shutdown</span>())).<span class='ident'>expect</span>(<span class='string'>&quot;Could not shutdown el0&quot;</span>);
-        <span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span>_, <span class='ident'>el</span><span class='op'>|</span> <span class='ident'>el</span>.<span class='ident'>shutdown</span>())).<span class='ident'>expect</span>(<span class='string'>&quot;Could not shutdown el1&quot;</span>);
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx0</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span>_, <span class='ident'>el</span><span class='op'>|</span> <span class='ident'>el</span>.<span class='ident'>shutdown</span>())),
+                <span class='string'>&quot;Could not shutdown el0&quot;</span>);
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>tx1</span>.<span class='ident'>send</span>(<span class='ident'>CoreMessage</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>|</span>_, <span class='ident'>el</span><span class='op'>|</span> <span class='ident'>el</span>.<span class='ident'>shutdown</span>())),
+                <span class='string'>&quot;Could not shutdown el1&quot;</span>);
     }
 }
 </pre>
@@ -735,6 +725,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

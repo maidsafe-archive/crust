@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/matches-0.1.2/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/matches-0.1.2/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -76,8 +76,8 @@
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span>: <span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> {
         <span class='macro'>_tt_as_expr_hack</span><span class='macro'>!</span> {
             <span class='kw'>match</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span> {
-                $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>)<span class='op'>+</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-                _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+                $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>)<span class='op'>+</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+                _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
             }
         }
     }
@@ -123,6 +123,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

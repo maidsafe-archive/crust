@@ -43,12 +43,12 @@
     </nav>
 
     <section id='main' class="content fn">
-<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='fn' href=''>catch_unwind</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='fn' href=''>catch_unwind</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.9.0'>1.9.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-6792' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/fn.catch_unwind.html?gotosrc=6792' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn catch_unwind&lt;F, R&gt;(f: F) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;R, <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a>&gt;&gt; <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/panic/trait.UnwindSafe.html' title='bitflags::__core::panic::UnwindSafe'>UnwindSafe</a> + <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; R</span></pre><span class="since">1.9.0</span><div class='docblock'><p>Invokes a closure, capturing the cause of an unwinding panic if one occurs.</p>
+               </span><a id='src-6757' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/fn.catch_unwind.html?gotosrc=6757' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn catch_unwind&lt;F, R&gt;(f: F) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;R, <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a>&gt;&gt; <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/panic/trait.UnwindSafe.html' title='bitflags::__core::panic::UnwindSafe'>UnwindSafe</a> + <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; R</span></pre><div class='docblock'><p>Invokes a closure, capturing the cause of an unwinding panic if one occurs.</p>
 
 <p>This function will return <code>Ok</code> with the closure&#39;s result if the closure
 does not panic, and will return <code>Err(cause)</code> if the closure panics. The
@@ -62,9 +62,9 @@ panic and allowing a graceful handling of the error.</p>
 <p>It is <strong>not</strong> recommended to use this function for a general try/catch
 mechanism. The <code>Result</code> type is more appropriate to use for functions that
 can fail on a regular basis. Additionally, this function is not guaranteed
-to catch all panics, see the &quot;Notes&quot; sectino below.</p>
+to catch all panics, see the &quot;Notes&quot; section below.</p>
 
-<p>The closure provided is required to adhere to the <code>UnwindSafe</code> to ensure
+<p>The closure provided is required to adhere to the <code>UnwindSafe</code> trait to ensure
 that all captured variables are safe to cross this boundary. The purpose of
 this bound is to encode the concept of <a href="https://github.com/rust-lang/rfcs/blob/master/text/1236-stabilize-catch-panic.md">exception safety</a> in the type
 system. Most usage of this function should not need to worry about this
@@ -115,6 +115,8 @@ not those that abort the process.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

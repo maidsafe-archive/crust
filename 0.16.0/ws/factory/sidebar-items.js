@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["Factory","A trait for creating new WebSocket handlers."]]});

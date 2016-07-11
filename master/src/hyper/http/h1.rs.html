@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/http/h1.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/http/h1.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>h1.rs.html -- source</title>
@@ -1358,12 +1358,12 @@
                         <span class='ident'>EmptyWriter</span>(<span class='ident'>writer</span>)
                     },
                     _ <span class='op'>=&gt;</span> {
-                        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>chunked</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>chunked</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='number'>0</span>;
 
                         <span class='kw'>match</span> <span class='ident'>head</span>.<span class='ident'>headers</span>.<span class='ident'>get</span>::<span class='op'>&lt;</span><span class='ident'>header</span>::<span class='ident'>ContentLength</span><span class='op'>&gt;</span>() {
                             <span class='prelude-val'>Some</span>(<span class='ident'>cl</span>) <span class='op'>=&gt;</span> {
-                                <span class='ident'>chunked</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                                <span class='ident'>chunked</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                                 <span class='ident'>len</span> <span class='op'>=</span> <span class='op'>*</span><span class='op'>*</span><span class='ident'>cl</span>;
                             },
                             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> ()
@@ -1375,9 +1375,9 @@
                                 <span class='prelude-val'>Some</span>(<span class='ident'>encodings</span>) <span class='op'>=&gt;</span> {
                                     <span class='comment'>//TODO: check if chunked is already in encodings. use HashSet?</span>
                                     <span class='ident'>encodings</span>.<span class='ident'>push</span>(<span class='ident'>header</span>::<span class='ident'>Encoding</span>::<span class='ident'>Chunked</span>);
-                                    <span class='boolval'>false</span>
+                                    <span class='boolvalue'>false</span>
                                 },
-                                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>
+                                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>
                             };
 
                             <span class='kw'>if</span> <span class='ident'>encodings</span> {
@@ -1509,9 +1509,9 @@
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>stream</span>.<span class='ident'>as_ref</span>().<span class='ident'>reader_ref</span>() {
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>EmptyReader</span>(..)) <span class='op'>|</span>
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>SizedReader</span>(_, <span class='number'>0</span>)) <span class='op'>|</span>
-            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ChunkedReader</span>(_, <span class='prelude-val'>Some</span>(<span class='number'>0</span>))) <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ChunkedReader</span>(_, <span class='prelude-val'>Some</span>(<span class='number'>0</span>))) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
             <span class='comment'>// specifically EofReader is always true</span>
-            _ <span class='op'>=&gt;</span> <span class='boolval'>true</span>
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>
         }
     }
 
@@ -1817,19 +1817,19 @@
     );
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>size</span> <span class='op'>=</span> <span class='number'>0u64</span>;
     <span class='kw'>let</span> <span class='ident'>radix</span> <span class='op'>=</span> <span class='number'>16</span>;
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolval'>false</span>;
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
     <span class='kw'>loop</span> {
         <span class='kw'>match</span> <span class='macro'>byte</span><span class='macro'>!</span>(<span class='ident'>rdr</span>) {
-            <span class='ident'>b</span><span class='kw-2'>@</span><span class='string'>b&#39;0&#39;</span>...<span class='string'>b&#39;9&#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {
+            <span class='ident'>b</span>@<span class='string'>b&#39;0&#39;</span>...<span class='string'>b&#39;9&#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {
                 <span class='ident'>size</span> <span class='op'>*=</span> <span class='ident'>radix</span>;
                 <span class='ident'>size</span> <span class='op'>+=</span> (<span class='ident'>b</span> <span class='op'>-</span> <span class='string'>b&#39;0&#39;</span>) <span class='kw'>as</span> <span class='ident'>u64</span>;
             },
-            <span class='ident'>b</span><span class='kw-2'>@</span><span class='string'>b&#39;a&#39;</span>...<span class='string'>b&#39;f&#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {
+            <span class='ident'>b</span>@<span class='string'>b&#39;a&#39;</span>...<span class='string'>b&#39;f&#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {
                 <span class='ident'>size</span> <span class='op'>*=</span> <span class='ident'>radix</span>;
                 <span class='ident'>size</span> <span class='op'>+=</span> (<span class='ident'>b</span> <span class='op'>+</span> <span class='number'>10</span> <span class='op'>-</span> <span class='string'>b&#39;a&#39;</span>) <span class='kw'>as</span> <span class='ident'>u64</span>;
             },
-            <span class='ident'>b</span><span class='kw-2'>@</span><span class='string'>b&#39;A&#39;</span>...<span class='string'>b&#39;F&#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {
+            <span class='ident'>b</span>@<span class='string'>b&#39;A&#39;</span>...<span class='string'>b&#39;F&#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {
                 <span class='ident'>size</span> <span class='op'>*=</span> <span class='ident'>radix</span>;
                 <span class='ident'>size</span> <span class='op'>+=</span> (<span class='ident'>b</span> <span class='op'>+</span> <span class='number'>10</span> <span class='op'>-</span> <span class='string'>b&#39;A&#39;</span>) <span class='kw'>as</span> <span class='ident'>u64</span>;
             },
@@ -1843,14 +1843,14 @@
             },
             <span class='comment'>// If we weren&#39;t in the extension yet, the &quot;;&quot; signals its start</span>
             <span class='string'>b&#39;;&#39;</span> <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>in_ext</span> <span class='op'>=&gt;</span> {
-                <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolval'>true</span>;
-                <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
             },
             <span class='comment'>// &quot;Linear white space&quot; is ignored between the chunk size and the</span>
             <span class='comment'>// extension separator token (&quot;;&quot;) due to the &quot;implied *LWS rule&quot;.</span>
             <span class='string'>b&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>b&#39; &#39;</span> <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>in_ext</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span><span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {},
             <span class='comment'>// LWS can follow the chunk size, but no more digits can come</span>
-            <span class='string'>b&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>b&#39; &#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolval'>false</span>,
+            <span class='string'>b&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>b&#39; &#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolvalue'>false</span>,
             <span class='comment'>// We allow any arbitrary octet once we are in the extension, since</span>
             <span class='comment'>// they all get ignored anyway. According to the HTTP spec, valid</span>
             <span class='comment'>// extensions would have a more strict syntax:</span>
@@ -1878,8 +1878,8 @@
         (_, <span class='number'>100</span>...<span class='number'>199</span>) <span class='op'>|</span>
         (_, <span class='number'>204</span>) <span class='op'>|</span>
         (_, <span class='number'>304</span>) <span class='op'>|</span>
-        (<span class='kw-2'>&amp;</span><span class='ident'>Method</span>::<span class='ident'>Connect</span>, <span class='number'>200</span>...<span class='number'>299</span>) <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
-        _ <span class='op'>=&gt;</span> <span class='boolval'>true</span>
+        (<span class='kw-2'>&amp;</span><span class='ident'>Method</span>::<span class='ident'>Connect</span>, <span class='number'>200</span>...<span class='number'>299</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+        _ <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>
     }
 }
 
@@ -2068,7 +2068,7 @@
 <span class='kw'>trait</span> <span class='ident'>TryParse</span> {
     <span class='kw'>type</span> <span class='ident'>Subject</span>;
     <span class='kw'>fn</span> <span class='ident'>try_parse</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='ident'>headers</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> [<span class='ident'>httparse</span>::<span class='ident'>Header</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>], <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> [<span class='ident'>u8</span>]) <span class='op'>-&gt;</span>
-        <span class='ident'>TryParseResult</span><span class='op'>&lt;</span><span class='ident'>Self</span>::<span class='ident'>Subject</span><span class='op'>&gt;</span>;
+        <span class='ident'>TryParseResult</span><span class='op'>&lt;</span><span class='self'>Self</span>::<span class='ident'>Subject</span><span class='op'>&gt;</span>;
 }
 
 <span class='kw'>type</span> <span class='ident'>TryParseResult</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>httparse</span>::<span class='ident'>Status</span><span class='op'>&lt;</span>(<span class='ident'>Incoming</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>, <span class='ident'>usize</span>)<span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span>;
@@ -2151,12 +2151,12 @@
     <span class='kw'>use</span> <span class='ident'>mock</span>::<span class='ident'>MockStream</span>;
     <span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>HttpMessage</span>;
 
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>read_chunk_size</span>, <span class='ident'>parse_request</span>, <span class='ident'>parse_response</span>, <span class='ident'>Http11Message</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>read_chunk_size</span>, <span class='ident'>parse_request</span>, <span class='ident'>parse_response</span>, <span class='ident'>Http11Message</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_write_chunked</span>() {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>from_utf8</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>w</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='ident'>HttpWriter</span>::<span class='ident'>ChunkedWriter</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>());
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>w</span> <span class='op'>=</span> <span class='kw'>super</span>::<span class='ident'>HttpWriter</span>::<span class='ident'>ChunkedWriter</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>());
         <span class='ident'>w</span>.<span class='ident'>write_all</span>(<span class='string'>b&quot;foo bar&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='ident'>w</span>.<span class='ident'>write_all</span>(<span class='string'>b&quot;baz quux herp&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>buf</span> <span class='op'>=</span> <span class='ident'>w</span>.<span class='ident'>end</span>().<span class='ident'>unwrap</span>();
@@ -2167,7 +2167,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_write_sized</span>() {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>from_utf8</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>w</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='ident'>HttpWriter</span>::<span class='ident'>SizedWriter</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>(), <span class='number'>8</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>w</span> <span class='op'>=</span> <span class='kw'>super</span>::<span class='ident'>HttpWriter</span>::<span class='ident'>SizedWriter</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>(), <span class='number'>8</span>);
         <span class='ident'>w</span>.<span class='ident'>write_all</span>(<span class='string'>b&quot;foo bar&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>w</span>.<span class='ident'>write</span>(<span class='string'>b&quot;baz&quot;</span>).<span class='ident'>unwrap</span>(), <span class='number'>1</span>);
 
@@ -2220,7 +2220,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_read_sized_early_eof</span>() {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='ident'>HttpReader</span>::<span class='ident'>SizedReader</span>(<span class='ident'>MockStream</span>::<span class='ident'>with_input</span>(<span class='string'>b&quot;foo bar&quot;</span>), <span class='number'>10</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='kw'>super</span>::<span class='ident'>HttpReader</span>::<span class='ident'>SizedReader</span>(<span class='ident'>MockStream</span>::<span class='ident'>with_input</span>(<span class='string'>b&quot;foo bar&quot;</span>), <span class='number'>10</span>);
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='number'>10</span>];
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>r</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>unwrap</span>(), <span class='number'>7</span>);
         <span class='kw'>let</span> <span class='ident'>e</span> <span class='op'>=</span> <span class='ident'>r</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>).<span class='ident'>unwrap_err</span>();
@@ -2230,7 +2230,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_read_chunked_early_eof</span>() {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='ident'>HttpReader</span>::<span class='ident'>ChunkedReader</span>(<span class='ident'>MockStream</span>::<span class='ident'>with_input</span>(<span class='string'>b&quot;\
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='kw'>super</span>::<span class='ident'>HttpReader</span>::<span class='ident'>ChunkedReader</span>(<span class='ident'>MockStream</span>::<span class='ident'>with_input</span>(<span class='string'>b&quot;\
             9\r\n\
             foo bar\
         &quot;</span>), <span class='prelude-val'>None</span>);
@@ -2325,6 +2325,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

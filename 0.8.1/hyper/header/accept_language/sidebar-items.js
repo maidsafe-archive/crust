@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AcceptLanguage","`Accept-Language` header, defined in RFC7231"]]});

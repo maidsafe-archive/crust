@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-249' class='srclink' href='../src/config_file_handler/file_handler.rs.html#293' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-247' class='srclink' href='../src/config_file_handler/file_handler.rs.html#293' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ScopedUserAppDirRemover;</pre><div class='docblock'><p>RAII object which removes the <a href="fn.user_app_dir.html"><code>user_app_dir()</code></a> when an instance is
 dropped.</p>
 
@@ -65,8 +65,10 @@ convenience object which tries to remove the directory when it is destroyed.</p>
     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>file_handler</span>.<span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='number'>111u64</span>);
 }
 <span class='comment'>// User app dir is now removed since &#39;_cleaner&#39; has gone out of scope.</span></pre>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../config_file_handler/struct.ScopedUserAppDirRemover.html' title='config_file_handler::ScopedUserAppDirRemover'>ScopedUserAppDirRemover</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
-</div></section>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../config_file_handler/struct.ScopedUserAppDirRemover.html' title='config_file_handler::ScopedUserAppDirRemover'>ScopedUserAppDirRemover</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-254' class='srclink' href='../src/config_file_handler/file_handler.rs.html#303-307' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -89,6 +91,8 @@ convenience object which tries to remove the directory when it is destroyed.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

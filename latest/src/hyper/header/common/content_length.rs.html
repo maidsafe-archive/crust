@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/header/common/content_length.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/content_length.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>content_length.rs.html -- source</title>
@@ -178,7 +178,7 @@
             .<span class='ident'>fold</span>(<span class='prelude-val'>None</span>, <span class='op'>|</span><span class='ident'>prev</span>, <span class='ident'>x</span><span class='op'>|</span> {
                 <span class='kw'>match</span> (<span class='ident'>prev</span>, <span class='ident'>x</span>) {
                     (<span class='prelude-val'>None</span>, <span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>x</span>),
-                    (<span class='ident'>e</span><span class='kw-2'>@</span><span class='prelude-val'>Some</span>(<span class='prelude-val'>Err</span>(_)), _ ) <span class='op'>=&gt;</span> <span class='ident'>e</span>,
+                    (<span class='ident'>e</span>@<span class='prelude-val'>Some</span>(<span class='prelude-val'>Err</span>(_)), _ ) <span class='op'>=&gt;</span> <span class='ident'>e</span>,
                     (<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>prev</span>)), <span class='prelude-val'>Ok</span>(<span class='ident'>x</span>)) <span class='kw'>if</span> <span class='ident'>prev</span> <span class='op'>==</span> <span class='ident'>x</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>prev</span>)),
                     _ <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='prelude-val'>Err</span>(::<span class='ident'>Error</span>::<span class='ident'>Header</span>))
                 }
@@ -239,6 +239,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

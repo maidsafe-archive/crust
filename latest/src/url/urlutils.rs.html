@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/url-0.2.38/src/urlutils.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/url-0.2.38/src/urlutils.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>urlutils.rs.html -- source</title>
@@ -224,7 +224,7 @@
 <span class='doccomment'>//! These methods are not meant for use in Rust code,</span>
 <span class='doccomment'>//! only to help implement the JavaScript URLUtils API: http://url.spec.whatwg.org/#urlutils</span>
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>Url</span>, <span class='ident'>UrlParser</span>, <span class='ident'>SchemeType</span>, <span class='ident'>SchemeData</span>, <span class='ident'>RelativeSchemeData</span>};
+<span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>Url</span>, <span class='ident'>UrlParser</span>, <span class='ident'>SchemeType</span>, <span class='ident'>SchemeData</span>, <span class='ident'>RelativeSchemeData</span>};
 <span class='kw'>use</span> <span class='ident'>parser</span>::{<span class='ident'>ParseError</span>, <span class='ident'>ParseResult</span>, <span class='ident'>Context</span>};
 <span class='kw'>use</span> <span class='ident'>percent_encoding</span>::{<span class='ident'>utf8_percent_encode_to</span>, <span class='ident'>USERNAME_ENCODE_SET</span>, <span class='ident'>PASSWORD_ENCODE_SET</span>};
 
@@ -405,6 +405,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

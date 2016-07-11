@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/mio-0.5.1/src/io.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/mio-0.5.1/src/io.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>io.rs.html -- source</title>
@@ -165,7 +165,7 @@
 
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>TryRead</span> {
     <span class='kw'>fn</span> <span class='ident'>try_read_buf</span><span class='op'>&lt;</span><span class='ident'>B</span>: <span class='ident'>MutBuf</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>B</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;&gt;</span>
-        <span class='kw'>where</span> <span class='kw'>Self</span> : <span class='ident'>Sized</span>
+        <span class='kw'>where</span> <span class='self'>Self</span> : <span class='ident'>Sized</span>
     {
         <span class='comment'>// Reads the length of the slice supplied by buf.mut_bytes into the buffer</span>
         <span class='comment'>// This is not guaranteed to consume an entire datagram or segment.</span>
@@ -186,7 +186,7 @@
 
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>TryWrite</span> {
     <span class='kw'>fn</span> <span class='ident'>try_write_buf</span><span class='op'>&lt;</span><span class='ident'>B</span>: <span class='ident'>Buf</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>B</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;&gt;</span>
-        <span class='kw'>where</span> <span class='kw'>Self</span> : <span class='ident'>Sized</span>
+        <span class='kw'>where</span> <span class='self'>Self</span> : <span class='ident'>Sized</span>
     {
         <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>try_write</span>(<span class='ident'>buf</span>.<span class='ident'>bytes</span>());
 
@@ -215,7 +215,7 @@
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>TryAccept</span> {
     <span class='kw'>type</span> <span class='ident'>Output</span>;
 
-    <span class='kw'>fn</span> <span class='ident'>accept</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Self</span>::<span class='ident'>Output</span><span class='op'>&gt;&gt;</span>;
+    <span class='kw'>fn</span> <span class='ident'>accept</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='self'>Self</span>::<span class='ident'>Output</span><span class='op'>&gt;&gt;</span>;
 }
 
 <span class='comment'>/*
@@ -271,6 +271,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

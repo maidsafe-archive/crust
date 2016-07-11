@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Host","The host name of an URL."]],"struct":[["Ipv6Address","A 128 bit IPv6 address"]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["write_config_file","Writes a Crust config file **for use by tests and examples**."]]});

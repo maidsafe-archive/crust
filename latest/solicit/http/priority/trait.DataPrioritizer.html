@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1211' class='srclink' href='../../../src/solicit/http/priority.rs.html#20-24' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1217' class='srclink' href='../../../src/solicit/http/priority.rs.html#20-24' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait DataPrioritizer {
     fn <a href='#tymethod.get_next_chunk' class='fnname'>get_next_chunk</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&gt;&gt;;
 }</pre><div class='docblock'><p>A trait that types that want to provide data to an HTTP/2 connection need to implement.</p>
@@ -59,7 +59,7 @@ that currently there was no data that could be sent at that point.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;'a, 'b, State&gt; <a class='trait' href='../../../solicit/http/priority/trait.DataPrioritizer.html' title='solicit::http::priority::DataPrioritizer'>DataPrioritizer</a> for <a class='struct' href='../../../solicit/http/priority/struct.SimplePrioritizer.html' title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a>&lt;'a, 'b, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></li>
+    <li><code>impl&lt;'a, 'b, State&gt; DataPrioritizer for <a class='struct' href='../../../solicit/http/priority/struct.SimplePrioritizer.html' title='solicit::http::priority::SimplePrioritizer'>SimplePrioritizer</a>&lt;'a, 'b, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></li>
 </ul><script type="text/javascript" async
                          src="../../../implementors/solicit/http/priority/trait.DataPrioritizer.js">
                  </script></section>
@@ -85,6 +85,8 @@ that currently there was no data that could be sent at that point.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

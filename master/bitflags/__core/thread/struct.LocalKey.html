@@ -43,14 +43,14 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>thread</a>::<wbr><a class='struct' href=''>LocalKey</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>thread</a>::<wbr><a class='struct' href=''>LocalKey</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-792' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/local/struct.LocalKey.html?gotosrc=792' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-796' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/local/struct.LocalKey.html?gotosrc=796' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct LocalKey&lt;T&gt; <span class='where'>where T: 'static</span> {
     // some fields omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>A thread local storage key which owns its contents.</p>
+}</pre><div class='docblock'><p>A thread local storage key which owns its contents.</p>
 
 <p>This key uses the fastest possible implementation available to it for the
 target platform. It is instantiated with the <code>thread_local!</code> macro and the
@@ -91,7 +91,7 @@ thread exits.</p>
 
 <h1 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h1>
 <p>Note that a &quot;best effort&quot; is made to ensure that destructors for types
-stored in thread local storage are run, but not all platforms can gurantee
+stored in thread local storage are run, but not all platforms can guarantee
 that destructors will be run for all types in thread local storage. For
 example, there are a number of known caveats where destructors are not run:</p>
 
@@ -109,7 +109,8 @@ destructors are run.</li>
 sometimes cancel <em>all</em> destructors for the current thread, whether or not
 the slots have already had their destructors run or not.</li>
 </ol>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.LocalKey.html' title='bitflags::__core::thread::LocalKey'>LocalKey</a>&lt;T&gt; <span class='where'>where T: 'static</span></code></h3><div class='impl-items'><h4 id='method.with' class='method'><code>fn <a href='#method.with' class='fnname'>with</a>&lt;F, R&gt;(&amp;'static self, f: F) -&gt; R <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>(&amp;T) -&gt; R</span></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.LocalKey.html' title='bitflags::__core::thread::LocalKey'>LocalKey</a>&lt;T&gt; <span class='where'>where T: 'static</span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.with' class='method'><code>fn <a href='#method.with' class='fnname'>with</a>&lt;F, R&gt;(&amp;'static self, f: F) -&gt; R <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>(&amp;T) -&gt; R</span></code></h4>
 <div class='docblock'><p>Acquires a reference to the value in this TLS key.</p>
 
 <p>This will lazily initialize the value if this thread has not referenced
@@ -137,7 +138,7 @@ destructor starts to run. Keys may remain in the <code>Destroyed</code> state af
 destruction has completed. Keys without destructors (e.g. with types
 that are <code>Copy</code>), may never enter the <code>Destroyed</code> state.</p>
 
-<p>Keys in the <code>Uninitialized</code> can be accessed so long as the
+<p>Keys in the <code>Uninitialized</code> state can be accessed so long as the
 initialization does not panic. Keys in the <code>Valid</code> state are guaranteed
 to be able to be accessed. Keys in the <code>Destroyed</code> state will panic on
 any call to <code>with</code>.</p>
@@ -164,6 +165,8 @@ any call to <code>with</code>.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

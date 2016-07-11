@@ -43,25 +43,31 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>thread</a>::<wbr><a class='struct' href=''>JoinHandle</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>thread</a>::<wbr><a class='struct' href=''>JoinHandle</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1088' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html?gotosrc=1088' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct JoinHandle&lt;T&gt;(_);</pre><span class="since">1.0.0</span><div class='docblock'><p>An owned permission to join on a thread (block on its termination).</p>
+               </span><a id='src-1084' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html?gotosrc=1084' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct JoinHandle&lt;T&gt;(_);</pre><div class='docblock'><p>An owned permission to join on a thread (block on its termination).</p>
 
 <p>A <code>JoinHandle</code> <em>detaches</em> the child thread when it is dropped.</p>
 
 <p>Due to platform restrictions, it is not possible to <code>Clone</code> this
 handle: the ability to join a child thread is a uniquely-owned
 permission.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.JoinHandle.html' title='bitflags::__core::thread::JoinHandle'>JoinHandle</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.thread' class='method'><code>fn <a href='#method.thread' class='fnname'>thread</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.JoinHandle.html' title='bitflags::__core::thread::JoinHandle'>JoinHandle</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.thread' class='method'><code>fn <a href='#method.thread' class='fnname'>thread</a>(&amp;self) -&gt; &amp;<a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h4>
 <div class='docblock'><p>Extracts a handle to the underlying thread</p>
 </div><h4 id='method.join' class='method'><code>fn <a href='#method.join' class='fnname'>join</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;T, <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a>&gt;&gt;</code></h4>
 <div class='docblock'><p>Waits for the associated thread to finish.</p>
 
 <p>If the child thread panics, <code>Err</code> is returned with the parameter given
 to <code>panic</code>.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.JoinHandleExt.html' title='bitflags::__core::os::ext::prelude::JoinHandleExt'>JoinHandleExt</a> for <a class='struct' href='../../../bitflags/__core/thread/struct.JoinHandle.html' title='bitflags::__core::thread::JoinHandle'>JoinHandle</a>&lt;T&gt;</code></span><span class='out-of-band'><div class='since' title='Stable since Rust version 1.9.0'>1.9.0</div></span></h3>
+<div class='impl-items'><h4 id='method.as_pthread_t' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.JoinHandleExt.html#tymethod.as_pthread_t' class='fnname'>as_pthread_t</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Extracts the raw pthread_t without taking ownership</p>
+</div><h4 id='method.into_pthread_t' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.JoinHandleExt.html#tymethod.into_pthread_t' class='fnname'>into_pthread_t</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Consumes the thread, returning the raw pthread_t <a href="../../../bitflags/__core/os/ext/prelude/trait.JoinHandleExt.html#tymethod.into_pthread_t">Read more</a></p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -85,6 +91,8 @@ to <code>panic</code>.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

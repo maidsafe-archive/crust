@@ -47,10 +47,11 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2761' class='srclink' href='../../../src/xml/writer/events.rs.html#148-150' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2739' class='srclink' href='../../../src/xml/writer/events.rs.html#148-150' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct EndElementBuilder&lt;'a&gt; {
     // some fields omitted
-}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../../xml/writer/events/struct.EndElementBuilder.html' title='xml::writer::events::EndElementBuilder'>EndElementBuilder</a>&lt;'a&gt;</code></h3><div class='docblock'><p>A builder for a closing element event.</p>
+}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../../../xml/writer/events/struct.EndElementBuilder.html' title='xml::writer::events::EndElementBuilder'>EndElementBuilder</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2742' class='srclink' href='../../../src/xml/writer/events.rs.html#153-165' title='goto source code'>[src]</a></span></h3>
+<div class='docblock'><p>A builder for a closing element event.</p>
 </div><div class='impl-items'><h4 id='method.name' class='method'><code>fn <a href='#method.name' class='fnname'>name</a>&lt;N&gt;(self, name: N) -&gt; <a class='struct' href='../../../xml/writer/events/struct.EndElementBuilder.html' title='xml::writer::events::EndElementBuilder'>EndElementBuilder</a>&lt;'a&gt; <span class='where'>where N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;&gt;</span></code></h4>
 <div class='docblock'><p>Sets the name of this closing element.</p>
 
@@ -81,6 +82,8 @@ closing element name is correct manually.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

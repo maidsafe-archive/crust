@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-858' class='srclink' href='../src/ws/factory.rs.html#5-104' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-859' class='srclink' href='../src/ws/factory.rs.html#5-104' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Factory {
     type <a href='#associatedtype.Handler' class='type'>Handler</a>: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a>;
     fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a>;
@@ -90,14 +90,14 @@ This method can be used to differentiate a client aspect for a handler.</p>
         <span class='ident'>MyHandler</span> {
             <span class='ident'>ws</span>: <span class='ident'>ws</span>,
             <span class='comment'>// default to server</span>
-            <span class='ident'>is_client</span>: <span class='boolval'>false</span>,
+            <span class='ident'>is_client</span>: <span class='boolvalue'>false</span>,
         }
     }
 
     <span class='kw'>fn</span> <span class='ident'>client_connected</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ws</span>: <span class='ident'>Sender</span>) <span class='op'>-&gt;</span> <span class='ident'>MyHandler</span> {
         <span class='ident'>MyHandler</span> {
             <span class='ident'>ws</span>: <span class='ident'>ws</span>,
-            <span class='ident'>is_client</span>: <span class='boolval'>true</span>,
+            <span class='ident'>is_client</span>: <span class='boolvalue'>true</span>,
         }
     }
 }</pre>
@@ -123,14 +123,14 @@ This method can be used to differentiate a server aspect for a handler.</p>
         <span class='ident'>MyHandler</span> {
             <span class='ident'>ws</span>: <span class='ident'>ws</span>,
             <span class='comment'>// default to client</span>
-            <span class='ident'>is_server</span>: <span class='boolval'>false</span>,
+            <span class='ident'>is_server</span>: <span class='boolvalue'>false</span>,
         }
     }
 
     <span class='kw'>fn</span> <span class='ident'>server_connected</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ws</span>: <span class='ident'>Sender</span>) <span class='op'>-&gt;</span> <span class='ident'>MyHandler</span> {
         <span class='ident'>MyHandler</span> {
             <span class='ident'>ws</span>: <span class='ident'>ws</span>,
-            <span class='ident'>is_server</span>: <span class='boolval'>true</span>,
+            <span class='ident'>is_server</span>: <span class='boolvalue'>true</span>,
         }
     }
 }</pre>
@@ -143,7 +143,8 @@ state that was not internally tracked by the handler.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    </ul><script type="text/javascript" async
+    <li><code>impl&lt;F, H&gt; Factory for F <span class='where'>where H: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a>, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(<a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; H</span></code></li>
+</ul><script type="text/javascript" async
                          src="../implementors/ws/trait.Factory.js">
                  </script></section>
     <section id='search' class="content hidden"></section>
@@ -168,6 +169,8 @@ state that was not internally tracked by the handler.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

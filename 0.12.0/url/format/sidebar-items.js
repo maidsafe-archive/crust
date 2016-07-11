@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["PathFormatter","Formatter and serializer for URL path data."],["UrlNoFragmentFormatter","Formatter for URLs which ignores the fragment field."],["UserInfoFormatter","Formatter and serializer for URL username and password data."]]});

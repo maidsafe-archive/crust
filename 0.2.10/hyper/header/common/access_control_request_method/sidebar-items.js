@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AccessControlRequestMethod","`Access-Control-Request-Method` header, part of CORS"]]});

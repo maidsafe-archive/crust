@@ -85,16 +85,16 @@ Returns the number of bytes read.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.ByteBuf.html' title='bytes::ByteBuf'>ByteBuf</a></code></li>
-<li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.ROByteBuf.html' title='bytes::ROByteBuf'>ROByteBuf</a></code></li>
-<li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.RingBuf.html' title='bytes::RingBuf'>RingBuf</a></code></li>
-<li><code>impl&lt;'a&gt; <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.SliceBuf.html' title='bytes::SliceBuf'>SliceBuf</a>&lt;'a&gt;</code></li>
-<li><code>impl&lt;T: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>&gt; <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.Take.html' title='bytes::Take'>Take</a>&lt;T&gt;</code></li>
-<li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> + 'static&gt;</code></li>
-<li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</code></li>
-<li><code>impl&lt;'a&gt; <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></li>
-<li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.RopeBuf.html' title='bytes::RopeBuf'>RopeBuf</a></code></li>
-<li><code>impl <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> for <a class='struct' href='../../bytes/struct.SmallByteStrBuf.html' title='bytes::SmallByteStrBuf'>SmallByteStrBuf</a></code></li>
+    <li><code>impl Buf for <a class='struct' href='../../bytes/struct.ByteBuf.html' title='bytes::ByteBuf'>ByteBuf</a></code></li>
+<li><code>impl Buf for <a class='struct' href='../../bytes/struct.ROByteBuf.html' title='bytes::ROByteBuf'>ROByteBuf</a></code></li>
+<li><code>impl Buf for <a class='struct' href='../../bytes/struct.RingBuf.html' title='bytes::RingBuf'>RingBuf</a></code></li>
+<li><code>impl&lt;'a&gt; Buf for <a class='struct' href='../../bytes/struct.SliceBuf.html' title='bytes::SliceBuf'>SliceBuf</a>&lt;'a&gt;</code></li>
+<li><code>impl&lt;T: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>&gt; Buf for <a class='struct' href='../../bytes/struct.Take.html' title='bytes::Take'>Take</a>&lt;T&gt;</code></li>
+<li><code>impl Buf for <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a> + 'static&gt;</code></li>
+<li><code>impl Buf for <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</code></li>
+<li><code>impl&lt;'a&gt; Buf for <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></li>
+<li><code>impl Buf for <a class='struct' href='../../bytes/struct.RopeBuf.html' title='bytes::RopeBuf'>RopeBuf</a></code></li>
+<li><code>impl Buf for <a class='struct' href='../../bytes/struct.SmallByteStrBuf.html' title='bytes::SmallByteStrBuf'>SmallByteStrBuf</a></code></li>
 </ul><script type="text/javascript" async
                          src="../../implementors/bytes/buf/trait.Buf.js">
                  </script></section>
@@ -120,6 +120,8 @@ Returns the number of bytes read.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

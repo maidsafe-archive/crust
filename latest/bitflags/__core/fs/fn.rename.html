@@ -43,19 +43,26 @@
     </nav>
 
     <section id='main' class="content fn">
-<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fs</a>::<wbr><a class='fn' href=''>rename</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fs</a>::<wbr><a class='fn' href=''>rename</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3896' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.rename.html?gotosrc=3896' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn rename&lt;P, Q&gt;(from: P, to: Q) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;, Q: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><span class="since">1.0.0</span><div class='docblock'><p>Rename a file or directory to a new name.</p>
+               </span><a id='src-3912' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.rename.html?gotosrc=3912' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn rename&lt;P, Q&gt;(from: P, to: Q) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;, Q: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='docblock'><p>Rename a file or directory to a new name, replacing the original file if
+<code>to</code> already exists.</p>
 
 <p>This will not work if the new name is on a different mount point.</p>
 
 <h1 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h1>
 <p>This function currently corresponds to the <code>rename</code> function on Unix
-and the <code>MoveFileEx</code> function with the <code>MOVEFILE_REPLACE_EXISTING</code> flag on Windows.
-Note that, this <a href="../io/index.html#platform-specific-behavior">may change in the future</a>.</p>
+and the <code>MoveFileEx</code> function with the <code>MOVEFILE_REPLACE_EXISTING</code> flag on Windows.</p>
+
+<p>Because of this, the behavior when both <code>from</code> and <code>to</code> exist differs. On
+Unix, if <code>from</code> is a directory, <code>to</code> must also be an (empty) directory. If
+<code>from</code> is not a directory, <code>to</code> must also be not a directory. In contrast,
+on Windows, <code>from</code> can be anything, but <code>to</code> must <em>not</em> be a directory.</p>
+
+<p>Note that, this <a href="../io/index.html#platform-specific-behavior">may change in the future</a>.</p>
 
 <h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
 <p>This function will return an error in the following situations, but is not
@@ -95,6 +102,8 @@ limited to just these cases:</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

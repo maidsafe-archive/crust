@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.7/src/rustc_serialize/reader.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/bincode-0.5.9/src/rustc_serialize/reader.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>reader.rs.html -- source</title>
@@ -448,8 +448,8 @@
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>InvalidEncoding</span> {
-    <span class='ident'>desc</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
-    <span class='ident'>detail</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>desc</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+    <span class='kw'>pub</span> <span class='ident'>detail</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>InvalidEncoding</span> {
@@ -622,8 +622,8 @@
     <span class='kw'>fn</span> <span class='ident'>read_bool</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>DecodingResult</span><span class='op'>&lt;</span><span class='ident'>bool</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>x</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_i8</span>());
         <span class='kw'>match</span> <span class='ident'>x</span> {
-            <span class='number'>1</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>),
-            <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolval'>false</span>),
+            <span class='number'>1</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>),
+            <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>false</span>),
             _ <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>DecodingError</span>::<span class='ident'>InvalidEncoding</span>(<span class='ident'>InvalidEncoding</span>{
                 <span class='ident'>desc</span>: <span class='string'>&quot;invalid u8 when decoding bool&quot;</span>,
                 <span class='ident'>detail</span>: <span class='prelude-val'>Some</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Expected 0 or 1, got {}&quot;</span>, <span class='ident'>x</span>))
@@ -762,8 +762,8 @@
     {
         <span class='kw'>let</span> <span class='ident'>x</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_u8</span>());
         <span class='kw'>match</span> <span class='ident'>x</span> {
-                <span class='number'>1</span> <span class='op'>=&gt;</span> <span class='ident'>f</span>(<span class='self'>self</span>, <span class='boolval'>true</span>),
-                <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='ident'>f</span>(<span class='self'>self</span>, <span class='boolval'>false</span>),
+                <span class='number'>1</span> <span class='op'>=&gt;</span> <span class='ident'>f</span>(<span class='self'>self</span>, <span class='boolvalue'>true</span>),
+                <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='ident'>f</span>(<span class='self'>self</span>, <span class='boolvalue'>false</span>),
                 _ <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>DecodingError</span>::<span class='ident'>InvalidEncoding</span>(<span class='ident'>InvalidEncoding</span> {
                     <span class='ident'>desc</span>: <span class='string'>&quot;invalid tag when decoding Option&quot;</span>,
                     <span class='ident'>detail</span>: <span class='prelude-val'>Some</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Expected 0 or 1, got {}&quot;</span>, <span class='ident'>x</span>))
@@ -851,6 +851,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

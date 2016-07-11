@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.1/src/sys/epoll.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.5.1/src/sys/epoll.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>epoll.rs.html -- source</title>
@@ -144,7 +144,7 @@
 
 <span class='kw'>mod</span> <span class='ident'>ffi</span> {
     <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>EpollEvent</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>EpollEvent</span>;
 
     <span class='kw'>extern</span> {
         <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>epoll_create</span>(<span class='ident'>size</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
@@ -257,6 +257,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

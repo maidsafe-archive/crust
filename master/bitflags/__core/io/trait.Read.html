@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>io</a>::<wbr><a class='trait' href=''>Read</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>io</a>::<wbr><a class='trait' href=''>Read</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-4911' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html?gotosrc=4911' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-4894' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html?gotosrc=4894' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Read {
     fn <a href='#tymethod.read' class='fnname'>read</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
 
@@ -202,7 +202,7 @@ returned and <code>buf</code> is unchanged.</p>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buffer</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
 
 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>f</span>.<span class='ident'>read_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>));</pre>
-</div><h3 id='method.read_exact' class='method stab '><code>fn <a href='#method.read_exact' class='fnname'>read_exact</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code><span class="since">1.6.0</span></h3><div class='docblock'><p>Read the exact number of bytes required to fill <code>buf</code>.</p>
+</div><h3 id='method.read_exact' class='method stab '><code>fn <a href='#method.read_exact' class='fnname'>read_exact</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code><div class='since' title='Stable since Rust version 1.6.0'>1.6.0</div></h3><div class='docblock'><p>Read the exact number of bytes required to fill <code>buf</code>.</p>
 
 <p>This function reads as many bytes as necessary to completely fill the
 specified buffer <code>buf</code>.</p>
@@ -361,7 +361,26 @@ calls to <code>read</code> may succeed.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
+    <li><code>impl Read for <a class='struct' href='../../../bitflags/__core/fs/struct.File.html' title='bitflags::__core::fs::File'>File</a></code></li>
+<li><code>impl&lt;'a&gt; Read for &amp;'a <a class='struct' href='../../../bitflags/__core/fs/struct.File.html' title='bitflags::__core::fs::File'>File</a></code></li>
+<li><code>impl&lt;R&gt; Read for <a class='struct' href='../../../bitflags/__core/io/struct.BufReader.html' title='bitflags::__core::io::BufReader'>BufReader</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
+<li><code>impl&lt;T&gt; Read for <a class='struct' href='../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;</span></code></li>
+<li><code>impl&lt;'a, R&gt; Read for &amp;'a mut R <span class='where'>where R: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;R&gt; Read for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;'a&gt; Read for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/io/struct.Empty.html' title='bitflags::__core::io::Empty'>Empty</a></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/io/struct.Repeat.html' title='bitflags::__core::io::Repeat'>Repeat</a></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/io/struct.Stdin.html' title='bitflags::__core::io::Stdin'>Stdin</a></code></li>
+<li><code>impl&lt;'a&gt; Read for <a class='struct' href='../../../bitflags/__core/io/struct.StdinLock.html' title='bitflags::__core::io::StdinLock'>StdinLock</a>&lt;'a&gt;</code></li>
+<li><code>impl&lt;T, U&gt; Read for <a class='struct' href='../../../bitflags/__core/io/struct.Chain.html' title='bitflags::__core::io::Chain'>Chain</a>&lt;T, U&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a>, U: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
+<li><code>impl&lt;T&gt; Read for <a class='struct' href='../../../bitflags/__core/io/struct.Take.html' title='bitflags::__core::io::Take'>Take</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>
+<li><code>impl&lt;'a&gt; Read for &amp;'a <a class='struct' href='../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/os/ext/net/struct.UnixStream.html' title='bitflags::__core::os::ext::net::UnixStream'>UnixStream</a></code></li>
+<li><code>impl&lt;'a&gt; Read for &amp;'a <a class='struct' href='../../../bitflags/__core/os/ext/net/struct.UnixStream.html' title='bitflags::__core::os::ext::net::UnixStream'>UnixStream</a></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/process/struct.ChildStdout.html' title='bitflags::__core::process::ChildStdout'>ChildStdout</a></code></li>
+<li><code>impl Read for <a class='struct' href='../../../bitflags/__core/process/struct.ChildStderr.html' title='bitflags::__core::process::ChildStderr'>ChildStderr</a></code></li>
+<li><code>impl&lt;'a&gt; Read for &amp;'a FileDesc</code></li>
 </ul><script type="text/javascript" async
                          src="../../../implementors/std/io/trait.Read.js">
                  </script></section>
@@ -387,6 +406,8 @@ calls to <code>read</code> may succeed.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

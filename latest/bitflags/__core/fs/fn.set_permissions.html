@@ -43,12 +43,12 @@
     </nav>
 
     <section id='main' class="content fn">
-<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fs</a>::<wbr><a class='fn' href=''>set_permissions</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Function <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fs</a>::<wbr><a class='fn' href=''>set_permissions</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.1.0'>1.1.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3937' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.set_permissions.html?gotosrc=3937' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn set_permissions&lt;P&gt;(path: P, perm: <a class='struct' href='../../../bitflags/__core/fs/struct.Permissions.html' title='bitflags::__core::fs::Permissions'>Permissions</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><span class="since">1.1.0</span><div class='docblock'><p>Changes the permissions found on a file or a directory.</p>
+               </span><a id='src-3953' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.set_permissions.html?gotosrc=3953' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn set_permissions&lt;P&gt;(path: P, perm: <a class='struct' href='../../../bitflags/__core/fs/struct.Permissions.html' title='bitflags::__core::fs::Permissions'>Permissions</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='docblock'><p>Changes the permissions found on a file or a directory.</p>
 
 <h1 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h1>
 <p>This function currently corresponds to the <code>chmod</code> function on Unix
@@ -69,7 +69,7 @@ limited to just these cases:</p>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>perms</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>fs</span>::<span class='ident'>metadata</span>(<span class='string'>&quot;foo.txt&quot;</span>)).<span class='ident'>permissions</span>();
-<span class='ident'>perms</span>.<span class='ident'>set_readonly</span>(<span class='boolval'>true</span>);
+<span class='ident'>perms</span>.<span class='ident'>set_readonly</span>(<span class='boolvalue'>true</span>);
 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>fs</span>::<span class='ident'>set_permissions</span>(<span class='string'>&quot;foo.txt&quot;</span>, <span class='ident'>perms</span>));</pre>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -94,6 +94,8 @@ limited to just these cases:</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

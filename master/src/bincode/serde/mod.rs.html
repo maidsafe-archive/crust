@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.8/src/serde/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/bincode-0.5.9/src/serde/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -177,6 +177,7 @@
     <span class='ident'>Deserializer</span>,
     <span class='ident'>DeserializeResult</span>,
     <span class='ident'>DeserializeError</span>,
+    <span class='ident'>InvalidEncoding</span>
 };
 
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>writer</span>::{
@@ -288,7 +289,6 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>reader</span> <span class='op'>=</span> <span class='ident'>bytes</span>;
     <span class='ident'>deserialize_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>reader</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>)
 }
-
 </pre>
 </section>
     <section id='search' class="content hidden"></section>
@@ -313,6 +313,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

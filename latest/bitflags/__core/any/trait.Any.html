@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>any</a>::<wbr><a class='trait' href=''>Any</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>any</a>::<wbr><a class='trait' href=''>Any</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-22665' class='srclink' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html?gotosrc=22665' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-23265' class='srclink' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html?gotosrc=23265' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Any: 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Reflect.html' title='bitflags::__core::marker::Reflect'>Reflect</a> {
     fn <a href='#tymethod.get_type_id' class='fnname'>get_type_id</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/any/struct.TypeId.html' title='bitflags::__core::any::TypeId'>TypeId</a>;
 }</pre><div class='docblock'><p>A type to emulate dynamic typing.</p>
@@ -59,10 +59,33 @@ See the <a href="index.html">module-level documentation</a> for more details.</p
             <div class='methods'>
         <h3 id='tymethod.get_type_id' class='method stab unstable'><code>fn <a href='#tymethod.get_type_id' class='fnname'>get_type_id</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/any/struct.TypeId.html' title='bitflags::__core::any::TypeId'>TypeId</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>get_type_id</code>)<p>: this method will likely be replaced by an associated static</p>
 </em></div><div class='docblock'><p>Gets the <code>TypeId</code> of <code>self</code>.</p>
+</div></div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.is' class='method'><code>fn <a href='#method.is' class='fnname'>is</a>&lt;T&gt;(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a></span></code></h4>
+<div class='docblock'><p>Returns true if the boxed type is the same as <code>T</code></p>
+</div><h4 id='method.downcast_ref' class='method'><code>fn <a href='#method.downcast_ref' class='fnname'>downcast_ref</a>&lt;T&gt;(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a></span></code></h4>
+<div class='docblock'><p>Returns some reference to the boxed value if it is of type <code>T</code>, or
+<code>None</code> if it isn&#39;t.</p>
+</div><h4 id='method.downcast_mut' class='method'><code>fn <a href='#method.downcast_mut' class='fnname'>downcast_mut</a>&lt;T&gt;(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;mut T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a></span></code></h4>
+<div class='docblock'><p>Returns some mutable reference to the boxed value if it is of type <code>T</code>, or
+<code>None</code> if it isn&#39;t.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.is-1' class='method'><code>fn <a href='#method.is-1' class='fnname'>is</a>&lt;T&gt;(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a></span></code></h4>
+<div class='docblock'><p>Forwards to the method defined on the type <code>Any</code>.</p>
+</div><h4 id='method.downcast_ref-1' class='method'><code>fn <a href='#method.downcast_ref-1' class='fnname'>downcast_ref</a>&lt;T&gt;(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a></span></code></h4>
+<div class='docblock'><p>Forwards to the method defined on the type <code>Any</code>.</p>
+</div><h4 id='method.downcast_mut-1' class='method'><code>fn <a href='#method.downcast_mut-1' class='fnname'>downcast_mut</a>&lt;T&gt;(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;mut T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a></span></code></h4>
+<div class='docblock'><p>Forwards to the method defined on the type <code>Any</code>.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    </ul><script type="text/javascript" async
+    <li><code>impl&lt;T&gt; Any for T <span class='where'>where T: 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Reflect.html' title='bitflags::__core::marker::Reflect'>Reflect</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+</ul><script type="text/javascript" async
                          src="../../../implementors/core/any/trait.Any.js">
                  </script></section>
     <section id='search' class="content hidden"></section>
@@ -87,6 +110,8 @@ See the <a href="index.html">module-level documentation</a> for more details.</p
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

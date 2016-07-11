@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/unicode-bidi-0.2.3/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/unicode-bidi-0.2.3/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1420,8 +1420,8 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// http://www.unicode.org/reports/tr9/#Explicit_Levels_and_Directions</span>
 <span class='kw'>mod</span> <span class='ident'>explicit</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>BidiClass</span>, <span class='ident'>is_rtl</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>BidiClass</span>, <span class='ident'>is_rtl</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
 
     <span class='doccomment'>/// Compute explicit embedding levels for one paragraph of text (X1-X8).</span>
     <span class='doccomment'>///</span>
@@ -1444,14 +1444,14 @@
                 <span class='comment'>// Rules X2-X5c</span>
                 <span class='ident'>RLE</span> <span class='op'>|</span> <span class='ident'>LRE</span> <span class='op'>|</span> <span class='ident'>RLO</span> <span class='op'>|</span> <span class='ident'>LRO</span> <span class='op'>|</span> <span class='ident'>RLI</span> <span class='op'>|</span> <span class='ident'>LRI</span> <span class='op'>|</span> <span class='ident'>FSI</span> <span class='op'>=&gt;</span> {
                     <span class='kw'>let</span> <span class='ident'>is_rtl</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>initial_classes</span>[<span class='ident'>i</span>] {
-                        <span class='ident'>RLE</span> <span class='op'>|</span> <span class='ident'>RLO</span> <span class='op'>|</span> <span class='ident'>RLI</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-                        _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+                        <span class='ident'>RLE</span> <span class='op'>|</span> <span class='ident'>RLO</span> <span class='op'>|</span> <span class='ident'>RLI</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+                        _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
                     };
 
                     <span class='kw'>let</span> <span class='ident'>last_level</span> <span class='op'>=</span> <span class='ident'>stack</span>.<span class='ident'>last</span>().<span class='ident'>level</span>;
                     <span class='kw'>let</span> <span class='ident'>new_level</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>is_rtl</span> {
-                        <span class='boolval'>true</span>  <span class='op'>=&gt;</span> <span class='ident'>next_rtl_level</span>(<span class='ident'>last_level</span>),
-                        <span class='boolval'>false</span> <span class='op'>=&gt;</span> <span class='ident'>next_ltr_level</span>(<span class='ident'>last_level</span>)
+                        <span class='boolvalue'>true</span>  <span class='op'>=&gt;</span> <span class='ident'>next_rtl_level</span>(<span class='ident'>last_level</span>),
+                        <span class='boolvalue'>false</span> <span class='op'>=&gt;</span> <span class='ident'>next_ltr_level</span>(<span class='ident'>last_level</span>)
                     };
 
                     <span class='comment'>// X5a-X5c: Isolate initiators get the level of the last entry on the stack.</span>
@@ -1572,7 +1572,7 @@
     }
 
     <span class='kw'>impl</span> <span class='ident'>DirectionalStatusStack</span> {
-        <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> {
             <span class='ident'>DirectionalStatusStack</span> {
                 <span class='ident'>vec</span>: <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='ident'>MAX_DEPTH</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>+</span> <span class='number'>2</span>)
             }
@@ -1590,8 +1590,8 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// http://www.unicode.org/reports/tr9/#Preparations_for_Implicit_Processing</span>
 <span class='kw'>mod</span> <span class='ident'>prepare</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>BidiClass</span>, <span class='ident'>class_for_level</span>, <span class='ident'>LevelRun</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>BidiClass</span>, <span class='ident'>class_for_level</span>, <span class='ident'>LevelRun</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>max</span>;
 
     <span class='doccomment'>/// Output of `isolating_run_sequences` (steps X9-X10)</span>
@@ -1746,9 +1746,9 @@
 
 <span class='doccomment'>/// 3.3.4 - 3.3.6. Resolve implicit levels and types.</span>
 <span class='kw'>mod</span> <span class='ident'>implicit</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>BidiClass</span>, <span class='ident'>class_for_level</span>, <span class='ident'>is_rtl</span>, <span class='ident'>LevelRun</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>prepare</span>::{<span class='ident'>IsolatingRunSequence</span>, <span class='ident'>not_removed_by_x9</span>, <span class='ident'>removed_by_x9</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>BidiClass</span>, <span class='ident'>class_for_level</span>, <span class='ident'>is_rtl</span>, <span class='ident'>LevelRun</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>prepare</span>::{<span class='ident'>IsolatingRunSequence</span>, <span class='ident'>not_removed_by_x9</span>, <span class='ident'>removed_by_x9</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>max</span>;
 
     <span class='doccomment'>/// 3.3.4 Resolving Weak Types</span>
@@ -1761,7 +1761,7 @@
         <span class='comment'>// extra state so each rule can see the correct previous class.</span>
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>prev_class</span> <span class='op'>=</span> <span class='ident'>sequence</span>.<span class='ident'>sos</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>last_strong_is_al</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>last_strong_is_al</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>et_run_indices</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>(); <span class='comment'>// for W5</span>
 
         <span class='comment'>// Like sequence.runs.iter().flat_map(Clone::clone), but make indices itself clonable.</span>
@@ -1817,8 +1817,8 @@
 
             <span class='ident'>prev_class</span> <span class='op'>=</span> <span class='ident'>classes</span>[<span class='ident'>i</span>];
             <span class='kw'>match</span> <span class='ident'>prev_class</span> {
-                <span class='ident'>L</span> <span class='op'>|</span> <span class='ident'>R</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_al</span> <span class='op'>=</span> <span class='boolval'>false</span>; }
-                <span class='ident'>AL</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_al</span> <span class='op'>=</span> <span class='boolval'>true</span>;  }
+                <span class='ident'>L</span> <span class='op'>|</span> <span class='ident'>R</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_al</span> <span class='op'>=</span> <span class='boolvalue'>false</span>; }
+                <span class='ident'>AL</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_al</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;  }
                 _ <span class='op'>=&gt;</span> {}
             }
             <span class='kw'>if</span> <span class='ident'>prev_class</span> <span class='op'>!=</span> <span class='ident'>ET</span> {
@@ -1836,8 +1836,8 @@
             <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='ident'>run</span>.<span class='ident'>clone</span>() {
                 <span class='kw'>match</span> <span class='ident'>classes</span>[<span class='ident'>i</span>] {
                     <span class='ident'>EN</span> <span class='kw'>if</span> <span class='ident'>last_strong_is_l</span> <span class='op'>=&gt;</span> { <span class='ident'>classes</span>[<span class='ident'>i</span>] <span class='op'>=</span> <span class='ident'>L</span>; }
-                    <span class='ident'>L</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_l</span> <span class='op'>=</span> <span class='boolval'>true</span>; }
-                    <span class='ident'>R</span> <span class='op'>|</span> <span class='ident'>AL</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_l</span> <span class='op'>=</span> <span class='boolval'>false</span>; }
+                    <span class='ident'>L</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_l</span> <span class='op'>=</span> <span class='boolvalue'>true</span>; }
+                    <span class='ident'>R</span> <span class='op'>|</span> <span class='ident'>AL</span> <span class='op'>=&gt;</span> { <span class='ident'>last_strong_is_l</span> <span class='op'>=</span> <span class='boolvalue'>false</span>; }
                     _ <span class='op'>=&gt;</span> {}
                 }
             }
@@ -1925,13 +1925,13 @@
         <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>levels</span>.<span class='ident'>len</span>() {
             <span class='kw'>match</span> (<span class='ident'>is_rtl</span>(<span class='ident'>levels</span>[<span class='ident'>i</span>]), <span class='ident'>classes</span>[<span class='ident'>i</span>]) {
                 <span class='comment'>// http://www.unicode.org/reports/tr9/#I1</span>
-                (<span class='boolval'>false</span>, <span class='ident'>R</span>)  <span class='op'>=&gt;</span> <span class='ident'>levels</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>,
-                (<span class='boolval'>false</span>, <span class='ident'>AN</span>) <span class='op'>|</span>
-                (<span class='boolval'>false</span>, <span class='ident'>EN</span>) <span class='op'>=&gt;</span> <span class='ident'>levels</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>2</span>,
+                (<span class='boolvalue'>false</span>, <span class='ident'>R</span>)  <span class='op'>=&gt;</span> <span class='ident'>levels</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>,
+                (<span class='boolvalue'>false</span>, <span class='ident'>AN</span>) <span class='op'>|</span>
+                (<span class='boolvalue'>false</span>, <span class='ident'>EN</span>) <span class='op'>=&gt;</span> <span class='ident'>levels</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>2</span>,
                 <span class='comment'>// http://www.unicode.org/reports/tr9/#I2</span>
-                (<span class='boolval'>true</span>, <span class='ident'>L</span>)  <span class='op'>|</span>
-                (<span class='boolval'>true</span>, <span class='ident'>EN</span>) <span class='op'>|</span>
-                (<span class='boolval'>true</span>, <span class='ident'>AN</span>) <span class='op'>=&gt;</span> <span class='ident'>levels</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>,
+                (<span class='boolvalue'>true</span>, <span class='ident'>L</span>)  <span class='op'>|</span>
+                (<span class='boolvalue'>true</span>, <span class='ident'>EN</span>) <span class='op'>|</span>
+                (<span class='boolvalue'>true</span>, <span class='ident'>AN</span>) <span class='op'>=&gt;</span> <span class='ident'>levels</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>,
                 (_, _) <span class='op'>=&gt;</span> {}
             }
             <span class='ident'>max_level</span> <span class='op'>=</span> <span class='ident'>max</span>(<span class='ident'>max_level</span>, <span class='ident'>levels</span>[<span class='ident'>i</span>]);
@@ -1942,11 +1942,11 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>BidiClass</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_initial_scan</span>() {
-        <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>InitialProperties</span>, <span class='ident'>initial_scan</span>, <span class='ident'>ParagraphInfo</span>};
+        <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>InitialProperties</span>, <span class='ident'>initial_scan</span>, <span class='ident'>ParagraphInfo</span>};
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>initial_scan</span>(<span class='string'>&quot;a1&quot;</span>, <span class='prelude-val'>None</span>), <span class='ident'>InitialProperties</span> {
             <span class='ident'>initial_classes</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>L</span>, <span class='ident'>EN</span>],
@@ -1977,7 +1977,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_bidi_class</span>() {
-        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>bidi_class</span>;
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>bidi_class</span>;
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>bidi_class</span>(<span class='string'>&#39;c&#39;</span>), <span class='ident'>L</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>bidi_class</span>(<span class='string'>&#39;\u{05D1}&#39;</span>), <span class='ident'>R</span>);
@@ -1986,7 +1986,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_process_text</span>() {
-        <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>BidiInfo</span>, <span class='ident'>ParagraphInfo</span>, <span class='ident'>process_text</span>};
+        <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>BidiInfo</span>, <span class='ident'>ParagraphInfo</span>, <span class='ident'>process_text</span>};
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>process_text</span>(<span class='string'>&quot;abc123&quot;</span>, <span class='prelude-val'>Some</span>(<span class='number'>0</span>)), <span class='ident'>BidiInfo</span> {
             <span class='ident'>levels</span>:  <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>0</span>,  <span class='number'>0</span>,  <span class='number'>0</span>],
@@ -2028,7 +2028,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_reorder_line</span>() {
-        <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>process_text</span>, <span class='ident'>reorder_line</span>};
+        <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>process_text</span>, <span class='ident'>reorder_line</span>};
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Cow</span>;
         <span class='kw'>fn</span> <span class='ident'>reorder</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>Cow</span><span class='op'>&lt;</span><span class='ident'>str</span><span class='op'>&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>info</span> <span class='op'>=</span> <span class='ident'>process_text</span>(<span class='ident'>s</span>, <span class='prelude-val'>None</span>);
@@ -2059,18 +2059,18 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_is_ltr</span>() {
-        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>is_ltr</span>;
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_ltr</span>(<span class='number'>10</span>), <span class='boolval'>true</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_ltr</span>(<span class='number'>11</span>), <span class='boolval'>false</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_ltr</span>(<span class='number'>20</span>), <span class='boolval'>true</span>);
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>is_ltr</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_ltr</span>(<span class='number'>10</span>), <span class='boolvalue'>true</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_ltr</span>(<span class='number'>11</span>), <span class='boolvalue'>false</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_ltr</span>(<span class='number'>20</span>), <span class='boolvalue'>true</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_is_rtl</span>() {
-        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>is_rtl</span>;
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_rtl</span>(<span class='number'>13</span>), <span class='boolval'>true</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_rtl</span>(<span class='number'>11</span>), <span class='boolval'>true</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_rtl</span>(<span class='number'>20</span>), <span class='boolval'>false</span>);
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>is_rtl</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_rtl</span>(<span class='number'>13</span>), <span class='boolvalue'>true</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_rtl</span>(<span class='number'>11</span>), <span class='boolvalue'>true</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>is_rtl</span>(<span class='number'>20</span>), <span class='boolvalue'>false</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -2079,10 +2079,10 @@
         <span class='kw'>let</span> <span class='ident'>rem_classes</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span>[<span class='ident'>RLE</span>, <span class='ident'>LRE</span>, <span class='ident'>RLO</span>, <span class='ident'>LRO</span>, <span class='ident'>PDF</span>, <span class='ident'>BN</span>];
         <span class='kw'>let</span> <span class='ident'>not_classes</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span>[<span class='ident'>L</span>, <span class='ident'>RLI</span>, <span class='ident'>AL</span>, <span class='ident'>LRI</span>, <span class='ident'>PDI</span>];
         <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='ident'>rem_classes</span> {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>removed_by_x9</span>(<span class='op'>*</span><span class='ident'>x</span>), <span class='boolval'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>removed_by_x9</span>(<span class='op'>*</span><span class='ident'>x</span>), <span class='boolvalue'>true</span>);
         }
         <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='ident'>not_classes</span> {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>removed_by_x9</span>(<span class='op'>*</span><span class='ident'>x</span>), <span class='boolval'>false</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>removed_by_x9</span>(<span class='op'>*</span><span class='ident'>x</span>), <span class='boolvalue'>false</span>);
         }
     }
 
@@ -2091,7 +2091,7 @@
         <span class='kw'>use</span> <span class='ident'>prepare</span>::<span class='ident'>not_removed_by_x9</span>;
         <span class='kw'>let</span> <span class='ident'>non_x9_classes</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span>[<span class='ident'>L</span>, <span class='ident'>R</span>, <span class='ident'>AL</span>, <span class='ident'>EN</span>, <span class='ident'>ES</span>, <span class='ident'>ET</span>, <span class='ident'>AN</span>, <span class='ident'>CS</span>, <span class='ident'>NSM</span>, <span class='ident'>B</span>, <span class='ident'>S</span>, <span class='ident'>WS</span>, <span class='ident'>ON</span>, <span class='ident'>LRI</span>, <span class='ident'>RLI</span>, <span class='ident'>FSI</span>, <span class='ident'>PDI</span>];
         <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='ident'>non_x9_classes</span> {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>not_removed_by_x9</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>), <span class='boolval'>true</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>not_removed_by_x9</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>), <span class='boolvalue'>true</span>);
         }
     }
 }
@@ -2119,6 +2119,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

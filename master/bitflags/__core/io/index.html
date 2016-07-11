@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>io</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>io</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3962' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/index.html?gotosrc=3962' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3976' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/index.html?gotosrc=3976' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Traits, helpers, and type definitions for core I/O functionality.</p>
 
 <p>The <code>std::io</code> module contains a number of common things you&#39;ll need
@@ -184,16 +184,15 @@ lines:</p>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 
 <span class='kw'>let</span> <span class='ident'>f</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>File</span>::<span class='ident'>open</span>(<span class='string'>&quot;foo.txt&quot;</span>));
-<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>reader</span> <span class='op'>=</span> <span class='ident'>BufReader</span>::<span class='ident'>new</span>(<span class='ident'>f</span>);
+<span class='kw'>let</span> <span class='ident'>reader</span> <span class='op'>=</span> <span class='ident'>BufReader</span>::<span class='ident'>new</span>(<span class='ident'>f</span>);
 
 <span class='kw'>for</span> <span class='ident'>line</span> <span class='kw'>in</span> <span class='ident'>reader</span>.<span class='ident'>lines</span>() {
-    <span class='kw'>let</span> <span class='ident'>line</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>line</span>);
-    <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>line</span>);
+    <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>line</span>));
 }
 </pre>
 
 <h2 id='functions' class='section-header'><a href='#functions'>Functions</a></h2>
-<p>There are a number of <a href="#functions">functions</a> that offer access to various
+<p>There are a number of <a href="#functions-1">functions</a> that offer access to various
 features. For example, we can use three of these functions to copy everything
 from standard input to standard output:</p>
 
@@ -530,6 +529,8 @@ bytes.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

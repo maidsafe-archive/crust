@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/config_file_handler-0.3.1/src/file_handler.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/config_file_handler-0.3.1/src/file_handler.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>file_handler.rs.html -- source</title>
@@ -495,7 +495,7 @@
         <span class='kw'>let</span> <span class='ident'>name</span> <span class='op'>=</span> <span class='ident'>name</span>.<span class='ident'>as_ref</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>current_bin_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
                 <span class='ident'>path</span>: <span class='ident'>path</span>,
                 <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
@@ -505,7 +505,7 @@
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>user_app_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
                 <span class='ident'>path</span>: <span class='ident'>path</span>,
                 <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
@@ -515,7 +515,7 @@
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>system_cache_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
                 <span class='ident'>path</span>: <span class='ident'>path</span>,
                 <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
@@ -556,7 +556,7 @@
         <span class='kw'>let</span> <span class='ident'>name</span> <span class='op'>=</span> <span class='ident'>name</span>.<span class='ident'>as_ref</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>current_bin_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>truncate</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
                 <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
@@ -569,7 +569,7 @@
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>user_app_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>truncate</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
                 <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
@@ -582,7 +582,7 @@
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>system_cache_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>truncate</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
                 <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
@@ -613,7 +613,7 @@
     <span class='doccomment'>/// Write `contents` to the file as JSON.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>contents</span>: <span class='kw-2'>&amp;</span><span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>contents</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>json</span>::<span class='ident'>as_pretty_json</span>(<span class='ident'>contents</span>)).<span class='ident'>into_bytes</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolval'>true</span>).<span class='ident'>create</span>(<span class='boolval'>true</span>).<span class='ident'>truncate</span>(<span class='boolval'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>path</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>path</span>));
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>file</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
         <span class='prelude-val'>Ok</span>(())
     }
@@ -757,7 +757,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>read_write_file_test</span>() {
@@ -855,6 +855,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

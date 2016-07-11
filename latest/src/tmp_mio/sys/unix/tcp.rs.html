@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/tmp_mio-0.5.2/src/sys/unix/tcp.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/tmp_mio-0.5.2/src/sys/unix/tcp.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>tcp.rs.html -- source</title>
@@ -299,7 +299,7 @@
 }
 
 <span class='kw'>fn</span> <span class='ident'>set_nonblock</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>AsRawFd</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-    <span class='ident'>fcntl</span>(<span class='ident'>s</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>F_SETFL</span>(<span class='ident'>O_NONBLOCK</span>)).<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+    <span class='ident'>fcntl</span>(<span class='ident'>s</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>F_SETFL</span>(<span class='ident'>O_NONBLOCK</span>)).<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
                                              .<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> ())
 }
 
@@ -525,6 +525,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

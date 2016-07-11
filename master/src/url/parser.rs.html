@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/url-0.2.38/src/parser.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/url-0.2.38/src/parser.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>parser.rs.html -- source</title>
@@ -804,7 +804,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>::<span class='ident'>Error</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Formatter</span>};
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>UrlParser</span>, <span class='ident'>Url</span>, <span class='ident'>SchemeData</span>, <span class='ident'>RelativeSchemeData</span>, <span class='ident'>Host</span>, <span class='ident'>SchemeType</span>};
+<span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>UrlParser</span>, <span class='ident'>Url</span>, <span class='ident'>SchemeData</span>, <span class='ident'>RelativeSchemeData</span>, <span class='ident'>Host</span>, <span class='ident'>SchemeType</span>};
 <span class='kw'>use</span> <span class='ident'>percent_encoding</span>::{
     <span class='ident'>utf8_percent_encode_to</span>, <span class='ident'>percent_encode</span>,
     <span class='ident'>SIMPLE_ENCODE_SET</span>, <span class='ident'>DEFAULT_ENCODE_SET</span>, <span class='ident'>USERINFO_ENCODE_SET</span>, <span class='ident'>QUERY_ENCODE_SET</span>
@@ -1182,7 +1182,7 @@
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>parse_hostname</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='ident'>input</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span>, <span class='ident'>parser</span>: <span class='kw-2'>&amp;</span><span class='ident'>UrlParser</span>)
                       <span class='op'>-&gt;</span> <span class='ident'>ParseResult</span><span class='op'>&lt;</span>(<span class='ident'>Host</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span>)<span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inside_square_brackets</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>inside_square_brackets</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>host_input</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>input</span>.<span class='ident'>len</span>();
     <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>c</span>) <span class='kw'>in</span> <span class='ident'>input</span>.<span class='ident'>char_indices</span>() {
@@ -1198,8 +1198,8 @@
             <span class='string'>&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\n&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\r&#39;</span> <span class='op'>=&gt;</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parser</span>.<span class='ident'>parse_error</span>(<span class='ident'>ParseError</span>::<span class='ident'>InvalidCharacter</span>)),
             <span class='ident'>c</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>match</span> <span class='ident'>c</span> {
-                    <span class='string'>&#39;[&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>inside_square_brackets</span> <span class='op'>=</span> <span class='boolval'>true</span>,
-                    <span class='string'>&#39;]&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>inside_square_brackets</span> <span class='op'>=</span> <span class='boolval'>false</span>,
+                    <span class='string'>&#39;[&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>inside_square_brackets</span> <span class='op'>=</span> <span class='boolvalue'>true</span>,
+                    <span class='string'>&#39;]&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>inside_square_brackets</span> <span class='op'>=</span> <span class='boolvalue'>false</span>,
                     _ <span class='op'>=&gt;</span> (),
                 }
                 <span class='ident'>host_input</span>.<span class='ident'>push</span>(<span class='ident'>c</span>)
@@ -1214,7 +1214,7 @@
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>parse_port</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='ident'>input</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span>, <span class='ident'>scheme_type</span>: <span class='ident'>SchemeType</span>, <span class='ident'>parser</span>: <span class='kw-2'>&amp;</span><span class='ident'>UrlParser</span>)
                       <span class='op'>-&gt;</span> <span class='ident'>ParseResult</span><span class='op'>&lt;</span>(<span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>, <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span>)<span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='number'>0</span>;
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>has_any_digit</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>has_any_digit</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>input</span>.<span class='ident'>len</span>();
     <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>c</span>) <span class='kw'>in</span> <span class='ident'>input</span>.<span class='ident'>char_indices</span>() {
         <span class='kw'>match</span> <span class='ident'>c</span> {
@@ -1223,7 +1223,7 @@
                 <span class='kw'>if</span> <span class='ident'>port</span> <span class='op'>&gt;</span> ::<span class='ident'>std</span>::<span class='ident'>u16</span>::<span class='ident'>MAX</span> <span class='kw'>as</span> <span class='ident'>u32</span> {
                     <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>ParseError</span>::<span class='ident'>InvalidPort</span>)
                 }
-                <span class='ident'>has_any_digit</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                <span class='ident'>has_any_digit</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
             },
             <span class='string'>&#39;/&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\\&#39;</span> <span class='op'>|</span> <span class='string'>&#39;?&#39;</span> <span class='op'>|</span> <span class='string'>&#39;#&#39;</span> <span class='op'>=&gt;</span> {
                 <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>i</span>;
@@ -1306,18 +1306,18 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>end</span>;
     <span class='kw'>loop</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path_part</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ends_with_slash</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ends_with_slash</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
         <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>input</span>.<span class='ident'>len</span>();
         <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>i</span>, <span class='ident'>c</span>, <span class='ident'>next_i</span>)) <span class='op'>=</span> <span class='ident'>iter</span>.<span class='ident'>next</span>() {
             <span class='kw'>match</span> <span class='ident'>c</span> {
                 <span class='string'>&#39;/&#39;</span> <span class='op'>=&gt;</span> {
-                    <span class='ident'>ends_with_slash</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                    <span class='ident'>ends_with_slash</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                     <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>i</span>;
                     <span class='kw'>break</span>
                 },
                 <span class='string'>&#39;\\&#39;</span> <span class='op'>=&gt;</span> {
                     <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parser</span>.<span class='ident'>parse_error</span>(<span class='ident'>ParseError</span>::<span class='ident'>InvalidBackslash</span>));
-                    <span class='ident'>ends_with_slash</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                    <span class='ident'>ends_with_slash</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                     <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>i</span>;
                     <span class='kw'>break</span>
                 },
@@ -1563,6 +1563,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

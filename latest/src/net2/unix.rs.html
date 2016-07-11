@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/net2-0.2.24/src/unix.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/net2-0.2.25/src/unix.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>unix.rs.html -- source</title>
@@ -115,14 +115,14 @@
     <span class='doccomment'>/// This indicates that futher calls to `bind` may allow reuse of local</span>
     <span class='doccomment'>/// addresses. For IPv4 sockets this means that a socket may bind even when</span>
     <span class='doccomment'>/// there&#39;s a socket already listening on this port.</span>
-    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span>;
+    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// Check the value of the `SO_REUSEPORT` option on this socket.</span>
     <span class='kw'>fn</span> <span class='ident'>get_reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>bool</span><span class='op'>&gt;</span>;
 }
 
 <span class='kw'>impl</span> <span class='ident'>UnixTcpBuilderExt</span> <span class='kw'>for</span> <span class='ident'>TcpBuilder</span> {
-    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>ext</span>::<span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>c</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>c</span>::<span class='ident'>SO_REUSEPORT</span>,
                     <span class='ident'>reuse</span> <span class='kw'>as</span> <span class='ident'>c_int</span>).<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -140,14 +140,14 @@
     <span class='doccomment'>/// This indicates that futher calls to `bind` may allow reuse of local</span>
     <span class='doccomment'>/// addresses. For IPv4 sockets this means that a socket may bind even when</span>
     <span class='doccomment'>/// there&#39;s a socket already listening on this port.</span>
-    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span>;
+    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// Check the value of the `SO_REUSEPORT` option on this socket.</span>
     <span class='kw'>fn</span> <span class='ident'>get_reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>bool</span><span class='op'>&gt;</span>;
 }
 
 <span class='kw'>impl</span> <span class='ident'>UnixUdpBuilderExt</span> <span class='kw'>for</span> <span class='ident'>UdpBuilder</span> {
-    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>reuse_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>ext</span>::<span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>c</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>c</span>::<span class='ident'>SO_REUSEPORT</span>,
                     <span class='ident'>reuse</span> <span class='kw'>as</span> <span class='ident'>c_int</span>).<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -181,6 +181,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

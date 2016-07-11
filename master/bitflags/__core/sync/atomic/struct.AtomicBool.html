@@ -43,23 +43,24 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a href='index.html'>atomic</a>::<wbr><a class='struct' href=''>AtomicBool</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a href='index.html'>atomic</a>::<wbr><a class='struct' href=''>AtomicBool</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-27692' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/struct.AtomicBool.html?gotosrc=27692' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-29513' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/struct.AtomicBool.html?gotosrc=29513' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct AtomicBool {
     // some fields omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>A boolean type which can be safely shared between threads.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(v: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h4>
+}</pre><div class='docblock'><p>A boolean type which can be safely shared between threads.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(v: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h4>
 <div class='docblock'><p>Creates a new <code>AtomicBool</code>.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::<span class='ident'>AtomicBool</span>;
 
-<span class='kw'>let</span> <span class='ident'>atomic_true</span>  <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='kw'>let</span> <span class='ident'>atomic_false</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);</pre>
+<span class='kw'>let</span> <span class='ident'>atomic_true</span>  <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='kw'>let</span> <span class='ident'>atomic_false</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>);</pre>
 </div><h4 id='method.load' class='method'><code>fn <a href='#method.load' class='fnname'>load</a>(&amp;self, order: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Loads a value from the bool.</p>
 
@@ -72,9 +73,9 @@
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
 
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>true</span>);</pre>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>true</span>);</pre>
 </div><h4 id='method.store' class='method'><code>fn <a href='#method.store' class='fnname'>store</a>(&amp;self, val: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, order: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>)</code></h4>
 <div class='docblock'><p>Stores a value into the bool.</p>
 
@@ -84,10 +85,10 @@
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
 
-<span class='ident'>some_bool</span>.<span class='ident'>store</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);</pre>
+<span class='ident'>some_bool</span>.<span class='ident'>store</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);</pre>
 
 <h1 id='panics-1' class='section-header'><a href='#panics-1'>Panics</a></h1>
 <p>Panics if <code>order</code> is <code>Acquire</code> or <code>AcqRel</code>.</p>
@@ -100,10 +101,10 @@
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
 
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>swap</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);</pre>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>swap</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);</pre>
 </div><h4 id='method.compare_and_swap' class='method'><code>fn <a href='#method.compare_and_swap' class='fnname'>compare_and_swap</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, order: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Stores a value into the <code>bool</code> if the current value is the same as the <code>current</code> value.</p>
 
@@ -117,16 +118,15 @@ this operation.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
 
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_and_swap</span>(<span class='boolval'>true</span>, <span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_and_swap</span>(<span class='boolvalue'>true</span>, <span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);
 
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_and_swap</span>(<span class='boolval'>true</span>, <span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);</pre>
-</div><h4 id='method.compare_exchange' class='method'><code>fn <a href='#method.compare_exchange' class='fnname'>compare_exchange</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>&gt;</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>extended_compare_and_swap</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>Stores a value into the <code>bool</code> if the current value is the same as the <code>current</code> value.</p>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_and_swap</span>(<span class='boolvalue'>true</span>, <span class='boolvalue'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);</pre>
+</div><h4 id='method.compare_exchange' class='method'><code>fn <a href='#method.compare_exchange' class='fnname'>compare_exchange</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>&gt;</code><div class='since' title='Stable since Rust version 1.10.0'>1.10.0</div></h4>
+<div class='docblock'><p>Stores a value into the <code>bool</code> if the current value is the same as the <code>current</code> value.</p>
 
 <p>The return value is a result indicating whether the new value was written and containing
 the previous value. On success this value is guaranteed to be equal to <code>new</code>.</p>
@@ -140,23 +140,22 @@ be <code>Release</code> or <code>AcqRel</code> and must be equivalent or weaker 
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>some_bool</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
 
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_exchange</span>(<span class='boolval'>true</span>,
-                                      <span class='boolval'>false</span>,
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_exchange</span>(<span class='boolvalue'>true</span>,
+                                      <span class='boolvalue'>false</span>,
                                       <span class='ident'>Ordering</span>::<span class='ident'>Acquire</span>,
                                       <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>),
-           <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);
+           <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);
 
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_exchange</span>(<span class='boolval'>true</span>, <span class='boolval'>true</span>,
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>compare_exchange</span>(<span class='boolvalue'>true</span>, <span class='boolvalue'>true</span>,
                                       <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>,
                                       <span class='ident'>Ordering</span>::<span class='ident'>Acquire</span>),
-           <span class='prelude-val'>Err</span>(<span class='boolval'>false</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolval'>false</span>);</pre>
-</div><h4 id='method.compare_exchange_weak' class='method'><code>fn <a href='#method.compare_exchange_weak' class='fnname'>compare_exchange_weak</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>&gt;</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>extended_compare_and_swap</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>Stores a value into the <code>bool</code> if the current value is the same as the <code>current</code> value.</p>
+           <span class='prelude-val'>Err</span>(<span class='boolvalue'>false</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>some_bool</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>), <span class='boolvalue'>false</span>);</pre>
+</div><h4 id='method.compare_exchange_weak' class='method'><code>fn <a href='#method.compare_exchange_weak' class='fnname'>compare_exchange_weak</a>(&amp;self, current: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, new: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, success: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>, failure: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>&gt;</code><div class='since' title='Stable since Rust version 1.10.0'>1.10.0</div></h4>
+<div class='docblock'><p>Stores a value into the <code>bool</code> if the current value is the same as the <code>current</code> value.</p>
 
 <p>Unlike <code>compare_exchange</code>, this function is allowed to spuriously fail even when the
 comparison succeeds, which can result in more efficient code on some platforms. The
@@ -173,9 +172,9 @@ success ordering.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>val</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);
+<span class='kw'>let</span> <span class='ident'>val</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>);
 
-<span class='kw'>let</span> <span class='ident'>new</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+<span class='kw'>let</span> <span class='ident'>new</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>old</span> <span class='op'>=</span> <span class='ident'>val</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
 <span class='kw'>loop</span> {
     <span class='kw'>match</span> <span class='ident'>val</span>.<span class='ident'>compare_exchange_weak</span>(<span class='ident'>old</span>, <span class='ident'>new</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>) {
@@ -195,17 +194,17 @@ the new value to the result.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_and</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_and</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_and</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_and</span>(<span class='boolvalue'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_and</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);</pre>
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_and</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);</pre>
 </div><h4 id='method.fetch_nand' class='method'><code>fn <a href='#method.fetch_nand' class='fnname'>fetch_nand</a>(&amp;self, val: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, order: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Logical &quot;nand&quot; with a boolean value.</p>
 
@@ -218,18 +217,18 @@ the new value to the result.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_nand</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_nand</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_nand</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_nand</span>(<span class='boolvalue'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>) <span class='kw'>as</span> <span class='ident'>usize</span>, <span class='number'>0</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_nand</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);</pre>
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_nand</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);</pre>
 </div><h4 id='method.fetch_or' class='method'><code>fn <a href='#method.fetch_or' class='fnname'>fetch_or</a>(&amp;self, val: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, order: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Logical &quot;or&quot; with a boolean value.</p>
 
@@ -242,17 +241,17 @@ new value to the result.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_or</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_or</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_or</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_or</span>(<span class='boolvalue'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_or</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);</pre>
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_or</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);</pre>
 </div><h4 id='method.fetch_xor' class='method'><code>fn <a href='#method.fetch_xor' class='fnname'>fetch_xor</a>(&amp;self, val: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, order: <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Logical &quot;xor&quot; with a boolean value.</p>
 
@@ -265,20 +264,25 @@ the new value to the result.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_xor</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_xor</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_xor</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>true</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_xor</span>(<span class='boolvalue'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>true</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
 
-<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_xor</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolval'>false</span>);</pre>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code><span class="since">1.3.0</span></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='../../../../bitflags/__core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h4>
-</div></section>
+<span class='kw'>let</span> <span class='ident'>foo</span> <span class='op'>=</span> <span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>fetch_xor</span>(<span class='boolvalue'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>foo</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>), <span class='boolvalue'>false</span>);</pre>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='../../../../bitflags/__core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></h4>
+<div class='docblock'><p>Returns the &quot;default value&quot; for a type. <a href="../../../../bitflags/__core/default/trait.Default.html#tymethod.default">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../../bitflags/__core/sync/atomic/struct.AtomicBool.html' title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></code></span><span class='out-of-band'><div class='since' title='Stable since Rust version 1.3.0'>1.3.0</div></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -301,6 +305,8 @@ the new value to the result.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

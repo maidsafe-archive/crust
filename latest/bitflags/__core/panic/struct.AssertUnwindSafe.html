@@ -43,12 +43,12 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='struct' href=''>AssertUnwindSafe</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>panic</a>::<wbr><a class='struct' href=''>AssertUnwindSafe</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.9.0'>1.9.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-6712' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/struct.AssertUnwindSafe.html?gotosrc=6712' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct AssertUnwindSafe&lt;T&gt;(pub T);</pre><span class="since">1.9.0</span><div class='docblock'><p>A simple wrapper around a type to assert that it is panic safe.</p>
+               </span><a id='src-6677' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/struct.AssertUnwindSafe.html?gotosrc=6677' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct AssertUnwindSafe&lt;T&gt;(pub T);</pre><div class='docblock'><p>A simple wrapper around a type to assert that it is panic safe.</p>
 
 <p>When using <code>recover</code> it may be the case that some of the closed over
 variables are not panic safe. For example if <code>&amp;mut T</code> is captured the
@@ -102,7 +102,22 @@ not.</p>
     })
 };
 <span class='comment'>// ...</span></pre>
-</div></section>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/panic/trait.UnwindSafe.html' title='bitflags::__core::panic::UnwindSafe'>UnwindSafe</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertUnwindSafe.html' title='bitflags::__core::panic::AssertUnwindSafe'>AssertUnwindSafe</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/panic/trait.RefUnwindSafe.html' title='bitflags::__core::panic::RefUnwindSafe'>RefUnwindSafe</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertUnwindSafe.html' title='bitflags::__core::panic::AssertUnwindSafe'>AssertUnwindSafe</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertUnwindSafe.html' title='bitflags::__core::panic::AssertUnwindSafe'>AssertUnwindSafe</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Target' class='type'><code>type <a href='../../../bitflags/__core/ops/trait.Deref.html#associatedtype.Target' class='type'>Target</a> = T</code></h4>
+<div class='docblock'><p>The resulting type after dereferencing</p>
+</div><h4 id='method.deref' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Deref.html#tymethod.deref' class='fnname'>deref</a>(&amp;self) -&gt; &amp;T</code></h4>
+<div class='docblock'><p>The method called to dereference a value</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.DerefMut.html' title='bitflags::__core::ops::DerefMut'>DerefMut</a> for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertUnwindSafe.html' title='bitflags::__core::panic::AssertUnwindSafe'>AssertUnwindSafe</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.deref_mut' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.DerefMut.html#tymethod.deref_mut' class='fnname'>deref_mut</a>(&amp;mut self) -&gt; &amp;mut T</code></h4>
+<div class='docblock'><p>The method called to mutably dereference a value</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;R, F&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() for <a class='struct' href='../../../bitflags/__core/panic/struct.AssertUnwindSafe.html' title='bitflags::__core::panic::AssertUnwindSafe'>AssertUnwindSafe</a>&lt;F&gt; <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; R</span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Output' class='type'><code>type <a href='../../../bitflags/__core/ops/trait.FnOnce.html#associatedtype.Output' class='type'>Output</a> = R</code></h4>
+<div class='docblock'><p>The returned type after the call operator is used.</p>
+</div><h4 id='method.call_once' class='method'><code>extern &quot;rust-call&quot; fn <a href='../../../bitflags/__core/ops/trait.FnOnce.html#tymethod.call_once' class='fnname'>call_once</a>(self, _args: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>) -&gt; R</code></h4>
+<div class='docblock'><p>This is called when the call operator is used.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -125,6 +140,8 @@ not.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

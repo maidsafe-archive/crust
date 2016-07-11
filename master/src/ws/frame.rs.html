@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/frame.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.0/src/frame.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>frame.rs.html -- source</title>
@@ -725,8 +725,8 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>message</span>(<span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>code</span>: <span class='ident'>OpCode</span>, <span class='ident'>finished</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>Frame</span> {
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>code</span> {
-            <span class='ident'>OpCode</span>::<span class='ident'>Text</span> <span class='op'>|</span> <span class='ident'>OpCode</span>::<span class='ident'>Binary</span> <span class='op'>|</span> <span class='ident'>OpCode</span>::<span class='ident'>Continue</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='ident'>OpCode</span>::<span class='ident'>Text</span> <span class='op'>|</span> <span class='ident'>OpCode</span>::<span class='ident'>Binary</span> <span class='op'>|</span> <span class='ident'>OpCode</span>::<span class='ident'>Continue</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
         }, <span class='string'>&quot;Invalid opcode for data frame.&quot;</span>);
 
         <span class='ident'>Frame</span> {
@@ -970,10 +970,10 @@
 <span class='kw'>impl</span> <span class='ident'>Default</span> <span class='kw'>for</span> <span class='ident'>Frame</span> {
     <span class='kw'>fn</span> <span class='ident'>default</span>() <span class='op'>-&gt;</span> <span class='ident'>Frame</span> {
         <span class='ident'>Frame</span> {
-            <span class='ident'>finished</span>: <span class='boolval'>true</span>,
-            <span class='ident'>rsv1</span>: <span class='boolval'>false</span>,
-            <span class='ident'>rsv2</span>: <span class='boolval'>false</span>,
-            <span class='ident'>rsv3</span>: <span class='boolval'>false</span>,
+            <span class='ident'>finished</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>rsv1</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>rsv2</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>rsv3</span>: <span class='boolvalue'>false</span>,
             <span class='ident'>opcode</span>: <span class='ident'>OpCode</span>::<span class='ident'>Close</span>,
             <span class='ident'>mask</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>payload</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -1007,12 +1007,12 @@ payload: 0x{}
 
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unused_imports</span>, <span class='ident'>unused_variables</span>, <span class='ident'>dead_code</span>)]</span>
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>protocol</span>::<span class='ident'>OpCode</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>display_frame</span>() {
-        <span class='kw'>let</span> <span class='ident'>f</span> <span class='op'>=</span> <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='string'>&quot;hi there&quot;</span>.<span class='ident'>into</span>(), <span class='ident'>OpCode</span>::<span class='ident'>Text</span>, <span class='boolval'>true</span>);
+        <span class='kw'>let</span> <span class='ident'>f</span> <span class='op'>=</span> <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='string'>&quot;hi there&quot;</span>.<span class='ident'>into</span>(), <span class='ident'>OpCode</span>::<span class='ident'>Text</span>, <span class='boolvalue'>true</span>);
         <span class='kw'>let</span> <span class='ident'>view</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>f</span>);
         <span class='ident'>view</span>.<span class='ident'>contains</span>(<span class='string'>&quot;payload:&quot;</span>);
     }
@@ -1041,6 +1041,8 @@ payload: 0x{}
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

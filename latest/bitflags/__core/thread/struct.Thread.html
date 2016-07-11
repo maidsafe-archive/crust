@@ -43,25 +43,30 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>thread</a>::<wbr><a class='struct' href=''>Thread</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>thread</a>::<wbr><a class='struct' href=''>Thread</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1037' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/struct.Thread.html?gotosrc=1037' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1033' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/struct.Thread.html?gotosrc=1033' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Thread {
     // some fields omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>A handle to a thread.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h3><div class='impl-items'><h4 id='method.unpark' class='method'><code>fn <a href='#method.unpark' class='fnname'>unpark</a>(&amp;self)</code></h4>
+}</pre><div class='docblock'><p>A handle to a thread.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.unpark' class='method'><code>fn <a href='#method.unpark' class='fnname'>unpark</a>(&amp;self)</code></h4>
 <div class='docblock'><p>Atomically makes the handle&#39;s token available if it is not already.</p>
 
 <p>See the module doc for more detail.</p>
 </div><h4 id='method.name' class='method'><code>fn <a href='#method.name' class='fnname'>name</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt;</code></h4>
 <div class='docblock'><p>Gets the thread&#39;s name.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/sys_common/thread_info/trait.NewThread.html' title='std::sys_common::thread_info::NewThread'>NewThread</a> for <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/sys_common/thread_info/trait.NewThread.html#tymethod.new' class='fnname'>new</a>(name: <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>&gt;) -&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
-</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.Thread.html' title='bitflags::__core::thread::Thread'>Thread</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="../../../bitflags/__core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -84,6 +89,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

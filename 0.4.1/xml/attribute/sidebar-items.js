@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Attribute","A borrowed version of an XML attribute."],["OwnedAttribute",""]]});

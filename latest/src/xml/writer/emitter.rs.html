@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/writer/emitter.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/writer/emitter.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>emitter.rs.html -- source</title>
@@ -561,8 +561,8 @@
 
             <span class='ident'>element_names</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
 
-            <span class='ident'>start_document_emitted</span>: <span class='boolval'>false</span>,
-            <span class='ident'>just_wrote_start_element</span>: <span class='boolval'>false</span>
+            <span class='ident'>start_document_emitted</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>just_wrote_start_element</span>: <span class='boolvalue'>false</span>
         }
     }
 }
@@ -694,7 +694,7 @@
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>start_document_emitted</span> {
             <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>EmitterError</span>::<span class='ident'>DocumentStartAlreadyEmitted</span>);
         }
-        <span class='self'>self</span>.<span class='ident'>start_document_emitted</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+        <span class='self'>self</span>.<span class='ident'>start_document_emitted</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
 
         <span class='macro'>wrapped_with</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='ident'>before_markup</span>(<span class='ident'>target</span>) <span class='ident'>and</span> <span class='ident'>after_markup</span>,
             <span class='macro'>try_chain</span><span class='macro'>!</span> {
@@ -719,7 +719,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>fix_non_empty_element</span><span class='op'>&lt;</span><span class='ident'>W</span>: <span class='ident'>Write</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>target</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>W</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>normalize_empty_elements</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> {
-            <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+            <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
             <span class='ident'>target</span>.<span class='ident'>write</span>(<span class='string'>b&quot;&gt;&quot;</span>).<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> ()).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
         } <span class='kw'>else</span> {
             <span class='prelude-val'>Ok</span>(())
@@ -770,7 +770,7 @@
         <span class='macro'>try_chain</span><span class='macro'>!</span> {
             <span class='self'>self</span>.<span class='ident'>emit_start_element_initial</span>(<span class='ident'>target</span>, <span class='ident'>name</span>, <span class='ident'>attributes</span>),
             {
-                <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                 <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>normalize_empty_elements</span> { <span class='prelude-val'>Ok</span>(()) }
                 <span class='kw'>else</span> { <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>target</span>, <span class='string'>&quot;&gt;&quot;</span>) }
             }
@@ -829,13 +829,13 @@
 
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>name</span>) <span class='op'>=</span> <span class='ident'>owned_name</span>.<span class='ident'>as_ref</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>n</span><span class='op'>|</span> <span class='ident'>n</span>.<span class='ident'>borrow</span>()).<span class='ident'>or</span>(<span class='ident'>name</span>) {
             <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>normalize_empty_elements</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> {
-                <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                 <span class='comment'>// TODO: make this space configurable</span>
                 <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>target</span>.<span class='ident'>write</span>(<span class='string'>b&quot; /&gt;&quot;</span>).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>);
                 <span class='self'>self</span>.<span class='ident'>after_end_element</span>();
                 <span class='ident'>result</span>.<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> ())
             } <span class='kw'>else</span> {
-                <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='self'>self</span>.<span class='ident'>just_wrote_start_element</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                 <span class='macro'>wrapped_with</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='ident'>before_end_element</span>(<span class='ident'>target</span>) <span class='ident'>and</span> <span class='ident'>after_end_element</span>,
                     <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>target</span>, <span class='string'>&quot;&lt;/{}&gt;&quot;</span>, <span class='ident'>name</span>.<span class='ident'>repr_display</span>()).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
                 )
@@ -921,6 +921,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

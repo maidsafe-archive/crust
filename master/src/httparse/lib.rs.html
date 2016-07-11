@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/httparse-1.1.2/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.1.2/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -913,7 +913,7 @@
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>expect</span> {
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>bytes</span>:<span class='ident'>ident</span>.<span class='ident'>next</span>() <span class='op'>==</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pat</span>:<span class='ident'>pat</span> <span class='op'>=&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ret</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
         <span class='kw'>match</span> <span class='macro'>next</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>bytes</span>) {
-            <span class='ident'>v</span><span class='kw-2'>@</span><span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pat</span> <span class='op'>=&gt;</span> <span class='ident'>v</span>,
+            <span class='ident'>v</span>@<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pat</span> <span class='op'>=&gt;</span> <span class='ident'>v</span>,
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ret</span>
         }
     }
@@ -1021,8 +1021,8 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_complete</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Status</span>::<span class='ident'>Complete</span>(..) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            <span class='ident'>Status</span>::<span class='ident'>Partial</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+            <span class='ident'>Status</span>::<span class='ident'>Complete</span>(..) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            <span class='ident'>Status</span>::<span class='ident'>Partial</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
         }
     }
 
@@ -1030,8 +1030,8 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_partial</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Status</span>::<span class='ident'>Complete</span>(..) <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
-            <span class='ident'>Status</span>::<span class='ident'>Partial</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>
+            <span class='ident'>Status</span>::<span class='ident'>Complete</span>(..) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Status</span>::<span class='ident'>Partial</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>
         }
     }
 
@@ -1445,8 +1445,8 @@
     <span class='kw'>const</span> <span class='ident'>RADIX</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>16</span>;
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='ident'>Bytes</span>::<span class='ident'>new</span>(<span class='ident'>buf</span>);
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>size</span> <span class='op'>=</span> <span class='number'>0</span>;
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolval'>true</span>;
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
     <span class='kw'>loop</span> {
         <span class='kw'>let</span> <span class='ident'>b</span> <span class='op'>=</span> <span class='macro'>next</span><span class='macro'>!</span>(<span class='ident'>bytes</span>);
         <span class='kw'>match</span> <span class='ident'>b</span> {
@@ -1470,14 +1470,14 @@
             }
             <span class='comment'>// If we weren&#39;t in the extension yet, the &quot;;&quot; signals its start</span>
             <span class='string'>b&#39;;&#39;</span> <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>in_ext</span> <span class='op'>=&gt;</span> {
-                <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolval'>true</span>;
-                <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='ident'>in_ext</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
             }
             <span class='comment'>// &quot;Linear white space&quot; is ignored between the chunk size and the</span>
             <span class='comment'>// extension separator token (&quot;;&quot;) due to the &quot;implied *LWS rule&quot;.</span>
             <span class='string'>b&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>b&#39; &#39;</span> <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>in_ext</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span><span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> {}
             <span class='comment'>// LWS can follow the chunk size, but no more digits can come</span>
-            <span class='string'>b&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>b&#39; &#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolval'>false</span>,
+            <span class='string'>b&#39;\t&#39;</span> <span class='op'>|</span> <span class='string'>b&#39; &#39;</span> <span class='kw'>if</span> <span class='ident'>in_chunk_size</span> <span class='op'>=&gt;</span> <span class='ident'>in_chunk_size</span> <span class='op'>=</span> <span class='boolvalue'>false</span>,
             <span class='comment'>// We allow any arbitrary octet once we are in the extension, since</span>
             <span class='comment'>// they all get ignored anyway. According to the HTTP spec, valid</span>
             <span class='comment'>// extensions would have a more strict syntax:</span>
@@ -1494,7 +1494,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>Request</span>, <span class='ident'>Response</span>, <span class='ident'>Status</span>, <span class='ident'>EMPTY_HEADER</span>, <span class='ident'>shrink</span>, <span class='ident'>parse_chunk_size</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>Request</span>, <span class='ident'>Response</span>, <span class='ident'>Status</span>, <span class='ident'>EMPTY_HEADER</span>, <span class='ident'>shrink</span>, <span class='ident'>parse_chunk_size</span>};
 
     <span class='kw'>const</span> <span class='ident'>NUM_OF_HEADERS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>4</span>;
 
@@ -1743,6 +1743,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/idna-0.1.0/src/punycode.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/idna-0.1.0/src/punycode.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>punycode.rs.html -- source</title>
@@ -339,9 +339,9 @@
         <span class='comment'>// which gets added to i.</span>
         <span class='kw'>loop</span> {
             <span class='kw'>let</span> <span class='ident'>digit</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>byte</span> {
-                <span class='ident'>byte</span> <span class='kw-2'>@</span> <span class='string'>b&#39;0&#39;</span> ... <span class='string'>b&#39;9&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;0&#39;</span> <span class='op'>+</span> <span class='number'>26</span>,
-                <span class='ident'>byte</span> <span class='kw-2'>@</span> <span class='string'>b&#39;A&#39;</span> ... <span class='string'>b&#39;Z&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;A&#39;</span>,
-                <span class='ident'>byte</span> <span class='kw-2'>@</span> <span class='string'>b&#39;a&#39;</span> ... <span class='string'>b&#39;z&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;a&#39;</span>,
+                <span class='ident'>byte</span> @ <span class='string'>b&#39;0&#39;</span> ... <span class='string'>b&#39;9&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;0&#39;</span> <span class='op'>+</span> <span class='number'>26</span>,
+                <span class='ident'>byte</span> @ <span class='string'>b&#39;A&#39;</span> ... <span class='string'>b&#39;Z&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;A&#39;</span>,
+                <span class='ident'>byte</span> @ <span class='string'>b&#39;a&#39;</span> ... <span class='string'>b&#39;z&#39;</span> <span class='op'>=&gt;</span> <span class='ident'>byte</span> <span class='op'>-</span> <span class='string'>b&#39;a&#39;</span>,
                 _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>None</span>
             } <span class='kw'>as</span> <span class='ident'>u32</span>;
             <span class='kw'>if</span> <span class='ident'>digit</span> <span class='op'>&gt;</span> (<span class='ident'>u32</span>::<span class='ident'>MAX</span> <span class='op'>-</span> <span class='ident'>i</span>) <span class='op'>/</span> <span class='ident'>weight</span> {
@@ -493,6 +493,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -52,12 +52,15 @@
     // some fields omitted
 }</pre><div class='docblock'><p>A RAII style thread joiner. The destruction of an instance of this type will block until
 the thread it is managing has joined.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../maidsafe_utilities/thread/struct.Joiner.html' title='maidsafe_utilities::thread::Joiner'>Joiner</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(joiner: <a class='struct' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html' title='std::thread::JoinHandle'>JoinHandle</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;) -&gt; <a class='struct' href='../../maidsafe_utilities/thread/struct.Joiner.html' title='maidsafe_utilities::thread::Joiner'>Joiner</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../maidsafe_utilities/thread/struct.Joiner.html' title='maidsafe_utilities::thread::Joiner'>Joiner</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-24' class='srclink' href='../../src/maidsafe_utilities/thread.rs.html#30-41' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(joiner: <a class='struct' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html' title='std::thread::JoinHandle'>JoinHandle</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;) -&gt; <a class='struct' href='../../maidsafe_utilities/thread/struct.Joiner.html' title='maidsafe_utilities::thread::Joiner'>Joiner</a></code></h4>
 <div class='docblock'><p>Create a new instance of self-managing thread joiner</p>
 </div><h4 id='method.detach' class='method'><code>fn <a href='#method.detach' class='fnname'>detach</a>(self)</code></h4>
 <div class='docblock'><p>Releases the <code>Joiner</code> by detaching the thread.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../maidsafe_utilities/thread/struct.Joiner.html' title='maidsafe_utilities::thread::Joiner'>Joiner</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../maidsafe_utilities/thread/struct.Joiner.html' title='maidsafe_utilities::thread::Joiner'>Joiner</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-39' class='srclink' href='../../src/maidsafe_utilities/thread.rs.html#43-49' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -80,6 +83,8 @@ the thread it is managing has joined.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

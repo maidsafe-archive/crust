@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.1/src/sys/signal.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.5.1/src/sys/signal.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>signal.rs.html -- source</title>
@@ -459,8 +459,8 @@
         <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>libc</span>::<span class='ident'>sigismember</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>sigset</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>libc</span>::<span class='ident'>sigset_t</span>, <span class='ident'>signum</span>) };
 
         <span class='kw'>match</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>)) {
-            <span class='number'>1</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>),
-            <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolval'>false</span>),
+            <span class='number'>1</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>),
+            <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>false</span>),
             _ <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>(<span class='string'>&quot;unexpected value from sigismember&quot;</span>),
         }
     }
@@ -602,19 +602,19 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_contains</span>() {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>mask</span> <span class='op'>=</span> <span class='ident'>SigSet</span>::<span class='ident'>empty</span>();
         <span class='ident'>mask</span>.<span class='ident'>add</span>(<span class='ident'>SIGUSR1</span>).<span class='ident'>unwrap</span>();
 
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>mask</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR1</span>), <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>));
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>mask</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR2</span>), <span class='prelude-val'>Ok</span>(<span class='boolval'>false</span>));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>mask</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR1</span>), <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>mask</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR2</span>), <span class='prelude-val'>Ok</span>(<span class='boolvalue'>false</span>));
 
         <span class='kw'>let</span> <span class='ident'>all</span> <span class='op'>=</span> <span class='ident'>SigSet</span>::<span class='ident'>all</span>();
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>all</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR1</span>), <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>));
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>all</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR2</span>), <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>all</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR1</span>), <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>all</span>.<span class='ident'>contains</span>(<span class='ident'>SIGUSR2</span>), <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>));
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -677,6 +677,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

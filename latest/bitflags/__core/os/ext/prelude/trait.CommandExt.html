@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content trait">
-<h1 class='fqn'><span class='in-band'>Trait <a href='../../../../index.html'>bitflags</a>::<wbr><a href='../../../index.html'>__core</a>::<wbr><a href='../../index.html'>os</a>::<wbr><a href='../index.html'>ext</a>::<wbr><a href='index.html'>prelude</a>::<wbr><a class='trait' href=''>CommandExt</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Trait <a href='../../../../index.html'>bitflags</a>::<wbr><a href='../../../index.html'>__core</a>::<wbr><a href='../../index.html'>os</a>::<wbr><a href='../index.html'>ext</a>::<wbr><a href='index.html'>prelude</a>::<wbr><a class='trait' href=''>CommandExt</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-13194' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/process/trait.CommandExt.html?gotosrc=13194' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-12755' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/process/trait.CommandExt.html?gotosrc=12755' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait CommandExt {
     fn <a href='#tymethod.uid' class='fnname'>uid</a>(&amp;mut self, id: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; &amp;mut <a class='struct' href='../../../../../bitflags/__core/process/struct.Command.html' title='bitflags::__core::process::Command'>Command</a>;
     fn <a href='#tymethod.gid' class='fnname'>gid</a>(&amp;mut self, id: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; &amp;mut <a class='struct' href='../../../../../bitflags/__core/process/struct.Command.html' title='bitflags::__core::process::Command'>Command</a>;
@@ -63,7 +63,8 @@
 call will cause the spawn to fail.</p>
 </div><h3 id='tymethod.gid' class='method stab '><code>fn <a href='#tymethod.gid' class='fnname'>gid</a>(&amp;mut self, id: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; &amp;mut <a class='struct' href='../../../../../bitflags/__core/process/struct.Command.html' title='bitflags::__core::process::Command'>Command</a></code></h3><div class='docblock'><p>Similar to <code>uid</code>, but sets the group id of the child process. This has
 the same semantics as the <code>uid</code> field.</p>
-</div><h3 id='tymethod.session_leader' class='method stab unstable deprecated'><code>fn <a href='#tymethod.session_leader' class='fnname'>session_leader</a>(&amp;mut self, on: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../../../../../bitflags/__core/process/struct.Command.html' title='bitflags::__core::process::Command'>Command</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.9.0<p>: use <code>before_exec</code> instead</p>
+</div><h3 id='tymethod.session_leader' class='method stab unstable deprecated'><code>fn <a href='#tymethod.session_leader' class='fnname'>session_leader</a>(&amp;mut self, on: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../../../../../bitflags/__core/process/struct.Command.html' title='bitflags::__core::process::Command'>Command</a></code></h3><div class='stability'><em class='stab deprecated'>Deprecated since 1.9.0<p>: use <code>before_exec</code> instead</p>
+</em></div><div class='stability'><em class='stab unstable'>Unstable (<code>process_session_leader</code>)<p>: use <code>before_exec</code> instead</p>
 </em></div><div class='docblock'><p>Create a new session (cf. <code>setsid(2)</code>) for the child process. This means
 that the child is the leader of a new process group. The parent process
 remains the child reaper of the new process.</p>
@@ -96,7 +97,7 @@ other threads perhaps still running when the <code>fork</code> was run).</p>
 <p>When this closure is run, aspects such as the stdio file descriptors and
 working directory have successfully been changed, so output to these
 locations may not appear where intended.</p>
-</div><h3 id='tymethod.exec' class='method stab '><code>fn <a href='#tymethod.exec' class='fnname'>exec</a>(&amp;mut self) -&gt; <a class='struct' href='../../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a></code><span class="since">1.9.0</span></h3><div class='docblock'><p>Performs all the required setup by this <code>Command</code>, followed by calling
+</div><h3 id='tymethod.exec' class='method stab '><code>fn <a href='#tymethod.exec' class='fnname'>exec</a>(&amp;mut self) -&gt; <a class='struct' href='../../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a></code><div class='since' title='Stable since Rust version 1.9.0'>1.9.0</div></h3><div class='docblock'><p>Performs all the required setup by this <code>Command</code>, followed by calling
 the <code>execvp</code> syscall.</p>
 
 <p>On success this function will not return, and otherwise it will return
@@ -117,7 +118,8 @@ cross-platform <code>spawn</code> instead.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    </ul><script type="text/javascript" async
+    <li><code>impl CommandExt for <a class='struct' href='../../../../../bitflags/__core/process/struct.Command.html' title='bitflags::__core::process::Command'>Command</a></code></li>
+</ul><script type="text/javascript" async
                          src="../../../../../implementors/std/sys/ext/process/trait.CommandExt.js">
                  </script></section>
     <section id='search' class="content hidden"></section>
@@ -142,6 +144,8 @@ cross-platform <code>spawn</code> instead.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

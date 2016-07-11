@@ -62,7 +62,8 @@ list of errors which have occurred during parsing.</p>
 <p>Not all parse errors are fatal, so this list is added to as much as
 possible without aborting parsing. If <code>None</code> is returned by <code>parse</code>, it
 is guaranteed that this list is not empty.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../toml/struct.Parser.html' title='toml::Parser'>Parser</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(s: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../toml/struct.Parser.html' title='toml::Parser'>Parser</a>&lt;'a&gt;</code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../toml/struct.Parser.html' title='toml::Parser'>Parser</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-82' class='srclink' href='../src/toml/parser.rs.html#116-1024' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(s: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../toml/struct.Parser.html' title='toml::Parser'>Parser</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Creates a new parser for a string.</p>
 
 <p>The parser can be executed by invoking the <code>parse</code> method.</p>
@@ -126,6 +127,8 @@ to determine the cause of the parse failure.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

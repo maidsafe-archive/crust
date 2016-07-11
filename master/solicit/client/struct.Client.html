@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1890' class='srclink' href='../../src/solicit/client/async.rs.html#569-573' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1894' class='srclink' href='../../src/solicit/client/async.rs.html#569-573' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Client {
     // some fields omitted
 }</pre><div class='docblock'><p>A struct representing an HTTP/2 client that receives responses to its
@@ -84,7 +84,8 @@ underlying HTTP/2 connection.</p>
 }).<span class='ident'>collect</span>();
 
 <span class='kw'>let</span> _: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>threads</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>thread</span><span class='op'>|</span> <span class='ident'>thread</span>.<span class='ident'>join</span>()).<span class='ident'>collect</span>();</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></h3><div class='impl-items'><h4 id='method.with_connector' class='method'><code>fn <a href='#method.with_connector' class='fnname'>with_connector</a>&lt;C, S&gt;(connector: C) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a>&gt; <span class='where'>where C: <a class='trait' href='../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>HttpConnect</a>&lt;Stream=S&gt;, S: <a class='trait' href='../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static</span></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1902' class='srclink' href='../../src/solicit/client/async.rs.html#590-717' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.with_connector' class='method'><code>fn <a href='#method.with_connector' class='fnname'>with_connector</a>&lt;C, S&gt;(connector: C) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a>&gt; <span class='where'>where C: <a class='trait' href='../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>HttpConnect</a>&lt;Stream=S&gt;, S: <a class='trait' href='../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static</span></code></h4>
 <div class='docblock'><p>Creates a brand new HTTP/2 client. This means that a new HTTP/2
 connection will be established behind the scenes. A thread is spawned
 to handle the connection in the background, so that the thread that
@@ -131,10 +132,15 @@ method.</p>
 <div class='docblock'><p>Issues a POST request to the server.</p>
 
 <p>Returns the receiving end of a channel where the <code>Response</code> will eventually be pushed.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></h4>
-<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1896' class='srclink' href='../../src/solicit/client/async.rs.html#575-582' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../solicit/client/struct.Client.html' title='solicit::client::Client'>Client</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1899' class='srclink' href='../../src/solicit/client/async.rs.html#584-588' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -157,6 +163,8 @@ method.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

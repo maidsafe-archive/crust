@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["From","`From` header, defined in RFC7231"]]});

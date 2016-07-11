@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.1/src/unistd.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.5.1/src/unistd.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>unistd.rs.html -- source</title>
@@ -556,15 +556,15 @@
 <span class='kw'>impl</span> <span class='ident'>Fork</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_child</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Fork</span>::<span class='ident'>Child</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+            <span class='ident'>Fork</span>::<span class='ident'>Child</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
         }
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_parent</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Fork</span>::<span class='ident'>Parent</span>(_) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+            <span class='ident'>Fork</span>::<span class='ident'>Parent</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
         }
     }
 }
@@ -790,10 +790,10 @@
         <span class='comment'>// ENOTTY means `fd` is a valid file descriptor, but not a TTY, so</span>
         <span class='comment'>// we return `Ok(false)`</span>
         <span class='kw'>if</span> <span class='ident'>libc</span>::<span class='ident'>isatty</span>(<span class='ident'>fd</span>) <span class='op'>==</span> <span class='number'>1</span> {
-            <span class='prelude-val'>Ok</span>(<span class='boolval'>true</span>)
+            <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>)
         } <span class='kw'>else</span> {
             <span class='kw'>match</span> <span class='ident'>Errno</span>::<span class='ident'>last</span>() {
-                <span class='ident'>Errno</span>::<span class='ident'>ENOTTY</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolval'>false</span>),
+                <span class='ident'>Errno</span>::<span class='ident'>ENOTTY</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>false</span>),
                 <span class='ident'>err</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>err</span>)),
             }
         }
@@ -907,7 +907,7 @@
         <span class='ident'>env_p</span>.<span class='ident'>push</span>(<span class='ident'>ptr</span>::<span class='ident'>null</span>());
 
         <span class='kw'>unsafe</span> {
-            <span class='ident'>super</span>::<span class='ident'>ffi</span>::<span class='ident'>execvpe</span>(<span class='ident'>filename</span>.<span class='ident'>as_ptr</span>(), <span class='ident'>args_p</span>.<span class='ident'>as_ptr</span>(), <span class='ident'>env_p</span>.<span class='ident'>as_ptr</span>())
+            <span class='kw'>super</span>::<span class='ident'>ffi</span>::<span class='ident'>execvpe</span>(<span class='ident'>filename</span>.<span class='ident'>as_ptr</span>(), <span class='ident'>args_p</span>.<span class='ident'>as_ptr</span>(), <span class='ident'>env_p</span>.<span class='ident'>as_ptr</span>())
         };
 
         <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()))
@@ -937,6 +937,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

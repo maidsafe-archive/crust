@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["SearchError",""]],"fn":[["search_gateway",""],["search_gateway_from",""]]});

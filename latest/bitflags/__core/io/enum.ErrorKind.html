@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content enum">
-<h1 class='fqn'><span class='in-band'>Enum <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>io</a>::<wbr><a class='enum' href=''>ErrorKind</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Enum <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>io</a>::<wbr><a class='enum' href=''>ErrorKind</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-4330' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/error/enum.ErrorKind.html?gotosrc=4330' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-4318' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/error/enum.ErrorKind.html?gotosrc=4318' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ErrorKind {
     NotFound,
     PermissionDenied,
@@ -68,7 +68,7 @@
     Other,
     UnexpectedEof,
     // some variants omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>A list specifying general categories of I/O error.</p>
+}</pre><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><div class='docblock'><p>A list specifying general categories of I/O error.</p>
 
 <p>This list is intended to grow over time and it is not recommended to
 exhaustively match against it.</p>
@@ -96,7 +96,7 @@ input data.</p>
 
 <p>For example, a function that reads a file into a string will error with
 <code>InvalidData</code> if the file&#39;s contents are not valid UTF-8.</p>
-</div></td><td><span class="since">1.2.0</span></td></tr><tr><td id='variant.TimedOut'><code>TimedOut</code></td><td><div class='docblock'><p>The I/O operation&#39;s timeout expired, causing it to be canceled.</p>
+</div></td><td><div class='since' title='Stable since Rust version 1.2.0'>1.2.0</div></td></tr><tr><td id='variant.TimedOut'><code>TimedOut</code></td><td><div class='docblock'><p>The I/O operation&#39;s timeout expired, causing it to be canceled.</p>
 </div></td><td></td></tr><tr><td id='variant.WriteZero'><code>WriteZero</code></td><td><div class='docblock'><p>An error returned when an operation could not be completed because a
 call to <code>write</code> returned <code>Ok(0)</code>.</p>
 
@@ -113,7 +113,22 @@ written.</p>
 <p>This typically means that an operation could only succeed if it read a
 particular number of bytes but only a smaller number of bytes could be
 read.</p>
-</div></td><td><span class="since">1.6.0</span></td></tr></table></section>
+</div></td><td><div class='since' title='Stable since Rust version 1.6.0'>1.6.0</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="../../../bitflags/__core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.Eq.html' title='bitflags::__core::cmp::Eq'>Eq</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialEq.html' title='bitflags::__core::cmp::PartialEq'>PartialEq</a>&lt;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>&gt; for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="../../../bitflags/__core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
+</div><h4 id='method.ne' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>This method tests for <code>!=</code>.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -136,6 +151,8 @@ read.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["ZipSlices","An iterator which iterates two slices simultaneously."]]});

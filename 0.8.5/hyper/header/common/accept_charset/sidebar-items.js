@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AcceptCharset","`Accept-Charset` header, defined in RFC7231"]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["LineColIterator","Iterator over a byte stream that tracks the current position's line and column."]]});

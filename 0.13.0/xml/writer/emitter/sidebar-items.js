@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["EmitterError","An error which may be returned by `XmlWriter` when writing XML events."]],"type":[["Result","A result type yielded by `XmlWriter`."]]});

@@ -43,12 +43,13 @@
     </nav>
 
     <section id='main' class="content constant">
-<h1 class='fqn'><span class='in-band'><a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='constant' href=''>CONDVAR_INIT</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'><a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='constant' href=''>CONDVAR_INIT</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version '></span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-10091' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/condvar/constant.CONDVAR_INIT.html?gotosrc=10091' title='goto source code'>[src]</a></span></h1>
-<pre class='rust const'>pub const CONDVAR_INIT: <a class='struct' href='../../../bitflags/__core/sync/struct.StaticCondvar.html' title='bitflags::__core::sync::StaticCondvar'>StaticCondvar</a><code> = </code><code>StaticCondvar::new()</code></pre><div class='stability'><em class='stab unstable'>Unstable (<code>static_condvar</code>)<p>: may be merged with Condvar in the future</p>
+               </span><a id='src-10042' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/condvar/constant.CONDVAR_INIT.html?gotosrc=10042' title='goto source code'>[src]</a></span></h1>
+<pre class='rust const'>pub const CONDVAR_INIT: <a class='struct' href='../../../bitflags/__core/sync/struct.StaticCondvar.html' title='bitflags::__core::sync::StaticCondvar'>StaticCondvar</a><code> = </code><code>StaticCondvar::new()</code></pre><div class='stability'><em class='stab deprecated'>Deprecated since 1.10.0<p>: the lazy-static crate suffices for static sync primitives and eventually this type shouldn&#39;t be necessary as <code>Condvar::new</code> in a static should suffice</p>
+</em></div><div class='stability'><em class='stab unstable'>Unstable (<code>static_condvar</code>)<p>: the lazy-static crate suffices for static sync primitives and eventually this type shouldn&#39;t be necessary as <code>Condvar::new</code> in a static should suffice</p>
 </em></div><div class='docblock'><p>Constant initializer for a statically allocated condition variable.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -73,6 +74,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

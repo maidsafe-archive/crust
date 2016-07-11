@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/protocol.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.0/src/protocol.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>protocol.rs.html -- source</title>
@@ -302,8 +302,8 @@
     <span class='doccomment'>/// Test whether the opcode indicates a control frame.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_control</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Text</span> <span class='op'>|</span> <span class='ident'>Binary</span> <span class='op'>|</span> <span class='ident'>Continue</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
+            <span class='ident'>Text</span> <span class='op'>|</span> <span class='ident'>Binary</span> <span class='op'>|</span> <span class='ident'>Continue</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
         }
     }
 
@@ -334,7 +334,7 @@
             <span class='ident'>Ping</span>       <span class='op'>=&gt;</span>   <span class='number'>9</span>,
             <span class='ident'>Pong</span>       <span class='op'>=&gt;</span>   <span class='number'>10</span>,
             <span class='ident'>Bad</span>        <span class='op'>=&gt;</span> {
-                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='boolval'>false</span>, <span class='string'>&quot;Attempted to convert invalid opcode to u8. This is a bug.&quot;</span>);
+                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;Attempted to convert invalid opcode to u8. This is a bug.&quot;</span>);
                 <span class='number'>8</span>  <span class='comment'>// if this somehow happens, a close frame will help us tear down quickly</span>
             }
         }
@@ -477,7 +477,7 @@
 
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unused_imports</span>, <span class='ident'>unused_variables</span>, <span class='ident'>dead_code</span>)]</span>
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>opcode_from_u8</span>() {
@@ -529,6 +529,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

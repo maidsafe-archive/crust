@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/method.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/method.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>method.rs.html -- source</title>
@@ -312,8 +312,8 @@
     <span class='doccomment'>/// for more words.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>safe</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Get</span> <span class='op'>|</span> <span class='ident'>Head</span> <span class='op'>|</span> <span class='ident'>Options</span> <span class='op'>|</span> <span class='ident'>Trace</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+            <span class='ident'>Get</span> <span class='op'>|</span> <span class='ident'>Head</span> <span class='op'>|</span> <span class='ident'>Options</span> <span class='op'>|</span> <span class='ident'>Trace</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
         }
     }
 
@@ -324,11 +324,11 @@
     <span class='doccomment'>/// more words.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>idempotent</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>safe</span>() {
-            <span class='boolval'>true</span>
+            <span class='boolvalue'>true</span>
         } <span class='kw'>else</span> {
             <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-                <span class='ident'>Put</span> <span class='op'>|</span> <span class='ident'>Delete</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-                _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+                <span class='ident'>Put</span> <span class='op'>|</span> <span class='ident'>Delete</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+                _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
             }
         }
     }
@@ -393,20 +393,20 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
     <span class='kw'>use</span> <span class='ident'>error</span>::<span class='ident'>Error</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Method</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Method</span>::{<span class='ident'>Get</span>, <span class='ident'>Post</span>, <span class='ident'>Put</span>, <span class='ident'>Extension</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Method</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Method</span>::{<span class='ident'>Get</span>, <span class='ident'>Post</span>, <span class='ident'>Put</span>, <span class='ident'>Extension</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_safe</span>() {
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolval'>true</span>, <span class='ident'>Get</span>.<span class='ident'>safe</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolval'>false</span>, <span class='ident'>Post</span>.<span class='ident'>safe</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>true</span>, <span class='ident'>Get</span>.<span class='ident'>safe</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='ident'>Post</span>.<span class='ident'>safe</span>());
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_idempotent</span>() {
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolval'>true</span>, <span class='ident'>Get</span>.<span class='ident'>idempotent</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolval'>true</span>, <span class='ident'>Put</span>.<span class='ident'>idempotent</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolval'>false</span>, <span class='ident'>Post</span>.<span class='ident'>idempotent</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>true</span>, <span class='ident'>Get</span>.<span class='ident'>idempotent</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>true</span>, <span class='ident'>Put</span>.<span class='ident'>idempotent</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='ident'>Post</span>.<span class='ident'>idempotent</span>());
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -467,6 +467,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

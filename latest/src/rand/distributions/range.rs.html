@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rand-0.3.14/src/distributions/range.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.3.14/src/distributions/range.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>range.rs.html -- source</title>
@@ -358,11 +358,11 @@
     <span class='doccomment'>/// requires. This should not ever be called directly, only via</span>
     <span class='doccomment'>/// `Range::new`, which will check that `low &lt; high`, so this</span>
     <span class='doccomment'>/// function doesn&#39;t have to repeat the check.</span>
-    <span class='kw'>fn</span> <span class='ident'>construct_range</span>(<span class='ident'>low</span>: <span class='kw'>Self</span>, <span class='ident'>high</span>: <span class='kw'>Self</span>) <span class='op'>-&gt;</span> <span class='ident'>Range</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span>;
+    <span class='kw'>fn</span> <span class='ident'>construct_range</span>(<span class='ident'>low</span>: <span class='self'>Self</span>, <span class='ident'>high</span>: <span class='self'>Self</span>) <span class='op'>-&gt;</span> <span class='ident'>Range</span><span class='op'>&lt;</span><span class='self'>Self</span><span class='op'>&gt;</span>;
 
     <span class='doccomment'>/// Sample a value from the given `Range` with the given `Rng` as</span>
     <span class='doccomment'>/// a source of randomness.</span>
-    <span class='kw'>fn</span> <span class='ident'>sample_range</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>Rng</span><span class='op'>&gt;</span>(<span class='ident'>r</span>: <span class='kw-2'>&amp;</span><span class='ident'>Range</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span>, <span class='ident'>rng</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>R</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span>;
+    <span class='kw'>fn</span> <span class='ident'>sample_range</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>Rng</span><span class='op'>&gt;</span>(<span class='ident'>r</span>: <span class='kw-2'>&amp;</span><span class='ident'>Range</span><span class='op'>&lt;</span><span class='self'>Self</span><span class='op'>&gt;</span>, <span class='ident'>rng</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>R</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span>;
 }
 
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>integer_impl</span> {
@@ -442,7 +442,7 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='ident'>distributions</span>::{<span class='ident'>Sample</span>, <span class='ident'>IndependentSample</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Range</span> <span class='kw'>as</span> <span class='ident'>Range</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Range</span> <span class='kw'>as</span> <span class='ident'>Range</span>;
 
     <span class='attribute'>#[<span class='ident'>should_panic</span>]</span>
     <span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>target_env</span> <span class='op'>=</span> <span class='string'>&quot;msvc&quot;</span>, <span class='ident'>ignore</span>)]</span>
@@ -533,6 +533,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

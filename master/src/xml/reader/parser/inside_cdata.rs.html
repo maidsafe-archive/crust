@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/parser/inside_cdata.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/parser/inside_cdata.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>inside_cdata.rs.html -- source</title>
@@ -78,7 +78,7 @@
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>;
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>};
+<span class='kw'>use</span> <span class='kw'>super</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>};
 
 <span class='kw'>impl</span> <span class='ident'>PullParser</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_cdata</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
@@ -100,7 +100,7 @@
             }
 
             _ <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                 <span class='ident'>t</span>.<span class='ident'>push_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>buf</span>);
                 <span class='prelude-val'>None</span>
             }
@@ -131,6 +131,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Cow","A clone-on-write smart pointer."]],"trait":[["Borrow","A trait for borrowing data."],["BorrowMut","A trait for mutably borrowing data."],["IntoCow","Trait for moving into a `Cow`."],["ToOwned","A generalization of `Clone` to borrowed data."]]});

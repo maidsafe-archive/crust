@@ -43,14 +43,14 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>string</a>::<wbr><a class='struct' href=''>FromUtf8Error</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>string</a>::<wbr><a class='struct' href=''>FromUtf8Error</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3458' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/struct.FromUtf8Error.html?gotosrc=3458' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3560' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/struct.FromUtf8Error.html?gotosrc=3560' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct FromUtf8Error {
     // some fields omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>A possible error value when converting a <code>String</code> from a UTF-8 byte vector.</p>
+}</pre><div class='docblock'><p>A possible error value when converting a <code>String</code> from a UTF-8 byte vector.</p>
 
 <p>This type is the error type for the <a href="struct.String.html#method.from_utf8"><code>from_utf8()</code></a> method on <a href="struct.String.html"><code>String</code></a>. It
 is designed in such a way to carefully avoid reallocations: the
@@ -73,7 +73,8 @@ through the <a href="#method.utf8_error"><code>utf8_error()</code></a> method.</
 
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>value</span>.<span class='ident'>is_err</span>());
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>159</span>], <span class='ident'>value</span>.<span class='ident'>unwrap_err</span>().<span class='ident'>into_bytes</span>());</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></h3><div class='impl-items'><h4 id='method.into_bytes' class='method'><code>fn <a href='#method.into_bytes' class='fnname'>into_bytes</a>(self) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.into_bytes' class='method'><code>fn <a href='#method.into_bytes' class='fnname'>into_bytes</a>(self) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h4>
 <div class='docblock'><p>Returns the bytes that were attempted to convert to a <code>String</code>.</p>
 
 <p>This method is carefully constructed to avoid allocation. It will
@@ -109,9 +110,18 @@ on using it.</p>
 
 <span class='comment'>// the first byte is invalid here</span>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>1</span>, <span class='ident'>error</span>.<span class='ident'>valid_up_to</span>());</pre>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
-</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='../../../bitflags/__core/error/trait.Error.html#tymethod.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></h4>
+<div class='docblock'><p>A short description of the error. <a href="../../../bitflags/__core/error/trait.Error.html#tymethod.description">Read more</a></p>
+</div><h4 id='method.cause' class='method'><code>fn <a href='../../../bitflags/__core/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>The lower-level cause of this error, if any.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -134,6 +144,8 @@ on using it.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

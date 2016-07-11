@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.1/src/errno.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.5.1/src/errno.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>errno.rs.html -- source</title>
@@ -2322,7 +2322,7 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>Errno</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>last</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>last</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>last</span>()
     }
 
@@ -2342,7 +2342,7 @@
     <span class='doccomment'>/// should not be used when `-1` is not the errno sentinel value.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>result</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>ErrnoSentinel</span> <span class='op'>+</span> <span class='ident'>PartialEq</span><span class='op'>&lt;</span><span class='ident'>S</span><span class='op'>&gt;&gt;</span>(<span class='ident'>value</span>: <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>S</span><span class='op'>&gt;</span> {
         <span class='kw'>if</span> <span class='ident'>value</span> <span class='op'>==</span> <span class='ident'>S</span>::<span class='ident'>sentinel</span>() {
-            <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Self</span>::<span class='ident'>last</span>()))
+            <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='self'>Self</span>::<span class='ident'>last</span>()))
         } <span class='kw'>else</span> {
             <span class='prelude-val'>Ok</span>(<span class='ident'>value</span>)
         }
@@ -2352,19 +2352,19 @@
 <span class='doccomment'>/// The sentinel value indicates that a function failed and more detailed</span>
 <span class='doccomment'>/// information about the error can be found in `errno`</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>ErrnoSentinel</span>: <span class='ident'>Sized</span> {
-    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span>;
+    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span>;
 }
 
 <span class='kw'>impl</span> <span class='ident'>ErrnoSentinel</span> <span class='kw'>for</span> <span class='ident'>isize</span> {
-    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> { <span class='op'>-</span><span class='number'>1</span> }
+    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> { <span class='op'>-</span><span class='number'>1</span> }
 }
 
 <span class='kw'>impl</span> <span class='ident'>ErrnoSentinel</span> <span class='kw'>for</span> <span class='ident'>i32</span> {
-    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> { <span class='op'>-</span><span class='number'>1</span> }
+    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> { <span class='op'>-</span><span class='number'>1</span> }
 }
 
 <span class='kw'>impl</span> <span class='ident'>ErrnoSentinel</span> <span class='kw'>for</span> <span class='ident'>i64</span> {
-    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> { <span class='op'>-</span><span class='number'>1</span> }
+    <span class='kw'>fn</span> <span class='ident'>sentinel</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> { <span class='op'>-</span><span class='number'>1</span> }
 }
 
 <span class='kw'>impl</span> <span class='ident'>error</span>::<span class='ident'>Error</span> <span class='kw'>for</span> <span class='ident'>Errno</span> {
@@ -2380,7 +2380,7 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>Errno</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>io</span>::<span class='ident'>Error</span> {
-    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>err</span>: <span class='ident'>Errno</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>err</span>: <span class='ident'>Errno</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>from_raw_os_error</span>(<span class='ident'>err</span> <span class='kw'>as</span> <span class='ident'>i32</span>)
     }
 }
@@ -4173,7 +4173,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>nixtest</span>::<span class='ident'>assert_const_eq</span>;
     <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_int</span>;
 
@@ -4513,6 +4513,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

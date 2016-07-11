@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>sync</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>sync</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-8603' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/index.html?gotosrc=8603' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-8562' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/index.html?gotosrc=8562' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Useful synchronization primitives.</p>
 
 <p>This module contains useful safe and unsafe synchronization primitives.
@@ -171,24 +171,32 @@ due to a time out or not.</p>
                            </td>
                        </tr>
                        <tr class='unstable module-item'>
+                           <td><a class='struct' href='struct.OnceState.html'
+                                  title='bitflags::__core::sync::OnceState'>OnceState</a></td>
+                           <td class='docblock short'>
+                               [<em class='stab unstable'>Unstable</em>] <p>State yielded to the <code>call_once_force</code> method which can be used to query
+whether the <code>Once</code> was previously poisoned or not.</p>
+                           </td>
+                       </tr>
+                       <tr class='unstable deprecated module-item'>
                            <td><a class='struct' href='struct.StaticCondvar.html'
                                   title='bitflags::__core::sync::StaticCondvar'>StaticCondvar</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>Statically allocated condition variables.</p>
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>Statically allocated condition variables.</p>
                            </td>
                        </tr>
-                       <tr class='unstable module-item'>
+                       <tr class='unstable deprecated module-item'>
                            <td><a class='struct' href='struct.StaticMutex.html'
                                   title='bitflags::__core::sync::StaticMutex'>StaticMutex</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>The static mutex type is provided to allow for static allocation of mutexes.</p>
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>The static mutex type is provided to allow for static allocation of mutexes.</p>
                            </td>
                        </tr>
-                       <tr class='unstable module-item'>
+                       <tr class='unstable deprecated module-item'>
                            <td><a class='struct' href='struct.StaticRwLock.html'
                                   title='bitflags::__core::sync::StaticRwLock'>StaticRwLock</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>Structure representing a statically allocated RwLock.</p>
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>Structure representing a statically allocated RwLock.</p>
                            </td>
                        </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
@@ -208,26 +216,26 @@ due to a time out or not.</p>
                                 <p>Initialization value for static <code>Once</code> values.</p>
                            </td>
                        </tr>
-                       <tr class='unstable module-item'>
+                       <tr class='unstable deprecated module-item'>
                            <td><a class='constant' href='constant.CONDVAR_INIT.html'
                                   title='bitflags::__core::sync::CONDVAR_INIT'>CONDVAR_INIT</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>Constant initializer for a statically allocated condition variable.</p>
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>Constant initializer for a statically allocated condition variable.</p>
                            </td>
                        </tr>
-                       <tr class='unstable module-item'>
+                       <tr class='unstable deprecated module-item'>
                            <td><a class='constant' href='constant.MUTEX_INIT.html'
                                   title='bitflags::__core::sync::MUTEX_INIT'>MUTEX_INIT</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>Static initialization of a mutex. This constant can be used to initialize
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>Static initialization of a mutex. This constant can be used to initialize
 other mutex constants.</p>
                            </td>
                        </tr>
-                       <tr class='unstable module-item'>
+                       <tr class='unstable deprecated module-item'>
                            <td><a class='constant' href='constant.RW_LOCK_INIT.html'
                                   title='bitflags::__core::sync::RW_LOCK_INIT'>RW_LOCK_INIT</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable'>Unstable</em>] <p>Constant initialization for a statically-initialized rwlock.</p>
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>Constant initialization for a statically-initialized rwlock.</p>
                            </td>
                        </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
@@ -267,6 +275,8 @@ other mutex constants.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

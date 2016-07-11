@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/header/common/if_range.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/if_range.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>if_range.rs.html -- source</title>
@@ -230,7 +230,7 @@
 <span class='kw'>mod</span> <span class='ident'>test_if_range</span> {
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
     <span class='kw'>use</span> <span class='ident'>header</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>IfRange</span> <span class='kw'>as</span> <span class='ident'>HeaderField</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>IfRange</span> <span class='kw'>as</span> <span class='ident'>HeaderField</span>;
     <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test1</span>, <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;Sat, 29 Oct 1994 19:43:31 GMT&quot;</span>]);
     <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test2</span>, <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;xyzzy\&quot;&quot;</span>]);
     <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test3</span>, <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;this-is-invalid&quot;</span>], <span class='prelude-val'>None</span>::<span class='op'>&lt;</span><span class='ident'>IfRange</span><span class='op'>&gt;</span>);
@@ -259,6 +259,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

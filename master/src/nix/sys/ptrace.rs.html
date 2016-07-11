@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.1/src/sys/ptrace.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.5.1/src/sys/ptrace.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>ptrace.rs.html -- source</title>
@@ -236,7 +236,7 @@
     };
     <span class='kw'>match</span> <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>ret</span>) {
         <span class='prelude-val'>Ok</span>(..) <span class='op'>|</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>UnknownErrno</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>ret</span>),
-        <span class='ident'>err</span> <span class='kw-2'>@</span> <span class='prelude-val'>Err</span>(..) <span class='op'>=&gt;</span> <span class='ident'>err</span>,
+        <span class='ident'>err</span> @ <span class='prelude-val'>Err</span>(..) <span class='op'>=&gt;</span> <span class='ident'>err</span>,
     }
 }
 
@@ -275,6 +275,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

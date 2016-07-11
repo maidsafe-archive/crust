@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/net2-0.2.24/src/sys/unix/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/net2-0.2.25/src/sys/unix/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -113,6 +113,20 @@
 <span id="69">69</span>
 <span id="70">70</span>
 <span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -129,7 +143,9 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>TcpListener</span>, <span class='ident'>TcpStream</span>, <span class='ident'>UdpSocket</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>io</span>::<span class='ident'>FromRawFd</span>;
-<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='self'>self</span>, <span class='ident'>c_int</span>, <span class='ident'>ioctl</span>, <span class='ident'>FIOCLEX</span>};
+<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='self'>self</span>, <span class='ident'>c_int</span>};
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;solaris&quot;</span>))]</span>
+<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>ioctl</span>, <span class='ident'>FIOCLEX</span>};
 
 <span class='kw'>mod</span> <span class='ident'>impls</span>;
 
@@ -142,10 +158,22 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>Socket</span> {
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;solaris&quot;</span>))]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>family</span>: <span class='ident'>c_int</span>, <span class='ident'>ty</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Socket</span><span class='op'>&gt;</span> {
         <span class='kw'>unsafe</span> {
             <span class='kw'>let</span> <span class='ident'>fd</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(::<span class='ident'>cvt</span>(<span class='ident'>libc</span>::<span class='ident'>socket</span>(<span class='ident'>family</span>, <span class='ident'>ty</span>, <span class='number'>0</span>)));
             <span class='ident'>ioctl</span>(<span class='ident'>fd</span>, <span class='ident'>FIOCLEX</span>);
+            <span class='prelude-val'>Ok</span>(<span class='ident'>Socket</span> { <span class='ident'>fd</span>: <span class='ident'>fd</span> })
+        }
+    }
+
+    <span class='comment'>// ioctl(FIOCLEX) is not supported by Solaris/Illumos,</span>
+    <span class='comment'>// use fcntl(FD_CLOEXEC) instead</span>
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;solaris&quot;</span>)]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>family</span>: <span class='ident'>c_int</span>, <span class='ident'>ty</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Socket</span><span class='op'>&gt;</span> {
+        <span class='kw'>unsafe</span> {
+            <span class='kw'>let</span> <span class='ident'>fd</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(::<span class='ident'>cvt</span>(<span class='ident'>libc</span>::<span class='ident'>socket</span>(<span class='ident'>family</span>, <span class='ident'>ty</span>, <span class='number'>0</span>)));
+            <span class='ident'>libc</span>::<span class='ident'>fcntl</span>(<span class='ident'>fd</span>, <span class='ident'>libc</span>::<span class='ident'>FD_CLOEXEC</span>);
             <span class='prelude-val'>Ok</span>(<span class='ident'>Socket</span> { <span class='ident'>fd</span>: <span class='ident'>fd</span> })
         }
     }
@@ -209,6 +237,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

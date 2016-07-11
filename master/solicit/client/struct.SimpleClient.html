@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1632' class='srclink' href='../../src/solicit/client/simple.rs.html#94-102' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1638' class='srclink' href='../../src/solicit/client/simple.rs.html#94-102' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct SimpleClient&lt;S&gt; <span class='where'>where S: <a class='trait' href='../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a></span> {
     // some fields omitted
 }</pre><div class='docblock'><p>A struct implementing a simple HTTP/2 client.</p>
@@ -132,7 +132,8 @@ to establish a new connection.</p>
         <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>header</span>.<span class='number'>1</span>).<span class='ident'>unwrap</span>());
 }
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>response</span>.<span class='ident'>body</span>).<span class='ident'>unwrap</span>());</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;S&gt; <a class='struct' href='../../solicit/client/struct.SimpleClient.html' title='solicit::client::SimpleClient'>SimpleClient</a>&lt;S&gt; <span class='where'>where S: <a class='trait' href='../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a></span></code></h3><div class='impl-items'><h4 id='method.with_connection' class='method'><code>fn <a href='#method.with_connection' class='fnname'>with_connection</a>(conn: <a class='struct' href='../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, S&gt;, host: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='type' href='../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='struct' href='../../solicit/client/struct.SimpleClient.html' title='solicit::client::SimpleClient'>SimpleClient</a>&lt;S&gt;&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;S&gt; <a class='struct' href='../../solicit/client/struct.SimpleClient.html' title='solicit::client::SimpleClient'>SimpleClient</a>&lt;S&gt; <span class='where'>where S: <a class='trait' href='../../solicit/http/transport/trait.TransportStream.html' title='solicit::http::transport::TransportStream'>TransportStream</a></span></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1643' class='srclink' href='../../src/solicit/client/simple.rs.html#104-266' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.with_connection' class='method'><code>fn <a href='#method.with_connection' class='fnname'>with_connection</a>(conn: <a class='struct' href='../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, S&gt;, host: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='type' href='../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='struct' href='../../solicit/client/struct.SimpleClient.html' title='solicit::client::SimpleClient'>SimpleClient</a>&lt;S&gt;&gt;</code></h4>
 <div class='docblock'><p>Create a new <code>SimpleClient</code> instance that will use the given <code>HttpConnection</code>
 to communicate to the server.</p>
 
@@ -197,6 +198,8 @@ calling <code>request</code> followed by <code>get_response</code> for the retur
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

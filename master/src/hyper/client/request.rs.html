@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/client/request.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/client/request.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>request.rs.html -- source</title>
@@ -495,7 +495,7 @@
     <span class='kw'>use</span> <span class='ident'>net</span>::<span class='ident'>Fresh</span>;
     <span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>ContentLength</span>,<span class='ident'>TransferEncoding</span>,<span class='ident'>Encoding</span>};
     <span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>form_urlencoded</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Request</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Request</span>;
     <span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>h1</span>::<span class='ident'>Http11Message</span>;
 
     <span class='kw'>fn</span> <span class='ident'>run_request</span>(<span class='ident'>req</span>: <span class='ident'>Request</span><span class='op'>&lt;</span><span class='ident'>Fresh</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
@@ -591,7 +591,7 @@
 
         <span class='ident'>req</span>.<span class='ident'>message</span>.<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>Http11Message</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>()
             .<span class='ident'>get_mut</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>MockStream</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>()
-            .<span class='ident'>error_on_write</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+            .<span class='ident'>error_on_write</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
 
         <span class='ident'>req</span>.<span class='ident'>write</span>(<span class='string'>b&quot;foo&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>req</span>.<span class='ident'>flush</span>().<span class='ident'>is_err</span>());
@@ -625,6 +625,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

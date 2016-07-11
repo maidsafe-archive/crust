@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rand-0.3.14/src/distributions/normal.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.3.14/src/distributions/normal.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>normal.rs.html -- source</title>
@@ -312,7 +312,7 @@
 
         <span class='ident'>StandardNormal</span>(<span class='ident'>ziggurat</span>(
             <span class='ident'>rng</span>,
-            <span class='boolval'>true</span>, <span class='comment'>// this is symmetric</span>
+            <span class='boolvalue'>true</span>, <span class='comment'>// this is symmetric</span>
             <span class='kw-2'>&amp;</span><span class='ident'>ziggurat_tables</span>::<span class='ident'>ZIG_NORM_X</span>,
             <span class='kw-2'>&amp;</span><span class='ident'>ziggurat_tables</span>::<span class='ident'>ZIG_NORM_F</span>,
             <span class='ident'>pdf</span>, <span class='ident'>zero_case</span>))
@@ -410,7 +410,7 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='ident'>distributions</span>::{<span class='ident'>Sample</span>, <span class='ident'>IndependentSample</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>Normal</span>, <span class='ident'>LogNormal</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>Normal</span>, <span class='ident'>LogNormal</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_normal</span>() {
@@ -469,6 +469,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

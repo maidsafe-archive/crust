@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["randombytes","`randombytes()` randomly generates size bytes of data."],["randombytes_into","`randombytes_into()` fills a buffer `buf` with random data."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Encoder","Encodes Rust values to CBOR bytes in the underlying writer `W`."]]});

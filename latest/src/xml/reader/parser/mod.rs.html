@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/parser/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/parser/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -710,7 +710,7 @@
 <span class='kw'>static</span> <span class='ident'>DEFAULT_STANDALONE</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>bool</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='prelude-val'>None</span>;
 
 <span class='kw'>type</span> <span class='ident'>ElementStack</span> <span class='op'>=</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>OwnedName</span><span class='op'>&gt;</span>;
-<span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span>;
+<span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span> <span class='op'>=</span> <span class='kw'>super</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span>;
 
 <span class='doccomment'>/// Pull-based XML parser.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PullParser</span> {
@@ -759,11 +759,11 @@
             <span class='ident'>est</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>pos</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>TextPosition</span>::<span class='ident'>new</span>()],
 
-            <span class='ident'>encountered_element</span>: <span class='boolval'>false</span>,
-            <span class='ident'>parsed_declaration</span>: <span class='boolval'>false</span>,
-            <span class='ident'>inside_whitespace</span>: <span class='boolval'>true</span>,
-            <span class='ident'>read_prefix_separator</span>: <span class='boolval'>false</span>,
-            <span class='ident'>pop_namespace</span>: <span class='boolval'>false</span>
+            <span class='ident'>encountered_element</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>parsed_declaration</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>inside_whitespace</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>read_prefix_separator</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>pop_namespace</span>: <span class='boolvalue'>false</span>
         }
     }
 }
@@ -895,7 +895,7 @@
         }
 
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>pop_namespace</span> {
-            <span class='self'>self</span>.<span class='ident'>pop_namespace</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+            <span class='self'>self</span>.<span class='ident'>pop_namespace</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
             <span class='self'>self</span>.<span class='ident'>nst</span>.<span class='ident'>pop</span>();
         }
 
@@ -1036,7 +1036,7 @@
         <span class='comment'>// We can get here for the first time only when self.data.name contains zero or one character,</span>
         <span class='comment'>// but first character cannot be a colon anyway</span>
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>buf</span>.<span class='ident'>len</span>() <span class='op'>&lt;=</span> <span class='number'>1</span> {
-            <span class='self'>self</span>.<span class='ident'>read_prefix_separator</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+            <span class='self'>self</span>.<span class='ident'>read_prefix_separator</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
         }
 
         <span class='kw'>let</span> <span class='ident'>invoke_callback</span> <span class='op'>=</span> <span class='op'>|</span><span class='ident'>this</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>PullParser</span>, <span class='ident'>t</span><span class='op'>|</span> {
@@ -1051,7 +1051,7 @@
             <span class='comment'>// There can be only one colon, and not as the first character</span>
             <span class='ident'>Token</span>::<span class='ident'>Character</span>(<span class='string'>&#39;:&#39;</span>) <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>buf_has_data</span>() <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>read_prefix_separator</span> <span class='op'>=&gt;</span> {
                 <span class='self'>self</span>.<span class='ident'>buf</span>.<span class='ident'>push</span>(<span class='string'>&#39;:&#39;</span>);
-                <span class='self'>self</span>.<span class='ident'>read_prefix_separator</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                <span class='self'>self</span>.<span class='ident'>read_prefix_separator</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                 <span class='prelude-val'>None</span>
             }
 
@@ -1138,7 +1138,7 @@
         }
 
         <span class='kw'>if</span> <span class='ident'>emit_end_element</span> {
-            <span class='self'>self</span>.<span class='ident'>pop_namespace</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+            <span class='self'>self</span>.<span class='ident'>pop_namespace</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
             <span class='self'>self</span>.<span class='ident'>next_event</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>EndElement</span> {
                 <span class='ident'>name</span>: <span class='ident'>name</span>.<span class='ident'>clone</span>()
             }));
@@ -1166,7 +1166,7 @@
         <span class='kw'>let</span> <span class='ident'>op_name</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>est</span>.<span class='ident'>pop</span>().<span class='ident'>unwrap</span>();
 
         <span class='kw'>if</span> <span class='ident'>name</span> <span class='op'>==</span> <span class='ident'>op_name</span> {
-            <span class='self'>self</span>.<span class='ident'>pop_namespace</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+            <span class='self'>self</span>.<span class='ident'>pop_namespace</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
             <span class='self'>self</span>.<span class='ident'>into_state_emit</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>, <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>EndElement</span> { <span class='ident'>name</span>: <span class='ident'>name</span> }))
         } <span class='kw'>else</span> {
             <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected closing tag: {}, expected {}&quot;</span>, <span class='ident'>name</span>, <span class='ident'>op_name</span>))
@@ -1269,6 +1269,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

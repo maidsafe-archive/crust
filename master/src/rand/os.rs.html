@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rand-0.3.14/src/os.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.3.14/src/os.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>os.rs.html -- source</title>
@@ -651,7 +651,7 @@
                 <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>last_os_error</span>().<span class='ident'>raw_os_error</span>();
                 <span class='ident'>err</span> <span class='op'>!=</span> <span class='prelude-val'>Some</span>(<span class='ident'>libc</span>::<span class='ident'>ENOSYS</span>)
             } <span class='kw'>else</span> {
-                <span class='boolval'>true</span>
+                <span class='boolvalue'>true</span>
             };
             <span class='ident'>AVAILABLE</span>.<span class='ident'>store</span>(<span class='ident'>available</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
         });
@@ -665,7 +665,7 @@
                       <span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;arm&quot;</span>,
                       <span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;aarch64&quot;</span>,
                       <span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;powerpc&quot;</span>))))]</span>
-    <span class='kw'>fn</span> <span class='ident'>is_getrandom_available</span>() <span class='op'>-&gt;</span> <span class='ident'>bool</span> { <span class='boolval'>false</span> }
+    <span class='kw'>fn</span> <span class='ident'>is_getrandom_available</span>() <span class='op'>-&gt;</span> <span class='ident'>bool</span> { <span class='boolvalue'>false</span> }
 
     <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>OsRng</span> {
         <span class='ident'>inner</span>: <span class='ident'>OsRngInner</span>,
@@ -1003,6 +1003,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

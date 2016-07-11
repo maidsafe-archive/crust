@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1333' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#176-184' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1337' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#176-184' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ClientConnection&lt;S, R, State = <a class='struct' href='../../../solicit/http/session/struct.DefaultSessionState.html' title='solicit::http::session::DefaultSessionState'>DefaultSessionState</a>&lt;<a class='struct' href='../../../solicit/http/session/struct.DefaultStream.html' title='solicit::http::session::DefaultStream'>DefaultStream</a>&gt;&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a>, State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a></span> {
     pub state: State,
     // some fields omitted
@@ -57,7 +57,8 @@
 <table><tr class='stab '>
                              <td id='structfield.state'><code>state</code></td><td><div class='docblock'><p>The state of the session associated to this client connection. Maintains the status of the
 connection streams.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;S, R, State&gt; <a class='struct' href='../../../solicit/http/client/struct.ClientConnection.html' title='solicit::http::client::ClientConnection'>ClientConnection</a>&lt;S, R, State&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a>, State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a></span></code></h3><div class='impl-items'><h4 id='method.with_connection' class='method'><code>fn <a href='#method.with_connection' class='fnname'>with_connection</a>(conn: <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt;, state: State) -&gt; <a class='struct' href='../../../solicit/http/client/struct.ClientConnection.html' title='solicit::http::client::ClientConnection'>ClientConnection</a>&lt;S, R, State&gt;</code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;S, R, State&gt; <a class='struct' href='../../../solicit/http/client/struct.ClientConnection.html' title='solicit::http::client::ClientConnection'>ClientConnection</a>&lt;S, R, State&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a>, State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a></span></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1343' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#186-265' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.with_connection' class='method'><code>fn <a href='#method.with_connection' class='fnname'>with_connection</a>(conn: <a class='struct' href='../../../solicit/http/connection/struct.HttpConnection.html' title='solicit::http::connection::HttpConnection'>HttpConnection</a>&lt;S, R&gt;, state: State) -&gt; <a class='struct' href='../../../solicit/http/client/struct.ClientConnection.html' title='solicit::http::client::ClientConnection'>ClientConnection</a>&lt;S, R, State&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>ClientConnection</code> that will use the given <code>HttpConnection</code>
 for all its underlying HTTP/2 communication.</p>
 
@@ -104,6 +105,8 @@ queued cannot be relied on.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

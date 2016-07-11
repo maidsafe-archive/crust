@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["UtpListener","A structure representing a socket server."],["UtpSocket","A structure that represents a uTP (Micro Transport Protocol) connection between a local socket and a remote socket."]]});

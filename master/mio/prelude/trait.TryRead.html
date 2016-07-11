@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-623' class='srclink' href='../../src/mio/io.rs.html#19-38' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-627' class='srclink' href='../../src/mio/io.rs.html#19-38' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait TryRead {
     fn <a href='#tymethod.try_read' class='fnname'>try_read</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;&gt;;
 
@@ -61,7 +61,8 @@
         <h3 id='method.try_read_buf' class='method stab '><code>fn <a href='#method.try_read_buf' class='fnname'>try_read_buf</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(&amp;mut self, buf: &amp;mut B) -&gt; <a class='type' href='../../std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span></code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    </ul><script type="text/javascript" async
+    <li><code>impl&lt;T: <a class='trait' href='../../std/io/trait.Read.html' title='std::io::Read'>Read</a>&gt; TryRead for T</code></li>
+</ul><script type="text/javascript" async
                          src="../../implementors/mio/prelude/trait.TryRead.js">
                  </script></section>
     <section id='search' class="content hidden"></section>
@@ -86,6 +87,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

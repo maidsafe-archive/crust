@@ -43,18 +43,18 @@
     </nav>
 
     <section id='main' class="content enum">
-<h1 class='fqn'><span class='in-band'>Enum <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a href='index.html'>atomic</a>::<wbr><a class='enum' href=''>Ordering</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Enum <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>sync</a>::<wbr><a href='index.html'>atomic</a>::<wbr><a class='enum' href=''>Ordering</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-27717' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html?gotosrc=27717' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-29528' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html?gotosrc=29528' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Ordering {
     Relaxed,
     Release,
     Acquire,
     AcqRel,
     SeqCst,
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>Atomic memory orderings</p>
+}</pre><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><div class='docblock'><p>Atomic memory orderings</p>
 
 <p>Memory orderings limit the ways that both the compiler and CPU may reorder
 instructions around atomic operations. At its most restrictive,
@@ -68,19 +68,25 @@ LLVM&#39;s</a>.</p>
 <table class='variants_table'><tr><td id='variant.Relaxed'><code>Relaxed</code></td><td><div class='docblock'><p>No ordering constraints, only atomic operations. Corresponds to LLVM&#39;s
 <code>Monotonic</code> ordering.</p>
 </div></td><td></td></tr><tr><td id='variant.Release'><code>Release</code></td><td><div class='docblock'><p>When coupled with a store, all previous writes become visible
-to another thread that performs a load with <code>Acquire</code> ordering
+to the other threads that perform a load with <code>Acquire</code> ordering
 on the same value.</p>
 </div></td><td></td></tr><tr><td id='variant.Acquire'><code>Acquire</code></td><td><div class='docblock'><p>When coupled with a load, all subsequent loads will see data
 written before a store with <code>Release</code> ordering on the same value
-in another thread.</p>
+in other threads.</p>
 </div></td><td></td></tr><tr><td id='variant.AcqRel'><code>AcqRel</code></td><td><div class='docblock'><p>When coupled with a load, uses <code>Acquire</code> ordering, and with a store
 <code>Release</code> ordering.</p>
 </div></td><td></td></tr><tr><td id='variant.SeqCst'><code>SeqCst</code></td><td><div class='docblock'><p>Like <code>AcqRel</code> with the additional guarantee that all threads see all
 sequentially consistent operations in the same order.</p>
-</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
-</div></section>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="../../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="../../../../bitflags/__core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -103,6 +109,8 @@ sequentially consistent operations in the same order.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

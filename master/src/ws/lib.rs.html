@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.0/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -623,25 +623,25 @@
     <span class='kw'>fn</span> <span class='ident'>default</span>() <span class='op'>-&gt;</span> <span class='ident'>Settings</span> {
         <span class='ident'>Settings</span> {
             <span class='ident'>max_connections</span>: <span class='number'>100</span>,
-            <span class='ident'>panic_on_new_connection</span>: <span class='boolval'>false</span>,
-            <span class='ident'>panic_on_shutdown</span>: <span class='boolval'>false</span>,
+            <span class='ident'>panic_on_new_connection</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>panic_on_shutdown</span>: <span class='boolvalue'>false</span>,
             <span class='ident'>fragments_capacity</span>: <span class='number'>10</span>,
-            <span class='ident'>fragments_grow</span>: <span class='boolval'>true</span>,
+            <span class='ident'>fragments_grow</span>: <span class='boolvalue'>true</span>,
             <span class='ident'>fragment_size</span>: <span class='ident'>u16</span>::<span class='ident'>max_value</span>() <span class='kw'>as</span> <span class='ident'>usize</span>,
             <span class='ident'>in_buffer_capacity</span>: <span class='number'>2048</span>,
-            <span class='ident'>in_buffer_grow</span>: <span class='boolval'>true</span>,
+            <span class='ident'>in_buffer_grow</span>: <span class='boolvalue'>true</span>,
             <span class='ident'>out_buffer_capacity</span>: <span class='number'>2048</span>,
-            <span class='ident'>out_buffer_grow</span>: <span class='boolval'>true</span>,
-            <span class='ident'>panic_on_internal</span>: <span class='boolval'>true</span>,
-            <span class='ident'>panic_on_capacity</span>: <span class='boolval'>false</span>,
-            <span class='ident'>panic_on_protocol</span>: <span class='boolval'>false</span>,
-            <span class='ident'>panic_on_encoding</span>: <span class='boolval'>false</span>,
-            <span class='ident'>panic_on_io</span>: <span class='boolval'>false</span>,
-            <span class='ident'>panic_on_timeout</span>: <span class='boolval'>false</span>,
-            <span class='ident'>masking_strict</span>: <span class='boolval'>false</span>,
-            <span class='ident'>key_strict</span>: <span class='boolval'>false</span>,
-            <span class='ident'>method_strict</span>: <span class='boolval'>false</span>,
-            <span class='ident'>encrypt_server</span>: <span class='boolval'>false</span>,
+            <span class='ident'>out_buffer_grow</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>panic_on_internal</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>panic_on_capacity</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>panic_on_protocol</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>panic_on_encoding</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>panic_on_io</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>panic_on_timeout</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>masking_strict</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>key_strict</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>method_strict</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>encrypt_server</span>: <span class='boolvalue'>false</span>,
         }
     }
 }
@@ -799,6 +799,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

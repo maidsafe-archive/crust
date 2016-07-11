@@ -43,16 +43,17 @@
     </nav>
 
     <section id='main' class="content mod">
-<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>thread</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a class='mod' href=''>thread</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-772' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/index.html?gotosrc=772' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-775' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/index.html?gotosrc=775' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Native threads.</p>
 
 <h2 id='the-threading-model' class='section-header'><a href='#the-threading-model'>The threading model</a></h2>
 <p>An executing Rust program consists of a collection of native OS threads,
-each with their own stack and local state.</p>
+each with their own stack and local state. Threads can be named, and
+provide some built-in support for low-level synchronization.</p>
 
 <p>Communication between threads can be done through
 <a href="../../std/sync/mpsc/index.html">channels</a>, Rust&#39;s message-passing
@@ -75,21 +76,6 @@ exit code.</p>
 down, even if other threads are still running. However, this module provides
 convenient facilities for automatically waiting for the termination of a
 child thread (i.e., join).</p>
-
-<h2 id='the-thread-type' class='section-header'><a href='#the-thread-type'>The <code>Thread</code> type</a></h2>
-<p>Threads are represented via the <code>Thread</code> type, which you can
-get in one of two ways:</p>
-
-<ul>
-<li>By spawning a new thread, e.g. using the <code>thread::spawn</code> function.</li>
-<li>By requesting the current thread, using the <code>thread::current</code> function.</li>
-</ul>
-
-<p>Threads can be named, and provide some built-in support for low-level
-synchronization (described below).</p>
-
-<p>The <code>thread::current()</code> function is available even for threads not spawned
-by the APIs of this module.</p>
 
 <h2 id='spawning-a-thread' class='section-header'><a href='#spawning-a-thread'>Spawning a thread</a></h2>
 <p>A new thread can be spawned using the <code>thread::spawn</code> function:</p>
@@ -133,9 +119,24 @@ which currently allows you to set the name and stack size for the child thread:<
     <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello, world!&quot;</span>);
 });</pre>
 
+<h2 id='the-thread-type' class='section-header'><a href='#the-thread-type'>The <code>Thread</code> type</a></h2>
+<p>Threads are represented via the <code>Thread</code> type, which you can get in one of
+two ways:</p>
+
+<ul>
+<li>By spawning a new thread, e.g. using the <code>thread::spawn</code> function, and
+calling <code>thread()</code> on the <code>JoinHandle</code>.</li>
+<li>By requesting the current thread, using the <code>thread::current</code> function.</li>
+</ul>
+
+<p>The <code>thread::current()</code> function is available even for threads not spawned
+by the APIs of this module.</p>
+
 <h2 id='blocking-support-park-and-unpark' class='section-header'><a href='#blocking-support-park-and-unpark'>Blocking support: park and unpark</a></h2>
 <p>Every thread is equipped with some basic low-level blocking support, via the
-<code>park</code> and <code>unpark</code> functions.</p>
+<code>thread::park()</code> function and <code>thread::Thread::unpark()</code> method. <code>park()</code>
+blocks the current thread, which can then be resumed from another thread by
+calling the <code>unpark()</code> method on the blocked thread&#39;s handle.</p>
 
 <p>Conceptually, each <code>Thread</code> handle has an associated token, which is
 initially not present:</p>
@@ -248,7 +249,7 @@ and behavior of new threads.</p>
                            <td><a class='struct' href='struct.ScopedKey.html'
                                   title='bitflags::__core::thread::ScopedKey'>ScopedKey</a></td>
                            <td class='docblock short'>
-                               [<em class='stab unstable deprecated'>Deprecated</em>] <p>Type representing a thread local storage key corresponding to a reference
+                               [<em class='stab deprecated'>Deprecated</em>] [<em class='stab unstable'>Unstable</em>] <p>Type representing a thread local storage key corresponding to a reference
 to the type parameter <code>T</code>.</p>
                            </td>
                        </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -294,7 +295,7 @@ the specified duration has been reached (may wake spuriously).</p>
                            <td><a class='fn' href='fn.park_timeout_ms.html'
                                   title='bitflags::__core::thread::park_timeout_ms'>park_timeout_ms</a></td>
                            <td class='docblock short'>
-                               [<em class='stab  deprecated'>Deprecated</em>] <p>Blocks unless or until the current thread&#39;s token is made available or
+                               [<em class='stab deprecated'>Deprecated</em>] <p>Blocks unless or until the current thread&#39;s token is made available or
 the specified duration has been reached (may wake spuriously).</p>
                            </td>
                        </tr>
@@ -309,7 +310,7 @@ the specified duration has been reached (may wake spuriously).</p>
                            <td><a class='fn' href='fn.sleep_ms.html'
                                   title='bitflags::__core::thread::sleep_ms'>sleep_ms</a></td>
                            <td class='docblock short'>
-                               [<em class='stab  deprecated'>Deprecated</em>] <p>Puts the current thread to sleep for the specified amount of time.</p>
+                               [<em class='stab deprecated'>Deprecated</em>] <p>Puts the current thread to sleep for the specified amount of time.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -356,6 +357,8 @@ the specified duration has been reached (may wake spuriously).</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

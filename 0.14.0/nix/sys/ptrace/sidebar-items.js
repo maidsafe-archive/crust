@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["ptrace",""],["ptrace_setoptions","Set options, as with ptrace(PTRACE_SETOPTIONS,...)."]],"mod":[["ptrace",""]]});

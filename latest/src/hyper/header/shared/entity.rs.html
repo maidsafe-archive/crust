@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/header/shared/entity.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/shared/entity.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>entity.rs.html -- source</title>
@@ -319,14 +319,14 @@
     <span class='doccomment'>/// # Panics</span>
     <span class='doccomment'>/// If the tag contains invalid characters.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>weak</span>(<span class='ident'>tag</span>: <span class='ident'>String</span>) <span class='op'>-&gt;</span> <span class='ident'>EntityTag</span> {
-        <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>, <span class='ident'>tag</span>)
+        <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='ident'>tag</span>)
     }
 
     <span class='doccomment'>/// Constructs a new strong EntityTag.</span>
     <span class='doccomment'>/// # Panics</span>
     <span class='doccomment'>/// If the tag contains invalid characters.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>strong</span>(<span class='ident'>tag</span>: <span class='ident'>String</span>) <span class='op'>-&gt;</span> <span class='ident'>EntityTag</span> {
-        <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>, <span class='ident'>tag</span>)
+        <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='ident'>tag</span>)
     }
 
     <span class='doccomment'>/// Get the tag.</span>
@@ -369,8 +369,8 @@
 <span class='kw'>impl</span> <span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>EntityTag</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>weak</span> {
-            <span class='boolval'>true</span> <span class='op'>=&gt;</span> <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;W/\&quot;{}\&quot;&quot;</span>, <span class='self'>self</span>.<span class='ident'>tag</span>),
-            <span class='boolval'>false</span> <span class='op'>=&gt;</span> <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;\&quot;{}\&quot;&quot;</span>, <span class='self'>self</span>.<span class='ident'>tag</span>),
+            <span class='boolvalue'>true</span> <span class='op'>=&gt;</span> <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;W/\&quot;{}\&quot;&quot;</span>, <span class='self'>self</span>.<span class='ident'>tag</span>),
+            <span class='boolvalue'>false</span> <span class='op'>=&gt;</span> <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;\&quot;{}\&quot;&quot;</span>, <span class='self'>self</span>.<span class='ident'>tag</span>),
         }
     }
 }
@@ -388,9 +388,9 @@
         <span class='kw'>if</span> <span class='ident'>slice</span>.<span class='ident'>starts_with</span>(<span class='string'>&#39;&quot;&#39;</span>) <span class='op'>&amp;&amp;</span> <span class='ident'>check_slice_validity</span>(<span class='kw-2'>&amp;</span><span class='ident'>slice</span>[<span class='number'>1</span>..<span class='ident'>length</span><span class='op'>-</span><span class='number'>1</span>]) {
             <span class='comment'>// No need to check if the last char is a DQUOTE,</span>
             <span class='comment'>// we already did that above.</span>
-            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>EntityTag</span> { <span class='ident'>weak</span>: <span class='boolval'>false</span>, <span class='ident'>tag</span>: <span class='ident'>slice</span>[<span class='number'>1</span>..<span class='ident'>length</span><span class='op'>-</span><span class='number'>1</span>].<span class='ident'>to_owned</span>() });
+            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>EntityTag</span> { <span class='ident'>weak</span>: <span class='boolvalue'>false</span>, <span class='ident'>tag</span>: <span class='ident'>slice</span>[<span class='number'>1</span>..<span class='ident'>length</span><span class='op'>-</span><span class='number'>1</span>].<span class='ident'>to_owned</span>() });
         } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>slice</span>.<span class='ident'>starts_with</span>(<span class='string'>&quot;W/\&quot;&quot;</span>) <span class='op'>&amp;&amp;</span> <span class='ident'>check_slice_validity</span>(<span class='kw-2'>&amp;</span><span class='ident'>slice</span>[<span class='number'>3</span>..<span class='ident'>length</span><span class='op'>-</span><span class='number'>1</span>]) {
-            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>EntityTag</span> { <span class='ident'>weak</span>: <span class='boolval'>true</span>, <span class='ident'>tag</span>: <span class='ident'>slice</span>[<span class='number'>3</span>..<span class='ident'>length</span><span class='op'>-</span><span class='number'>1</span>].<span class='ident'>to_owned</span>() });
+            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>EntityTag</span> { <span class='ident'>weak</span>: <span class='boolvalue'>true</span>, <span class='ident'>tag</span>: <span class='ident'>slice</span>[<span class='number'>3</span>..<span class='ident'>length</span><span class='op'>-</span><span class='number'>1</span>].<span class='ident'>to_owned</span>() });
         }
         <span class='prelude-val'>Err</span>(::<span class='ident'>Error</span>::<span class='ident'>Header</span>)
     }
@@ -398,7 +398,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>EntityTag</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>EntityTag</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_etag_parse_success</span>() {
@@ -495,6 +495,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

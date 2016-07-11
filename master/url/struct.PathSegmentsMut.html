@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-526' class='srclink' href='../src/url/path_segments.rs.html#29-34' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-521' class='srclink' href='../src/url/path_segments.rs.html#29-34' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct PathSegmentsMut&lt;'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Exposes methods to manipulate the path of an URL that is not cannot-be-base.</p>
@@ -64,7 +64,8 @@ There is always at least one segment (which may be the empty string).</p>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>url</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://example.net/foo/index.html&quot;</span>).<span class='ident'>unwrap</span>();
 <span class='ident'>url</span>.<span class='ident'>path_segments_mut</span>().<span class='ident'>unwrap</span>().<span class='ident'>pop</span>().<span class='ident'>push</span>(<span class='string'>&quot;img&quot;</span>).<span class='ident'>push</span>(<span class='string'>&quot;2/100%.png&quot;</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>url</span>.<span class='ident'>as_str</span>(), <span class='string'>&quot;http://example.net/foo/img/2%2F100%25.png&quot;</span>);</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../url/struct.PathSegmentsMut.html' title='url::PathSegmentsMut'>PathSegmentsMut</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.clear' class='method'><code>fn <a href='#method.clear' class='fnname'>clear</a>(&amp;mut self) -&gt; &amp;mut Self</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../url/struct.PathSegmentsMut.html' title='url::PathSegmentsMut'>PathSegmentsMut</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-536' class='srclink' href='../src/url/path_segments.rs.html#54-186' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clear' class='method'><code>fn <a href='#method.clear' class='fnname'>clear</a>(&amp;mut self) -&gt; &amp;mut Self</code></h4>
 <div class='docblock'><p>Remove all segments in the path, leaving the minimal <code>url.path() == &quot;/&quot;</code>.</p>
 
 <p>Returns <code>&amp;mut Self</code> so that method calls can be chained.</p>
@@ -106,7 +107,7 @@ unless it is also the initial slash (so this does nothing if <code>url.path() ==
 <p>See the documentation for <code>.extend()</code>.</p>
 
 <p>Returns <code>&amp;mut Self</code> so that method calls can be chained.</p>
-</div><h4 id='method.extend' class='method'><code>fn <a href='#method.extend' class='fnname'>extend</a>&lt;I&gt;(&amp;mut self, segments: I) -&gt; &amp;mut Self <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, I::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</span></code></h4>
+</div><h4 id='method.extend' class='method'><code>fn <a href='#method.extend' class='fnname'>extend</a>&lt;I&gt;(&amp;mut self, segments: I) -&gt; &amp;mut Self <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/traits/trait.IntoIterator.html' title='core::iter::traits::IntoIterator'>IntoIterator</a>, I::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</span></code></h4>
 <div class='docblock'><p>Append each segment from the given iterator at the end of this URL’s path.</p>
 
 <p>Each segment is percent-encoded like in <code>Url::parse</code> or <code>Url::join</code>,
@@ -142,8 +143,10 @@ a segment is ignored if it is <code>&quot;.&quot;</code> or <code>&quot;..&quot;
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>url</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;https://github.com/servo&quot;</span>).<span class='ident'>unwrap</span>();
 <span class='ident'>url</span>.<span class='ident'>path_segments_mut</span>().<span class='ident'>unwrap</span>().<span class='ident'>extend</span>(<span class='kw-2'>&amp;</span>[<span class='string'>&quot;..&quot;</span>, <span class='string'>&quot;rust-url&quot;</span>, <span class='string'>&quot;.&quot;</span>, <span class='string'>&quot;pulls&quot;</span>]);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>url</span>.<span class='ident'>as_str</span>(), <span class='string'>&quot;https://github.com/servo/rust-url/pulls&quot;</span>);</pre>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../url/struct.PathSegmentsMut.html' title='url::PathSegmentsMut'>PathSegmentsMut</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../url/struct.PathSegmentsMut.html' title='url::PathSegmentsMut'>PathSegmentsMut</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-532' class='srclink' href='../src/url/path_segments.rs.html#48-52' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -166,6 +169,8 @@ a segment is ignored if it is <code>&quot;.&quot;</code> or <code>&quot;..&quot;
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

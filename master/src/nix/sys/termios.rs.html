@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.1/src/sys/termios.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/nix-0.5.1/src/sys/termios.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>termios.rs.html -- source</title>
@@ -553,7 +553,7 @@
 
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;dragonfly&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>))]</span>
     <span class='kw'>mod</span> <span class='ident'>non_android</span> {
-        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>consts</span>::<span class='op'>*</span>;
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>consts</span>::<span class='op'>*</span>;
         <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_int</span>;
 
         <span class='comment'>// `Termios` contains bitflags which are not considered</span>
@@ -584,7 +584,7 @@
     <span class='kw'>mod</span> <span class='ident'>android</span> {
         <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>funcs</span>::<span class='ident'>bsd44</span>::<span class='ident'>ioctl</span>;
         <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_int</span>;
-        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>consts</span>::<span class='op'>*</span>;
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>consts</span>::<span class='op'>*</span>;
 
         <span class='kw'>const</span> <span class='ident'>TCGETS</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x5401</span>;
         <span class='kw'>const</span> <span class='ident'>TCSBRK</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x5409</span>;
@@ -1057,6 +1057,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

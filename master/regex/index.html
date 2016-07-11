@@ -432,7 +432,7 @@ our time complexity guarantees, but can lead to unbounded memory growth
 proportional to the size of the input. As a stopgap, the DFA is only
 allowed to store a fixed number of states. (When the limit is reached, its
 states are wiped and continues on, possibly duplicating previous work. If
-the limit is reached too frequently, it gives up and hands control of to
+the limit is reached too frequently, it gives up and hands control off to
 another matching engine with fixed memory requirements.)</p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
@@ -613,6 +613,8 @@ regular expression.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

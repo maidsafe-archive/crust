@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/tmp_mio-0.5.2/src/sys/unix/socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/tmp_mio-0.5.2/src/sys/unix/socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>socket.rs.html -- source</title>
@@ -116,7 +116,7 @@
     <span class='doccomment'>/// Returns the value for the `SO_LINGER` socket option.</span>
     <span class='kw'>fn</span> <span class='ident'>linger</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>linger</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>nix</span>::<span class='ident'>getsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>Linger</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>));
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>));
 
         <span class='kw'>if</span> <span class='ident'>linger</span>.<span class='ident'>l_onoff</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
             <span class='prelude-val'>Ok</span>(<span class='ident'>linger</span>.<span class='ident'>l_onoff</span> <span class='kw'>as</span> <span class='ident'>usize</span>)
@@ -133,22 +133,22 @@
         };
 
         <span class='ident'>nix</span>::<span class='ident'>setsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>Linger</span>, <span class='kw-2'>&amp;</span><span class='ident'>linger</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_reuseaddr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>val</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='ident'>nix</span>::<span class='ident'>setsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>ReuseAddr</span>, <span class='kw-2'>&amp;</span><span class='ident'>val</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_reuseport</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>val</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='ident'>nix</span>::<span class='ident'>setsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>ReusePort</span>, <span class='kw-2'>&amp;</span><span class='ident'>val</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_tcp_nodelay</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>val</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='ident'>nix</span>::<span class='ident'>setsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(),  <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>TcpNoDelay</span>, <span class='kw-2'>&amp;</span><span class='ident'>val</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
     }
 
     <span class='doccomment'>/// Sets the `SO_RCVTIMEO` socket option to the supplied number of</span>
@@ -159,7 +159,7 @@
     <span class='kw'>fn</span> <span class='ident'>set_read_timeout_ms</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>val</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>t</span> <span class='op'>=</span> <span class='ident'>nix</span>::<span class='ident'>TimeVal</span>::<span class='ident'>milliseconds</span>(<span class='ident'>val</span> <span class='kw'>as</span> <span class='ident'>i64</span>);
         <span class='ident'>nix</span>::<span class='ident'>setsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>ReceiveTimeout</span>, <span class='kw-2'>&amp;</span><span class='ident'>t</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
     }
 
     <span class='doccomment'>/// Sets the `SO_SNDTIMEO` socket option to the supplied number of</span>
@@ -170,7 +170,7 @@
     <span class='kw'>fn</span> <span class='ident'>set_write_timeout_ms</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>val</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>t</span> <span class='op'>=</span> <span class='ident'>nix</span>::<span class='ident'>TimeVal</span>::<span class='ident'>milliseconds</span>(<span class='ident'>val</span> <span class='kw'>as</span> <span class='ident'>i64</span>);
         <span class='ident'>nix</span>::<span class='ident'>setsockopt</span>(<span class='self'>self</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>nix</span>::<span class='ident'>sockopt</span>::<span class='ident'>SendTimeout</span>, <span class='kw-2'>&amp;</span><span class='ident'>t</span>)
-            .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
+            .<span class='ident'>map_err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>)
     }
 }
 </pre>
@@ -197,6 +197,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

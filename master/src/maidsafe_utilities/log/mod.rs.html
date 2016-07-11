@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.8.0/src/log/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.8.0/src/log/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -863,7 +863,7 @@
 
         <span class='kw'>let</span> <span class='ident'>file_appender</span> <span class='op'>=</span> <span class='ident'>AsyncFileAppender</span>::<span class='ident'>builder</span>(<span class='ident'>file_path</span>)
             .<span class='ident'>pattern</span>(<span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>))
-            .<span class='ident'>append</span>(<span class='boolval'>false</span>)
+            .<span class='ident'>append</span>(<span class='boolvalue'>false</span>)
             .<span class='ident'>build</span>();
         <span class='kw'>let</span> <span class='ident'>file_appender</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>file_appender</span> {
             <span class='prelude-val'>Ok</span>(<span class='ident'>appender</span>) <span class='op'>=&gt;</span> <span class='ident'>appender</span>,
@@ -1054,7 +1054,7 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>ParseLoggerError</span> {
-    <span class='kw'>fn</span> <span class='ident'>from</span>(_: ()) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(_: ()) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>ParseLoggerError</span>
     }
 }
@@ -1109,8 +1109,8 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>parse_loggers</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>parse_loggers</span>;
 
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
@@ -1230,7 +1230,7 @@
 
         <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
 
-        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_server</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>, <span class='boolval'>true</span>, <span class='boolval'>false</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_server</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>, <span class='boolvalue'>true</span>, <span class='boolvalue'>false</span>));
 
         <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
         <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;This is message 0&quot;</span>);
@@ -1287,7 +1287,7 @@
         <span class='comment'>// Allow sometime for server to start listening</span>
         <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>100</span>));
 
-        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_web_socket</span>(<span class='string'>&quot;ws://127.0.0.1:44444&quot;</span>, <span class='boolval'>false</span>, <span class='boolval'>false</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_web_socket</span>(<span class='string'>&quot;ws://127.0.0.1:44444&quot;</span>, <span class='boolvalue'>false</span>, <span class='boolvalue'>false</span>));
 
         <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
         <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;This is message 0&quot;</span>);
@@ -1329,6 +1329,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

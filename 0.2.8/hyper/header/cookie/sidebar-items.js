@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Cookie","`Cookie` header, defined in RFC6265"]]});

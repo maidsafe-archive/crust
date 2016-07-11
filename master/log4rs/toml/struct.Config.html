@@ -47,11 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-838' class='srclink' href='../../src/log4rs/toml/mod.rs.html#243-246' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-814' class='srclink' href='../../src/log4rs/toml/mod.rs.html#243-246' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Config {
     // some fields omitted
 }</pre><div class='docblock'><p>A deserialized TOML log4rs configuration.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../log4rs/toml/struct.Config.html' title='log4rs::toml::Config'>Config</a></code></h3><div class='impl-items'><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(config: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, creator: &amp;<a class='struct' href='../../log4rs/toml/struct.Creator.html' title='log4rs::toml::Creator'>Creator</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../log4rs/toml/struct.Config.html' title='log4rs::toml::Config'>Config</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='../../log4rs/toml/struct.Errors.html' title='log4rs::toml::Errors'>Errors</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='struct' href='../../log4rs/toml/struct.ParseErrors.html' title='log4rs::toml::ParseErrors'>ParseErrors</a>&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../log4rs/toml/struct.Config.html' title='log4rs::toml::Config'>Config</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-817' class='srclink' href='../../src/log4rs/toml/mod.rs.html#248-339' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(config: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, creator: &amp;<a class='struct' href='../../log4rs/toml/struct.Creator.html' title='log4rs::toml::Creator'>Creator</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../log4rs/toml/struct.Config.html' title='log4rs::toml::Config'>Config</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='../../log4rs/toml/struct.Errors.html' title='log4rs::toml::Errors'>Errors</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>, <a class='struct' href='../../log4rs/toml/struct.ParseErrors.html' title='log4rs::toml::ParseErrors'>ParseErrors</a>&gt;</code></h4>
 <div class='docblock'><p>Creates a log4rs <code>Config</code> from the specified TOML config string and <code>Creator</code>.</p>
 </div><h4 id='method.refresh_rate' class='method'><code>fn <a href='#method.refresh_rate' class='fnname'>refresh_rate</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../time/duration/struct.Duration.html' title='time::duration::Duration'>Duration</a>&gt;</code></h4>
 <div class='docblock'><p>Returns the requested refresh rate.</p>
@@ -80,6 +81,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

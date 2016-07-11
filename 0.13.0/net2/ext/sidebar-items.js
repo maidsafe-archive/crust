@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["TcpListenerExt","Extension methods for the standard [`TcpListener` type][link] in `std::net`."],["TcpStreamExt","Extension methods for the standard [`TcpStream` type][link] in `std::net`."],["UdpSocketExt","Extension methods for the standard [`UdpSocket` type][link] in `std::net`."]]});

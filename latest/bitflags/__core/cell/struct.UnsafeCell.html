@@ -43,14 +43,14 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>cell</a>::<wbr><a class='struct' href=''>UnsafeCell</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>cell</a>::<wbr><a class='struct' href=''>UnsafeCell</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-28356' class='srclink' href='https://doc.rust-lang.org/nightly/core/cell/struct.UnsafeCell.html?gotosrc=28356' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-30711' class='srclink' href='https://doc.rust-lang.org/nightly/core/cell/struct.UnsafeCell.html?gotosrc=30711' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct UnsafeCell&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     // some fields omitted
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>The core primitive for interior mutability in Rust.</p>
+}</pre><div class='docblock'><p>The core primitive for interior mutability in Rust.</p>
 
 <p><code>UnsafeCell&lt;T&gt;</code> is a type that wraps some <code>T</code> and indicates unsafe interior operations on the
 wrapped type. Types with an <code>UnsafeCell&lt;T&gt;</code> field are considered to have an &#39;unsafe interior&#39;.
@@ -69,23 +69,14 @@ mutable. In general, transmuting an <code>&amp;T</code> type into an <code>&amp;
 }
 
 <span class='kw'>unsafe</span> <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Sync</span> <span class='kw'>for</span> <span class='ident'>NotThreadSafe</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {}</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
-<div class='docblock'><p>Gets a mutable pointer to the wrapped value.</p>
-
-<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
-<pre class='rust rust-example-rendered'>
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
-
-<span class='kw'>let</span> <span class='ident'>uc</span> <span class='op'>=</span> <span class='ident'>UnsafeCell</span>::<span class='ident'>new</span>(<span class='number'>5</span>);
-
-<span class='kw'>let</span> <span class='ident'>five</span> <span class='op'>=</span> <span class='ident'>uc</span>.<span class='ident'>get</span>();</pre>
-</div></div><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(value: T) -&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(value: T) -&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Constructs a new instance of <code>UnsafeCell</code> which will wrap the specified
 value.</p>
 
 <p>All access to the inner value through methods is <code>unsafe</code>.</p>
 
-<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
 
@@ -97,15 +88,33 @@ value.</p>
 <p>This function is unsafe because this thread or another thread may currently be
 inspecting the inner value.</p>
 
-<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
 
 <span class='kw'>let</span> <span class='ident'>uc</span> <span class='op'>=</span> <span class='ident'>UnsafeCell</span>::<span class='ident'>new</span>(<span class='number'>5</span>);
 
 <span class='kw'>let</span> <span class='ident'>five</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>uc</span>.<span class='ident'>into_inner</span>() };</pre>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; !<a class='trait' href='../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code><span class="since">1.9.0</span></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
-</div></section>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
+<div class='docblock'><p>Gets a mutable pointer to the wrapped value.</p>
+
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
+
+<span class='kw'>let</span> <span class='ident'>uc</span> <span class='op'>=</span> <span class='ident'>UnsafeCell</span>::<span class='ident'>new</span>(<span class='number'>5</span>);
+
+<span class='kw'>let</span> <span class='ident'>five</span> <span class='op'>=</span> <span class='ident'>uc</span>.<span class='ident'>get</span>();</pre>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; !<a class='trait' href='../../../bitflags/__core/panic/trait.RefUnwindSafe.html' title='bitflags::__core::panic::RefUnwindSafe'>RefUnwindSafe</a> for <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'><div class='since' title='Stable since Rust version 1.9.0'>1.9.0</div></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; !<a class='trait' href='../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> for <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a></span></code></span><span class='out-of-band'><div class='since' title='Stable since Rust version 1.9.0'>1.9.0</div></span></h3>
+<div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='../../../bitflags/__core/default/trait.Default.html#tymethod.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Returns the &quot;default value&quot; for a type. <a href="../../../bitflags/__core/default/trait.Default.html#tymethod.default">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></span><span class='out-of-band'><div class='since' title='Stable since Rust version 1.9.0'>1.9.0</div></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -128,6 +137,8 @@ inspecting the inner value.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

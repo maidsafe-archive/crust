@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-973' class='srclink' href='../src/log4rs/lib.rs.html#121-124' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-941' class='srclink' href='../src/log4rs/lib.rs.html#121-124' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Append: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static {
     fn <a href='#tymethod.append' class='fnname'>append</a>(&amp;mut self, record: &amp;<a class='struct' href='../log/struct.LogRecord.html' title='log::LogRecord'>LogRecord</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a>&gt;&gt;;
 }</pre><div class='docblock'><p>A trait implemented by log4rs appenders.</p>
@@ -58,8 +58,8 @@
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../log4rs/trait.Append.html' title='log4rs::Append'>Append</a> for <a class='struct' href='../log4rs/appender/struct.FileAppender.html' title='log4rs::appender::FileAppender'>FileAppender</a></code></li>
-<li><code>impl <a class='trait' href='../log4rs/trait.Append.html' title='log4rs::Append'>Append</a> for <a class='struct' href='../log4rs/appender/struct.ConsoleAppender.html' title='log4rs::appender::ConsoleAppender'>ConsoleAppender</a></code></li>
+    <li><code>impl Append for <a class='struct' href='../log4rs/appender/struct.FileAppender.html' title='log4rs::appender::FileAppender'>FileAppender</a></code></li>
+<li><code>impl Append for <a class='struct' href='../log4rs/appender/struct.ConsoleAppender.html' title='log4rs::appender::ConsoleAppender'>ConsoleAppender</a></code></li>
 </ul><script type="text/javascript" async
                          src="../implementors/log4rs/trait.Append.js">
                  </script></section>
@@ -85,6 +85,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

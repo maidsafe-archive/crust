@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/net2-0.2.24/src/ext.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/net2-0.2.25/src/ext.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>ext.rs.html -- source</title>
@@ -1298,6 +1298,7 @@
 <span id="1254">1254</span>
 <span id="1255">1255</span>
 <span id="1256">1256</span>
+<span id="1257">1257</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1326,7 +1327,8 @@
                  <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>,
                  <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>,
                  <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>,
-                 <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>))]</span> {
+                 <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>,
+                 <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;solaris&quot;</span>))]</span> {
         <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_JOIN_GROUP</span> <span class='kw'>as</span> <span class='ident'>IPV6_ADD_MEMBERSHIP</span>;
         <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_LEAVE_GROUP</span> <span class='kw'>as</span> <span class='ident'>IPV6_DROP_MEMBERSHIP</span>;
     } <span class='kw'>else</span> {
@@ -2142,7 +2144,7 @@
 }
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>int2bool</span>(<span class='ident'>n</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-    <span class='kw'>if</span> <span class='ident'>n</span> <span class='op'>==</span> <span class='number'>0</span> {<span class='boolval'>false</span>} <span class='kw'>else</span> {<span class='boolval'>true</span>}
+    <span class='kw'>if</span> <span class='ident'>n</span> <span class='op'>==</span> <span class='number'>0</span> {<span class='boolvalue'>false</span>} <span class='kw'>else</span> {<span class='boolvalue'>true</span>}
 }
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>int2usize</span>(<span class='ident'>n</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
@@ -2470,7 +2472,7 @@
     <span class='doccomment'>/// This is the same as [`TcpStreamExt::set_ttl`][other].</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// [other]: trait.TcpStreamExt.html#tymethod.set_ttl</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ttl</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ttl</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ttl</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ttl</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>IPPROTO_IP</span>, <span class='ident'>IP_TTL</span>, <span class='ident'>ttl</span> <span class='kw'>as</span> <span class='ident'>c_int</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -2480,7 +2482,7 @@
     <span class='doccomment'>/// This is the same as [`TcpStreamExt::set_only_v6`][other].</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// [other]: trait.TcpStreamExt.html#tymethod.set_only_v6</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>only_v6</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>only_v6</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>only_v6</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>only_v6</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>v</span>(<span class='ident'>IPPROTO_IPV6</span>), <span class='ident'>IPV6_V6ONLY</span>, <span class='ident'>only_v6</span> <span class='kw'>as</span> <span class='ident'>c_int</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -2490,7 +2492,7 @@
     <span class='doccomment'>/// This indicates that futher calls to `bind` may allow reuse of local</span>
     <span class='doccomment'>/// addresses. For IPv4 sockets this means that a socket may bind even when</span>
     <span class='doccomment'>/// there&#39;s a socket already listening on this port.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reuse_address</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reuse_address</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>SOL_SOCKET</span>, <span class='ident'>SO_REUSEADDR</span>,
                <span class='ident'>reuse</span> <span class='kw'>as</span> <span class='ident'>c_int</span>).<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -2516,7 +2518,7 @@
     <span class='doccomment'>/// This is the same as [`TcpStreamExt::set_ttl`][other].</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// [other]: trait.TcpStreamExt.html#tymethod.set_ttl</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ttl</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ttl</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ttl</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ttl</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>IPPROTO_IP</span>, <span class='ident'>IP_TTL</span>, <span class='ident'>ttl</span> <span class='kw'>as</span> <span class='ident'>c_int</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -2526,7 +2528,7 @@
     <span class='doccomment'>/// This is the same as [`TcpStream::only_v6`][other].</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// [other]: struct.TcpBuilder.html#method.only_v6</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>only_v6</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>only_v6</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>only_v6</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>only_v6</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>v</span>(<span class='ident'>IPPROTO_IPV6</span>), <span class='ident'>IPV6_V6ONLY</span>, <span class='ident'>only_v6</span> <span class='kw'>as</span> <span class='ident'>c_int</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -2536,7 +2538,7 @@
     <span class='doccomment'>/// This is the same as [`TcpBuilder::reuse_address`][other].</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// [other]: struct.TcpBuilder.html#method.reuse_address</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reuse_address</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reuse_address</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>reuse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>set_opt</span>(<span class='self'>self</span>.<span class='ident'>as_sock</span>(), <span class='ident'>SOL_SOCKET</span>, <span class='ident'>SO_REUSEADDR</span>,
                <span class='ident'>reuse</span> <span class='kw'>as</span> <span class='ident'>c_int</span>).<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='self'>self</span>)
     }
@@ -2579,6 +2581,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

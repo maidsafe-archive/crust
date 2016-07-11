@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.71/src/re_set.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/re_set.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>re_set.rs.html -- source</title>
@@ -567,7 +567,7 @@
     <span class='doccomment'>/// assert!(matches.matched(6));</span>
     <span class='doccomment'>/// ```</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>matches</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>text</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>text_ty</span>) <span class='op'>-&gt;</span> <span class='ident'>SetMatches</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>matches</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='boolval'>false</span>; <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>regex_strings</span>().<span class='ident'>len</span>()];
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>matches</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='boolvalue'>false</span>; <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>regex_strings</span>().<span class='ident'>len</span>()];
         <span class='kw'>let</span> <span class='ident'>any</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>searcher</span>().<span class='ident'>many_matches_at</span>(
             <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>matches</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>as_bytes</span>(<span class='ident'>text</span>), <span class='number'>0</span>);
         <span class='ident'>SetMatches</span> {
@@ -622,7 +622,7 @@
     <span class='kw'>type</span> <span class='ident'>IntoIter</span> <span class='op'>=</span> <span class='ident'>SetMatchesIntoIter</span>;
     <span class='kw'>type</span> <span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>usize</span>;
 
-    <span class='kw'>fn</span> <span class='ident'>into_iter</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Self</span>::<span class='ident'>IntoIter</span> {
+    <span class='kw'>fn</span> <span class='ident'>into_iter</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span>::<span class='ident'>IntoIter</span> {
         <span class='ident'>SetMatchesIntoIter</span>(<span class='self'>self</span>.<span class='ident'>matches</span>.<span class='ident'>into_iter</span>().<span class='ident'>enumerate</span>())
     }
 }
@@ -631,7 +631,7 @@
     <span class='kw'>type</span> <span class='ident'>IntoIter</span> <span class='op'>=</span> <span class='ident'>SetMatchesIter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>;
     <span class='kw'>type</span> <span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>usize</span>;
 
-    <span class='kw'>fn</span> <span class='ident'>into_iter</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Self</span>::<span class='ident'>IntoIter</span> {
+    <span class='kw'>fn</span> <span class='ident'>into_iter</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span>::<span class='ident'>IntoIter</span> {
         <span class='self'>self</span>.<span class='ident'>iter</span>()
     }
 }
@@ -646,8 +646,8 @@
         <span class='kw'>loop</span> {
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>next</span>() {
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>None</span>,
-                <span class='prelude-val'>Some</span>((_, <span class='boolval'>false</span>)) <span class='op'>=&gt;</span> {}
-                <span class='prelude-val'>Some</span>((<span class='ident'>i</span>, <span class='boolval'>true</span>)) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>i</span>),
+                <span class='prelude-val'>Some</span>((_, <span class='boolvalue'>false</span>)) <span class='op'>=&gt;</span> {}
+                <span class='prelude-val'>Some</span>((<span class='ident'>i</span>, <span class='boolvalue'>true</span>)) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>i</span>),
             }
         }
     }
@@ -666,8 +666,8 @@
         <span class='kw'>loop</span> {
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>next</span>() {
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>None</span>,
-                <span class='prelude-val'>Some</span>((_, <span class='kw-2'>&amp;</span><span class='boolval'>false</span>)) <span class='op'>=&gt;</span> {}
-                <span class='prelude-val'>Some</span>((<span class='ident'>i</span>, <span class='kw-2'>&amp;</span><span class='boolval'>true</span>)) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>i</span>),
+                <span class='prelude-val'>Some</span>((_, <span class='kw-2'>&amp;</span><span class='boolvalue'>false</span>)) <span class='op'>=&gt;</span> {}
+                <span class='prelude-val'>Some</span>((<span class='ident'>i</span>, <span class='kw-2'>&amp;</span><span class='boolvalue'>true</span>)) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>i</span>),
             }
         }
     }
@@ -675,7 +675,7 @@
 
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
 <span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>Exec</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>RegexSet</span> {
-    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>exec</span>: <span class='ident'>Exec</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>exec</span>: <span class='ident'>Exec</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>RegexSet</span>(<span class='ident'>exec</span>)
     }
 }
@@ -701,7 +701,7 @@
 
 <span class='macro'>define_set</span><span class='macro'>!</span> {
     <span class='ident'>bytes</span>,
-    <span class='op'>|</span><span class='ident'>exprs</span><span class='op'>|</span> <span class='ident'>ExecBuilder</span>::<span class='ident'>new_many</span>(<span class='ident'>exprs</span>).<span class='ident'>only_utf8</span>(<span class='boolval'>false</span>).<span class='ident'>build</span>(),
+    <span class='op'>|</span><span class='ident'>exprs</span><span class='op'>|</span> <span class='ident'>ExecBuilder</span>::<span class='ident'>new_many</span>(<span class='ident'>exprs</span>).<span class='ident'>only_utf8</span>(<span class='boolvalue'>false</span>).<span class='ident'>build</span>(),
     <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>],
     <span class='ident'>as_bytes_bytes</span>
 }
@@ -729,6 +729,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

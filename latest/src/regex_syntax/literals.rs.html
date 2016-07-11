@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.3.3/src/literals.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-syntax-0.3.4/src/literals.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>literals.rs.html -- source</title>
@@ -1741,14 +1741,14 @@
     <span class='doccomment'>/// returns true.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>union</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>lits</span>: <span class='ident'>Literals</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>num_bytes</span>() <span class='op'>+</span> <span class='ident'>lits</span>.<span class='ident'>num_bytes</span>() <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>limit_size</span> {
-            <span class='kw'>return</span> <span class='boolval'>false</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
         }
         <span class='kw'>if</span> <span class='ident'>lits</span>.<span class='ident'>is_empty</span>() {
             <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>push</span>(<span class='ident'>Lit</span>::<span class='ident'>empty</span>());
         } <span class='kw'>else</span> {
             <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>extend</span>(<span class='ident'>lits</span>.<span class='ident'>lits</span>);
         }
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Extends this set with another set.</span>
@@ -1760,7 +1760,7 @@
     <span class='doccomment'>/// product succeeds, it returns true.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cross_product</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>lits</span>: <span class='kw-2'>&amp;</span><span class='ident'>Literals</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='ident'>lits</span>.<span class='ident'>is_empty</span>() {
-            <span class='kw'>return</span> <span class='boolval'>true</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>true</span>;
         }
         <span class='comment'>// Check that we make sure we stay in our limits.</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>size_after</span>;
@@ -1782,7 +1782,7 @@
             }
         }
         <span class='kw'>if</span> <span class='ident'>size_after</span> <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>limit_size</span> {
-            <span class='kw'>return</span> <span class='boolval'>false</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
         }
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>base</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>remove_complete</span>();
@@ -1796,7 +1796,7 @@
                 <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>push</span>(<span class='ident'>self_lit</span>);
             }
         }
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Extends each literal in this set with the bytes given.</span>
@@ -1812,7 +1812,7 @@
         <span class='comment'>// a literal set containing just `bytes`, but we can be smarter about</span>
         <span class='comment'>// taking shorter prefixes of `bytes` if they&#39;ll fit.</span>
         <span class='kw'>if</span> <span class='ident'>bytes</span>.<span class='ident'>is_empty</span>() {
-            <span class='kw'>return</span> <span class='boolval'>true</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>true</span>;
         }
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>is_empty</span>() {
             <span class='kw'>let</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='ident'>cmp</span>::<span class='ident'>min</span>(<span class='self'>self</span>.<span class='ident'>limit_size</span>, <span class='ident'>bytes</span>.<span class='ident'>len</span>());
@@ -1822,7 +1822,7 @@
         }
         <span class='kw'>let</span> <span class='ident'>size</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>num_bytes</span>();
         <span class='kw'>if</span> <span class='ident'>size</span> <span class='op'>+</span> <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='self'>self</span>.<span class='ident'>limit_size</span> {
-            <span class='kw'>return</span> <span class='boolval'>false</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
         }
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='number'>1</span>;
         <span class='kw'>while</span> <span class='ident'>size</span> <span class='op'>+</span> (<span class='ident'>i</span> <span class='op'>*</span> <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>len</span>()) <span class='op'>&lt;=</span> <span class='self'>self</span>.<span class='ident'>limit_size</span>
@@ -1837,7 +1837,7 @@
                 }
             }
         }
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Adds the given literal to this set.</span>
@@ -1846,17 +1846,17 @@
     <span class='doccomment'>/// big.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>lit</span>: <span class='ident'>Lit</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>num_bytes</span>() <span class='op'>+</span> <span class='ident'>lit</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>limit_size</span> {
-            <span class='kw'>return</span> <span class='boolval'>false</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
         }
         <span class='self'>self</span>.<span class='ident'>lits</span>.<span class='ident'>push</span>(<span class='ident'>lit</span>);
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Extends each literal in this set with the character class given.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns false if the character class was too big to add.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_char_class</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cls</span>: <span class='kw-2'>&amp;</span><span class='ident'>CharClass</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='self'>self</span>.<span class='ident'>_add_char_class</span>(<span class='ident'>cls</span>, <span class='boolval'>false</span>)
+        <span class='self'>self</span>.<span class='ident'>_add_char_class</span>(<span class='ident'>cls</span>, <span class='boolvalue'>false</span>)
     }
 
     <span class='doccomment'>/// Extends each literal in this set with the character class given,</span>
@@ -1864,14 +1864,14 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns false if the character class was too big to add.</span>
     <span class='kw'>fn</span> <span class='ident'>add_char_class_reverse</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cls</span>: <span class='kw-2'>&amp;</span><span class='ident'>CharClass</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='self'>self</span>.<span class='ident'>_add_char_class</span>(<span class='ident'>cls</span>, <span class='boolval'>true</span>)
+        <span class='self'>self</span>.<span class='ident'>_add_char_class</span>(<span class='ident'>cls</span>, <span class='boolvalue'>true</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>_add_char_class</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cls</span>: <span class='kw-2'>&amp;</span><span class='ident'>CharClass</span>, <span class='ident'>reverse</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>char</span>;
 
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>class_exceeds_limits</span>(<span class='ident'>cls</span>.<span class='ident'>num_chars</span>()) {
-            <span class='kw'>return</span> <span class='boolval'>false</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
         }
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>base</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>remove_complete</span>();
         <span class='kw'>if</span> <span class='ident'>base</span>.<span class='ident'>is_empty</span>() {
@@ -1890,7 +1890,7 @@
                 }
             }
         }
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Extends each literal in this set with the byte class given.</span>
@@ -1898,7 +1898,7 @@
     <span class='doccomment'>/// Returns false if the byte class was too big to add.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_byte_class</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>cls</span>: <span class='kw-2'>&amp;</span><span class='ident'>ByteClass</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>class_exceeds_limits</span>(<span class='ident'>cls</span>.<span class='ident'>num_bytes</span>()) {
-            <span class='kw'>return</span> <span class='boolval'>false</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
         }
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>base</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>remove_complete</span>();
         <span class='kw'>if</span> <span class='ident'>base</span>.<span class='ident'>is_empty</span>() {
@@ -1913,7 +1913,7 @@
                 }
             }
         }
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Cuts every member of this set. When a member is cut, it can never</span>
@@ -1960,7 +1960,7 @@
     <span class='doccomment'>/// The size given should correspond to the number of items in the class.</span>
     <span class='kw'>fn</span> <span class='ident'>class_exceeds_limits</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>size</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='ident'>size</span> <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>limit_class</span> {
-            <span class='kw'>return</span> <span class='boolval'>true</span>;
+            <span class='kw'>return</span> <span class='boolvalue'>true</span>;
         }
         <span class='comment'>// This is an approximation since codepoints in a char class can encode</span>
         <span class='comment'>// to 1-4 bytes.</span>
@@ -1987,11 +1987,11 @@
 <span class='kw'>fn</span> <span class='ident'>prefixes</span>(<span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='ident'>Expr</span>, <span class='ident'>lits</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Literals</span>) {
     <span class='kw'>use</span> <span class='ident'>Expr</span>::<span class='op'>*</span>;
     <span class='kw'>match</span> <span class='op'>*</span><span class='ident'>expr</span> {
-        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolval'>false</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolvalue'>false</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>s</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>chars</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>().<span class='ident'>collect</span>();
             <span class='ident'>lits</span>.<span class='ident'>cross_add</span>(<span class='ident'>s</span>.<span class='ident'>as_bytes</span>());
         }
-        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolval'>true</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolvalue'>true</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>c</span> <span class='kw'>in</span> <span class='ident'>chars</span> {
                 <span class='kw'>let</span> <span class='ident'>cls</span> <span class='op'>=</span> <span class='ident'>CharClass</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
                     <span class='ident'>ClassRange</span> { <span class='ident'>start</span>: <span class='ident'>c</span>, <span class='ident'>end</span>: <span class='ident'>c</span> },
@@ -2002,10 +2002,10 @@
                 }
             }
         }
-        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolval'>false</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolvalue'>false</span> } <span class='op'>=&gt;</span> {
             <span class='ident'>lits</span>.<span class='ident'>cross_add</span>(<span class='ident'>bytes</span>);
         }
-        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolval'>true</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolvalue'>true</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>b</span> <span class='kw'>in</span> <span class='ident'>bytes</span> {
                 <span class='kw'>let</span> <span class='ident'>cls</span> <span class='op'>=</span> <span class='ident'>ByteClass</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
                     <span class='ident'>ByteRange</span> { <span class='ident'>start</span>: <span class='ident'>b</span>, <span class='ident'>end</span>: <span class='ident'>b</span> },
@@ -2074,13 +2074,13 @@
 <span class='kw'>fn</span> <span class='ident'>suffixes</span>(<span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='ident'>Expr</span>, <span class='ident'>lits</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Literals</span>) {
     <span class='kw'>use</span> <span class='ident'>Expr</span>::<span class='op'>*</span>;
     <span class='kw'>match</span> <span class='op'>*</span><span class='ident'>expr</span> {
-        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolval'>false</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolvalue'>false</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>s</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>chars</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>().<span class='ident'>collect</span>();
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='ident'>s</span>.<span class='ident'>into_bytes</span>();
             <span class='ident'>bytes</span>.<span class='ident'>reverse</span>();
             <span class='ident'>lits</span>.<span class='ident'>cross_add</span>(<span class='kw-2'>&amp;</span><span class='ident'>bytes</span>);
         }
-        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolval'>true</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>Literal</span> { <span class='kw-2'>ref</span> <span class='ident'>chars</span>, <span class='ident'>casei</span>: <span class='boolvalue'>true</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>c</span> <span class='kw'>in</span> <span class='ident'>chars</span>.<span class='ident'>iter</span>().<span class='ident'>rev</span>() {
                 <span class='kw'>let</span> <span class='ident'>cls</span> <span class='op'>=</span> <span class='ident'>CharClass</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
                     <span class='ident'>ClassRange</span> { <span class='ident'>start</span>: <span class='ident'>c</span>, <span class='ident'>end</span>: <span class='ident'>c</span> },
@@ -2091,11 +2091,11 @@
                 }
             }
         }
-        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolval'>false</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolvalue'>false</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>let</span> <span class='ident'>b</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>bytes</span>.<span class='ident'>iter</span>().<span class='ident'>rev</span>().<span class='ident'>cloned</span>().<span class='ident'>collect</span>();
             <span class='ident'>lits</span>.<span class='ident'>cross_add</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>);
         }
-        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolval'>true</span> } <span class='op'>=&gt;</span> {
+        <span class='ident'>LiteralBytes</span> { <span class='kw-2'>ref</span> <span class='ident'>bytes</span>, <span class='ident'>casei</span>: <span class='boolvalue'>true</span> } <span class='op'>=&gt;</span> {
             <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>b</span> <span class='kw'>in</span> <span class='ident'>bytes</span>.<span class='ident'>iter</span>().<span class='ident'>rev</span>() {
                 <span class='kw'>let</span> <span class='ident'>cls</span> <span class='op'>=</span> <span class='ident'>ByteClass</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
                     <span class='ident'>ByteRange</span> { <span class='ident'>start</span>: <span class='ident'>b</span>, <span class='ident'>end</span>: <span class='ident'>b</span> },
@@ -2237,7 +2237,7 @@
                 <span class='ident'>lits</span>.<span class='ident'>cut</span>();
             }
         }
-        <span class='kw'>if</span> <span class='ident'>max</span>.<span class='ident'>map_or</span>(<span class='boolval'>true</span>, <span class='op'>|</span><span class='ident'>max</span><span class='op'>|</span> <span class='ident'>min</span> <span class='op'>&lt;</span> <span class='ident'>max</span>) {
+        <span class='kw'>if</span> <span class='ident'>max</span>.<span class='ident'>map_or</span>(<span class='boolvalue'>true</span>, <span class='op'>|</span><span class='ident'>max</span><span class='op'>|</span> <span class='ident'>min</span> <span class='op'>&lt;</span> <span class='ident'>max</span>) {
             <span class='ident'>lits</span>.<span class='ident'>cut</span>();
         }
     }
@@ -2280,12 +2280,12 @@
 <span class='kw'>impl</span> <span class='ident'>Lit</span> {
     <span class='doccomment'>/// Returns a new complete literal with the bytes given.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>bytes</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Lit</span> {
-        <span class='ident'>Lit</span> { <span class='ident'>v</span>: <span class='ident'>bytes</span>, <span class='ident'>cut</span>: <span class='boolval'>false</span> }
+        <span class='ident'>Lit</span> { <span class='ident'>v</span>: <span class='ident'>bytes</span>, <span class='ident'>cut</span>: <span class='boolvalue'>false</span> }
     }
 
     <span class='doccomment'>/// Returns a new complete empty literal.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>empty</span>() <span class='op'>-&gt;</span> <span class='ident'>Lit</span> {
-        <span class='ident'>Lit</span> { <span class='ident'>v</span>: <span class='macro'>vec</span><span class='macro'>!</span>[], <span class='ident'>cut</span>: <span class='boolval'>false</span> }
+        <span class='ident'>Lit</span> { <span class='ident'>v</span>: <span class='macro'>vec</span><span class='macro'>!</span>[], <span class='ident'>cut</span>: <span class='boolvalue'>false</span> }
     }
 
     <span class='doccomment'>/// Returns true if this literal was &quot;cut.&quot;</span>
@@ -2295,7 +2295,7 @@
 
     <span class='doccomment'>/// Cuts this literal.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
-        <span class='self'>self</span>.<span class='ident'>cut</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+        <span class='self'>self</span>.<span class='ident'>cut</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
     }
 }
 
@@ -2391,7 +2391,7 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 
     <span class='kw'>use</span> {<span class='ident'>Expr</span>, <span class='ident'>ExprBuilder</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>Literals</span>, <span class='ident'>Lit</span>, <span class='ident'>escape_bytes</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>Literals</span>, <span class='ident'>Lit</span>, <span class='ident'>escape_bytes</span>};
 
     <span class='comment'>// To make test failures easier to read.</span>
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>)]</span>
@@ -2449,9 +2449,9 @@
     }
 
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>non_snake_case</span>)]</span>
-    <span class='kw'>fn</span> <span class='ident'>C</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>ULit</span> { <span class='ident'>ULit</span> { <span class='ident'>v</span>: <span class='ident'>s</span>.<span class='ident'>to_owned</span>(), <span class='ident'>cut</span>: <span class='boolval'>true</span> } }
+    <span class='kw'>fn</span> <span class='ident'>C</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>ULit</span> { <span class='ident'>ULit</span> { <span class='ident'>v</span>: <span class='ident'>s</span>.<span class='ident'>to_owned</span>(), <span class='ident'>cut</span>: <span class='boolvalue'>true</span> } }
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>non_snake_case</span>)]</span>
-    <span class='kw'>fn</span> <span class='ident'>M</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>ULit</span> { <span class='ident'>ULit</span> { <span class='ident'>v</span>: <span class='ident'>s</span>.<span class='ident'>to_owned</span>(), <span class='ident'>cut</span>: <span class='boolval'>false</span> } }
+    <span class='kw'>fn</span> <span class='ident'>M</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>ULit</span> { <span class='ident'>ULit</span> { <span class='ident'>v</span>: <span class='ident'>s</span>.<span class='ident'>to_owned</span>(), <span class='ident'>cut</span>: <span class='boolvalue'>false</span> } }
 
     <span class='kw'>fn</span> <span class='ident'>prefixes</span>(<span class='ident'>lits</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Literals</span>, <span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='ident'>Expr</span>) {
         <span class='ident'>lits</span>.<span class='ident'>union_prefixes</span>(<span class='ident'>expr</span>);
@@ -2488,7 +2488,7 @@
                 <span class='kw'>let</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>expr</span>.<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>which</span>();
                 <span class='macro'>assert_lit_eq</span><span class='macro'>!</span>(<span class='ident'>Unicode</span>, <span class='ident'>lits</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lit</span>),<span class='op'>*</span>);
 
-                <span class='kw'>let</span> <span class='ident'>expr</span> <span class='op'>=</span> <span class='ident'>ExprBuilder</span>::<span class='ident'>new</span>().<span class='ident'>allow_bytes</span>(<span class='boolval'>true</span>).<span class='ident'>unicode</span>(<span class='boolval'>false</span>)
+                <span class='kw'>let</span> <span class='ident'>expr</span> <span class='op'>=</span> <span class='ident'>ExprBuilder</span>::<span class='ident'>new</span>().<span class='ident'>allow_bytes</span>(<span class='boolvalue'>true</span>).<span class='ident'>unicode</span>(<span class='boolvalue'>false</span>)
                                        .<span class='ident'>parse</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>).<span class='ident'>unwrap</span>();
                 <span class='kw'>let</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>expr</span>.<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>which</span>();
                 <span class='macro'>assert_lit_eq</span><span class='macro'>!</span>(<span class='ident'>Bytes</span>, <span class='ident'>lits</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lit</span>),<span class='op'>*</span>);
@@ -2620,7 +2620,7 @@
                 <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>which</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>lits</span>, <span class='kw-2'>&amp;</span><span class='ident'>expr</span>);
                 <span class='macro'>assert_lit_eq</span><span class='macro'>!</span>(<span class='ident'>Unicode</span>, <span class='ident'>lits</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lit</span>),<span class='op'>*</span>);
 
-                <span class='kw'>let</span> <span class='ident'>expr</span> <span class='op'>=</span> <span class='ident'>ExprBuilder</span>::<span class='ident'>new</span>().<span class='ident'>allow_bytes</span>(<span class='boolval'>true</span>).<span class='ident'>unicode</span>(<span class='boolval'>false</span>)
+                <span class='kw'>let</span> <span class='ident'>expr</span> <span class='op'>=</span> <span class='ident'>ExprBuilder</span>::<span class='ident'>new</span>().<span class='ident'>allow_bytes</span>(<span class='boolvalue'>true</span>).<span class='ident'>unicode</span>(<span class='boolvalue'>false</span>)
                                        .<span class='ident'>parse</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>).<span class='ident'>unwrap</span>();
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>Literals</span>::<span class='ident'>empty</span>();
                 <span class='ident'>lits</span>.<span class='ident'>set_limit_size</span>(<span class='number'>20</span>).<span class='ident'>set_limit_class</span>(<span class='number'>10</span>);
@@ -2818,7 +2818,7 @@
                     .<span class='ident'>into_iter</span>()
                     .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>|</span> <span class='ident'>Lit</span> {
                         <span class='ident'>v</span>: <span class='ident'>s</span>.<span class='ident'>to_owned</span>().<span class='ident'>into_bytes</span>(),
-                        <span class='ident'>cut</span>: <span class='boolval'>false</span>,
+                        <span class='ident'>cut</span>: <span class='boolvalue'>false</span>,
                     })
                     .<span class='ident'>collect</span>();
                 <span class='kw'>let</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>create_lits</span>(<span class='ident'>given</span>);
@@ -2854,7 +2854,7 @@
                     .<span class='ident'>into_iter</span>()
                     .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>|</span> <span class='ident'>Lit</span> {
                         <span class='ident'>v</span>: <span class='ident'>s</span>.<span class='ident'>to_owned</span>().<span class='ident'>into_bytes</span>(),
-                        <span class='ident'>cut</span>: <span class='boolval'>false</span>,
+                        <span class='ident'>cut</span>: <span class='boolvalue'>false</span>,
                     })
                     .<span class='ident'>collect</span>();
                 <span class='kw'>let</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>create_lits</span>(<span class='ident'>given</span>);
@@ -2901,6 +2901,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

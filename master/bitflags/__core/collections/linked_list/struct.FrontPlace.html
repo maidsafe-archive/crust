@@ -43,11 +43,11 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>collections</a>::<wbr><a href='index.html'>linked_list</a>::<wbr><a class='struct' href=''>FrontPlace</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>collections</a>::<wbr><a href='index.html'>linked_list</a>::<wbr><a class='struct' href=''>FrontPlace</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version '></span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2767' class='srclink' href='https://doc.rust-lang.org/nightly/collections/linked_list/struct.FrontPlace.html?gotosrc=2767' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2883' class='srclink' href='https://doc.rust-lang.org/nightly/collections/linked_list/struct.FrontPlace.html?gotosrc=2883' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>#[must_use = "places do nothing unless written to with `<-` syntax"]
 pub struct FrontPlace&lt;'a, T&gt; <span class='where'>where T: 'a</span> {
     // some fields omitted
@@ -55,12 +55,20 @@ pub struct FrontPlace&lt;'a, T&gt; <span class='where'>where T: 'a</span> {
 </em></div><div class='docblock'><p>A place for insertion at the front of a <code>LinkedList</code>.</p>
 
 <p>See <a href="struct.LinkedList.html#method.front_place"><code>LinkedList::front_place</code></a> for details.</p>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.InPlace.html' title='bitflags::__core::ops::InPlace'>InPlace</a>&lt;T&gt; for <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h3><div class='impl-items'><h4 id='associatedtype.Owner' class='type'><code>type <a href='../../../../bitflags/__core/ops/trait.InPlace.html#associatedtype.Owner' class='type'>Owner</a> = <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a></code></h4>
-<h4 id='method.finalize' class='method'><code>unsafe fn <a href='../../../../bitflags/__core/ops/trait.InPlace.html#tymethod.finalize' class='fnname'>finalize</a>(self)</code></h4>
-</div><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.Place.html' title='bitflags::__core::ops::Place'>Place</a>&lt;T&gt; for <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h3><div class='impl-items'><h4 id='method.pointer' class='method'><code>fn <a href='../../../../bitflags/__core/ops/trait.Place.html#tymethod.pointer' class='fnname'>pointer</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
-</div><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.Placer.html' title='bitflags::__core::ops::Placer'>Placer</a>&lt;T&gt; for <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h3><div class='impl-items'><h4 id='associatedtype.Place' class='type'><code>type <a href='../../../../bitflags/__core/ops/trait.Placer.html#associatedtype.Place' class='type'>Place</a> = <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h4>
-<h4 id='method.make_place' class='method'><code>fn <a href='../../../../bitflags/__core/ops/trait.Placer.html#tymethod.make_place' class='fnname'>make_place</a>(self) -&gt; <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h4>
-</div></section>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.Placer.html' title='bitflags::__core::ops::Placer'>Placer</a>&lt;T&gt; for <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Place' class='type'><code>type <a href='../../../../bitflags/__core/ops/trait.Placer.html#associatedtype.Place' class='type'>Place</a> = <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h4>
+<div class='docblock'><p><code>Place</code> is the intermedate agent guarding the uninitialized state for <code>Data</code>. <a href="../../../../bitflags/__core/ops/trait.Placer.html#associatedtype.Place">Read more</a></p>
+</div><h4 id='method.make_place' class='method'><code>fn <a href='../../../../bitflags/__core/ops/trait.Placer.html#tymethod.make_place' class='fnname'>make_place</a>(self) -&gt; <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></h4>
+<div class='docblock'><p>Creates a fresh place from <code>self</code>.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.Place.html' title='bitflags::__core::ops::Place'>Place</a>&lt;T&gt; for <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.pointer' class='method'><code>fn <a href='../../../../bitflags/__core/ops/trait.Place.html#tymethod.pointer' class='fnname'>pointer</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
+<div class='docblock'><p>Returns the address where the input value will be written. Note that the data at this address is generally uninitialized, and thus one should use <code>ptr::write</code> for initializing it. <a href="../../../../bitflags/__core/ops/trait.Place.html#tymethod.pointer">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.InPlace.html' title='bitflags::__core::ops::InPlace'>InPlace</a>&lt;T&gt; for <a class='struct' href='../../../../bitflags/__core/collections/linked_list/struct.FrontPlace.html' title='bitflags::__core::collections::linked_list::FrontPlace'>FrontPlace</a>&lt;'a, T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Owner' class='type'><code>type <a href='../../../../bitflags/__core/ops/trait.InPlace.html#associatedtype.Owner' class='type'>Owner</a> = <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a></code></h4>
+<div class='docblock'><p><code>Owner</code> is the type of the end value of <code>in (PLACE) EXPR</code> <a href="../../../../bitflags/__core/ops/trait.InPlace.html#associatedtype.Owner">Read more</a></p>
+</div><h4 id='method.finalize' class='method'><code>unsafe fn <a href='../../../../bitflags/__core/ops/trait.InPlace.html#tymethod.finalize' class='fnname'>finalize</a>(self)</code></h4>
+<div class='docblock'><p>Converts self into the final value, shifting deallocation/cleanup responsibilities (if any remain), over to the returned instance of <code>Owner</code> and forgetting self. <a href="../../../../bitflags/__core/ops/trait.InPlace.html#tymethod.finalize">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -83,6 +91,8 @@ pub struct FrontPlace&lt;'a, T&gt; <span class='where'>where T: 'a</span> {
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

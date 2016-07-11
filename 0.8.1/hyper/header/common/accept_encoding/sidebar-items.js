@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AcceptEncoding","`Accept-Encoding` header, defined in RFC7231"]]});

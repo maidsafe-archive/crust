@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/ws-0.5.0/src/io.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.0/src/io.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>io.rs.html -- source</title>
@@ -741,7 +741,7 @@
 <span class='kw'>use</span> <span class='ident'>result</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>, <span class='ident'>Kind</span>};
 <span class='kw'>use</span> <span class='ident'>connection</span>::<span class='ident'>Connection</span>;
 <span class='kw'>use</span> <span class='ident'>factory</span>::<span class='ident'>Factory</span>;
-<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Settings</span>;
+<span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>Settings</span>;
 
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>ALL</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>0</span>);
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SYSTEM</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>1</span>);
@@ -774,8 +774,8 @@
 
     <span class='kw'>fn</span> <span class='ident'>is_active</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>State</span>::<span class='ident'>Active</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            <span class='ident'>State</span>::<span class='ident'>Inactive</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='ident'>State</span>::<span class='ident'>Active</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            <span class='ident'>State</span>::<span class='ident'>Inactive</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
         }
     }
 }
@@ -1034,7 +1034,7 @@
 
         <span class='kw'>match</span> <span class='ident'>token</span> {
             <span class='ident'>SYSTEM</span> <span class='op'>=&gt;</span> {
-                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='boolval'>false</span>, <span class='string'>&quot;System token used for io event. This is a bug!&quot;</span>);
+                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;System token used for io event. This is a bug!&quot;</span>);
                 <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;System token used for io event. This is a bug!&quot;</span>)
             }
             <span class='ident'>ALL</span> <span class='op'>=&gt;</span> {
@@ -1367,8 +1367,8 @@
     <span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>Url</span>;
 
     <span class='kw'>use</span> <span class='ident'>result</span>::{<span class='ident'>Error</span>, <span class='ident'>Kind</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>url_to_addrs</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>url_to_addrs</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_url_to_addrs</span>() {
@@ -1421,6 +1421,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

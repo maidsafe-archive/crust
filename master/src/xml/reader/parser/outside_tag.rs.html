@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/parser/outside_tag.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/parser/outside_tag.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>outside_tag.rs.html -- source</title>
@@ -178,7 +178,7 @@
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>;
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{
+<span class='kw'>use</span> <span class='kw'>super</span>::{
     <span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>ClosingTagSubstate</span>, <span class='ident'>OpeningTagSubstate</span>,
     <span class='ident'>ProcessingInstructionSubstate</span>, <span class='ident'>DEFAULT_VERSION</span>, <span class='ident'>DEFAULT_ENCODING</span>, <span class='ident'>DEFAULT_STANDALONE</span>
 };
@@ -207,13 +207,13 @@
                 <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>buf_has_data</span>() {
                     <span class='self'>self</span>.<span class='ident'>push_pos</span>();
                 }
-                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                 <span class='ident'>t</span>.<span class='ident'>push_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>buf</span>);
                 <span class='prelude-val'>None</span>
             }
 
             <span class='ident'>Token</span>::<span class='ident'>ReferenceEnd</span> <span class='op'>=&gt;</span> { <span class='comment'>// Semi-colon in a text outside an entity</span>
-                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                 <span class='ident'>Token</span>::<span class='ident'>ReferenceEnd</span>.<span class='ident'>push_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>buf</span>);
                 <span class='prelude-val'>None</span>
             }
@@ -248,7 +248,7 @@
                         <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='ident'>buf</span>)))
                     }
                 } <span class='kw'>else</span> { <span class='prelude-val'>None</span> };
-                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolval'>true</span>;  <span class='comment'>// Reset inside_whitespace flag</span>
+                <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;  <span class='comment'>// Reset inside_whitespace flag</span>
                 <span class='self'>self</span>.<span class='ident'>push_pos</span>();
                 <span class='kw'>match</span> <span class='ident'>t</span> {
                     <span class='ident'>Token</span>::<span class='ident'>ProcessingInstructionStart</span> <span class='op'>=&gt;</span>
@@ -266,7 +266,7 @@
                         <span class='comment'>// If declaration was not parsed and we have encountered an element,</span>
                         <span class='comment'>// emit this declaration as the next event.</span>
                         <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>parsed_declaration</span> {
-                            <span class='self'>self</span>.<span class='ident'>parsed_declaration</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                            <span class='self'>self</span>.<span class='ident'>parsed_declaration</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                             <span class='kw'>let</span> <span class='ident'>sd_event</span> <span class='op'>=</span> <span class='ident'>XmlEvent</span>::<span class='ident'>StartDocument</span> {
                                 <span class='ident'>version</span>: <span class='ident'>DEFAULT_VERSION</span>,
                                 <span class='ident'>encoding</span>: <span class='ident'>DEFAULT_ENCODING</span>.<span class='ident'>into</span>(),
@@ -277,7 +277,7 @@
                             <span class='ident'>next_event</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>sd_event</span>));
                             <span class='self'>self</span>.<span class='ident'>push_pos</span>();
                         }
-                        <span class='self'>self</span>.<span class='ident'>encountered_element</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                        <span class='self'>self</span>.<span class='ident'>encountered_element</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                         <span class='self'>self</span>.<span class='ident'>nst</span>.<span class='ident'>push_empty</span>();
                         <span class='self'>self</span>.<span class='ident'>into_state</span>(<span class='ident'>State</span>::<span class='ident'>InsideOpeningTag</span>(<span class='ident'>OpeningTagSubstate</span>::<span class='ident'>InsideName</span>), <span class='ident'>next_event</span>)
                     }
@@ -327,6 +327,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

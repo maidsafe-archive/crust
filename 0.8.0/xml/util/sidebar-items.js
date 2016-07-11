@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["ClonedPairwise",""]],"trait":[["IteratorClonedPairwiseExt",""],["OptionBorrowExt",""]]});

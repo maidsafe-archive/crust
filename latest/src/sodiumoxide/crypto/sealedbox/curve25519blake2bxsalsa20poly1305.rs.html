@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.10/src/crypto/sealedbox/curve25519blake2bxsalsa20poly1305.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/sodiumoxide-0.0.10/src/crypto/sealedbox/curve25519blake2bxsalsa20poly1305.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>curve25519blake2bxsalsa20poly1305.rs.html -- source</title>
@@ -138,7 +138,7 @@
 
 <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_ulonglong</span>;
 
-<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>box_</span>::<span class='ident'>curve25519xsalsa20poly1305</span> <span class='kw'>as</span> <span class='ident'>box_</span>;
+<span class='kw'>use</span> <span class='kw'>super</span>::<span class='kw'>super</span>::<span class='ident'>box_</span>::<span class='ident'>curve25519xsalsa20poly1305</span> <span class='kw'>as</span> <span class='ident'>box_</span>;
 
 <span class='doccomment'>/// Number of additional bytes in a ciphertext compared to the corresponding</span>
 <span class='doccomment'>/// plaintext.</span>
@@ -193,8 +193,8 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>super</span>::<span class='ident'>box_</span>::<span class='ident'>curve25519xsalsa20poly1305</span> <span class='kw'>as</span> <span class='ident'>box_</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='kw'>super</span>::<span class='kw'>super</span>::<span class='ident'>box_</span>::<span class='ident'>curve25519xsalsa20poly1305</span> <span class='kw'>as</span> <span class='ident'>box_</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_seal_open</span>() {
@@ -247,6 +247,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

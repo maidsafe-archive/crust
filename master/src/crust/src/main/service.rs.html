@@ -753,7 +753,7 @@
 <span class='kw'>impl</span> <span class='ident'>Service</span> {
     <span class='doccomment'>/// Construct a service. `event_tx` is the sending half of the channel which crust will send</span>
     <span class='doccomment'>/// notifications on.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_tx</span>, <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>config_handler</span>::<span class='ident'>read_config_file</span>()))
     }
 
@@ -962,7 +962,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disconnect</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='ident'>PeerId</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>()).<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>peer_id</span>) {
             <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(<span class='ident'>token</span>), .. }) <span class='op'>=&gt;</span> <span class='ident'>token</span>,
-            _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='boolval'>false</span>,
+            _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='boolvalue'>false</span>,
         };
 
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>post</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='kw-2'>mut</span> <span class='ident'>core</span>, <span class='kw-2'>mut</span> <span class='ident'>el</span><span class='op'>|</span> {
@@ -971,7 +971,7 @@
             }
         });
 
-        <span class='boolval'>true</span>
+        <span class='boolvalue'>true</span>
     }
 
     <span class='doccomment'>/// Send data to a peer.</span>
@@ -1037,8 +1037,8 @@
     <span class='doccomment'>/// Check if we are connected to the given peer</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_connected</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>peer_id</span>: <span class='kw-2'>&amp;</span><span class='ident'>PeerId</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>lock</span>()).<span class='ident'>get</span>(<span class='ident'>peer_id</span>) {
-            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(_), .. }) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>ConnectionId</span> { <span class='ident'>active_connection</span>: <span class='prelude-val'>Some</span>(_), .. }) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
         }
     }
 
@@ -1070,7 +1070,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>, <span class='ident'>hash_map</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>ATOMIC_USIZE_INIT</span>, <span class='ident'>AtomicUsize</span>, <span class='ident'>Ordering</span>};
@@ -1107,7 +1107,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='attribute'>#[<span class='ident'>ignore</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>rendezvous_connect_two_peers</span>() {
-        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolvalue'>true</span>));
         <span class='ident'>timebomb</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>30</span>), <span class='op'>||</span> {
             <span class='kw'>let</span> (<span class='ident'>event_tx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
             <span class='kw'>let</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new</span>(<span class='ident'>event_tx_0</span>));
@@ -1373,6 +1373,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

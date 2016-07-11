@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/hyper-0.6.16/src/header/common/etag.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/etag.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>etag.rs.html -- source</title>
@@ -176,29 +176,29 @@
         <span class='comment'>// From the RFC</span>
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test1</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;xyzzy\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test2</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;W/\&quot;xyzzy\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test3</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>, <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='comment'>// Own tests</span>
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test4</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;foobar\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>, <span class='string'>&quot;foobar&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;foobar&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test5</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>, <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test6</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;W/\&quot;weak-etag\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>, <span class='string'>&quot;weak-etag&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='string'>&quot;weak-etag&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test7</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;W/\&quot;\x65\x62\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>, <span class='string'>&quot;\u{0065}\u{0062}&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='string'>&quot;\u{0065}\u{0062}&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test8</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;W/\&quot;\&quot;&quot;</span>],
-            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>, <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()))));
+            <span class='prelude-val'>Some</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()))));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test9</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;no-dquotes&quot;</span>],
             <span class='prelude-val'>None</span>::<span class='op'>&lt;</span><span class='ident'>ETag</span><span class='op'>&gt;</span>);
@@ -245,6 +245,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

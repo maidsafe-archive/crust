@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-798' class='srclink' href='../src/toml/encoder/mod.rs.html#38-46' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-770' class='srclink' href='../src/toml/encoder/mod.rs.html#38-46' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Encoder {
     pub toml: <a class='type' href='../toml/type.Table.html' title='toml::Table'>Table</a>,
     // some fields omitted
@@ -81,9 +81,11 @@ the top-level representation of a structure to be a table.</p>
 
 <p>This field can be used to extract the return value after feeding a value
 into this <code>Encoder</code>.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-816' class='srclink' href='../src/toml/encoder/mod.rs.html#76-156' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h4>
 <div class='docblock'><p>Constructs a new encoder which will emit to the given output stream.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a> for <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h3><div class='impl-items'><h4 id='associatedtype.Error' class='type'><code>type <a href='../rustc_serialize/serialize/trait.Encoder.html#associatedtype.Error' class='type'>Error</a> = <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a> for <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-580' class='srclink' href='../src/toml/encoder/rustc_serialize.rs.html#8-175' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Error' class='type'><code>type <a href='../rustc_serialize/serialize/trait.Encoder.html#associatedtype.Error' class='type'>Error</a> = <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a></code></h4>
 <h4 id='method.emit_nil' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encoder.html#tymethod.emit_nil' class='fnname'>emit_nil</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.emit_usize' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encoder.html#tymethod.emit_usize' class='fnname'>emit_usize</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.emit_u8' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encoder.html#tymethod.emit_u8' class='fnname'>emit_u8</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a>&gt;</code></h4>
@@ -142,6 +144,8 @@ into this <code>Encoder</code>.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

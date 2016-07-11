@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["WResult","A result type that carries warnings."]]});

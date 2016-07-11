@@ -51,7 +51,8 @@
 <pre class='rust struct'>pub struct Appender {
     // some fields omitted
 }</pre><div class='docblock'><p>Configuration for an appender.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../log4rs/config/struct.Appender.html' title='log4rs::config::Appender'>Appender</a></code></h3><div class='impl-items'><h4 id='method.builder' class='method'><code>fn <a href='#method.builder' class='fnname'>builder</a>(name: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, appender: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../log4rs/trait.Append.html' title='log4rs::Append'>Append</a>&gt;) -&gt; <a class='struct' href='../../log4rs/config/struct.AppenderBuilder.html' title='log4rs::config::AppenderBuilder'>AppenderBuilder</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../log4rs/config/struct.Appender.html' title='log4rs::config::Appender'>Appender</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-141' class='srclink' href='../../src/log4rs/config.rs.html#74-98' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.builder' class='method'><code>fn <a href='#method.builder' class='fnname'>builder</a>(name: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, appender: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../log4rs/trait.Append.html' title='log4rs::Append'>Append</a>&gt;) -&gt; <a class='struct' href='../../log4rs/config/struct.AppenderBuilder.html' title='log4rs::config::AppenderBuilder'>AppenderBuilder</a></code></h4>
 <div class='docblock'><p>Creates a new <code>AppenderBuilder</code> with the specified name and <code>Append</code> trait object.</p>
 </div><h4 id='method.name' class='method'><code>fn <a href='#method.name' class='fnname'>name</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <div class='docblock'><p>Returns the name of the appender.</p>
@@ -59,8 +60,10 @@
 <div class='docblock'><p>Returns the appender.</p>
 </div><h4 id='method.filters' class='method'><code>fn <a href='#method.filters' class='fnname'>filters</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../log4rs/trait.Filter.html' title='log4rs::Filter'>Filter</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
 <div class='docblock'><p>Returns the filters attached to the appender.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../log4rs/config/struct.Appender.html' title='log4rs::config::Appender'>Appender</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../log4rs/config/struct.Appender.html' title='log4rs::config::Appender'>Appender</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-135' class='srclink' href='../../src/log4rs/config.rs.html#68-72' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -83,6 +86,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

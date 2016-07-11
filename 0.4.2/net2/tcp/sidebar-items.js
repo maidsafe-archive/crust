@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["TcpBuilder","An \"in progress\" TCP socket which has not yet been connected or listened."]]});

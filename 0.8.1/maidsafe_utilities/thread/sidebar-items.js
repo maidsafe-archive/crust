@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["RaiiThreadJoiner","A RAII style thread joiner. The destruction of an instance of this type will block until the thread it is managing has joined."]]});

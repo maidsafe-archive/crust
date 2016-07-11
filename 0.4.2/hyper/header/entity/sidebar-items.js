@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["EntityTag","An entity tag, defined in RFC7232"]]});

@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['net2'] = [];
+implementors["net2"] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

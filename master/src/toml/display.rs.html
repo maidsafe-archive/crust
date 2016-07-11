@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/toml-0.1.30/src/display.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/toml-0.1.30/src/display.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>display.rs.html -- source</title>
@@ -354,8 +354,8 @@
                     <span class='string'>&#39;a&#39;</span> ... <span class='string'>&#39;z&#39;</span> <span class='op'>|</span>
                     <span class='string'>&#39;A&#39;</span> ... <span class='string'>&#39;Z&#39;</span> <span class='op'>|</span>
                     <span class='string'>&#39;0&#39;</span> ... <span class='string'>&#39;9&#39;</span> <span class='op'>|</span>
-                    <span class='string'>&#39;-&#39;</span> <span class='op'>|</span> <span class='string'>&#39;_&#39;</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-                    _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+                    <span class='string'>&#39;-&#39;</span> <span class='op'>|</span> <span class='string'>&#39;_&#39;</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+                    _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
                 }
             });
             <span class='kw'>if</span> <span class='ident'>ok</span> {
@@ -391,7 +391,7 @@
                    <span class='string'>&quot;10.0&quot;</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Float</span>(<span class='number'>2.4</span>).<span class='ident'>to_string</span>(),
                    <span class='string'>&quot;2.4&quot;</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Boolean</span>(<span class='boolval'>true</span>).<span class='ident'>to_string</span>(),
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Boolean</span>(<span class='boolvalue'>true</span>).<span class='ident'>to_string</span>(),
                    <span class='string'>&quot;true&quot;</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Datetime</span>(<span class='string'>&quot;test&quot;</span>.<span class='ident'>to_string</span>()).<span class='ident'>to_string</span>(),
                    <span class='string'>&quot;test&quot;</span>);
@@ -469,6 +469,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

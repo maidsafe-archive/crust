@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/solicit-0.4.4/src/client/async.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/solicit-0.4.4/src/client/async.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>async.rs.html -- source</title>
@@ -1090,7 +1090,7 @@
             <span class='ident'>request_queue</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>client_count</span>: <span class='number'>0</span>,
             <span class='ident'>host</span>: <span class='ident'>host</span>.<span class='ident'>as_bytes</span>().<span class='ident'>to_vec</span>(),
-            <span class='ident'>initialized</span>: <span class='boolval'>false</span>,
+            <span class='ident'>initialized</span>: <span class='boolvalue'>false</span>,
         };
 
         <span class='comment'>// Returns the handles to the channel sender/receiver, so that the client can use them to</span>
@@ -1150,7 +1150,7 @@
             <span class='ident'>WorkItem</span>::<span class='ident'>HandleFrame</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>initialized</span> {
                     <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>conn</span>.<span class='ident'>init</span>());
-                    <span class='self'>self</span>.<span class='ident'>initialized</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                    <span class='self'>self</span>.<span class='ident'>initialized</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                     <span class='prelude-val'>Ok</span>(())
                 } <span class='kw'>else</span> {
                     <span class='self'>self</span>.<span class='ident'>handle_frame</span>()
@@ -1501,6 +1501,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

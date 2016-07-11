@@ -43,15 +43,16 @@
     </nav>
 
     <section id='main' class="content struct">
-<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>raw</a>::<wbr><a class='struct' href=''>Slice</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>raw</a>::<wbr><a class='struct' href=''>Slice</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version '></span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-30538' class='srclink' href='https://doc.rust-lang.org/nightly/core/raw/struct.Slice.html?gotosrc=30538' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-32904' class='srclink' href='https://doc.rust-lang.org/nightly/core/raw/struct.Slice.html?gotosrc=32904' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Slice&lt;T&gt; {
     pub data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>,
     pub len: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>,
-}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
+}</pre><div class='stability'><em class='stab deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
+</em></div><div class='stability'><em class='stab unstable'>Unstable (<code>raw</code>)<p>: use raw accessors/constructors in <code>slice</code> module</p>
 </em></div><div class='docblock'><p>The representation of a slice like <code>&amp;[T]</code>.</p>
 
 <p>This struct is guaranteed to have the layout of types like <code>&amp;[T]</code>,
@@ -90,12 +91,18 @@ than a call to <code>transmute</code>.</p>
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;data pointer = {:?}, length = {}&quot;</span>, <span class='ident'>repr</span>.<span class='ident'>data</span>, <span class='ident'>repr</span>.<span class='ident'>len</span>);</pre>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab unstable deprecated'>
-                             <td id='structfield.data'><code>data</code></td><td><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
+                             <td id='structfield.data'><code>data</code></td><td><div class='stability'><em class='stab deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
+</em></div><div class='stability'><em class='stab unstable'>Unstable (<code>raw</code>)<p>: use raw accessors/constructors in <code>slice</code> module</p>
 </em></div></td></tr><tr class='stab unstable deprecated'>
-                             <td id='structfield.len'><code>len</code></td><td><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
-</em></div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/raw/struct.Slice.html' title='bitflags::__core::raw::Slice'>Slice</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/raw/struct.Slice.html' title='bitflags::__core::raw::Slice'>Slice</a>&lt;T&gt;</code></h4>
-<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='struct' href='../../../bitflags/__core/raw/struct.Slice.html' title='bitflags::__core::raw::Slice'>Slice</a>&lt;T&gt;</code></h3><div class='impl-items'></div></section>
+                             <td id='structfield.len'><code>len</code></td><td><div class='stability'><em class='stab deprecated'>Deprecated since 1.9.0<p>: use raw accessors/constructors in <code>slice</code> module</p>
+</em></div><div class='stability'><em class='stab unstable'>Unstable (<code>raw</code>)<p>: use raw accessors/constructors in <code>slice</code> module</p>
+</em></div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='struct' href='../../../bitflags/__core/raw/struct.Slice.html' title='bitflags::__core::raw::Slice'>Slice</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/raw/struct.Slice.html' title='bitflags::__core::raw::Slice'>Slice</a>&lt;T&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/raw/struct.Slice.html' title='bitflags::__core::raw::Slice'>Slice</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="../../../bitflags/__core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="../../../bitflags/__core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -118,6 +125,8 @@ than a call to <code>transmute</code>.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

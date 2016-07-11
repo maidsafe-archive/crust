@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Group","An iterator for the elements in a single group."],["GroupByLazy","`GroupByLazy` is the storage for the lazy grouping operation."],["Groups","An iterator that yields the Group iterators."]]});

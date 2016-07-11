@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["escape_str","Performs escaping of common XML characters."]]});

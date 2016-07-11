@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.4/src/reader/lexer.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/lexer.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lexer.rs.html -- source</title>
@@ -1012,8 +1012,8 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>contains_char_data</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>Token</span>::<span class='ident'>Whitespace</span>(_) <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>Chunk</span>(_) <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>Character</span>(_) <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>CommentEnd</span> <span class='op'>|</span>
-            <span class='ident'>Token</span>::<span class='ident'>TagEnd</span> <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>EqualsSign</span> <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>DoubleQuote</span> <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>SingleQuote</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+            <span class='ident'>Token</span>::<span class='ident'>TagEnd</span> <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>EqualsSign</span> <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>DoubleQuote</span> <span class='op'>|</span> <span class='ident'>Token</span>::<span class='ident'>SingleQuote</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
         }
     }
 
@@ -1021,8 +1021,8 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_whitespace</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Token</span>::<span class='ident'>Whitespace</span>(_) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
+            <span class='ident'>Token</span>::<span class='ident'>Whitespace</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
         }
     }
 }
@@ -1123,31 +1123,31 @@
             <span class='ident'>head_pos</span>: <span class='ident'>TextPosition</span>::<span class='ident'>new</span>(),
             <span class='ident'>char_queue</span>: <span class='ident'>VecDeque</span>::<span class='ident'>with_capacity</span>(<span class='number'>4</span>),  <span class='comment'>// TODO: check size</span>
             <span class='ident'>st</span>: <span class='ident'>State</span>::<span class='ident'>Normal</span>,
-            <span class='ident'>skip_errors</span>: <span class='boolval'>false</span>,
-            <span class='ident'>inside_comment</span>: <span class='boolval'>false</span>,
-            <span class='ident'>inside_token</span>: <span class='boolval'>false</span>,
-            <span class='ident'>eof_handled</span>: <span class='boolval'>false</span>
+            <span class='ident'>skip_errors</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>inside_comment</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>inside_token</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>eof_handled</span>: <span class='boolvalue'>false</span>
         }
     }
 
     <span class='doccomment'>/// Enables error handling so `next_token` will return `Some(Err(..))`</span>
     <span class='doccomment'>/// upon invalid lexeme.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>enable_errors</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>skip_errors</span> <span class='op'>=</span> <span class='boolval'>false</span>; }
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>enable_errors</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>skip_errors</span> <span class='op'>=</span> <span class='boolvalue'>false</span>; }
 
     <span class='doccomment'>/// Disables error handling so `next_token` will return `Some(Chunk(..))`</span>
     <span class='doccomment'>/// upon invalid lexeme with this lexeme content.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disable_errors</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>skip_errors</span> <span class='op'>=</span> <span class='boolval'>true</span>; }
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disable_errors</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>skip_errors</span> <span class='op'>=</span> <span class='boolvalue'>true</span>; }
 
     <span class='doccomment'>/// Enables special handling of some lexemes which should be done when we&#39;re parsing comment</span>
     <span class='doccomment'>/// internals.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_comment</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>inside_comment</span> <span class='op'>=</span> <span class='boolval'>true</span>; }
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_comment</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>inside_comment</span> <span class='op'>=</span> <span class='boolvalue'>true</span>; }
 
     <span class='doccomment'>/// Disables the effect of `inside_comment()` method.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>outside_comment</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>inside_comment</span> <span class='op'>=</span> <span class='boolval'>false</span>; }
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>outside_comment</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) { <span class='self'>self</span>.<span class='ident'>inside_comment</span> <span class='op'>=</span> <span class='boolvalue'>false</span>; }
 
     <span class='doccomment'>/// Tries to read the next token from the buffer.</span>
     <span class='doccomment'>///</span>
@@ -1166,14 +1166,14 @@
 
         <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>inside_token</span> {
             <span class='self'>self</span>.<span class='ident'>pos</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>head_pos</span>;
-            <span class='self'>self</span>.<span class='ident'>inside_token</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+            <span class='self'>self</span>.<span class='ident'>inside_token</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
         }
 
         <span class='comment'>// Check if we have saved a char or two for ourselves</span>
         <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>char_queue</span>.<span class='ident'>pop_front</span>() {
             <span class='kw'>match</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_next_token</span>(<span class='ident'>c</span>)) {
                 <span class='prelude-val'>Some</span>(<span class='ident'>t</span>) <span class='op'>=&gt;</span> {
-                    <span class='self'>self</span>.<span class='ident'>inside_token</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                    <span class='self'>self</span>.<span class='ident'>inside_token</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                     <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>t</span>));
                 }
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {}  <span class='comment'>// continue</span>
@@ -1189,7 +1189,7 @@
 
             <span class='kw'>match</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_next_token</span>(<span class='ident'>c</span>)) {
                 <span class='prelude-val'>Some</span>(<span class='ident'>t</span>) <span class='op'>=&gt;</span> {
-                    <span class='self'>self</span>.<span class='ident'>inside_token</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                    <span class='self'>self</span>.<span class='ident'>inside_token</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
                     <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>t</span>));
                 }
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
@@ -1199,7 +1199,7 @@
         }
 
         <span class='comment'>// Handle end of stream</span>
-        <span class='self'>self</span>.<span class='ident'>eof_handled</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+        <span class='self'>self</span>.<span class='ident'>eof_handled</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
         <span class='self'>self</span>.<span class='ident'>pos</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>head_pos</span>;
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>st</span> {
             <span class='ident'>State</span>::<span class='ident'>TagStarted</span> <span class='op'>|</span> <span class='ident'>State</span>::<span class='ident'>CommentOrCDataOrDoctypeStarted</span> <span class='op'>|</span>
@@ -1412,7 +1412,7 @@
     <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Position</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>BufReader</span>, <span class='ident'>Cursor</span>};
 
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>Lexer</span>, <span class='ident'>Token</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>Lexer</span>, <span class='ident'>Token</span>};
 
     <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>assert_oks</span>(
         (<span class='kw'>for</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lex</span>:<span class='ident'>ident</span> <span class='ident'>and</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>buf</span>:<span class='ident'>ident</span> ; $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>e</span>:<span class='ident'>expr</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> ({
@@ -1747,6 +1747,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

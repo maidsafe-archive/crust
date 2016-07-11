@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Protocol","Enum representing supported transport protocols"]],"struct":[["Endpoint","Enum representing endpoint of supported protocols"]]});

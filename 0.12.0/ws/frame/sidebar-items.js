@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Frame","A struct representing a WebSocket frame."]]});

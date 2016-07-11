@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/aho-corasick-0.5.2/src/autiter.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/aho-corasick-0.5.2/src/autiter.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>autiter.rs.html -- source</title>
@@ -551,7 +551,7 @@
 
 <span class='kw'>use</span> <span class='ident'>memchr</span>::{<span class='ident'>memchr</span>, <span class='ident'>memchr2</span>, <span class='ident'>memchr3</span>};
 
-<span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>ROOT_STATE</span>, <span class='ident'>StateIdx</span>};
+<span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>ROOT_STATE</span>, <span class='ident'>StateIdx</span>};
 
 <span class='doccomment'>/// An abstraction over automatons and their corresponding iterators.</span>
 <span class='doccomment'>/// The type parameter `P` is the type of the pattern that was used to</span>
@@ -597,8 +597,8 @@
     <span class='kw'>fn</span> <span class='ident'>find</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>Q</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='ident'>AsRef</span><span class='op'>&lt;</span>[<span class='ident'>u8</span>]<span class='op'>&gt;&gt;</span>(
         <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>,
         <span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;s</span> <span class='ident'>Q</span>,
-    ) <span class='op'>-&gt;</span> <span class='ident'>Matches</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>P</span>, <span class='kw'>Self</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span> {
+    ) <span class='op'>-&gt;</span> <span class='ident'>Matches</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>P</span>, <span class='self'>Self</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='self'>Self</span>: <span class='ident'>Sized</span> {
         <span class='ident'>Matches</span> {
             <span class='ident'>aut</span>: <span class='self'>self</span>,
             <span class='ident'>text</span>: <span class='ident'>s</span>.<span class='ident'>as_ref</span>(),
@@ -612,8 +612,8 @@
     <span class='kw'>fn</span> <span class='ident'>find_overlapping</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>Q</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='ident'>AsRef</span><span class='op'>&lt;</span>[<span class='ident'>u8</span>]<span class='op'>&gt;&gt;</span>(
         <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>,
         <span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;s</span> <span class='ident'>Q</span>,
-    ) <span class='op'>-&gt;</span> <span class='ident'>MatchesOverlapping</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>P</span>, <span class='kw'>Self</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span> {
+    ) <span class='op'>-&gt;</span> <span class='ident'>MatchesOverlapping</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>P</span>, <span class='self'>Self</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='self'>Self</span>: <span class='ident'>Sized</span> {
         <span class='ident'>MatchesOverlapping</span> {
             <span class='ident'>aut</span>: <span class='self'>self</span>,
             <span class='ident'>text</span>: <span class='ident'>s</span>.<span class='ident'>as_ref</span>(),
@@ -628,8 +628,8 @@
     <span class='kw'>fn</span> <span class='ident'>stream_find</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>R</span>: <span class='ident'>io</span>::<span class='ident'>Read</span><span class='op'>&gt;</span>(
         <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>,
         <span class='ident'>rdr</span>: <span class='ident'>R</span>,
-    ) <span class='op'>-&gt;</span> <span class='ident'>StreamMatches</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>R</span>, <span class='ident'>P</span>, <span class='kw'>Self</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span> {
+    ) <span class='op'>-&gt;</span> <span class='ident'>StreamMatches</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>R</span>, <span class='ident'>P</span>, <span class='self'>Self</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='self'>Self</span>: <span class='ident'>Sized</span> {
         <span class='ident'>StreamMatches</span> {
             <span class='ident'>aut</span>: <span class='self'>self</span>,
             <span class='ident'>buf</span>: <span class='ident'>io</span>::<span class='ident'>BufReader</span>::<span class='ident'>new</span>(<span class='ident'>rdr</span>),
@@ -643,8 +643,8 @@
     <span class='kw'>fn</span> <span class='ident'>stream_find_overlapping</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>R</span>: <span class='ident'>io</span>::<span class='ident'>Read</span><span class='op'>&gt;</span>(
         <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>,
         <span class='ident'>rdr</span>: <span class='ident'>R</span>,
-    ) <span class='op'>-&gt;</span> <span class='ident'>StreamMatchesOverlapping</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>R</span>, <span class='ident'>P</span>, <span class='kw'>Self</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span> {
+    ) <span class='op'>-&gt;</span> <span class='ident'>StreamMatchesOverlapping</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>R</span>, <span class='ident'>P</span>, <span class='self'>Self</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='self'>Self</span>: <span class='ident'>Sized</span> {
         <span class='ident'>StreamMatchesOverlapping</span> {
             <span class='ident'>aut</span>: <span class='self'>self</span>,
             <span class='ident'>buf</span>: <span class='ident'>io</span>::<span class='ident'>BufReader</span>::<span class='ident'>new</span>(<span class='ident'>rdr</span>),
@@ -1073,6 +1073,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

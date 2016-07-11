@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.71/src/compile.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/compile.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>compile.rs.html -- source</title>
@@ -1130,6 +1130,7 @@
 <span id="1086">1086</span>
 <span id="1087">1087</span>
 <span id="1088">1088</span>
+<span id="1089">1089</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2016 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1186,7 +1187,7 @@
     <span class='doccomment'>/// Create a new regular expression compiler.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Various options can be set before calling `compile` on an expression.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>Compiler</span> {
             <span class='ident'>insts</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>compiled</span>: <span class='ident'>Program</span>::<span class='ident'>new</span>(),
@@ -1202,7 +1203,7 @@
     <span class='doccomment'>/// The size of the resulting program is limited by size_limit. If</span>
     <span class='doccomment'>/// the program approximately exceeds the given size (in bytes), then</span>
     <span class='doccomment'>/// compilation will stop and return an error.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>size_limit</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>size_limit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>size_limit</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>size_limit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>size_limit</span> <span class='op'>=</span> <span class='ident'>size_limit</span>;
         <span class='self'>self</span>
     }
@@ -1218,7 +1219,7 @@
     <span class='doccomment'>/// instruction is never produced.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Note that `dfa(true)` implies `bytes(true)`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bytes</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bytes</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>is_bytes</span> <span class='op'>=</span> <span class='ident'>yes</span>;
         <span class='self'>self</span>
     }
@@ -1227,7 +1228,7 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// When enabled (the default), all compiled programs exclusively match</span>
     <span class='doccomment'>/// valid UTF-8 bytes.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>only_utf8</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>only_utf8</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>only_utf8</span> <span class='op'>=</span> <span class='ident'>yes</span>;
         <span class='self'>self</span>
     }
@@ -1239,14 +1240,14 @@
     <span class='doccomment'>/// beginning, then a preceding `.*?` is included in the program. (The NFA</span>
     <span class='doccomment'>/// based engines handle the preceding `.*?` explicitly, which is difficult</span>
     <span class='doccomment'>/// or impossible in the DFA engine.)</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>dfa</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>dfa</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>is_dfa</span> <span class='op'>=</span> <span class='ident'>yes</span>;
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// When set, the machine returned is suitable for matching text in</span>
     <span class='doccomment'>/// reverse. In particular, all concatenations are flipped.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reverse</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reverse</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>is_reverse</span> <span class='op'>=</span> <span class='ident'>yes</span>;
         <span class='self'>self</span>
     }
@@ -1402,12 +1403,12 @@
                 <span class='self'>self</span>.<span class='ident'>c_empty_look</span>(<span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='ident'>EndText</span>)
             }
             <span class='ident'>WordBoundary</span> <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                 <span class='self'>self</span>.<span class='ident'>byte_classes</span>.<span class='ident'>set_word_boundary</span>();
                 <span class='self'>self</span>.<span class='ident'>c_empty_look</span>(<span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='ident'>WordBoundary</span>)
             }
             <span class='ident'>NotWordBoundary</span> <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='boolval'>true</span>;
+                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                 <span class='self'>self</span>.<span class='ident'>byte_classes</span>.<span class='ident'>set_word_boundary</span>();
                 <span class='self'>self</span>.<span class='ident'>c_empty_look</span>(<span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='ident'>NotWordBoundary</span>)
             }
@@ -1465,13 +1466,13 @@
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>c</span>(<span class='kw-2'>&amp;</span><span class='ident'>Expr</span>::<span class='ident'>Repeat</span> {
                 <span class='ident'>e</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>Expr</span>::<span class='ident'>AnyByte</span>),
                 <span class='ident'>r</span>: <span class='ident'>Repeater</span>::<span class='ident'>ZeroOrMore</span>,
-                <span class='ident'>greedy</span>: <span class='boolval'>false</span>,
+                <span class='ident'>greedy</span>: <span class='boolvalue'>false</span>,
             }))
         } <span class='kw'>else</span> {
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>c</span>(<span class='kw-2'>&amp;</span><span class='ident'>Expr</span>::<span class='ident'>Repeat</span> {
                 <span class='ident'>e</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>Expr</span>::<span class='ident'>AnyChar</span>),
                 <span class='ident'>r</span>: <span class='ident'>Repeater</span>::<span class='ident'>ZeroOrMore</span>,
-                <span class='ident'>greedy</span>: <span class='boolval'>false</span>,
+                <span class='ident'>greedy</span>: <span class='boolvalue'>false</span>,
             }))
         })
     }
@@ -1505,6 +1506,7 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>c_class</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ranges</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>ClassRange</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span> {
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>ranges</span>.<span class='ident'>is_empty</span>());
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>uses_bytes</span>() {
             <span class='ident'>CompileClass</span> {
                 <span class='ident'>c</span>: <span class='self'>self</span>,
@@ -2091,7 +2093,7 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>SuffixCache</span> {
-    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>size</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>size</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='ident'>SuffixCache</span> {
             <span class='ident'>table</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>SuffixCacheEntry</span>::<span class='ident'>default</span>(); <span class='ident'>size</span>],
             <span class='ident'>version</span>: <span class='number'>0</span>,
@@ -2132,16 +2134,16 @@
 <span class='kw'>struct</span> <span class='ident'>ByteClassSet</span>([<span class='ident'>bool</span>; <span class='number'>256</span>]);
 
 <span class='kw'>impl</span> <span class='ident'>ByteClassSet</span> {
-    <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
-        <span class='ident'>ByteClassSet</span>([<span class='boolval'>false</span>; <span class='number'>256</span>])
+    <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> {
+        <span class='ident'>ByteClassSet</span>([<span class='boolvalue'>false</span>; <span class='number'>256</span>])
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_range</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>start</span>: <span class='ident'>u8</span>, <span class='ident'>end</span>: <span class='ident'>u8</span>) {
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>start</span> <span class='op'>&lt;=</span> <span class='ident'>end</span>);
         <span class='kw'>if</span> <span class='ident'>start</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
-            <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>-</span> <span class='number'>1</span>] <span class='op'>=</span> <span class='boolval'>true</span>;
+            <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>-</span> <span class='number'>1</span>] <span class='op'>=</span> <span class='boolvalue'>true</span>;
         }
-        <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolval'>true</span>;
+        <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolvalue'>true</span>;
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_word_boundary</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
@@ -2186,7 +2188,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>ByteClassSet</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>ByteClassSet</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>byte_classes</span>() {
@@ -2243,6 +2245,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

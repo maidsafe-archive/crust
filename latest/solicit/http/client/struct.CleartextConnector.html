@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1283' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#95-100' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1287' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#95-100' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct CleartextConnector&lt;'a&gt; {
     pub host: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>,
     pub port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>,
@@ -63,16 +63,22 @@ support for HTTP/2.</p>
                              <td id='structfield.host'><code>host</code></td><td><div class='docblock'><p>The host to which the connection should be established</p>
 </div></td></tr><tr class='stab '>
                              <td id='structfield.port'><code>port</code></td><td><div class='docblock'><p>The port on which the connection should be established</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(host: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a></code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1291' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#102-114' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(host: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a></code></h4>
 <div class='docblock'><p>Creates a new <code>CleartextConnector</code> that will attempt to establish a connection to the given
 host on port 80.</p>
 </div><h4 id='method.with_port' class='method'><code>fn <a href='#method.with_port' class='fnname'>with_port</a>(host: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a></code></h4>
 <div class='docblock'><p>Creates a new <code>CleartextConnector</code> that will attempt to establish a connection to the given
 host on the given port.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>HttpConnect</a> for <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='associatedtype.Stream' class='type'><code>type <a href='../../../solicit/http/client/trait.HttpConnect.html#associatedtype.Stream' class='type'>Stream</a> = <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/tcp/struct.TcpStream.html' title='std::net::tcp::TcpStream'>TcpStream</a></code></h4>
-<h4 id='associatedtype.Err' class='type'><code>type <a href='../../../solicit/http/client/trait.HttpConnect.html#associatedtype.Err' class='type'>Err</a> = <a class='struct' href='../../../solicit/http/client/struct.CleartextConnectError.html' title='solicit::http::client::CleartextConnectError'>CleartextConnectError</a></code></h4>
-<h4 id='method.connect' class='method'><code>fn <a href='../../../solicit/http/client/trait.HttpConnect.html#tymethod.connect' class='fnname'>connect</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../../solicit/http/client/struct.ClientStream.html' title='solicit::http::client::ClientStream'>ClientStream</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/tcp/struct.TcpStream.html' title='std::net::tcp::TcpStream'>TcpStream</a>&gt;, <a class='struct' href='../../../solicit/http/client/struct.CleartextConnectError.html' title='solicit::http::client::CleartextConnectError'>CleartextConnectError</a>&gt;</code></h4>
-</div></section>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='../../../solicit/http/client/trait.HttpConnect.html' title='solicit::http::client::HttpConnect'>HttpConnect</a> for <a class='struct' href='../../../solicit/http/client/struct.CleartextConnector.html' title='solicit::http::client::CleartextConnector'>CleartextConnector</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1322' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#146-161' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Stream' class='type'><code>type <a href='../../../solicit/http/client/trait.HttpConnect.html#associatedtype.Stream' class='type'>Stream</a> = <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/tcp/struct.TcpStream.html' title='std::net::tcp::TcpStream'>TcpStream</a></code></h4>
+<div class='docblock'><p>The type of the underlying transport stream that the <code>HttpConnection</code>s produced by this <code>HttpConnect</code> implementation will be based on. <a href="../../../solicit/http/client/trait.HttpConnect.html#associatedtype.Stream">Read more</a></p>
+</div><h4 id='associatedtype.Err' class='type'><code>type <a href='../../../solicit/http/client/trait.HttpConnect.html#associatedtype.Err' class='type'>Err</a> = <a class='struct' href='../../../solicit/http/client/struct.CleartextConnectError.html' title='solicit::http::client::CleartextConnectError'>CleartextConnectError</a></code></h4>
+<div class='docblock'><p>The type of the error that can be produced by trying to establish the connection (i.e. calling the <code>connect</code> method). <a href="../../../solicit/http/client/trait.HttpConnect.html#associatedtype.Err">Read more</a></p>
+</div><h4 id='method.connect' class='method'><code>fn <a href='../../../solicit/http/client/trait.HttpConnect.html#tymethod.connect' class='fnname'>connect</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../../solicit/http/client/struct.ClientStream.html' title='solicit::http::client::ClientStream'>ClientStream</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/tcp/struct.TcpStream.html' title='std::net::tcp::TcpStream'>TcpStream</a>&gt;, <a class='struct' href='../../../solicit/http/client/struct.CleartextConnectError.html' title='solicit::http::client::CleartextConnectError'>CleartextConnectError</a>&gt;</code></h4>
+<div class='docblock'><p>Establishes a cleartext TCP connection based on the host and port.
+If it is not possible, returns an <code>HttpError</code>.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -95,6 +101,8 @@ host on the given port.</p>
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

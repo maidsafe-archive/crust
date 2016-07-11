@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["tcp_punch_hole","Perform a tcp rendezvous connect. `socket` should have been obtained from a `MappedTcpSocket`."]],"struct":[["MappedTcpSocket","A tcp socket for which we know our external endpoints."]]});

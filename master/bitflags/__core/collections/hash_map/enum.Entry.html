@@ -43,19 +43,28 @@
     </nav>
 
     <section id='main' class="content enum">
-<h1 class='fqn'><span class='in-band'>Enum <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>collections</a>::<wbr><a href='index.html'>hash_map</a>::<wbr><a class='enum' href=''>Entry</a></span><span class='out-of-band'><span id='render-detail'>
+<h1 class='fqn'><span class='in-band'>Enum <a href='../../../index.html'>bitflags</a>::<wbr><a href='../../index.html'>__core</a>::<wbr><a href='../index.html'>collections</a>::<wbr><a href='index.html'>hash_map</a>::<wbr><a class='enum' href=''>Entry</a></span><span class='out-of-band'><span class='since' title='Stable since Rust version 1.0.0'>1.0.0</span><span id='render-detail'>
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2075' class='srclink' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/enum.Entry.html?gotosrc=2075' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2062' class='srclink' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/enum.Entry.html?gotosrc=2062' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Entry&lt;'a, K, V&gt; <span class='where'>where K: 'a, V: 'a</span> {
     Occupied(<a class='struct' href='../../../../bitflags/__core/collections/hash_map/struct.OccupiedEntry.html' title='bitflags::__core::collections::hash_map::OccupiedEntry'>OccupiedEntry</a>&lt;'a, K, V&gt;),
     Vacant(<a class='struct' href='../../../../bitflags/__core/collections/hash_map/struct.VacantEntry.html' title='bitflags::__core::collections::hash_map::VacantEntry'>VacantEntry</a>&lt;'a, K, V&gt;),
-}</pre><span class="since">1.0.0</span><div class='docblock'><p>A view into a single location in a map, which may be vacant or occupied.</p>
+}</pre><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><div class='docblock'><p>A view into a single location in a map, which may be vacant or occupied.</p>
 </div><h2 class='variants'>Variants</h2>
 <table class='variants_table'><tr><td id='variant.Occupied'><code>Occupied</code></td><td><div class='docblock'><p>An occupied Entry.</p>
 </div></td><td></td></tr><tr><td id='variant.Vacant'><code>Vacant</code></td><td><div class='docblock'><p>A vacant Entry.</p>
-</div></td><td></td></tr></table></section>
+</div></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a, K, V&gt; <a class='enum' href='../../../../bitflags/__core/collections/hash_map/enum.Entry.html' title='bitflags::__core::collections::hash_map::Entry'>Entry</a>&lt;'a, K, V&gt;</code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.or_insert' class='method'><code>fn <a href='#method.or_insert' class='fnname'>or_insert</a>(self, default: V) -&gt; &amp;'a mut V</code></h4>
+<div class='docblock'><p>Ensures a value is in the entry by inserting the default if empty, and returns
+a mutable reference to the value in the entry.</p>
+</div><h4 id='method.or_insert_with' class='method'><code>fn <a href='#method.or_insert_with' class='fnname'>or_insert_with</a>&lt;F&gt;(self, default: F) -&gt; &amp;'a mut V <span class='where'>where F: <a class='trait' href='../../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; V</span></code></h4>
+<div class='docblock'><p>Ensures a value is in the entry by inserting the result of the default function if empty,
+and returns a mutable reference to the value in the entry.</p>
+</div><h4 id='method.key' class='method'><code>fn <a href='#method.key' class='fnname'>key</a>(&amp;self) -&gt; &amp;K</code><div class='since' title='Stable since Rust version 1.10.0'>1.10.0</div></h4>
+<div class='docblock'><p>Returns a reference to this entry&#39;s key.</p>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -78,6 +87,8 @@
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 

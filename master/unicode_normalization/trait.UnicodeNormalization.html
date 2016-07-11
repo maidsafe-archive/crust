@@ -47,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-236' class='srclink' href='../src/unicode_normalization/lib.rs.html#74-94' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait UnicodeNormalization&lt;I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a>&lt;Item=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>&gt;&gt; {
+               </span><a id='src-224' class='srclink' href='../src/unicode_normalization/lib.rs.html#74-94' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait UnicodeNormalization&lt;I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a>&lt;Item=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>&gt;&gt; {
     fn <a href='#tymethod.nfd' class='fnname'>nfd</a>(self) -&gt; <a class='struct' href='../unicode_normalization/struct.Decompositions.html' title='unicode_normalization::Decompositions'>Decompositions</a>&lt;I&gt;;
     fn <a href='#tymethod.nfkd' class='fnname'>nfkd</a>(self) -&gt; <a class='struct' href='../unicode_normalization/struct.Decompositions.html' title='unicode_normalization::Decompositions'>Decompositions</a>&lt;I&gt;;
     fn <a href='#tymethod.nfc' class='fnname'>nfc</a>(self) -&gt; <a class='struct' href='../unicode_normalization/struct.Recompositions.html' title='unicode_normalization::Recompositions'>Recompositions</a>&lt;I&gt;;
@@ -70,7 +70,8 @@ as described in
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;'a&gt; <a class='trait' href='../unicode_normalization/trait.UnicodeNormalization.html' title='unicode_normalization::UnicodeNormalization'>UnicodeNormalization</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/str/struct.Chars.html' title='core::str::Chars'>Chars</a>&lt;'a&gt;&gt; for &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></li>
+    <li><code>impl&lt;'a&gt; UnicodeNormalization&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/core/str/struct.Chars.html' title='core::str::Chars'>Chars</a>&lt;'a&gt;&gt; for &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></li>
+<li><code>impl&lt;I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a>&lt;Item=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>&gt;&gt; UnicodeNormalization&lt;I&gt; for I</code></li>
 </ul><script type="text/javascript" async
                          src="../implementors/unicode_normalization/trait.UnicodeNormalization.js">
                  </script></section>
@@ -96,6 +97,8 @@ as described in
                     <dd>Move down in search results</dd>
                     <dt>&#9166;</dt>
                     <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
                 </dl>
             </div>
 
