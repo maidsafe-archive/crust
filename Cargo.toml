@@ -7,7 +7,7 @@ license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.16.0"
+version = "0.16.1"
 
 [dependencies]
 byteorder = "~0.5.1"
@@ -22,7 +22,7 @@ net2 = "~0.2.23"
 quick-error = "~1.1.0"
 rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
-sodiumoxide = "~0.0.10"
+sodiumoxide = "=0.0.10"
 tmp_mio = "~0.5.2"
 unwrap = "~1.1.0"
 
