@@ -302,8 +302,6 @@
 <span id="258">258</span>
 <span id="259">259</span>
 <span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -535,13 +533,11 @@
     <span class='kw'>fn</span> <span class='ident'>timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>, <span class='ident'>timer_id</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>HeartbeatAction</span> {
         <span class='kw'>if</span> <span class='ident'>timer_id</span> <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>recv_timer</span>.<span class='ident'>timer_id</span> {
             <span class='ident'>HeartbeatAction</span>::<span class='ident'>Terminate</span>
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>error</span>) <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>timeout_ms</span>(<span class='self'>self</span>.<span class='ident'>send_timer</span>, <span class='ident'>HEARTBEAT_PERIOD_MS</span>) {
+            <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Failed to reschedule heartbeat send timer: {:?}&quot;</span>, <span class='ident'>error</span>);
+            <span class='ident'>HeartbeatAction</span>::<span class='ident'>Terminate</span>
         } <span class='kw'>else</span> {
-            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>error</span>) <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>timeout_ms</span>(<span class='self'>self</span>.<span class='ident'>send_timer</span>, <span class='ident'>HEARTBEAT_PERIOD_MS</span>) {
-                <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Failed to reschedule heartbeat send timer: {:?}&quot;</span>, <span class='ident'>error</span>);
-                <span class='ident'>HeartbeatAction</span>::<span class='ident'>Terminate</span>
-            } <span class='kw'>else</span> {
-                <span class='ident'>HeartbeatAction</span>::<span class='ident'>Send</span>
-            }
+            <span class='ident'>HeartbeatAction</span>::<span class='ident'>Send</span>
         }
     }
 
