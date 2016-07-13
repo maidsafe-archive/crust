@@ -31,7 +31,7 @@ quick_error! {
             cause(e)
             from()
         }
-        /// Size of a message to send or about to be read is too large
+        /// Socket is uninitialised and invalid for any operation
         UninitialisedSocket {
             description("Socket is uninitialised and invalid for any operation")
         }

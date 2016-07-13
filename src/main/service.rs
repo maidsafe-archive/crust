@@ -591,7 +591,7 @@ mod tests {
                                 for m in msg {
                                     assert_eq!(n, m);
                                 }
-                                match their_ids.entry(their_id.clone()) {
+                                match their_ids.entry(their_id) {
                                     hash_map::Entry::Occupied(mut oe) => {
                                         let next_msg = oe.get_mut();
                                         assert_eq!(*next_msg as u8, n);

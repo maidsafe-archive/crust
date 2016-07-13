@@ -228,13 +228,11 @@ impl Heartbeat {
     fn timeout(&self, el: &mut EventLoop<Core>, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
+        } else if let Err(error) = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS) {
+            warn!("Failed to reschedule heartbeat send timer: {:?}", error);
+            HeartbeatAction::Terminate
         } else {
-            if let Err(error) = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS) {
-                warn!("Failed to reschedule heartbeat send timer: {:?}", error);
-                HeartbeatAction::Terminate
-            } else {
-                HeartbeatAction::Send
-            }
+            HeartbeatAction::Send
         }
     }
 
