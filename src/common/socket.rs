@@ -32,11 +32,7 @@ use rustc_serialize::{Decodable, Encodable};
 const MAX_MSG_AGE_SECS: u64 = 60;
 
 pub struct Socket {
-    stream: TcpStream,
-    read_buffer: Vec<u8>,
-    read_len: usize,
-    write_queue: BTreeMap<Priority, VecDeque<(Instant, Vec<u8>)>>,
-    current_write: Option<Vec<u8>>,
+    inner: Option<SockInner>,
 }
 
 impl Socket {
@@ -47,16 +43,19 @@ impl Socket {
 
     pub fn wrap(stream: TcpStream) -> Self {
         Socket {
-            stream: stream,
-            read_buffer: Vec::new(),
-            read_len: 0,
-            write_queue: BTreeMap::new(),
-            current_write: None,
+            inner: Some(SockInner {
+                stream: stream,
+                read_buffer: Vec::new(),
+                read_len: 0,
+                write_queue: BTreeMap::new(),
+                current_write: None,
+            }),
         }
     }
 
     pub fn peer_addr(&self) -> Result<SocketAddr> {
-        Ok(try!(self.stream.peer_addr()))
+        let inner = try!(self.inner.as_ref().ok_or(CommonError::UninitialisedSocket));
+        Ok(try!(inner.stream.peer_addr()))
     }
 
     // Read message from the socket. Call this from inside the `ready` handler.
@@ -67,6 +66,83 @@ impl Socket {
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
     pub fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
+        let inner = try!(self.inner.as_mut().ok_or(CommonError::UninitialisedSocket));
+        inner.read()
+    }
+
+    // Write a message to the socket.
+    //
+    // Returns:
+    //   - Ok(true):   the message has been successfuly written.
+    //   - Ok(false):  the message has been queued, but not yet fully written.
+    //                 Write event is already scheduled for next time.
+    //   - Err(error): there was an error while writing to the socket.
+    pub fn write<T: Encodable>(&mut self,
+                               el: &mut EventLoop<Core>,
+                               token: Token,
+                               msg: Option<(T, Priority)>)
+                               -> ::Res<bool> {
+        let inner = try!(self.inner.as_mut().ok_or(CommonError::UninitialisedSocket));
+        inner.write(el, token, msg)
+    }
+}
+
+impl Default for Socket {
+    fn default() -> Self {
+        Socket { inner: None }
+    }
+}
+
+impl Evented for Socket {
+    fn register(&self,
+                selector: &mut Selector,
+                token: Token,
+                interest: EventSet,
+                opts: PollOpt)
+                -> io::Result<()> {
+        let inner = try!(self.inner
+            .as_ref()
+            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket)));
+        inner.register(selector, token, interest, opts)
+    }
+
+    fn reregister(&self,
+                  selector: &mut Selector,
+                  token: Token,
+                  interest: EventSet,
+                  opts: PollOpt)
+                  -> io::Result<()> {
+        let inner = try!(self.inner
+            .as_ref()
+            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket)));
+        inner.reregister(selector, token, interest, opts)
+    }
+
+    fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
+        let inner = try!(self.inner
+            .as_ref()
+            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket)));
+        inner.deregister(selector)
+    }
+}
+
+struct SockInner {
+    stream: TcpStream,
+    read_buffer: Vec<u8>,
+    read_len: usize,
+    write_queue: BTreeMap<Priority, VecDeque<(Instant, Vec<u8>)>>,
+    current_write: Option<Vec<u8>>,
+}
+
+impl SockInner {
+    // Read message from the socket. Call this from inside the `ready` handler.
+    //
+    // Returns:
+    //   - Ok(Some(data)): data has been successfuly read from the socket
+    //   - Ok(None):       there is not enough data in the socket. Call `read`
+    //                     again in the next invocation of the `ready` handler.
+    //   - Err(error):     there was an error reading from the socket.
+    fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
         if let Some(message) = try!(self.read_from_buffer()) {
             return Ok(Some(message));
         }
@@ -127,11 +203,11 @@ impl Socket {
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
-    pub fn write<T: Encodable>(&mut self,
-                               el: &mut EventLoop<Core>,
-                               token: Token,
-                               msg: Option<(T, Priority)>)
-                               -> ::Res<bool> {
+    fn write<T: Encodable>(&mut self,
+                           el: &mut EventLoop<Core>,
+                           token: Token,
+                           msg: Option<(T, Priority)>)
+                           -> ::Res<bool> {
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
             .skip_while(|&(&priority, ref queue)| {
@@ -211,7 +287,7 @@ impl Socket {
     }
 }
 
-impl Evented for Socket {
+impl Evented for SockInner {
     fn register(&self,
                 selector: &mut Selector,
                 token: Token,
