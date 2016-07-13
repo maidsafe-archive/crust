@@ -18,6 +18,7 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
+use std::mem;
 use std::rc::Rc;
 
 use common::{Core, Message, NameHash, Priority, Socket, State};
@@ -30,7 +31,7 @@ pub struct ExchangeMsg {
     token: Token,
     expected_id: PeerId,
     expected_nh: NameHash,
-    socket: Option<Socket>,
+    socket: Socket,
     cm: ConnectionMap,
     msg: Option<(Message, Priority)>,
     finish: Finish,
@@ -67,7 +68,7 @@ impl ExchangeMsg {
             token: token,
             expected_id: expected_id,
             expected_nh: name_hash,
-            socket: Some(socket),
+            socket: socket,
             cm: cm,
             msg: Some((Message::Connect(our_id.0, name_hash), 0)),
             finish: finish,
@@ -82,20 +83,20 @@ impl ExchangeMsg {
              core: &mut Core,
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        if unwrap!(self.socket.as_mut()).write(el, self.token, msg).is_err() {
+        if self.socket.write(el, self.token, msg).is_err() {
             self.handle_error(core, el);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match unwrap!(self.socket.as_mut()).read::<Message>() {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::Connect(their_pk, name_hash))) => {
                 if their_pk != self.expected_id.0 || name_hash != self.expected_nh {
                     return self.handle_error(core, el);
                 }
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let socket = unwrap!(self.socket.take());
+                let socket = mem::replace(&mut self.socket, Socket::default());
 
                 (*self.finish)(core, el, token, Some(socket));
             }
@@ -128,7 +129,7 @@ impl State for ExchangeMsg {
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&unwrap!(self.socket.take()));
+        let _ = el.deregister(&self.socket);
 
         let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.expected_id) {

@@ -17,6 +17,7 @@
 
 use std::any::Any;
 use std::cell::RefCell;
+use std::mem;
 use std::rc::Rc;
 
 use common::{Core, Message, Priority, Socket, State};
@@ -36,7 +37,7 @@ pub type Finish = Box<FnMut(&mut Core,
 pub struct TryPeer {
     token: Token,
     peer: SocketAddr,
-    socket: Option<Socket>,
+    socket: Socket,
     request: Option<(Message, Priority)>,
     finish: Finish,
 }
@@ -52,18 +53,18 @@ impl TryPeer {
         let socket = try!(Socket::connect(&peer));
         let token = core.get_new_token();
 
-        let state = TryPeer {
-            token: token,
-            peer: peer,
-            socket: Some(socket),
-            request: Some((Message::BootstrapRequest(our_pk, name_hash), 0)),
-            finish: finish,
-        };
-
-        try!(el.register(unwrap!(state.socket.as_ref()),
+        try!(el.register(&socket,
                          token,
                          EventSet::error() | EventSet::hup() | EventSet::writable(),
                          PollOpt::edge()));
+
+        let state = TryPeer {
+            token: token,
+            peer: peer,
+            socket: socket,
+            request: Some((Message::BootstrapRequest(our_pk, name_hash), 0)),
+            finish: finish,
+        };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 
@@ -74,17 +75,18 @@ impl TryPeer {
              core: &mut Core,
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
-        if unwrap!(self.socket.as_mut()).write(el, self.token, msg).is_err() {
+        if self.socket.write(el, self.token, msg).is_err() {
             self.handle_error(core, el);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match unwrap!(self.socket.as_mut()).read::<Message>() {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapResponse(peer_pk))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let data = (unwrap!(self.socket.take()), self.peer, PeerId(peer_pk));
+                let socket = mem::replace(&mut self.socket, Socket::default());
+                let data = (socket, self.peer, PeerId(peer_pk));
                 (*self.finish)(core, el, token, Ok(data));
             }
             Ok(None) => (),
@@ -117,7 +119,7 @@ impl State for TryPeer {
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&unwrap!(self.socket.take()));
+        let _ = el.deregister(&self.socket);
     }
 
     fn as_any(&mut self) -> &mut Any {
