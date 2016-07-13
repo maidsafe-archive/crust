@@ -18,6 +18,7 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
+use std::mem;
 use std::rc::Rc;
 
 use common::{self, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
@@ -34,7 +35,7 @@ pub struct ExchangeMsg {
     name_hash: u64,
     next_state: NextState,
     our_pk: PublicKey,
-    socket: Option<Socket>,
+    socket: Socket,
     timeout: Timeout,
 }
 
@@ -63,7 +64,7 @@ impl ExchangeMsg {
             name_hash: name_hash,
             next_state: NextState::None,
             our_pk: our_pk,
-            socket: Some(socket),
+            socket: socket,
             timeout: timeout,
         };
 
@@ -73,7 +74,7 @@ impl ExchangeMsg {
     }
 
     fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match unwrap!(self.socket.as_mut()).read::<Message>() {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
                 self.handle_bootstrap_req(core, el, their_public_key, name_hash)
             }
@@ -126,7 +127,7 @@ impl ExchangeMsg {
 
     fn handle_echo_addr_req(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         self.next_state = NextState::None;
-        if let Ok(peer_addr) = unwrap!(self.socket.as_ref()).peer_addr() {
+        if let Ok(peer_addr) = self.socket.peer_addr() {
             self.write(core,
                        el,
                        Some((Message::EchoAddrResp(common::SocketAddr(peer_addr)), 0)));
@@ -176,7 +177,7 @@ impl ExchangeMsg {
             }
         }
 
-        match unwrap!(self.socket.as_mut()).write(el, self.token, msg) {
+        match self.socket.write(el, self.token, msg) {
             Ok(true) => self.done(core, el),
             Ok(false) => (),
             Err(e) => {
@@ -195,10 +196,11 @@ impl ExchangeMsg {
 
         match self.next_state {
             NextState::ActiveConnection(their_id) => {
+                let socket = mem::replace(&mut self.socket, Socket::default());
                 ActiveConnection::start(core,
                                         el,
                                         self.token,
-                                        unwrap!(self.socket.take()),
+                                        socket,
                                         self.cm.clone(),
                                         our_id,
                                         their_id,
@@ -220,10 +222,12 @@ impl ExchangeMsg {
                                                 event_tx.clone());
                     }
                 };
+
+                let socket = mem::replace(&mut self.socket, Socket::default());
                 let _ = ConnectionCandidate::start(core,
                                                    el,
                                                    self.token,
-                                                   unwrap!(self.socket.take()),
+                                                   socket,
                                                    self.cm.clone(),
                                                    our_id,
                                                    their_id,
@@ -266,7 +270,7 @@ impl State for ExchangeMsg {
         }
 
         let _ = el.clear_timeout(self.timeout);
-        let _ = el.deregister(&unwrap!(self.socket.take()));
+        let _ = el.deregister(&self.socket);
     }
 
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {

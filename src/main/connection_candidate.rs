@@ -18,6 +18,7 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
+use std::mem;
 use std::rc::Rc;
 
 use common::{Core, Message, Priority, Socket, State};
@@ -29,7 +30,7 @@ pub type Finish = Box<FnMut(&mut Core, &mut EventLoop<Core>, Token, Option<Socke
 pub struct ConnectionCandidate {
     token: Token,
     cm: ConnectionMap,
-    socket: Option<Socket>,
+    socket: Socket,
     their_id: PeerId,
     msg: Option<(Message, Priority)>,
     finish: Finish,
@@ -48,7 +49,7 @@ impl ConnectionCandidate {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
             token: token,
             cm: cm,
-            socket: Some(socket),
+            socket: socket,
             their_id: their_id,
             msg: Some((Message::ChooseConnection, 0)),
             finish: finish,
@@ -57,7 +58,7 @@ impl ConnectionCandidate {
         let _ = core.insert_state(token, state.clone());
 
         if our_id > their_id {
-            if let Err(e) = el.reregister(unwrap!(state.borrow().socket.as_ref()),
+            if let Err(e) = el.reregister(&state.borrow().socket,
                                           token,
                                           EventSet::writable() | EventSet::error() |
                                           EventSet::hup(),
@@ -71,7 +72,7 @@ impl ConnectionCandidate {
     }
 
     fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        match unwrap!(self.socket.as_mut()).read::<Message>() {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, el),
             Ok(Some(_)) | Err(_) => self.handle_error(core, el),
             Ok(None) => (),
@@ -90,7 +91,7 @@ impl ConnectionCandidate {
             return self.handle_error(core, el);
         }
 
-        match unwrap!(self.socket.as_mut()).write(el, self.token, msg) {
+        match self.socket.write(el, self.token, msg) {
             Ok(true) => self.done(core, el),
             Ok(false) => (),
             Err(_) => self.handle_error(core, el),
@@ -100,7 +101,7 @@ impl ConnectionCandidate {
     fn done(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
         let token = self.token;
-        let socket = unwrap!(self.socket.take());
+        let socket = mem::replace(&mut self.socket, Socket::default());
 
         (*self.finish)(core, el, token, Some(socket));
     }
@@ -128,7 +129,7 @@ impl State for ConnectionCandidate {
 
     fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&unwrap!(self.socket.take()));
+        let _ = el.deregister(&self.socket);
 
         let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.their_id) {
