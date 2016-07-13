@@ -39,7 +39,7 @@ pub struct Connect {
     our_nh: NameHash,
     our_id: PeerId,
     their_id: PeerId,
-    weak: Option<Weak<RefCell<Connect>>>,
+    self_weak: Weak<RefCell<Connect>>,
     listener: Option<TcpListener>,
     children: HashSet<Token>,
     event_tx: ::CrustEventSender,
@@ -72,14 +72,13 @@ impl Connect {
             our_nh: our_nh,
             our_id: our_ci.id,
             their_id: their_id,
-            weak: None,
+            self_weak: Weak::new(),
             listener: None,
             children: HashSet::with_capacity(their_direct.len() + their_hole_punch.len()),
             event_tx: event_tx,
         }));
 
-        let weak_self = Rc::downgrade(&state);
-        state.borrow_mut().weak = Some(weak_self);
+        state.borrow_mut().self_weak = Rc::downgrade(&state);
 
         let mut sockets = their_direct.into_iter()
             .filter_map(|elt| Socket::connect(&elt).ok())
@@ -109,7 +108,7 @@ impl Connect {
     }
 
     fn exchange_msg(&mut self, core: &mut Core, el: &mut EventLoop<Core>, socket: Socket) {
-        let self_weak = unwrap!(self.weak.as_ref()).clone();
+        let self_weak = self.self_weak.clone();
         let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
                 self_rc.borrow_mut().handle_exchange_msg(core, el, child, res);
@@ -136,7 +135,7 @@ impl Connect {
                            res: Option<Socket>) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            let self_weak = unwrap!(self.weak.as_ref()).clone();
+            let self_weak = self.self_weak.clone();
             let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_connection_candidate(core, el, child, res);

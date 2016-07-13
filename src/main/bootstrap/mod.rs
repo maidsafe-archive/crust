@@ -53,7 +53,7 @@ pub struct Bootstrap {
     bs_timeout: Timeout,
     cache: Cache,
     children: HashSet<Token>,
-    self_weak: Option<Weak<RefCell<Bootstrap>>>,
+    self_weak: Weak<RefCell<Bootstrap>>,
 }
 
 impl Bootstrap {
@@ -103,10 +103,10 @@ impl Bootstrap {
             bs_timeout: bs_timeout,
             cache: cache,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
-            self_weak: None,
+            self_weak: Weak::new(),
         }));
 
-        state.borrow_mut().self_weak = Some(Rc::downgrade(&state));
+        state.borrow_mut().self_weak = Rc::downgrade(&state);
 
         let _ = core.insert_state(token, state.clone());
 
@@ -126,7 +126,7 @@ impl Bootstrap {
         }
 
         for peer in peers {
-            let self_weak = unwrap!(self.self_weak.as_ref()).clone();
+            let self_weak = self.self_weak.clone();
             let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_result(core, el, child, res)
