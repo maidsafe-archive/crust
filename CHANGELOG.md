@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.16.2]
+- Shuffle the bootstrap list, otherwise there is a higher probability of connecting to the ones at the beginning of the list even with parallel bootstrap.
+- Update dependencies to their latest.
+
 ## [0.16.1]
 - Fix sodiumoxide to v0.0.10 as the new released v0.0.12 does not support rustc-serializable types anymore and breaks builds
 
