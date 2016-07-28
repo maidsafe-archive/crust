@@ -33,6 +33,7 @@ use self::cache::Cache;
 use self::try_peer::TryPeer;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide::crypto::box_::PublicKey;
+use rand::{self, Rng};
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 1000;
@@ -124,6 +125,7 @@ impl Bootstrap {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, el);
         }
+        rand::thread_rng().shuffle(&mut peers);
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
