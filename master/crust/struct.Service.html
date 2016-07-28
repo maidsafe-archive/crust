@@ -47,12 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1374' class='srclink' href='../src/crust/src/main/service.rs.html#43-53' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1375' class='srclink' href='../src/crust/src/main/service.rs.html#43-53' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager. This is the main object through which crust is
 used.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1384' class='srclink' href='../src/crust/src/main/service.rs.html#55-357' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1385' class='srclink' href='../src/crust/src/main/service.rs.html#55-357' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_tx: <a class='type' href='../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>) -&gt; <a class='type' href='../crust/type.Res.html' title='crust::Res'>Res</a>&lt;Self&gt;</code></h4>
 <div class='docblock'><p>Construct a service. <code>event_tx</code> is the sending half of the channel which crust will send
 notifications on.</p>
@@ -96,7 +96,7 @@ peer, see <code>Service::connect</code> for more info.</p>
 <div class='docblock'><p>Check if we are connected to the given peer</p>
 </div><h4 id='method.id' class='method'><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a></code></h4>
 <div class='docblock'><p>Returns our ID.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1571' class='srclink' href='../src/crust/src/main/service.rs.html#359-363' title='goto source code'>[src]</a></span></h3>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1572' class='srclink' href='../src/crust/src/main/service.rs.html#359-363' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>A method called when the value goes out of scope. <a href="https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#tymethod.drop">Read more</a></p>
 </div></div></section>

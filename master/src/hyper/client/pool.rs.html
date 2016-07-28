@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/client/pool.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/client/pool.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>pool.rs.html -- source</title>
@@ -317,9 +317,6 @@
 <span id="273">273</span>
 <span id="274">274</span>
 <span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Client Connection Pooling</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>ToOwned</span>;
@@ -328,7 +325,6 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>SocketAddr</span>, <span class='ident'>Shutdown</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
 <span class='kw'>use</span> <span class='ident'>net</span>::{<span class='ident'>NetworkConnector</span>, <span class='ident'>NetworkStream</span>, <span class='ident'>DefaultConnector</span>};
@@ -499,13 +495,11 @@
         <span class='self'>self</span>.<span class='ident'>inner</span>.<span class='ident'>as_mut</span>().<span class='ident'>unwrap</span>().<span class='ident'>stream</span>.<span class='ident'>peer_addr</span>()
     }
 
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>set_read_timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>dur</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>inner</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>().<span class='ident'>stream</span>.<span class='ident'>set_read_timeout</span>(<span class='ident'>dur</span>)
     }
 
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>set_write_timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>dur</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>inner</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>().<span class='ident'>stream</span>.<span class='ident'>set_write_timeout</span>(<span class='ident'>dur</span>)

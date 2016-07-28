@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/server/response.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/server/response.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>response.rs.html -- source</title>
@@ -473,6 +473,9 @@
 <span id="429">429</span>
 <span id="430">430</span>
 <span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Server Responses</span>
 <span class='doccomment'>//!</span>
@@ -824,6 +827,9 @@
         }
     }
 
+    <span class='comment'>// x86 windows msvc does not support unwinding</span>
+    <span class='comment'>// See https://github.com/rust-lang/rust/issues/25869</span>
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>all</span>(<span class='ident'>windows</span>, <span class='ident'>target_arch</span><span class='op'>=</span><span class='string'>&quot;x86&quot;</span>, <span class='ident'>target_env</span><span class='op'>=</span><span class='string'>&quot;msvc&quot;</span>)))]</span>
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_fresh_drop_panicing</span>() {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;

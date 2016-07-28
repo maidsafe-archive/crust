@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/status.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/status.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>status.rs.html -- source</title>
@@ -773,6 +773,23 @@
 <span id="729">729</span>
 <span id="730">730</span>
 <span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! HTTP status codes</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
@@ -931,6 +948,9 @@
     <span class='doccomment'>/// [curiously, not registered by IANA, but [RFC2324](https://tools.ietf.org/html/rfc2324)]</span>
     <span class='ident'>ImATeapot</span>,
 
+    <span class='doccomment'>/// 421 Misdirected Request</span>
+    <span class='doccomment'>/// [RFC7540, Section 9.1.2](http://tools.ietf.org/html/rfc7540#section-9.1.2)</span>
+    <span class='ident'>MisdirectedRequest</span>,
     <span class='doccomment'>/// 422 Unprocessable Entity</span>
     <span class='doccomment'>/// [[RFC4918](https://tools.ietf.org/html/rfc4918)]</span>
     <span class='ident'>UnprocessableEntity</span>,
@@ -955,6 +975,10 @@
     <span class='doccomment'>/// 431 Request Header Fields Too Large</span>
     <span class='doccomment'>/// [[RFC6585](https://tools.ietf.org/html/rfc6585)]</span>
     <span class='ident'>RequestHeaderFieldsTooLarge</span>,
+
+    <span class='doccomment'>/// 451 Unavailable For Legal Reasons</span>
+    <span class='doccomment'>/// [[RFC7725](http://tools.ietf.org/html/rfc7725)]</span>
+    <span class='ident'>UnavailableForLegalReasons</span>,
 
     <span class='doccomment'>/// 500 Internal Server Error</span>
     <span class='doccomment'>/// [[RFC7231, Section 6.6.1](https://tools.ietf.org/html/rfc7231#section-6.6.1)]</span>
@@ -1041,6 +1065,7 @@
             <span class='number'>416</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>RangeNotSatisfiable</span>,
             <span class='number'>417</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>ExpectationFailed</span>,
             <span class='number'>418</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>ImATeapot</span>,
+            <span class='number'>421</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>MisdirectedRequest</span>,
             <span class='number'>422</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>UnprocessableEntity</span>,
             <span class='number'>423</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>Locked</span>,
             <span class='number'>424</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>FailedDependency</span>,
@@ -1048,6 +1073,7 @@
             <span class='number'>428</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>PreconditionRequired</span>,
             <span class='number'>429</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>TooManyRequests</span>,
             <span class='number'>431</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>RequestHeaderFieldsTooLarge</span>,
+            <span class='number'>451</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>UnavailableForLegalReasons</span>,
             <span class='number'>500</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>InternalServerError</span>,
             <span class='number'>501</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>NotImplemented</span>,
             <span class='number'>502</span> <span class='op'>=&gt;</span> <span class='ident'>StatusCode</span>::<span class='ident'>BadGateway</span>,
@@ -1106,6 +1132,7 @@
             <span class='ident'>StatusCode</span>::<span class='ident'>RangeNotSatisfiable</span> <span class='op'>=&gt;</span> <span class='number'>416</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>ExpectationFailed</span> <span class='op'>=&gt;</span> <span class='number'>417</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>ImATeapot</span> <span class='op'>=&gt;</span> <span class='number'>418</span>,
+            <span class='ident'>StatusCode</span>::<span class='ident'>MisdirectedRequest</span> <span class='op'>=&gt;</span> <span class='number'>421</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>UnprocessableEntity</span> <span class='op'>=&gt;</span> <span class='number'>422</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>Locked</span> <span class='op'>=&gt;</span> <span class='number'>423</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>FailedDependency</span> <span class='op'>=&gt;</span> <span class='number'>424</span>,
@@ -1113,6 +1140,7 @@
             <span class='ident'>StatusCode</span>::<span class='ident'>PreconditionRequired</span> <span class='op'>=&gt;</span> <span class='number'>428</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>TooManyRequests</span> <span class='op'>=&gt;</span> <span class='number'>429</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>RequestHeaderFieldsTooLarge</span> <span class='op'>=&gt;</span> <span class='number'>431</span>,
+            <span class='ident'>StatusCode</span>::<span class='ident'>UnavailableForLegalReasons</span> <span class='op'>=&gt;</span> <span class='number'>451</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>InternalServerError</span> <span class='op'>=&gt;</span> <span class='number'>500</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>NotImplemented</span> <span class='op'>=&gt;</span> <span class='number'>501</span>,
             <span class='ident'>StatusCode</span>::<span class='ident'>BadGateway</span> <span class='op'>=&gt;</span> <span class='number'>502</span>,
@@ -1186,6 +1214,7 @@
             <span class='ident'>StatusCode</span>::<span class='ident'>ExpectationFailed</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Expectation Failed&quot;</span>),
             <span class='ident'>StatusCode</span>::<span class='ident'>ImATeapot</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;I&#39;m a teapot&quot;</span>),
 
+            <span class='ident'>StatusCode</span>::<span class='ident'>MisdirectedRequest</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Misdirected Request&quot;</span>),
             <span class='ident'>StatusCode</span>::<span class='ident'>UnprocessableEntity</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Unprocessable Entity&quot;</span>),
             <span class='ident'>StatusCode</span>::<span class='ident'>Locked</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Locked&quot;</span>),
             <span class='ident'>StatusCode</span>::<span class='ident'>FailedDependency</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Failed Dependency&quot;</span>),
@@ -1196,6 +1225,8 @@
             <span class='ident'>StatusCode</span>::<span class='ident'>TooManyRequests</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Too Many Requests&quot;</span>),
 
             <span class='ident'>StatusCode</span>::<span class='ident'>RequestHeaderFieldsTooLarge</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Request Header Fields Too Large&quot;</span>),
+
+            <span class='ident'>StatusCode</span>::<span class='ident'>UnavailableForLegalReasons</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Unavailable For Legal Reasons&quot;</span>),
 
             <span class='ident'>StatusCode</span>::<span class='ident'>InternalServerError</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Internal Server Error&quot;</span>),
             <span class='ident'>StatusCode</span>::<span class='ident'>NotImplemented</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;Not Implemented&quot;</span>),
@@ -1480,6 +1511,7 @@
         <span class='ident'>validate</span>(<span class='number'>416</span>, <span class='ident'>RangeNotSatisfiable</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Range Not Satisfiable&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>417</span>, <span class='ident'>ExpectationFailed</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Expectation Failed&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>418</span>, <span class='ident'>ImATeapot</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;I&#39;m a teapot&quot;</span>));
+        <span class='ident'>validate</span>(<span class='number'>421</span>, <span class='ident'>MisdirectedRequest</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Misdirected Request&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>422</span>, <span class='ident'>UnprocessableEntity</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Unprocessable Entity&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>423</span>, <span class='ident'>Locked</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Locked&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>424</span>, <span class='ident'>FailedDependency</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Failed Dependency&quot;</span>));
@@ -1488,6 +1520,8 @@
         <span class='ident'>validate</span>(<span class='number'>429</span>, <span class='ident'>TooManyRequests</span>, <span class='ident'>BadRequest</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Too Many Requests&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>431</span>, <span class='ident'>RequestHeaderFieldsTooLarge</span>, <span class='ident'>BadRequest</span>,
             <span class='prelude-val'>Some</span>(<span class='string'>&quot;Request Header Fields Too Large&quot;</span>));
+        <span class='ident'>validate</span>(<span class='number'>451</span>, <span class='ident'>UnavailableForLegalReasons</span>, <span class='ident'>BadRequest</span>,
+            <span class='prelude-val'>Some</span>(<span class='string'>&quot;Unavailable For Legal Reasons&quot;</span>));
 
         <span class='ident'>validate</span>(<span class='number'>500</span>, <span class='ident'>InternalServerError</span>, <span class='ident'>InternalServerError</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Internal Server Error&quot;</span>));
         <span class='ident'>validate</span>(<span class='number'>501</span>, <span class='ident'>NotImplemented</span>, <span class='ident'>InternalServerError</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;Not Implemented&quot;</span>));

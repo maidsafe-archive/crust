@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/parser/inside_processing_instruction.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.1.26/src/reader/parser/inside_processing_instruction.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>inside_processing_instruction.rs.html -- source</title>
@@ -146,10 +146,10 @@
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>;
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
-<span class='kw'>use</span> <span class='kw'>super</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>ProcessingInstructionSubstate</span>, <span class='ident'>DeclarationSubstate</span>};
+<span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>ProcessingInstructionSubstate</span>, <span class='ident'>DeclarationSubstate</span>};
 
 <span class='kw'>impl</span> <span class='ident'>PullParser</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_processing_instruction</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>, <span class='ident'>s</span>: <span class='ident'>ProcessingInstructionSubstate</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inside_processing_instruction</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>, <span class='ident'>s</span>: <span class='ident'>ProcessingInstructionSubstate</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='ident'>s</span> {
             <span class='ident'>ProcessingInstructionSubstate</span>::<span class='ident'>PIInsideName</span> <span class='op'>=&gt;</span> <span class='kw'>match</span> <span class='ident'>t</span> {
                 <span class='ident'>Token</span>::<span class='ident'>Character</span>(<span class='ident'>c</span>) <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>buf_has_data</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>is_name_start_char</span>(<span class='ident'>c</span>) <span class='op'>||</span>
@@ -174,10 +174,10 @@
                         _ <span class='op'>=&gt;</span> {
                             <span class='self'>self</span>.<span class='ident'>into_state_emit</span>(
                                 <span class='ident'>State</span>::<span class='ident'>OutsideTag</span>,
-                                <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>ProcessingInstruction</span> {
+                                <span class='ident'>XmlEvent</span>::<span class='ident'>ProcessingInstruction</span> {
                                     <span class='ident'>name</span>: <span class='ident'>name</span>,
                                     <span class='ident'>data</span>: <span class='prelude-val'>None</span>
-                                })
+                                }
                             )
                         }
                     }
@@ -208,7 +208,7 @@
                     }
                 }
 
-                _ <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected token: &lt;?{}{}&quot;</span>, <span class='self'>self</span>.<span class='ident'>buf</span>, <span class='ident'>t</span>))
+                _ <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected token: &lt;?{}{}&quot;</span>, <span class='self'>self</span>.<span class='ident'>buf</span>, <span class='ident'>t</span>.<span class='ident'>to_string</span>()))
             },
 
             <span class='ident'>ProcessingInstructionSubstate</span>::<span class='ident'>PIInsideData</span> <span class='op'>=&gt;</span> <span class='kw'>match</span> <span class='ident'>t</span> {
@@ -218,16 +218,16 @@
                     <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>take_buf</span>();
                     <span class='self'>self</span>.<span class='ident'>into_state_emit</span>(
                         <span class='ident'>State</span>::<span class='ident'>OutsideTag</span>,
-                        <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>ProcessingInstruction</span> {
+                        <span class='ident'>XmlEvent</span>::<span class='ident'>ProcessingInstruction</span> {
                             <span class='ident'>name</span>: <span class='ident'>name</span>,
                             <span class='ident'>data</span>: <span class='prelude-val'>Some</span>(<span class='ident'>data</span>)
-                        })
+                        }
                     )
                 },
 
                 <span class='comment'>// Any other token should be treated as plain characters</span>
                 _ <span class='op'>=&gt;</span> {
-                    <span class='ident'>t</span>.<span class='ident'>push_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>buf</span>);
+                    <span class='self'>self</span>.<span class='ident'>buf</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='ident'>t</span>.<span class='ident'>to_string</span>());
                     <span class='prelude-val'>None</span>
                 }
             },

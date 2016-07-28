@@ -47,11 +47,11 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2524' class='srclink' href='../src/ws/lib.rs.html#320-323' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2531' class='srclink' href='../src/ws/lib.rs.html#333-336' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Builder {
     // some fields omitted
 }</pre><div class='docblock'><p>Utility for constructing a WebSocket from various settings.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../ws/struct.Builder.html' title='ws::Builder'>Builder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2534' class='srclink' href='../src/ws/lib.rs.html#326-366' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../ws/struct.Builder.html' title='ws::Builder'>Builder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2541' class='srclink' href='../src/ws/lib.rs.html#339-379' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../ws/struct.Builder.html' title='ws::Builder'>Builder</a></code></h4>
 <div class='docblock'><p>Create a new Builder with default settings.</p>
 </div><h4 id='method.build' class='method'><code>fn <a href='#method.build' class='fnname'>build</a>&lt;F&gt;(&amp;self, factory: F) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='../ws/struct.WebSocket.html' title='ws::WebSocket'>WebSocket</a>&lt;F&gt;&gt; <span class='where'>where F: <a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Factory</a></span></code></h4>
@@ -62,7 +62,7 @@ It is possible to use the same builder to create multiple WebSockets.</p>
 the builder will use a default EventLoopConfig based on other settings.</p>
 </div><h4 id='method.with_settings' class='method'><code>fn <a href='#method.with_settings' class='fnname'>with_settings</a>(&amp;mut self, settings: <a class='struct' href='../ws/struct.Settings.html' title='ws::Settings'>Settings</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Builder.html' title='ws::Builder'>Builder</a></code></h4>
 <div class='docblock'><p>Set the WebSocket settings to use.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Builder.html' title='ws::Builder'>Builder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2527' class='srclink' href='../src/ws/lib.rs.html#319' title='goto source code'>[src]</a></span></h3>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Builder.html' title='ws::Builder'>Builder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2534' class='srclink' href='../src/ws/lib.rs.html#332' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div></section>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/language-tags-0.0.7/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/language-tags-0.2.2/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -536,8 +536,157 @@
 <span id="492">492</span>
 <span id="493">493</span>
 <span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>missing_docs</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>test</span>, <span class='ident'>deny</span>(<span class='ident'>warnings</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;heap_size&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>custom_derive</span>, <span class='ident'>plugin</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;heap_size&quot;</span>, <span class='ident'>plugin</span>(<span class='ident'>heapsize_plugin</span>))]</span>
 
 <span class='doccomment'>//! Language tags can be used identify human languages, scripts e.g. Latin script, countries and</span>
 <span class='doccomment'>//! other regions.</span>
@@ -572,29 +721,28 @@
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! You can check for equality, but more often you should test if two tags match.</span>
-<span class='doccomment'>//! In this example we check if the resource in German language is suitable for</span>
-<span class='doccomment'>//! a user from Austria. While people speaking Austrian German normally understand</span>
-<span class='doccomment'>//! standard German the opposite is not always true. So the resource can be presented</span>
-<span class='doccomment'>//! to the user but if the resource was in `de-AT` and a user asked for a representation</span>
-<span class='doccomment'>//! in `de` the request should be rejected.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ```rust</span>
 <span class='doccomment'>//! use language_tags::LanguageTag;</span>
-<span class='doccomment'>//! let mut langtag1: LanguageTag = Default::default();</span>
-<span class='doccomment'>//! langtag1.language = Some(&quot;de&quot;.to_owned());</span>
-<span class='doccomment'>//! langtag1.region = Some(&quot;AT&quot;.to_owned());</span>
-<span class='doccomment'>//! let mut langtag2: LanguageTag = Default::default();</span>
-<span class='doccomment'>//! langtag2.language = Some(&quot;de&quot;.to_owned());</span>
-<span class='doccomment'>//! assert!(langtag2.matches(&amp;langtag1));</span>
+<span class='doccomment'>//! let mut langtag_server: LanguageTag = Default::default();</span>
+<span class='doccomment'>//! langtag_server.language = Some(&quot;de&quot;.to_owned());</span>
+<span class='doccomment'>//! langtag_server.region = Some(&quot;AT&quot;.to_owned());</span>
+<span class='doccomment'>//! let mut langtag_user: LanguageTag = Default::default();</span>
+<span class='doccomment'>//! langtag_user.language = Some(&quot;de&quot;.to_owned());</span>
+<span class='doccomment'>//! assert!(langtag_user.matches(&amp;langtag_server));</span>
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! There is also the `langtag!` macro for creating language tags.</span>
 
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;heap_size&quot;</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>heapsize</span>;
+
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ascii</span>::<span class='ident'>AsciiExt</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>BTreeMap</span>, <span class='ident'>BTreeSet</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>ErrorTrait</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Display</span>, <span class='ident'>Formatter</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Display</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>FromIterator</span>;
 
 <span class='kw'>fn</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='ident'>s</span>.<span class='ident'>chars</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;A&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;Z&#39;</span> <span class='op'>||</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;a&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;z&#39;</span>)
@@ -605,8 +753,8 @@
 }
 
 <span class='kw'>fn</span> <span class='ident'>is_alphanumeric_or_dash</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-    <span class='ident'>s</span>.<span class='ident'>chars</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;A&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;Z&#39;</span> <span class='op'>||</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;a&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;z&#39;</span> <span class='op'>||</span>
-                      <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;0&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;9&#39;</span> <span class='op'>||</span> <span class='ident'>x</span> <span class='op'>==</span> <span class='string'>&#39;-&#39;</span>)
+    <span class='ident'>s</span>.<span class='ident'>chars</span>()
+     .<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;A&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;Z&#39;</span> <span class='op'>||</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;a&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;z&#39;</span> <span class='op'>||</span> <span class='ident'>x</span> <span class='op'>&gt;=</span> <span class='string'>&#39;0&#39;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>x</span> <span class='op'>&lt;=</span> <span class='string'>&#39;9&#39;</span> <span class='op'>||</span> <span class='ident'>x</span> <span class='op'>==</span> <span class='string'>&#39;-&#39;</span>)
 }
 
 <span class='doccomment'>/// Defines an Error type for langtags.</span>
@@ -656,37 +804,95 @@
 <span class='doccomment'>/// Result type used for this library.</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>result</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>Error</span><span class='op'>&gt;</span>;
 
-<span class='doccomment'>/// Contains the 17 irregular old language tags not matching the standard grammer of tags.</span>
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>GRANDFATHERED_IRREGULAR</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>17</span>] <span class='op'>=</span> [
-    <span class='string'>&quot;en-GB-oed&quot;</span>,
-    <span class='string'>&quot;i-ami&quot;</span>,
-    <span class='string'>&quot;i-bnn&quot;</span>,
-    <span class='string'>&quot;i-default&quot;</span>,
-    <span class='string'>&quot;i-enochian&quot;</span>,
-    <span class='string'>&quot;i-hak&quot;</span>,
-    <span class='string'>&quot;i-klingon&quot;</span>,
-    <span class='string'>&quot;i-lux&quot;</span>,
-    <span class='string'>&quot;i-mingo&quot;</span>,
-    <span class='string'>&quot;i-navajo&quot;</span>,
-    <span class='string'>&quot;i-pwn&quot;</span>,
-    <span class='string'>&quot;i-tao&quot;</span>,
-    <span class='string'>&quot;i-tay&quot;</span>,
-    <span class='string'>&quot;i-tsu&quot;</span>,
-    <span class='string'>&quot;sgn-BE-FR&quot;</span>,
-    <span class='string'>&quot;sgn-BE-NL&quot;</span>,
-    <span class='string'>&quot;sgn-CH-DE&quot;</span>];
+<span class='doccomment'>/// Contains all grandfathered tags.</span>
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>GRANDFATHERED</span>: [(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span><span class='op'>&gt;</span>); <span class='number'>26</span>] <span class='op'>=</span> [(<span class='string'>&quot;art-lojban&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;jbo&quot;</span>)),
+                                                                       (<span class='string'>&quot;cel-gaulish&quot;</span>, <span class='prelude-val'>None</span>),
+                                                                       (<span class='string'>&quot;en-GB-oed&quot;</span>,
+                                                                        <span class='prelude-val'>Some</span>(<span class='string'>&quot;en-GB-oxendict&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-ami&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;ami&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-bnn&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;bnn&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-default&quot;</span>, <span class='prelude-val'>None</span>),
+                                                                       (<span class='string'>&quot;i-enochian&quot;</span>, <span class='prelude-val'>None</span>),
+                                                                       (<span class='string'>&quot;i-hak&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;hak&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-klingon&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;tlh&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-lux&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;lb&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-mingo&quot;</span>, <span class='prelude-val'>None</span>),
+                                                                       (<span class='string'>&quot;i-navajo&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;nv&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-pwn&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;pwn&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-tao&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;tao&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-tay&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;tay&quot;</span>)),
+                                                                       (<span class='string'>&quot;i-tsu&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;tsu&quot;</span>)),
+                                                                       (<span class='string'>&quot;no-bok&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;nb&quot;</span>)),
+                                                                       (<span class='string'>&quot;no-nyn&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;nn&quot;</span>)),
+                                                                       (<span class='string'>&quot;sgn-BE-FR&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;sfb&quot;</span>)),
+                                                                       (<span class='string'>&quot;sgn-BE-NL&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;vgt&quot;</span>)),
+                                                                       (<span class='string'>&quot;sgn-CH-DE&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;sgg&quot;</span>)),
+                                                                       (<span class='string'>&quot;zh-guoyu&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;cmn&quot;</span>)),
+                                                                       (<span class='string'>&quot;zh-hakka&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;hak&quot;</span>)),
+                                                                       (<span class='string'>&quot;zh-min&quot;</span>, <span class='prelude-val'>None</span>),
+                                                                       (<span class='string'>&quot;zh-min-nan&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;nan&quot;</span>)),
+                                                                       (<span class='string'>&quot;zh-xiang&quot;</span>, <span class='prelude-val'>Some</span>(<span class='string'>&quot;hsn&quot;</span>))];
 
-<span class='doccomment'>/// Contains the 9 regular grandfathered tags having special semantics.</span>
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>GRANDFATHERED_REGULAR</span>: [<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>; <span class='number'>9</span>] <span class='op'>=</span> [
-    <span class='string'>&quot;art-lojban&quot;</span>,
-    <span class='string'>&quot;cel-gaulish&quot;</span>,
-    <span class='string'>&quot;no-bok&quot;</span>,
-    <span class='string'>&quot;no-nyn&quot;</span>,
-    <span class='string'>&quot;zh-guoyu&quot;</span>,
-    <span class='string'>&quot;zh-hakka&quot;</span>,
-    <span class='string'>&quot;zh-min&quot;</span>,
-    <span class='string'>&quot;zh-min-nan&quot;</span>,
-    <span class='string'>&quot;zh-xiang&quot;</span>];
+<span class='kw'>const</span> <span class='ident'>DEPRECATED_LANGUAGE</span>: [(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>); <span class='number'>53</span>] <span class='op'>=</span> [(<span class='string'>&quot;in&quot;</span>, <span class='string'>&quot;id&quot;</span>),
+                                                                 (<span class='string'>&quot;iw&quot;</span>, <span class='string'>&quot;he&quot;</span>),
+                                                                 (<span class='string'>&quot;ji&quot;</span>, <span class='string'>&quot;yi&quot;</span>),
+                                                                 (<span class='string'>&quot;jw&quot;</span>, <span class='string'>&quot;jv&quot;</span>),
+                                                                 (<span class='string'>&quot;mo&quot;</span>, <span class='string'>&quot;ro&quot;</span>),
+                                                                 (<span class='string'>&quot;aam&quot;</span>, <span class='string'>&quot;aas&quot;</span>),
+                                                                 (<span class='string'>&quot;adp&quot;</span>, <span class='string'>&quot;dz&quot;</span>),
+                                                                 (<span class='string'>&quot;aue&quot;</span>, <span class='string'>&quot;ktz&quot;</span>),
+                                                                 (<span class='string'>&quot;ayx&quot;</span>, <span class='string'>&quot;nun&quot;</span>),
+                                                                 (<span class='string'>&quot;bjd&quot;</span>, <span class='string'>&quot;drl&quot;</span>),
+                                                                 (<span class='string'>&quot;ccq&quot;</span>, <span class='string'>&quot;rki&quot;</span>),
+                                                                 (<span class='string'>&quot;cjr&quot;</span>, <span class='string'>&quot;mom&quot;</span>),
+                                                                 (<span class='string'>&quot;cka&quot;</span>, <span class='string'>&quot;cmr&quot;</span>),
+                                                                 (<span class='string'>&quot;cmk&quot;</span>, <span class='string'>&quot;xch&quot;</span>),
+                                                                 (<span class='string'>&quot;drh&quot;</span>, <span class='string'>&quot;khk&quot;</span>),
+                                                                 (<span class='string'>&quot;drw&quot;</span>, <span class='string'>&quot;prs&quot;</span>),
+                                                                 (<span class='string'>&quot;gav&quot;</span>, <span class='string'>&quot;dev&quot;</span>),
+                                                                 (<span class='string'>&quot;gfx&quot;</span>, <span class='string'>&quot;vaj&quot;</span>),
+                                                                 (<span class='string'>&quot;gti&quot;</span>, <span class='string'>&quot;nyc&quot;</span>),
+                                                                 (<span class='string'>&quot;hrr&quot;</span>, <span class='string'>&quot;jal&quot;</span>),
+                                                                 (<span class='string'>&quot;ibi&quot;</span>, <span class='string'>&quot;opa&quot;</span>),
+                                                                 (<span class='string'>&quot;ilw&quot;</span>, <span class='string'>&quot;gal&quot;</span>),
+                                                                 (<span class='string'>&quot;kgh&quot;</span>, <span class='string'>&quot;kml&quot;</span>),
+                                                                 (<span class='string'>&quot;koj&quot;</span>, <span class='string'>&quot;kwv&quot;</span>),
+                                                                 (<span class='string'>&quot;kwq&quot;</span>, <span class='string'>&quot;yam&quot;</span>),
+                                                                 (<span class='string'>&quot;kxe&quot;</span>, <span class='string'>&quot;tvd&quot;</span>),
+                                                                 (<span class='string'>&quot;lii&quot;</span>, <span class='string'>&quot;raq&quot;</span>),
+                                                                 (<span class='string'>&quot;lmm&quot;</span>, <span class='string'>&quot;rmx&quot;</span>),
+                                                                 (<span class='string'>&quot;meg&quot;</span>, <span class='string'>&quot;cir&quot;</span>),
+                                                                 (<span class='string'>&quot;mst&quot;</span>, <span class='string'>&quot;mry&quot;</span>),
+                                                                 (<span class='string'>&quot;mwj&quot;</span>, <span class='string'>&quot;vaj&quot;</span>),
+                                                                 (<span class='string'>&quot;myt&quot;</span>, <span class='string'>&quot;mry&quot;</span>),
+                                                                 (<span class='string'>&quot;nnx&quot;</span>, <span class='string'>&quot;ngv&quot;</span>),
+                                                                 (<span class='string'>&quot;oun&quot;</span>, <span class='string'>&quot;vaj&quot;</span>),
+                                                                 (<span class='string'>&quot;pcr&quot;</span>, <span class='string'>&quot;adx&quot;</span>),
+                                                                 (<span class='string'>&quot;pmu&quot;</span>, <span class='string'>&quot;phr&quot;</span>),
+                                                                 (<span class='string'>&quot;ppr&quot;</span>, <span class='string'>&quot;lcq&quot;</span>),
+                                                                 (<span class='string'>&quot;puz&quot;</span>, <span class='string'>&quot;pub&quot;</span>),
+                                                                 (<span class='string'>&quot;sca&quot;</span>, <span class='string'>&quot;hle&quot;</span>),
+                                                                 (<span class='string'>&quot;thx&quot;</span>, <span class='string'>&quot;oyb&quot;</span>),
+                                                                 (<span class='string'>&quot;tie&quot;</span>, <span class='string'>&quot;ras&quot;</span>),
+                                                                 (<span class='string'>&quot;tkk&quot;</span>, <span class='string'>&quot;twm&quot;</span>),
+                                                                 (<span class='string'>&quot;tlw&quot;</span>, <span class='string'>&quot;weo&quot;</span>),
+                                                                 (<span class='string'>&quot;tnf&quot;</span>, <span class='string'>&quot;prs&quot;</span>),
+                                                                 (<span class='string'>&quot;tsf&quot;</span>, <span class='string'>&quot;taj&quot;</span>),
+                                                                 (<span class='string'>&quot;uok&quot;</span>, <span class='string'>&quot;ema&quot;</span>),
+                                                                 (<span class='string'>&quot;xia&quot;</span>, <span class='string'>&quot;acn&quot;</span>),
+                                                                 (<span class='string'>&quot;xsj&quot;</span>, <span class='string'>&quot;suj&quot;</span>),
+                                                                 (<span class='string'>&quot;ybd&quot;</span>, <span class='string'>&quot;rki&quot;</span>),
+                                                                 (<span class='string'>&quot;yma&quot;</span>, <span class='string'>&quot;lrr&quot;</span>),
+                                                                 (<span class='string'>&quot;ymt&quot;</span>, <span class='string'>&quot;mtm&quot;</span>),
+                                                                 (<span class='string'>&quot;yos&quot;</span>, <span class='string'>&quot;zom&quot;</span>),
+                                                                 (<span class='string'>&quot;yuu&quot;</span>, <span class='string'>&quot;yug&quot;</span>)];
+
+<span class='kw'>const</span> <span class='ident'>DEPRECATED_REGION</span>: [(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>); <span class='number'>6</span>] <span class='op'>=</span> [(<span class='string'>&quot;BU&quot;</span>, <span class='string'>&quot;MM&quot;</span>),
+                                                              (<span class='string'>&quot;DD&quot;</span>, <span class='string'>&quot;DE&quot;</span>),
+                                                              (<span class='string'>&quot;FX&quot;</span>, <span class='string'>&quot;FR&quot;</span>),
+                                                              (<span class='string'>&quot;TP&quot;</span>, <span class='string'>&quot;TL&quot;</span>),
+                                                              (<span class='string'>&quot;YD&quot;</span>, <span class='string'>&quot;YE&quot;</span>),
+                                                              (<span class='string'>&quot;ZR&quot;</span>, <span class='string'>&quot;CD&quot;</span>)];
 
 <span class='doccomment'>/// A language tag as described in [BCP47](http://tools.ietf.org/html/bcp47).</span>
 <span class='doccomment'>///</span>
@@ -695,7 +901,8 @@
 <span class='doccomment'>/// communication.  This includes constructed and artificial languages</span>
 <span class='doccomment'>/// but excludes languages not intended primarily for human</span>
 <span class='doccomment'>/// communication, such as programming languages.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Default</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;heap_size&quot;</span>, <span class='ident'>derive</span>(<span class='ident'>HeapSizeOf</span>))]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>LanguageTag</span> {
     <span class='doccomment'>/// Language subtags are used to indicate the language, ignoring all</span>
     <span class='doccomment'>/// other aspects such as script, region or spefic invariants.</span>
@@ -704,7 +911,7 @@
     <span class='doccomment'>/// selected languages that, for various historical and compatibility</span>
     <span class='doccomment'>/// reasons, are closely identified with or tagged using an existing</span>
     <span class='doccomment'>/// primary language subtag.</span>
-    <span class='kw'>pub</span> <span class='ident'>extlang</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>extlangs</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
     <span class='doccomment'>/// Script subtags are used to indicate the script or writing system</span>
     <span class='doccomment'>/// variations that distinguish the written forms of a language or its</span>
     <span class='doccomment'>/// dialects.</span>
@@ -728,151 +935,214 @@
     <span class='kw'>pub</span> <span class='ident'>extensions</span>: <span class='ident'>BTreeMap</span><span class='op'>&lt;</span><span class='ident'>u8</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;&gt;</span>,
     <span class='doccomment'>/// Private use subtags are used to indicate distinctions in language</span>
     <span class='doccomment'>/// that are important in a given context by private agreement.</span>
-    <span class='kw'>pub</span> <span class='ident'>privateuse</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>
+    <span class='kw'>pub</span> <span class='ident'>privateuse</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>LanguageTag</span> {
-    <span class='doccomment'>/// Matches language tags like described in</span>
-    <span class='doccomment'>/// [RFC4647#Extended filtering](https://tools.ietf.org/html/rfc4647#section-3.3.2)</span>
+    <span class='doccomment'>/// Matches language tags. The first language acts as a language range, the second one is used</span>
+    <span class='doccomment'>/// as a normal language tag. None fields in the language range are ignored. If the language</span>
+    <span class='doccomment'>/// tag has more extlangs than the range these extlangs are ignored. Matches are</span>
+    <span class='doccomment'>/// case-insensitive. `*` in language ranges are represented using `None` values. The language</span>
+    <span class='doccomment'>/// range `*` that matches language tags is created by the default language tag:</span>
+    <span class='doccomment'>/// `let wildcard: LanguageTag = Default::default();.`</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// For example `en-GB` matches only `en-GB` and `en-Arab-GB` but not `en`. While `en` matches</span>
-    <span class='doccomment'>/// all of `en`, `en-GB` ,`en-Arab` and `en-Arab-GB`.</span>
+    <span class='doccomment'>/// For example the range `en-GB` matches only `en-GB` and `en-Arab-GB` but not `en`.</span>
+    <span class='doccomment'>/// The range `en` matches all language tags starting with `en` including `en`, `en-GB`,</span>
+    <span class='doccomment'>/// `en-Arab` and `en-Arab-GB`.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// # Panics</span>
+    <span class='doccomment'>/// If the language range has extensions or private use tags.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// # Examples</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// # #[macro_use] extern crate language_tags;</span>
+    <span class='doccomment'>/// # fn main() {</span>
+    <span class='doccomment'>/// let range_italian = langtag!(it);</span>
+    <span class='doccomment'>/// let tag_german = langtag!(de);</span>
+    <span class='doccomment'>/// let tag_italian_switzerland = langtag!(it;;;CH);</span>
+    <span class='doccomment'>/// assert!(!range_italian.matches(&amp;tag_german));</span>
+    <span class='doccomment'>/// assert!(range_italian.matches(&amp;tag_italian_switzerland));</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let range_spanish_brazil = langtag!(es;;;BR);</span>
+    <span class='doccomment'>/// let tag_spanish = langtag!(es);</span>
+    <span class='doccomment'>/// assert!(!range_spanish_brazil.matches(&amp;tag_spanish));</span>
+    <span class='doccomment'>/// # }</span>
+    <span class='doccomment'>/// ```</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>matches</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>other</span>: <span class='kw-2'>&amp;</span><span class='ident'>LanguageTag</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>return</span> <span class='ident'>matches_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>language</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>language</span>) <span class='op'>&amp;&amp;</span>
-        <span class='ident'>matches_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extlang</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>extlang</span>) <span class='op'>&amp;&amp;</span>
-        <span class='ident'>matches_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>script</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>script</span>) <span class='op'>&amp;&amp;</span>
-        <span class='ident'>matches_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>region</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>region</span>) <span class='op'>&amp;&amp;</span>
-        <span class='self'>self</span>.<span class='ident'>variants</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>other</span>.<span class='ident'>variants</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>y</span><span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>y</span>))) <span class='op'>&amp;&amp;</span>
-        <span class='self'>self</span>.<span class='ident'>privateuse</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>other</span>.<span class='ident'>privateuse</span>.<span class='ident'>len</span>() <span class='op'>&amp;&amp;</span>
-        <span class='self'>self</span>.<span class='ident'>privateuse</span>.<span class='ident'>iter</span>().<span class='ident'>zip</span>(<span class='ident'>other</span>.<span class='ident'>privateuse</span>.<span class='ident'>iter</span>()).<span class='ident'>all</span>(<span class='op'>|</span>(<span class='ident'>x</span>, <span class='ident'>y</span>)<span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>y</span>));
-
-        <span class='kw'>fn</span> <span class='ident'>matches_option_ignore_ascii_case</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-            <span class='kw'>match</span> (<span class='ident'>a</span>.<span class='ident'>is_some</span>(), <span class='ident'>b</span>.<span class='ident'>is_some</span>()) {
-                (<span class='boolvalue'>true</span>, <span class='boolvalue'>true</span>) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>().<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>b</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>()),
-                (<span class='boolvalue'>false</span>, <span class='boolvalue'>false</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-                (<span class='boolvalue'>true</span>, <span class='boolvalue'>false</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
-                (<span class='boolvalue'>false</span>, <span class='boolvalue'>true</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+        <span class='kw'>fn</span> <span class='ident'>matches_option</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='kw'>match</span> (<span class='ident'>a</span>, <span class='ident'>b</span>) {
+                (<span class='kw-2'>&amp;</span><span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>), <span class='kw-2'>&amp;</span><span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>b</span>)) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>b</span>),
+                (<span class='kw-2'>&amp;</span><span class='prelude-val'>None</span>, _) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+                (_, <span class='kw-2'>&amp;</span><span class='prelude-val'>None</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
             }
-
         }
+        <span class='kw'>fn</span> <span class='ident'>matches_vec</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>String</span>], <span class='ident'>b</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>String</span>]) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='ident'>a</span>.<span class='ident'>iter</span>().<span class='ident'>zip</span>(<span class='ident'>b</span>.<span class='ident'>iter</span>()).<span class='ident'>all</span>(<span class='op'>|</span>(<span class='ident'>x</span>, <span class='ident'>y</span>)<span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>y</span>))
+        }
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>is_language_range</span>());
+        <span class='ident'>matches_option</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>language</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>language</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>matches_vec</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extlangs</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>extlangs</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>matches_option</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>script</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>script</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>matches_option</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>region</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>region</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>matches_vec</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>variants</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>variants</span>)
+    }
+
+    <span class='doccomment'>/// Checks if it is a language range, meaning that there are no extension and privateuse tags.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_language_range</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='self'>self</span>.<span class='ident'>extensions</span>.<span class='ident'>is_empty</span>() <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>privateuse</span>.<span class='ident'>is_empty</span>()
+    }
+
+    <span class='doccomment'>/// Returns the canonical version of the language tag.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// It currently applies the following steps:</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// * Grandfathered tags are replaced with the canonical version if possible.</span>
+    <span class='doccomment'>/// * Extension languages are promoted to primary language.</span>
+    <span class='doccomment'>/// * Deprecated languages are replaced with modern equivalents.</span>
+    <span class='doccomment'>/// * Deprecated regions are replaced with new country names.</span>
+    <span class='doccomment'>/// * The `heploc` variant is replaced with `alalc97`.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// The returned language tags may not be completly canonical and they are</span>
+    <span class='doccomment'>/// not validated.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>canonicalize</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>LanguageTag</span> {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>language</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>language</span> {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span>(_, <span class='prelude-val'>Some</span>(<span class='ident'>tag</span>))) <span class='op'>=</span> <span class='ident'>GRANDFATHERED</span>.<span class='ident'>iter</span>().<span class='ident'>find</span>(<span class='op'>|</span><span class='op'>&amp;&amp;</span>(<span class='ident'>x</span>, _)<span class='op'>|</span> {
+                <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='ident'>language</span>)
+            }) {
+                <span class='kw'>return</span> <span class='ident'>tag</span>.<span class='ident'>parse</span>().<span class='ident'>expect</span>(<span class='string'>&quot;GRANDFATHERED list must contain only valid tags.&quot;</span>);
+            }
+        }
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>tag</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>clone</span>();
+        <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>extlangs</span>.<span class='ident'>is_empty</span>() {
+            <span class='ident'>tag</span>.<span class='ident'>language</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='self'>self</span>.<span class='ident'>extlangs</span>[<span class='number'>0</span>].<span class='ident'>clone</span>());
+            <span class='ident'>tag</span>.<span class='ident'>extlangs</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
+        }
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>language</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>language</span> {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span>(_, <span class='ident'>l</span>)) <span class='op'>=</span> <span class='ident'>DEPRECATED_LANGUAGE</span>.<span class='ident'>iter</span>().<span class='ident'>find</span>(<span class='op'>|</span><span class='op'>&amp;&amp;</span>(<span class='ident'>x</span>, _)<span class='op'>|</span> {
+                <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='ident'>language</span>)
+            }) {
+                <span class='ident'>tag</span>.<span class='ident'>language</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>l</span>.<span class='ident'>to_owned</span>());
+            };
+        }
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>region</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>region</span> {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span>(_, <span class='ident'>r</span>)) <span class='op'>=</span> <span class='ident'>DEPRECATED_REGION</span>.<span class='ident'>iter</span>().<span class='ident'>find</span>(<span class='op'>|</span><span class='op'>&amp;&amp;</span>(<span class='ident'>x</span>, _)<span class='op'>|</span> {
+                <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='ident'>region</span>)
+            }) {
+                <span class='ident'>tag</span>.<span class='ident'>region</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>r</span>.<span class='ident'>to_owned</span>());
+            };
+        }
+        <span class='ident'>tag</span>.<span class='ident'>variants</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>variants</span>
+                           .<span class='ident'>iter</span>()
+                           .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>variant</span><span class='op'>|</span> {
+                               <span class='kw'>if</span> <span class='string'>&quot;heploc&quot;</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>variant</span>) {
+                                   <span class='string'>&quot;alalc97&quot;</span>.<span class='ident'>to_owned</span>()
+                               } <span class='kw'>else</span> {
+                                   <span class='ident'>variant</span>.<span class='ident'>clone</span>()
+                               }
+                           })
+                           .<span class='ident'>collect</span>();
+        <span class='ident'>tag</span>
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>PartialEq</span> <span class='kw'>for</span> <span class='ident'>LanguageTag</span> {
     <span class='kw'>fn</span> <span class='ident'>eq</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>other</span>: <span class='kw-2'>&amp;</span><span class='ident'>LanguageTag</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>return</span> <span class='ident'>eq_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>language</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>language</span>) <span class='op'>&amp;&amp;</span>
-        <span class='ident'>eq_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extlang</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>extlang</span>) <span class='op'>&amp;&amp;</span>
-        <span class='ident'>eq_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>script</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>script</span>) <span class='op'>&amp;&amp;</span>
-        <span class='ident'>eq_option_ignore_ascii_case</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>region</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>region</span>) <span class='op'>&amp;&amp;</span>
-        <span class='self'>self</span>.<span class='ident'>variants</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>other</span>.<span class='ident'>variants</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>y</span><span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>y</span>))) <span class='op'>&amp;&amp;</span>
-        <span class='self'>self</span>.<span class='ident'>privateuse</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>other</span>.<span class='ident'>privateuse</span>.<span class='ident'>len</span>() <span class='op'>&amp;&amp;</span>
-        <span class='self'>self</span>.<span class='ident'>privateuse</span>.<span class='ident'>iter</span>().<span class='ident'>zip</span>(<span class='ident'>other</span>.<span class='ident'>privateuse</span>.<span class='ident'>iter</span>()).<span class='ident'>all</span>(<span class='op'>|</span>(<span class='ident'>x</span>, <span class='ident'>y</span>)<span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>y</span>));
-
-        <span class='kw'>fn</span> <span class='ident'>eq_option_ignore_ascii_case</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-            <span class='kw'>match</span> (<span class='ident'>a</span>.<span class='ident'>is_some</span>(), <span class='ident'>b</span>.<span class='ident'>is_some</span>()) {
-                (<span class='boolvalue'>true</span>, <span class='boolvalue'>true</span>) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>().<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>b</span>.<span class='ident'>as_ref</span>().<span class='ident'>unwrap</span>()),
-                (<span class='boolvalue'>false</span>, <span class='boolvalue'>false</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+        <span class='kw'>fn</span> <span class='ident'>eq_option</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='kw'>match</span> (<span class='ident'>a</span>, <span class='ident'>b</span>) {
+                (<span class='kw-2'>&amp;</span><span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>), <span class='kw-2'>&amp;</span><span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>b</span>)) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>b</span>),
+                (<span class='kw-2'>&amp;</span><span class='prelude-val'>None</span>, <span class='kw-2'>&amp;</span><span class='prelude-val'>None</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
                 _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
             }
-
         }
+        <span class='kw'>fn</span> <span class='ident'>eq_vec</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>String</span>], <span class='ident'>b</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>String</span>]) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='ident'>a</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>b</span>.<span class='ident'>len</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>a</span>.<span class='ident'>iter</span>().<span class='ident'>zip</span>(<span class='ident'>b</span>.<span class='ident'>iter</span>()).<span class='ident'>all</span>(<span class='op'>|</span>(<span class='ident'>x</span>, <span class='ident'>y</span>)<span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>y</span>))
+        }
+        <span class='ident'>eq_option</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>language</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>language</span>) <span class='op'>&amp;&amp;</span> <span class='ident'>eq_vec</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extlangs</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>extlangs</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>eq_option</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>script</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>script</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>eq_option</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>region</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>region</span>) <span class='op'>&amp;&amp;</span> <span class='ident'>eq_vec</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>variants</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>variants</span>) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>BTreeSet</span>::<span class='ident'>from_iter</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extensions</span>) <span class='op'>==</span> <span class='ident'>BTreeSet</span>::<span class='ident'>from_iter</span>(<span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>extensions</span>) <span class='op'>&amp;&amp;</span>
+        <span class='self'>self</span>.<span class='ident'>extensions</span>.<span class='ident'>keys</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>a</span><span class='op'>|</span> <span class='ident'>eq_vec</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extensions</span>[<span class='ident'>a</span>], <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>extensions</span>[<span class='ident'>a</span>])) <span class='op'>&amp;&amp;</span>
+        <span class='ident'>eq_vec</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>privateuse</span>, <span class='kw-2'>&amp;</span><span class='ident'>other</span>.<span class='ident'>privateuse</span>)
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>Default</span> <span class='kw'>for</span> <span class='ident'>LanguageTag</span> {
-    <span class='kw'>fn</span> <span class='ident'>default</span>() <span class='op'>-&gt;</span> <span class='ident'>LanguageTag</span> {
-        <span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: <span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
+<span class='doccomment'>/// Handles normal tags.</span>
+<span class='doccomment'>/// The parser has a position from 0 to 6. Bigger positions reepresent the ASCII codes of</span>
+<span class='doccomment'>/// single character extensions</span>
+<span class='doccomment'>/// language-extlangs-script-region-variant-extension-privateuse</span>
+<span class='doccomment'>/// --- 0 -- -- 1 -- -- 2 - -- 3 - -- 4 -- --- x --- ---- 6 ---</span>
+<span class='kw'>fn</span> <span class='ident'>parse_language_tag</span>(<span class='ident'>langtag</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>LanguageTag</span>, <span class='ident'>t</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>position</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>0</span>;
+    <span class='kw'>for</span> <span class='ident'>subtag</span> <span class='kw'>in</span> <span class='ident'>t</span>.<span class='ident'>split</span>(<span class='string'>&#39;-&#39;</span>) {
+        <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>8</span> {
+            <span class='comment'>// All subtags have a maximum length of eight characters.</span>
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>SubtagTooLong</span>);
+        }
+        <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>6</span> {
+            <span class='ident'>langtag</span>.<span class='ident'>privateuse</span>.<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='string'>&quot;x&quot;</span>) {
+            <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>6</span>;
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>0</span> {
+            <span class='comment'>// Primary language</span>
+            <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&lt;</span> <span class='number'>2</span> <span class='op'>||</span> <span class='op'>!</span><span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) {
+                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLanguage</span>);
+            }
+            <span class='ident'>langtag</span>.<span class='ident'>language</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+            <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&lt;</span> <span class='number'>4</span> {
+                <span class='comment'>// extlangs are only allowed for short language tags</span>
+                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>1</span>;
+            } <span class='kw'>else</span> {
+                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>2</span>;
+            }
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>1</span> <span class='op'>&amp;&amp;</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) {
+            <span class='comment'>// extlangs</span>
+            <span class='ident'>langtag</span>.<span class='ident'>extlangs</span>.<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&lt;=</span> <span class='number'>2</span> <span class='op'>&amp;&amp;</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>4</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) {
+            <span class='comment'>// Script</span>
+            <span class='ident'>langtag</span>.<span class='ident'>script</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+            <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>3</span>;
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&lt;=</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span>
+           (<span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>2</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) <span class='op'>||</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_numeric</span>(<span class='ident'>subtag</span>)) {
+            <span class='ident'>langtag</span>.<span class='ident'>region</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+            <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>4</span>;
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&lt;=</span> <span class='number'>4</span> <span class='op'>&amp;&amp;</span>
+           (<span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='number'>5</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='kw-2'>&amp;</span><span class='ident'>subtag</span>[<span class='number'>0</span>..<span class='number'>1</span>]) <span class='op'>||</span>
+            <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='number'>4</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_numeric</span>(<span class='kw-2'>&amp;</span><span class='ident'>subtag</span>[<span class='number'>0</span>..<span class='number'>1</span>])) {
+            <span class='comment'>// Variant</span>
+            <span class='ident'>langtag</span>.<span class='ident'>variants</span>.<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+            <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>4</span>;
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> {
+            <span class='ident'>position</span> <span class='op'>=</span> <span class='ident'>subtag</span>.<span class='ident'>as_bytes</span>()[<span class='number'>0</span>] <span class='kw'>as</span> <span class='ident'>u8</span>;
+            <span class='kw'>if</span> <span class='ident'>langtag</span>.<span class='ident'>extensions</span>.<span class='ident'>contains_key</span>(<span class='kw-2'>&amp;</span><span class='ident'>position</span>) {
+                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>DuplicateExtension</span>);
+            }
+            <span class='ident'>langtag</span>.<span class='ident'>extensions</span>.<span class='ident'>insert</span>(<span class='ident'>position</span>, <span class='ident'>Vec</span>::<span class='ident'>new</span>());
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&gt;</span> <span class='number'>6</span> {
+            <span class='ident'>langtag</span>.<span class='ident'>extensions</span>
+                   .<span class='ident'>get_mut</span>(<span class='kw-2'>&amp;</span><span class='ident'>position</span>)
+                   .<span class='ident'>expect</span>(<span class='string'>&quot;no entry found for key&quot;</span>)
+                   .<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
+        } <span class='kw'>else</span> {
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidSubtag</span>);
         }
     }
+    <span class='prelude-val'>Ok</span>(<span class='ident'>position</span>)
 }
 
 <span class='kw'>impl</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span> <span class='kw'>for</span> <span class='ident'>LanguageTag</span> {
     <span class='kw'>type</span> <span class='prelude-val'>Err</span> <span class='op'>=</span> <span class='ident'>Error</span>;
     <span class='kw'>fn</span> <span class='ident'>from_str</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='self'>Self</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>t</span> <span class='op'>=</span> <span class='ident'>s</span>.<span class='ident'>trim</span>();
-        <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>is_alphanumeric_or_dash</span>(<span class='ident'>t</span>)  {
+        <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>is_alphanumeric_or_dash</span>(<span class='ident'>t</span>) {
             <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>ForbiddenChar</span>);
         }
-        <span class='comment'>// Handle grandfathered tags</span>
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>tag</span>) <span class='op'>=</span> <span class='ident'>GRANDFATHERED_IRREGULAR</span>.<span class='ident'>iter</span>().<span class='ident'>find</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>t</span>)) {
-            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>simple_langtag</span>(<span class='ident'>tag</span>))
-        }
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>tag</span>) <span class='op'>=</span> <span class='ident'>GRANDFATHERED_REGULAR</span>.<span class='ident'>iter</span>().<span class='ident'>find</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>t</span>)) {
-            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>simple_langtag</span>(<span class='ident'>tag</span>))
-        }
-        <span class='comment'>// Handle normal tags</span>
-        <span class='comment'>// The parser has a position from 0 to 6. Bigger positions reepresent the ASCII codes of</span>
-        <span class='comment'>// single character extensions</span>
-        <span class='comment'>// language-extlang-script-region-variant-extension-privateuse</span>
-        <span class='comment'>// --- 0 -- -- 1 -- -- 2 - -- 3 - -- 4 -- --- x --- ---- 6 ---</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>langtag</span>: <span class='ident'>LanguageTag</span> <span class='op'>=</span> <span class='ident'>Default</span>::<span class='ident'>default</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>position</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>0</span>;
-        <span class='kw'>for</span> <span class='ident'>subtag</span> <span class='kw'>in</span> <span class='ident'>t</span>.<span class='ident'>split</span>(<span class='string'>&#39;-&#39;</span>) {
-            <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>8</span> {
-                <span class='comment'>// &gt; All subtags have a maximum length of eight characters.</span>
-                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>SubtagTooLong</span>);
-            }
-            <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>6</span> {
-                <span class='ident'>langtag</span>.<span class='ident'>privateuse</span>.<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='string'>&quot;x&quot;</span>) {
-                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>6</span>;
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>0</span> {
-                <span class='comment'>// Primary language</span>
-                <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&lt;</span> <span class='number'>2</span> <span class='op'>||</span> <span class='op'>!</span><span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) {
-                    <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLanguage</span>)
-                }
-                <span class='ident'>langtag</span>.<span class='ident'>language</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-                <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&lt;</span> <span class='number'>4</span> {
-                    <span class='comment'>// Extlangs are only allowed for short language tags</span>
-                    <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>1</span>;
-                } <span class='kw'>else</span> {
-                    <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>2</span>;
-                }
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>1</span> <span class='op'>&amp;&amp;</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) {
-                <span class='comment'>// Extlang</span>
-                <span class='ident'>langtag</span>.<span class='ident'>extlang</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>2</span>;
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>2</span> <span class='op'>&amp;&amp;</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>)
-                    <span class='op'>&amp;&amp;</span> <span class='ident'>langtag</span>.<span class='ident'>extlang</span>.<span class='ident'>is_some</span>() {
-                <span class='comment'>// Multiple extlangs</span>
-                <span class='kw'>let</span> <span class='ident'>x</span> <span class='op'>=</span> [<span class='ident'>langtag</span>.<span class='ident'>extlang</span>.<span class='ident'>unwrap</span>(), <span class='ident'>subtag</span>.<span class='ident'>to_owned</span>()].<span class='ident'>connect</span>(<span class='string'>&quot;-&quot;</span>);
-                <span class='kw'>if</span> <span class='ident'>x</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>11</span> {
-                    <span class='comment'>// maximum 3 extlangs</span>
-                    <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>TooManyExtlangs</span>);
-                }
-                <span class='ident'>langtag</span>.<span class='ident'>extlang</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>x</span>);
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&lt;=</span> <span class='number'>2</span> <span class='op'>&amp;&amp;</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>4</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) {
-                <span class='comment'>// Script</span>
-                <span class='ident'>langtag</span>.<span class='ident'>script</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>3</span>;
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&lt;=</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span> (<span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>2</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='ident'>subtag</span>) <span class='op'>||</span>
-                    <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_numeric</span>(<span class='ident'>subtag</span>)) {
-                <span class='ident'>langtag</span>.<span class='ident'>region</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>4</span>;
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&lt;=</span> <span class='number'>4</span> <span class='op'>&amp;&amp;</span> (<span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='number'>5</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_alphabetic</span>(<span class='kw-2'>&amp;</span><span class='ident'>subtag</span>[<span class='number'>0</span>..<span class='number'>1</span>]) <span class='op'>||</span>
-                    <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='number'>4</span> <span class='op'>&amp;&amp;</span> <span class='ident'>is_numeric</span>(<span class='kw-2'>&amp;</span><span class='ident'>subtag</span>[<span class='number'>0</span>..<span class='number'>1</span>])) {
-                <span class='comment'>// Variant</span>
-                <span class='ident'>langtag</span>.<span class='ident'>variants</span>.<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-                <span class='ident'>position</span> <span class='op'>=</span> <span class='number'>4</span>;
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>subtag</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> {
-                <span class='ident'>position</span> <span class='op'>=</span> <span class='ident'>subtag</span>.<span class='ident'>chars</span>().<span class='ident'>next</span>().<span class='ident'>unwrap</span>() <span class='kw'>as</span> <span class='ident'>u8</span>;
-                <span class='kw'>if</span> <span class='ident'>langtag</span>.<span class='ident'>extensions</span>.<span class='ident'>contains_key</span>(<span class='kw-2'>&amp;</span><span class='ident'>position</span>) {
-                    <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>DuplicateExtension</span>);
-                }
-                <span class='ident'>langtag</span>.<span class='ident'>extensions</span>.<span class='ident'>insert</span>(<span class='ident'>position</span>, <span class='ident'>Vec</span>::<span class='ident'>new</span>());
-            } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>&gt;</span> <span class='number'>6</span> {
-                <span class='ident'>langtag</span>.<span class='ident'>extensions</span>.<span class='ident'>get_mut</span>(<span class='kw-2'>&amp;</span><span class='ident'>position</span>).<span class='ident'>unwrap</span>().<span class='ident'>push</span>(<span class='ident'>subtag</span>.<span class='ident'>to_owned</span>());
-            } <span class='kw'>else</span> {
-                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidSubtag</span>);
-            }
+        <span class='comment'>// Handle grandfathered tags</span>
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span>(<span class='ident'>tag</span>, _)) <span class='op'>=</span> <span class='ident'>GRANDFATHERED</span>.<span class='ident'>iter</span>().<span class='ident'>find</span>(<span class='op'>|</span><span class='op'>&amp;&amp;</span>(<span class='ident'>x</span>, _)<span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>eq_ignore_ascii_case</span>(<span class='ident'>t</span>)) {
+            <span class='ident'>langtag</span>.<span class='ident'>language</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>((<span class='op'>*</span><span class='ident'>tag</span>).<span class='ident'>to_owned</span>());
+            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>langtag</span>);
         }
+        <span class='kw'>let</span> <span class='ident'>position</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_language_tag</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>langtag</span>, <span class='ident'>t</span>));
         <span class='kw'>if</span> <span class='ident'>langtag</span>.<span class='ident'>extensions</span>.<span class='ident'>values</span>().<span class='ident'>any</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span>.<span class='ident'>is_empty</span>()) {
             <span class='comment'>// Extensions and privateuse must not be empty if present</span>
             <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>EmptyExtension</span>);
@@ -880,34 +1150,56 @@
         <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='number'>6</span> <span class='op'>&amp;&amp;</span> <span class='ident'>langtag</span>.<span class='ident'>privateuse</span>.<span class='ident'>is_empty</span>() {
             <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>EmptyPrivateUse</span>);
         }
-        <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>langtag</span>);
-
-        <span class='kw'>fn</span> <span class='ident'>simple_langtag</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>LanguageTag</span> {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>x</span>: <span class='ident'>LanguageTag</span> <span class='op'>=</span> <span class='ident'>Default</span>::<span class='ident'>default</span>();
-            <span class='ident'>x</span>.<span class='ident'>language</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>s</span>.<span class='ident'>to_owned</span>());
-            <span class='ident'>x</span>
+        <span class='kw'>if</span> <span class='ident'>langtag</span>.<span class='ident'>extlangs</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>2</span> {
+            <span class='comment'>// maximum 3 extlangs</span>
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>TooManyExtlangs</span>);
         }
+        <span class='prelude-val'>Ok</span>(<span class='ident'>langtag</span>)
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>LanguageTag</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>x</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>language</span> {
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Display</span>::<span class='ident'>fmt</span>(<span class='ident'>x</span>, <span class='ident'>f</span>))
+        <span class='kw'>fn</span> <span class='ident'>cmp_ignore_ascii_case</span>(<span class='ident'>a</span>: <span class='kw-2'>&amp;</span><span class='ident'>u8</span>, <span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>Ordering</span> {
+            <span class='kw'>fn</span> <span class='ident'>byte_to_uppercase</span>(<span class='ident'>x</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>u8</span> {
+                <span class='kw'>if</span> <span class='ident'>x</span> <span class='op'>&gt;</span> <span class='number'>96</span> {
+                    <span class='ident'>x</span> <span class='op'>-</span> <span class='number'>32</span>
+                } <span class='kw'>else</span> {
+                    <span class='ident'>x</span>
+                }
+            }
+            <span class='kw'>let</span> <span class='ident'>x</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='ident'>byte_to_uppercase</span>(<span class='op'>*</span><span class='ident'>a</span>);
+            <span class='kw'>let</span> <span class='ident'>y</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='ident'>byte_to_uppercase</span>(<span class='op'>*</span><span class='ident'>b</span>);
+            <span class='ident'>x</span>.<span class='ident'>cmp</span>(<span class='kw-2'>&amp;</span><span class='ident'>y</span>)
         }
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>x</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>extlang</span> {
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>));
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>x</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>language</span> {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Display</span>::<span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='ident'>x</span>.<span class='ident'>to_ascii_lowercase</span>()[..], <span class='ident'>f</span>))
+        }
+        <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>extlangs</span> {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>.<span class='ident'>to_ascii_lowercase</span>()));
         }
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>x</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>script</span> {
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>));
+            <span class='kw'>let</span> <span class='ident'>y</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>x</span>.<span class='ident'>chars</span>()
+                             .<span class='ident'>enumerate</span>()
+                             .<span class='ident'>map</span>(<span class='op'>|</span>(<span class='ident'>i</span>, <span class='ident'>c</span>)<span class='op'>|</span> {
+                                 <span class='kw'>if</span> <span class='ident'>i</span> <span class='op'>==</span> <span class='number'>0</span> {
+                                     <span class='ident'>c</span>.<span class='ident'>to_ascii_uppercase</span>()
+                                 } <span class='kw'>else</span> {
+                                     <span class='ident'>c</span>.<span class='ident'>to_ascii_lowercase</span>()
+                                 }
+                             })
+                             .<span class='ident'>collect</span>();
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>y</span>));
         }
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>x</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>region</span> {
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>));
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>.<span class='ident'>to_ascii_uppercase</span>()));
         }
-        <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variants</span>.<span class='ident'>iter</span>() {
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>));
+        <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>variants</span> {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>x</span>.<span class='ident'>to_ascii_lowercase</span>()));
         }
-        <span class='kw'>for</span> (<span class='ident'>raw_key</span>, <span class='ident'>values</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>extensions</span>.<span class='ident'>iter</span>() {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>extensions</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>u8</span>, <span class='kw-2'>&amp;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>extensions</span>.<span class='ident'>iter</span>().<span class='ident'>collect</span>();
+        <span class='ident'>extensions</span>.<span class='ident'>sort_by</span>(<span class='op'>|</span><span class='kw-2'>&amp;</span>(<span class='ident'>a</span>, _), <span class='kw-2'>&amp;</span>(<span class='ident'>b</span>, _)<span class='op'>|</span> <span class='ident'>cmp_ignore_ascii_case</span>(<span class='ident'>a</span>, <span class='ident'>b</span>));
+        <span class='kw'>for</span> (<span class='ident'>raw_key</span>, <span class='ident'>values</span>) <span class='kw'>in</span> <span class='ident'>extensions</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
             <span class='ident'>key</span>.<span class='ident'>push</span>(<span class='op'>*</span><span class='ident'>raw_key</span> <span class='kw'>as</span> <span class='ident'>char</span>);
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>key</span>));
@@ -921,7 +1213,7 @@
             } <span class='kw'>else</span> {
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>f</span>.<span class='ident'>write_str</span>(<span class='string'>&quot;-x&quot;</span>));
             }
-            <span class='kw'>for</span> <span class='ident'>value</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>privateuse</span>.<span class='ident'>iter</span>() {
+            <span class='kw'>for</span> <span class='ident'>value</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>privateuse</span> {
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;-{}&quot;</span>, <span class='ident'>value</span>));
             }
         }
@@ -945,7 +1237,7 @@
     ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>extlangs</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -956,7 +1248,7 @@
     ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>extlangs</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -967,7 +1259,7 @@
     ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>extlangs</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -978,7 +1270,7 @@
     ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>extlangs</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -986,10 +1278,10 @@
             <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
         }
     };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
+            <span class='ident'>extlangs</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>).<span class='ident'>to_owned</span>()],
             <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -997,10 +1289,10 @@
             <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
         }
     };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
+            <span class='ident'>extlangs</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>).<span class='ident'>to_owned</span>()],
             <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -1008,10 +1300,10 @@
             <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
         }
     };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
+            <span class='ident'>extlangs</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>).<span class='ident'>to_owned</span>()],
             <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -1019,10 +1311,10 @@
             <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
         }
     };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
         <span class='macro-nonterminal'>$</span><span class='kw'>crate</span>::<span class='macro-nonterminal'>LanguageTag</span> {
             <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
+            <span class='ident'>extlangs</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlangs</span>).<span class='ident'>to_owned</span>()],
             <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
             <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),

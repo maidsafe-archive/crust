@@ -47,11 +47,11 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1490' class='srclink' href='../src/url/lib.rs.html#320-325' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1626' class='srclink' href='../src/url/lib.rs.html#339-344' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct UrlParser&lt;'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A set of optional parameters for URL parsing.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../url/struct.UrlParser.html' title='url::UrlParser'>UrlParser</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1497' class='srclink' href='../src/url/lib.rs.html#329-434' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='struct' href='../url/struct.UrlParser.html' title='url::UrlParser'>UrlParser</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1633' class='srclink' href='../src/url/lib.rs.html#348-454' title='goto source code'>[src]</a></span></h3>
 <div class='docblock'><p>A method-chaining API to provide a set of optional parameters for URL parsing.</p>
 </div><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../url/struct.UrlParser.html' title='url::UrlParser'>UrlParser</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Return a new UrlParser with default parameters.</p>
@@ -88,7 +88,7 @@ as found in the <code>scheme</code> field of an <code>Url</code> struct.</p>
         <span class='string'>&quot;https&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='number'>443</span>),
         <span class='string'>&quot;ws&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='number'>80</span>),
         <span class='string'>&quot;wss&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='number'>443</span>),
-        _ <span class='op'>=&gt;</span> <span class='ident'>NonRelative</span>,
+        _ <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>NonRelative</span>,
     }
 }</pre>
 

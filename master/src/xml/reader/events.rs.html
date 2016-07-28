@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/events.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.1.26/src/reader/events.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>events.rs.html -- source</title>
@@ -233,43 +233,15 @@
 <span id="189">189</span>
 <span id="190">190</span>
 <span id="191">191</span>
-<span id="192">192</span>
-<span id="193">193</span>
-<span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
-<span id="218">218</span>
-<span id="219">219</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Contains `XmlEvent` datatype, instances of which are emitted by the parser.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Cow</span>;
 
 <span class='kw'>use</span> <span class='ident'>name</span>::<span class='ident'>OwnedName</span>;
 <span class='kw'>use</span> <span class='ident'>attribute</span>::<span class='ident'>OwnedAttribute</span>;
-<span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>XmlVersion</span>;
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Position</span>, <span class='ident'>XmlVersion</span>};
+<span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>CommonError</span>;
 <span class='kw'>use</span> <span class='ident'>namespace</span>::<span class='ident'>Namespace</span>;
 
 <span class='doccomment'>/// An element of an XML input stream.</span>
@@ -280,7 +252,7 @@
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>XmlEvent</span> {
     <span class='doccomment'>/// Corresponds to XML document declaration.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// This event is always emitted before any other event. It is emitted</span>
+    <span class='doccomment'>/// This event is always emitted before any other event (except `Error`). It is emitted</span>
     <span class='doccomment'>/// even if the actual declaration is not present in the document.</span>
     <span class='ident'>StartDocument</span> {
         <span class='doccomment'>/// XML version.</span>
@@ -338,7 +310,7 @@
         <span class='ident'>namespace</span>: <span class='ident'>Namespace</span>,
     },
 
-    <span class='doccomment'>/// Denotes an end of an XML element.</span>
+    <span class='doccomment'>/// Denotes an end of an XML document.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// This event is emitted after parsing closing tags or after parsing bodiless tags. In the</span>
     <span class='doccomment'>/// latter case it is emitted immediately after corresponding `StartElement` event.</span>
@@ -375,7 +347,15 @@
     <span class='doccomment'>/// It is possible to configure a parser to emit `Characters` event instead of `Whitespace`.</span>
     <span class='doccomment'>/// See `pull::ParserConfiguration` structure for more information. When combined with whitespace</span>
     <span class='doccomment'>/// trimming, it will eliminate standalone whitespace from the event stream completely.</span>
-    <span class='ident'>Whitespace</span>(<span class='ident'>String</span>)
+    <span class='ident'>Whitespace</span>(<span class='ident'>String</span>),
+
+    <span class='doccomment'>/// Denotes parsing error.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This event will always be the last event in the stream; no further XML processing will be done</span>
+    <span class='doccomment'>/// as is required by XML specification, [section 1.2][1].</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// [1]: http://www.w3.org/TR/2006/REC-xml11-20060816/#sec-terminology</span>
+    <span class='ident'>Error</span>(<span class='ident'>CommonError</span>)
 }
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>XmlEvent</span> {
@@ -397,7 +377,7 @@
                     <span class='kw'>let</span> <span class='ident'>attributes</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>attributes</span>.<span class='ident'>iter</span>().<span class='ident'>map</span>(
                         <span class='op'>|</span><span class='ident'>a</span><span class='op'>|</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{} -&gt; {}&quot;</span>, <span class='ident'>a</span>.<span class='ident'>name</span>, <span class='ident'>a</span>.<span class='ident'>value</span>)
                     ).<span class='ident'>collect</span>();
-                    <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;, [{}]&quot;</span>, <span class='ident'>attributes</span>.<span class='ident'>join</span>(<span class='string'>&quot;, &quot;</span>))
+                    <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;, [{}]&quot;</span>, <span class='ident'>attributes</span>.<span class='ident'>connect</span>(<span class='string'>&quot;, &quot;</span>))
                 }),
             <span class='ident'>XmlEvent</span>::<span class='ident'>EndElement</span> { <span class='kw-2'>ref</span> <span class='ident'>name</span> } <span class='op'>=&gt;</span>
                 <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;EndElement({})&quot;</span>, <span class='ident'>name</span>),
@@ -408,50 +388,14 @@
             <span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='kw-2'>ref</span> <span class='ident'>data</span>) <span class='op'>=&gt;</span>
                 <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Characters({})&quot;</span>, <span class='ident'>data</span>),
             <span class='ident'>XmlEvent</span>::<span class='ident'>Whitespace</span>(<span class='kw-2'>ref</span> <span class='ident'>data</span>) <span class='op'>=&gt;</span>
-                <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Whitespace({})&quot;</span>, <span class='ident'>data</span>)
+                <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Whitespace({})&quot;</span>, <span class='ident'>data</span>),
+            <span class='ident'>XmlEvent</span>::<span class='ident'>Error</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span>
+                <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Error(position: {}, message: {})&quot;</span>, <span class='ident'>e</span>.<span class='ident'>position</span>(), <span class='ident'>e</span>.<span class='ident'>msg</span>())
         }
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>XmlEvent</span> {
-    <span class='doccomment'>/// Obtains a writer event from this reader event.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// This method is useful for streaming processing of XML documents where the output</span>
-    <span class='doccomment'>/// is also an XML document. With this method it is possible to process some events</span>
-    <span class='doccomment'>/// while passing other events through to the writer unchanged:</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// ```rust</span>
-    <span class='doccomment'>/// use std::str;</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// use xml::{EventReader, EventWriter};</span>
-    <span class='doccomment'>/// use xml::reader::XmlEvent as ReaderEvent;</span>
-    <span class='doccomment'>/// use xml::writer::XmlEvent as WriterEvent;</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// let mut input: &amp;[u8] = b&quot;&lt;hello&gt;world&lt;/hello&gt;&quot;;</span>
-    <span class='doccomment'>/// let mut output: Vec&lt;u8&gt; = Vec::new();</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// {</span>
-    <span class='doccomment'>///     let mut reader = EventReader::new(&amp;mut input);</span>
-    <span class='doccomment'>///     let mut writer = EventWriter::new(&amp;mut output);</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>///     for e in reader {</span>
-    <span class='doccomment'>///         match e.unwrap() {</span>
-    <span class='doccomment'>///             ReaderEvent::Characters(s) =&gt;</span>
-    <span class='doccomment'>///                 writer.write(WriterEvent::characters(&amp;s.to_uppercase())).unwrap(),</span>
-    <span class='doccomment'>///             e =&gt; if let Some(e) = e.as_writer_event() {</span>
-    <span class='doccomment'>///                 writer.write(e).unwrap()</span>
-    <span class='doccomment'>///             }</span>
-    <span class='doccomment'>///         }</span>
-    <span class='doccomment'>///     }</span>
-    <span class='doccomment'>/// }</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// assert_eq!(</span>
-    <span class='doccomment'>///     str::from_utf8(&amp;output).unwrap(),</span>
-    <span class='doccomment'>///     r#&quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;hello&gt;WORLD&lt;/hello&gt;&quot;#</span>
-    <span class='doccomment'>/// );</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Note that this API may change or get additions in future to improve its ergonomics.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>as_writer_event</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;&gt;</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>XmlEvent</span>::<span class='ident'>StartDocument</span> { <span class='ident'>version</span>, <span class='kw-2'>ref</span> <span class='ident'>encoding</span>, <span class='ident'>standalone</span> } <span class='op'>=&gt;</span>
@@ -469,10 +413,10 @@
                 <span class='prelude-val'>Some</span>(::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>::<span class='ident'>StartElement</span> {
                     <span class='ident'>name</span>: <span class='ident'>name</span>.<span class='ident'>borrow</span>(),
                     <span class='ident'>attributes</span>: <span class='ident'>attributes</span>.<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>a</span><span class='op'>|</span> <span class='ident'>a</span>.<span class='ident'>borrow</span>()).<span class='ident'>collect</span>(),
-                    <span class='ident'>namespace</span>: <span class='ident'>Cow</span>::<span class='ident'>Borrowed</span>(<span class='ident'>namespace</span>)
+                    <span class='ident'>namespace</span>: <span class='ident'>namespace</span>
                 }),
             <span class='ident'>XmlEvent</span>::<span class='ident'>EndElement</span> { <span class='kw-2'>ref</span> <span class='ident'>name</span> } <span class='op'>=&gt;</span>
-                <span class='prelude-val'>Some</span>(::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>::<span class='ident'>EndElement</span> { <span class='ident'>name</span>: <span class='prelude-val'>Some</span>(<span class='ident'>name</span>.<span class='ident'>borrow</span>()) }),
+                <span class='prelude-val'>Some</span>(::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>::<span class='ident'>EndElement</span> { <span class='ident'>name</span>: <span class='ident'>name</span>.<span class='ident'>borrow</span>() }),
             <span class='ident'>XmlEvent</span>::<span class='ident'>Comment</span>(<span class='kw-2'>ref</span> <span class='ident'>data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>::<span class='ident'>Comment</span>(<span class='ident'>data</span>)),
             <span class='ident'>XmlEvent</span>::<span class='ident'>CData</span>(<span class='kw-2'>ref</span> <span class='ident'>data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>::<span class='ident'>CData</span>(<span class='ident'>data</span>)),
             <span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='kw-2'>ref</span> <span class='ident'>data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(::<span class='ident'>writer</span>::<span class='ident'>events</span>::<span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='ident'>data</span>)),

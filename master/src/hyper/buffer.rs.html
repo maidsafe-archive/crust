@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/buffer.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/buffer.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>buffer.rs.html -- source</title>
@@ -196,6 +196,16 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>Read</span>, <span class='ident'>BufRead</span>};
@@ -278,7 +288,7 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ptr</span>;
     <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>buf</span>.<span class='ident'>len</span>();
     <span class='ident'>buf</span>.<span class='ident'>set_len</span>(<span class='ident'>len</span> <span class='op'>+</span> <span class='ident'>additional</span>);
-    <span class='ident'>ptr</span>::<span class='ident'>write_bytes</span>(<span class='ident'>buf</span>.<span class='ident'>as_mut_ptr</span>(), <span class='number'>0</span>, <span class='ident'>buf</span>.<span class='ident'>len</span>());
+    <span class='ident'>ptr</span>::<span class='ident'>write_bytes</span>(<span class='ident'>buf</span>.<span class='ident'>as_mut_ptr</span>().<span class='ident'>offset</span>(<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>isize</span>), <span class='number'>0</span>, <span class='ident'>additional</span>);
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>Read</span><span class='op'>&gt;</span> <span class='ident'>Read</span> <span class='kw'>for</span> <span class='ident'>BufReader</span><span class='op'>&lt;</span><span class='ident'>R</span><span class='op'>&gt;</span> {
@@ -349,6 +359,16 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>rdr</span>.<span class='ident'>get_buf</span>(), <span class='string'>b&quot;&quot;</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>rdr</span>.<span class='ident'>pos</span>, <span class='number'>0</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>rdr</span>.<span class='ident'>cap</span>, <span class='number'>0</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_resize</span>() {
+        <span class='kw'>let</span> <span class='ident'>raw</span> <span class='op'>=</span> <span class='string'>b&quot;hello world&quot;</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rdr</span> <span class='op'>=</span> <span class='ident'>BufReader</span>::<span class='ident'>with_capacity</span>(<span class='kw-2'>&amp;</span><span class='ident'>raw</span>[..], <span class='number'>5</span>);
+        <span class='ident'>rdr</span>.<span class='ident'>read_into_buf</span>().<span class='ident'>unwrap</span>();
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>rdr</span>.<span class='ident'>get_buf</span>(), <span class='string'>b&quot;hello&quot;</span>);
+        <span class='ident'>rdr</span>.<span class='ident'>read_into_buf</span>().<span class='ident'>unwrap</span>();
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>rdr</span>.<span class='ident'>get_buf</span>(), <span class='string'>b&quot;hello world&quot;</span>);
     }
 }
 </pre>

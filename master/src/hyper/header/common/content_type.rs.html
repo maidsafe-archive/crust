@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/content_type.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/common/content_type.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>content_type.rs.html -- source</title>
@@ -200,10 +200,10 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>ContentType</span> {
-    <span class='doccomment'>/// A constructor  to easily create a `Content-Type: application/json; charset=utf-8` header.</span>
+    <span class='doccomment'>/// A constructor  to easily create a `Content-Type: application/json` header.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>json</span>() <span class='op'>-&gt;</span> <span class='ident'>ContentType</span> {
-        <span class='ident'>ContentType</span>(<span class='macro'>mime</span><span class='macro'>!</span>(<span class='ident'>Application</span><span class='op'>/</span><span class='ident'>Json</span>; <span class='ident'>Charset</span><span class='op'>=</span><span class='ident'>Utf8</span>))
+        <span class='ident'>ContentType</span>(<span class='macro'>mime</span><span class='macro'>!</span>(<span class='ident'>Application</span><span class='op'>/</span><span class='ident'>Json</span>))
     }
 
     <span class='doccomment'>/// A constructor  to easily create a `Content-Type: text/plain; charset=utf-8` header.</span>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/cookie.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/common/cookie.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>cookie.rs.html -- source</title>
@@ -175,16 +175,10 @@
 <span id="131">131</span>
 <span id="132">132</span>
 <span id="133">133</span>
-<span id="134">134</span>
-<span id="135">135</span>
-<span id="136">136</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>};
+<span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>, <span class='ident'>CookiePair</span>, <span class='ident'>CookieJar</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Display</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>from_utf8</span>;
-
-<span class='kw'>use</span> <span class='ident'>cookie</span>::<span class='ident'>Cookie</span> <span class='kw'>as</span> <span class='ident'>CookiePair</span>;
-<span class='kw'>use</span> <span class='ident'>cookie</span>::<span class='ident'>CookieJar</span>;
 
 <span class='doccomment'>/// `Cookie` header, defined in [RFC6265](http://tools.ietf.org/html/rfc6265#section-5.4)</span>
 <span class='doccomment'>///</span>
