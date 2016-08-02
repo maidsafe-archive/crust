@@ -30,7 +30,7 @@ use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
 use self::exchange_msg::ExchangeMsg;
-use sodiumoxide::crypto::box_::PublicKey;
+use rust_sodium::crypto::box_::PublicKey;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -187,7 +187,7 @@ mod test {
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use nat::MappingContext;
-    use sodiumoxide::crypto::box_::{self, PublicKey};
+    use rust_sodium::crypto::box_::{self, PublicKey};
     use rustc_serialize::Decodable;
 
     const NAME_HASH: NameHash = 9876543210;

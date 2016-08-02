@@ -21,7 +21,7 @@ use common;
 use mio::Token;
 use net2::TcpBuilder;
 use rand::{Rand, Rng};
-use sodiumoxide::crypto::box_::{self, PublicKey};
+use rust_sodium::crypto::box_::{self, PublicKey};
 
 // ========================================================================================
 //                                     PeerId

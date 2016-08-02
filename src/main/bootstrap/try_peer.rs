@@ -23,7 +23,7 @@ use std::rc::Rc;
 use common::{Core, Message, Priority, Socket, State};
 use main::PeerId;
 use mio::{EventLoop, EventSet, PollOpt, Token};
-use sodiumoxide::crypto::box_::PublicKey;
+use rust_sodium::crypto::box_::PublicKey;
 use std::net::SocketAddr;
 
 // TODO(Spandan) Result contains socket address too as currently due to bug in mio we are unable to

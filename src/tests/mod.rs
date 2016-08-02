@@ -269,7 +269,7 @@ mod broken_peer {
     use common::{Core, Message, Socket, State};
     use mio::tcp::TcpListener;
     use mio::{EventLoop, EventSet, PollOpt, Token};
-    use sodiumoxide::crypto::box_;
+    use rust_sodium::crypto::box_;
 
     pub struct Listen(TcpListener, Token);
 
@@ -358,9 +358,9 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use mio::EventLoop;
     use mio::tcp::TcpListener;
     use self::broken_peer;
-    use sodiumoxide;
+    use rust_sodium;
 
-    sodiumoxide::init();
+    rust_sodium::init();
 
     // Spin up the non-responsive peer.
     let mut el = unwrap!(EventLoop::new());
