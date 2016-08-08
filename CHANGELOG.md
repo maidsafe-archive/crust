@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.16.3]
+- Use latest `config_file_handler` (0.4.0) to derive the file paths for config and bootstrap cache on various platforms.
+
 ## [0.16.2]
 - Shuffle the bootstrap list, otherwise there is a higher probability of connecting to the ones at the beginning of the list even with parallel bootstrap.
 - Update dependencies to their latest.
