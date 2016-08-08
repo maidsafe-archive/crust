@@ -32,7 +32,7 @@ use mio::{EventLoop, Timeout, Token};
 use self::cache::Cache;
 use self::try_peer::TryPeer;
 use service_discovery::ServiceDiscovery;
-use sodiumoxide::crypto::box_::PublicKey;
+use rust_sodium::crypto::box_::PublicKey;
 use rand::{self, Rng};
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;

@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use common::{self, NameHash};
-use sodiumoxide::crypto::box_::PublicKey;
+use rust_sodium::crypto::box_::PublicKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum Message {
