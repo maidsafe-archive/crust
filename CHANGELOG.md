@@ -1,5 +1,10 @@
 # CRUST - Change Log
 
+## [0.17.0]
+- Use `rust_sodium` instead of `sodiumoxide` crate.
+- Use latest `config_file_handler` (0.4.0) to derive the file paths for config and bootstrap cache on various platforms.
+- Use latest `maidsafe_utilities` (0.9.0).
+
 ## [0.16.2]
 - Shuffle the bootstrap list, otherwise there is a higher probability of connecting to the ones at the beginning of the list even with parallel bootstrap.
 - Update dependencies to their latest.
