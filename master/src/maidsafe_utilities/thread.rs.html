@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.8.0/src/thread.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.9.0/src/thread.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>thread.rs.html -- source</title>
@@ -186,6 +186,17 @@
 <span id="142">142</span>
 <span id="143">143</span>
 <span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -205,12 +216,23 @@
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>::<span class='ident'>JoinHandle</span>;
 
 <span class='doccomment'>/// A RAII style thread joiner. The destruction of an instance of this type will block until</span>
 <span class='doccomment'>/// the thread it is managing has joined.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Joiner</span> {
     <span class='ident'>joiner</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>JoinHandle</span><span class='op'>&lt;</span>()<span class='op'>&gt;&gt;</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>Joiner</span> {
+    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>joiner</span>.<span class='ident'>is_some</span>() {
+            <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Joiner {{ joiner: Some(...) }}&quot;</span>)
+        } <span class='kw'>else</span> {
+            <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Joiner {{ joiner: None }}&quot;</span>)
+        }
+    }
 }
 
 <span class='doccomment'>/// Deprecated name for `Joiner`</span>

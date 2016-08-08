@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/log4rs-0.3.3/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/log4rs-0.4.8/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -566,18 +566,118 @@
 <span id="522">522</span>
 <span id="523">523</span>
 <span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! log4rs is a highly configurable logging framework modeled after Java&#39;s</span>
 <span class='doccomment'>//! Logback and log4j libraries.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Architecture</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! The basic units of configuration are *appenders*, *filters*, and *loggers*.</span>
+<span class='doccomment'>//! The basic units of configuration are *appenders*, *encoders*, *filters*, and</span>
+<span class='doccomment'>//! *loggers*.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Appenders</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! An appender takes a log record and logs it somewhere, for example, to a</span>
 <span class='doccomment'>//! file, the console, or the syslog.</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! ## Encoders</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! An encoder is responsible for taking a log record, transforming it into the</span>
+<span class='doccomment'>//! appropriate output format, and writing it out. An appender will normally</span>
+<span class='doccomment'>//! use an encoder internally.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Filters</span>
 <span class='doccomment'>//!</span>
@@ -607,125 +707,126 @@
 <span class='doccomment'>//! filtered out by the logger&#39;s maximum log level will be sent to all</span>
 <span class='doccomment'>//! associated appenders.</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! The &quot;root&quot; logger is the ancestor of all other logger. Since it has no</span>
+<span class='doccomment'>//! The &quot;root&quot; logger is the ancestor of all other loggers. Since it has no</span>
 <span class='doccomment'>//! ancestors, its additivity cannot be configured.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Configuration</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! log4rs can be configured either programmatically by using the builders in</span>
-<span class='doccomment'>//! the `config` module to construct a log4rs `Config` object, which can be</span>
-<span class='doccomment'>//! passed to the `init_config` function.</span>
+<span class='doccomment'>//! log4rs can be configured programmatically by using the builders in the</span>
+<span class='doccomment'>//! `config` module to construct a log4rs `Config` object, which can be passed</span>
+<span class='doccomment'>//! to the `init_config` function.</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! The more common configuration method, however, is via a separate TOML</span>
-<span class='doccomment'>//! config file. The `init_file` function takes the path to a config file as</span>
-<span class='doccomment'>//! well as a `Creator` object which is responsible for instantiating the</span>
-<span class='doccomment'>//! various objects specified by the config file. The `toml` module</span>
-<span class='doccomment'>//! documentation covers the exact configuration syntax, but an example is</span>
-<span class='doccomment'>//! provided below.</span>
+<span class='doccomment'>//! The more common configuration method, however, is via a separate config</span>
+<span class='doccomment'>//! file. The `init_file` function takes the path to a config file as</span>
+<span class='doccomment'>//! well as a `Deserializers` object which is responsible for instantiating the</span>
+<span class='doccomment'>//! various objects specified by the config file. The `file` module</span>
+<span class='doccomment'>//! documentation covers the exact configuration syntax, but an example in the</span>
+<span class='doccomment'>//! YAML format is provided below.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Examples</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! ```toml</span>
+<span class='doccomment'>//! ```yaml</span>
 <span class='doccomment'>//! # Scan this file for changes every 30 seconds</span>
-<span class='doccomment'>//! refresh_rate = 30</span>
+<span class='doccomment'>//! refresh_rate: 30 seconds</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! # An appender named &quot;stdout&quot; that writes to stdout</span>
-<span class='doccomment'>//! [appender.stdout]</span>
-<span class='doccomment'>//! kind = &quot;console&quot;</span>
+<span class='doccomment'>//! appenders:</span>
+<span class='doccomment'>//!   # An appender named &quot;stdout&quot; that writes to stdout</span>
+<span class='doccomment'>//!   stdout:</span>
+<span class='doccomment'>//!     kind: console</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! # An appender named &quot;requests&quot; that writes to a file with a custom pattern</span>
-<span class='doccomment'>//! [appender.requests]</span>
-<span class='doccomment'>//! kind = &quot;file&quot;</span>
-<span class='doccomment'>//! path = &quot;log/requests.log&quot;</span>
-<span class='doccomment'>//! pattern = &quot;%d - %m&quot;</span>
+<span class='doccomment'>//!   # An appender named &quot;requests&quot; that writes to a file with a custom pattern encoder</span>
+<span class='doccomment'>//!   requests:</span>
+<span class='doccomment'>//!     kind: file</span>
+<span class='doccomment'>//!     path: &quot;log/requests.log&quot;</span>
+<span class='doccomment'>//!     encoder:</span>
+<span class='doccomment'>//!       pattern: &quot;{d} - {m}{n}&quot;</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Set the default logging level to &quot;warn&quot; and attach the &quot;stdout&quot; appender to the root</span>
-<span class='doccomment'>//! [root]</span>
-<span class='doccomment'>//! level = &quot;warn&quot;</span>
-<span class='doccomment'>//! appenders = [&quot;stdout&quot;]</span>
+<span class='doccomment'>//! root:</span>
+<span class='doccomment'>//!   level: warn</span>
+<span class='doccomment'>//!   appenders:</span>
+<span class='doccomment'>//!     - stdout</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! # Raise the maximum log level for events sent to the &quot;app::backend::db&quot; logger to &quot;info&quot;</span>
-<span class='doccomment'>//! [[logger]]</span>
-<span class='doccomment'>//! name = &quot;app::backend::db&quot;</span>
-<span class='doccomment'>//! level = &quot;info&quot;</span>
+<span class='doccomment'>//! loggers:</span>
+<span class='doccomment'>//!   # Raise the maximum log level for events sent to the &quot;app::backend::db&quot; logger to &quot;info&quot;</span>
+<span class='doccomment'>//!   app::backend::db:</span>
+<span class='doccomment'>//!     level: info</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! # Route log events sent to the &quot;app::requests&quot; logger to the &quot;requests&quot; appender,</span>
-<span class='doccomment'>//! # and *not* the normal appenders installed at the root</span>
-<span class='doccomment'>//! [[logger]]</span>
-<span class='doccomment'>//! name = &quot;app::requests&quot;</span>
-<span class='doccomment'>//! level = &quot;info&quot;</span>
-<span class='doccomment'>//! appenders = [&quot;requests&quot;]</span>
-<span class='doccomment'>//! additive = false</span>
+<span class='doccomment'>//!   # Route log events sent to the &quot;app::requests&quot; logger to the &quot;requests&quot; appender,</span>
+<span class='doccomment'>//!   # and *not* the normal appenders installed at the root</span>
+<span class='doccomment'>//!   app::requests:</span>
+<span class='doccomment'>//!     level: info</span>
+<span class='doccomment'>//!     appenders:</span>
+<span class='doccomment'>//!       - requests</span>
+<span class='doccomment'>//!     additive: false</span>
 <span class='doccomment'>//! ```</span>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_root_url</span><span class='op'>=</span><span class='string'>&quot;https://sfackler.github.io/log4rs/doc/v0.3.3&quot;</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_root_url</span><span class='op'>=</span><span class='string'>&quot;https://sfackler.github.io/log4rs/doc/v0.4.8&quot;</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>antidote</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>chrono</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>crossbeam</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>humantime</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>time</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>toml</span> <span class='kw'>as</span> <span class='ident'>toml_parser</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>serde</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>serde_value</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>typemap</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;yaml&quot;</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>serde_yaml</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;json&quot;</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>serde_json</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;toml&quot;</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>toml</span>;
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>ToOwned</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>convert</span>::<span class='ident'>AsRef</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>kernel32</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>winapi</span>;
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>tempdir</span>;
+
+<span class='kw'>use</span> <span class='ident'>crossbeam</span>::<span class='ident'>sync</span>::<span class='ident'>ArcCell</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::{<span class='ident'>Path</span>, <span class='ident'>PathBuf</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Mutex</span>, <span class='ident'>Arc</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
-<span class='kw'>use</span> <span class='ident'>time</span>::<span class='ident'>Duration</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 <span class='kw'>use</span> <span class='ident'>log</span>::{<span class='ident'>LogLevel</span>, <span class='ident'>LogMetadata</span>, <span class='ident'>LogRecord</span>, <span class='ident'>LogLevelFilter</span>, <span class='ident'>SetLoggerError</span>, <span class='ident'>MaxLogLevelFilter</span>};
 
-<span class='kw'>use</span> <span class='ident'>toml</span>::<span class='ident'>Creator</span>;
+<span class='kw'>use</span> <span class='ident'>append</span>::<span class='ident'>Append</span>;
+<span class='kw'>use</span> <span class='ident'>config</span>::<span class='ident'>Config</span>;
+<span class='kw'>use</span> <span class='ident'>filter</span>::<span class='ident'>Filter</span>;
+<span class='kw'>use</span> <span class='ident'>file</span>::{<span class='ident'>Format</span>, <span class='ident'>Deserializers</span>};
 
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>appender</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>append</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>config</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>filter</span>;
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>pattern</span>;
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>toml</span>;
-
-<span class='doccomment'>/// A trait implemented by log4rs appenders.</span>
-<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>Append</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
-    <span class='doccomment'>/// Processes the provided `LogRecord`.</span>
-    <span class='kw'>fn</span> <span class='ident'>append</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>LogRecord</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span>;
-}
-
-<span class='doccomment'>/// The response returned by a filter.</span>
-<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>FilterResponse</span> {
-    <span class='doccomment'>/// Accept the log event.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// It will be immediately passed to the appender, bypassing any remaining</span>
-    <span class='doccomment'>/// filters.</span>
-    <span class='ident'>Accept</span>,
-
-    <span class='doccomment'>/// Take no action on the log event.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// It will continue on to remaining filters or pass on to the appender if</span>
-    <span class='doccomment'>/// there are none remaining.</span>
-    <span class='ident'>Neutral</span>,
-
-    <span class='doccomment'>/// Reject the log event.</span>
-    <span class='ident'>Reject</span>,
-}
-
-<span class='doccomment'>/// The trait implemented by log4rs filters.</span>
-<span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>Filter</span>: <span class='ident'>Send</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
-    <span class='doccomment'>/// Filters a log event.</span>
-    <span class='kw'>fn</span> <span class='ident'>filter</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>LogRecord</span>) <span class='op'>-&gt;</span> <span class='ident'>FilterResponse</span>;
-}
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>file</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>encode</span>;
+<span class='kw'>mod</span> <span class='ident'>priv_serde</span>;
 
 <span class='kw'>struct</span> <span class='ident'>ConfiguredLogger</span> {
     <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>,
     <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>,
-    <span class='ident'>children</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>String</span>, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>ConfiguredLogger</span><span class='op'>&gt;</span>)<span class='op'>&gt;</span>,
+    <span class='ident'>children</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>String</span>, <span class='ident'>ConfiguredLogger</span>)<span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>ConfiguredLogger</span> {
-    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='kw-2'>mut</span> <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>, <span class='ident'>additive</span>: <span class='ident'>bool</span>, <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>) {
+    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+           <span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
+           <span class='kw-2'>mut</span> <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>,
+           <span class='ident'>additive</span>: <span class='ident'>bool</span>,
+           <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>) {
         <span class='kw'>let</span> (<span class='ident'>part</span>, <span class='ident'>rest</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>path</span>.<span class='ident'>find</span>(<span class='string'>&quot;::&quot;</span>) {
-            <span class='prelude-val'>Some</span>(<span class='ident'>idx</span>) <span class='op'>=&gt;</span> (<span class='kw-2'>&amp;</span><span class='ident'>path</span>[..<span class='ident'>idx</span>], <span class='kw-2'>&amp;</span><span class='ident'>path</span>[<span class='ident'>idx</span><span class='op'>+</span><span class='number'>2</span>..]),
+            <span class='prelude-val'>Some</span>(<span class='ident'>idx</span>) <span class='op'>=&gt;</span> (<span class='kw-2'>&amp;</span><span class='ident'>path</span>[..<span class='ident'>idx</span>], <span class='kw-2'>&amp;</span><span class='ident'>path</span>[<span class='ident'>idx</span> <span class='op'>+</span> <span class='number'>2</span>..]),
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> (<span class='ident'>path</span>, <span class='string'>&quot;&quot;</span>),
         };
 
@@ -756,7 +857,7 @@
             <span class='ident'>child</span>
         };
 
-        <span class='self'>self</span>.<span class='ident'>children</span>.<span class='ident'>push</span>((<span class='ident'>part</span>.<span class='ident'>to_owned</span>(), <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>child</span>)));
+        <span class='self'>self</span>.<span class='ident'>children</span>.<span class='ident'>push</span>((<span class='ident'>part</span>.<span class='ident'>to_owned</span>(), <span class='ident'>child</span>));
     }
 
     <span class='kw'>fn</span> <span class='ident'>max_log_level</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>LogLevelFilter</span> {
@@ -788,7 +889,7 @@
         <span class='self'>self</span>.<span class='ident'>level</span> <span class='op'>&gt;=</span> <span class='ident'>level</span>
     }
 
-    <span class='kw'>fn</span> <span class='ident'>log</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>log</span>::<span class='ident'>LogRecord</span>, <span class='ident'>appenders</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>Appender</span>]) {
+    <span class='kw'>fn</span> <span class='ident'>log</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>log</span>::<span class='ident'>LogRecord</span>, <span class='ident'>appenders</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>Appender</span>]) {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>enabled</span>(<span class='ident'>record</span>.<span class='ident'>level</span>()) {
             <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>idx</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>appenders</span> {
                 <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=</span> <span class='ident'>appenders</span>[<span class='ident'>idx</span>].<span class='ident'>append</span>(<span class='ident'>record</span>) {
@@ -805,12 +906,12 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>Appender</span> {
-    <span class='kw'>fn</span> <span class='ident'>append</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>LogRecord</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> {
-        <span class='kw'>for</span> <span class='ident'>filter</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>filters</span> {
+    <span class='kw'>fn</span> <span class='ident'>append</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>LogRecord</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> {
+        <span class='kw'>for</span> <span class='ident'>filter</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>filters</span> {
             <span class='kw'>match</span> <span class='ident'>filter</span>.<span class='ident'>filter</span>(<span class='ident'>record</span>) {
-                <span class='ident'>FilterResponse</span>::<span class='ident'>Accept</span> <span class='op'>=&gt;</span> <span class='kw'>break</span>,
-                <span class='ident'>FilterResponse</span>::<span class='ident'>Neutral</span> <span class='op'>=&gt;</span> {}
-                <span class='ident'>FilterResponse</span>::<span class='ident'>Reject</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(()),
+                <span class='ident'>filter</span>::<span class='ident'>Response</span>::<span class='ident'>Accept</span> <span class='op'>=&gt;</span> <span class='kw'>break</span>,
+                <span class='ident'>filter</span>::<span class='ident'>Response</span>::<span class='ident'>Neutral</span> <span class='op'>=&gt;</span> {}
+                <span class='ident'>filter</span>::<span class='ident'>Response</span>::<span class='ident'>Reject</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(()),
             }
         }
 
@@ -825,42 +926,45 @@
 
 <span class='kw'>impl</span> <span class='ident'>SharedLogger</span> {
     <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>config</span>: <span class='ident'>config</span>::<span class='ident'>Config</span>) <span class='op'>-&gt;</span> <span class='ident'>SharedLogger</span> {
-        <span class='kw'>let</span> (<span class='ident'>appenders</span>, <span class='ident'>root</span>, <span class='ident'>loggers</span>) <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>unpack</span>();
+        <span class='kw'>let</span> (<span class='ident'>appenders</span>, <span class='ident'>root</span>, <span class='kw-2'>mut</span> <span class='ident'>loggers</span>) <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>unpack</span>();
 
         <span class='kw'>let</span> <span class='ident'>root</span> <span class='op'>=</span> {
-            <span class='kw'>let</span> <span class='ident'>appender_map</span> <span class='op'>=</span> <span class='ident'>appenders</span>
-                .<span class='ident'>iter</span>()
-                .<span class='ident'>enumerate</span>()
-                .<span class='ident'>map</span>(<span class='op'>|</span>(<span class='ident'>i</span>, <span class='ident'>appender</span>)<span class='op'>|</span> (<span class='ident'>appender</span>.<span class='ident'>name</span>(), <span class='ident'>i</span>))
-                .<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span>_, _<span class='op'>&gt;&gt;</span>();
+            <span class='kw'>let</span> <span class='ident'>appender_map</span> <span class='op'>=</span> <span class='ident'>appenders</span>.<span class='ident'>iter</span>()
+                                        .<span class='ident'>enumerate</span>()
+                                        .<span class='ident'>map</span>(<span class='op'>|</span>(<span class='ident'>i</span>, <span class='ident'>appender</span>)<span class='op'>|</span> (<span class='ident'>appender</span>.<span class='ident'>name</span>(), <span class='ident'>i</span>))
+                                        .<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span>_, _<span class='op'>&gt;&gt;</span>();
 
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>root</span> <span class='op'>=</span> <span class='ident'>ConfiguredLogger</span> {
                 <span class='ident'>level</span>: <span class='ident'>root</span>.<span class='ident'>level</span>(),
                 <span class='ident'>appenders</span>: <span class='ident'>root</span>.<span class='ident'>appenders</span>()
-                    .<span class='ident'>iter</span>()
-                    .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>appender</span><span class='op'>|</span> <span class='ident'>appender_map</span>[<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>appender</span>])
-                    .<span class='ident'>collect</span>(),
+                               .<span class='ident'>iter</span>()
+                               .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>appender</span><span class='op'>|</span> <span class='ident'>appender_map</span>[<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>appender</span>])
+                               .<span class='ident'>collect</span>(),
                 <span class='ident'>children</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             };
 
+            <span class='comment'>// sort loggers by name length to ensure that we initialize them top to bottom</span>
+            <span class='ident'>loggers</span>.<span class='ident'>sort_by_key</span>(<span class='op'>|</span><span class='ident'>l</span><span class='op'>|</span> <span class='ident'>l</span>.<span class='ident'>name</span>().<span class='ident'>len</span>());
             <span class='kw'>for</span> <span class='ident'>logger</span> <span class='kw'>in</span> <span class='ident'>loggers</span> {
                 <span class='kw'>let</span> <span class='ident'>appenders</span> <span class='op'>=</span> <span class='ident'>logger</span>.<span class='ident'>appenders</span>()
-                    .<span class='ident'>iter</span>()
-                    .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>appender</span><span class='op'>|</span> <span class='ident'>appender_map</span>[<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>appender</span>])
-                    .<span class='ident'>collect</span>();
+                                      .<span class='ident'>iter</span>()
+                                      .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>appender</span><span class='op'>|</span> <span class='ident'>appender_map</span>[<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>appender</span>])
+                                      .<span class='ident'>collect</span>();
                 <span class='ident'>root</span>.<span class='ident'>add</span>(<span class='ident'>logger</span>.<span class='ident'>name</span>(), <span class='ident'>appenders</span>, <span class='ident'>logger</span>.<span class='ident'>additive</span>(), <span class='ident'>logger</span>.<span class='ident'>level</span>());
             }
 
             <span class='ident'>root</span>
         };
 
-        <span class='kw'>let</span> <span class='ident'>appenders</span> <span class='op'>=</span> <span class='ident'>appenders</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>appender</span><span class='op'>|</span> {
-            <span class='kw'>let</span> (_, <span class='ident'>appender</span>, <span class='ident'>filters</span>) <span class='op'>=</span> <span class='ident'>appender</span>.<span class='ident'>unpack</span>();
-            <span class='ident'>Appender</span> {
-                <span class='ident'>appender</span>: <span class='ident'>appender</span>,
-                <span class='ident'>filters</span>: <span class='ident'>filters</span>,
-            }
-        }).<span class='ident'>collect</span>();
+        <span class='kw'>let</span> <span class='ident'>appenders</span> <span class='op'>=</span> <span class='ident'>appenders</span>.<span class='ident'>into_iter</span>()
+                                 .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>appender</span><span class='op'>|</span> {
+                                     <span class='kw'>let</span> (_, <span class='ident'>appender</span>, <span class='ident'>filters</span>) <span class='op'>=</span> <span class='ident'>appender</span>.<span class='ident'>unpack</span>();
+                                     <span class='ident'>Appender</span> {
+                                         <span class='ident'>appender</span>: <span class='ident'>appender</span>,
+                                         <span class='ident'>filters</span>: <span class='ident'>filters</span>,
+                                     }
+                                 })
+                                 .<span class='ident'>collect</span>();
 
         <span class='ident'>SharedLogger</span> {
             <span class='ident'>root</span>: <span class='ident'>root</span>,
@@ -869,19 +973,15 @@
     }
 }
 
-<span class='kw'>struct</span> <span class='ident'>Logger</span> {
-    <span class='ident'>inner</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>SharedLogger</span><span class='op'>&gt;&gt;</span>,
-}
+<span class='kw'>struct</span> <span class='ident'>Logger</span>(<span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>ArcCell</span><span class='op'>&lt;</span><span class='ident'>SharedLogger</span><span class='op'>&gt;&gt;</span>);
 
 <span class='kw'>impl</span> <span class='ident'>Logger</span> {
     <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>config</span>: <span class='ident'>config</span>::<span class='ident'>Config</span>) <span class='op'>-&gt;</span> <span class='ident'>Logger</span> {
-        <span class='ident'>Logger</span> {
-            <span class='ident'>inner</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>SharedLogger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>)))
-        }
+        <span class='ident'>Logger</span>(<span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>ArcCell</span>::<span class='ident'>new</span>(<span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>SharedLogger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>)))))
     }
 
     <span class='kw'>fn</span> <span class='ident'>max_log_level</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>LogLevelFilter</span> {
-        <span class='self'>self</span>.<span class='ident'>inner</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>root</span>.<span class='ident'>max_log_level</span>()
+        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>get</span>().<span class='ident'>root</span>.<span class='ident'>max_log_level</span>()
     }
 }
 
@@ -891,123 +991,209 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>log</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>record</span>: <span class='kw-2'>&amp;</span><span class='ident'>log</span>::<span class='ident'>LogRecord</span>) {
-        <span class='kw'>let</span> <span class='ident'>shared</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>inner</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
-        <span class='ident'>shared</span>.<span class='ident'>root</span>.<span class='ident'>find</span>(<span class='ident'>record</span>.<span class='ident'>target</span>()).<span class='ident'>log</span>(<span class='ident'>record</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>shared</span>.<span class='ident'>appenders</span>);
+        <span class='kw'>let</span> <span class='ident'>shared</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>get</span>();
+        <span class='ident'>shared</span>.<span class='ident'>root</span>.<span class='ident'>find</span>(<span class='ident'>record</span>.<span class='ident'>target</span>()).<span class='ident'>log</span>(<span class='ident'>record</span>, <span class='kw-2'>&amp;</span><span class='ident'>shared</span>.<span class='ident'>appenders</span>);
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>Logger</span> {
     <span class='kw'>fn</span> <span class='ident'>enabled_inner</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>level</span>: <span class='ident'>LogLevel</span>, <span class='ident'>target</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='self'>self</span>.<span class='ident'>inner</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>().<span class='ident'>root</span>.<span class='ident'>find</span>(<span class='ident'>target</span>).<span class='ident'>enabled</span>(<span class='ident'>level</span>)
+        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>get</span>().<span class='ident'>root</span>.<span class='ident'>find</span>(<span class='ident'>target</span>).<span class='ident'>enabled</span>(<span class='ident'>level</span>)
     }
 }
 
-<span class='kw'>fn</span> <span class='ident'>handle_error</span><span class='op'>&lt;</span><span class='ident'>E</span>: <span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>+</span>?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>e</span>: <span class='kw-2'>&amp;</span><span class='ident'>E</span>) {
+<span class='kw'>fn</span> <span class='ident'>handle_error</span><span class='op'>&lt;</span><span class='ident'>E</span>: <span class='ident'>error</span>::<span class='ident'>Error</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>e</span>: <span class='kw-2'>&amp;</span><span class='ident'>E</span>) {
     <span class='kw'>let</span> <span class='ident'>stderr</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>stderr</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stderr</span> <span class='op'>=</span> <span class='ident'>stderr</span>.<span class='ident'>lock</span>();
-    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>writeln</span><span class='macro'>!</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>stderr</span>, <span class='string'>&quot;{}&quot;</span>, <span class='ident'>e</span>);
+    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>writeln</span><span class='macro'>!</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>stderr</span>, <span class='string'>&quot;log4rs: {}&quot;</span>, <span class='ident'>e</span>);
 }
 
-<span class='doccomment'>/// Initializes the global logger with a log4rs logger configured by `config`.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_config</span>(<span class='ident'>config</span>: <span class='ident'>config</span>::<span class='ident'>Config</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>SetLoggerError</span><span class='op'>&gt;</span> {
+<span class='doccomment'>/// Initializes the global logger as a log4rs logger with the provided config.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// A `Handle` object is returned which can be used to adjust the logging</span>
+<span class='doccomment'>/// configuration.</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_config</span>(<span class='ident'>config</span>: <span class='ident'>config</span>::<span class='ident'>Config</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Handle</span>, <span class='ident'>SetLoggerError</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>handle</span> <span class='op'>=</span> <span class='prelude-val'>None</span>;
     <span class='ident'>log</span>::<span class='ident'>set_logger</span>(<span class='op'>|</span><span class='ident'>max_log_level</span><span class='op'>|</span> {
         <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>Logger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>);
         <span class='ident'>max_log_level</span>.<span class='ident'>set</span>(<span class='ident'>logger</span>.<span class='ident'>max_log_level</span>());
+        <span class='ident'>handle</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>Handle</span> {
+            <span class='ident'>shared</span>: <span class='ident'>logger</span>.<span class='number'>0</span>.<span class='ident'>clone</span>(),
+            <span class='ident'>max_log_level</span>: <span class='ident'>max_log_level</span>,
+        });
         <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>logger</span>)
-    })
+    }).<span class='ident'>map</span>(<span class='op'>|</span>()<span class='op'>|</span> <span class='ident'>handle</span>.<span class='ident'>unwrap</span>())
 }
 
-<span class='doccomment'>/// Initializes the global logger with a log4rs logger.</span>
+<span class='doccomment'>/// A handle to the active logger.</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Handle</span> {
+    <span class='ident'>shared</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>ArcCell</span><span class='op'>&lt;</span><span class='ident'>SharedLogger</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>max_log_level</span>: <span class='ident'>MaxLogLevelFilter</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>Handle</span> {
+    <span class='doccomment'>/// Sets the logging configuration.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_config</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>config</span>: <span class='ident'>Config</span>) {
+        <span class='kw'>let</span> <span class='ident'>shared</span> <span class='op'>=</span> <span class='ident'>SharedLogger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>);
+        <span class='self'>self</span>.<span class='ident'>max_log_level</span>.<span class='ident'>set</span>(<span class='ident'>shared</span>.<span class='ident'>root</span>.<span class='ident'>max_log_level</span>());
+        <span class='self'>self</span>.<span class='ident'>shared</span>.<span class='ident'>set</span>(<span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>shared</span>));
+    }
+}
+
+<span class='doccomment'>/// Initializes the global logger as a log4rs logger configured via a file.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// Configuration is read from a TOML file located at the provided path on the</span>
-<span class='doccomment'>/// filesystem and appenders are created from the provided `Creator`.</span>
+<span class='doccomment'>/// Configuration is read from a file located at the provided path on the</span>
+<span class='doccomment'>/// filesystem and appenders are created from the provided `Deserializers`.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// Any errors encountered when processing the configuration are reported to</span>
-<span class='doccomment'>/// stderr.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_file</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>Path</span><span class='op'>&gt;&gt;</span>(<span class='ident'>path</span>: <span class='ident'>P</span>, <span class='ident'>creator</span>: <span class='ident'>Creator</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>SetLoggerError</span><span class='op'>&gt;</span> {
-    <span class='ident'>log</span>::<span class='ident'>set_logger</span>(<span class='op'>|</span><span class='ident'>max_log_level</span><span class='op'>|</span> {
-        <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>path</span>.<span class='ident'>as_ref</span>().<span class='ident'>to_path_buf</span>();
-        <span class='kw'>let</span> (<span class='ident'>source</span>, <span class='ident'>refresh_rate</span>, <span class='ident'>config</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>read_config</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
-            <span class='prelude-val'>Ok</span>(<span class='ident'>source</span>) <span class='op'>=&gt;</span> {
-                <span class='kw'>match</span> <span class='ident'>parse_config</span>(<span class='kw-2'>&amp;</span><span class='ident'>source</span>, <span class='kw-2'>&amp;</span><span class='ident'>creator</span>) {
-                    <span class='prelude-val'>Ok</span>(<span class='ident'>config</span>) <span class='op'>=&gt;</span> {
-                        <span class='kw'>let</span> (<span class='ident'>refresh_rate</span>, <span class='ident'>config</span>) <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>unpack</span>();
-                        (<span class='ident'>source</span>, <span class='ident'>refresh_rate</span>, <span class='ident'>config</span>)
-                    }
-                    <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
-                        <span class='ident'>handle_error</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>err</span>);
-                        (<span class='string'>&quot;&quot;</span>.<span class='ident'>to_string</span>(), <span class='prelude-val'>None</span>, <span class='ident'>config</span>::<span class='ident'>Config</span>::<span class='ident'>builder</span>(
-                                <span class='ident'>config</span>::<span class='ident'>Root</span>::<span class='ident'>builder</span>(<span class='ident'>LogLevelFilter</span>::<span class='ident'>Off</span>).<span class='ident'>build</span>()).<span class='ident'>build</span>().<span class='ident'>unwrap</span>())
-                    }
-                }
-            },
-            <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
-                <span class='ident'>handle_error</span>(<span class='kw-2'>&amp;</span><span class='ident'>err</span>);
-                (<span class='string'>&quot;&quot;</span>.<span class='ident'>to_string</span>(), <span class='prelude-val'>None</span>, <span class='ident'>config</span>::<span class='ident'>Config</span>::<span class='ident'>builder</span>(
-                        <span class='ident'>config</span>::<span class='ident'>Root</span>::<span class='ident'>builder</span>(<span class='ident'>LogLevelFilter</span>::<span class='ident'>Off</span>).<span class='ident'>build</span>()).<span class='ident'>build</span>().<span class='ident'>unwrap</span>())
+<span class='doccomment'>/// Any nonfatal errors encountered when processing the configuration are</span>
+<span class='doccomment'>/// reported to stderr.</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_file</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>Path</span><span class='op'>&gt;&gt;</span>(<span class='ident'>path</span>: <span class='ident'>P</span>, <span class='ident'>deserializers</span>: <span class='ident'>Deserializers</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Error</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='ident'>path</span>.<span class='ident'>as_ref</span>().<span class='ident'>to_path_buf</span>();
+    <span class='kw'>let</span> <span class='ident'>format</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_format</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>));
+    <span class='kw'>let</span> <span class='ident'>source</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>read_config</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>));
+    <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_config</span>(<span class='kw-2'>&amp;</span><span class='ident'>source</span>, <span class='ident'>format</span>, <span class='kw-2'>&amp;</span><span class='ident'>deserializers</span>));
+
+    <span class='kw'>let</span> <span class='ident'>refresh_rate</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>refresh_rate</span>();
+    <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>into_config</span>();
+
+    <span class='kw'>match</span> <span class='ident'>init_config</span>(<span class='ident'>config</span>) {
+        <span class='prelude-val'>Ok</span>(<span class='ident'>handle</span>) <span class='op'>=&gt;</span> {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>refresh_rate</span>) <span class='op'>=</span> <span class='ident'>refresh_rate</span> {
+                <span class='ident'>ConfigReloader</span>::<span class='ident'>start</span>(<span class='ident'>path</span>,
+                                      <span class='ident'>format</span>,
+                                      <span class='ident'>refresh_rate</span>,
+                                      <span class='ident'>source</span>,
+                                      <span class='ident'>deserializers</span>,
+                                      <span class='ident'>handle</span>);
             }
-        };
-        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>Logger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>);
-        <span class='ident'>max_log_level</span>.<span class='ident'>set</span>(<span class='ident'>logger</span>.<span class='ident'>max_log_level</span>());
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>refresh_rate</span>) <span class='op'>=</span> <span class='ident'>refresh_rate</span> {
-            <span class='ident'>ConfigReloader</span>::<span class='ident'>start</span>(<span class='ident'>path</span>, <span class='ident'>refresh_rate</span>, <span class='ident'>source</span>, <span class='ident'>creator</span>, <span class='kw-2'>&amp;</span><span class='ident'>logger</span>, <span class='ident'>max_log_level</span>);
+            <span class='prelude-val'>Ok</span>(())
         }
-        <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>logger</span>)
-    })
+        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>.<span class='ident'>into</span>())
+    }
 }
 
-<span class='kw'>fn</span> <span class='ident'>read_config</span>(<span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='ident'>Path</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>String</span>, <span class='ident'>io</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
+<span class='doccomment'>/// An error initializing the logging framework from a file.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Error</span> {
+    <span class='doccomment'>/// An error from the log crate</span>
+    <span class='ident'>Log</span>(<span class='ident'>SetLoggerError</span>),
+    <span class='doccomment'>/// A fatal error initializing the log4rs config.</span>
+    <span class='ident'>Log4rs</span>(<span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;</span>),
+}
+
+<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
+    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>Error</span>::<span class='ident'>Log</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span>::<span class='ident'>fmt</span>(<span class='ident'>e</span>, <span class='ident'>fmt</span>),
+            <span class='ident'>Error</span>::<span class='ident'>Log4rs</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span>::<span class='ident'>fmt</span>(<span class='ident'>e</span>, <span class='ident'>fmt</span>),
+        }
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>error</span>::<span class='ident'>Error</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
+    <span class='kw'>fn</span> <span class='ident'>description</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>str</span> {
+        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>Error</span>::<span class='ident'>Log</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>error</span>::<span class='ident'>Error</span>::<span class='ident'>description</span>(<span class='ident'>e</span>),
+            <span class='ident'>Error</span>::<span class='ident'>Log4rs</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>error</span>::<span class='ident'>Error</span>::<span class='ident'>description</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>e</span>),
+        }
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>cause</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
+        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>Error</span>::<span class='ident'>Log</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>e</span>),
+            <span class='ident'>Error</span>::<span class='ident'>Log4rs</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>e</span>),
+        }
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>SetLoggerError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>t</span>: <span class='ident'>SetLoggerError</span>) <span class='op'>-&gt;</span> <span class='ident'>Error</span> {
+        <span class='ident'>Error</span>::<span class='ident'>Log</span>(<span class='ident'>t</span>)
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>t</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Error</span> {
+        <span class='ident'>Error</span>::<span class='ident'>Log4rs</span>(<span class='ident'>t</span>)
+    }
+}
+
+<span class='kw'>fn</span> <span class='ident'>get_format</span>(<span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='ident'>Path</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Format</span>, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>match</span> <span class='ident'>path</span>.<span class='ident'>extension</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>s</span><span class='op'>|</span> <span class='ident'>s</span>.<span class='ident'>to_str</span>()) {
+        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;yaml&quot;</span>)]</span>
+        <span class='prelude-val'>Some</span>(<span class='string'>&quot;yaml&quot;</span>) <span class='op'>|</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;yml&quot;</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Format</span>::<span class='ident'>Yaml</span>),
+        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;yaml&quot;</span>))]</span>
+        <span class='prelude-val'>Some</span>(<span class='string'>&quot;yaml&quot;</span>) <span class='op'>|</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;yml&quot;</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;the `yaml` feature is required for YAML support&quot;</span>.<span class='ident'>into</span>()),
+        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;json&quot;</span>)]</span>
+        <span class='prelude-val'>Some</span>(<span class='string'>&quot;json&quot;</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Format</span>::<span class='ident'>Json</span>),
+        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;json&quot;</span>))]</span>
+        <span class='prelude-val'>Some</span>(<span class='string'>&quot;json&quot;</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;the `json` feature is required for JSON support&quot;</span>.<span class='ident'>into</span>()),
+        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;toml&quot;</span>)]</span>
+        <span class='prelude-val'>Some</span>(<span class='string'>&quot;toml&quot;</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Format</span>::<span class='ident'>Toml</span>),
+        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;toml&quot;</span>))]</span>
+        <span class='prelude-val'>Some</span>(<span class='string'>&quot;toml&quot;</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;the `toml` feature is required for TOML support&quot;</span>.<span class='ident'>into</span>()),
+        <span class='prelude-val'>Some</span>(<span class='ident'>f</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;unsupported file format `{}`&quot;</span>, <span class='ident'>f</span>).<span class='ident'>into</span>()),
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;unable to determine the file format&quot;</span>.<span class='ident'>into</span>()),
+    }
+}
+
+<span class='kw'>fn</span> <span class='ident'>read_config</span>(<span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='ident'>Path</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>String</span>, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>File</span>::<span class='ident'>open</span>(<span class='ident'>path</span>));
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
     <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file</span>.<span class='ident'>read_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>s</span>));
     <span class='prelude-val'>Ok</span>(<span class='ident'>s</span>)
 }
 
-<span class='kw'>fn</span> <span class='ident'>parse_config</span>(<span class='ident'>source</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>creator</span>: <span class='kw-2'>&amp;</span><span class='ident'>Creator</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>toml</span>::<span class='ident'>Config</span>, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> {
-    <span class='kw'>let</span> (<span class='ident'>config</span>, <span class='ident'>errors</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>toml</span>::<span class='ident'>Config</span>::<span class='ident'>parse</span>(<span class='kw-2'>&amp;</span><span class='ident'>source</span>, <span class='ident'>creator</span>));
-    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>errors</span>) <span class='op'>=</span> <span class='ident'>errors</span> {
-        <span class='kw'>for</span> <span class='ident'>error</span> <span class='kw'>in</span> <span class='ident'>errors</span>.<span class='ident'>errors</span>() {
-            <span class='ident'>handle_error</span>(<span class='ident'>error</span>);
-        }
+<span class='kw'>fn</span> <span class='ident'>parse_config</span>(<span class='ident'>source</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
+                <span class='ident'>format</span>: <span class='ident'>Format</span>,
+                <span class='ident'>deserializers</span>: <span class='kw-2'>&amp;</span><span class='ident'>Deserializers</span>)
+                <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>file</span>::<span class='ident'>Config</span>, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file</span>::<span class='ident'>Config</span>::<span class='ident'>parse</span>(<span class='kw-2'>&amp;</span><span class='ident'>source</span>, <span class='ident'>format</span>, <span class='ident'>deserializers</span>));
+    <span class='kw'>for</span> <span class='ident'>error</span> <span class='kw'>in</span> <span class='ident'>config</span>.<span class='ident'>errors</span>() {
+        <span class='ident'>handle_error</span>(<span class='ident'>error</span>);
     }
     <span class='prelude-val'>Ok</span>(<span class='ident'>config</span>)
 }
 
 <span class='kw'>struct</span> <span class='ident'>ConfigReloader</span> {
     <span class='ident'>path</span>: <span class='ident'>PathBuf</span>,
+    <span class='ident'>format</span>: <span class='ident'>Format</span>,
     <span class='ident'>rate</span>: <span class='ident'>Duration</span>,
     <span class='ident'>source</span>: <span class='ident'>String</span>,
-    <span class='ident'>creator</span>: <span class='ident'>Creator</span>,
-    <span class='ident'>shared</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>SharedLogger</span><span class='op'>&gt;&gt;</span>,
-    <span class='ident'>max_log_level</span>: <span class='ident'>MaxLogLevelFilter</span>,
+    <span class='ident'>deserializers</span>: <span class='ident'>Deserializers</span>,
+    <span class='ident'>handle</span>: <span class='ident'>Handle</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>ConfigReloader</span> {
-    <span class='kw'>fn</span> <span class='ident'>start</span>(<span class='ident'>path</span>: <span class='ident'>PathBuf</span>, <span class='ident'>rate</span>: <span class='ident'>Duration</span>, <span class='ident'>source</span>: <span class='ident'>String</span>, <span class='ident'>creator</span>: <span class='ident'>Creator</span>, <span class='ident'>logger</span>: <span class='kw-2'>&amp;</span><span class='ident'>Logger</span>,
-             <span class='ident'>max_log_level</span>: <span class='ident'>MaxLogLevelFilter</span>) {
+    <span class='kw'>fn</span> <span class='ident'>start</span>(<span class='ident'>path</span>: <span class='ident'>PathBuf</span>,
+             <span class='ident'>format</span>: <span class='ident'>Format</span>,
+             <span class='ident'>rate</span>: <span class='ident'>Duration</span>,
+             <span class='ident'>source</span>: <span class='ident'>String</span>,
+             <span class='ident'>deserializers</span>: <span class='ident'>Deserializers</span>,
+             <span class='ident'>handle</span>: <span class='ident'>Handle</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>reloader</span> <span class='op'>=</span> <span class='ident'>ConfigReloader</span> {
             <span class='ident'>path</span>: <span class='ident'>path</span>,
+            <span class='ident'>format</span>: <span class='ident'>format</span>,
             <span class='ident'>rate</span>: <span class='ident'>rate</span>,
             <span class='ident'>source</span>: <span class='ident'>source</span>,
-            <span class='ident'>creator</span>: <span class='ident'>creator</span>,
-            <span class='ident'>shared</span>: <span class='ident'>logger</span>.<span class='ident'>inner</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>max_log_level</span>: <span class='ident'>max_log_level</span>,
+            <span class='ident'>deserializers</span>: <span class='ident'>deserializers</span>,
+            <span class='ident'>handle</span>: <span class='ident'>handle</span>,
         };
 
         <span class='ident'>thread</span>::<span class='ident'>Builder</span>::<span class='ident'>new</span>()
-            .<span class='ident'>name</span>(<span class='string'>&quot;log4rs config refresh thread&quot;</span>.<span class='ident'>to_string</span>())
+            .<span class='ident'>name</span>(<span class='string'>&quot;log4rs refresh&quot;</span>.<span class='ident'>to_owned</span>())
             .<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> <span class='ident'>reloader</span>.<span class='ident'>run</span>())
             .<span class='ident'>unwrap</span>();
     }
 
     <span class='kw'>fn</span> <span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
         <span class='kw'>loop</span> {
-            <span class='ident'>thread</span>::<span class='ident'>sleep_ms</span>(<span class='self'>self</span>.<span class='ident'>rate</span>.<span class='ident'>num_milliseconds</span>() <span class='kw'>as</span> <span class='ident'>u32</span>);
+            <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='self'>self</span>.<span class='ident'>rate</span>);
 
             <span class='kw'>let</span> <span class='ident'>source</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>read_config</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>path</span>) {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>source</span>) <span class='op'>=&gt;</span> <span class='ident'>source</span>,
                 <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
-                    <span class='ident'>handle_error</span>(<span class='kw-2'>&amp;</span><span class='ident'>err</span>);
+                    <span class='ident'>handle_error</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>err</span>);
                     <span class='kw'>continue</span>;
                 }
             };
@@ -1018,18 +1204,17 @@
 
             <span class='self'>self</span>.<span class='ident'>source</span> <span class='op'>=</span> <span class='ident'>source</span>;
 
-            <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>parse_config</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>source</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>creator</span>) {
+            <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>parse_config</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>source</span>, <span class='self'>self</span>.<span class='ident'>format</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>deserializers</span>) {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>config</span>) <span class='op'>=&gt;</span> <span class='ident'>config</span>,
                 <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
                     <span class='ident'>handle_error</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>err</span>);
                     <span class='kw'>continue</span>;
                 }
             };
-            <span class='kw'>let</span> (<span class='ident'>refresh_rate</span>, <span class='ident'>config</span>) <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>unpack</span>();
+            <span class='kw'>let</span> <span class='ident'>refresh_rate</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>refresh_rate</span>();
+            <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>into_config</span>();
 
-            <span class='kw'>let</span> <span class='ident'>shared</span> <span class='op'>=</span> <span class='ident'>SharedLogger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>);
-            <span class='self'>self</span>.<span class='ident'>max_log_level</span>.<span class='ident'>set</span>(<span class='ident'>shared</span>.<span class='ident'>root</span>.<span class='ident'>max_log_level</span>());
-            <span class='op'>*</span><span class='self'>self</span>.<span class='ident'>shared</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>shared</span>;
+            <span class='self'>self</span>.<span class='ident'>handle</span>.<span class='ident'>set_config</span>(<span class='ident'>config</span>);
 
             <span class='kw'>match</span> <span class='ident'>refresh_rate</span> {
                 <span class='prelude-val'>Some</span>(<span class='ident'>rate</span>) <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>rate</span> <span class='op'>=</span> <span class='ident'>rate</span>,
@@ -1039,14 +1224,13 @@
     }
 }
 
-<span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-<span class='kw'>trait</span> <span class='ident'>ConfigPrivateExt</span> {
-    <span class='kw'>fn</span> <span class='ident'>unpack</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>config</span>::<span class='ident'>Appender</span><span class='op'>&gt;</span>, <span class='ident'>config</span>::<span class='ident'>Root</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>config</span>::<span class='ident'>Logger</span><span class='op'>&gt;</span>);
+<span class='kw'>trait</span> <span class='ident'>ErrorInternals</span> {
+    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>message</span>: <span class='ident'>String</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span>;
 }
 
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
-<span class='kw'>trait</span> <span class='ident'>PrivateTomlConfigExt</span> {
-    <span class='kw'>fn</span> <span class='ident'>unpack</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>, <span class='ident'>config</span>::<span class='ident'>Config</span>);
+<span class='kw'>trait</span> <span class='ident'>ConfigPrivateExt</span> {
+    <span class='kw'>fn</span> <span class='ident'>unpack</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>config</span>::<span class='ident'>Appender</span><span class='op'>&gt;</span>, <span class='ident'>config</span>::<span class='ident'>Root</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>config</span>::<span class='ident'>Logger</span><span class='op'>&gt;</span>);
 }
 
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
@@ -1067,15 +1251,17 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>enabled</span>() {
-        <span class='kw'>let</span> <span class='ident'>root</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Root</span>::<span class='ident'>builder</span>(<span class='ident'>LogLevelFilter</span>::<span class='ident'>Debug</span>).<span class='ident'>build</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Config</span>::<span class='ident'>builder</span>(<span class='ident'>root</span>);
-        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Logger</span>::<span class='ident'>builder</span>(<span class='string'>&quot;foo::bar&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>LogLevelFilter</span>::<span class='ident'>Trace</span>).<span class='ident'>build</span>();
+        <span class='kw'>let</span> <span class='ident'>root</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Root</span>::<span class='ident'>builder</span>().<span class='ident'>build</span>(<span class='ident'>LogLevelFilter</span>::<span class='ident'>Debug</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Config</span>::<span class='ident'>builder</span>();
+        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Logger</span>::<span class='ident'>builder</span>().<span class='ident'>build</span>(<span class='string'>&quot;foo::bar&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>LogLevelFilter</span>::<span class='ident'>Trace</span>);
         <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>logger</span>(<span class='ident'>logger</span>);
-        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Logger</span>::<span class='ident'>builder</span>(<span class='string'>&quot;foo::bar::baz&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>LogLevelFilter</span>::<span class='ident'>Off</span>).<span class='ident'>build</span>();
+        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Logger</span>::<span class='ident'>builder</span>()
+                         .<span class='ident'>build</span>(<span class='string'>&quot;foo::bar::baz&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>LogLevelFilter</span>::<span class='ident'>Off</span>);
         <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>logger</span>(<span class='ident'>logger</span>);
-        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Logger</span>::<span class='ident'>builder</span>(<span class='string'>&quot;foo::baz::buz&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>LogLevelFilter</span>::<span class='ident'>Error</span>).<span class='ident'>build</span>();
+        <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='ident'>config</span>::<span class='ident'>Logger</span>::<span class='ident'>builder</span>()
+                         .<span class='ident'>build</span>(<span class='string'>&quot;foo::baz::buz&quot;</span>.<span class='ident'>to_string</span>(), <span class='ident'>LogLevelFilter</span>::<span class='ident'>Error</span>);
         <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>logger</span>(<span class='ident'>logger</span>);
-        <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>build</span>().<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>build</span>(<span class='ident'>root</span>).<span class='ident'>unwrap</span>();
 
         <span class='kw'>let</span> <span class='ident'>logger</span> <span class='op'>=</span> <span class='kw'>super</span>::<span class='ident'>Logger</span>::<span class='ident'>new</span>(<span class='ident'>config</span>);
 

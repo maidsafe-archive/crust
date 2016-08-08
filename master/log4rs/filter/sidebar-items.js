@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ThresholdFilter","A filter that rejects all events at a level below a provided threshold."]]});
+initSidebarItems({"enum":[["Response","The response returned by a filter."]],"mod":[["threshold","The threshold filter."]],"trait":[["Filter","The trait implemented by log4rs filters."]]});

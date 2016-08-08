@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `DeserializerError` enum in crate `serde_value`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, DeserializerError">
+
+    <title>serde_value::DeserializerError - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>serde_value</a></p><script>window.sidebarCurrent = {name: 'DeserializerError', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>serde_value</a>::<wbr><a class='enum' href=''>DeserializerError</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-12' class='srclink' href='../src/serde_value/lib.rs.html#14-23' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum DeserializerError {
+    Custom(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    EndOfStream,
+    InvalidType(<a class='enum' href='../serde/de/enum.Type.html' title='serde::de::Type'>Type</a>),
+    InvalidValue(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    InvalidLength(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>),
+    UnknownVariant(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    UnknownField(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    MissingField(&amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
+}</pre><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.Custom'><code>Custom</code></td><td></td><td></td></tr><tr><td id='variant.EndOfStream'><code>EndOfStream</code></td><td></td><td></td></tr><tr><td id='variant.InvalidType'><code>InvalidType</code></td><td></td><td></td></tr><tr><td id='variant.InvalidValue'><code>InvalidValue</code></td><td></td><td></td></tr><tr><td id='variant.InvalidLength'><code>InvalidLength</code></td><td></td><td></td></tr><tr><td id='variant.UnknownVariant'><code>UnknownVariant</code></td><td></td><td></td></tr><tr><td id='variant.UnknownField'><code>UnknownField</code></td><td></td><td></td></tr><tr><td id='variant.MissingField'><code>MissingField</code></td><td></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-64' class='srclink' href='../src/serde_value/lib.rs.html#59-76' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.to_error' class='method'><code>fn <a href='#method.to_error' class='fnname'>to_error</a>&lt;E: <a class='trait' href='../serde/de/trait.Error.html' title='serde::de::Error'>Error</a>&gt;(&amp;self) -&gt; E</code></h4>
+<h4 id='method.into_error' class='method'><code>fn <a href='#method.into_error' class='fnname'>into_error</a>&lt;E: <a class='trait' href='../serde/de/trait.Error.html' title='serde::de::Error'>Error</a>&gt;(self) -&gt; E</code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../serde/de/trait.Error.html' title='serde::de::Error'>Error</a> for <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-47' class='srclink' href='../src/serde_value/lib.rs.html#25-57' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.custom' class='method'><code>fn <a href='../serde/de/trait.Error.html#tymethod.custom' class='fnname'>custom</a>&lt;T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;&gt;(msg: T) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when there is general error when deserializing a type.</p>
+</div><h4 id='method.end_of_stream' class='method'><code>fn <a href='../serde/de/trait.Error.html#tymethod.end_of_stream' class='fnname'>end_of_stream</a>() -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a <code>Deserialize</code> type unexpectedly hit the end of the stream.</p>
+</div><h4 id='method.invalid_type' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.invalid_type' class='fnname'>invalid_type</a>(ty: <a class='enum' href='../serde/de/enum.Type.html' title='serde::de::Type'>Type</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a <code>Deserialize</code> was passed an incorrect type.</p>
+</div><h4 id='method.invalid_value' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.invalid_value' class='fnname'>invalid_value</a>(msg: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a <code>Deserialize</code> was passed an incorrect value.</p>
+</div><h4 id='method.invalid_length' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.invalid_length' class='fnname'>invalid_length</a>(len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a fixed sized sequence or map was passed in the wrong amount of arguments. <a href="../serde/de/trait.Error.html#method.invalid_length">Read more</a></p>
+</div><h4 id='method.unknown_variant' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.unknown_variant' class='fnname'>unknown_variant</a>(field: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a <code>Deserialize</code> enum type received an unexpected variant.</p>
+</div><h4 id='method.unknown_field' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.unknown_field' class='fnname'>unknown_field</a>(field: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a <code>Deserialize</code> struct type received an unexpected struct field.</p>
+</div><h4 id='method.missing_field' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.missing_field' class='fnname'>missing_field</a>(field: &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>raised when a <code>deserialize</code> struct type did not receive a field.</p>
+</div><h4 id='method.duplicate_field' class='method'><code>fn <a href='../serde/de/trait.Error.html#method.duplicate_field' class='fnname'>duplicate_field</a>(field: &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Raised when a <code>Deserialize</code> struct type received more than one of the same struct field. <a href="../serde/de/trait.Error.html#method.duplicate_field">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-78' class='srclink' href='../src/serde_value/lib.rs.html#78-82' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#tymethod.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<div class='docblock'><p>A short description of the error. <a href="https://doc.rust-lang.org/nightly/std/error/trait.Error.html#tymethod.description">Read more</a></p>
+</div><h4 id='method.cause' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a>&gt;</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>The lower-level cause of this error, if any.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-81' class='srclink' href='../src/serde_value/lib.rs.html#84-97' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='enum' href='../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a>&gt; for <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-107' class='srclink' href='../src/serde_value/lib.rs.html#99-112' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(e: <a class='enum' href='../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a>) -&gt; Self</code></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-28' class='srclink' href='../src/serde_value/lib.rs.html#13' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "serde_value";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

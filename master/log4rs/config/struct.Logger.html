@@ -47,12 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-176' class='srclink' href='../../src/log4rs/config.rs.html#132-141' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-483' class='srclink' href='../../src/log4rs/config.rs.html#133-138' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Logger {
     // some fields omitted
 }</pre><div class='docblock'><p>Configuration for a logger.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../log4rs/config/struct.Logger.html' title='log4rs::config::Logger'>Logger</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-190' class='srclink' href='../../src/log4rs/config.rs.html#143-175' title='goto source code'>[src]</a></span></h3>
-<div class='impl-items'><h4 id='method.builder' class='method'><code>fn <a href='#method.builder' class='fnname'>builder</a>(name: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, level: <a class='enum' href='../../log/enum.LogLevelFilter.html' title='log::LogLevelFilter'>LogLevelFilter</a>) -&gt; <a class='struct' href='../../log4rs/config/struct.LoggerBuilder.html' title='log4rs::config::LoggerBuilder'>LoggerBuilder</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../log4rs/config/struct.Logger.html' title='log4rs::config::Logger'>Logger</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-497' class='srclink' href='../../src/log4rs/config.rs.html#140-170' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.builder' class='method'><code>fn <a href='#method.builder' class='fnname'>builder</a>() -&gt; <a class='struct' href='../../log4rs/config/struct.LoggerBuilder.html' title='log4rs::config::LoggerBuilder'>LoggerBuilder</a></code></h4>
 <div class='docblock'><p>Creates a new <code>LoggerBuilder</code> with the specified name and level.</p>
 
 <p>There are initially no appenders attached and <code>additive</code> is <code>true</code>.</p>
@@ -64,7 +64,7 @@
 <div class='docblock'><p>Returns the list of names of appenders that will be attached to the logger.</p>
 </div><h4 id='method.additive' class='method'><code>fn <a href='#method.additive' class='fnname'>additive</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Determines if appenders of parent loggers will also be attached to this logger.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../log4rs/config/struct.Logger.html' title='log4rs::config::Logger'>Logger</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-181' class='srclink' href='../../src/log4rs/config.rs.html#131' title='goto source code'>[src]</a></span></h3>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../log4rs/config/struct.Logger.html' title='log4rs::config::Logger'>Logger</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-488' class='srclink' href='../../src/log4rs/config.rs.html#132' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div></section>

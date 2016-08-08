@@ -201,7 +201,7 @@
         };
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>Cache</span> {
-            <span class='ident'>file_handler</span>: <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>name</span>)),
+            <span class='ident'>file_handler</span>: <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>name</span>, <span class='boolvalue'>true</span>)),
             <span class='comment'>// last_updated: Instant::now(),</span>
         })
     }

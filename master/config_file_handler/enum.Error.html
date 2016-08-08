@@ -50,14 +50,14 @@
                </span></span></h1>
 <pre class='rust enum'>pub enum Error {
     EnvError(<a class='enum' href='https://doc.rust-lang.org/nightly/std/env/enum.VarError.html' title='std::env::VarError'>VarError</a>),
-    IoError(<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>),
+    Io(<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>),
     JsonDecoderError(<a class='enum' href='../rustc_serialize/json/enum.DecoderError.html' title='rustc_serialize::json::DecoderError'>DecoderError</a>),
     JsonEncoderError(<a class='enum' href='../rustc_serialize/json/enum.EncoderError.html' title='rustc_serialize::json::EncoderError'>EncoderError</a>),
     JsonParserError(<a class='enum' href='../rustc_serialize/json/enum.ParserError.html' title='rustc_serialize::json::ParserError'>ParserError</a>),
 }</pre><div class='docblock'><p>Error types.</p>
 </div><h2 class='variants'>Variants</h2>
 <table class='variants_table'><tr><td id='variant.EnvError'><code>EnvError</code></td><td><div class='docblock'><p>Wrapper for a <code>::std::env::VarError</code></p>
-</div></td><td></td></tr><tr><td id='variant.IoError'><code>IoError</code></td><td><div class='docblock'><p>Wrapper for a <code>::std::io::Error</code></p>
+</div></td><td></td></tr><tr><td id='variant.Io'><code>Io</code></td><td><div class='docblock'><p>Wrapper for a <code>::std::io::Error</code></p>
 </div></td><td></td></tr><tr><td id='variant.JsonDecoderError'><code>JsonDecoderError</code></td><td><div class='docblock'><p>Wrapper for a <code>::rustc_serialize::json::DecoderError</code></p>
 </div></td><td></td></tr><tr><td id='variant.JsonEncoderError'><code>JsonEncoderError</code></td><td><div class='docblock'><p>Wrapper for a <code>::rustc_serialize::json::EncoderError</code></p>
 </div></td><td></td></tr><tr><td id='variant.JsonParserError'><code>JsonParserError</code></td><td><div class='docblock'><p>Wrapper for a <code>rustc_serialize::json::ParserError</code></p>

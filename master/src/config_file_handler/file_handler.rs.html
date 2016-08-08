@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/config_file_handler-0.3.1/src/file_handler.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/config_file_handler-0.4.0/src/file_handler.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>file_handler.rs.html -- source</title>
@@ -436,6 +436,201 @@
 <span id="392">392</span>
 <span id="393">393</span>
 <span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -465,6 +660,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>PhantomData</span>;
 
 <span class='kw'>use</span> <span class='ident'>error</span>::<span class='ident'>Error</span>;
+<span class='kw'>use</span> <span class='ident'>global_mutex</span>;
 
 <span class='doccomment'>/// Struct for reading and writing config files.</span>
 <span class='doccomment'>///</span>
@@ -489,37 +685,63 @@
     <span class='doccomment'>///   2. [`user_app_dir()`](fn.user_app_dir.html)</span>
     <span class='doccomment'>///   3. [`system_cache_dir()`](fn.system_cache_dir.html)</span>
     <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Parameter `assert_writable` dictates if the file should be writable or not.</span>
+    <span class='doccomment'>///</span>
     <span class='doccomment'>/// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and</span>
     <span class='doccomment'>/// process-safety.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>open</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>open</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>S</span>,
+                                          <span class='ident'>assert_writable</span>: <span class='ident'>bool</span>)
+                                          <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>name</span> <span class='op'>=</span> <span class='ident'>name</span>.<span class='ident'>as_ref</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>current_bin_dir</span>());
-        <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
-            <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
-                <span class='ident'>path</span>: <span class='ident'>path</span>,
-                <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
-            }),
-            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
-        };
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>user_app_dir</span>());
-        <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
-            <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
-                <span class='ident'>path</span>: <span class='ident'>path</span>,
-                <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
-            }),
-            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
-        };
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>path</span>) <span class='op'>=</span> <span class='ident'>current_bin_dir</span>() {
+            <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
+            <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>read</span>(<span class='boolvalue'>true</span>).<span class='ident'>write</span>(<span class='ident'>assert_writable</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+                <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> {
+                    <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
+                        <span class='ident'>path</span>: <span class='ident'>path</span>,
+                        <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
+                    })
+                }
+                <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
+            }
+        }
+
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>path</span>) <span class='op'>=</span> <span class='ident'>bundle_resource_dir</span>() {
+            <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
+            <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>read</span>(<span class='boolvalue'>true</span>).<span class='ident'>write</span>(<span class='ident'>assert_writable</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+                <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> {
+                    <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
+                        <span class='ident'>path</span>: <span class='ident'>path</span>,
+                        <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
+                    })
+                }
+                <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
+            }
+        }
+
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>path</span>) <span class='op'>=</span> <span class='ident'>user_app_dir</span>() {
+            <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
+            <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>read</span>(<span class='boolvalue'>true</span>).<span class='ident'>write</span>(<span class='ident'>assert_writable</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+                <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> {
+                    <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
+                        <span class='ident'>path</span>: <span class='ident'>path</span>,
+                        <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
+                    })
+                }
+                <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
+            }
+        }
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>system_cache_dir</span>());
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
-            <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
-                <span class='ident'>path</span>: <span class='ident'>path</span>,
-                <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
-            }),
+        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>read</span>(<span class='boolvalue'>true</span>).<span class='ident'>write</span>(<span class='ident'>assert_writable</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+            <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> {
+                <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
+                    <span class='ident'>path</span>: <span class='ident'>path</span>,
+                    <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
+                })
+            }
             <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>e</span>)),
         }
     }
@@ -531,12 +753,12 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Default</span> <span class='op'>+</span> <span class='ident'>Encodable</span>
+    <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Default</span> <span class='op'>+</span> <span class='ident'>Encodable</span>
 {
     <span class='doccomment'>/// Constructor taking the required file name (not the full path)</span>
     <span class='doccomment'>/// The config file will be initialised to a default if it does not exist.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// This function tests whether it has write access to the file in the following locations in</span>
+    <span class='doccomment'>/// This function tests whether it has read access to the file in the following locations in</span>
     <span class='doccomment'>/// this order (see also [an example config file flowchart]</span>
     <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf)):</span>
     <span class='doccomment'>///</span>
@@ -544,43 +766,63 @@
     <span class='doccomment'>///   2. [`user_app_dir()`](fn.user_app_dir.html)</span>
     <span class='doccomment'>///   3. [`system_cache_dir()`](fn.system_cache_dir.html)</span>
     <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Parameter `is_existing_file_writable` will assert that if the file pre-exists should it be</span>
+    <span class='doccomment'>/// also writable or not. (E.g. it is enough for `crust-config` file to merely exist as</span>
+    <span class='doccomment'>/// readable, but `bootstrap-cache` must be writable too if it exists, else no updation can</span>
+    <span class='doccomment'>/// happen).</span>
+    <span class='doccomment'>///</span>
     <span class='doccomment'>/// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and</span>
     <span class='doccomment'>/// process-safety.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-        <span class='kw'>match</span> <span class='ident'>FileHandler</span>::<span class='ident'>open</span>(<span class='ident'>name</span>) {
-            <span class='prelude-val'>Ok</span>(<span class='ident'>fh</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>fh</span>),
-            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
-        };
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>OsStr</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>S</span>,
+                                         <span class='ident'>is_existing_file_writable</span>: <span class='ident'>bool</span>)
+                                         <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>fh</span>) <span class='op'>=</span> <span class='self'>Self</span>::<span class='ident'>open</span>(<span class='ident'>name</span>, <span class='ident'>is_existing_file_writable</span>) {
+            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>fh</span>);
+        }
 
         <span class='kw'>let</span> <span class='ident'>contents</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>json</span>::<span class='ident'>as_pretty_json</span>(<span class='kw-2'>&amp;</span><span class='ident'>T</span>::<span class='ident'>default</span>())).<span class='ident'>into_bytes</span>();
         <span class='kw'>let</span> <span class='ident'>name</span> <span class='op'>=</span> <span class='ident'>name</span>.<span class='ident'>as_ref</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>current_bin_dir</span>());
-        <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
-            <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
-                <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
-                <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
-                    <span class='ident'>path</span>: <span class='ident'>path</span>,
-                    <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
-                });
-            },
-            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
-        };
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>user_app_dir</span>());
-        <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
-        <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
-            <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
-                <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
-                <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
-                    <span class='ident'>path</span>: <span class='ident'>path</span>,
-                    <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
-                });
-            },
-            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
-        };
+        <span class='kw'>let</span> <span class='ident'>_guard</span> <span class='op'>=</span> <span class='ident'>global_mutex</span>::<span class='ident'>get_mutex</span>().<span class='ident'>lock</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not lock mutex&quot;</span>);
+
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>path</span>) <span class='op'>=</span> <span class='ident'>current_bin_dir</span>() {
+            <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
+            <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+                <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
+                    <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
+                    <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
+                        <span class='ident'>path</span>: <span class='ident'>path</span>,
+                        <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
+                    });
+                }
+                <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
+            }
+        }
+
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>path</span>) <span class='op'>=</span> <span class='ident'>user_app_dir</span>() {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>avoid</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+            <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>path</span>.<span class='ident'>is_dir</span>() {
+                <span class='ident'>avoid</span> <span class='op'>=</span> <span class='ident'>fs</span>::<span class='ident'>create_dir</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>).<span class='ident'>is_err</span>();
+            }
+            <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>avoid</span> {
+                <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
+                <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
+                    <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
+                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>f</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
+                        <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>FileHandler</span> {
+                            <span class='ident'>path</span>: <span class='ident'>path</span>,
+                            <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
+                        });
+                    }
+                    <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> (),
+                }
+            }
+        }
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>system_cache_dir</span>());
+        <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>path</span>.<span class='ident'>is_dir</span>() {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>fs</span>::<span class='ident'>create_dir</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>));
+        }
         <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='ident'>name</span>);
         <span class='kw'>match</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>) {
             <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>f</span>) <span class='op'>=&gt;</span> {
@@ -589,14 +831,14 @@
                     <span class='ident'>path</span>: <span class='ident'>path</span>,
                     <span class='ident'>_ph</span>: <span class='ident'>PhantomData</span>,
                 })
-            },
+            }
             <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>e</span>)),
         }
     }
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Decodable</span>
+    <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Decodable</span>
 {
     <span class='doccomment'>/// Read the contents of the file and decode it as JSON.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_file</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
@@ -608,12 +850,16 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Encodable</span>
+    <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Encodable</span>
 {
     <span class='doccomment'>/// Write `contents` to the file as JSON.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>contents</span>: <span class='kw-2'>&amp;</span><span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>contents</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>json</span>::<span class='ident'>as_pretty_json</span>(<span class='ident'>contents</span>)).<span class='ident'>into_bytes</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>path</span>));
+
+        <span class='kw'>let</span> <span class='ident'>_guard</span> <span class='op'>=</span> <span class='ident'>global_mutex</span>::<span class='ident'>get_mutex</span>().<span class='ident'>lock</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Could not lock mutex&quot;</span>);
+
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file</span> <span class='op'>=</span>
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>().<span class='ident'>write</span>(<span class='boolvalue'>true</span>).<span class='ident'>create</span>(<span class='boolvalue'>true</span>).<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>).<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>path</span>));
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>write_with_lock</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>file</span>, <span class='kw-2'>&amp;</span><span class='ident'>contents</span>));
         <span class='prelude-val'>Ok</span>(())
     }
@@ -639,7 +885,9 @@
 }
 
 <span class='kw'>fn</span> <span class='ident'>exclusive_lock</span><span class='op'>&lt;</span><span class='ident'>F</span>, <span class='ident'>R</span>, <span class='ident'>E</span><span class='op'>&gt;</span>(<span class='ident'>file</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>File</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>Error</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>File</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>E</span><span class='op'>&gt;</span>, <span class='ident'>Error</span>: <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>E</span><span class='op'>&gt;</span> {
+    <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>File</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
+          <span class='ident'>Error</span>: <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>E</span><span class='op'>&gt;</span>
+{
     <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file</span>.<span class='ident'>lock_exclusive</span>());
     <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>f</span>(<span class='ident'>file</span>);
     <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file</span>.<span class='ident'>unlock</span>());
@@ -647,7 +895,9 @@
 }
 
 <span class='kw'>fn</span> <span class='ident'>shared_lock</span><span class='op'>&lt;</span><span class='ident'>F</span>, <span class='ident'>R</span>, <span class='ident'>E</span><span class='op'>&gt;</span>(<span class='ident'>file</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>File</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>Error</span><span class='op'>&gt;</span>
-    <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>File</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>E</span><span class='op'>&gt;</span>, <span class='ident'>Error</span>: <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>E</span><span class='op'>&gt;</span> {
+    <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>File</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>R</span>, <span class='ident'>E</span><span class='op'>&gt;</span>,
+          <span class='ident'>Error</span>: <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>E</span><span class='op'>&gt;</span>
+{
     <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file</span>.<span class='ident'>lock_shared</span>());
     <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>f</span>(<span class='ident'>file</span>);
     <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file</span>.<span class='ident'>unlock</span>());
@@ -662,10 +912,42 @@
 <span class='doccomment'>/// config file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>current_bin_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>current_exe</span>());
-    <span class='kw'>let</span> <span class='ident'>pop_result</span> <span class='op'>=</span> <span class='ident'>path</span>.<span class='ident'>pop</span>();
-    <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>pop_result</span>);
-    <span class='prelude-val'>Ok</span>(<span class='ident'>path</span>)
+    <span class='kw'>match</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>current_exe</span>()).<span class='ident'>parent</span>() {
+        <span class='prelude-val'>Some</span>(<span class='ident'>path</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='ident'>path</span>.<span class='ident'>to_path_buf</span>()),
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>, <span class='string'>&quot;Current bin dir&quot;</span>))),
+    }
+}
+
+<span class='doccomment'>/// The full path to the directory containing the resources to currently-running binary.</span>
+<span class='doccomment'>/// For OSX this is special directory. For others it&#39;s an error.</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>))]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bundle_resource_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+    <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                 <span class='string'>&quot;Bundle resource directory only applicable to MacOs&quot;</span>)))
+}
+
+<span class='doccomment'>/// The full path to the directory containing the resources to currently-running binary.</span>
+<span class='doccomment'>/// For OSX this is special directory. For others it&#39;s an error.</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bundle_resource_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bundle_dir</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>current_exe</span>())
+            .<span class='ident'>parent</span>()
+            .<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>, <span class='string'>&quot;Bundle resources directory&quot;</span>)))
+        .<span class='ident'>to_path_buf</span>();
+
+    <span class='kw'>if</span> <span class='op'>!</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>bundle_dir</span>.<span class='ident'>to_str</span>()
+            .<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>, <span class='string'>&quot;Path is not unicode&quot;</span>)))
+        .<span class='ident'>ends_with</span>(<span class='string'>&quot;.app/Contents/MacOS&quot;</span>) {
+        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                            <span class='string'>&quot;Not inside an Application Bundle&quot;</span>)));
+    }
+
+    <span class='ident'>bundle_dir</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>bundle_dir</span>.<span class='ident'>parent</span>()
+            .<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>, <span class='string'>&quot;Bundle resource directory&quot;</span>)))
+        .<span class='ident'>to_path_buf</span>();
+    <span class='ident'>bundle_dir</span>.<span class='ident'>push</span>(<span class='string'>&quot;Resources&quot;</span>);
+
+    <span class='prelude-val'>Ok</span>(<span class='ident'>bundle_dir</span>)
 }
 
 <span class='doccomment'>/// The full path to an application support directory for the current user.  See also [an example</span>
@@ -673,33 +955,95 @@
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>user_app_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-    <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>var</span>(<span class='string'>&quot;APPDATA&quot;</span>))))))
+    <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>var</span>(<span class='string'>&quot;APPDATA&quot;</span>));
+    <span class='kw'>let</span> <span class='ident'>app_dir</span> <span class='op'>=</span> <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>);
+
+    <span class='kw'>if</span> <span class='ident'>app_dir</span>.<span class='ident'>is_dir</span>() {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>app_dir</span>)))
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                     <span class='string'>&quot;Global user app directory not found.&quot;</span>)))
+    }
 }
 
 <span class='doccomment'>/// The full path to an application support directory for the current user.  See also [an example</span>
 <span class='doccomment'>/// config file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>unix</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>unix</span>, <span class='ident'>not</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>)))]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>user_app_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='ident'>home_dir</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>home_dir</span>().<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
-                                                             <span class='string'>&quot;User home directory not found.&quot;</span>)));
-    <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>home_dir</span>)).<span class='ident'>join</span>(<span class='string'>&quot;.config&quot;</span>))
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>home_dir</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>home_dir</span>()
+        .<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>, <span class='string'>&quot;Home directory not found.&quot;</span>)));
+    <span class='ident'>home_dir</span>.<span class='ident'>push</span>(<span class='string'>&quot;.config&quot;</span>);
+
+    <span class='kw'>if</span> <span class='ident'>home_dir</span>.<span class='ident'>is_dir</span>() {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>home_dir</span>)))
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                     <span class='string'>&quot;Global user app directory not found.&quot;</span>)))
+    }
 }
 
-<span class='doccomment'>/// The full path to a system cache directory available for all users.  See also [an example config</span>
+<span class='doccomment'>/// The full path to an application support directory for the current user.  See also [an example</span>
+<span class='doccomment'>/// config file flowchart]</span>
+<span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>user_app_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>app_dir</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>home_dir</span>()
+        .<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>, <span class='string'>&quot;Home directory not found.&quot;</span>)));
+    <span class='ident'>app_dir</span>.<span class='ident'>push</span>(<span class='string'>&quot;Library/Application Support&quot;</span>);
+
+    <span class='kw'>if</span> <span class='ident'>app_dir</span>.<span class='ident'>is_dir</span>() {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>app_dir</span>)))
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                     <span class='string'>&quot;Global user app directory not found.&quot;</span>)))
+    }
+}
+
+<span class='doccomment'>/// The full path to a system cache directory available for all users. See also [an example config</span>
 <span class='doccomment'>/// file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>system_cache_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-    <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>var</span>(<span class='string'>&quot;ALLUSERSPROFILE&quot;</span>))))))
+    <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>var</span>(<span class='string'>&quot;ALLUSERSPROFILE&quot;</span>));
+    <span class='kw'>let</span> <span class='ident'>sys_cache_dir</span> <span class='op'>=</span> <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>);
+
+    <span class='kw'>if</span> <span class='ident'>sys_cache_dir</span>.<span class='ident'>is_dir</span>() {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>sys_cache_dir</span>)))
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                     <span class='string'>&quot;Global system cache directory not found.&quot;</span>)))
+    }
 }
 
-<span class='doccomment'>/// The full path to a system cache directory available for all users.  See also [an example config</span>
+<span class='doccomment'>/// The full path to a system cache directory available for all users. See also [an example config</span>
 <span class='doccomment'>/// file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>unix</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>unix</span>, <span class='ident'>not</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>)))]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>system_cache_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-    <span class='ident'>join_exe_file_stem</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;/var/cache&quot;</span>))
+    <span class='kw'>let</span> <span class='ident'>sys_cache_dir</span> <span class='op'>=</span> <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;/var/cache&quot;</span>);
+
+    <span class='kw'>if</span> <span class='ident'>sys_cache_dir</span>.<span class='ident'>is_dir</span>() {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>sys_cache_dir</span>)))
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                     <span class='string'>&quot;Global system cache directory not found.&quot;</span>)))
+    }
+}
+
+<span class='doccomment'>/// The full path to a system cache directory available for all users. See also [an example config</span>
+<span class='doccomment'>/// file flowchart]</span>
+<span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>system_cache_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='ident'>sys_cache_dir</span> <span class='op'>=</span> <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;/Library/Application Support&quot;</span>);
+
+    <span class='kw'>if</span> <span class='ident'>sys_cache_dir</span>.<span class='ident'>is_dir</span>() {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='kw-2'>&amp;</span><span class='ident'>sys_cache_dir</span>)))
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
+                                     <span class='string'>&quot;Global system cache directory not found.&quot;</span>)))
+    }
 }
 
 <span class='doccomment'>/// The file name of the currently-running binary without any suffix or extension.  For example, if</span>
@@ -723,7 +1067,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// {</span>
 <span class='doccomment'>///     let _cleaner = ScopedUserAppDirRemover;</span>
-<span class='doccomment'>///     let file_handler = FileHandler::new(&quot;test.json&quot;).unwrap();</span>
+<span class='doccomment'>///     let file_handler = FileHandler::new(&quot;test.json&quot;, true).unwrap();</span>
 <span class='doccomment'>///     // User app dir is possibly created by this call.</span>
 <span class='doccomment'>///     let _ = file_handler.write_file(&amp;111u64);</span>
 <span class='doccomment'>/// }</span>
@@ -733,9 +1077,8 @@
 
 <span class='kw'>impl</span> <span class='ident'>ScopedUserAppDirRemover</span> {
     <span class='kw'>fn</span> <span class='ident'>remove_dir</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
-        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>user_app_dir</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>user_app_dir</span><span class='op'>|</span> {
-            <span class='ident'>fs</span>::<span class='ident'>remove_dir_all</span>(<span class='ident'>user_app_dir</span>).<span class='ident'>map_err</span>(<span class='ident'>Error</span>::<span class='ident'>IoError</span>)
-        });
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>user_app_dir</span>()
+            .<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>user_app_dir</span><span class='op'>|</span> <span class='ident'>fs</span>::<span class='ident'>remove_dir_all</span>(<span class='ident'>user_app_dir</span>).<span class='ident'>map_err</span>(<span class='ident'>Error</span>::<span class='ident'>Io</span>));
     }
 }
 
@@ -762,7 +1105,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>read_write_file_test</span>() {
         <span class='kw'>let</span> <span class='ident'>_cleaner</span> <span class='op'>=</span> <span class='ident'>ScopedUserAppDirRemover</span>;
-        <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='string'>&quot;test0.json&quot;</span>) {
+        <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='string'>&quot;test0.json&quot;</span>, <span class='boolvalue'>true</span>) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>result</span>) <span class='op'>=&gt;</span> <span class='ident'>result</span>,
             <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;failed accessing file with error {:?}&quot;</span>, <span class='ident'>err</span>),
         };
@@ -779,7 +1122,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>existing_file_is_overwritten</span>() {
         <span class='kw'>let</span> <span class='ident'>_cleaner</span> <span class='op'>=</span> <span class='ident'>ScopedUserAppDirRemover</span>;
-        <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='string'>&quot;test1.json&quot;</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed accessing file&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='string'>&quot;test1.json&quot;</span>, <span class='boolvalue'>true</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed accessing file&quot;</span>);
 
         <span class='kw'>let</span> <span class='ident'>write_value0</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
         <span class='ident'>file_handler</span>.<span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='ident'>write_value0</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed writing file&quot;</span>);
@@ -797,38 +1140,85 @@
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>};
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 
-        <span class='kw'>const</span> <span class='ident'>NUM_THREADS</span> : <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>100</span>;
-        <span class='kw'>const</span> <span class='ident'>DATA_SIZE</span> : <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>10000</span>;
-        <span class='kw'>const</span> <span class='ident'>FILE_NAME</span> : <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;test2.json&quot;</span>;
+        <span class='kw'>const</span> <span class='ident'>NUM_THREADS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>100</span>;
+        <span class='kw'>const</span> <span class='ident'>DATA_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>10000</span>;
+        <span class='kw'>const</span> <span class='ident'>FILE_NAME</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;test2.json&quot;</span>;
 
         <span class='kw'>let</span> <span class='ident'>_cleaner</span> <span class='op'>=</span> <span class='ident'>ScopedUserAppDirRemover</span>;
         <span class='kw'>let</span> <span class='ident'>barrier</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Barrier</span>::<span class='ident'>new</span>(<span class='ident'>NUM_THREADS</span>));
 
-        <span class='kw'>let</span> <span class='ident'>handles</span> <span class='op'>=</span> (<span class='number'>0</span>..<span class='ident'>NUM_THREADS</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>i</span><span class='op'>|</span> {
-            <span class='kw'>let</span> <span class='ident'>barrier</span> <span class='op'>=</span> <span class='ident'>barrier</span>.<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>handles</span> <span class='op'>=</span> (<span class='number'>0</span>..<span class='ident'>NUM_THREADS</span>)
+            .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>i</span><span class='op'>|</span> {
+                <span class='kw'>let</span> <span class='ident'>barrier</span> <span class='op'>=</span> <span class='ident'>barrier</span>.<span class='ident'>clone</span>();
 
-            <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='ident'>iter</span>::<span class='ident'>repeat</span>(<span class='ident'>i</span>).<span class='ident'>take</span>(<span class='ident'>DATA_SIZE</span>).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
+                <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
+                    <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='ident'>iter</span>::<span class='ident'>repeat</span>(<span class='ident'>i</span>).<span class='ident'>take</span>(<span class='ident'>DATA_SIZE</span>).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
 
-                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>barrier</span>.<span class='ident'>wait</span>();
+                    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>barrier</span>.<span class='ident'>wait</span>();
 
-                <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='ident'>FILE_NAME</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed accessing file&quot;</span>);
-                <span class='ident'>file_handler</span>.<span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='ident'>data</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed writing file&quot;</span>);
+                    <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='ident'>FILE_NAME</span>, <span class='boolvalue'>true</span>)
+                        .<span class='ident'>expect</span>(<span class='string'>&quot;failed accessing file&quot;</span>);
+                    <span class='ident'>file_handler</span>.<span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='ident'>data</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed writing file&quot;</span>);
+                })
             })
-        }).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
+            .<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
 
         <span class='kw'>for</span> <span class='ident'>handle</span> <span class='kw'>in</span> <span class='ident'>handles</span> {
             <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>handle</span>.<span class='ident'>join</span>().<span class='ident'>unwrap</span>();
         }
 
-        <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='ident'>FILE_NAME</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed accessing file&quot;</span>);
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>data</span> : <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>file_handler</span>.<span class='ident'>read_file</span>().<span class='ident'>expect</span>(<span class='string'>&quot;failed reading file&quot;</span>);
+        <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='ident'>FILE_NAME</span>, <span class='boolvalue'>true</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed accessing file&quot;</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>file_handler</span>.<span class='ident'>read_file</span>().<span class='ident'>expect</span>(<span class='string'>&quot;failed reading file&quot;</span>);
 
         <span class='comment'>// Test that all elements in the vector are the same, to verify no</span>
         <span class='comment'>// interleaving took place.</span>
         <span class='ident'>data</span>.<span class='ident'>sort</span>();
         <span class='ident'>data</span>.<span class='ident'>dedup</span>();
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>data</span>.<span class='ident'>len</span>(), <span class='number'>1</span>);
+    }
+
+    <span class='comment'>// Run as `cargo test -- --ignored --nocapture` to print the paths</span>
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='attribute'>#[<span class='ident'>ignore</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>print_paths</span>() {
+        <span class='kw'>let</span> <span class='ident'>os</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>) {
+            <span class='string'>&quot;Mac&quot;</span>.<span class='ident'>to_string</span>()
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>) {
+            <span class='string'>&quot;Linux&quot;</span>.<span class='ident'>to_string</span>()
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>unix</span>) {
+            <span class='string'>&quot;Unix (family)&quot;</span>.<span class='ident'>to_string</span>()
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>windows</span>) {
+            <span class='string'>&quot;Windows&quot;</span>.<span class='ident'>to_string</span>()
+        } <span class='kw'>else</span> {
+            <span class='string'>&quot;Unknown&quot;</span>.<span class='ident'>to_string</span>()
+        };
+
+        <span class='kw'>let</span> <span class='ident'>current_bin_dir</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>current_bin_dir</span>() {
+            <span class='prelude-val'>Ok</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+            <span class='prelude-val'>Err</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+        };
+
+        <span class='kw'>let</span> <span class='ident'>bundle_resource_dir</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>bundle_resource_dir</span>() {
+            <span class='prelude-val'>Ok</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+            <span class='prelude-val'>Err</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+        };
+
+        <span class='kw'>let</span> <span class='ident'>user_app_dir</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>user_app_dir</span>() {
+            <span class='prelude-val'>Ok</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+            <span class='prelude-val'>Err</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+        };
+
+        <span class='kw'>let</span> <span class='ident'>system_cache_dir</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>system_cache_dir</span>() {
+            <span class='prelude-val'>Ok</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+            <span class='prelude-val'>Err</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>x</span>),
+        };
+
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;=================================&quot;</span>);
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Current bin dir in {}: {}&quot;</span>, <span class='ident'>os</span>, <span class='ident'>current_bin_dir</span>);
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Current bin resource in {}: {}&quot;</span>, <span class='ident'>os</span>, <span class='ident'>bundle_resource_dir</span>);
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Current use-app-dir in {}: {}&quot;</span>, <span class='ident'>os</span>, <span class='ident'>user_app_dir</span>);
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Current system-cache-dir in {}: {}&quot;</span>, <span class='ident'>os</span>, <span class='ident'>system_cache_dir</span>);
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;=================================&quot;</span>);
     }
 }
 </pre>

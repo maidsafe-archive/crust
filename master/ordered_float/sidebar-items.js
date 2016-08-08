@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["NotNaN","A wrapper around Floats providing an implementation of Ord."],["OrderedFloat","A wrapper around Floats providing an implementation of Ord."]]});
