@@ -1,6 +1,6 @@
 # CRUST - Change Log
 
-## [0.16.3]
+## [0.17.0]
 - Use latest `config_file_handler` (0.4.0) to derive the file paths for config and bootstrap cache on various platforms.
 
 ## [0.16.2]
