@@ -24,7 +24,7 @@ use std::rc::Rc;
 use common::{self, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
-use sodiumoxide::crypto::box_::PublicKey;
+use rust_sodium::crypto::box_::PublicKey;
 
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 

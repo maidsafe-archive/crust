@@ -26,8 +26,8 @@ use maidsafe_utilities::thread::RaiiThreadJoiner;
 use mio::{self, EventLoop, Token};
 use nat::{MappedTcpSocket, MappingContext};
 use service_discovery::ServiceDiscovery;
-use sodiumoxide;
-use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
+use rust_sodium;
+use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
 use main::config_handler::{self, Config};
 use main::{Bootstrap, Connect, ConnectionId, ConnectionInfoResult, ConnectionListener,
            ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo};
@@ -63,7 +63,7 @@ impl Service {
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
     pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> ::Res<Service> {
-        sodiumoxide::init();
+        rust_sodium::init();
 
         let mut el = try!(EventLoop::new());
         let mio_tx = el.channel();
