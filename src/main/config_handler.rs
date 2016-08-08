@@ -44,7 +44,7 @@ impl Default for Config {
 
 /// Reads the default crust config file.
 pub fn read_config_file() -> ::Res<Config> {
-    let file_handler = try!(FileHandler::new(&try!(get_file_name())));
+    let file_handler = try!(FileHandler::new(&try!(get_file_name()), false));
     let cfg = try!(file_handler.read_file());
     Ok(cfg)
 }

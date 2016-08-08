@@ -41,7 +41,7 @@ impl Cache {
         };
 
         Ok(Cache {
-            file_handler: try!(FileHandler::new(&name)),
+            file_handler: try!(FileHandler::new(&name, true)),
             // last_updated: Instant::now(),
         })
     }
