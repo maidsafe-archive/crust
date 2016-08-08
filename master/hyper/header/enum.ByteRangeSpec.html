@@ -47,13 +47,13 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3690' class='srclink' href='../../src/hyper/header/common/range.rs.html#70-77' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3976' class='srclink' href='../../src/hyper/header/common/range.rs.html#70-77' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ByteRangeSpec {
     FromTo(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>),
     AllFrom(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>),
     Last(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>),
-}</pre><div class='docblock'><p>Each Range::Bytes header can contain one or more ByteRangeSpecs.
-Each ByteRangeSpec defines a range of bytes to fetch</p>
+}</pre><div class='docblock'><p>Each <code>Range::Bytes</code> header can contain one or more <code>ByteRangeSpecs</code>.
+Each <code>ByteRangeSpec</code> defines a range of bytes to fetch</p>
 </div><h2 class='variants'>Variants</h2>
 <table class='variants_table'><tr><td id='variant.FromTo'><code>FromTo</code></td><td><div class='docblock'><p>Get all bytes between x and y (&quot;x-y&quot;)</p>
 </div></td><td></td></tr><tr><td id='variant.AllFrom'><code>AllFrom</code></td><td><div class='docblock'><p>Get all bytes starting from x (&quot;x-&quot;)</p>

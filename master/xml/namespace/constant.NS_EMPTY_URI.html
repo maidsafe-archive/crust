@@ -47,8 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-544' class='srclink' href='../../src/xml/namespace.rs.html#14' title='goto source code'>[src]</a></span></h1>
-<pre class='rust const'>pub const NS_EMPTY_URI: &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a><code> = </code><code>&quot;&quot;</code></pre></section>
+               </span><a id='src-531' class='srclink' href='../../src/xml/namespace.rs.html#61' title='goto source code'>[src]</a></span></h1>
+<pre class='rust const'>pub const NS_EMPTY_URI: &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a><code> = </code><code>&quot;&quot;</code></pre><div class='docblock'><p>Designates an empty namespace URI, which is equivalent to absence of namespace.</p>
+
+<p>This constant should not usually be used directly; it is used to designate that
+empty prefix corresponds to absent namespace in <code>NamespaceStack</code> instances created with
+<code>NamespaceStack::default()</code>. Therefore, it can be used to restore <code>NS_NO_PREFIX</code> mapping
+in a namespace back to its default value.</p>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

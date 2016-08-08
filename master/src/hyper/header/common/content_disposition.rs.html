@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/common/content_disposition.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/common/content_disposition.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>content_disposition.rs.html -- source</title>
@@ -307,7 +307,6 @@
 <span id="263">263</span>
 <span id="264">264</span>
 <span id="265">265</span>
-<span id="266">266</span>
 </pre><pre class='rust '>
 <span class='comment'>// # References</span>
 <span class='comment'>//</span>
@@ -323,7 +322,7 @@
 <span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>percent_encoding</span>;
 
 <span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>, <span class='ident'>parsing</span>};
-<span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>parsing</span>::<span class='ident'>parse_extended_value</span>;
+<span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>parsing</span>::{<span class='ident'>parse_extended_value</span>, <span class='ident'>HTTP_VALUE</span>};
 <span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>shared</span>::<span class='ident'>Charset</span>;
 
 <span class='doccomment'>/// The implied disposition of the content of the HTTP body</span>
@@ -495,8 +494,7 @@
                         };
                         <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;&#39;&quot;</span>));
                         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>f</span>.<span class='ident'>write_str</span>(
-                            <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>percent_encoding</span>::<span class='ident'>percent_encode</span>(
-                                <span class='ident'>bytes</span>, <span class='ident'>percent_encoding</span>::<span class='ident'>HTTP_VALUE_ENCODE_SET</span>)))
+                            <span class='kw-2'>&amp;</span><span class='ident'>percent_encoding</span>::<span class='ident'>percent_encode</span>(<span class='ident'>bytes</span>, <span class='ident'>HTTP_VALUE</span>).<span class='ident'>to_string</span>()))
                     }
                 },
                 <span class='ident'>DispositionParam</span>::<span class='ident'>Ext</span>(<span class='kw-2'>ref</span> <span class='ident'>k</span>, <span class='kw-2'>ref</span> <span class='ident'>v</span>) <span class='op'>=&gt;</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;; {}=\&quot;{}\&quot;&quot;</span>, <span class='ident'>k</span>, <span class='ident'>v</span>)),

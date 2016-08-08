@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/sha1-0.1.1/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/sha1-0.2.0/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -260,6 +260,122 @@
 <span id="216">216</span>
 <span id="217">217</span>
 <span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! A minimal implementation of SHA1 for rust.</span>
 <span class='doccomment'>//!</span>
@@ -270,52 +386,167 @@
 <span class='doccomment'>//! # fn main() {</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! let mut m = sha1::Sha1::new();</span>
-<span class='doccomment'>//! m.update(&quot;Hello World!&quot;.as_bytes());</span>
-<span class='doccomment'>//! assert_eq!(m.hexdigest(),</span>
+<span class='doccomment'>//! m.update(b&quot;Hello World!&quot;);</span>
+<span class='doccomment'>//! assert_eq!(m.digest().to_string(),</span>
 <span class='doccomment'>//!            &quot;2ef7bde608ce5404e97d5f042f95f89f1c232871&quot;);</span>
 <span class='doccomment'>//! # }</span>
 <span class='doccomment'>//! ```</span>
 
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>byteorder</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>Cursor</span>,<span class='ident'>Write</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>BufWriter</span>;
-<span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>BigEndian</span>, <span class='ident'>WriteBytesExt</span>};
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>no_std</span>]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>missing_docs</span>)]</span>
+
+<span class='kw'>use</span> <span class='ident'>core</span>::<span class='ident'>cmp</span>;
+<span class='kw'>use</span> <span class='ident'>core</span>::<span class='ident'>fmt</span>;
 
 <span class='doccomment'>/// Represents a Sha1 hash object in memory.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Sha1</span> {
-    <span class='ident'>state</span>: [<span class='ident'>u32</span>; <span class='number'>5</span>],
-    <span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
+    <span class='ident'>state</span>: <span class='ident'>Sha1State</span>,
+    <span class='ident'>blocks</span>: <span class='ident'>Blocks</span>,
     <span class='ident'>len</span>: <span class='ident'>u64</span>,
 }
 
-<span class='kw'>const</span> <span class='ident'>DEFAULT_STATE</span> : [<span class='ident'>u32</span>; <span class='number'>5</span>] <span class='op'>=</span>
-    [<span class='number'>0x67452301</span>, <span class='number'>0xefcdab89</span>, <span class='number'>0x98badcfe</span>, <span class='number'>0x10325476</span>, <span class='number'>0xc3d2e1f0</span>];
-
-
-<span class='kw'>fn</span> <span class='ident'>to_hex</span>(<span class='ident'>input</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
-    <span class='kw'>for</span> <span class='ident'>b</span> <span class='kw'>in</span> <span class='ident'>input</span>.<span class='ident'>iter</span>() {
-        <span class='ident'>s</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{:02x}&quot;</span>, <span class='op'>*</span><span class='ident'>b</span>));
-    }
-    <span class='kw'>return</span> <span class='ident'>s</span>;
+<span class='kw'>struct</span> <span class='ident'>Blocks</span> {
+    <span class='ident'>len</span>: <span class='ident'>u32</span>,
+    <span class='ident'>block</span>: [<span class='ident'>u8</span>; <span class='number'>64</span>],
 }
 
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>)]</span>
+<span class='kw'>struct</span> <span class='ident'>Sha1State</span> {
+    <span class='ident'>state</span>: [<span class='ident'>u32</span>; <span class='number'>5</span>],
+}
+
+<span class='doccomment'>/// Digest generated from a `Sha1` instance.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// A digest can be formatted to view the digest as a hex string, or the bytes</span>
+<span class='doccomment'>/// can be extracted for later processing.</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Digest</span> {
+    <span class='ident'>data</span>: <span class='ident'>Sha1State</span>,
+}
+
+<span class='kw'>const</span> <span class='ident'>DEFAULT_STATE</span>: <span class='ident'>Sha1State</span> <span class='op'>=</span> <span class='ident'>Sha1State</span> {
+    <span class='ident'>state</span>: [<span class='number'>0x67452301</span>, <span class='number'>0xefcdab89</span>, <span class='number'>0x98badcfe</span>, <span class='number'>0x10325476</span>, <span class='number'>0xc3d2e1f0</span>],
+};
 
 <span class='kw'>impl</span> <span class='ident'>Sha1</span> {
-
     <span class='doccomment'>/// Creates an fresh sha1 hash object.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>Sha1</span> {
         <span class='ident'>Sha1</span> {
             <span class='ident'>state</span>: <span class='ident'>DEFAULT_STATE</span>,
-            <span class='ident'>data</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>len</span>: <span class='number'>0</span>,
+            <span class='ident'>blocks</span>: <span class='ident'>Blocks</span> {
+                <span class='ident'>len</span>: <span class='number'>0</span>,
+                <span class='ident'>block</span>: [<span class='number'>0</span>; <span class='number'>64</span>],
+            },
         }
     }
 
-    <span class='kw'>fn</span> <span class='ident'>process_block</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>block</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) {
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>block</span>.<span class='ident'>len</span>(), <span class='number'>64</span>);
+    <span class='doccomment'>/// Resets the hash object to it&#39;s initial state.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reset</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='self'>self</span>.<span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>DEFAULT_STATE</span>;
+        <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>=</span> <span class='number'>0</span>;
+        <span class='self'>self</span>.<span class='ident'>blocks</span>.<span class='ident'>len</span> <span class='op'>=</span> <span class='number'>0</span>;
+    }
 
+    <span class='doccomment'>/// Update hash with input data.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) {
+        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>len</span>;
+        <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>state</span>;
+        <span class='self'>self</span>.<span class='ident'>blocks</span>.<span class='ident'>input</span>(<span class='ident'>data</span>, <span class='op'>|</span><span class='ident'>chunk</span><span class='op'>|</span> {
+            <span class='op'>*</span><span class='ident'>len</span> <span class='op'>+=</span> <span class='number'>64</span>;
+            <span class='ident'>state</span>.<span class='ident'>process</span>(<span class='ident'>chunk</span>);
+        })
+    }
+
+    <span class='doccomment'>/// Retrieve digest result.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>digest</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Digest</span> {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>;
+        <span class='kw'>let</span> <span class='ident'>bits</span> <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>blocks</span>.<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>u64</span>)) <span class='op'>*</span> <span class='number'>8</span>;
+        <span class='kw'>let</span> <span class='ident'>extra</span> <span class='op'>=</span> [
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span> <span class='number'>56</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span> <span class='number'>48</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span> <span class='number'>40</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span> <span class='number'>32</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span> <span class='number'>24</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span> <span class='number'>16</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span>  <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='ident'>bits</span> <span class='op'>&gt;&gt;</span>  <span class='number'>0</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+        ];
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>last</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>128</span>];
+        <span class='kw'>let</span> <span class='ident'>blocklen</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>blocks</span>.<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>usize</span>;
+        <span class='ident'>last</span>[..<span class='ident'>blocklen</span>].<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>blocks</span>.<span class='ident'>block</span>[..<span class='ident'>blocklen</span>]);
+        <span class='ident'>last</span>[<span class='ident'>blocklen</span>] <span class='op'>=</span> <span class='number'>0x80</span>;
+
+        <span class='kw'>if</span> <span class='ident'>blocklen</span> <span class='op'>&lt;</span> <span class='number'>56</span> {
+            <span class='ident'>last</span>[<span class='number'>56</span>..<span class='number'>64</span>].<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>extra</span>);
+            <span class='ident'>state</span>.<span class='ident'>process</span>(<span class='kw-2'>&amp;</span><span class='ident'>last</span>[<span class='number'>0</span>..<span class='number'>64</span>]);
+        } <span class='kw'>else</span> {
+            <span class='ident'>last</span>[<span class='number'>120</span>..<span class='number'>128</span>].<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>extra</span>);
+            <span class='ident'>state</span>.<span class='ident'>process</span>(<span class='kw-2'>&amp;</span><span class='ident'>last</span>[<span class='number'>0</span>..<span class='number'>64</span>]);
+            <span class='ident'>state</span>.<span class='ident'>process</span>(<span class='kw-2'>&amp;</span><span class='ident'>last</span>[<span class='number'>64</span>..<span class='number'>128</span>]);
+        }
+
+        <span class='ident'>Digest</span> { <span class='ident'>data</span>: <span class='ident'>state</span> }
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>Digest</span> {
+    <span class='doccomment'>/// Returns the 160 bit (20 byte) digest as a byte array.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bytes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> [<span class='ident'>u8</span>; <span class='number'>20</span>] {
+        [
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>0</span>] <span class='op'>&gt;&gt;</span> <span class='number'>24</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>0</span>] <span class='op'>&gt;&gt;</span> <span class='number'>16</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>0</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>0</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>0</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>1</span>] <span class='op'>&gt;&gt;</span> <span class='number'>24</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>1</span>] <span class='op'>&gt;&gt;</span> <span class='number'>16</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>1</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>1</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>0</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>2</span>] <span class='op'>&gt;&gt;</span> <span class='number'>24</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>2</span>] <span class='op'>&gt;&gt;</span> <span class='number'>16</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>2</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>2</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>0</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>3</span>] <span class='op'>&gt;&gt;</span> <span class='number'>24</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>3</span>] <span class='op'>&gt;&gt;</span> <span class='number'>16</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>3</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>3</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>0</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>4</span>] <span class='op'>&gt;&gt;</span> <span class='number'>24</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>4</span>] <span class='op'>&gt;&gt;</span> <span class='number'>16</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>4</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+            (<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>[<span class='number'>4</span>] <span class='op'>&gt;&gt;</span>  <span class='number'>0</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,
+        ]
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>Blocks</span> {
+    <span class='kw'>fn</span> <span class='ident'>input</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>input</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='kw-2'>mut</span> <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnMut</span>(<span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
+            <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>usize</span>;
+            <span class='kw'>let</span> <span class='ident'>amt</span> <span class='op'>=</span> <span class='ident'>cmp</span>::<span class='ident'>min</span>(<span class='ident'>input</span>.<span class='ident'>len</span>(), <span class='self'>self</span>.<span class='ident'>block</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='ident'>len</span>);
+            <span class='self'>self</span>.<span class='ident'>block</span>[<span class='ident'>len</span>..<span class='ident'>len</span> <span class='op'>+</span> <span class='ident'>amt</span>].<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>input</span>[..<span class='ident'>amt</span>]);
+            <span class='kw'>if</span> <span class='ident'>len</span> <span class='op'>+</span> <span class='ident'>amt</span> <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>block</span>.<span class='ident'>len</span>() {
+                <span class='ident'>f</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>block</span>);
+                <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>=</span> <span class='number'>0</span>;
+                <span class='ident'>input</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>input</span>[<span class='ident'>amt</span>..];
+            } <span class='kw'>else</span> {
+                <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>+=</span> <span class='ident'>amt</span> <span class='kw'>as</span> <span class='ident'>u32</span>;
+                <span class='kw'>return</span>
+            }
+        }
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>len</span>, <span class='number'>0</span>);
+        <span class='kw'>for</span> <span class='ident'>chunk</span> <span class='kw'>in</span> <span class='ident'>input</span>.<span class='ident'>chunks</span>(<span class='number'>64</span>) {
+            <span class='kw'>if</span> <span class='ident'>chunk</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>64</span> {
+                <span class='ident'>f</span>(<span class='ident'>chunk</span>)
+            } <span class='kw'>else</span> {
+                <span class='self'>self</span>.<span class='ident'>block</span>[..<span class='ident'>chunk</span>.<span class='ident'>len</span>()].<span class='ident'>clone_from_slice</span>(<span class='ident'>chunk</span>);
+                <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>chunk</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>u32</span>;
+            }
+        }
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>Sha1State</span> {
+    <span class='kw'>fn</span> <span class='ident'>process</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>block</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>words</span> <span class='op'>=</span> [<span class='number'>0u32</span>; <span class='number'>80</span>];
         <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>chunk</span>) <span class='kw'>in</span> <span class='ident'>block</span>.<span class='ident'>chunks</span>(<span class='number'>4</span>).<span class='ident'>enumerate</span>() {
             <span class='ident'>words</span>[<span class='ident'>i</span>] <span class='op'>=</span> (<span class='ident'>chunk</span>[<span class='number'>3</span>] <span class='kw'>as</span> <span class='ident'>u32</span>) <span class='op'>|</span>
@@ -350,10 +581,10 @@
             };
 
             <span class='kw'>let</span> <span class='ident'>tmp</span> <span class='op'>=</span> <span class='ident'>a</span>.<span class='ident'>rotate_left</span>(<span class='number'>5</span>)
-                .<span class='ident'>wrapping_add</span>(<span class='ident'>f</span>)
-                .<span class='ident'>wrapping_add</span>(<span class='ident'>e</span>)
-                .<span class='ident'>wrapping_add</span>(<span class='ident'>k</span>)
-                .<span class='ident'>wrapping_add</span>(<span class='ident'>words</span>[<span class='ident'>i</span>]);
+                       .<span class='ident'>wrapping_add</span>(<span class='ident'>f</span>)
+                       .<span class='ident'>wrapping_add</span>(<span class='ident'>e</span>)
+                       .<span class='ident'>wrapping_add</span>(<span class='ident'>k</span>)
+                       .<span class='ident'>wrapping_add</span>(<span class='ident'>words</span>[<span class='ident'>i</span>]);
             <span class='ident'>e</span> <span class='op'>=</span> <span class='ident'>d</span>;
             <span class='ident'>d</span> <span class='op'>=</span> <span class='ident'>c</span>;
             <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>rotate_left</span>(<span class='number'>30</span>);
@@ -367,117 +598,118 @@
         <span class='self'>self</span>.<span class='ident'>state</span>[<span class='number'>3</span>] <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>[<span class='number'>3</span>].<span class='ident'>wrapping_add</span>(<span class='ident'>d</span>);
         <span class='self'>self</span>.<span class='ident'>state</span>[<span class='number'>4</span>] <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>[<span class='number'>4</span>].<span class='ident'>wrapping_add</span>(<span class='ident'>e</span>);
     }
+}
 
-    <span class='doccomment'>/// Resets the hash object to it&#39;s initial state.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>reset</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
-        <span class='self'>self</span>.<span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>DEFAULT_STATE</span>;
-        <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>clear</span>();
-        <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>=</span> <span class='number'>0</span>;
-    }
-
-    <span class='doccomment'>/// Update hash with input data.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>d</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>clone</span>();
-        <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>clear</span>();
-
-        <span class='ident'>d</span>.<span class='ident'>extend</span>(<span class='ident'>data</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>());
-
-        <span class='kw'>for</span> <span class='ident'>chunk</span> <span class='kw'>in</span> <span class='ident'>d</span>.<span class='ident'>chunks</span>(<span class='number'>64</span>) {
-            <span class='kw'>if</span> <span class='ident'>chunk</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>64</span> {
-                <span class='self'>self</span>.<span class='ident'>len</span> <span class='op'>+=</span> <span class='ident'>chunk</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>u64</span>;
-                <span class='self'>self</span>.<span class='ident'>process_block</span>(<span class='ident'>chunk</span>);
-            } <span class='kw'>else</span> {
-                <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>extend</span>(<span class='ident'>chunk</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>());
-            }
-        }
-    }
-
-    <span class='doccomment'>/// Retrieve digest result.  The output must be large enough to</span>
-    <span class='doccomment'>/// contain result (20 bytes).</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>output</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>out</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>]) {
-        <span class='comment'>// these are unlikely to fail, since we&#39;re writing to memory</span>
-        <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unused_must_use</span>)]</span>
-
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span> {
-            <span class='ident'>state</span>: <span class='self'>self</span>.<span class='ident'>state</span>,
-            <span class='ident'>data</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>len</span>: <span class='number'>0</span>,
-        };
-
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>w</span> : <span class='ident'>Cursor</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>());
-        <span class='ident'>w</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='self'>self</span>.<span class='ident'>data</span>);
-        <span class='ident'>w</span>.<span class='ident'>write_all</span>(<span class='kw-2'>&amp;</span>[<span class='number'>0x80</span>]);
-        <span class='kw'>let</span> <span class='ident'>padding</span> <span class='op'>=</span> <span class='number'>64</span> <span class='op'>-</span> ((<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>len</span>() <span class='op'>+</span> <span class='number'>9</span>) <span class='op'>%</span> <span class='number'>64</span>);
-        <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>padding</span> {
-            <span class='ident'>w</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span>[<span class='number'>0u8</span>]);
-        }
-
-        <span class='ident'>w</span>.<span class='ident'>write_u64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>((<span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>u64</span> <span class='op'>+</span> <span class='self'>self</span>.<span class='ident'>len</span>) <span class='op'>*</span> <span class='number'>8</span>);
-        <span class='kw'>for</span> <span class='ident'>chunk</span> <span class='kw'>in</span> <span class='ident'>w</span>.<span class='ident'>into_inner</span>().<span class='ident'>chunks</span>(<span class='number'>64</span>) {
-            <span class='ident'>m</span>.<span class='ident'>process_block</span>(<span class='ident'>chunk</span>);
-        }
-
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>w</span> <span class='op'>=</span> <span class='ident'>BufWriter</span>::<span class='ident'>new</span>(<span class='ident'>out</span>);
-        <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>n</span> <span class='kw'>in</span> <span class='ident'>m</span>.<span class='ident'>state</span>.<span class='ident'>iter</span>() {
-            <span class='ident'>w</span>.<span class='ident'>write_u32</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>(<span class='ident'>n</span>);
-        }
-    }
-
-    <span class='doccomment'>/// Shortcut for getting `output` into a new vector.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>digest</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='number'>20</span>].<span class='ident'>to_vec</span>();
-        <span class='self'>self</span>.<span class='ident'>output</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>);
-        <span class='ident'>buf</span>
-    }
-
-    <span class='doccomment'>/// Shortcut for getting a hex output of the vector.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>hexdigest</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
-        <span class='ident'>to_hex</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>digest</span>())
+<span class='kw'>impl</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>Blocks</span> {
+    <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Blocks</span> {
+        <span class='ident'>Blocks</span> { ..<span class='op'>*</span><span class='self'>self</span> }
     }
 }
 
+<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>Digest</span> {
+    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+        <span class='kw'>for</span> <span class='ident'>byte</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>state</span>.<span class='ident'>iter</span>() {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;{:08x}&quot;</span>, <span class='ident'>byte</span>));
+        }
+        <span class='prelude-val'>Ok</span>(())
+    }
+}
 
-<span class='attribute'>#[<span class='ident'>test</span>]</span>
-<span class='kw'>fn</span> <span class='ident'>test_simple</span>() {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span>::<span class='ident'>new</span>();
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>mod</span> <span class='ident'>tests</span> {
+    <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>std</span>;
+    <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rand</span>;
+    <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>openssl</span>;
 
-    <span class='kw'>let</span> <span class='ident'>tests</span> <span class='op'>=</span> [
-        (<span class='string'>&quot;The quick brown fox jumps over the lazy dog&quot;</span>,
-         <span class='string'>&quot;2fd4e1c67a2d28fced849ee1bb76e7391b93eb12&quot;</span>),
-        (<span class='string'>&quot;The quick brown fox jumps over the lazy cog&quot;</span>,
-         <span class='string'>&quot;de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3&quot;</span>),
-        (<span class='string'>&quot;&quot;</span>, <span class='string'>&quot;da39a3ee5e6b4b0d3255bfef95601890afd80709&quot;</span>),
-        (<span class='string'>&quot;testing\n&quot;</span>, <span class='string'>&quot;9801739daae44ec5293d4e1f53d3f4d2d426d91c&quot;</span>),
-        (<span class='string'>&quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;</span>,
-         <span class='string'>&quot;025ecbd5d70f8fb3c5457cd96bab13fda305dc59&quot;</span>),
-    ];
+    <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>std</span>::<span class='ident'>prelude</span>::<span class='ident'>v1</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
 
-    <span class='kw'>for</span> <span class='kw-2'>&amp;</span>(<span class='ident'>s</span>, <span class='kw-2'>ref</span> <span class='ident'>h</span>) <span class='kw'>in</span> <span class='ident'>tests</span>.<span class='ident'>iter</span>() {
-        <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='ident'>s</span>.<span class='ident'>as_bytes</span>();
+    <span class='kw'>use</span> <span class='ident'>Sha1</span>;
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_simple</span>() {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span>::<span class='ident'>new</span>();
+
+        <span class='kw'>let</span> <span class='ident'>tests</span> <span class='op'>=</span> [
+            (<span class='string'>&quot;The quick brown fox jumps over the lazy dog&quot;</span>,
+             <span class='string'>&quot;2fd4e1c67a2d28fced849ee1bb76e7391b93eb12&quot;</span>),
+            (<span class='string'>&quot;The quick brown fox jumps over the lazy cog&quot;</span>,
+             <span class='string'>&quot;de9f2c7fd25e1b3afad3e85a0bd17d9b100db4b3&quot;</span>),
+            (<span class='string'>&quot;&quot;</span>, <span class='string'>&quot;da39a3ee5e6b4b0d3255bfef95601890afd80709&quot;</span>),
+            (<span class='string'>&quot;testing\n&quot;</span>, <span class='string'>&quot;9801739daae44ec5293d4e1f53d3f4d2d426d91c&quot;</span>),
+            (<span class='string'>&quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;</span>,
+             <span class='string'>&quot;025ecbd5d70f8fb3c5457cd96bab13fda305dc59&quot;</span>),
+            (<span class='string'>&quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;</span>,
+             <span class='string'>&quot;4300320394f7ee239bcdce7d3b8bcee173a0cd5c&quot;</span>),
+            (<span class='string'>&quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;</span>,
+             <span class='string'>&quot;cef734ba81a024479e09eb5a75b6ddae62e6abf1&quot;</span>),
+        ];
+
+        <span class='kw'>for</span> <span class='kw-2'>&amp;</span>(<span class='ident'>s</span>, <span class='kw-2'>ref</span> <span class='ident'>h</span>) <span class='kw'>in</span> <span class='ident'>tests</span>.<span class='ident'>iter</span>() {
+            <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='ident'>s</span>.<span class='ident'>as_bytes</span>();
+
+            <span class='ident'>m</span>.<span class='ident'>reset</span>();
+            <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='ident'>data</span>);
+            <span class='kw'>let</span> <span class='ident'>hh</span> <span class='op'>=</span> <span class='ident'>m</span>.<span class='ident'>digest</span>().<span class='ident'>to_string</span>();
+
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>.<span class='ident'>len</span>(), <span class='ident'>h</span>.<span class='ident'>len</span>());
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>, <span class='op'>*</span><span class='ident'>h</span>);
+        }
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_multiple_updates</span>() {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span>::<span class='ident'>new</span>();
 
         <span class='ident'>m</span>.<span class='ident'>reset</span>();
-        <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='ident'>data</span>);
-        <span class='kw'>let</span> <span class='ident'>hh</span> <span class='op'>=</span> <span class='ident'>m</span>.<span class='ident'>hexdigest</span>();
+        <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;The quick brown &quot;</span>.<span class='ident'>as_bytes</span>());
+        <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;fox jumps over &quot;</span>.<span class='ident'>as_bytes</span>());
+        <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;the lazy dog&quot;</span>.<span class='ident'>as_bytes</span>());
+        <span class='kw'>let</span> <span class='ident'>hh</span> <span class='op'>=</span> <span class='ident'>m</span>.<span class='ident'>digest</span>().<span class='ident'>to_string</span>();
 
+
+        <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='string'>&quot;2fd4e1c67a2d28fced849ee1bb76e7391b93eb12&quot;</span>;
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>.<span class='ident'>len</span>(), <span class='ident'>h</span>.<span class='ident'>len</span>());
-		<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>, <span class='op'>*</span><span class='ident'>h</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>, <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>h</span>);
     }
-}
 
-<span class='attribute'>#[<span class='ident'>test</span>]</span>
-<span class='kw'>fn</span> <span class='ident'>test_multiple_updates</span>() {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span>::<span class='ident'>new</span>();
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_sha1_loop</span>() {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span>::<span class='ident'>new</span>();
+        <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='string'>&quot;The quick brown fox jumps over the lazy dog.&quot;</span>;
+        <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>1000u64</span>;
 
-    <span class='ident'>m</span>.<span class='ident'>reset</span>();
-    <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;The quick brown &quot;</span>.<span class='ident'>as_bytes</span>());
-    <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;fox jumps over &quot;</span>.<span class='ident'>as_bytes</span>());
-    <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;the lazy dog&quot;</span>.<span class='ident'>as_bytes</span>());
-    <span class='kw'>let</span> <span class='ident'>hh</span> <span class='op'>=</span> <span class='ident'>m</span>.<span class='ident'>hexdigest</span>();
+        <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>3</span> {
+            <span class='ident'>m</span>.<span class='ident'>reset</span>();
+            <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>n</span> {
+                <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='ident'>s</span>.<span class='ident'>as_bytes</span>());
+            }
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>.<span class='ident'>digest</span>().<span class='ident'>to_string</span>(),
+                       <span class='string'>&quot;7ca27655f67fceaa78ed2e645a81c7f1d6e249d2&quot;</span>);
+        }
+    }
 
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>spray_and_pray</span>() {
+        <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>rand</span>::<span class='ident'>Rng</span>;
 
-    <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='string'>&quot;2fd4e1c67a2d28fced849ee1bb76e7391b93eb12&quot;</span>;
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>.<span class='ident'>len</span>(), <span class='ident'>h</span>.<span class='ident'>len</span>());
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hh</span>, <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>h</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rng</span> <span class='op'>=</span> <span class='ident'>rand</span>::<span class='ident'>thread_rng</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>Sha1</span>::<span class='ident'>new</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bytes</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>512</span>];
+
+        <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>20</span> {
+            <span class='kw'>let</span> <span class='ident'>ty</span> <span class='op'>=</span> <span class='ident'>openssl</span>::<span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>Type</span>::<span class='ident'>SHA1</span>;
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='ident'>openssl</span>::<span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>Hasher</span>::<span class='ident'>new</span>(<span class='ident'>ty</span>);
+            <span class='ident'>m</span>.<span class='ident'>reset</span>();
+            <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>50</span> {
+                <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>rng</span>.<span class='ident'>gen</span>::<span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>() <span class='op'>%</span> <span class='ident'>bytes</span>.<span class='ident'>len</span>();
+                <span class='ident'>rng</span>.<span class='ident'>fill_bytes</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>bytes</span>[..<span class='ident'>len</span>]);
+                <span class='ident'>m</span>.<span class='ident'>update</span>(<span class='kw-2'>&amp;</span><span class='ident'>bytes</span>[..<span class='ident'>len</span>]);
+                <span class='ident'>r</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='ident'>bytes</span>[..<span class='ident'>len</span>]).<span class='ident'>unwrap</span>();
+            }
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>r</span>.<span class='ident'>finish</span>(), <span class='ident'>m</span>.<span class='ident'>digest</span>().<span class='ident'>bytes</span>());
+        }
+    }
 }
 </pre>
 </section>

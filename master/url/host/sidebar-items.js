@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Host","The host name of an URL."]]});
+initSidebarItems({"enum":[["Host","The host name of an URL."]],"struct":[["HostAndPort","This mostly exists because coherence rules don’t allow us to implement `ToSocketAddrs for (Host<S>, u16)`."],["SocketAddrs","Socket addresses for an URL."]]});

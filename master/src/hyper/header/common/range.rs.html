@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/common/range.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/common/range.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>range.rs.html -- source</title>
@@ -397,8 +397,8 @@
     <span class='ident'>Unregistered</span>(<span class='ident'>String</span>, <span class='ident'>String</span>)
 }
 
-<span class='doccomment'>/// Each Range::Bytes header can contain one or more ByteRangeSpecs.</span>
-<span class='doccomment'>/// Each ByteRangeSpec defines a range of bytes to fetch</span>
+<span class='doccomment'>/// Each `Range::Bytes` header can contain one or more `ByteRangeSpecs`.</span>
+<span class='doccomment'>/// Each `ByteRangeSpec` defines a range of bytes to fetch</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>ByteRangeSpec</span> {
     <span class='doccomment'>/// Get all bytes between x and y (&quot;x-y&quot;)</span>

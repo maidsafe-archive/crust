@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/internals/item.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/internals/item.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>item.rs.html -- source</title>
@@ -158,13 +158,12 @@
 <span id="114">114</span>
 <span id="115">115</span>
 <span id="116">116</span>
+<span id="117">117</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>TypeId</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>from_utf8</span>;
-
-<span class='kw'>use</span> <span class='ident'>typeable</span>::<span class='ident'>Typeable</span>;
 
 <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>cell</span>::{<span class='ident'>OptCell</span>, <span class='ident'>PtrMapCell</span>};
 <span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>};
@@ -240,6 +239,9 @@
                 },
                 <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> ()
             }
+        }
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>raw</span>.<span class='ident'>is_some</span>() <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>typed</span>.<span class='ident'>get_mut</span>(<span class='ident'>tid</span>).<span class='ident'>is_some</span>() {
+            <span class='self'>self</span>.<span class='ident'>raw</span> <span class='op'>=</span> <span class='ident'>OptCell</span>::<span class='ident'>new</span>(<span class='prelude-val'>None</span>);
         }
         <span class='self'>self</span>.<span class='ident'>typed</span>.<span class='ident'>get_mut</span>(<span class='ident'>tid</span>).<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>typed</span><span class='op'>|</span> <span class='kw'>unsafe</span> { <span class='ident'>typed</span>.<span class='ident'>downcast_mut_unchecked</span>() })
     }

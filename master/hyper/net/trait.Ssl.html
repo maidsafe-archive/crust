@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-6684' class='srclink' href='../../src/hyper/net.rs.html#416-423' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-7042' class='srclink' href='../../src/hyper/net.rs.html#419-426' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Ssl {
     type <a href='#associatedtype.Stream' class='type'>Stream</a>: <a class='trait' href='../../hyper/net/trait.NetworkStream.html' title='hyper::net::NetworkStream'>NetworkStream</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>;
     fn <a href='#tymethod.wrap_client' class='fnname'>wrap_client</a>(&amp;self, stream: <a class='struct' href='../../hyper/net/struct.HttpStream.html' title='hyper::net::HttpStream'>HttpStream</a>, host: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;Self::<a class='trait' href='../../hyper/net/trait.Ssl.html' title='hyper::net::Ssl'>Stream</a>&gt;;

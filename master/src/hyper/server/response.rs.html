@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/server/response.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/server/response.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>response.rs.html -- source</title>
@@ -474,8 +474,6 @@
 <span id="430">430</span>
 <span id="431">431</span>
 <span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Server Responses</span>
 <span class='doccomment'>//!</span>
@@ -491,7 +489,7 @@
 <span class='kw'>use</span> <span class='ident'>time</span>::<span class='ident'>now_utc</span>;
 
 <span class='kw'>use</span> <span class='ident'>header</span>;
-<span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>h1</span>::{<span class='ident'>CR</span>, <span class='ident'>LF</span>, <span class='ident'>LINE_ENDING</span>, <span class='ident'>HttpWriter</span>};
+<span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>h1</span>::{<span class='ident'>LINE_ENDING</span>, <span class='ident'>HttpWriter</span>};
 <span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>h1</span>::<span class='ident'>HttpWriter</span>::{<span class='ident'>ThroughWriter</span>, <span class='ident'>ChunkedWriter</span>, <span class='ident'>SizedWriter</span>, <span class='ident'>EmptyWriter</span>};
 <span class='kw'>use</span> <span class='ident'>status</span>;
 <span class='kw'>use</span> <span class='ident'>net</span>::{<span class='ident'>Fresh</span>, <span class='ident'>Streaming</span>};
@@ -561,8 +559,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>write_head</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Body</span><span class='op'>&gt;</span> {
         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;writing head: {:?} {:?}&quot;</span>, <span class='self'>self</span>.<span class='ident'>version</span>, <span class='self'>self</span>.<span class='ident'>status</span>);
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>body</span>, <span class='string'>&quot;{} {}{}{}&quot;</span>, <span class='self'>self</span>.<span class='ident'>version</span>, <span class='self'>self</span>.<span class='ident'>status</span>,
-            <span class='ident'>CR</span> <span class='kw'>as</span> <span class='ident'>char</span>, <span class='ident'>LF</span> <span class='kw'>as</span> <span class='ident'>char</span>));
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>body</span>, <span class='string'>&quot;{} {}\r\n&quot;</span>, <span class='self'>self</span>.<span class='ident'>version</span>, <span class='self'>self</span>.<span class='ident'>status</span>));
 
         <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>headers</span>.<span class='ident'>has</span>::<span class='op'>&lt;</span><span class='ident'>header</span>::<span class='ident'>Date</span><span class='op'>&gt;</span>() {
             <span class='self'>self</span>.<span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>header</span>::<span class='ident'>Date</span>(<span class='ident'>header</span>::<span class='ident'>HttpDate</span>(<span class='ident'>now_utc</span>())));
@@ -894,7 +891,6 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_no_content</span>() {
-        <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
         <span class='kw'>use</span> <span class='ident'>status</span>::<span class='ident'>StatusCode</span>;
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='ident'>MockStream</span>::<span class='ident'>new</span>();

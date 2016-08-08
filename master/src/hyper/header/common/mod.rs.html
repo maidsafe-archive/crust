@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/common/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/common/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -461,6 +461,10 @@
 <span id="417">417</span>
 <span id="418">418</span>
 <span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! A Collection of Header implementations for common HTTP Headers.</span>
 <span class='doccomment'>//!</span>
@@ -507,11 +511,13 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>if_range</span>::<span class='ident'>IfRange</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>last_modified</span>::<span class='ident'>LastModified</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>location</span>::<span class='ident'>Location</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>origin</span>::<span class='ident'>Origin</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>pragma</span>::<span class='ident'>Pragma</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>prefer</span>::{<span class='ident'>Prefer</span>, <span class='ident'>Preference</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>preference_applied</span>::<span class='ident'>PreferenceApplied</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>range</span>::{<span class='ident'>Range</span>, <span class='ident'>ByteRangeSpec</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>referer</span>::<span class='ident'>Referer</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>referrer_policy</span>::<span class='ident'>ReferrerPolicy</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>server</span>::<span class='ident'>Server</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>set_cookie</span>::<span class='ident'>SetCookie</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>strict_transport_security</span>::<span class='ident'>StrictTransportSecurity</span>;
@@ -869,11 +875,13 @@
 <span class='kw'>mod</span> <span class='ident'>if_unmodified_since</span>;
 <span class='kw'>mod</span> <span class='ident'>last_modified</span>;
 <span class='kw'>mod</span> <span class='ident'>location</span>;
+<span class='kw'>mod</span> <span class='ident'>origin</span>;
 <span class='kw'>mod</span> <span class='ident'>pragma</span>;
 <span class='kw'>mod</span> <span class='ident'>prefer</span>;
 <span class='kw'>mod</span> <span class='ident'>preference_applied</span>;
 <span class='kw'>mod</span> <span class='ident'>range</span>;
 <span class='kw'>mod</span> <span class='ident'>referer</span>;
+<span class='kw'>mod</span> <span class='ident'>referrer_policy</span>;
 <span class='kw'>mod</span> <span class='ident'>server</span>;
 <span class='kw'>mod</span> <span class='ident'>set_cookie</span>;
 <span class='kw'>mod</span> <span class='ident'>strict_transport_security</span>;

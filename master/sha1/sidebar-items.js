@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Sha1","Represents a Sha1 hash object in memory."]]});
+initSidebarItems({"struct":[["Digest","Digest generated from a `Sha1` instance."],["Sha1","Represents a Sha1 hash object in memory."]]});

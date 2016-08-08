@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-0' class='srclink' href='../src/sha1/lib.rs.html#1-218' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-0' class='srclink' href='../src/sha1/lib.rs.html#1-334' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>A minimal implementation of SHA1 for rust.</p>
 
 <p>Example:</p>
@@ -56,11 +56,18 @@
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>sha1</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>sha1</span>::<span class='ident'>Sha1</span>::<span class='ident'>new</span>();
-<span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>&quot;Hello World!&quot;</span>.<span class='ident'>as_bytes</span>());
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>.<span class='ident'>hexdigest</span>(),
+<span class='ident'>m</span>.<span class='ident'>update</span>(<span class='string'>b&quot;Hello World!&quot;</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>m</span>.<span class='ident'>digest</span>().<span class='ident'>to_string</span>(),
            <span class='string'>&quot;2ef7bde608ce5404e97d5f042f95f89f1c232871&quot;</span>);</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Digest.html'
+                                  title='sha1::Digest'>Digest</a></td>
+                           <td class='docblock short'>
+                                <p>Digest generated from a <code>Sha1</code> instance.</p>
+                           </td>
+                       </tr>
                        <tr class=' module-item'>
                            <td><a class='struct' href='struct.Sha1.html'
                                   title='sha1::Sha1'>Sha1</a></td>

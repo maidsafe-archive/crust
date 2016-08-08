@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/server/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/server/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -680,7 +680,7 @@
 <span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>Headers</span>, <span class='ident'>Expect</span>, <span class='ident'>Connection</span>};
 <span class='kw'>use</span> <span class='ident'>http</span>;
 <span class='kw'>use</span> <span class='ident'>method</span>::<span class='ident'>Method</span>;
-<span class='kw'>use</span> <span class='ident'>net</span>::{<span class='ident'>NetworkListener</span>, <span class='ident'>NetworkStream</span>, <span class='ident'>HttpListener</span>, <span class='ident'>HttpsListener</span>, <span class='ident'>Ssl</span>};
+<span class='kw'>use</span> <span class='ident'>net</span>::{<span class='ident'>NetworkListener</span>, <span class='ident'>NetworkStream</span>, <span class='ident'>HttpListener</span>, <span class='ident'>HttpsListener</span>, <span class='ident'>SslServer</span>};
 <span class='kw'>use</span> <span class='ident'>status</span>::<span class='ident'>StatusCode</span>;
 <span class='kw'>use</span> <span class='ident'>uri</span>::<span class='ident'>RequestUri</span>;
 <span class='kw'>use</span> <span class='ident'>version</span>::<span class='ident'>HttpVersion</span>::<span class='ident'>Http11</span>;
@@ -769,7 +769,7 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>Ssl</span> <span class='op'>+</span> <span class='ident'>Clone</span> <span class='op'>+</span> <span class='ident'>Send</span><span class='op'>&gt;</span> <span class='ident'>Server</span><span class='op'>&lt;</span><span class='ident'>HttpsListener</span><span class='op'>&lt;</span><span class='ident'>S</span><span class='op'>&gt;&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>SslServer</span> <span class='op'>+</span> <span class='ident'>Clone</span> <span class='op'>+</span> <span class='ident'>Send</span><span class='op'>&gt;</span> <span class='ident'>Server</span><span class='op'>&lt;</span><span class='ident'>HttpsListener</span><span class='op'>&lt;</span><span class='ident'>S</span><span class='op'>&gt;&gt;</span> {
     <span class='doccomment'>/// Creates a new server that will handle `HttpStream`s over SSL.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// You can use any SSL implementation, as long as implements `hyper::net::Ssl`.</span>

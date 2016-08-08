@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ReferrerPolicy","`Referrer-Policy` header, part of Referrer Policy"]]});

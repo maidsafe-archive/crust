@@ -47,8 +47,13 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-892' class='srclink' href='../../src/url/percent_encoding.rs.html#125-129' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn percent_decode(input: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</pre><div class='docblock'><p>Percent-decode the given bytes.</p>
+               </span><a id='src-1534' class='srclink' href='../../src/url/percent_encoding.rs.html#245-249' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn percent_decode&lt;'a&gt;(input: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../../url/percent_encoding/struct.PercentDecode.html' title='url::percent_encoding::PercentDecode'>PercentDecode</a>&lt;'a&gt;</pre><div class='docblock'><p>Percent-decode the given bytes.</p>
+
+<p>The return value is an iterator of decoded <code>u8</code> bytes
+that also implements <code>Into&lt;Cow&lt;u8&gt;&gt;</code>
+(which returns <code>Cow::Borrowed</code> when <code>input</code> contains no percent-encoded sequence)
+and has <code>decode_utf8()</code> and <code>decode_utf8_lossy()</code> methods.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

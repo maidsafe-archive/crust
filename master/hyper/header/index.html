@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-925' class='srclink' href='../../src/hyper/header/mod.rs.html#1-808' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1146' class='srclink' href='../../src/hyper/header/mod.rs.html#1-809' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Headers container, and common header fields.</p>
 
 <p>hyper has the opinion that Headers should be strongly-typed, because that&#39;s
@@ -451,6 +451,13 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Origin.html'
+                                  title='hyper::header::Origin'>Origin</a></td>
+                           <td class='docblock short'>
+                                <p>The <code>Origin</code> header.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='struct' href='struct.Prefer.html'
                                   title='hyper::header::Prefer'>Prefer</a></td>
                            <td class='docblock short'>
@@ -551,15 +558,15 @@ part of <a href="http://www.w3.org/TR/cors/#access-control-allow-origin-response
                            <td><a class='enum' href='enum.ByteRangeSpec.html'
                                   title='hyper::header::ByteRangeSpec'>ByteRangeSpec</a></td>
                            <td class='docblock short'>
-                                <p>Each Range::Bytes header can contain one or more ByteRangeSpecs.
-Each ByteRangeSpec defines a range of bytes to fetch</p>
+                                <p>Each <code>Range::Bytes</code> header can contain one or more <code>ByteRangeSpecs</code>.
+Each <code>ByteRangeSpec</code> defines a range of bytes to fetch</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='enum' href='enum.CacheDirective.html'
                                   title='hyper::header::CacheDirective'>CacheDirective</a></td>
                            <td class='docblock short'>
-                                <p>CacheControl contains a list of these directives.</p>
+                                <p><code>CacheControl</code> contains a list of these directives.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -669,6 +676,14 @@ except for the <code>WebSocket</code> value.</p>
                                   title='hyper::header::RangeUnit'>RangeUnit</a></td>
                            <td class='docblock short'>
                                 <p>Range Units, described in <a href="http://tools.ietf.org/html/rfc7233#section-2">RFC7233</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.ReferrerPolicy.html'
+                                  title='hyper::header::ReferrerPolicy'>ReferrerPolicy</a></td>
+                           <td class='docblock short'>
+                                <p><code>Referrer-Policy</code> header, part of
+<a href="https://www.w3.org/TR/referrer-policy/#referrer-policy-header">Referrer Policy</a></p>
                            </td>
                        </tr>
                        <tr class=' module-item'>

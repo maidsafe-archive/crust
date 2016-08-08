@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/uri.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/uri.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>uri.rs.html -- source</title>
@@ -211,7 +211,7 @@
     <span class='kw'>fn</span> <span class='ident'>from_str</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>RequestUri</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='ident'>s</span>.<span class='ident'>as_bytes</span>();
         <span class='kw'>if</span> <span class='ident'>bytes</span> <span class='op'>==</span> [] {
-            <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Uri</span>(<span class='ident'>UrlError</span>::<span class='ident'>InvalidCharacter</span>))
+            <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Uri</span>(<span class='ident'>UrlError</span>::<span class='ident'>RelativeUrlWithoutBase</span>))
         } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>bytes</span> <span class='op'>==</span> <span class='string'>b&quot;*&quot;</span> {
             <span class='prelude-val'>Ok</span>(<span class='ident'>RequestUri</span>::<span class='ident'>Star</span>)
         } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>bytes</span>.<span class='ident'>starts_with</span>(<span class='string'>b&quot;/&quot;</span>) {

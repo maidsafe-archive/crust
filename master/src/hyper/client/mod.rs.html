@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/client/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/client/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -577,6 +577,115 @@
 <span id="533">533</span>
 <span id="534">534</span>
 <span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! HTTP Client</span>
 <span class='doccomment'>//!</span>
@@ -635,33 +744,39 @@
 <span class='doccomment'>//!     clone2.post(&quot;http://example.domain/post&quot;).body(&quot;foo=bar&quot;).send().unwrap();</span>
 <span class='doccomment'>//! });</span>
 <span class='doccomment'>//! ```</span>
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Cow</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>default</span>::<span class='ident'>Default</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>copy</span>, <span class='ident'>Read</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>Extend</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
-<span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>UrlParser</span>;
+<span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>Url</span>;
 <span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>ParseError</span> <span class='kw'>as</span> <span class='ident'>UrlError</span>;
 
 <span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>Headers</span>, <span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>};
-<span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>ContentLength</span>, <span class='ident'>Location</span>};
+<span class='kw'>use</span> <span class='ident'>header</span>::{<span class='ident'>ContentLength</span>, <span class='ident'>Host</span>, <span class='ident'>Location</span>};
 <span class='kw'>use</span> <span class='ident'>method</span>::<span class='ident'>Method</span>;
-<span class='kw'>use</span> <span class='ident'>net</span>::{<span class='ident'>NetworkConnector</span>, <span class='ident'>NetworkStream</span>};
-<span class='kw'>use</span> {<span class='ident'>Url</span>};
+<span class='kw'>use</span> <span class='ident'>net</span>::{<span class='ident'>HttpConnector</span>, <span class='ident'>NetworkConnector</span>, <span class='ident'>NetworkStream</span>, <span class='ident'>SslClient</span>};
 <span class='kw'>use</span> <span class='ident'>Error</span>;
 
+<span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>proxy</span>::{<span class='ident'>Proxy</span>, <span class='ident'>tunnel</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>pool</span>::<span class='ident'>Pool</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>request</span>::<span class='ident'>Request</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>response</span>::<span class='ident'>Response</span>;
 
+<span class='kw'>mod</span> <span class='ident'>proxy</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>pool</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>request</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>response</span>;
 
 <span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>Protocol</span>;
 <span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>h1</span>::<span class='ident'>Http11Protocol</span>;
+
+<span class='doccomment'>/// Proxy server configuration with a custom TLS wrapper.</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ProxyConfig</span><span class='op'>&lt;</span><span class='ident'>H</span>, <span class='ident'>S</span><span class='op'>&gt;</span>(<span class='kw'>pub</span> <span class='ident'>H</span>, <span class='kw'>pub</span> <span class='ident'>u16</span>, <span class='kw'>pub</span> <span class='ident'>S</span>)
+<span class='kw'>where</span> <span class='ident'>H</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>Cow</span><span class='op'>&lt;</span><span class='lifetime'>&#39;static</span>, <span class='ident'>str</span><span class='op'>&gt;&gt;</span>,
+      <span class='ident'>S</span>: <span class='ident'>SslClient</span><span class='op'>&lt;&lt;</span><span class='ident'>HttpConnector</span> <span class='kw'>as</span> <span class='ident'>NetworkConnector</span><span class='op'>&gt;</span>::<span class='ident'>Stream</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span>;
 
 <span class='doccomment'>/// A Client to use additional features with Requests.</span>
 <span class='doccomment'>///</span>
@@ -671,6 +786,7 @@
     <span class='ident'>redirect_policy</span>: <span class='ident'>RedirectPolicy</span>,
     <span class='ident'>read_timeout</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>,
     <span class='ident'>write_timeout</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>,
+    <span class='ident'>proxy</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>Cow</span><span class='op'>&lt;</span><span class='lifetime'>&#39;static</span>, <span class='ident'>str</span><span class='op'>&gt;</span>, <span class='ident'>u16</span>)<span class='op'>&gt;</span>
 }
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>Client</span> {
@@ -679,6 +795,7 @@
            .<span class='ident'>field</span>(<span class='string'>&quot;redirect_policy&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>redirect_policy</span>)
            .<span class='ident'>field</span>(<span class='string'>&quot;read_timeout&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>read_timeout</span>)
            .<span class='ident'>field</span>(<span class='string'>&quot;write_timeout&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>write_timeout</span>)
+           .<span class='ident'>field</span>(<span class='string'>&quot;proxy&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>proxy</span>)
            .<span class='ident'>finish</span>()
     }
 }
@@ -695,6 +812,30 @@
         <span class='ident'>Client</span>::<span class='ident'>with_connector</span>(<span class='ident'>Pool</span>::<span class='ident'>new</span>(<span class='ident'>config</span>))
     }
 
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>with_http_proxy</span><span class='op'>&lt;</span><span class='ident'>H</span><span class='op'>&gt;</span>(<span class='ident'>host</span>: <span class='ident'>H</span>, <span class='ident'>port</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>Client</span>
+    <span class='kw'>where</span> <span class='ident'>H</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>Cow</span><span class='op'>&lt;</span><span class='lifetime'>&#39;static</span>, <span class='ident'>str</span><span class='op'>&gt;&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>host</span> <span class='op'>=</span> <span class='ident'>host</span>.<span class='ident'>into</span>();
+        <span class='kw'>let</span> <span class='ident'>proxy</span> <span class='op'>=</span> <span class='ident'>tunnel</span>((<span class='ident'>host</span>.<span class='ident'>clone</span>(), <span class='ident'>port</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>client</span> <span class='op'>=</span> <span class='ident'>Client</span>::<span class='ident'>with_connector</span>(<span class='ident'>Pool</span>::<span class='ident'>with_connector</span>(<span class='ident'>Default</span>::<span class='ident'>default</span>(), <span class='ident'>proxy</span>));
+        <span class='ident'>client</span>.<span class='ident'>proxy</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>((<span class='ident'>host</span>, <span class='ident'>port</span>));
+        <span class='ident'>client</span>
+    }
+
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>with_proxy_config</span><span class='op'>&lt;</span><span class='ident'>H</span>, <span class='ident'>S</span><span class='op'>&gt;</span>(<span class='ident'>proxy_config</span>: <span class='ident'>ProxyConfig</span><span class='op'>&lt;</span><span class='ident'>H</span>, <span class='ident'>S</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Client</span>
+    <span class='kw'>where</span> <span class='ident'>H</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>Cow</span><span class='op'>&lt;</span><span class='lifetime'>&#39;static</span>, <span class='ident'>str</span><span class='op'>&gt;&gt;</span>,
+          <span class='ident'>S</span>: <span class='ident'>SslClient</span><span class='op'>&lt;&lt;</span><span class='ident'>HttpConnector</span> <span class='kw'>as</span> <span class='ident'>NetworkConnector</span><span class='op'>&gt;</span>::<span class='ident'>Stream</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span> {
+        <span class='kw'>let</span> <span class='ident'>host</span> <span class='op'>=</span> <span class='ident'>proxy_config</span>.<span class='number'>0</span>.<span class='ident'>into</span>();
+        <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='ident'>proxy_config</span>.<span class='number'>1</span>;
+        <span class='kw'>let</span> <span class='ident'>proxy</span> <span class='op'>=</span> <span class='ident'>Proxy</span> {
+            <span class='ident'>connector</span>: <span class='ident'>HttpConnector</span>,
+            <span class='ident'>proxy</span>: (<span class='ident'>host</span>.<span class='ident'>clone</span>(), <span class='ident'>port</span>),
+            <span class='ident'>ssl</span>: <span class='ident'>proxy_config</span>.<span class='number'>2</span>
+        };
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>client</span> <span class='op'>=</span> <span class='ident'>Client</span>::<span class='ident'>with_connector</span>(<span class='ident'>Pool</span>::<span class='ident'>with_connector</span>(<span class='ident'>Default</span>::<span class='ident'>default</span>(), <span class='ident'>proxy</span>));
+        <span class='ident'>client</span>.<span class='ident'>proxy</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>((<span class='ident'>host</span>, <span class='ident'>port</span>));
+        <span class='ident'>client</span>
+    }
+
     <span class='doccomment'>/// Create a new client with a specific connector.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>with_connector</span><span class='op'>&lt;</span><span class='ident'>C</span>, <span class='ident'>S</span><span class='op'>&gt;</span>(<span class='ident'>connector</span>: <span class='ident'>C</span>) <span class='op'>-&gt;</span> <span class='ident'>Client</span>
     <span class='kw'>where</span> <span class='ident'>C</span>: <span class='ident'>NetworkConnector</span><span class='op'>&lt;</span><span class='ident'>Stream</span><span class='op'>=</span><span class='ident'>S</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> <span class='op'>+</span> <span class='lifetime'>&#39;static</span>, <span class='ident'>S</span>: <span class='ident'>NetworkStream</span> <span class='op'>+</span> <span class='ident'>Send</span> {
@@ -708,6 +849,7 @@
             <span class='ident'>redirect_policy</span>: <span class='ident'>Default</span>::<span class='ident'>default</span>(),
             <span class='ident'>read_timeout</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>write_timeout</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>proxy</span>: <span class='prelude-val'>None</span>,
         }
     }
 
@@ -828,7 +970,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Response</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>RequestBuilder</span> { <span class='ident'>client</span>, <span class='ident'>method</span>, <span class='ident'>url</span>, <span class='ident'>headers</span>, <span class='ident'>body</span> } <span class='op'>=</span> <span class='self'>self</span>;
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>url</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>url</span>);
-        <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;send {:?} {:?}&quot;</span>, <span class='ident'>method</span>, <span class='ident'>url</span>);
+        <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;send method={:?}, url={:?}, client={:?}&quot;</span>, <span class='ident'>method</span>, <span class='ident'>url</span>, <span class='ident'>client</span>);
 
         <span class='kw'>let</span> <span class='ident'>can_have_body</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>method</span> {
             <span class='ident'>Method</span>::<span class='ident'>Get</span> <span class='op'>|</span> <span class='ident'>Method</span>::<span class='ident'>Head</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
@@ -842,12 +984,23 @@
         };
 
         <span class='kw'>loop</span> {
-            <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>req</span> <span class='op'>=</span> {
                 <span class='kw'>let</span> (<span class='ident'>host</span>, <span class='ident'>port</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_host_and_port</span>(<span class='kw-2'>&amp;</span><span class='ident'>url</span>));
-                <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>client</span>.<span class='ident'>protocol</span>.<span class='ident'>new_message</span>(<span class='kw-2'>&amp;</span><span class='ident'>host</span>, <span class='ident'>port</span>, <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>url</span>.<span class='ident'>scheme</span>))
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>client</span>.<span class='ident'>protocol</span>.<span class='ident'>new_message</span>(<span class='kw-2'>&amp;</span><span class='ident'>host</span>, <span class='ident'>port</span>, <span class='ident'>url</span>.<span class='ident'>scheme</span>()));
+                <span class='kw'>if</span> <span class='ident'>url</span>.<span class='ident'>scheme</span>() <span class='op'>==</span> <span class='string'>&quot;http&quot;</span> <span class='op'>&amp;&amp;</span> <span class='ident'>client</span>.<span class='ident'>proxy</span>.<span class='ident'>is_some</span>() {
+                    <span class='ident'>message</span>.<span class='ident'>set_proxied</span>(<span class='boolvalue'>true</span>);
+                }
+
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>headers</span> {
+                    <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>headers</span>) <span class='op'>=&gt;</span> <span class='ident'>headers</span>.<span class='ident'>clone</span>(),
+                    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>(),
+                };
+                <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>Host</span> {
+                    <span class='ident'>hostname</span>: <span class='ident'>host</span>.<span class='ident'>to_owned</span>(),
+                    <span class='ident'>port</span>: <span class='prelude-val'>Some</span>(<span class='ident'>port</span>),
+                });
+                <span class='ident'>Request</span>::<span class='ident'>with_headers_and_message</span>(<span class='ident'>method</span>.<span class='ident'>clone</span>(), <span class='ident'>url</span>.<span class='ident'>clone</span>(), <span class='ident'>headers</span>, <span class='ident'>message</span>)
             };
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>req</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Request</span>::<span class='ident'>with_message</span>(<span class='ident'>method</span>.<span class='ident'>clone</span>(), <span class='ident'>url</span>.<span class='ident'>clone</span>(), <span class='ident'>message</span>));
-            <span class='ident'>headers</span>.<span class='ident'>as_ref</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>headers</span><span class='op'>|</span> <span class='ident'>req</span>.<span class='ident'>headers_mut</span>().<span class='ident'>extend</span>(<span class='ident'>headers</span>.<span class='ident'>iter</span>()));
 
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>req</span>.<span class='ident'>set_write_timeout</span>(<span class='ident'>client</span>.<span class='ident'>write_timeout</span>));
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>req</span>.<span class='ident'>set_read_timeout</span>(<span class='ident'>client</span>.<span class='ident'>read_timeout</span>));
@@ -872,7 +1025,7 @@
                 <span class='comment'>// punching borrowck here</span>
                 <span class='kw'>let</span> <span class='ident'>loc</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>res</span>.<span class='ident'>headers</span>.<span class='ident'>get</span>::<span class='op'>&lt;</span><span class='ident'>Location</span><span class='op'>&gt;</span>() {
                     <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>Location</span>(<span class='kw-2'>ref</span> <span class='ident'>loc</span>)) <span class='op'>=&gt;</span> {
-                        <span class='prelude-val'>Some</span>(<span class='ident'>UrlParser</span>::<span class='ident'>new</span>().<span class='ident'>base_url</span>(<span class='kw-2'>&amp;</span><span class='ident'>url</span>).<span class='ident'>parse</span>(<span class='kw-2'>&amp;</span><span class='ident'>loc</span>[..]))
+                        <span class='prelude-val'>Some</span>(<span class='ident'>url</span>.<span class='ident'>join</span>(<span class='ident'>loc</span>))
                     }
                     <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
                         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;no Location header&quot;</span>);
@@ -1019,13 +1172,14 @@
     }
 }
 
-<span class='kw'>fn</span> <span class='ident'>get_host_and_port</span>(<span class='ident'>url</span>: <span class='kw-2'>&amp;</span><span class='ident'>Url</span>) <span class='op'>-&gt;</span> ::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(<span class='ident'>String</span>, <span class='ident'>u16</span>)<span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='ident'>host</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>url</span>.<span class='ident'>serialize_host</span>() {
+
+<span class='kw'>fn</span> <span class='ident'>get_host_and_port</span>(<span class='ident'>url</span>: <span class='kw-2'>&amp;</span><span class='ident'>Url</span>) <span class='op'>-&gt;</span> ::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>u16</span>)<span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='ident'>host</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>url</span>.<span class='ident'>host_str</span>() {
         <span class='prelude-val'>Some</span>(<span class='ident'>host</span>) <span class='op'>=&gt;</span> <span class='ident'>host</span>,
         <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Uri</span>(<span class='ident'>UrlError</span>::<span class='ident'>EmptyHost</span>))
     };
     <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;host={:?}&quot;</span>, <span class='ident'>host</span>);
-    <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>url</span>.<span class='ident'>port_or_default</span>() {
+    <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>url</span>.<span class='ident'>port_or_known_default</span>() {
         <span class='prelude-val'>Some</span>(<span class='ident'>port</span>) <span class='op'>=&gt;</span> <span class='ident'>port</span>,
         <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Uri</span>(<span class='ident'>UrlError</span>::<span class='ident'>InvalidPort</span>))
     };
@@ -1037,7 +1191,10 @@
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
     <span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>Server</span>;
+    <span class='kw'>use</span> <span class='ident'>http</span>::<span class='ident'>h1</span>::<span class='ident'>Http11Message</span>;
+    <span class='kw'>use</span> <span class='ident'>mock</span>::{<span class='ident'>MockStream</span>, <span class='ident'>MockSsl</span>};
     <span class='kw'>use</span> <span class='kw'>super</span>::{<span class='ident'>Client</span>, <span class='ident'>RedirectPolicy</span>};
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>proxy</span>::<span class='ident'>Proxy</span>;
     <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>pool</span>::<span class='ident'>Pool</span>;
     <span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>Url</span>;
 
@@ -1057,6 +1214,67 @@
                                      \r\n\
                                     &quot;</span>
     });
+
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_proxy</span>() {
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>pool</span>::<span class='ident'>PooledStream</span>;
+        <span class='kw'>type</span> <span class='ident'>MessageStream</span> <span class='op'>=</span> <span class='ident'>PooledStream</span><span class='op'>&lt;</span><span class='kw'>super</span>::<span class='ident'>proxy</span>::<span class='ident'>Proxied</span><span class='op'>&lt;</span><span class='ident'>MockStream</span>, <span class='ident'>MockStream</span><span class='op'>&gt;&gt;</span>;
+        <span class='macro'>mock_connector</span><span class='macro'>!</span>(<span class='ident'>ProxyConnector</span> {
+            <span class='string'>b&quot;HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n&quot;</span>
+        });
+        <span class='kw'>let</span> <span class='ident'>tunnel</span> <span class='op'>=</span> <span class='ident'>Proxy</span> {
+            <span class='ident'>connector</span>: <span class='ident'>ProxyConnector</span>,
+            <span class='ident'>proxy</span>: (<span class='string'>&quot;example.proxy&quot;</span>.<span class='ident'>into</span>(), <span class='number'>8008</span>),
+            <span class='ident'>ssl</span>: <span class='ident'>MockSsl</span>,
+        };
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>client</span> <span class='op'>=</span> <span class='ident'>Client</span>::<span class='ident'>with_connector</span>(<span class='ident'>Pool</span>::<span class='ident'>with_connector</span>(<span class='ident'>Default</span>::<span class='ident'>default</span>(), <span class='ident'>tunnel</span>));
+        <span class='ident'>client</span>.<span class='ident'>proxy</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>((<span class='string'>&quot;example.proxy&quot;</span>.<span class='ident'>into</span>(), <span class='number'>8008</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dump</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
+        <span class='ident'>client</span>.<span class='ident'>get</span>(<span class='string'>&quot;http://127.0.0.1/foo/bar&quot;</span>).<span class='ident'>send</span>().<span class='ident'>unwrap</span>().<span class='ident'>read_to_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>dump</span>).<span class='ident'>unwrap</span>();
+
+        <span class='kw'>let</span> <span class='ident'>box_message</span> <span class='op'>=</span> <span class='ident'>client</span>.<span class='ident'>protocol</span>.<span class='ident'>new_message</span>(<span class='string'>&quot;127.0.0.1&quot;</span>, <span class='number'>80</span>, <span class='string'>&quot;http&quot;</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>box_message</span>.<span class='ident'>downcast</span>::<span class='op'>&lt;</span><span class='ident'>Http11Message</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>stream</span> <span class='op'>=</span>  <span class='ident'>message</span>.<span class='ident'>into_inner</span>().<span class='ident'>downcast</span>::<span class='op'>&lt;</span><span class='ident'>MessageStream</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>().<span class='ident'>into_inner</span>().<span class='ident'>into_normal</span>().<span class='ident'>unwrap</span>();;
+
+        <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>stream</span>.<span class='ident'>write</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>request_line</span> <span class='op'>=</span> <span class='string'>&quot;GET http://127.0.0.1/foo/bar HTTP/1.1\r\n&quot;</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>s</span>.<span class='ident'>starts_with</span>(<span class='ident'>request_line</span>), <span class='string'>&quot;{:?} doesn&#39;t start with {:?}&quot;</span>, <span class='ident'>s</span>, <span class='ident'>request_line</span>);
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>s</span>.<span class='ident'>contains</span>(<span class='string'>&quot;Host: 127.0.0.1\r\n&quot;</span>));
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_proxy_tunnel</span>() {
+        <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>pool</span>::<span class='ident'>PooledStream</span>;
+        <span class='kw'>type</span> <span class='ident'>MessageStream</span> <span class='op'>=</span> <span class='ident'>PooledStream</span><span class='op'>&lt;</span><span class='kw'>super</span>::<span class='ident'>proxy</span>::<span class='ident'>Proxied</span><span class='op'>&lt;</span><span class='ident'>MockStream</span>, <span class='ident'>MockStream</span><span class='op'>&gt;&gt;</span>;
+
+        <span class='macro'>mock_connector</span><span class='macro'>!</span>(<span class='ident'>ProxyConnector</span> {
+            <span class='string'>b&quot;HTTP/1.1 200 OK\r\n\r\n&quot;</span>,
+            <span class='string'>b&quot;HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n&quot;</span>
+        });
+        <span class='kw'>let</span> <span class='ident'>tunnel</span> <span class='op'>=</span> <span class='ident'>Proxy</span> {
+            <span class='ident'>connector</span>: <span class='ident'>ProxyConnector</span>,
+            <span class='ident'>proxy</span>: (<span class='string'>&quot;example.proxy&quot;</span>.<span class='ident'>into</span>(), <span class='number'>8008</span>),
+            <span class='ident'>ssl</span>: <span class='ident'>MockSsl</span>,
+        };
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>client</span> <span class='op'>=</span> <span class='ident'>Client</span>::<span class='ident'>with_connector</span>(<span class='ident'>Pool</span>::<span class='ident'>with_connector</span>(<span class='ident'>Default</span>::<span class='ident'>default</span>(), <span class='ident'>tunnel</span>));
+        <span class='ident'>client</span>.<span class='ident'>proxy</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>((<span class='string'>&quot;example.proxy&quot;</span>.<span class='ident'>into</span>(), <span class='number'>8008</span>));
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dump</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
+        <span class='ident'>client</span>.<span class='ident'>get</span>(<span class='string'>&quot;https://127.0.0.1/foo/bar&quot;</span>).<span class='ident'>send</span>().<span class='ident'>unwrap</span>().<span class='ident'>read_to_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>dump</span>).<span class='ident'>unwrap</span>();
+
+        <span class='kw'>let</span> <span class='ident'>box_message</span> <span class='op'>=</span> <span class='ident'>client</span>.<span class='ident'>protocol</span>.<span class='ident'>new_message</span>(<span class='string'>&quot;127.0.0.1&quot;</span>, <span class='number'>443</span>, <span class='string'>&quot;https&quot;</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='ident'>box_message</span>.<span class='ident'>downcast</span>::<span class='op'>&lt;</span><span class='ident'>Http11Message</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='ident'>message</span>.<span class='ident'>into_inner</span>().<span class='ident'>downcast</span>::<span class='op'>&lt;</span><span class='ident'>MessageStream</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>().<span class='ident'>into_inner</span>().<span class='ident'>into_tunneled</span>().<span class='ident'>unwrap</span>();
+
+        <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>stream</span>.<span class='ident'>write</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>connect_line</span> <span class='op'>=</span> <span class='string'>&quot;CONNECT 127.0.0.1:443 HTTP/1.1\r\nHost: 127.0.0.1:443\r\n\r\n&quot;</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='kw-2'>&amp;</span><span class='ident'>s</span>[..<span class='ident'>connect_line</span>.<span class='ident'>len</span>()], <span class='ident'>connect_line</span>);
+
+        <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>s</span>[<span class='ident'>connect_line</span>.<span class='ident'>len</span>()..];
+        <span class='kw'>let</span> <span class='ident'>request_line</span> <span class='op'>=</span> <span class='string'>&quot;GET /foo/bar HTTP/1.1\r\n&quot;</span>;
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='kw-2'>&amp;</span><span class='ident'>s</span>[..<span class='ident'>request_line</span>.<span class='ident'>len</span>()], <span class='ident'>request_line</span>);
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>s</span>.<span class='ident'>contains</span>(<span class='string'>&quot;Host: 127.0.0.1\r\n&quot;</span>));
+    }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_redirect_followall</span>() {
@@ -1078,7 +1296,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_redirect_followif</span>() {
         <span class='kw'>fn</span> <span class='ident'>follow_if</span>(<span class='ident'>url</span>: <span class='kw-2'>&amp;</span><span class='ident'>Url</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-            <span class='op'>!</span><span class='ident'>url</span>.<span class='ident'>serialize</span>().<span class='ident'>contains</span>(<span class='string'>&quot;127.0.0.3&quot;</span>)
+            <span class='op'>!</span><span class='ident'>url</span>.<span class='ident'>as_str</span>().<span class='ident'>contains</span>(<span class='string'>&quot;127.0.0.3&quot;</span>)
         }
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>client</span> <span class='op'>=</span> <span class='ident'>Client</span>::<span class='ident'>with_connector</span>(<span class='ident'>MockRedirectPolicy</span>);
         <span class='ident'>client</span>.<span class='ident'>set_redirect_policy</span>(<span class='ident'>RedirectPolicy</span>::<span class='ident'>FollowIf</span>(<span class='ident'>follow_if</span>));

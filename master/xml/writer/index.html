@@ -47,39 +47,52 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1808' class='srclink' href='../../src/xml/writer/mod.rs.html#1-103' title='goto source code'>[src]</a></span></h1>
-<h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+               </span><a id='src-2060' class='srclink' href='../../src/xml/writer/mod.rs.html#1-83' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Contains high-level interface for an events-based XML emitter.</p>
+
+<p>The most important type in this module is <code>EventWriter</code> which allows writing an XML document
+to some output stream.</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
 <table><tr><td><code>pub use self::<a class='mod'
-                                       href='./config/index.html'>config</a>::<a class='struct' href='../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+                                       href='./events/index.html'>events</a>::<a class='enum' href='../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
-                       <tr class=' module-item'>
-                           <td><a class='mod' href='config/index.html'
-                                  title='xml::writer::config'>config</a></td>
-                           <td class='docblock short'>
-                                <p>Contains emitter configuration structure.</p>
-                           </td>
-                       </tr>
                        <tr class=' module-item'>
                            <td><a class='mod' href='events/index.html'
                                   title='xml::writer::events'>events</a></td>
                            <td class='docblock short'>
-                                
+                                <p>Contains <code>XmlEvent</code> datatype, instances of which are consumed by the writer.</p>
                            </td>
                        </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                        <tr class=' module-item'>
+                           <td><a class='struct' href='struct.EmitterConfig.html'
+                                  title='xml::writer::EmitterConfig'>EmitterConfig</a></td>
+                           <td class='docblock short'>
+                                <p>Emitter configuration structure.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='struct' href='struct.EventWriter.html'
                                   title='xml::writer::EventWriter'>EventWriter</a></td>
                            <td class='docblock short'>
-                                
+                                <p>A wrapper around an <code>std::io::Write</code> instance which emits XML document according to provided
+events.</p>
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Error.html'
+                                  title='xml::writer::Error'>Error</a></td>
+                           <td class='docblock short'>
+                                <p>An error which may be returned by <code>XmlWriter</code> when writing XML events.</p>
                            </td>
                        </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
 <table>
                        <tr class=' module-item'>
-                           <td><a class='type' href='type.EventWriterResult.html'
-                                  title='xml::writer::EventWriterResult'>EventWriterResult</a></td>
+                           <td><a class='type' href='type.Result.html'
+                                  title='xml::writer::Result'>Result</a></td>
                            <td class='docblock short'>
-                                
+                                <p>A result type yielded by <code>XmlWriter</code>.</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>

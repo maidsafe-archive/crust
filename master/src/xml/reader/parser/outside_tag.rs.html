@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.1.26/src/reader/parser/outside_tag.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/xml-rs-0.3.4/src/reader/parser/outside_tag.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>outside_tag.rs.html -- source</title>
@@ -171,6 +171,7 @@
 <span id="127">127</span>
 <span id="128">128</span>
 <span id="129">129</span>
+<span id="130">130</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>is_whitespace_char</span>;
 
@@ -178,12 +179,12 @@
 <span class='kw'>use</span> <span class='ident'>reader</span>::<span class='ident'>lexer</span>::<span class='ident'>Token</span>;
 
 <span class='kw'>use</span> <span class='kw'>super</span>::{
-    <span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>ClosingTagSubstate</span>, <span class='ident'>OpeningTagSubstate</span>, <span class='ident'>ProcessingInstructionSubstate</span>,
-    <span class='ident'>DEFAULT_VERSION</span>, <span class='ident'>DEFAULT_ENCODING</span>, <span class='ident'>DEFAULT_STANDALONE</span>
+    <span class='prelude-ty'>Result</span>, <span class='ident'>PullParser</span>, <span class='ident'>State</span>, <span class='ident'>ClosingTagSubstate</span>, <span class='ident'>OpeningTagSubstate</span>,
+    <span class='ident'>ProcessingInstructionSubstate</span>, <span class='ident'>DEFAULT_VERSION</span>, <span class='ident'>DEFAULT_ENCODING</span>, <span class='ident'>DEFAULT_STANDALONE</span>
 };
 
 <span class='kw'>impl</span> <span class='ident'>PullParser</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>outside_tag</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>XmlEvent</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>outside_tag</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>t</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='ident'>t</span> {
             <span class='ident'>Token</span>::<span class='ident'>ReferenceStart</span> <span class='op'>=&gt;</span>
                 <span class='self'>self</span>.<span class='ident'>into_state_continue</span>(<span class='ident'>State</span>::<span class='ident'>InsideReference</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>State</span>::<span class='ident'>OutsideTag</span>))),
@@ -191,7 +192,7 @@
             <span class='ident'>Token</span>::<span class='ident'>Whitespace</span>(_) <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>depth</span>() <span class='op'>==</span> <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,  <span class='comment'>// skip whitespace outside of the root element</span>
 
             _ <span class='kw'>if</span> <span class='ident'>t</span>.<span class='ident'>contains_char_data</span>() <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>depth</span>() <span class='op'>==</span> <span class='number'>0</span> <span class='op'>=&gt;</span>
-                <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected characters outside the root element: {}&quot;</span>, <span class='ident'>t</span>.<span class='ident'>to_string</span>())),
+                <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected characters outside the root element: {}&quot;</span>, <span class='ident'>t</span>)),
 
             <span class='ident'>Token</span>::<span class='ident'>Whitespace</span>(_) <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>trim_whitespace</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>buf_has_data</span>() <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
 
@@ -218,8 +219,8 @@
             }
 
             <span class='ident'>Token</span>::<span class='ident'>CommentStart</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>coalesce_characters</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>ignore_comments</span> <span class='op'>=&gt;</span> {
-                <span class='comment'>// We need to disable lexing errors inside comments</span>
-                <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>disable_errors</span>();
+                <span class='comment'>// We need to switch the lexer into a comment mode inside comments</span>
+                <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>inside_comment</span>();
                 <span class='self'>self</span>.<span class='ident'>into_state_continue</span>(<span class='ident'>State</span>::<span class='ident'>InsideComment</span>)
             }
 
@@ -240,11 +241,11 @@
                     <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>trim_whitespace</span> {
                         <span class='prelude-val'>None</span>
                     } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>whitespace_to_characters</span> {
-                        <span class='prelude-val'>Some</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Whitespace</span>(<span class='ident'>buf</span>))
+                        <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Whitespace</span>(<span class='ident'>buf</span>)))
                     } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>config</span>.<span class='ident'>trim_whitespace</span> {
-                        <span class='prelude-val'>Some</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='ident'>buf</span>.<span class='ident'>trim_matches</span>(<span class='ident'>is_whitespace_char</span>).<span class='ident'>to_string</span>()))
+                        <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='ident'>buf</span>.<span class='ident'>trim_matches</span>(<span class='ident'>is_whitespace_char</span>).<span class='ident'>into</span>())))
                     } <span class='kw'>else</span> {
-                        <span class='prelude-val'>Some</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='ident'>buf</span>))
+                        <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>Characters</span>(<span class='ident'>buf</span>)))
                     }
                 } <span class='kw'>else</span> { <span class='prelude-val'>None</span> };
                 <span class='self'>self</span>.<span class='ident'>inside_whitespace</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;  <span class='comment'>// Reset inside_whitespace flag</span>
@@ -255,6 +256,7 @@
 
                     <span class='ident'>Token</span>::<span class='ident'>DoctypeStart</span> <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>encountered_element</span> <span class='op'>=&gt;</span> {
                         <span class='comment'>// We don&#39;t have a doctype event so skip this position</span>
+                        <span class='comment'>// FIXME: update when we have a doctype event</span>
                         <span class='self'>self</span>.<span class='ident'>next_pos</span>();
                         <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>disable_errors</span>();
                         <span class='self'>self</span>.<span class='ident'>into_state</span>(<span class='ident'>State</span>::<span class='ident'>InsideDoctype</span>, <span class='ident'>next_event</span>)
@@ -267,12 +269,12 @@
                             <span class='self'>self</span>.<span class='ident'>parsed_declaration</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
                             <span class='kw'>let</span> <span class='ident'>sd_event</span> <span class='op'>=</span> <span class='ident'>XmlEvent</span>::<span class='ident'>StartDocument</span> {
                                 <span class='ident'>version</span>: <span class='ident'>DEFAULT_VERSION</span>,
-                                <span class='ident'>encoding</span>: <span class='ident'>DEFAULT_ENCODING</span>.<span class='ident'>to_string</span>(),
+                                <span class='ident'>encoding</span>: <span class='ident'>DEFAULT_ENCODING</span>.<span class='ident'>into</span>(),
                                 <span class='ident'>standalone</span>: <span class='ident'>DEFAULT_STANDALONE</span>
                             };
                             <span class='comment'>// next_event is always none here because we&#39;re outside of</span>
                             <span class='comment'>// the root element</span>
-                            <span class='ident'>next_event</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>sd_event</span>);
+                            <span class='ident'>next_event</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>sd_event</span>));
                             <span class='self'>self</span>.<span class='ident'>push_pos</span>();
                         }
                         <span class='self'>self</span>.<span class='ident'>encountered_element</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
@@ -284,8 +286,8 @@
                         <span class='self'>self</span>.<span class='ident'>into_state</span>(<span class='ident'>State</span>::<span class='ident'>InsideClosingTag</span>(<span class='ident'>ClosingTagSubstate</span>::<span class='ident'>CTInsideName</span>), <span class='ident'>next_event</span>),
 
                     <span class='ident'>Token</span>::<span class='ident'>CommentStart</span> <span class='op'>=&gt;</span> {
-                        <span class='comment'>// We need to disable lexing errors inside comments</span>
-                        <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>disable_errors</span>();
+                        <span class='comment'>// We need to switch the lexer into a comment mode inside comments</span>
+                        <span class='self'>self</span>.<span class='ident'>lexer</span>.<span class='ident'>inside_comment</span>();
                         <span class='self'>self</span>.<span class='ident'>into_state</span>(<span class='ident'>State</span>::<span class='ident'>InsideComment</span>, <span class='ident'>next_event</span>)
                     }
 
@@ -295,7 +297,7 @@
                         <span class='self'>self</span>.<span class='ident'>into_state</span>(<span class='ident'>State</span>::<span class='ident'>InsideCData</span>, <span class='ident'>next_event</span>)
                     }
 
-                    _ <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected token: {}&quot;</span>, <span class='ident'>t</span>.<span class='ident'>to_string</span>()))
+                    _ <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='macro'>self_error</span><span class='macro'>!</span>(<span class='self'>self</span>; <span class='string'>&quot;Unexpected token: {}&quot;</span>, <span class='ident'>t</span>))
                 }
             }
         }

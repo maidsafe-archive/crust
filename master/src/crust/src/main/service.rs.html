@@ -724,8 +724,8 @@
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
 <span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='self'>self</span>, <span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>};
+<span class='kw'>use</span> <span class='ident'>rust_sodium</span>;
+<span class='kw'>use</span> <span class='ident'>rust_sodium</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='self'>self</span>, <span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>config_handler</span>::{<span class='self'>self</span>, <span class='ident'>Config</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Bootstrap</span>, <span class='ident'>Connect</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>ConnectionListener</span>,
            <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
@@ -761,7 +761,7 @@
     <span class='doccomment'>/// and provide the sender half to this method. Receiver will receive all `Event`s from this</span>
     <span class='doccomment'>/// library.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>with_config</span>(<span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>, <span class='ident'>config</span>: <span class='ident'>Config</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='ident'>Service</span><span class='op'>&gt;</span> {
-        <span class='ident'>sodiumoxide</span>::<span class='ident'>init</span>();
+        <span class='ident'>rust_sodium</span>::<span class='ident'>init</span>();
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>el</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>EventLoop</span>::<span class='ident'>new</span>());
         <span class='kw'>let</span> <span class='ident'>mio_tx</span> <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>channel</span>();

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -850,6 +850,7 @@
 <span id="806">806</span>
 <span id="807">807</span>
 <span id="808">808</span>
+<span id="809">809</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Headers container, and common header fields.</span>
 <span class='doccomment'>//!</span>
@@ -984,7 +985,7 @@
 
 <span class='doccomment'>/// A trait for any object that will represent a header field and value.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// This trait represents the formatting of a Header for output to a TcpStream.</span>
+<span class='doccomment'>/// This trait represents the formatting of a `Header` for output to a TcpStream.</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>HeaderFormat</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='op'>+</span> <span class='ident'>HeaderClone</span> <span class='op'>+</span> <span class='ident'>Any</span> <span class='op'>+</span> <span class='ident'>Typeable</span> <span class='op'>+</span> <span class='ident'>Send</span> <span class='op'>+</span> <span class='ident'>Sync</span> {
     <span class='doccomment'>/// Format a header to be output into a TcpStream.</span>
     <span class='doccomment'>///</span>
@@ -1313,7 +1314,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This can be used like so: `format!(&quot;{}&quot;, HeaderFormatter(&amp;header))` to</span>
 <span class='doccomment'>/// get the representation of a Header which will be written to an</span>
-<span class='doccomment'>/// outgoing TcpStream.</span>
+<span class='doccomment'>/// outgoing `TcpStream`.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>HeaderFormatter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>H</span>: <span class='ident'>HeaderFormat</span><span class='op'>&gt;</span>(<span class='kw'>pub</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>H</span>);
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>H</span>: <span class='ident'>HeaderFormat</span><span class='op'>&gt;</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>HeaderFormatter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>H</span><span class='op'>&gt;</span> {
@@ -1492,6 +1493,7 @@
     <span class='kw'>fn</span> <span class='ident'>test_get_mutable</span>() {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>from_raw</span>(<span class='kw-2'>&amp;</span><span class='macro'>raw</span><span class='macro'>!</span>(<span class='string'>b&quot;Content-Length: 10&quot;</span>)).<span class='ident'>unwrap</span>();
         <span class='op'>*</span><span class='ident'>headers</span>.<span class='ident'>get_mut</span>::<span class='op'>&lt;</span><span class='ident'>ContentLength</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>() <span class='op'>=</span> <span class='ident'>ContentLength</span>(<span class='number'>20</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>headers</span>.<span class='ident'>get_raw</span>(<span class='string'>&quot;content-length&quot;</span>).<span class='ident'>unwrap</span>(), <span class='kw-2'>&amp;</span>[<span class='string'>b&quot;20&quot;</span>.<span class='ident'>to_vec</span>()][..]);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>headers</span>.<span class='ident'>get</span>::<span class='op'>&lt;</span><span class='ident'>ContentLength</span><span class='op'>&gt;</span>().<span class='ident'>unwrap</span>(), <span class='ident'>ContentLength</span>(<span class='number'>20</span>));
     }
 

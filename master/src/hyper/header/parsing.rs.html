@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.8.1/src/header/parsing.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/parsing.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>parsing.rs.html -- source</title>
@@ -258,6 +258,14 @@
 <span id="214">214</span>
 <span id="215">215</span>
 <span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Utility functions for Header implementations.</span>
 
@@ -379,7 +387,7 @@
     <span class='comment'>// Interpret the third piece as a sequence of value characters</span>
     <span class='kw'>let</span> <span class='ident'>value</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>parts</span>.<span class='ident'>next</span>() {
         <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(::<span class='ident'>Error</span>::<span class='ident'>Header</span>),
-        <span class='prelude-val'>Some</span>(<span class='ident'>v</span>) <span class='op'>=&gt;</span> <span class='ident'>percent_encoding</span>::<span class='ident'>percent_decode</span>(<span class='ident'>v</span>.<span class='ident'>as_bytes</span>()),
+        <span class='prelude-val'>Some</span>(<span class='ident'>v</span>) <span class='op'>=&gt;</span> <span class='ident'>percent_encoding</span>::<span class='ident'>percent_decode</span>(<span class='ident'>v</span>.<span class='ident'>as_bytes</span>()).<span class='ident'>collect</span>(),
     };
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>ExtendedValue</span> {
@@ -389,11 +397,19 @@
     })
 }
 
+<span class='macro'>define_encode_set</span><span class='macro'>!</span> {
+    <span class='doccomment'>/// This encode set is used for HTTP header values and is defined at</span>
+    <span class='doccomment'>/// https://tools.ietf.org/html/rfc5987#section-3.2</span>
+    <span class='kw'>pub</span> <span class='ident'>HTTP_VALUE</span> <span class='op'>=</span> [<span class='ident'>percent_encoding</span>::<span class='ident'>SIMPLE_ENCODE_SET</span>] <span class='op'>|</span> {
+        <span class='string'>&#39; &#39;</span>, <span class='string'>&#39;&quot;&#39;</span>, <span class='string'>&#39;%&#39;</span>, <span class='string'>&#39;\&#39;&#39;</span>, <span class='string'>&#39;(&#39;</span>, <span class='string'>&#39;)&#39;</span>, <span class='string'>&#39;*&#39;</span>, <span class='string'>&#39;,&#39;</span>, <span class='string'>&#39;/&#39;</span>, <span class='string'>&#39;:&#39;</span>, <span class='string'>&#39;;&#39;</span>, <span class='string'>&#39;&lt;&#39;</span>, <span class='string'>&#39;-&#39;</span>, <span class='string'>&#39;&gt;&#39;</span>, <span class='string'>&#39;?&#39;</span>,
+        <span class='string'>&#39;[&#39;</span>, <span class='string'>&#39;\\&#39;</span>, <span class='string'>&#39;]&#39;</span>, <span class='string'>&#39;{&#39;</span>, <span class='string'>&#39;}&#39;</span>
+    }
+}
+
 <span class='kw'>impl</span> <span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>ExtendedValue</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
         <span class='kw'>let</span> <span class='ident'>encoded_value</span> <span class='op'>=</span>
-            <span class='ident'>percent_encoding</span>::<span class='ident'>percent_encode</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>value</span>[..],
-                                             <span class='ident'>percent_encoding</span>::<span class='ident'>HTTP_VALUE_ENCODE_SET</span>);
+            <span class='ident'>percent_encoding</span>::<span class='ident'>percent_encode</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>value</span>[..], <span class='ident'>HTTP_VALUE</span>);
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>lang</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>language_tag</span> {
             <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;{}&#39;{}&#39;{}&quot;</span>, <span class='self'>self</span>.<span class='ident'>charset</span>, <span class='ident'>lang</span>, <span class='ident'>encoded_value</span>)
         } <span class='kw'>else</span> {
