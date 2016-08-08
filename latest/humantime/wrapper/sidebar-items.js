@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Duration","A wrapper for duration that has `FromStr` implementation"]]});

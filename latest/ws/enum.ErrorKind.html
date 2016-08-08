@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-24' class='srclink' href='../src/ws/result.rs.html#20-56' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-24' class='srclink' href='../src/ws/result.rs.html#20-59' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ErrorKind {
     Internal,
     Capacity,
@@ -77,8 +77,11 @@ This kind of error will result in a WebSocket Connection disconnecting.</p>
 </div></td><td></td></tr><tr><td id='variant.Http'><code>Http</code></td><td><div class='docblock'><p>Indicates a failure to parse an HTTP message.
 This kind of error should only occur during a WebSocket Handshake, and a HTTP 500 response
 will be generated.</p>
-</div></td><td></td></tr><tr><td id='variant.Queue'><code>Queue</code></td><td><div class='docblock'><p>Indicates a failure to send a command on the internal EventLoop channel. This means that
-the WebSocket is overloaded and the Connection will disconnect.</p>
+</div></td><td></td></tr><tr><td id='variant.Queue'><code>Queue</code></td><td><div class='docblock'><p>Indicates a failure to send a signal on the internal EventLoop channel. This means that
+the WebSocket is overloaded. In order to avoid this error, it is important to set
+<code>Settings::max_connections</code> and <code>Settings:queue_size</code> high enough to handle the load.
+If encountered, retuning from a handler method and waiting for the EventLoop to consume
+the queue may relieve the situation.</p>
 </div></td><td></td></tr><tr><td id='variant.Timer'><code>Timer</code></td><td><div class='docblock'><p>Indicates a failure to schedule a timeout on the EventLoop.</p>
 </div></td><td></td></tr><tr><td id='variant.Custom'><code>Custom</code></td><td><div class='docblock'><p>A custom error kind for use by applications. This error kind involves extra overhead
 because it will allocate the memory on the heap. The WebSocket ignores such errors by

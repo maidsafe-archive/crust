@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/igd-0.4.2/src/soap.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/igd-0.5.1/src/soap.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>soap.rs.html -- source</title>
@@ -111,14 +111,17 @@
 <span id="67">67</span>
 <span id="68">68</span>
 <span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>Read</span>};
 
 <span class='kw'>use</span> <span class='ident'>hyper</span>;
+<span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>mime</span>;
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>client</span>::<span class='ident'>Client</span>;
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>error</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>HyperError</span>;
-<span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>};
+<span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>, <span class='ident'>ContentType</span>};
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Action</span>(<span class='ident'>String</span>);
@@ -174,6 +177,7 @@
     <span class='kw'>let</span> <span class='ident'>client</span> <span class='op'>=</span> <span class='ident'>Client</span>::<span class='ident'>new</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>resp</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>client</span>.<span class='ident'>post</span>(<span class='ident'>url</span>)
         .<span class='ident'>header</span>(<span class='ident'>action</span>)
+        .<span class='ident'>header</span>(<span class='ident'>ContentType</span>(<span class='ident'>mime</span>::<span class='ident'>Mime</span>(<span class='ident'>mime</span>::<span class='ident'>TopLevel</span>::<span class='ident'>Text</span>, <span class='ident'>mime</span>::<span class='ident'>SubLevel</span>::<span class='ident'>Xml</span>, <span class='ident'>Vec</span>::<span class='ident'>new</span>())))
         .<span class='ident'>body</span>(<span class='ident'>body</span>)
         .<span class='ident'>send</span>());
 

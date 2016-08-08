@@ -328,6 +328,10 @@
 <span id="284">284</span>
 <span id="285">285</span>
 <span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -349,12 +353,13 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>hash_map</span>::<span class='ident'>Entry</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Core</span>, <span class='ident'>CoreTimerId</span>, <span class='ident'>Message</span>, <span class='ident'>NameHash</span>, <span class='ident'>Priority</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ActiveConnection</span>, <span class='ident'>ConnectionCandidate</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>PollOpt</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
+<span class='kw'>use</span> <span class='ident'>rust_sodium</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
 
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>EXCHANGE_MSG_TIMEOUT_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>10</span> <span class='op'>*</span> <span class='number'>60</span> <span class='op'>*</span> <span class='number'>1000</span>;
 
@@ -365,7 +370,7 @@
     <span class='ident'>name_hash</span>: <span class='ident'>u64</span>,
     <span class='ident'>next_state</span>: <span class='ident'>NextState</span>,
     <span class='ident'>our_pk</span>: <span class='ident'>PublicKey</span>,
-    <span class='ident'>socket</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Socket</span><span class='op'>&gt;</span>,
+    <span class='ident'>socket</span>: <span class='ident'>Socket</span>,
     <span class='ident'>timeout</span>: <span class='ident'>Timeout</span>,
 }
 
@@ -394,7 +399,7 @@
             <span class='ident'>name_hash</span>: <span class='ident'>name_hash</span>,
             <span class='ident'>next_state</span>: <span class='ident'>NextState</span>::<span class='prelude-val'>None</span>,
             <span class='ident'>our_pk</span>: <span class='ident'>our_pk</span>,
-            <span class='ident'>socket</span>: <span class='prelude-val'>Some</span>(<span class='ident'>socket</span>),
+            <span class='ident'>socket</span>: <span class='ident'>socket</span>,
             <span class='ident'>timeout</span>: <span class='ident'>timeout</span>,
         };
 
@@ -404,7 +409,7 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) {
-        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_mut</span>()).<span class='ident'>read</span>::<span class='op'>&lt;</span><span class='ident'>Message</span><span class='op'>&gt;</span>() {
+        <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>read</span>::<span class='op'>&lt;</span><span class='ident'>Message</span><span class='op'>&gt;</span>() {
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>Message</span>::<span class='ident'>BootstrapRequest</span>(<span class='ident'>their_public_key</span>, <span class='ident'>name_hash</span>))) <span class='op'>=&gt;</span> {
                 <span class='self'>self</span>.<span class='ident'>handle_bootstrap_req</span>(<span class='ident'>core</span>, <span class='ident'>el</span>, <span class='ident'>their_public_key</span>, <span class='ident'>name_hash</span>)
             }
@@ -457,7 +462,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>handle_echo_addr_req</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>) {
         <span class='self'>self</span>.<span class='ident'>next_state</span> <span class='op'>=</span> <span class='ident'>NextState</span>::<span class='prelude-val'>None</span>;
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>peer_addr</span>) <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_ref</span>()).<span class='ident'>peer_addr</span>() {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>peer_addr</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>peer_addr</span>() {
             <span class='self'>self</span>.<span class='ident'>write</span>(<span class='ident'>core</span>,
                        <span class='ident'>el</span>,
                        <span class='prelude-val'>Some</span>((<span class='ident'>Message</span>::<span class='ident'>EchoAddrResp</span>(<span class='ident'>common</span>::<span class='ident'>SocketAddr</span>(<span class='ident'>peer_addr</span>)), <span class='number'>0</span>)));
@@ -507,7 +512,7 @@
             }
         }
 
-        <span class='kw'>match</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>as_mut</span>()).<span class='ident'>write</span>(<span class='ident'>el</span>, <span class='self'>self</span>.<span class='ident'>token</span>, <span class='ident'>msg</span>) {
+        <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>write</span>(<span class='ident'>el</span>, <span class='self'>self</span>.<span class='ident'>token</span>, <span class='ident'>msg</span>) {
             <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>) <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>done</span>(<span class='ident'>core</span>, <span class='ident'>el</span>),
             <span class='prelude-val'>Ok</span>(<span class='boolvalue'>false</span>) <span class='op'>=&gt;</span> (),
             <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
@@ -526,10 +531,11 @@
 
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>next_state</span> {
             <span class='ident'>NextState</span>::<span class='ident'>ActiveConnection</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> {
+                <span class='kw'>let</span> <span class='ident'>socket</span> <span class='op'>=</span> <span class='ident'>mem</span>::<span class='ident'>replace</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>socket</span>, <span class='ident'>Socket</span>::<span class='ident'>default</span>());
                 <span class='ident'>ActiveConnection</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
                                         <span class='ident'>el</span>,
                                         <span class='self'>self</span>.<span class='ident'>token</span>,
-                                        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>()),
+                                        <span class='ident'>socket</span>,
                                         <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>clone</span>(),
                                         <span class='ident'>our_id</span>,
                                         <span class='ident'>their_id</span>,
@@ -551,10 +557,12 @@
                                                 <span class='ident'>event_tx</span>.<span class='ident'>clone</span>());
                     }
                 };
+
+                <span class='kw'>let</span> <span class='ident'>socket</span> <span class='op'>=</span> <span class='ident'>mem</span>::<span class='ident'>replace</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>socket</span>, <span class='ident'>Socket</span>::<span class='ident'>default</span>());
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>ConnectionCandidate</span>::<span class='ident'>start</span>(<span class='ident'>core</span>,
                                                    <span class='ident'>el</span>,
                                                    <span class='self'>self</span>.<span class='ident'>token</span>,
-                                                   <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>()),
+                                                   <span class='ident'>socket</span>,
                                                    <span class='self'>self</span>.<span class='ident'>cm</span>.<span class='ident'>clone</span>(),
                                                    <span class='ident'>our_id</span>,
                                                    <span class='ident'>their_id</span>,
@@ -597,7 +605,7 @@
         }
 
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>clear_timeout</span>(<span class='self'>self</span>.<span class='ident'>timeout</span>);
-        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>deregister</span>(<span class='kw-2'>&amp;</span><span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>take</span>()));
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>el</span>.<span class='ident'>deregister</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>socket</span>);
     }
 
     <span class='kw'>fn</span> <span class='ident'>timeout</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>core</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Core</span>, <span class='ident'>el</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>EventLoop</span><span class='op'>&lt;</span><span class='ident'>Core</span><span class='op'>&gt;</span>, <span class='ident'>_timer_id</span>: <span class='ident'>u8</span>) {

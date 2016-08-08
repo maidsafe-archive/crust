@@ -47,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1270' class='srclink' href='../src/toml/decoder/mod.rs.html#71-73' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn decode&lt;T: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(toml: <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</pre><div class='docblock'><p>Decodes a TOML value into a decodable type.</p>
+               </span><a id='src-1178' class='srclink' href='../src/toml/decoder/mod.rs.html#82-84' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn decode&lt;T: <a class='trait' href='../serde/de/trait.Deserialize.html' title='serde::de::Deserialize'>Deserialize</a>&gt;(toml: <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</pre><div class='docblock'><p>Decodes a TOML value into a decodable type.</p>
 
 <p>This function will consume the given TOML value and attempt to decode it
 into the type specified. If decoding fails, <code>None</code> will be returned. If a

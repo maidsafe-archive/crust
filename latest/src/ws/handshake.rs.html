@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.0/src/handshake.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.2/src/handshake.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>handshake.rs.html -- source</title>
@@ -697,8 +697,6 @@
 <span id="653">653</span>
 <span id="654">654</span>
 <span id="655">655</span>
-<span id="656">656</span>
-<span id="657">657</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
@@ -726,13 +724,11 @@
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>hash_key</span>(<span class='ident'>key</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>hasher</span> <span class='op'>=</span> <span class='ident'>sha1</span>::<span class='ident'>Sha1</span>::<span class='ident'>new</span>();
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='number'>20</span>];
 
     <span class='ident'>hasher</span>.<span class='ident'>update</span>(<span class='ident'>key</span>);
     <span class='ident'>hasher</span>.<span class='ident'>update</span>(<span class='ident'>WS_GUID</span>.<span class='ident'>as_bytes</span>());
-    <span class='ident'>hasher</span>.<span class='ident'>output</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>);
 
-    <span class='ident'>encode_base64</span>(<span class='kw-2'>&amp;</span><span class='ident'>buf</span>)
+    <span class='ident'>encode_base64</span>(<span class='kw-2'>&amp;</span><span class='ident'>hasher</span>.<span class='ident'>digest</span>().<span class='ident'>bytes</span>())
 }
 
 <span class='comment'>// This code is based on rustc_serialize base64 STANDARD</span>

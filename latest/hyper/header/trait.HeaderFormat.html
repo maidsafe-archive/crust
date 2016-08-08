@@ -47,12 +47,12 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-4667' class='srclink' href='../../src/hyper/header/mod.rs.html#135-142' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-5489' class='srclink' href='../../src/hyper/header/mod.rs.html#135-142' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait HeaderFormat: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + HeaderClone + <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='../../typeable/trait.Typeable.html' title='typeable::Typeable'>Typeable</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> {
     fn <a href='#tymethod.fmt_header' class='fnname'>fmt_header</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a>;
 }</pre><div class='docblock'><p>A trait for any object that will represent a header field and value.</p>
 
-<p>This trait represents the formatting of a Header for output to a TcpStream.</p>
+<p>This trait represents the formatting of a <code>Header</code> for output to a TcpStream.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
@@ -60,7 +60,7 @@
 
 <p>This method is not allowed to introduce an Err not produced
 by the passed-in Formatter.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for &amp;'a <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-4850' class='srclink' href='../../src/hyper/header/mod.rs.html#452-457' title='goto source code'>[src]</a></span></h3>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for &amp;'a <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-5670' class='srclink' href='../../src/hyper/header/mod.rs.html#452-457' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div>

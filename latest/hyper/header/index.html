@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-894' class='srclink' href='../../src/hyper/header/mod.rs.html#1-808' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1146' class='srclink' href='../../src/hyper/header/mod.rs.html#1-809' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Headers container, and common header fields.</p>
 
 <p>hyper has the opinion that Headers should be strongly-typed, because that&#39;s
@@ -175,6 +175,14 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='struct' href='struct.AccessControlAllowCredentials.html'
+                                  title='hyper::header::AccessControlAllowCredentials'>AccessControlAllowCredentials</a></td>
+                           <td class='docblock short'>
+                                <p><code>Access-Control-Allow-Credentials</code> header, part of
+<a href="http://www.w3.org/TR/cors/#access-control-allow-headers-response-header">CORS</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='struct' href='struct.AccessControlAllowHeaders.html'
                                   title='hyper::header::AccessControlAllowHeaders'>AccessControlAllowHeaders</a></td>
                            <td class='docblock short'>
@@ -266,6 +274,13 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='struct' href='struct.ContentDisposition.html'
+                                  title='hyper::header::ContentDisposition'>ContentDisposition</a></td>
+                           <td class='docblock short'>
+                                <p>A <code>Content-Disposition</code> header, (re)defined in <a href="https://tools.ietf.org/html/rfc6266">RFC6266</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='struct' href='struct.ContentEncoding.html'
                                   title='hyper::header::ContentEncoding'>ContentEncoding</a></td>
                            <td class='docblock short'>
@@ -310,6 +325,20 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                   title='hyper::header::Cookie'>Cookie</a></td>
                            <td class='docblock short'>
                                 <p><code>Cookie</code> header, defined in <a href="http://tools.ietf.org/html/rfc6265#section-5.4">RFC6265</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.CookieJar.html'
+                                  title='hyper::header::CookieJar'>CookieJar</a></td>
+                           <td class='docblock short'>
+                                <p>A jar of cookies for managing a session</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.CookiePair.html'
+                                  title='hyper::header::CookiePair'>CookiePair</a></td>
+                           <td class='docblock short'>
+                                
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -422,6 +451,27 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Origin.html'
+                                  title='hyper::header::Origin'>Origin</a></td>
+                           <td class='docblock short'>
+                                <p>The <code>Origin</code> header.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.Prefer.html'
+                                  title='hyper::header::Prefer'>Prefer</a></td>
+                           <td class='docblock short'>
+                                <p><code>Prefer</code> header, defined in <a href="http://tools.ietf.org/html/rfc7240">RFC7240</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='struct' href='struct.PreferenceApplied.html'
+                                  title='hyper::header::PreferenceApplied'>PreferenceApplied</a></td>
+                           <td class='docblock short'>
+                                <p><code>Preference-Applied</code> header, defined in <a href="http://tools.ietf.org/html/rfc7240">RFC7240</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='struct' href='struct.Protocol.html'
                                   title='hyper::header::Protocol'>Protocol</a></td>
                            <td class='docblock short'>
@@ -508,15 +558,15 @@ part of <a href="http://www.w3.org/TR/cors/#access-control-allow-origin-response
                            <td><a class='enum' href='enum.ByteRangeSpec.html'
                                   title='hyper::header::ByteRangeSpec'>ByteRangeSpec</a></td>
                            <td class='docblock short'>
-                                <p>Each Range::Bytes header can contain one or more ByteRangeSpecs.
-Each ByteRangeSpec defines a range of bytes to fetch</p>
+                                <p>Each <code>Range::Bytes</code> header can contain one or more <code>ByteRangeSpecs</code>.
+Each <code>ByteRangeSpec</code> defines a range of bytes to fetch</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
                            <td><a class='enum' href='enum.CacheDirective.html'
                                   title='hyper::header::CacheDirective'>CacheDirective</a></td>
                            <td class='docblock short'>
-                                <p>CacheControl contains a list of these directives.</p>
+                                <p><code>CacheControl</code> contains a list of these directives.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -538,6 +588,20 @@ Each ByteRangeSpec defines a range of bytes to fetch</p>
                                   title='hyper::header::ContentRangeSpec'>ContentRangeSpec</a></td>
                            <td class='docblock short'>
                                 <p>Content-Range, described in <a href="https://tools.ietf.org/html/rfc7233#section-4.2">RFC7233</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.DispositionParam.html'
+                                  title='hyper::header::DispositionParam'>DispositionParam</a></td>
+                           <td class='docblock short'>
+                                <p>A parameter to the disposition type</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.DispositionType.html'
+                                  title='hyper::header::DispositionType'>DispositionType</a></td>
+                           <td class='docblock short'>
+                                <p>The implied disposition of the content of the HTTP body</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -586,6 +650,13 @@ or <code>Accept-Encoding</code> header.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
+                           <td><a class='enum' href='enum.Preference.html'
+                                  title='hyper::header::Preference'>Preference</a></td>
+                           <td class='docblock short'>
+                                <p>Prefer contains a list of these preferences.</p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
                            <td><a class='enum' href='enum.ProtocolName.html'
                                   title='hyper::header::ProtocolName'>ProtocolName</a></td>
                            <td class='docblock short'>
@@ -605,6 +676,14 @@ except for the <code>WebSocket</code> value.</p>
                                   title='hyper::header::RangeUnit'>RangeUnit</a></td>
                            <td class='docblock short'>
                                 <p>Range Units, described in <a href="http://tools.ietf.org/html/rfc7233#section-2">RFC7233</a></p>
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class='enum' href='enum.ReferrerPolicy.html'
+                                  title='hyper::header::ReferrerPolicy'>ReferrerPolicy</a></td>
+                           <td class='docblock short'>
+                                <p><code>Referrer-Policy</code> header, part of
+<a href="https://www.w3.org/TR/referrer-policy/#referrer-policy-header">Referrer Policy</a></p>
                            </td>
                        </tr>
                        <tr class=' module-item'>
@@ -641,7 +720,7 @@ except for the <code>WebSocket</code> value.</p>
                            <td><a class='fn' href='fn.q.html'
                                   title='hyper::header::q'>q</a></td>
                            <td class='docblock short'>
-                                <p>Convenience function to create a <code>Quality</code> fromt a float.</p>
+                                <p>Convenience function to create a <code>Quality</code> from a float.</p>
                            </td>
                        </tr>
                        <tr class=' module-item'>

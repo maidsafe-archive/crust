@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/log4rs-0.3.3/src/config.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/log4rs-0.4.8/src/config.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>config.rs.html -- source</title>
@@ -506,6 +506,11 @@
 <span id="462">462</span>
 <span id="463">463</span>
 <span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! log4rs configuration</span>
 
@@ -515,7 +520,9 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>;
 <span class='kw'>use</span> <span class='ident'>log</span>::<span class='ident'>LogLevelFilter</span>;
 
-<span class='kw'>use</span> {<span class='ident'>Append</span>, <span class='ident'>Filter</span>, <span class='ident'>ConfigPrivateExt</span>, <span class='ident'>PrivateConfigErrorsExt</span>, <span class='ident'>PrivateConfigAppenderExt</span>};
+<span class='kw'>use</span> <span class='ident'>append</span>::<span class='ident'>Append</span>;
+<span class='kw'>use</span> <span class='ident'>filter</span>::<span class='ident'>Filter</span>;
+<span class='kw'>use</span> {<span class='ident'>ConfigPrivateExt</span>, <span class='ident'>PrivateConfigErrorsExt</span>, <span class='ident'>PrivateConfigAppenderExt</span>};
 
 <span class='doccomment'>/// Configuration for the root logger.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -525,12 +532,9 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>Root</span> {
-    <span class='doccomment'>/// Creates a new `RootBuilder` with no appenders and the specified level.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>(<span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>) <span class='op'>-&gt;</span> <span class='ident'>RootBuilder</span> {
-        <span class='ident'>RootBuilder</span>(<span class='ident'>Root</span> {
-            <span class='ident'>level</span>: <span class='ident'>level</span>,
-            <span class='ident'>appenders</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-        })
+    <span class='doccomment'>/// Creates a new `RootBuilder` with no appenders.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>() <span class='op'>-&gt;</span> <span class='ident'>RootBuilder</span> {
+        <span class='ident'>RootBuilder</span> { <span class='ident'>appenders</span>: <span class='macro'>vec</span><span class='macro'>!</span>[] }
     }
 
     <span class='doccomment'>/// Returns the minimum level of log messages that the root logger will accept.</span>
@@ -546,48 +550,44 @@
 
 <span class='doccomment'>/// A builder for `Root`s.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RootBuilder</span>(<span class='ident'>Root</span>);
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RootBuilder</span> {
+    <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+}
 
 <span class='kw'>impl</span> <span class='ident'>RootBuilder</span> {
     <span class='doccomment'>/// Adds an appender.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appender</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appender</span>: <span class='ident'>String</span>) <span class='op'>-&gt;</span> <span class='ident'>RootBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>appenders</span>.<span class='ident'>push</span>(<span class='ident'>appender</span>);
+        <span class='self'>self</span>.<span class='ident'>appenders</span>.<span class='ident'>push</span>(<span class='ident'>appender</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Adds appenders.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appenders</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>String</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appenders</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>RootBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>appenders</span>.<span class='ident'>extend</span>(<span class='ident'>appenders</span>);
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appenders</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>String</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appenders</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>RootBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>appenders</span>.<span class='ident'>extend</span>(<span class='ident'>appenders</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Consumes the `RootBuilder`, returning the `Root`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Root</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>, <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>) <span class='op'>-&gt;</span> <span class='ident'>Root</span> {
+        <span class='ident'>Root</span> {
+            <span class='ident'>level</span>: <span class='ident'>level</span>,
+            <span class='ident'>appenders</span>: <span class='self'>self</span>.<span class='ident'>appenders</span>,
+        }
     }
 }
 
 <span class='doccomment'>/// Configuration for an appender.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Appender</span> {
     <span class='ident'>name</span>: <span class='ident'>String</span>,
     <span class='ident'>appender</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Append</span><span class='op'>&gt;</span>,
     <span class='ident'>filters</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Filter</span><span class='op'>&gt;&gt;</span>,
 }
 
-<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>Appender</span> {
-    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;Appender {{ name: {} }}&quot;</span>, <span class='self'>self</span>.<span class='ident'>name</span>)
-    }
-}
-
 <span class='kw'>impl</span> <span class='ident'>Appender</span> {
     <span class='doccomment'>/// Creates a new `AppenderBuilder` with the specified name and `Append` trait object.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>(<span class='ident'>name</span>: <span class='ident'>String</span>, <span class='ident'>appender</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Append</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>AppenderBuilder</span> {
-        <span class='ident'>AppenderBuilder</span>(<span class='ident'>Appender</span> {
-            <span class='ident'>name</span>: <span class='ident'>name</span>,
-            <span class='ident'>appender</span>: <span class='ident'>appender</span>,
-            <span class='ident'>filters</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-        })
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>() <span class='op'>-&gt;</span> <span class='ident'>AppenderBuilder</span> {
+        <span class='ident'>AppenderBuilder</span> { <span class='ident'>filters</span>: <span class='macro'>vec</span><span class='macro'>!</span>[] }
     }
 
     <span class='doccomment'>/// Returns the name of the appender.</span>
@@ -615,37 +615,39 @@
 
 <span class='doccomment'>/// A builder for `Appender`s.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>AppenderBuilder</span>(<span class='ident'>Appender</span>);
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>AppenderBuilder</span> {
+    <span class='ident'>filters</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Filter</span><span class='op'>&gt;&gt;</span>,
+}
 
 <span class='kw'>impl</span> <span class='ident'>AppenderBuilder</span> {
     <span class='doccomment'>/// Adds a filter.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>filter</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>filter</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Filter</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>AppenderBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>filters</span>.<span class='ident'>push</span>(<span class='ident'>filter</span>);
+        <span class='self'>self</span>.<span class='ident'>filters</span>.<span class='ident'>push</span>(<span class='ident'>filter</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Adds filters.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>filters</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Filter</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>filters</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>AppenderBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>filters</span>.<span class='ident'>extend</span>(<span class='ident'>filters</span>);
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>filters</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Filter</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>filters</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>AppenderBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>filters</span>.<span class='ident'>extend</span>(<span class='ident'>filters</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Consumes the `AppenderBuilder`, returning the `Appender`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Appender</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>, <span class='ident'>name</span>: <span class='ident'>String</span>, <span class='ident'>appender</span>: <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Append</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Appender</span> {
+        <span class='ident'>Appender</span> {
+            <span class='ident'>name</span>: <span class='ident'>name</span>,
+            <span class='ident'>appender</span>: <span class='ident'>appender</span>,
+            <span class='ident'>filters</span>: <span class='self'>self</span>.<span class='ident'>filters</span>,
+        }
     }
 }
 
 <span class='doccomment'>/// Configuration for a logger.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Logger</span> {
-    <span class='doccomment'>/// The name of the logger.</span>
     <span class='ident'>name</span>: <span class='ident'>String</span>,
-    <span class='doccomment'>/// The minimum level of log messages that the logger will accept.</span>
     <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>,
-    <span class='doccomment'>/// The set of names of appenders that will be attached to the logger.</span>
     <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
-    <span class='doccomment'>/// If `true`, appenders of parent loggers will also be attached to this logger.</span>
     <span class='ident'>additive</span>: <span class='ident'>bool</span>,
 }
 
@@ -653,13 +655,11 @@
     <span class='doccomment'>/// Creates a new `LoggerBuilder` with the specified name and level.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// There are initially no appenders attached and `additive` is `true`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>(<span class='ident'>name</span>: <span class='ident'>String</span>, <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>) <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
-        <span class='ident'>LoggerBuilder</span>(<span class='ident'>Logger</span> {
-            <span class='ident'>name</span>: <span class='ident'>name</span>,
-            <span class='ident'>level</span>: <span class='ident'>level</span>,
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>() <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
+        <span class='ident'>LoggerBuilder</span> {
             <span class='ident'>appenders</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>additive</span>: <span class='boolvalue'>true</span>,
-        })
+        }
     }
 
     <span class='doccomment'>/// Returns the name of the logger.</span>
@@ -685,30 +685,38 @@
 
 <span class='doccomment'>/// A builder for `Logger`s.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>LoggerBuilder</span>(<span class='ident'>Logger</span>);
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>LoggerBuilder</span> {
+    <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+    <span class='ident'>additive</span>: <span class='ident'>bool</span>,
+}
 
 <span class='kw'>impl</span> <span class='ident'>LoggerBuilder</span> {
     <span class='doccomment'>/// Adds an appender.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appender</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appender</span>: <span class='ident'>String</span>) <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>appenders</span>.<span class='ident'>push</span>(<span class='ident'>appender</span>);
+        <span class='self'>self</span>.<span class='ident'>appenders</span>.<span class='ident'>push</span>(<span class='ident'>appender</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Adds appenders.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appenders</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>String</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appenders</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>appenders</span>.<span class='ident'>extend</span>(<span class='ident'>appenders</span>);
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appenders</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>String</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appenders</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>appenders</span>.<span class='ident'>extend</span>(<span class='ident'>appenders</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Sets the additivity of the logger.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>additive</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>additive</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>additive</span> <span class='op'>=</span> <span class='ident'>additive</span>;
+        <span class='self'>self</span>.<span class='ident'>additive</span> <span class='op'>=</span> <span class='ident'>additive</span>;
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Consumes the `LoggerBuilder`, returning the `Logger`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Logger</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>, <span class='ident'>name</span>: <span class='ident'>String</span>, <span class='ident'>level</span>: <span class='ident'>LogLevelFilter</span>) <span class='op'>-&gt;</span> <span class='ident'>Logger</span> {
+        <span class='ident'>Logger</span> {
+            <span class='ident'>name</span>: <span class='ident'>name</span>,
+            <span class='ident'>level</span>: <span class='ident'>level</span>,
+            <span class='ident'>appenders</span>: <span class='self'>self</span>.<span class='ident'>appenders</span>,
+            <span class='ident'>additive</span>: <span class='self'>self</span>.<span class='ident'>additive</span>,
+        }
     }
 }
 
@@ -721,13 +729,12 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>Config</span> {
-    <span class='doccomment'>/// Creates a new `ConfigBuilder` with the specified `Root`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>(<span class='ident'>root</span>: <span class='ident'>Root</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
-        <span class='ident'>ConfigBuilder</span>(<span class='ident'>Config</span> {
+    <span class='doccomment'>/// Creates a new `ConfigBuilder`.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>() <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
+        <span class='ident'>ConfigBuilder</span> {
             <span class='ident'>appenders</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-            <span class='ident'>root</span>: <span class='ident'>root</span>,
             <span class='ident'>loggers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-        })
+        }
     }
 
     <span class='doccomment'>/// Returns the `Appender`s associated with the `Config`.</span>
@@ -747,30 +754,33 @@
 }
 
 <span class='doccomment'>/// A builder for `Config`s.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ConfigBuilder</span>(<span class='ident'>Config</span>);
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ConfigBuilder</span> {
+    <span class='ident'>appenders</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Appender</span><span class='op'>&gt;</span>,
+    <span class='ident'>loggers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Logger</span><span class='op'>&gt;</span>,
+}
 
 <span class='kw'>impl</span> <span class='ident'>ConfigBuilder</span> {
     <span class='doccomment'>/// Adds an appender.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appender</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appender</span>: <span class='ident'>Appender</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>appenders</span>.<span class='ident'>push</span>(<span class='ident'>appender</span>);
+        <span class='self'>self</span>.<span class='ident'>appenders</span>.<span class='ident'>push</span>(<span class='ident'>appender</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Adds appenders.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appenders</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>Appender</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appenders</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>appenders</span>.<span class='ident'>extend</span>(<span class='ident'>appenders</span>);
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>appenders</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>Appender</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>appenders</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>appenders</span>.<span class='ident'>extend</span>(<span class='ident'>appenders</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Adds a logger.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>logger</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>logger</span>: <span class='ident'>Logger</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>loggers</span>.<span class='ident'>push</span>(<span class='ident'>logger</span>);
+        <span class='self'>self</span>.<span class='ident'>loggers</span>.<span class='ident'>push</span>(<span class='ident'>logger</span>);
         <span class='self'>self</span>
     }
 
     <span class='doccomment'>/// Adds loggers.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>loggers</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span><span class='op'>=</span><span class='ident'>Logger</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>loggers</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
-        <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>loggers</span>.<span class='ident'>extend</span>(<span class='ident'>loggers</span>);
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>loggers</span><span class='op'>&lt;</span><span class='ident'>I</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>Logger</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>loggers</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>ConfigBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>loggers</span>.<span class='ident'>extend</span>(<span class='ident'>loggers</span>);
         <span class='self'>self</span>
     }
 
@@ -778,10 +788,10 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Unlike `build`, this method will always return a `Config` by stripping</span>
     <span class='doccomment'>/// portions of the configuration that are incorrect.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build_lossy</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>Config</span>, <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Errors</span><span class='op'>&gt;</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build_lossy</span>(<span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>root</span>: <span class='ident'>Root</span>) <span class='op'>-&gt;</span> (<span class='ident'>Config</span>, <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Errors</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>errors</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
 
-        <span class='kw'>let</span> <span class='ident'>Config</span> { <span class='ident'>appenders</span>, <span class='kw-2'>mut</span> <span class='ident'>root</span>, <span class='ident'>loggers</span> } <span class='op'>=</span> <span class='self'>self</span>.<span class='number'>0</span>;
+        <span class='kw'>let</span> <span class='ident'>ConfigBuilder</span> { <span class='ident'>appenders</span>, <span class='ident'>loggers</span> } <span class='op'>=</span> <span class='self'>self</span>;
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ok_appenders</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>appender_names</span> <span class='op'>=</span> <span class='ident'>HashSet</span>::<span class='ident'>new</span>();
@@ -845,34 +855,34 @@
     }
 
     <span class='doccomment'>/// Consumes the `ConfigBuilder`, returning the `Config`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Config</span>, <span class='ident'>Errors</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> (<span class='ident'>config</span>, <span class='ident'>errors</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>build_lossy</span>();
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>, <span class='ident'>root</span>: <span class='ident'>Root</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Config</span>, <span class='ident'>Errors</span><span class='op'>&gt;</span> {
+        <span class='kw'>let</span> (<span class='ident'>config</span>, <span class='ident'>errors</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>build_lossy</span>(<span class='ident'>root</span>);
         <span class='ident'>errors</span>.<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> <span class='ident'>config</span>)
     }
 }
 
 <span class='kw'>fn</span> <span class='ident'>check_logger_name</span>(<span class='ident'>name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='kw'>if</span> <span class='ident'>name</span>.<span class='ident'>is_empty</span>() {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_string</span>()));
+        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_owned</span>()));
     }
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>streak</span> <span class='op'>=</span> <span class='number'>0</span>;
     <span class='kw'>for</span> <span class='ident'>ch</span> <span class='kw'>in</span> <span class='ident'>name</span>.<span class='ident'>chars</span>() {
-        <span class='kw'>if</span> <span class='ident'>ch</span> <span class='op'>!=</span> <span class='string'>&#39;:&#39;</span> {
-            <span class='kw'>if</span> <span class='ident'>streak</span> <span class='op'>&gt;</span> <span class='number'>0</span> <span class='op'>&amp;&amp;</span> <span class='ident'>streak</span> <span class='op'>!=</span> <span class='number'>2</span> {
-                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_string</span>()));
-            }
-            <span class='ident'>streak</span> <span class='op'>=</span> <span class='number'>0</span>;
-        } <span class='kw'>else</span> {
+        <span class='kw'>if</span> <span class='ident'>ch</span> <span class='op'>==</span> <span class='string'>&#39;:&#39;</span> {
             <span class='ident'>streak</span> <span class='op'>+=</span> <span class='number'>1</span>;
             <span class='kw'>if</span> <span class='ident'>streak</span> <span class='op'>&gt;</span> <span class='number'>2</span> {
-                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_string</span>()));
+                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_owned</span>()));
             }
+        } <span class='kw'>else</span> {
+            <span class='kw'>if</span> <span class='ident'>streak</span> <span class='op'>&gt;</span> <span class='number'>0</span> <span class='op'>&amp;&amp;</span> <span class='ident'>streak</span> <span class='op'>!=</span> <span class='number'>2</span> {
+                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_owned</span>()));
+            }
+            <span class='ident'>streak</span> <span class='op'>=</span> <span class='number'>0</span>;
         }
     }
 
     <span class='kw'>if</span> <span class='ident'>streak</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
-        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_string</span>()))
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidLoggerName</span>(<span class='ident'>name</span>.<span class='ident'>to_owned</span>()))
     } <span class='kw'>else</span> {
         <span class='prelude-val'>Ok</span>(())
     }
@@ -955,19 +965,19 @@
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>check_logger_name</span>() {
-        <span class='kw'>let</span> <span class='ident'>tests</span> <span class='op'>=</span> [
-            (<span class='string'>&quot;&quot;</span>, <span class='boolvalue'>false</span>),
-            (<span class='string'>&quot;asdf&quot;</span>, <span class='boolvalue'>true</span>),
-            (<span class='string'>&quot;asdf::jkl&quot;</span>, <span class='boolvalue'>true</span>),
-            (<span class='string'>&quot;::&quot;</span>, <span class='boolvalue'>false</span>),
-            (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='boolvalue'>false</span>),
-            (<span class='string'>&quot;asdf:jkl&quot;</span>, <span class='boolvalue'>false</span>),
-            (<span class='string'>&quot;asdf:::jkl&quot;</span>, <span class='boolvalue'>false</span>),
-            (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='boolvalue'>false</span>),
-        ];
+        <span class='kw'>let</span> <span class='ident'>tests</span> <span class='op'>=</span> [(<span class='string'>&quot;&quot;</span>, <span class='boolvalue'>false</span>),
+                     (<span class='string'>&quot;asdf&quot;</span>, <span class='boolvalue'>true</span>),
+                     (<span class='string'>&quot;asdf::jkl&quot;</span>, <span class='boolvalue'>true</span>),
+                     (<span class='string'>&quot;::&quot;</span>, <span class='boolvalue'>false</span>),
+                     (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='boolvalue'>false</span>),
+                     (<span class='string'>&quot;asdf:jkl&quot;</span>, <span class='boolvalue'>false</span>),
+                     (<span class='string'>&quot;asdf:::jkl&quot;</span>, <span class='boolvalue'>false</span>),
+                     (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='boolvalue'>false</span>)];
 
         <span class='kw'>for</span> <span class='kw-2'>&amp;</span>(<span class='kw-2'>ref</span> <span class='ident'>name</span>, <span class='ident'>expected</span>) <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='ident'>tests</span> {
-            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>expected</span> <span class='op'>==</span> <span class='kw'>super</span>::<span class='ident'>check_logger_name</span>(<span class='ident'>name</span>).<span class='ident'>is_ok</span>(), <span class='string'>&quot;{}&quot;</span>, <span class='ident'>name</span>);
+            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>expected</span> <span class='op'>==</span> <span class='kw'>super</span>::<span class='ident'>check_logger_name</span>(<span class='ident'>name</span>).<span class='ident'>is_ok</span>(),
+                    <span class='string'>&quot;{}&quot;</span>,
+                    <span class='ident'>name</span>);
         }
     }
 }

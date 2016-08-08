@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.0/src/connection.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.2/src/connection.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>connection.rs.html -- source</title>
@@ -1066,6 +1066,12 @@
 <span id="1022">1022</span>
 <span id="1023">1023</span>
 <span id="1024">1024</span>
+<span id="1025">1025</span>
+<span id="1026">1026</span>
+<span id="1027">1027</span>
+<span id="1028">1028</span>
+<span id="1029">1029</span>
+<span id="1030">1030</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>replace</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>transmute</span>;
@@ -1445,6 +1451,12 @@
                         }
                         <span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_error</span>(<span class='ident'>err</span>);
                     }
+                    <span class='ident'>Kind</span>::<span class='ident'>Queue</span>(_) <span class='op'>=&gt;</span> {
+                        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>panic_on_queue</span> {
+                            <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Panicking on queue error -- {}&quot;</span>, <span class='ident'>err</span>);
+                        }
+                        <span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_error</span>(<span class='ident'>err</span>);
+                    }
                     _ <span class='op'>=&gt;</span> {
                         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>panic_on_io</span> {
                             <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Panicking on io error -- {}&quot;</span>, <span class='ident'>err</span>);
@@ -1476,8 +1488,8 @@
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>endpoint</span> {
                 <span class='ident'>Server</span> <span class='op'>=&gt;</span> {
                     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>done</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
-                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='ident'>res</span>)) {
-                        <span class='kw'>if</span> <span class='ident'>res</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>len</span> {
+                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(_) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='ident'>res</span>)) {
+                        <span class='kw'>if</span> <span class='ident'>res</span>.<span class='ident'>position</span>() <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>==</span> <span class='ident'>res</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() {
                             <span class='ident'>done</span> <span class='op'>=</span> <span class='boolvalue'>true</span>
                         }
                     }
@@ -1486,8 +1498,8 @@
                     }
                 }
                 <span class='ident'>Client</span> <span class='op'>=&gt;</span>  {
-                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='ident'>req</span>)) {
-                        <span class='kw'>if</span> <span class='ident'>req</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>len</span> {
+                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(_) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='ident'>req</span>)) {
+                        <span class='kw'>if</span> <span class='ident'>req</span>.<span class='ident'>position</span>() <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>==</span> <span class='ident'>req</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() {
                             <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Finished writing handshake request to {}&quot;</span>,
                                 <span class='self'>self</span>.<span class='ident'>socket</span>
                                     .<span class='ident'>peer_addr</span>()

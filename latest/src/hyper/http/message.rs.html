@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/http/message.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/http/message.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>message.rs.html -- source</title>
@@ -174,6 +174,7 @@
 <span id="130">130</span>
 <span id="131">131</span>
 <span id="132">132</span>
+<span id="133">133</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Defines the `HttpMessage` trait that serves to encapsulate the operations of a single</span>
 <span class='doccomment'>//! request-response cycle on any HTTP connection.</span>
@@ -183,9 +184,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>Read</span>, <span class='ident'>Write</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
 <span class='kw'>use</span> <span class='ident'>typeable</span>::<span class='ident'>Typeable</span>;
@@ -242,15 +241,18 @@
     <span class='doccomment'>/// the response body.</span>
     <span class='kw'>fn</span> <span class='ident'>get_incoming</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>ResponseHead</span><span class='op'>&gt;</span>;
     <span class='doccomment'>/// Set the read timeout duration for this message.</span>
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
     <span class='kw'>fn</span> <span class='ident'>set_read_timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>dur</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>;
     <span class='doccomment'>/// Set the write timeout duration for this message.</span>
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;timeouts&quot;</span>)]</span>
     <span class='kw'>fn</span> <span class='ident'>set_write_timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>dur</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Duration</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>;
     <span class='doccomment'>/// Closes the underlying HTTP connection.</span>
     <span class='kw'>fn</span> <span class='ident'>close_connection</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>;
     <span class='doccomment'>/// Returns whether the incoming message has a body.</span>
     <span class='kw'>fn</span> <span class='ident'>has_body</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span>;
+    <span class='doccomment'>/// Called when the Client wishes to use a Proxy.</span>
+    <span class='kw'>fn</span> <span class='ident'>set_proxied</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>val</span>: <span class='ident'>bool</span>) {
+        <span class='comment'>// default implementation so as to not be a breaking change.</span>
+        <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;default set_proxied({:?})&quot;</span>, <span class='ident'>val</span>);
+    }
 }
 
 <span class='kw'>impl</span> <span class='ident'>HttpMessage</span> {

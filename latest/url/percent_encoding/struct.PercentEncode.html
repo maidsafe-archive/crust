@@ -50,7 +50,7 @@
                </span><a id='src-1486' class='srclink' href='../../src/url/percent_encoding.rs.html#167-170' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct PercentEncode&lt;'a, E: <a class='trait' href='../../url/percent_encoding/trait.EncodeSet.html' title='url::percent_encoding::EncodeSet'>EncodeSet</a>&gt; {
     // some fields omitted
-}</pre><div class='docblock'><p>The return type of <code>percent_decode()</code>.</p>
+}</pre><div class='docblock'><p>The return type of <code>percent_encode()</code> and <code>utf8_percent_encode()</code>.</p>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a, E: <a class='trait' href='../../url/percent_encoding/trait.EncodeSet.html' title='url::percent_encoding::EncodeSet'>EncodeSet</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a> for <a class='struct' href='../../url/percent_encoding/struct.PercentEncode.html' title='url::percent_encoding::PercentEncode'>PercentEncode</a>&lt;'a, E&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1498' class='srclink' href='../../src/url/percent_encoding.rs.html#172-208' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='associatedtype.Item' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html#associatedtype.Item' class='type'>Item</a> = &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <div class='docblock'><p>The type of the elements being iterated over.</p>

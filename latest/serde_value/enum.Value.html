@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Value` enum in crate `serde_value`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Value">
+
+    <title>serde_value::Value - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>serde_value</a></p><script>window.sidebarCurrent = {name: 'Value', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>serde_value</a>::<wbr><a class='enum' href=''>Value</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-117' class='srclink' href='../src/serde_value/lib.rs.html#115-143' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum Value {
+    Bool(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>),
+    Usize(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>),
+    U8(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>),
+    U16(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>),
+    U32(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
+    U64(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>),
+    Isize(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.isize.html'>isize</a>),
+    I8(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i8.html'>i8</a>),
+    I16(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i16.html'>i16</a>),
+    I32(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a>),
+    I64(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a>),
+    F32(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a>),
+    F64(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f64.html'>f64</a>),
+    Char(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>),
+    String(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    Unit,
+    UnitStruct(&amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
+    Option(<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a>&gt;&gt;),
+    Newtype(<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a>&gt;),
+    Seq(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a>&gt;),
+    Map(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/btree/map/struct.BTreeMap.html' title='collections::btree::map::BTreeMap'>BTreeMap</a>&lt;<a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a>, <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a>&gt;),
+    Bytes(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
+}</pre><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.Bool'><code>Bool</code></td><td></td><td></td></tr><tr><td id='variant.Usize'><code>Usize</code></td><td></td><td></td></tr><tr><td id='variant.U8'><code>U8</code></td><td></td><td></td></tr><tr><td id='variant.U16'><code>U16</code></td><td></td><td></td></tr><tr><td id='variant.U32'><code>U32</code></td><td></td><td></td></tr><tr><td id='variant.U64'><code>U64</code></td><td></td><td></td></tr><tr><td id='variant.Isize'><code>Isize</code></td><td></td><td></td></tr><tr><td id='variant.I8'><code>I8</code></td><td></td><td></td></tr><tr><td id='variant.I16'><code>I16</code></td><td></td><td></td></tr><tr><td id='variant.I32'><code>I32</code></td><td></td><td></td></tr><tr><td id='variant.I64'><code>I64</code></td><td></td><td></td></tr><tr><td id='variant.F32'><code>F32</code></td><td></td><td></td></tr><tr><td id='variant.F64'><code>F64</code></td><td></td><td></td></tr><tr><td id='variant.Char'><code>Char</code></td><td></td><td></td></tr><tr><td id='variant.String'><code>String</code></td><td></td><td></td></tr><tr><td id='variant.Unit'><code>Unit</code></td><td></td><td></td></tr><tr><td id='variant.UnitStruct'><code>UnitStruct</code></td><td></td><td></td></tr><tr><td id='variant.Option'><code>Option</code></td><td></td><td></td></tr><tr><td id='variant.Newtype'><code>Newtype</code></td><td></td><td></td></tr><tr><td id='variant.Seq'><code>Seq</code></td><td></td><td></td></tr><tr><td id='variant.Map'><code>Map</code></td><td></td><td></td></tr><tr><td id='variant.Bytes'><code>Bytes</code></td><td></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-326' class='srclink' href='../src/serde_value/lib.rs.html#205-240' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.deserializer' class='method'><code>fn <a href='#method.deserializer' class='fnname'>deserializer</a>(self) -&gt; <a class='struct' href='../serde_value/struct.Deserializer.html' title='serde_value::Deserializer'>Deserializer</a></code></h4>
+<h4 id='method.deserialize_into' class='method'><code>fn <a href='#method.deserialize_into' class='fnname'>deserialize_into</a>&lt;T: <a class='trait' href='../serde/de/trait.Deserialize.html' title='serde::de::Deserialize'>Deserialize</a>&gt;(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, <a class='enum' href='../serde_value/enum.DeserializerError.html' title='serde_value::DeserializerError'>DeserializerError</a>&gt;</code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-232' class='srclink' href='../src/serde_value/lib.rs.html#145-173' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, rhs: &amp;Self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
+</div><h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>This method tests for <code>!=</code>.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html' title='core::cmp::PartialOrd'>PartialOrd</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-278' class='srclink' href='../src/serde_value/lib.rs.html#175-203' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.partial_cmp' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#tymethod.partial_cmp' class='fnname'>partial_cmp</a>(&amp;self, rhs: &amp;Self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/cmp/enum.Ordering.html' title='core::cmp::Ordering'>Ordering</a>&gt;</code></h4>
+<div class='docblock'><p>This method returns an ordering between <code>self</code> and <code>other</code> values if one exists. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#tymethod.partial_cmp">Read more</a></p>
+</div><h4 id='method.lt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.lt' class='fnname'>lt</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>This method tests less than (for <code>self</code> and <code>other</code>) and is used by the <code>&lt;</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.lt">Read more</a></p>
+</div><h4 id='method.le' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.le' class='fnname'>le</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>This method tests less than or equal to (for <code>self</code> and <code>other</code>) and is used by the <code>&lt;=</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.le">Read more</a></p>
+</div><h4 id='method.gt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.gt' class='fnname'>gt</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>This method tests greater than (for <code>self</code> and <code>other</code>) and is used by the <code>&gt;</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.gt">Read more</a></p>
+</div><h4 id='method.ge' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.ge' class='fnname'>ge</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>This method tests greater than or equal to (for <code>self</code> and <code>other</code>) and is used by the <code>&gt;=</code> operator. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.ge">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-334' class='srclink' href='../src/serde_value/lib.rs.html#242' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html' title='core::cmp::Ord'>Ord</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-335' class='srclink' href='../src/serde_value/lib.rs.html#243-247' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.cmp' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html#tymethod.cmp' class='fnname'>cmp</a>(&amp;self, rhs: &amp;Self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/cmp/enum.Ordering.html' title='core::cmp::Ordering'>Ordering</a></code></h4>
+<div class='docblock'><p>This method returns an <code>Ordering</code> between <code>self</code> and <code>other</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html#tymethod.cmp">Read more</a></p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../serde/de/trait.Deserialize.html' title='serde::de::Deserialize'>Deserialize</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-452' class='srclink' href='../src/serde_value/lib.rs.html#359-363' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.deserialize' class='method'><code>fn <a href='../serde/de/trait.Deserialize.html#tymethod.deserialize' class='fnname'>deserialize</a>&lt;D: <a class='trait' href='../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Deserializer</a>&gt;(d: &amp;mut D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self, D::Error&gt;</code></h4>
+<div class='docblock'><p>Deserialize this value given this <code>Deserializer</code>.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../serde/ser/trait.Serialize.html' title='serde::ser::Serialize'>Serialize</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-456' class='srclink' href='../src/serde_value/lib.rs.html#365-393' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.serialize' class='method'><code>fn <a href='../serde/ser/trait.Serialize.html#tymethod.serialize' class='fnname'>serialize</a>&lt;S: <a class='trait' href='../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Serializer</a>&gt;(&amp;self, s: &amp;mut S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, S::Error&gt;</code></h4>
+<div class='docblock'><p>Serializes this value into this serializer.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='../serde/de/value/trait.ValueDeserializer.html' title='serde::de::value::ValueDeserializer'>ValueDeserializer</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-488' class='srclink' href='../src/serde_value/lib.rs.html#407-413' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.Deserializer' class='type'><code>type <a href='../serde/de/value/trait.ValueDeserializer.html#associatedtype.Deserializer' class='type'>Deserializer</a> = <a class='struct' href='../serde_value/struct.ValueDeserializer.html' title='serde_value::ValueDeserializer'>ValueDeserializer</a></code></h4>
+<div class='docblock'><p>The actual deserializer type.</p>
+</div><h4 id='method.into_deserializer' class='method'><code>fn <a href='../serde/de/value/trait.ValueDeserializer.html#tymethod.into_deserializer' class='fnname'>into_deserializer</a>(self) -&gt; Self::<a class='trait' href='../serde/de/value/trait.ValueDeserializer.html' title='serde::de::value::ValueDeserializer'>Deserializer</a></code></h4>
+<div class='docblock'><p>Convert this value into a deserializer.</p>
+</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-161' class='srclink' href='../src/serde_value/lib.rs.html#114' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-208' class='srclink' href='../src/serde_value/lib.rs.html#114' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../serde_value/enum.Value.html' title='serde_value::Value'>Value</a></code></h4>
+<div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
+</div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
+<div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "serde_value";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

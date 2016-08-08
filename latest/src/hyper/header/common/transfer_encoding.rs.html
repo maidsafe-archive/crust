@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.6.16/src/header/common/transfer_encoding.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/hyper-0.9.10/src/header/common/transfer_encoding.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>transfer_encoding.rs.html -- source</title>
@@ -88,6 +88,13 @@
 <span id="44">44</span>
 <span id="45">45</span>
 <span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>Encoding</span>;
 
@@ -129,6 +136,13 @@
             <span class='prelude-val'>Some</span>(<span class='ident'>HeaderField</span>(
                 <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Encoding</span>::<span class='ident'>Gzip</span>, <span class='ident'>Encoding</span>::<span class='ident'>Chunked</span>]
                 )));
+        <span class='comment'>// Issue: #683</span>
+        <span class='macro'>test_header</span><span class='macro'>!</span>(
+            <span class='ident'>test2</span>,
+            <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;chunked&quot;</span>, <span class='string'>b&quot;chunked&quot;</span>],
+            <span class='prelude-val'>Some</span>(<span class='ident'>HeaderField</span>(
+                <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>Encoding</span>::<span class='ident'>Chunked</span>, <span class='ident'>Encoding</span>::<span class='ident'>Chunked</span>]
+            )));
 
     }
 }

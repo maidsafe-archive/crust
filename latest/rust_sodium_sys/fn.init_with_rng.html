@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `init_with_rng` fn in crate `rust_sodium_sys`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, init_with_rng">
+
+    <title>rust_sodium_sys::init_with_rng - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>rust_sodium_sys</a></p><script>window.sidebarCurrent = {name: 'init_with_rng', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content fn">
+<h1 class='fqn'><span class='in-band'>Function <a href='index.html'>rust_sodium_sys</a>::<wbr><a class='fn' href=''>init_with_rng</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a id='src-870' class='srclink' href='../src/rust_sodium_sys/src/init_with_rng.rs.html#91-120' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn init_with_rng&lt;T: <a class='trait' href='../rand/trait.Rng.html' title='rand::Rng'>Rng</a>&gt;(rng: &amp;mut T) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a>&gt;</pre><div class='docblock'><p>Sets <a href="https://download.libsodium.org/doc/advanced/custom_rng.html">libsodium&#39;s <code>randombytes_implementation</code></a> to use a
+<a href="../rand/trait.Rng.html">Rust <code>Rng</code> implementation</a> and initialises libsodium.</p>
+
+<p>This allows a seeded PRNG to be used for example, which can be helpful in test scenarios when
+predictable results may be preferred.</p>
+
+<p>This function is safe to call multiple times concurrently from different threads.  It will
+either always return <code>Ok</code> or will always return <code>Err</code>.</p>
+
+<p>The error will contain either <code>-1</code> or <code>1</code>.  If the error is <code>-1</code>, the initialisation of
+libsodium has failed.  If the error is <code>1</code>, libsodium has been successfully initialised
+elsewhere (e.g. via <a href="http://docs.maidsafe.net/rust_sodium/master/rust_sodium/fn.init.html"><code>rust_sodium::init()</code></a>) but this means that our
+attempt to apply this seeded RNG to libsodium has not been actioned.</p>
+
+<p>Each sodiumoxide function which uses the random generator in a new thread will cause a new
+thread-local instance of the PRNG to be created.  Each such instance will be seeded with the
+same value, meaning for example that two newly-spawned threads calling <code>box_::gen_keypair()</code>
+will generate identical keys.</p>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "rust_sodium_sys";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
