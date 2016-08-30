@@ -858,8 +858,8 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>idx</span>: <span class='ident'>I</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>get</span>(<span class='ident'>idx</span>) {
-            <span class='prelude-val'>Some</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+            <span class='prelude-val'>Some</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
         }
     }
 
@@ -1136,13 +1136,13 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_insertion</span>() {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>slab</span> <span class='op'>=</span> <span class='ident'>Slab</span>::<span class='op'>&lt;</span><span class='ident'>usize</span>, <span class='ident'>usize</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='number'>1</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>is_empty</span>(), <span class='boolvalue'>true</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>has_remaining</span>(), <span class='boolvalue'>true</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>is_empty</span>(), <span class='bool-val'>true</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>has_remaining</span>(), <span class='bool-val'>true</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>remaining</span>(), <span class='number'>1</span>);
         <span class='kw'>let</span> <span class='ident'>idx</span> <span class='op'>=</span> <span class='ident'>slab</span>.<span class='ident'>insert</span>(<span class='number'>10</span>).<span class='ident'>ok</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Failed to insert&quot;</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>[<span class='ident'>idx</span>], <span class='number'>10</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>is_empty</span>(), <span class='boolvalue'>false</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>has_remaining</span>(), <span class='boolvalue'>false</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>is_empty</span>(), <span class='bool-val'>false</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>has_remaining</span>(), <span class='bool-val'>false</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>remaining</span>(), <span class='number'>0</span>);
     }
 
@@ -1340,7 +1340,7 @@
         <span class='ident'>slab</span>.<span class='ident'>retain</span>(<span class='op'>|</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span> <span class='op'>%</span> <span class='number'>2</span> <span class='op'>==</span> <span class='number'>0</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>count</span>(), <span class='number'>1</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>[<span class='ident'>tok1</span>], <span class='number'>0</span>);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>contains</span>(<span class='ident'>tok2</span>), <span class='boolvalue'>false</span>);
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>slab</span>.<span class='ident'>contains</span>(<span class='ident'>tok2</span>), <span class='bool-val'>false</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>

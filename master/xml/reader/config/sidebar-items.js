@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["ParserConfig","Parser configuration structure."]]});

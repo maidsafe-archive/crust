@@ -1245,7 +1245,7 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>has_body</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='boolvalue'>true</span>
+        <span class='bool-val'>true</span>
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
@@ -1358,7 +1358,7 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>mock_connector</span> <span class='op'>=</span> <span class='ident'>MockHttp2Connector</span>::<span class='ident'>new</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
         <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>header</span>::<span class='ident'>ContentLength</span>(<span class='number'>3</span>));
-        <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>header</span>::<span class='ident'>ETag</span>(<span class='ident'>header</span>::<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='string'>&quot;tag&quot;</span>.<span class='ident'>into</span>())));
+        <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>header</span>::<span class='ident'>ETag</span>(<span class='ident'>header</span>::<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>true</span>, <span class='string'>&quot;tag&quot;</span>.<span class='ident'>into</span>())));
         <span class='ident'>mock_connector</span>.<span class='ident'>new_response_stream</span>(<span class='string'>b&quot;200&quot;</span>, <span class='kw-2'>&amp;</span><span class='ident'>headers</span>, <span class='prelude-val'>Some</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]));
         <span class='kw'>let</span> <span class='ident'>protocol</span> <span class='op'>=</span> <span class='ident'>Http2Protocol</span>::<span class='ident'>with_connector</span>(<span class='ident'>mock_connector</span>);
 
@@ -1417,13 +1417,13 @@
         <span class='ident'>server_stream</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='number'>0</span>; <span class='number'>24</span>]).<span class='ident'>unwrap</span>();
         <span class='comment'>// The first frame are the settings</span>
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>server_stream</span>.<span class='ident'>recv_frame</span>().<span class='ident'>unwrap</span>() {
-            <span class='ident'>HttpFrame</span>::<span class='ident'>SettingsFrame</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>HttpFrame</span>::<span class='ident'>SettingsFrame</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='comment'>// Now the ACK to the server&#39;s settings.</span>
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>server_stream</span>.<span class='ident'>recv_frame</span>().<span class='ident'>unwrap</span>() {
-            <span class='ident'>HttpFrame</span>::<span class='ident'>SettingsFrame</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>HttpFrame</span>::<span class='ident'>SettingsFrame</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
@@ -1451,7 +1451,7 @@
         <span class='kw'>let</span> <span class='ident'>frame</span> <span class='op'>=</span> <span class='ident'>server_stream</span>.<span class='ident'>recv_frame</span>().<span class='ident'>unwrap</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>frame</span> {
             <span class='ident'>HttpFrame</span>::<span class='ident'>HeadersFrame</span>(<span class='kw-2'>ref</span> <span class='ident'>frame</span>) <span class='op'>=&gt;</span> <span class='ident'>frame</span>.<span class='ident'>is_end_of_stream</span>(),
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
@@ -1482,11 +1482,11 @@
         <span class='kw'>let</span> <span class='ident'>frame</span> <span class='op'>=</span> <span class='ident'>server_stream</span>.<span class='ident'>recv_frame</span>().<span class='ident'>unwrap</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>frame</span> {
             <span class='ident'>HttpFrame</span>::<span class='ident'>HeadersFrame</span>(<span class='kw-2'>ref</span> <span class='ident'>frame</span>) <span class='op'>=&gt;</span> <span class='op'>!</span><span class='ident'>frame</span>.<span class='ident'>is_end_of_stream</span>(),
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>server_stream</span>.<span class='ident'>recv_frame</span>().<span class='ident'>unwrap</span>() {
             <span class='ident'>HttpFrame</span>::<span class='ident'>DataFrame</span>(<span class='kw-2'>ref</span> <span class='ident'>frame</span>) <span class='op'>=&gt;</span> <span class='ident'>frame</span>.<span class='ident'>data</span> <span class='op'>==</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>],
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 

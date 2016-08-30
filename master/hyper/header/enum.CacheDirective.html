@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2127' class='srclink' href='../../src/hyper/header/common/cache_control.rs.html#75-107' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2167' class='srclink' href='../../src/hyper/header/common/cache_control.rs.html#75-107' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum CacheDirective {
     NoCache,
     NoStore,
@@ -61,23 +61,23 @@
     Private,
     ProxyRevalidate,
     SMaxAge(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
-    Extension(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;),
+    Extension(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;),
 }</pre><div class='docblock'><p><code>CacheControl</code> contains a list of these directives.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.NoCache'><code>NoCache</code></td><td><div class='docblock'><p>&quot;no-cache&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.NoStore'><code>NoStore</code></td><td><div class='docblock'><p>&quot;no-store&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.NoTransform'><code>NoTransform</code></td><td><div class='docblock'><p>&quot;no-transform&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.OnlyIfCached'><code>OnlyIfCached</code></td><td><div class='docblock'><p>&quot;only-if-cached&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.MaxAge'><code>MaxAge</code></td><td><div class='docblock'><p>&quot;max-age=delta&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.MaxStale'><code>MaxStale</code></td><td><div class='docblock'><p>&quot;max-stale=delta&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.MinFresh'><code>MinFresh</code></td><td><div class='docblock'><p>&quot;min-fresh=delta&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.MustRevalidate'><code>MustRevalidate</code></td><td><div class='docblock'><p>&quot;must-revalidate&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.Public'><code>Public</code></td><td><div class='docblock'><p>&quot;public&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.Private'><code>Private</code></td><td><div class='docblock'><p>&quot;private&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.ProxyRevalidate'><code>ProxyRevalidate</code></td><td><div class='docblock'><p>&quot;proxy-revalidate&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.SMaxAge'><code>SMaxAge</code></td><td><div class='docblock'><p>&quot;s-maxage=delta&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.Extension'><code>Extension</code></td><td><div class='docblock'><p>Extension directives. Optionally include an argument.</p>
-</div></td><td></td></tr></table></section>
+<span id='variant.NoCache' class='variant'><code>NoCache</code></span><div class='docblock'><p>&quot;no-cache&quot;</p>
+</div><span id='variant.NoStore' class='variant'><code>NoStore</code></span><div class='docblock'><p>&quot;no-store&quot;</p>
+</div><span id='variant.NoTransform' class='variant'><code>NoTransform</code></span><div class='docblock'><p>&quot;no-transform&quot;</p>
+</div><span id='variant.OnlyIfCached' class='variant'><code>OnlyIfCached</code></span><div class='docblock'><p>&quot;only-if-cached&quot;</p>
+</div><span id='variant.MaxAge' class='variant'><code>MaxAge(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></span><div class='docblock'><p>&quot;max-age=delta&quot;</p>
+</div><span id='variant.MaxStale' class='variant'><code>MaxStale(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></span><div class='docblock'><p>&quot;max-stale=delta&quot;</p>
+</div><span id='variant.MinFresh' class='variant'><code>MinFresh(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></span><div class='docblock'><p>&quot;min-fresh=delta&quot;</p>
+</div><span id='variant.MustRevalidate' class='variant'><code>MustRevalidate</code></span><div class='docblock'><p>&quot;must-revalidate&quot;</p>
+</div><span id='variant.Public' class='variant'><code>Public</code></span><div class='docblock'><p>&quot;public&quot;</p>
+</div><span id='variant.Private' class='variant'><code>Private</code></span><div class='docblock'><p>&quot;private&quot;</p>
+</div><span id='variant.ProxyRevalidate' class='variant'><code>ProxyRevalidate</code></span><div class='docblock'><p>&quot;proxy-revalidate&quot;</p>
+</div><span id='variant.SMaxAge' class='variant'><code>SMaxAge(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></span><div class='docblock'><p>&quot;s-maxage=delta&quot;</p>
+</div><span id='variant.Extension' class='variant'><code>Extension(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;)</code></span><div class='docblock'><p>Extension directives. Optionally include an argument.</p>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

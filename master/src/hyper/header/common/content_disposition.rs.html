@@ -473,11 +473,11 @@
         <span class='kw'>for</span> <span class='ident'>param</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>parameters</span> {
             <span class='kw'>match</span> <span class='op'>*</span><span class='ident'>param</span> {
                 <span class='ident'>DispositionParam</span>::<span class='ident'>Filename</span>(<span class='kw-2'>ref</span> <span class='ident'>charset</span>, <span class='kw-2'>ref</span> <span class='ident'>opt_lang</span>, <span class='kw-2'>ref</span> <span class='ident'>bytes</span>) <span class='op'>=&gt;</span> {
-                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>use_simple_format</span>: <span class='ident'>bool</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>use_simple_format</span>: <span class='ident'>bool</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
                     <span class='kw'>if</span> <span class='ident'>opt_lang</span>.<span class='ident'>is_none</span>() {
                         <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>Charset</span>::<span class='ident'>Ext</span>(<span class='kw-2'>ref</span> <span class='ident'>ext</span>) <span class='op'>=</span> <span class='op'>*</span><span class='ident'>charset</span> {
                             <span class='kw'>if</span> <span class='ident'>UniCase</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='op'>*</span><span class='ident'>ext</span>) <span class='op'>==</span> <span class='ident'>UniCase</span>(<span class='string'>&quot;utf-8&quot;</span>) {
-                                <span class='ident'>use_simple_format</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                                <span class='ident'>use_simple_format</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                             }
                         }
                     }

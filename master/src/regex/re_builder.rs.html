@@ -227,12 +227,12 @@
             <span class='ident'>pats</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>size_limit</span>: <span class='number'>10</span> <span class='op'>*</span> (<span class='number'>1</span><span class='op'>&lt;&lt;</span><span class='number'>20</span>),
             <span class='ident'>dfa_size_limit</span>: <span class='number'>2</span> <span class='op'>*</span> (<span class='number'>1</span><span class='op'>&lt;&lt;</span><span class='number'>20</span>),
-            <span class='ident'>case_insensitive</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>multi_line</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>dot_matches_new_line</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>swap_greed</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>ignore_whitespace</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>unicode</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>case_insensitive</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>multi_line</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>dot_matches_new_line</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>swap_greed</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>ignore_whitespace</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>unicode</span>: <span class='bool-val'>true</span>,
         }
     }
 }
@@ -349,8 +349,8 @@
     }
 }
 
-<span class='macro'>define_builder</span><span class='macro'>!</span>(<span class='ident'>bytes</span>, <span class='ident'>re_bytes</span>, <span class='boolvalue'>false</span>, <span class='boolvalue'>false</span>);
-<span class='macro'>define_builder</span><span class='macro'>!</span>(<span class='ident'>unicode</span>, <span class='ident'>re_unicode</span>, <span class='boolvalue'>true</span>, <span class='boolvalue'>true</span>);
+<span class='macro'>define_builder</span><span class='macro'>!</span>(<span class='ident'>bytes</span>, <span class='ident'>re_bytes</span>, <span class='bool-val'>false</span>, <span class='bool-val'>false</span>);
+<span class='macro'>define_builder</span><span class='macro'>!</span>(<span class='ident'>unicode</span>, <span class='ident'>re_unicode</span>, <span class='bool-val'>true</span>, <span class='bool-val'>true</span>);
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

@@ -842,9 +842,9 @@
 <span class='kw'>impl</span> <span class='ident'>SingleByteSet</span> {
     <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>SingleByteSet</span> {
         <span class='ident'>SingleByteSet</span> {
-            <span class='ident'>sparse</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='boolvalue'>false</span>; <span class='number'>256</span>],
+            <span class='ident'>sparse</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='bool-val'>false</span>; <span class='number'>256</span>],
             <span class='ident'>dense</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-            <span class='ident'>complete</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>complete</span>: <span class='bool-val'>true</span>,
         }
     }
 
@@ -855,7 +855,7 @@
             <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>) <span class='op'>=</span> <span class='ident'>lit</span>.<span class='ident'>get</span>(<span class='number'>0</span>) {
                 <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>sset</span>.<span class='ident'>sparse</span>[<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>usize</span>] {
                     <span class='ident'>sset</span>.<span class='ident'>dense</span>.<span class='ident'>push</span>(<span class='ident'>b</span>);
-                    <span class='ident'>sset</span>.<span class='ident'>sparse</span>[<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                    <span class='ident'>sset</span>.<span class='ident'>sparse</span>[<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='bool-val'>true</span>;
                 }
             }
         }
@@ -869,7 +869,7 @@
             <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>b</span>) <span class='op'>=</span> <span class='ident'>lit</span>.<span class='ident'>get</span>(<span class='ident'>lit</span>.<span class='ident'>len</span>().<span class='ident'>checked_sub</span>(<span class='number'>1</span>).<span class='ident'>unwrap</span>()) {
                 <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>sset</span>.<span class='ident'>sparse</span>[<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>usize</span>] {
                     <span class='ident'>sset</span>.<span class='ident'>dense</span>.<span class='ident'>push</span>(<span class='ident'>b</span>);
-                    <span class='ident'>sset</span>.<span class='ident'>sparse</span>[<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                    <span class='ident'>sset</span>.<span class='ident'>sparse</span>[<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='bool-val'>true</span>;
                 }
             }
         }
@@ -1026,7 +1026,7 @@
     <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span> <span class='comment'>// reduces constant overhead</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_suffix</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='ident'>text</span>.<span class='ident'>len</span>() <span class='op'>&lt;</span> <span class='self'>self</span>.<span class='ident'>len</span>() {
-            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+            <span class='kw'>return</span> <span class='bool-val'>false</span>;
         }
         <span class='kw-2'>&amp;</span><span class='ident'>text</span>[<span class='ident'>text</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>len</span>()..] <span class='op'>==</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='self'>self</span>.<span class='ident'>pat</span>
     }

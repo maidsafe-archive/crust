@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Preference","Prefer contains a list of these preferences."]],"struct":[["Prefer","`Prefer` header, defined in RFC7240"]]});

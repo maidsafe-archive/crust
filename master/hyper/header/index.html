@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1146' class='srclink' href='../../src/hyper/header/mod.rs.html#1-809' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1137' class='srclink' href='../../src/hyper/header/mod.rs.html#1-809' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Headers container, and common header fields.</p>
 
 <p>hyper has the opinion that Headers should be strongly-typed, because that&#39;s
@@ -106,8 +106,8 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
             <span class='kw'>if</span> <span class='ident'>line</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> {
                 <span class='kw'>let</span> <span class='ident'>byte</span> <span class='op'>=</span> <span class='ident'>line</span>[<span class='number'>0</span>];
                 <span class='kw'>match</span> <span class='ident'>byte</span> {
-                    <span class='string'>b&#39;0&#39;</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Dnt</span>(<span class='boolvalue'>true</span>)),
-                    <span class='string'>b&#39;1&#39;</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Dnt</span>(<span class='boolvalue'>false</span>)),
+                    <span class='string'>b&#39;0&#39;</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Dnt</span>(<span class='bool-val'>true</span>)),
+                    <span class='string'>b&#39;1&#39;</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Dnt</span>(<span class='bool-val'>false</span>)),
                     _ <span class='op'>=&gt;</span> ()
                 }
             }

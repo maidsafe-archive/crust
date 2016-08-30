@@ -1403,12 +1403,12 @@
                 <span class='self'>self</span>.<span class='ident'>c_empty_look</span>(<span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='ident'>EndText</span>)
             }
             <span class='ident'>WordBoundary</span> <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                 <span class='self'>self</span>.<span class='ident'>byte_classes</span>.<span class='ident'>set_word_boundary</span>();
                 <span class='self'>self</span>.<span class='ident'>c_empty_look</span>(<span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='ident'>WordBoundary</span>)
             }
             <span class='ident'>NotWordBoundary</span> <span class='op'>=&gt;</span> {
-                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_unicode_word_boundary</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                 <span class='self'>self</span>.<span class='ident'>byte_classes</span>.<span class='ident'>set_word_boundary</span>();
                 <span class='self'>self</span>.<span class='ident'>c_empty_look</span>(<span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='ident'>NotWordBoundary</span>)
             }
@@ -1466,13 +1466,13 @@
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>c</span>(<span class='kw-2'>&amp;</span><span class='ident'>Expr</span>::<span class='ident'>Repeat</span> {
                 <span class='ident'>e</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>Expr</span>::<span class='ident'>AnyByte</span>),
                 <span class='ident'>r</span>: <span class='ident'>Repeater</span>::<span class='ident'>ZeroOrMore</span>,
-                <span class='ident'>greedy</span>: <span class='boolvalue'>false</span>,
+                <span class='ident'>greedy</span>: <span class='bool-val'>false</span>,
             }))
         } <span class='kw'>else</span> {
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>c</span>(<span class='kw-2'>&amp;</span><span class='ident'>Expr</span>::<span class='ident'>Repeat</span> {
                 <span class='ident'>e</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>Expr</span>::<span class='ident'>AnyChar</span>),
                 <span class='ident'>r</span>: <span class='ident'>Repeater</span>::<span class='ident'>ZeroOrMore</span>,
-                <span class='ident'>greedy</span>: <span class='boolvalue'>false</span>,
+                <span class='ident'>greedy</span>: <span class='bool-val'>false</span>,
             }))
         })
     }
@@ -2135,15 +2135,15 @@
 
 <span class='kw'>impl</span> <span class='ident'>ByteClassSet</span> {
     <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='self'>Self</span> {
-        <span class='ident'>ByteClassSet</span>([<span class='boolvalue'>false</span>; <span class='number'>256</span>])
+        <span class='ident'>ByteClassSet</span>([<span class='bool-val'>false</span>; <span class='number'>256</span>])
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_range</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>start</span>: <span class='ident'>u8</span>, <span class='ident'>end</span>: <span class='ident'>u8</span>) {
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>start</span> <span class='op'>&lt;=</span> <span class='ident'>end</span>);
         <span class='kw'>if</span> <span class='ident'>start</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
-            <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>-</span> <span class='number'>1</span>] <span class='op'>=</span> <span class='boolvalue'>true</span>;
+            <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>-</span> <span class='number'>1</span>] <span class='op'>=</span> <span class='bool-val'>true</span>;
         }
-        <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolvalue'>true</span>;
+        <span class='self'>self</span>.<span class='number'>0</span>[<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='bool-val'>true</span>;
     }
 
     <span class='kw'>fn</span> <span class='ident'>set_word_boundary</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {

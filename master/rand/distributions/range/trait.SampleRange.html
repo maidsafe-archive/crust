@@ -47,10 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-61' class='srclink' href='../../../src/rand/distributions/range.rs.html#78-88' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-59' class='srclink' href='../../../src/rand/distributions/range.rs.html#78-88' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait SampleRange: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> {
     fn <a href='#tymethod.construct_range' class='fnname'>construct_range</a>(low: Self, high: Self) -&gt; <a class='struct' href='../../../rand/distributions/range/struct.Range.html' title='rand::distributions::range::Range'>Range</a>&lt;Self&gt;;
-    fn <a href='#tymethod.sample_range' class='fnname'>sample_range</a>&lt;R: <a class='trait' href='../../../rand/trait.Rng.html' title='rand::Rng'>Rng</a>&gt;(r: &amp;<a class='struct' href='../../../rand/distributions/range/struct.Range.html' title='rand::distributions::range::Range'>Range</a>&lt;Self&gt;, rng: &amp;mut R) -&gt; Self;
+    fn <a href='#tymethod.sample_range' class='fnname'>sample_range</a>&lt;R:&nbsp;<a class='trait' href='../../../rand/trait.Rng.html' title='rand::Rng'>Rng</a>&gt;(r: &amp;<a class='struct' href='../../../rand/distributions/range/struct.Range.html' title='rand::distributions::range::Range'>Range</a>&lt;Self&gt;, rng: &amp;mut R) -&gt; Self;
 }</pre><div class='docblock'><p>The helper trait for types that have a sensible way to sample
 uniformly between two values. This should not be used directly,
 and is only to facilitate <code>Range</code>.</p>
@@ -61,7 +61,7 @@ and is only to facilitate <code>Range</code>.</p>
 requires. This should not ever be called directly, only via
 <code>Range::new</code>, which will check that <code>low &lt; high</code>, so this
 function doesn&#39;t have to repeat the check.</p>
-</div><h3 id='tymethod.sample_range' class='method stab '><code>fn <a href='#tymethod.sample_range' class='fnname'>sample_range</a>&lt;R: <a class='trait' href='../../../rand/trait.Rng.html' title='rand::Rng'>Rng</a>&gt;(r: &amp;<a class='struct' href='../../../rand/distributions/range/struct.Range.html' title='rand::distributions::range::Range'>Range</a>&lt;Self&gt;, rng: &amp;mut R) -&gt; Self</code></h3><div class='docblock'><p>Sample a value from the given <code>Range</code> with the given <code>Rng</code> as
+</div><h3 id='tymethod.sample_range' class='method stab '><code>fn <a href='#tymethod.sample_range' class='fnname'>sample_range</a>&lt;R:&nbsp;<a class='trait' href='../../../rand/trait.Rng.html' title='rand::Rng'>Rng</a>&gt;(r: &amp;<a class='struct' href='../../../rand/distributions/range/struct.Range.html' title='rand::distributions::range::Range'>Range</a>&lt;Self&gt;, rng: &amp;mut R) -&gt; Self</code></h3><div class='docblock'><p>Sample a value from the given <code>Range</code> with the given <code>Rng</code> as
 a source of randomness.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>

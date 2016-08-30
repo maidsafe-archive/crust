@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-932' class='srclink' href='../../src/rand/reseeding.rs.html#128-131' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-923' class='srclink' href='../../src/rand/reseeding.rs.html#128-131' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Reseeder&lt;R&gt; {
     fn <a href='#tymethod.reseed' class='fnname'>reseed</a>(&amp;mut self, rng: &amp;mut R);
 }</pre><div class='docblock'><p>Something that can be used to reseed an RNG via <code>ReseedingRng</code>.</p>
@@ -66,7 +66,7 @@
     }
 }
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='kw'>let</span> <span class='ident'>rsdr</span> <span class='op'>=</span> <span class='ident'>TickTockReseeder</span> { <span class='ident'>tick</span>: <span class='boolvalue'>true</span> };
+    <span class='kw'>let</span> <span class='ident'>rsdr</span> <span class='op'>=</span> <span class='ident'>TickTockReseeder</span> { <span class='ident'>tick</span>: <span class='bool-val'>true</span> };
 
     <span class='kw'>let</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='ident'>StdRng</span>::<span class='ident'>new</span>().<span class='ident'>unwrap</span>();
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rng</span> <span class='op'>=</span> <span class='ident'>ReseedingRng</span>::<span class='ident'>new</span>(<span class='ident'>inner</span>, <span class='number'>10</span>, <span class='ident'>rsdr</span>);
@@ -83,7 +83,7 @@
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;R: <a class='trait' href='../../rand/trait.Rng.html' title='rand::Rng'>Rng</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a>&gt; Reseeder&lt;R&gt; for <a class='struct' href='../../rand/reseeding/struct.ReseedWithDefault.html' title='rand::reseeding::ReseedWithDefault'>ReseedWithDefault</a></code></li>
+    <li><code>impl&lt;R:&nbsp;<a class='trait' href='../../rand/trait.Rng.html' title='rand::Rng'>Rng</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a>&gt; Reseeder&lt;R&gt; for <a class='struct' href='../../rand/reseeding/struct.ReseedWithDefault.html' title='rand::reseeding::ReseedWithDefault'>ReseedWithDefault</a></code></li>
 </ul><script type="text/javascript" async
                          src="../../implementors/rand/reseeding/trait.Reseeder.js">
                  </script></section>

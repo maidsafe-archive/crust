@@ -1054,27 +1054,27 @@
     <span class='kw'>fn</span> <span class='ident'>test_serialize_stream_dependency</span>() {
         {
             <span class='kw'>let</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>5</span>];
-            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>1</span>, <span class='number'>5</span>, <span class='boolvalue'>false</span>);
+            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>1</span>, <span class='number'>5</span>, <span class='bool-val'>false</span>);
 
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>buf</span>, <span class='ident'>dep</span>.<span class='ident'>serialize</span>());
         }
         {
             <span class='comment'>// Most significant bit set =&gt; is exclusive!</span>
             <span class='kw'>let</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>128</span>, <span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>5</span>];
-            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>1</span>, <span class='number'>5</span>, <span class='boolvalue'>true</span>);
+            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>1</span>, <span class='number'>5</span>, <span class='bool-val'>true</span>);
 
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>buf</span>, <span class='ident'>dep</span>.<span class='ident'>serialize</span>());
         }
         {
             <span class='comment'>// Most significant bit set =&gt; is exclusive!</span>
             <span class='kw'>let</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>255</span>, <span class='number'>255</span>, <span class='number'>255</span>, <span class='number'>255</span>, <span class='number'>5</span>];
-            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>31</span>) <span class='op'>-</span> <span class='number'>1</span>, <span class='number'>5</span>, <span class='boolvalue'>true</span>);
+            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>31</span>) <span class='op'>-</span> <span class='number'>1</span>, <span class='number'>5</span>, <span class='bool-val'>true</span>);
 
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>buf</span>, <span class='ident'>dep</span>.<span class='ident'>serialize</span>());
         }
         {
             <span class='kw'>let</span> <span class='ident'>buf</span> <span class='op'>=</span> [<span class='number'>127</span>, <span class='number'>255</span>, <span class='number'>255</span>, <span class='number'>255</span>, <span class='number'>5</span>];
-            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>31</span>) <span class='op'>-</span> <span class='number'>1</span>, <span class='number'>5</span>, <span class='boolvalue'>false</span>);
+            <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>31</span>) <span class='op'>-</span> <span class='number'>1</span>, <span class='number'>5</span>, <span class='bool-val'>false</span>);
 
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>buf</span>, <span class='ident'>dep</span>.<span class='ident'>serialize</span>());
         }
@@ -1118,7 +1118,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_headers_frame_parse_with_priority</span>() {
         <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='string'>b&quot;123&quot;</span>;
-        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='boolvalue'>true</span>);
+        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='bool-val'>true</span>);
         <span class='kw'>let</span> <span class='ident'>payload</span> <span class='op'>=</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
             <span class='ident'>buf</span>.<span class='ident'>extend</span>(<span class='ident'>dep</span>.<span class='ident'>serialize</span>().<span class='ident'>to_vec</span>().<span class='ident'>into_iter</span>());
@@ -1142,7 +1142,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_headers_frame_parse_padding_and_priority</span>() {
         <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='string'>b&quot;123&quot;</span>;
-        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='boolvalue'>true</span>);
+        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='bool-val'>true</span>);
         <span class='kw'>let</span> <span class='ident'>full</span> <span class='op'>=</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
             <span class='ident'>buf</span>.<span class='ident'>extend</span>(<span class='ident'>dep</span>.<span class='ident'>serialize</span>().<span class='ident'>to_vec</span>().<span class='ident'>into_iter</span>());
@@ -1237,7 +1237,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_headers_frame_serialize_with_priority</span>() {
         <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='string'>b&quot;123&quot;</span>;
-        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='boolvalue'>true</span>);
+        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='bool-val'>true</span>);
         <span class='kw'>let</span> <span class='ident'>payload</span> <span class='op'>=</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
             <span class='ident'>buf</span>.<span class='ident'>extend</span>(<span class='ident'>dep</span>.<span class='ident'>serialize</span>().<span class='ident'>to_vec</span>().<span class='ident'>into_iter</span>());
@@ -1266,7 +1266,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_headers_frame_serialize_padding_and_priority</span>() {
         <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='string'>b&quot;123&quot;</span>;
-        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='boolvalue'>true</span>);
+        <span class='kw'>let</span> <span class='ident'>dep</span> <span class='op'>=</span> <span class='ident'>StreamDependency</span>::<span class='ident'>new</span>(<span class='number'>0</span>, <span class='number'>5</span>, <span class='bool-val'>true</span>);
         <span class='kw'>let</span> <span class='ident'>full</span> <span class='op'>=</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
             <span class='ident'>buf</span>.<span class='ident'>extend</span>(<span class='ident'>dep</span>.<span class='ident'>serialize</span>().<span class='ident'>to_vec</span>().<span class='ident'>into_iter</span>());

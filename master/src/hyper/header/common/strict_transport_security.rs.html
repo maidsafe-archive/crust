@@ -300,7 +300,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>including_subdomains</span>(<span class='ident'>max_age</span>: <span class='ident'>u64</span>) <span class='op'>-&gt;</span> <span class='ident'>StrictTransportSecurity</span> {
         <span class='ident'>StrictTransportSecurity</span> {
             <span class='ident'>max_age</span>: <span class='ident'>max_age</span>,
-            <span class='ident'>include_subdomains</span>: <span class='boolvalue'>true</span>
+            <span class='ident'>include_subdomains</span>: <span class='bool-val'>true</span>
         }
     }
 
@@ -308,7 +308,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>excluding_subdomains</span>(<span class='ident'>max_age</span>: <span class='ident'>u64</span>) <span class='op'>-&gt;</span> <span class='ident'>StrictTransportSecurity</span> {
         <span class='ident'>StrictTransportSecurity</span> {
             <span class='ident'>max_age</span>: <span class='ident'>max_age</span>,
-            <span class='ident'>include_subdomains</span>: <span class='boolvalue'>false</span>
+            <span class='ident'>include_subdomains</span>: <span class='bool-val'>false</span>
         }
     }
 }
@@ -387,7 +387,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_parse_max_age</span>() {
         <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='ident'>Header</span>::<span class='ident'>parse_header</span>(<span class='kw-2'>&amp;</span>[<span class='string'>b&quot;max-age=31536000&quot;</span>.<span class='ident'>to_vec</span>()][..]);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='boolvalue'>false</span>, <span class='ident'>max_age</span>: <span class='number'>31536000u64</span> }));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='bool-val'>false</span>, <span class='ident'>max_age</span>: <span class='number'>31536000u64</span> }));
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -399,19 +399,19 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_parse_quoted_max_age</span>() {
         <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='ident'>Header</span>::<span class='ident'>parse_header</span>(<span class='kw-2'>&amp;</span>[<span class='string'>b&quot;max-age=\&quot;31536000\&quot;&quot;</span>.<span class='ident'>to_vec</span>()][..]);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='boolvalue'>false</span>, <span class='ident'>max_age</span>: <span class='number'>31536000u64</span> }));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='bool-val'>false</span>, <span class='ident'>max_age</span>: <span class='number'>31536000u64</span> }));
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_parse_spaces_max_age</span>() {
         <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='ident'>Header</span>::<span class='ident'>parse_header</span>(<span class='kw-2'>&amp;</span>[<span class='string'>b&quot;max-age = 31536000&quot;</span>.<span class='ident'>to_vec</span>()][..]);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='boolvalue'>false</span>, <span class='ident'>max_age</span>: <span class='number'>31536000u64</span> }));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='bool-val'>false</span>, <span class='ident'>max_age</span>: <span class='number'>31536000u64</span> }));
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_parse_include_subdomains</span>() {
         <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='ident'>Header</span>::<span class='ident'>parse_header</span>(<span class='kw-2'>&amp;</span>[<span class='string'>b&quot;max-age=15768000 ; includeSubDomains&quot;</span>.<span class='ident'>to_vec</span>()][..]);
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='boolvalue'>true</span>, <span class='ident'>max_age</span>: <span class='number'>15768000u64</span> }));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>StrictTransportSecurity</span> { <span class='ident'>include_subdomains</span>: <span class='bool-val'>true</span>, <span class='ident'>max_age</span>: <span class='number'>15768000u64</span> }));
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>

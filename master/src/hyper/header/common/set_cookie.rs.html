@@ -364,7 +364,7 @@
 <span class='kw'>fn</span> <span class='ident'>test_parse</span>() {
     <span class='kw'>let</span> <span class='ident'>h</span> <span class='op'>=</span> <span class='ident'>Header</span>::<span class='ident'>parse_header</span>(<span class='kw-2'>&amp;</span>[<span class='string'>b&quot;foo=bar; HttpOnly&quot;</span>.<span class='ident'>to_vec</span>()][..]);
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c1</span> <span class='op'>=</span> <span class='ident'>CookiePair</span>::<span class='ident'>new</span>(<span class='string'>&quot;foo&quot;</span>.<span class='ident'>to_owned</span>(), <span class='string'>&quot;bar&quot;</span>.<span class='ident'>to_owned</span>());
-    <span class='ident'>c1</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+    <span class='ident'>c1</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
 
     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>h</span>.<span class='ident'>ok</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>SetCookie</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>c1</span>])));
 }
@@ -374,7 +374,7 @@
     <span class='kw'>use</span> <span class='ident'>header</span>::<span class='ident'>Headers</span>;
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cookie</span> <span class='op'>=</span> <span class='ident'>CookiePair</span>::<span class='ident'>new</span>(<span class='string'>&quot;foo&quot;</span>.<span class='ident'>to_owned</span>(), <span class='string'>&quot;bar&quot;</span>.<span class='ident'>to_owned</span>());
-    <span class='ident'>cookie</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+    <span class='ident'>cookie</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
     <span class='ident'>cookie</span>.<span class='ident'>path</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='string'>&quot;/p&quot;</span>.<span class='ident'>to_owned</span>());
     <span class='kw'>let</span> <span class='ident'>cookies</span> <span class='op'>=</span> <span class='ident'>SetCookie</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>cookie</span>, <span class='ident'>CookiePair</span>::<span class='ident'>new</span>(<span class='string'>&quot;baz&quot;</span>.<span class='ident'>to_owned</span>(), <span class='string'>&quot;quux&quot;</span>.<span class='ident'>to_owned</span>())]);
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();

@@ -797,7 +797,7 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;Logger already initialised&quot;</span>.<span class='ident'>to_owned</span>());
 
     <span class='ident'>INITIALISE_LOGGER</span>.<span class='ident'>call_once</span>(<span class='op'>||</span> {
-        <span class='kw'>let</span> <span class='ident'>log_config_path</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='op'>&lt;</span>()<span class='op'>&gt;</span>::<span class='ident'>open</span>(<span class='ident'>CONFIG_FILE</span>, <span class='boolvalue'>false</span>)
+        <span class='kw'>let</span> <span class='ident'>log_config_path</span> <span class='op'>=</span> <span class='ident'>FileHandler</span>::<span class='op'>&lt;</span>()<span class='op'>&gt;</span>::<span class='ident'>open</span>(<span class='ident'>CONFIG_FILE</span>, <span class='bool-val'>false</span>)
             .<span class='ident'>ok</span>()
             .<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>fh</span><span class='op'>|</span> <span class='prelude-val'>Some</span>(<span class='ident'>fh</span>.<span class='ident'>path</span>().<span class='ident'>to_path_buf</span>()));
 
@@ -872,7 +872,7 @@
 
         <span class='kw'>let</span> <span class='ident'>file_appender</span> <span class='op'>=</span> <span class='ident'>AsyncFileAppender</span>::<span class='ident'>builder</span>(<span class='ident'>file_path</span>)
             .<span class='ident'>encoder</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>)))
-            .<span class='ident'>append</span>(<span class='boolvalue'>false</span>)
+            .<span class='ident'>append</span>(<span class='bool-val'>false</span>)
             .<span class='ident'>build</span>();
         <span class='kw'>let</span> <span class='ident'>file_appender</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>file_appender</span> {
             <span class='prelude-val'>Ok</span>(<span class='ident'>appender</span>) <span class='op'>=&gt;</span> <span class='ident'>appender</span>,
@@ -1237,7 +1237,7 @@
 
         <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>rx</span>.<span class='ident'>recv</span>());
 
-        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_server</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>, <span class='boolvalue'>true</span>, <span class='boolvalue'>false</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_server</span>(<span class='string'>&quot;127.0.0.1:55555&quot;</span>, <span class='bool-val'>true</span>, <span class='bool-val'>false</span>));
 
         <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
 
@@ -1295,7 +1295,7 @@
         <span class='comment'>// Allow sometime for server to start listening</span>
         <span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>100</span>));
 
-        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_web_socket</span>(<span class='string'>&quot;ws://127.0.0.1:44444&quot;</span>, <span class='boolvalue'>false</span>, <span class='boolvalue'>false</span>));
+        <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>init_to_web_socket</span>(<span class='string'>&quot;ws://127.0.0.1:44444&quot;</span>, <span class='bool-val'>false</span>, <span class='bool-val'>false</span>));
 
         <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;This message should not be found by default log level&quot;</span>);
         <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;This is message 0&quot;</span>);

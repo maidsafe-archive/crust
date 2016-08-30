@@ -1,1 +1,0 @@
-initSidebarItems({"trait":[["CloneAny","A marker trait meant for use as the `A` parameter in `TypeMap`."],["DebugAny","A marker trait meant for use as the `A` parameter in `TypeMap`."]]});

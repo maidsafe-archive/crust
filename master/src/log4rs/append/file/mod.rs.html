@@ -258,7 +258,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>() <span class='op'>-&gt;</span> <span class='ident'>FileAppenderBuilder</span> {
         <span class='ident'>FileAppenderBuilder</span> {
             <span class='ident'>encoder</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>append</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>append</span>: <span class='bool-val'>true</span>,
         }
     }
 }
@@ -291,10 +291,10 @@
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>fs</span>::<span class='ident'>create_dir_all</span>(<span class='ident'>parent</span>));
         }
         <span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>()
-                            .<span class='ident'>write</span>(<span class='boolvalue'>true</span>)
+                            .<span class='ident'>write</span>(<span class='bool-val'>true</span>)
                             .<span class='ident'>append</span>(<span class='self'>self</span>.<span class='ident'>append</span>)
                             .<span class='ident'>truncate</span>(<span class='op'>!</span><span class='self'>self</span>.<span class='ident'>append</span>)
-                            .<span class='ident'>create</span>(<span class='boolvalue'>true</span>)
+                            .<span class='ident'>create</span>(<span class='bool-val'>true</span>)
                             .<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>path</span>));
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>FileAppender</span> {
@@ -366,7 +366,7 @@
     <span class='kw'>fn</span> <span class='ident'>append_false</span>() {
         <span class='kw'>let</span> <span class='ident'>tempdir</span> <span class='op'>=</span> <span class='ident'>TempDir</span>::<span class='ident'>new</span>(<span class='string'>&quot;append_false&quot;</span>).<span class='ident'>unwrap</span>();
         <span class='ident'>FileAppender</span>::<span class='ident'>builder</span>()
-            .<span class='ident'>append</span>(<span class='boolvalue'>false</span>)
+            .<span class='ident'>append</span>(<span class='bool-val'>false</span>)
             .<span class='ident'>build</span>(<span class='ident'>tempdir</span>.<span class='ident'>path</span>().<span class='ident'>join</span>(<span class='string'>&quot;foo.log&quot;</span>))
             .<span class='ident'>unwrap</span>();
     }

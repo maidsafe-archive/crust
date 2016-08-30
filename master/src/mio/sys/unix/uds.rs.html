@@ -203,7 +203,7 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>ty</span>: <span class='ident'>nix</span>::<span class='ident'>SockType</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>UnixSocket</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>fd</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>socket</span>(<span class='ident'>nix</span>::<span class='ident'>AddressFamily</span>::<span class='ident'>Unix</span>, <span class='ident'>ty</span>, <span class='boolvalue'>true</span>));
+        <span class='kw'>let</span> <span class='ident'>fd</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>socket</span>(<span class='ident'>nix</span>::<span class='ident'>AddressFamily</span>::<span class='ident'>Unix</span>, <span class='ident'>ty</span>, <span class='bool-val'>true</span>));
         <span class='prelude-val'>Ok</span>(<span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>Io</span>::<span class='ident'>from_raw_fd</span>(<span class='ident'>fd</span>)))
     }
 
@@ -218,7 +218,7 @@
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>accept</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>UnixSocket</span><span class='op'>&gt;&gt;</span> {
-        <span class='ident'>net</span>::<span class='ident'>accept</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>io</span>, <span class='boolvalue'>true</span>)
+        <span class='ident'>net</span>::<span class='ident'>accept</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>io</span>, <span class='bool-val'>true</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>fd</span><span class='op'>|</span> <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>Io</span>::<span class='ident'>from_raw_fd</span>(<span class='ident'>fd</span>)))
             .<span class='ident'>map_non_block</span>()
     }

@@ -47,18 +47,18 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-173' class='srclink' href='../../../src/log4rs/append/file/mod.rs.html#58-61' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-170' class='srclink' href='../../../src/log4rs/append/file/mod.rs.html#58-61' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct FileAppenderBuilder {
     // some fields omitted
 }</pre><div class='docblock'><p>A builder for <code>FileAppender</code>s.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../../log4rs/append/file/struct.FileAppenderBuilder.html' title='log4rs::append::file::FileAppenderBuilder'>FileAppenderBuilder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-176' class='srclink' href='../../../src/log4rs/append/file/mod.rs.html#63-97' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class='struct' href='../../../log4rs/append/file/struct.FileAppenderBuilder.html' title='log4rs::append::file::FileAppenderBuilder'>FileAppenderBuilder</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-173' class='srclink' href='../../../src/log4rs/append/file/mod.rs.html#63-97' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.encoder' class='method'><code>fn <a href='#method.encoder' class='fnname'>encoder</a>(self, encoder: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../log4rs/encode/trait.Encode.html' title='log4rs::encode::Encode'>Encode</a>&gt;) -&gt; <a class='struct' href='../../../log4rs/append/file/struct.FileAppenderBuilder.html' title='log4rs::append::file::FileAppenderBuilder'>FileAppenderBuilder</a></code></h4>
 <div class='docblock'><p>Sets the output encoder for the <code>FileAppender</code>.</p>
 </div><h4 id='method.append' class='method'><code>fn <a href='#method.append' class='fnname'>append</a>(self, append: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../log4rs/append/file/struct.FileAppenderBuilder.html' title='log4rs::append::file::FileAppenderBuilder'>FileAppenderBuilder</a></code></h4>
 <div class='docblock'><p>Determines if the appender will append to or truncate the output file.</p>
 
 <p>Defaults to <code>true</code>.</p>
-</div><h4 id='method.build' class='method'><code>fn <a href='#method.build' class='fnname'>build</a>&lt;P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt;&gt;(self, path: P) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../../../log4rs/append/file/struct.FileAppender.html' title='log4rs::append::file::FileAppender'>FileAppender</a>&gt;</code></h4>
+</div><h4 id='method.build' class='method'><code>fn <a href='#method.build' class='fnname'>build</a>&lt;P:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt;&gt;(self, path: P) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../../../log4rs/append/file/struct.FileAppender.html' title='log4rs::append::file::FileAppender'>FileAppender</a>&gt;</code></h4>
 <div class='docblock'><p>Consumes the <code>FileAppenderBuilder</code>, producing a <code>FileAppender</code>.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>

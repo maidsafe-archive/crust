@@ -1270,11 +1270,11 @@
         <span class='kw'>let</span> <span class='ident'>system_addrs</span> <span class='op'>=</span> <span class='ident'>list_system_addrs</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>system_addrs</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='number'>1</span>);
         <span class='kw'>for</span> <span class='ident'>addr</span> <span class='kw'>in</span> <span class='ident'>system_addrs</span> {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>listed</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>listed</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
             <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;\n checking whether {:?} has been properly listed \n&quot;</span>, <span class='ident'>addr</span>);
             <span class='kw'>for</span> <span class='ident'>interface</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='ident'>ifaces</span> {
                 <span class='kw'>if</span> <span class='ident'>interface</span>.<span class='ident'>addr</span>.<span class='ident'>ip</span>() <span class='op'>==</span> <span class='ident'>addr</span> {
-                    <span class='ident'>listed</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                    <span class='ident'>listed</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                 }
             }
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>listed</span>);

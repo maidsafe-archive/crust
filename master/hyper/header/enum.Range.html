@@ -47,10 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3932' class='srclink' href='../../src/hyper/header/common/range.rs.html#59-65' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3917' class='srclink' href='../../src/hyper/header/common/range.rs.html#59-65' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Range {
     Bytes(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../../hyper/header/enum.ByteRangeSpec.html' title='hyper::header::ByteRangeSpec'>ByteRangeSpec</a>&gt;),
-    Unregistered(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    Unregistered(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
 }</pre><div class='docblock'><p><code>Range</code> header, defined in <a href="https://tools.ietf.org/html/rfc7233#section-3.1">RFC7233</a></p>
 
 <p>The &quot;Range&quot; header field on a GET request modifies the method
@@ -103,10 +103,10 @@ last-byte-pos = 1*DIGIT
 <span class='ident'>headers</span>.<span class='ident'>clear</span>();
 <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>Range</span>::<span class='ident'>bytes_multi</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='number'>1</span>, <span class='number'>100</span>), (<span class='number'>200</span>, <span class='number'>300</span>)]));</pre>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Bytes'><code>Bytes</code></td><td><div class='docblock'><p>Byte range</p>
-</div></td><td></td></tr><tr><td id='variant.Unregistered'><code>Unregistered</code></td><td><div class='docblock'><p>Custom range, with unit not registered at IANA
+<span id='variant.Bytes' class='variant'><code>Bytes(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../../hyper/header/enum.ByteRangeSpec.html' title='hyper::header::ByteRangeSpec'>ByteRangeSpec</a>&gt;)</code></span><div class='docblock'><p>Byte range</p>
+</div><span id='variant.Unregistered' class='variant'><code>Unregistered(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>)</code></span><div class='docblock'><p>Custom range, with unit not registered at IANA
 (<code>other-range-unit</code>: String , <code>other-range-set</code>: String)</p>
-</div></td><td></td></tr></table></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

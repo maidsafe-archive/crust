@@ -66,8 +66,8 @@ expressions or even build their own matching engine.</p>
 <span class='kw'>use</span> <span class='ident'>regex_syntax</span>::<span class='ident'>Expr</span>;
 
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Expr</span>::<span class='ident'>parse</span>(<span class='string'>r&quot;ab|yz&quot;</span>).<span class='ident'>unwrap</span>(), <span class='ident'>Expr</span>::<span class='ident'>Alternate</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
-    <span class='ident'>Expr</span>::<span class='ident'>Literal</span> { <span class='ident'>chars</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>&#39;a&#39;</span>, <span class='string'>&#39;b&#39;</span>], <span class='ident'>casei</span>: <span class='boolvalue'>false</span> },
-    <span class='ident'>Expr</span>::<span class='ident'>Literal</span> { <span class='ident'>chars</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>&#39;y&#39;</span>, <span class='string'>&#39;z&#39;</span>], <span class='ident'>casei</span>: <span class='boolvalue'>false</span> },
+    <span class='ident'>Expr</span>::<span class='ident'>Literal</span> { <span class='ident'>chars</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>&#39;a&#39;</span>, <span class='string'>&#39;b&#39;</span>], <span class='ident'>casei</span>: <span class='bool-val'>false</span> },
+    <span class='ident'>Expr</span>::<span class='ident'>Literal</span> { <span class='ident'>chars</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>&#39;y&#39;</span>, <span class='string'>&#39;z&#39;</span>], <span class='ident'>casei</span>: <span class='bool-val'>false</span> },
 ]));</pre>
 
 <h1 id='example-inspecting-an-error' class='section-header'><a href='#example-inspecting-an-error'>Example: inspecting an error</a></h1>

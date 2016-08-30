@@ -47,10 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-493' class='srclink' href='../../src/bytes/buf/mod.rs.html#200-204' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-484' class='srclink' href='../../src/bytes/buf/mod.rs.html#200-204' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Sink {
     type <a href='#associatedtype.Error' class='type'>Error</a>;
-    fn <a href='#tymethod.sink' class='fnname'>sink</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Self::<a class='trait' href='../../bytes/buf/trait.Sink.html' title='bytes::buf::Sink'>Error</a>&gt;;
+    fn <a href='#tymethod.sink' class='fnname'>sink</a>&lt;B:&nbsp;<a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,&nbsp;Self::<a class='trait' href='../../bytes/buf/trait.Sink.html' title='bytes::buf::Sink'>Error</a>&gt;;
 }</pre><div class='docblock'><p>A value that reads bytes from a Buf into itself</p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
@@ -58,7 +58,7 @@
         <h3 id='associatedtype.Error' class='method stab '><code>type <a href='#associatedtype.Error' class='type'>Error</a></code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.sink' class='method stab '><code>fn <a href='#tymethod.sink' class='fnname'>sink</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Self::<a class='trait' href='../../bytes/buf/trait.Sink.html' title='bytes::buf::Sink'>Error</a>&gt;</code></h3></div>
+        <h3 id='tymethod.sink' class='method stab '><code>fn <a href='#tymethod.sink' class='fnname'>sink</a>&lt;B:&nbsp;<a class='trait' href='../../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,&nbsp;Self::<a class='trait' href='../../bytes/buf/trait.Sink.html' title='bytes::buf::Sink'>Error</a>&gt;</code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;'a&gt; Sink for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></li>

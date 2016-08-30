@@ -154,10 +154,10 @@
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>connect</span>(<span class='ident'>io</span>: <span class='kw-2'>&amp;</span><span class='ident'>Io</span>, <span class='ident'>addr</span>: <span class='kw-2'>&amp;</span><span class='ident'>nix</span>::<span class='ident'>SockAddr</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>bool</span><span class='op'>&gt;</span> {
     <span class='kw'>match</span> <span class='ident'>nix</span>::<span class='ident'>connect</span>(<span class='ident'>io</span>.<span class='ident'>as_raw_fd</span>(), <span class='ident'>addr</span>) {
-        <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>true</span>),
+        <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='bool-val'>true</span>),
         <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
             <span class='kw'>match</span> <span class='ident'>e</span> {
-                <span class='ident'>nix</span>::<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>nix</span>::<span class='ident'>EINPROGRESS</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='boolvalue'>false</span>),
+                <span class='ident'>nix</span>::<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>nix</span>::<span class='ident'>EINPROGRESS</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='bool-val'>false</span>),
                 _ <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='kw'>super</span>::<span class='ident'>from_nix_error</span>(<span class='ident'>e</span>))
             }
         }

@@ -235,7 +235,7 @@
 <span class='kw'>impl</span> <span class='ident'>UdpSocket</span> {
     <span class='doccomment'>/// Returns a new, unbound, non-blocking, IPv4 UDP socket</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>v4</span>() <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>UdpSocket</span><span class='op'>&gt;</span> {
-        <span class='ident'>net</span>::<span class='ident'>socket</span>(<span class='ident'>nix</span>::<span class='ident'>AddressFamily</span>::<span class='ident'>Inet</span>, <span class='ident'>nix</span>::<span class='ident'>SockType</span>::<span class='ident'>Datagram</span>, <span class='boolvalue'>true</span>)
+        <span class='ident'>net</span>::<span class='ident'>socket</span>(<span class='ident'>nix</span>::<span class='ident'>AddressFamily</span>::<span class='ident'>Inet</span>, <span class='ident'>nix</span>::<span class='ident'>SockType</span>::<span class='ident'>Datagram</span>, <span class='bool-val'>true</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>fd</span><span class='op'>|</span> {
                 <span class='ident'>UdpSocket</span> {
                     <span class='ident'>io</span>: <span class='ident'>Io</span>::<span class='ident'>from_raw_fd</span>(<span class='ident'>fd</span>),
@@ -246,7 +246,7 @@
 
     <span class='doccomment'>/// Returns a new, unbound, non-blocking, IPv6 UDP socket</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>v6</span>() <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>UdpSocket</span><span class='op'>&gt;</span> {
-        <span class='ident'>net</span>::<span class='ident'>socket</span>(<span class='ident'>nix</span>::<span class='ident'>AddressFamily</span>::<span class='ident'>Inet6</span>, <span class='ident'>nix</span>::<span class='ident'>SockType</span>::<span class='ident'>Datagram</span>, <span class='boolvalue'>true</span>)
+        <span class='ident'>net</span>::<span class='ident'>socket</span>(<span class='ident'>nix</span>::<span class='ident'>AddressFamily</span>::<span class='ident'>Inet6</span>, <span class='ident'>nix</span>::<span class='ident'>SockType</span>::<span class='ident'>Datagram</span>, <span class='bool-val'>true</span>)
             .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>fd</span><span class='op'>|</span> {
                 <span class='ident'>UdpSocket</span> {
                     <span class='ident'>io</span>: <span class='ident'>Io</span>::<span class='ident'>from_raw_fd</span>(<span class='ident'>fd</span>),

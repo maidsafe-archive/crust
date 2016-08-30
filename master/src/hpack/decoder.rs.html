@@ -1813,14 +1813,14 @@
                 },
                 <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> {
                     <span class='kw'>let</span> ((<span class='ident'>name</span>, <span class='ident'>value</span>), <span class='ident'>consumed</span>) <span class='op'>=</span>
-                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>decode_literal</span>(<span class='ident'>buffer_leftover</span>, <span class='boolvalue'>true</span>));
+                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>decode_literal</span>(<span class='ident'>buffer_leftover</span>, <span class='bool-val'>true</span>));
                     <span class='ident'>header_list</span>.<span class='ident'>push</span>((<span class='ident'>name</span>, <span class='ident'>value</span>));
 
                     <span class='ident'>consumed</span>
                 },
                 <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> {
                     <span class='kw'>let</span> ((<span class='ident'>name</span>, <span class='ident'>value</span>), <span class='ident'>consumed</span>) <span class='op'>=</span>
-                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>decode_literal</span>(<span class='ident'>buffer_leftover</span>, <span class='boolvalue'>false</span>));
+                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>decode_literal</span>(<span class='ident'>buffer_leftover</span>, <span class='bool-val'>false</span>));
                     <span class='ident'>header_list</span>.<span class='ident'>push</span>((<span class='ident'>name</span>, <span class='ident'>value</span>));
 
                     <span class='ident'>consumed</span>
@@ -1831,7 +1831,7 @@
                     <span class='comment'>// representation received here. We don&#39;t care about this</span>
                     <span class='comment'>// for now.</span>
                     <span class='kw'>let</span> ((<span class='ident'>name</span>, <span class='ident'>value</span>), <span class='ident'>consumed</span>) <span class='op'>=</span>
-                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>decode_literal</span>(<span class='ident'>buffer_leftover</span>, <span class='boolvalue'>false</span>));
+                        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>decode_literal</span>(<span class='ident'>buffer_leftover</span>, <span class='bool-val'>false</span>));
                     <span class='ident'>header_list</span>.<span class='ident'>push</span>((<span class='ident'>name</span>, <span class='ident'>value</span>));
 
                     <span class='ident'>consumed</span>
@@ -2002,84 +2002,84 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_detect_literal_without_indexing</span>() {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>0</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>4</span>) <span class='op'>-</span> <span class='number'>1</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>2</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithoutIndexing</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_detect_literal_never_indexed</span>() {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>4</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralNeverIndexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralNeverIndexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>4</span>) <span class='op'>+</span> <span class='number'>15</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralNeverIndexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralNeverIndexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_detect_literal_incremental_indexing</span>() {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>6</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>6</span>) <span class='op'>+</span> (<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>4</span>)) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>7</span>) <span class='op'>-</span> <span class='number'>1</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>LiteralWithIncrementalIndexing</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_detect_indexed</span>() {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>7</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>7</span>) <span class='op'>+</span> (<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>4</span>)) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>7</span>) <span class='op'>+</span> (<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>5</span>)) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>7</span>) <span class='op'>+</span> (<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>6</span>)) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>255</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>Indexed</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_detect_dynamic_table_size_update</span>() {
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>(<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>5</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>SizeUpdate</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>SizeUpdate</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>5</span>) <span class='op'>+</span> (<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>4</span>)) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>SizeUpdate</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>SizeUpdate</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>FieldRepresentation</span>::<span class='ident'>new</span>((<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>6</span>) <span class='op'>-</span> <span class='number'>1</span>) {
-            <span class='ident'>FieldRepresentation</span>::<span class='ident'>SizeUpdate</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>FieldRepresentation</span>::<span class='ident'>SizeUpdate</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
@@ -2704,7 +2704,7 @@
     <span class='kw'>fn</span> <span class='ident'>is_decoder_error</span>(<span class='ident'>err</span>: <span class='kw-2'>&amp;</span><span class='ident'>DecoderError</span>, <span class='ident'>result</span>: <span class='kw-2'>&amp;</span><span class='ident'>DecoderResult</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='ident'>result</span> {
             <span class='prelude-val'>Err</span>(<span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>e</span> <span class='op'>==</span> <span class='ident'>err</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
         }
     }
 
@@ -2754,8 +2754,8 @@
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>decoder</span>.<span class='ident'>decode</span>(<span class='kw-2'>&amp;</span><span class='ident'>hex_dump</span>) {
             <span class='prelude-val'>Err</span>(<span class='ident'>DecoderError</span>::<span class='ident'>StringDecodingError</span>(
                     <span class='ident'>StringDecodingError</span>::<span class='ident'>HuffmanDecoderError</span>(
-                        <span class='ident'>HuffmanDecoderError</span>::<span class='ident'>InvalidPadding</span>))) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+                        <span class='ident'>HuffmanDecoderError</span>::<span class='ident'>InvalidPadding</span>))) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
@@ -2774,8 +2774,8 @@
 
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>result</span> {
             <span class='prelude-val'>Err</span>(<span class='ident'>DecoderError</span>::<span class='ident'>StringDecodingError</span>(
-                    <span class='ident'>StringDecodingError</span>::<span class='ident'>NotEnoughOctets</span>)) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+                    <span class='ident'>StringDecodingError</span>::<span class='ident'>NotEnoughOctets</span>)) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 
@@ -2795,8 +2795,8 @@
 
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='kw'>match</span> <span class='ident'>result</span> {
             <span class='prelude-val'>Err</span>(<span class='ident'>DecoderError</span>::<span class='ident'>IntegerDecodingError</span>(
-                    <span class='ident'>IntegerDecodingError</span>::<span class='ident'>NotEnoughOctets</span>)) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+                    <span class='ident'>IntegerDecodingError</span>::<span class='ident'>NotEnoughOctets</span>)) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         });
     }
 }

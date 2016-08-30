@@ -455,7 +455,7 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>chars</span> <span class='op'>=</span> <span class='ident'>label</span>.<span class='ident'>chars</span>();
     <span class='kw'>let</span> <span class='ident'>class</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>chars</span>.<span class='ident'>next</span>() {
         <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='op'>=&gt;</span> <span class='ident'>bidi_class</span>(<span class='ident'>c</span>),
-        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='boolvalue'>true</span>, <span class='comment'>// empty string</span>
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='bool-val'>true</span>, <span class='comment'>// empty string</span>
     };
 
     <span class='kw'>if</span> <span class='ident'>class</span> <span class='op'>==</span> <span class='ident'>BidiClass</span>::<span class='ident'>L</span>
@@ -472,7 +472,7 @@
                                     <span class='ident'>BidiClass</span>::<span class='ident'>ES</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>CS</span> <span class='op'>|</span>
                                     <span class='ident'>BidiClass</span>::<span class='ident'>ET</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>ON</span> <span class='op'>|</span>
                                     <span class='ident'>BidiClass</span>::<span class='ident'>BN</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>NSM</span>) {
-                        <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+                        <span class='kw'>return</span> <span class='bool-val'>false</span>;
                     }
                 },
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> { <span class='kw'>break</span>; },
@@ -501,8 +501,8 @@
         <span class='comment'>// }</span>
 
     } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>class</span> <span class='op'>==</span> <span class='ident'>BidiClass</span>::<span class='ident'>R</span> <span class='op'>||</span> <span class='ident'>class</span> <span class='op'>==</span> <span class='ident'>BidiClass</span>::<span class='ident'>AL</span> { <span class='comment'>// RTL</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>found_en</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>found_an</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>found_en</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>found_an</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
 
         <span class='comment'>// Rule 2</span>
         <span class='kw'>loop</span> {
@@ -511,10 +511,10 @@
                     <span class='kw'>let</span> <span class='ident'>char_class</span> <span class='op'>=</span> <span class='ident'>bidi_class</span>(<span class='ident'>c</span>);
 
                     <span class='kw'>if</span> <span class='ident'>char_class</span> <span class='op'>==</span> <span class='ident'>BidiClass</span>::<span class='ident'>EN</span> {
-                        <span class='ident'>found_en</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                        <span class='ident'>found_en</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                     }
                     <span class='kw'>if</span> <span class='ident'>char_class</span> <span class='op'>==</span> <span class='ident'>BidiClass</span>::<span class='ident'>AN</span> {
-                        <span class='ident'>found_an</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                        <span class='ident'>found_an</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                     }
 
                     <span class='kw'>if</span> <span class='op'>!</span><span class='macro'>matches</span><span class='macro'>!</span>(<span class='ident'>char_class</span>, <span class='ident'>BidiClass</span>::<span class='ident'>R</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>AL</span> <span class='op'>|</span>
@@ -522,7 +522,7 @@
                                              <span class='ident'>BidiClass</span>::<span class='ident'>ES</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>CS</span> <span class='op'>|</span>
                                              <span class='ident'>BidiClass</span>::<span class='ident'>ET</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>ON</span> <span class='op'>|</span>
                                              <span class='ident'>BidiClass</span>::<span class='ident'>BN</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>NSM</span>) {
-                        <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+                        <span class='kw'>return</span> <span class='bool-val'>false</span>;
                     }
                 },
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> { <span class='kw'>break</span>; },
@@ -543,19 +543,19 @@
         <span class='kw'>match</span> <span class='ident'>last</span> {
             <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='kw'>if</span> <span class='macro'>matches</span><span class='macro'>!</span>(<span class='ident'>bidi_class</span>(<span class='ident'>c</span>), <span class='ident'>BidiClass</span>::<span class='ident'>R</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>AL</span> <span class='op'>|</span>
                                                <span class='ident'>BidiClass</span>::<span class='ident'>EN</span> <span class='op'>|</span> <span class='ident'>BidiClass</span>::<span class='ident'>AN</span>) <span class='op'>=&gt;</span> {},
-            _ <span class='op'>=&gt;</span> { <span class='kw'>return</span> <span class='boolvalue'>false</span>; }
+            _ <span class='op'>=&gt;</span> { <span class='kw'>return</span> <span class='bool-val'>false</span>; }
         }
 
         <span class='comment'>// Rule 4</span>
         <span class='kw'>if</span> <span class='ident'>found_an</span> <span class='op'>&amp;&amp;</span> <span class='ident'>found_en</span> {
-            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+            <span class='kw'>return</span> <span class='bool-val'>false</span>;
         }
     } <span class='kw'>else</span> {
         <span class='comment'>// Rule 2: Should start with L or R/AL</span>
-        <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+        <span class='kw'>return</span> <span class='bool-val'>false</span>;
     }
 
-    <span class='kw'>return</span> <span class='boolvalue'>true</span>;
+    <span class='kw'>return</span> <span class='bool-val'>true</span>;
 }
 
 <span class='doccomment'>/// http://www.unicode.org/reports/tr46/#Validity_Criteria</span>
@@ -572,12 +572,12 @@
         (<span class='ident'>third</span>, <span class='ident'>fourth</span>) <span class='op'>==</span> (<span class='prelude-val'>Some</span>(<span class='string'>&#39;-&#39;</span>), <span class='prelude-val'>Some</span>(<span class='string'>&#39;-&#39;</span>))
     } <span class='op'>||</span> <span class='ident'>label</span>.<span class='ident'>starts_with</span>(<span class='string'>&quot;-&quot;</span>)
         <span class='op'>||</span> <span class='ident'>label</span>.<span class='ident'>ends_with</span>(<span class='string'>&quot;-&quot;</span>)
-        <span class='op'>||</span> <span class='ident'>label</span>.<span class='ident'>chars</span>().<span class='ident'>next</span>().<span class='ident'>map_or</span>(<span class='boolvalue'>false</span>, <span class='ident'>is_combining_mark</span>)
+        <span class='op'>||</span> <span class='ident'>label</span>.<span class='ident'>chars</span>().<span class='ident'>next</span>().<span class='ident'>map_or</span>(<span class='bool-val'>false</span>, <span class='ident'>is_combining_mark</span>)
         <span class='op'>||</span> <span class='ident'>label</span>.<span class='ident'>chars</span>().<span class='ident'>any</span>(<span class='op'>|</span><span class='ident'>c</span><span class='op'>|</span> <span class='kw'>match</span> <span class='op'>*</span><span class='ident'>find_char</span>(<span class='ident'>c</span>) {
-            <span class='ident'>Mapping</span>::<span class='ident'>Valid</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Mapping</span>::<span class='ident'>Valid</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
             <span class='ident'>Mapping</span>::<span class='ident'>Deviation</span>(_) <span class='op'>=&gt;</span> <span class='ident'>flags</span>.<span class='ident'>transitional_processing</span>,
             <span class='ident'>Mapping</span>::<span class='ident'>DisallowedStd3Valid</span> <span class='op'>=&gt;</span> <span class='ident'>flags</span>.<span class='ident'>use_std3_ascii_rules</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         })
         <span class='op'>||</span> <span class='op'>!</span><span class='ident'>passes_bidi</span>(<span class='ident'>label</span>, <span class='ident'>flags</span>.<span class='ident'>transitional_processing</span>)
     {
@@ -600,7 +600,7 @@
         <span class='kw'>if</span> <span class='ident'>label</span>.<span class='ident'>starts_with</span>(<span class='string'>&quot;xn--&quot;</span>) {
             <span class='kw'>match</span> <span class='ident'>punycode</span>::<span class='ident'>decode_to_string</span>(<span class='kw-2'>&amp;</span><span class='ident'>label</span>[<span class='string'>&quot;xn--&quot;</span>.<span class='ident'>len</span>()..]) {
                 <span class='prelude-val'>Some</span>(<span class='ident'>decoded_label</span>) <span class='op'>=&gt;</span> {
-                    <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>transitional_processing</span>: <span class='boolvalue'>false</span>, ..<span class='ident'>flags</span> };
+                    <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>transitional_processing</span>: <span class='bool-val'>false</span>, ..<span class='ident'>flags</span> };
                     <span class='ident'>validate</span>(<span class='kw-2'>&amp;</span><span class='ident'>decoded_label</span>, <span class='ident'>flags</span>, <span class='ident'>errors</span>);
                     <span class='ident'>validated</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='ident'>decoded_label</span>)
                 }
@@ -677,7 +677,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// Only `use_std3_ascii_rules` is used in `flags`.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_unicode</span>(<span class='ident'>domain</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='kw-2'>mut</span> <span class='ident'>flags</span>: <span class='ident'>Flags</span>) <span class='op'>-&gt;</span> (<span class='ident'>String</span>, <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Errors</span><span class='op'>&gt;</span>) {
-    <span class='ident'>flags</span>.<span class='ident'>transitional_processing</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+    <span class='ident'>flags</span>.<span class='ident'>transitional_processing</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>errors</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
     <span class='kw'>let</span> <span class='ident'>domain</span> <span class='op'>=</span> <span class='ident'>processing</span>(<span class='ident'>domain</span>, <span class='ident'>flags</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>errors</span>);
     <span class='kw'>let</span> <span class='ident'>errors</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>errors</span>.<span class='ident'>is_empty</span>() {

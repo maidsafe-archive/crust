@@ -47,22 +47,22 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-6398' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/enum.Shutdown.html?gotosrc=6398' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-6324' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/enum.Shutdown.html?gotosrc=6324' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Shutdown {
     Read,
     Write,
     Both,
 }</pre><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div><div class='docblock'><p>Possible values which can be passed to the <code>shutdown</code> method of <code>TcpStream</code>.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Read'><code>Read</code></td><td><div class='docblock'><p>Indicates that the reading portion of this stream/socket should be shut
+<span id='variant.Read' class='variant'><code>Read</code></span><div class='docblock'><p>Indicates that the reading portion of this stream/socket should be shut
 down. All currently blocked and future reads will return <code>Ok(0)</code>.</p>
-</div></td><td></td></tr><tr><td id='variant.Write'><code>Write</code></td><td><div class='docblock'><p>Indicates that the writing portion of this stream/socket should be shut
+</div><span id='variant.Write' class='variant'><code>Write</code></span><div class='docblock'><p>Indicates that the writing portion of this stream/socket should be shut
 down. All currently blocked and future writes will return an error.</p>
-</div></td><td></td></tr><tr><td id='variant.Both'><code>Both</code></td><td><div class='docblock'><p>Shut down both the reading and writing portions of this stream.</p>
+</div><span id='variant.Both' class='variant'><code>Both</code></span><div class='docblock'><p>Shut down both the reading and writing portions of this stream.</p>
 
 <p>See <code>Shutdown::Read</code> and <code>Shutdown::Write</code> for more information.</p>
-</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../tmp_mio/tcp/enum.Shutdown.html' title='tmp_mio::tcp::Shutdown'>Shutdown</a></code></span><span class='out-of-band'></span></h3>
-<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Error.html' title='core::fmt::Error'>Error</a>&gt;</code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../tmp_mio/tcp/enum.Shutdown.html' title='tmp_mio::tcp::Shutdown'>Shutdown</a></code></span><span class='out-of-band'></span></h3>
+<div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Error.html' title='core::fmt::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a>&lt;<a class='enum' href='../../tmp_mio/tcp/enum.Shutdown.html' title='tmp_mio::tcp::Shutdown'>Shutdown</a>&gt; for <a class='enum' href='../../tmp_mio/tcp/enum.Shutdown.html' title='tmp_mio::tcp::Shutdown'>Shutdown</a></code></span><span class='out-of-band'></span></h3>
 <div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../tmp_mio/tcp/enum.Shutdown.html' title='tmp_mio::tcp::Shutdown'>Shutdown</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>

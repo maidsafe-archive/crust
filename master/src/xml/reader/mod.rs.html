@@ -248,7 +248,7 @@
     <span class='kw'>type</span> <span class='ident'>IntoIter</span> <span class='op'>=</span> <span class='ident'>Events</span><span class='op'>&lt;</span><span class='ident'>R</span><span class='op'>&gt;</span>;
 
     <span class='kw'>fn</span> <span class='ident'>into_iter</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Events</span><span class='op'>&lt;</span><span class='ident'>R</span><span class='op'>&gt;</span> {
-        <span class='ident'>Events</span> { <span class='ident'>reader</span>: <span class='self'>self</span>, <span class='ident'>finished</span>: <span class='boolvalue'>false</span> }
+        <span class='ident'>Events</span> { <span class='ident'>reader</span>: <span class='self'>self</span>, <span class='ident'>finished</span>: <span class='bool-val'>false</span> }
     }
 }
 
@@ -278,7 +278,7 @@
         <span class='kw'>else</span> {
             <span class='kw'>let</span> <span class='ident'>ev</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>reader</span>.<span class='ident'>next</span>();
             <span class='kw'>match</span> <span class='ident'>ev</span> {
-                <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>EndDocument</span>) <span class='op'>|</span> <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>finished</span> <span class='op'>=</span> <span class='boolvalue'>true</span>,
+                <span class='prelude-val'>Ok</span>(<span class='ident'>XmlEvent</span>::<span class='ident'>EndDocument</span>) <span class='op'>|</span> <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>finished</span> <span class='op'>=</span> <span class='bool-val'>true</span>,
                 _ <span class='op'>=&gt;</span> {}
             }
             <span class='prelude-val'>Some</span>(<span class='ident'>ev</span>)

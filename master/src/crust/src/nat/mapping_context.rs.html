@@ -252,15 +252,15 @@
         <span class='kw'>let</span> <span class='ident'>mc</span> <span class='op'>=</span> <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>MappingContext</span>::<span class='ident'>new</span>(), <span class='string'>&quot;Could not instantiate MC&quot;</span>);
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>mc</span>.<span class='ident'>our_ifv4s</span>.<span class='ident'>is_empty</span>());
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>loopback_found</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>non_loopback_found</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>loopback_found</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>non_loopback_found</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
 
         <span class='kw'>for</span> <span class='ident'>ifv4</span> <span class='kw'>in</span> <span class='ident'>mc</span>.<span class='ident'>our_ifv4s</span> {
             <span class='kw'>if</span> <span class='ident'>ifv4</span>.<span class='number'>0</span>.<span class='ident'>is_loopback</span>() {
-                <span class='ident'>loopback_found</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                <span class='ident'>loopback_found</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>ifv4</span>.<span class='number'>1</span>.<span class='ident'>is_none</span>());
             } <span class='kw'>else</span> {
-                <span class='ident'>non_loopback_found</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                <span class='ident'>non_loopback_found</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>ifv4</span>.<span class='number'>1</span>.<span class='ident'>is_some</span>());
             }
         }

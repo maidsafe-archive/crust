@@ -2224,9 +2224,9 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='kw'>fn</span> <span class='ident'>matches_empty</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>Repeater</span>::<span class='op'>*</span>;
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>ZeroOrOne</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>ZeroOrMore</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>OneOrMore</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>ZeroOrOne</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>ZeroOrMore</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>OneOrMore</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
             <span class='ident'>Range</span> { <span class='ident'>min</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>min</span> <span class='op'>==</span> <span class='number'>0</span>,
         }
     }
@@ -2376,7 +2376,7 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unicode</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
         <span class='self'>self</span>.<span class='ident'>flags</span>.<span class='ident'>unicode</span> <span class='op'>=</span> <span class='ident'>yes</span>;
         <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>yes</span> {
-            <span class='self'>self</span>.<span class='ident'>allow_bytes</span>(<span class='boolvalue'>true</span>)
+            <span class='self'>self</span>.<span class='ident'>allow_bytes</span>(<span class='bool-val'>true</span>)
         } <span class='kw'>else</span> {
             <span class='self'>self</span>
         }
@@ -2434,8 +2434,8 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
             <span class='op'>|</span> <span class='ident'>WordBoundary</span> <span class='op'>|</span> <span class='ident'>NotWordBoundary</span>
             <span class='op'>|</span> <span class='ident'>WordBoundaryAscii</span> <span class='op'>|</span> <span class='ident'>NotWordBoundaryAscii</span>
             <span class='op'>|</span> <span class='ident'>Group</span>{..}
-            <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
@@ -2540,8 +2540,8 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
             <span class='ident'>Group</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>(),
             <span class='ident'>Concat</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>[<span class='number'>0</span>].<span class='ident'>is_anchored_start</span>(),
             <span class='ident'>Alternate</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>()),
-            <span class='ident'>StartText</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>StartText</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
@@ -2555,8 +2555,8 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
             <span class='ident'>Group</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>(),
             <span class='ident'>Concat</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>[<span class='ident'>es</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='number'>1</span>].<span class='ident'>is_anchored_end</span>(),
             <span class='ident'>Alternate</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>()),
-            <span class='ident'>EndText</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>EndText</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
@@ -2568,11 +2568,11 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
             <span class='ident'>Group</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>has_bytes</span>(),
             <span class='ident'>Concat</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>iter</span>().<span class='ident'>any</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>has_bytes</span>()),
             <span class='ident'>Alternate</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>iter</span>().<span class='ident'>any</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>has_bytes</span>()),
-            <span class='ident'>LiteralBytes</span>{..} <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>AnyByte</span> <span class='op'>|</span> <span class='ident'>AnyByteNoNL</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>ClassBytes</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>WordBoundaryAscii</span> <span class='op'>|</span> <span class='ident'>NotWordBoundaryAscii</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>LiteralBytes</span>{..} <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>AnyByte</span> <span class='op'>|</span> <span class='ident'>AnyByteNoNL</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>ClassBytes</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>WordBoundaryAscii</span> <span class='op'>|</span> <span class='ident'>NotWordBoundaryAscii</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 }
@@ -3623,7 +3623,7 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_word_char</span>(<span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='kw'>match</span> <span class='ident'>c</span> {
-        <span class='string'>&#39;_&#39;</span> <span class='op'>|</span> <span class='string'>&#39;0&#39;</span> ... <span class='string'>&#39;9&#39;</span> <span class='op'>|</span> <span class='string'>&#39;a&#39;</span> ... <span class='string'>&#39;z&#39;</span> <span class='op'>|</span> <span class='string'>&#39;A&#39;</span> ... <span class='string'>&#39;Z&#39;</span>  <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+        <span class='string'>&#39;_&#39;</span> <span class='op'>|</span> <span class='string'>&#39;0&#39;</span> ... <span class='string'>&#39;9&#39;</span> <span class='op'>|</span> <span class='string'>&#39;a&#39;</span> ... <span class='string'>&#39;z&#39;</span> <span class='op'>|</span> <span class='string'>&#39;A&#39;</span> ... <span class='string'>&#39;Z&#39;</span>  <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         _ <span class='op'>=&gt;</span> ::<span class='ident'>unicode</span>::<span class='ident'>regex</span>::<span class='ident'>PERLW</span>.<span class='ident'>binary_search_by</span>(<span class='op'>|</span><span class='kw-2'>&amp;</span>(<span class='ident'>start</span>, <span class='ident'>end</span>)<span class='op'>|</span> {
             <span class='kw'>if</span> <span class='ident'>c</span> <span class='op'>&gt;=</span> <span class='ident'>start</span> <span class='op'>&amp;&amp;</span> <span class='ident'>c</span> <span class='op'>&lt;=</span> <span class='ident'>end</span> {
                 <span class='ident'>Ordering</span>::<span class='ident'>Equal</span>
@@ -3640,8 +3640,8 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_word_byte</span>(<span class='ident'>b</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='kw'>match</span> <span class='ident'>b</span> {
-        <span class='string'>b&#39;_&#39;</span> <span class='op'>|</span> <span class='string'>b&#39;0&#39;</span> ... <span class='string'>b&#39;9&#39;</span> <span class='op'>|</span> <span class='string'>b&#39;a&#39;</span> ... <span class='string'>b&#39;z&#39;</span> <span class='op'>|</span> <span class='string'>b&#39;A&#39;</span> ... <span class='string'>b&#39;Z&#39;</span>  <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-        _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+        <span class='string'>b&#39;_&#39;</span> <span class='op'>|</span> <span class='string'>b&#39;0&#39;</span> ... <span class='string'>b&#39;9&#39;</span> <span class='op'>|</span> <span class='string'>b&#39;a&#39;</span> ... <span class='string'>b&#39;z&#39;</span> <span class='op'>|</span> <span class='string'>b&#39;A&#39;</span> ... <span class='string'>b&#39;Z&#39;</span>  <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+        _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
     }
 }
 

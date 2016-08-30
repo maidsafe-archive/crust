@@ -651,7 +651,7 @@
                 <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>last_os_error</span>().<span class='ident'>raw_os_error</span>();
                 <span class='ident'>err</span> <span class='op'>!=</span> <span class='prelude-val'>Some</span>(<span class='ident'>libc</span>::<span class='ident'>ENOSYS</span>)
             } <span class='kw'>else</span> {
-                <span class='boolvalue'>true</span>
+                <span class='bool-val'>true</span>
             };
             <span class='ident'>AVAILABLE</span>.<span class='ident'>store</span>(<span class='ident'>available</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
         });
@@ -665,7 +665,7 @@
                       <span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;arm&quot;</span>,
                       <span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;aarch64&quot;</span>,
                       <span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;powerpc&quot;</span>))))]</span>
-    <span class='kw'>fn</span> <span class='ident'>is_getrandom_available</span>() <span class='op'>-&gt;</span> <span class='ident'>bool</span> { <span class='boolvalue'>false</span> }
+    <span class='kw'>fn</span> <span class='ident'>is_getrandom_available</span>() <span class='op'>-&gt;</span> <span class='ident'>bool</span> { <span class='bool-val'>false</span> }
 
     <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>OsRng</span> {
         <span class='ident'>inner</span>: <span class='ident'>OsRngInner</span>,

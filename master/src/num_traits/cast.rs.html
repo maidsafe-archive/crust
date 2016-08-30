@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/num-traits-0.1.34/src/cast.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/num-traits-0.1.35/src/cast.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>cast.rs.html -- source</title>
@@ -941,7 +941,7 @@
     <span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='ident'>f32</span>::<span class='ident'>MAX</span> <span class='kw'>as</span> <span class='ident'>f64</span>).<span class='ident'>to_f32</span>(), <span class='prelude-val'>Some</span>(<span class='op'>-</span><span class='ident'>f32</span>::<span class='ident'>MAX</span>));
     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>f64</span>::<span class='ident'>INFINITY</span>.<span class='ident'>to_f32</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>f32</span>::<span class='ident'>INFINITY</span>));
     <span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='ident'>f64</span>::<span class='ident'>NEG_INFINITY</span>).<span class='ident'>to_f32</span>(), <span class='prelude-val'>Some</span>(<span class='ident'>f32</span>::<span class='ident'>NEG_INFINITY</span>));
-    <span class='macro'>assert</span><span class='macro'>!</span>((<span class='ident'>f64</span>::<span class='ident'>NAN</span>).<span class='ident'>to_f32</span>().<span class='ident'>map_or</span>(<span class='boolvalue'>false</span>, <span class='op'>|</span><span class='ident'>f</span><span class='op'>|</span> <span class='ident'>f</span>.<span class='ident'>is_nan</span>()));
+    <span class='macro'>assert</span><span class='macro'>!</span>((<span class='ident'>f64</span>::<span class='ident'>NAN</span>).<span class='ident'>to_f32</span>().<span class='ident'>map_or</span>(<span class='bool-val'>false</span>, <span class='op'>|</span><span class='ident'>f</span><span class='op'>|</span> <span class='ident'>f</span>.<span class='ident'>is_nan</span>()));
 }
 </pre>
 </section>

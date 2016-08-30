@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3700' class='srclink' href='../../src/regex/re_bytes.rs.html#695-699' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3683' class='srclink' href='../../src/regex/re_bytes.rs.html#695-699' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Captures&lt;'t&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Captures represents a group of captured byte strings for a single match.</p>
@@ -61,7 +61,7 @@ accessed with the <code>at</code> method.)</p>
 <p>Positions returned from a capture group are always byte indices.</p>
 
 <p><code>&#39;t</code> is the lifetime of the matched text.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'t&gt; <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3705' class='srclink' href='../../src/regex/re_bytes.rs.html#701-785' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'t&gt; <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3688' class='srclink' href='../../src/regex/re_bytes.rs.html#701-785' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.pos' class='method'><code>fn <a href='#method.pos' class='fnname'>pos</a>(&amp;self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></h4>
 <div class='docblock'><p>Returns the start and end positions of the Nth capture group. Returns
 <code>None</code> if <code>i</code> is not a valid capture group or if the capture group did
@@ -75,14 +75,14 @@ returned.</p>
 <div class='docblock'><p>Returns the matched string for the capture group named <code>name</code>.  If
 <code>name</code> isn&#39;t a valid capture group or didn&#39;t match anything, then
 <code>None</code> is returned.</p>
-</div><h4 id='method.iter' class='method'><code>fn <a href='#method.iter' class='fnname'>iter</a>&lt;'a&gt;(&amp;'a self) -&gt; <a class='struct' href='../../regex/bytes/struct.SubCaptures.html' title='regex::bytes::SubCaptures'>SubCaptures</a>&lt;'a, 't&gt;</code></h4>
+</div><h4 id='method.iter' class='method'><code>fn <a href='#method.iter' class='fnname'>iter</a>&lt;'a&gt;(&amp;'a self) -&gt; <a class='struct' href='../../regex/bytes/struct.SubCaptures.html' title='regex::bytes::SubCaptures'>SubCaptures</a>&lt;'a,&nbsp;'t&gt;</code></h4>
 <div class='docblock'><p>Creates an iterator of all the capture groups in order of appearance
 in the regular expression.</p>
 </div><h4 id='method.iter_pos' class='method'><code>fn <a href='#method.iter_pos' class='fnname'>iter_pos</a>(&amp;'t self) -&gt; <a class='struct' href='../../regex/bytes/struct.SubCapturesPos.html' title='regex::bytes::SubCapturesPos'>SubCapturesPos</a>&lt;'t&gt;</code></h4>
 <div class='docblock'><p>Creates an iterator of all the capture group positions in order of
 appearance in the regular expression. Positions are byte indices
 in terms of the original string matched.</p>
-</div><h4 id='method.iter_named' class='method'><code>fn <a href='#method.iter_named' class='fnname'>iter_named</a>&lt;'a&gt;(&amp;'a self) -&gt; <a class='struct' href='../../regex/bytes/struct.SubCapturesNamed.html' title='regex::bytes::SubCapturesNamed'>SubCapturesNamed</a>&lt;'a, 't&gt;</code></h4>
+</div><h4 id='method.iter_named' class='method'><code>fn <a href='#method.iter_named' class='fnname'>iter_named</a>&lt;'a&gt;(&amp;'a self) -&gt; <a class='struct' href='../../regex/bytes/struct.SubCapturesNamed.html' title='regex::bytes::SubCapturesNamed'>SubCapturesNamed</a>&lt;'a,&nbsp;'t&gt;</code></h4>
 <div class='docblock'><p>Creates an iterator of all named groups as an tuple with the group
 name and the value. The iterator returns these values in arbitrary
 order.</p>
@@ -107,10 +107,10 @@ precise control over the name, use braces, e.g., <code>${1}a</code>.</p>
 <div class='docblock'><p>Returns the number of captured groups.</p>
 </div><h4 id='method.is_empty' class='method'><code>fn <a href='#method.is_empty' class='fnname'>is_empty</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Returns true if and only if there are no captured groups.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3741' class='srclink' href='../../src/regex/re_bytes.rs.html#787-791' title='goto source code'>[src]</a></span></h3>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3724' class='srclink' href='../../src/regex/re_bytes.rs.html#787-791' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt; for <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3777' class='srclink' href='../../src/regex/re_bytes.rs.html#840-846' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt; for <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3760' class='srclink' href='../../src/regex/re_bytes.rs.html#840-846' title='goto source code'>[src]</a></span></h3>
 <div class='docblock'><p>Get a group by index.</p>
 
 <p><code>&#39;t</code> is the lifetime of the matched text.</p>
@@ -125,7 +125,7 @@ of <code>a</code> and can&#39;t outlive it); to do that, use <code>at()</code> i
 <div class='docblock'><p>The returned type after indexing</p>
 </div><h4 id='method.index' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html#tymethod.index' class='fnname'>index</a>(&amp;self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
 <div class='docblock'><p>The method for the indexing (<code>Foo[Bar]</code>) operation</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'t, 'i&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;&amp;'i <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3787' class='srclink' href='../../src/regex/re_bytes.rs.html#860-866' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'t,&nbsp;'i&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;&amp;'i <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='struct' href='../../regex/bytes/struct.Captures.html' title='regex::bytes::Captures'>Captures</a>&lt;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3770' class='srclink' href='../../src/regex/re_bytes.rs.html#860-866' title='goto source code'>[src]</a></span></h3>
 <div class='docblock'><p>Get a group by name.</p>
 
 <p><code>&#39;t</code> is the lifetime of the matched text and <code>&#39;i</code> is the lifetime

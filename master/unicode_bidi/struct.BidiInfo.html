@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-91' class='srclink' href='../src/unicode_bidi/lib.rs.html#72-84' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-117' class='srclink' href='../src/unicode_bidi/lib.rs.html#72-84' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct BidiInfo {
     pub classes: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../unicode_bidi/tables/enum.BidiClass.html' title='unicode_bidi::tables::BidiClass'>BidiClass</a>&gt;,
     pub levels: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;,
@@ -56,22 +56,21 @@
 
 <p>The <code>classes</code> and <code>levels</code> vectors are indexed by byte offsets into the text.  If a character
 is multiple bytes wide, then its class and level will appear multiple times in these vectors.</p>
-</div><h2 class='fields'>Fields</h2>
-<table><tr class='stab '>
-                             <td id='structfield.classes'><code>classes</code></td><td><div class='docblock'><p>The BidiClass of the character at each byte in the text.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.levels'><code>levels</code></td><td><div class='docblock'><p>The directional embedding level of each byte in the text.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.paragraphs'><code>paragraphs</code></td><td><div class='docblock'><p>The boundaries and paragraph embedding level of each paragraph within the text.</p>
+</div><h2 class='fields'>Fields</h2><span id='structfield.classes' class='structfield'><code>classes: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../unicode_bidi/tables/enum.BidiClass.html' title='unicode_bidi::tables::BidiClass'>BidiClass</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The BidiClass of the character at each byte in the text.</p>
+</div><span id='structfield.levels' class='structfield'><code>levels: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The directional embedding level of each byte in the text.</p>
+</div><span id='structfield.paragraphs' class='structfield'><code>paragraphs: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../unicode_bidi/struct.ParagraphInfo.html' title='unicode_bidi::ParagraphInfo'>ParagraphInfo</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The boundaries and paragraph embedding level of each paragraph within the text.</p>
 
 <p>TODO: Use SmallVec or similar to avoid overhead when there are only one or two paragraphs?
 Or just don&#39;t include the first paragraph, which always starts at 0?</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../unicode_bidi/struct.BidiInfo.html' title='unicode_bidi::BidiInfo'>BidiInfo</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-95' class='srclink' href='../src/unicode_bidi/lib.rs.html#71' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../unicode_bidi/struct.BidiInfo.html' title='unicode_bidi::BidiInfo'>BidiInfo</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-90' class='srclink' href='../src/unicode_bidi/lib.rs.html#71' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../unicode_bidi/struct.BidiInfo.html' title='unicode_bidi::BidiInfo'>BidiInfo</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
 </div><h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../unicode_bidi/struct.BidiInfo.html' title='unicode_bidi::BidiInfo'>BidiInfo</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>This method tests for <code>!=</code>.</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../unicode_bidi/struct.BidiInfo.html' title='unicode_bidi::BidiInfo'>BidiInfo</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-114' class='srclink' href='../src/unicode_bidi/lib.rs.html#71' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../unicode_bidi/struct.BidiInfo.html' title='unicode_bidi::BidiInfo'>BidiInfo</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-109' class='srclink' href='../src/unicode_bidi/lib.rs.html#71' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div></section>
