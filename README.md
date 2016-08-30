@@ -28,7 +28,7 @@ _direct connected == Nodes we were previously connected to. TCP nodes or reliabl
 ## NAT Traversal/Handling
 
 Several methods are used for NAT traversal, UpNP, hole punching [See here for TCP NAT traversal] (http://www.goto.info.waseda.ac.jp/~wei/file/wei-apan-v10.pdf) and [here for UCP/DHT NAT traversal
-  ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf) etc. These methods will be added to by the community to allow a p2p network that cannot be easily blocked. By default this library spawns sockets randomly, enabling nodes to appear on several ports over time. This makes them very difficult to trace.
+  ](http://docs.maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf) etc. These methods will be added to by the community to allow a p2p network that cannot be easily blocked. By default this library spawns sockets randomly, enabling nodes to appear on several ports over time. This makes them very difficult to trace.
 
 ## License
 
