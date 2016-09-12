@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/prog.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.76/src/prog.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>prog.rs.html -- source</title>
@@ -468,6 +468,14 @@
 <span id="424">424</span>
 <span id="425">425</span>
 <span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
@@ -523,6 +531,12 @@
     <span class='kw'>pub</span> <span class='ident'>is_anchored_start</span>: <span class='ident'>bool</span>,
     <span class='doccomment'>/// Whether the regex must match at the end of the input.</span>
     <span class='kw'>pub</span> <span class='ident'>is_anchored_end</span>: <span class='ident'>bool</span>,
+    <span class='doccomment'>/// Whether the regex has at least one matchable sub-expression that must</span>
+    <span class='doccomment'>/// match from the start of the input.</span>
+    <span class='kw'>pub</span> <span class='ident'>has_anchored_start</span>: <span class='ident'>bool</span>,
+    <span class='doccomment'>/// Whether the regex has at least one matchable sub-expression that must</span>
+    <span class='doccomment'>/// match at the end of the input.</span>
+    <span class='kw'>pub</span> <span class='ident'>has_anchored_end</span>: <span class='ident'>bool</span>,
     <span class='doccomment'>/// Whether this program contains a Unicode word boundary instruction.</span>
     <span class='kw'>pub</span> <span class='ident'>has_unicode_word_boundary</span>: <span class='ident'>bool</span>,
     <span class='doccomment'>/// A possibly empty machine for very quickly matching prefix literals.</span>
@@ -562,6 +576,8 @@
             <span class='ident'>is_reverse</span>: <span class='bool-val'>false</span>,
             <span class='ident'>is_anchored_start</span>: <span class='bool-val'>false</span>,
             <span class='ident'>is_anchored_end</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>has_anchored_start</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>has_anchored_end</span>: <span class='bool-val'>false</span>,
             <span class='ident'>has_unicode_word_boundary</span>: <span class='bool-val'>false</span>,
             <span class='ident'>prefixes</span>: <span class='ident'>LiteralSearcher</span>::<span class='ident'>empty</span>(),
             <span class='ident'>dfa_size_limit</span>: <span class='number'>2</span> <span class='op'>*</span> (<span class='number'>1</span><span class='op'>&lt;&lt;</span><span class='number'>20</span>),

@@ -175,13 +175,13 @@
 
 <span class='doccomment'>//! Defines the `MappingContext` type</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>Ipv4Addr</span>, <span class='ident'>Ipv6Addr</span>, <span class='ident'>SocketAddr</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
 <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>get_if_addrs</span>::{<span class='self'>self</span>, <span class='ident'>IfAddr</span>};
 <span class='kw'>use</span> <span class='ident'>crossbeam</span>;
 <span class='kw'>use</span> <span class='ident'>igd</span>::{<span class='self'>self</span>, <span class='ident'>Gateway</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>Ipv4Addr</span>, <span class='ident'>Ipv6Addr</span>, <span class='ident'>SocketAddr</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>NatError</span>;
 
 <span class='doccomment'>/// Keeps track of information about external mapping servers</span>

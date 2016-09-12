@@ -99,11 +99,11 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>TcpStream</span>;
 
 <span class='kw'>use</span> <span class='ident'>mio</span>::<span class='ident'>tcp</span>::<span class='ident'>TcpListener</span>;
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>NatError</span>, <span class='ident'>util</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>TcpStream</span>;
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_sockets</span>(<span class='ident'>mapped_socket</span>: <span class='ident'>TcpBuilder</span>,
                    <span class='ident'>required</span>: <span class='ident'>usize</span>)

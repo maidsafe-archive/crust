@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/compile.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.76/src/compile.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>compile.rs.html -- source</title>
@@ -1131,6 +1131,12 @@
 <span id="1087">1087</span>
 <span id="1088">1088</span>
 <span id="1089">1089</span>
+<span id="1090">1090</span>
+<span id="1091">1091</span>
+<span id="1092">1092</span>
+<span id="1093">1093</span>
+<span id="1094">1094</span>
+<span id="1095">1095</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2016 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1277,7 +1283,9 @@
         <span class='comment'>// matching engine itself.</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dotstar_patch</span> <span class='op'>=</span> <span class='ident'>Patch</span> { <span class='ident'>hole</span>: <span class='ident'>Hole</span>::<span class='prelude-val'>None</span>, <span class='ident'>entry</span>: <span class='number'>0</span> };
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>is_anchored_start</span> <span class='op'>=</span> <span class='ident'>expr</span>.<span class='ident'>is_anchored_start</span>();
+        <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_anchored_start</span> <span class='op'>=</span> <span class='ident'>expr</span>.<span class='ident'>has_anchored_start</span>();
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>is_anchored_end</span> <span class='op'>=</span> <span class='ident'>expr</span>.<span class='ident'>is_anchored_end</span>();
+        <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_anchored_end</span> <span class='op'>=</span> <span class='ident'>expr</span>.<span class='ident'>has_anchored_end</span>();
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>needs_dotstar</span>() {
             <span class='ident'>dotstar_patch</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>c_dotstar</span>());
             <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>dotstar_patch</span>.<span class='ident'>entry</span>;
@@ -1305,6 +1313,10 @@
             <span class='ident'>exprs</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>());
         <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>is_anchored_end</span> <span class='op'>=</span>
             <span class='ident'>exprs</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>());
+        <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_anchored_start</span> <span class='op'>=</span>
+            <span class='ident'>exprs</span>.<span class='ident'>iter</span>().<span class='ident'>any</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>has_anchored_start</span>());
+        <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>has_anchored_end</span> <span class='op'>=</span>
+            <span class='ident'>exprs</span>.<span class='ident'>iter</span>().<span class='ident'>any</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>has_anchored_end</span>());
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dotstar_patch</span> <span class='op'>=</span> <span class='ident'>Patch</span> { <span class='ident'>hole</span>: <span class='ident'>Hole</span>::<span class='prelude-val'>None</span>, <span class='ident'>entry</span>: <span class='number'>0</span> };
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>compiled</span>.<span class='ident'>needs_dotstar</span>() {
             <span class='ident'>dotstar_patch</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>c_dotstar</span>());

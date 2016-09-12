@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/dfa.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.76/src/dfa.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>dfa.rs.html -- source</title>
@@ -1902,21 +1902,6 @@
 <span id="1858">1858</span>
 <span id="1859">1859</span>
 <span id="1860">1860</span>
-<span id="1861">1861</span>
-<span id="1862">1862</span>
-<span id="1863">1863</span>
-<span id="1864">1864</span>
-<span id="1865">1865</span>
-<span id="1866">1866</span>
-<span id="1867">1867</span>
-<span id="1868">1868</span>
-<span id="1869">1869</span>
-<span id="1870">1870</span>
-<span id="1871">1871</span>
-<span id="1872">1872</span>
-<span id="1873">1873</span>
-<span id="1874">1874</span>
-<span id="1875">1875</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2016 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -2072,6 +2057,9 @@ implementation.)
     <span class='doccomment'>/// The total number of times this cache has been flushed by the DFA</span>
     <span class='doccomment'>/// because of space constraints.</span>
     <span class='ident'>flush_count</span>: <span class='ident'>u64</span>,
+    <span class='doccomment'>/// The total heap size of the DFA&#39;s cache. We use this to determine when</span>
+    <span class='doccomment'>/// we should flush the cache.</span>
+    <span class='ident'>size</span>: <span class='ident'>usize</span>,
 }
 
 <span class='doccomment'>/// The transition table.</span>
@@ -2340,18 +2328,32 @@ implementation.)
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>prog</span>: <span class='kw-2'>&amp;</span><span class='ident'>Program</span>) <span class='op'>-&gt;</span> <span class='self'>Self</span> {
         <span class='comment'>// We add 1 to account for the special EOF byte.</span>
         <span class='kw'>let</span> <span class='ident'>num_byte_classes</span> <span class='op'>=</span> (<span class='ident'>prog</span>.<span class='ident'>byte_classes</span>[<span class='number'>255</span>] <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>+</span> <span class='number'>1</span>) <span class='op'>+</span> <span class='number'>1</span>;
-        <span class='ident'>Cache</span> {
+        <span class='kw'>let</span> <span class='ident'>starts</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>STATE_UNKNOWN</span>; <span class='number'>256</span>];
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cache</span> <span class='op'>=</span> <span class='ident'>Cache</span> {
             <span class='ident'>inner</span>: <span class='ident'>CacheInner</span> {
                 <span class='ident'>compiled</span>: <span class='ident'>HashMap</span>::<span class='ident'>new</span>(),
                 <span class='ident'>trans</span>: <span class='ident'>Transitions</span>::<span class='ident'>new</span>(<span class='ident'>num_byte_classes</span>),
                 <span class='ident'>states</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-                <span class='ident'>start_states</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>STATE_UNKNOWN</span>; <span class='number'>256</span>],
+                <span class='ident'>start_states</span>: <span class='ident'>starts</span>,
                 <span class='ident'>stack</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
                 <span class='ident'>flush_count</span>: <span class='number'>0</span>,
+                <span class='ident'>size</span>: <span class='number'>0</span>,
             },
             <span class='ident'>qcur</span>: <span class='ident'>SparseSet</span>::<span class='ident'>new</span>(<span class='ident'>prog</span>.<span class='ident'>insts</span>.<span class='ident'>len</span>()),
             <span class='ident'>qnext</span>: <span class='ident'>SparseSet</span>::<span class='ident'>new</span>(<span class='ident'>prog</span>.<span class='ident'>insts</span>.<span class='ident'>len</span>()),
-        }
+        };
+        <span class='ident'>cache</span>.<span class='ident'>inner</span>.<span class='ident'>reset_size</span>();
+        <span class='ident'>cache</span>
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>CacheInner</span> {
+    <span class='doccomment'>/// Resets the cache size to account for fixed costs, such as the program</span>
+    <span class='doccomment'>/// and stack sizes.</span>
+    <span class='kw'>fn</span> <span class='ident'>reset_size</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='self'>self</span>.<span class='ident'>size</span> <span class='op'>=</span>
+            (<span class='self'>self</span>.<span class='ident'>start_states</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>())
+            <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>stack</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>InstPtr</span><span class='op'>&gt;</span>());
     }
 }
 
@@ -3200,6 +3202,7 @@ implementation.)
         } <span class='kw'>else</span> {
             <span class='prelude-val'>None</span>
         };
+        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>reset_size</span>();
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>trans</span>.<span class='ident'>clear</span>();
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>clear</span>();
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>clear</span>();
@@ -3374,6 +3377,11 @@ implementation.)
         }
         <span class='comment'>// Finally, put our actual state on to our heap of states and index it</span>
         <span class='comment'>// so we can find it later.</span>
+        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>size</span> <span class='op'>+=</span>
+            <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>trans</span>.<span class='ident'>state_heap_size</span>()
+            <span class='op'>+</span> (<span class='number'>2</span> <span class='op'>*</span> <span class='ident'>state</span>.<span class='ident'>data</span>.<span class='ident'>len</span>())
+            <span class='op'>+</span> (<span class='number'>2</span> <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>())
+            <span class='op'>+</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>();
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>push</span>(<span class='ident'>state</span>.<span class='ident'>clone</span>());
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>insert</span>(<span class='ident'>state</span>, <span class='ident'>si</span>);
         <span class='comment'>// Transition table and set of states and map should all be in sync.</span>
@@ -3456,51 +3464,8 @@ implementation.)
     <span class='doccomment'>/// be wiped. Namely, it is possible that for certain regexes on certain</span>
     <span class='doccomment'>/// inputs, a new state could be created for every byte of input. (This is</span>
     <span class='doccomment'>/// bad for memory use, so we bound it with a cache.)</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// The approximation is guaranteed to be done in constant time (and</span>
-    <span class='doccomment'>/// indeed, this requirement is why it&#39;s approximate).</span>
     <span class='kw'>fn</span> <span class='ident'>approximate_size</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
-        <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>size_of</span> <span class='kw'>as</span> <span class='ident'>size</span>;
-        <span class='comment'>// Estimate that there are about 16 instructions per state consuming</span>
-        <span class='comment'>// 20 = 4 + (15 * 1) bytes of space (1 byte because of delta encoding).</span>
-        <span class='kw'>const</span> <span class='ident'>STATE_HEAP</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>20</span> <span class='op'>+</span> <span class='number'>1</span>; <span class='comment'>// one extra byte for flags</span>
-        <span class='kw'>let</span> <span class='ident'>compiled</span> <span class='op'>=</span>
-            (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>len</span>() <span class='op'>*</span> (<span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>() <span class='op'>+</span> <span class='ident'>STATE_HEAP</span>))
-            <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>());
-        <span class='kw'>let</span> <span class='ident'>states</span> <span class='op'>=</span>
-            <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>len</span>()
-            <span class='op'>*</span> (<span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>()
-               <span class='op'>+</span> <span class='ident'>STATE_HEAP</span>
-               <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>num_byte_classes</span>() <span class='op'>*</span> <span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>()));
-        <span class='kw'>let</span> <span class='ident'>start_states</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>start_states</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>();
-        <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>approximate_size</span>() <span class='op'>+</span> <span class='ident'>compiled</span> <span class='op'>+</span> <span class='ident'>states</span> <span class='op'>+</span> <span class='ident'>start_states</span>
-    }
-
-    <span class='doccomment'>/// Returns the actual heap space of the DFA. This visits every state in</span>
-    <span class='doccomment'>/// the DFA.</span>
-    <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span> <span class='comment'>// useful for debugging</span>
-    <span class='kw'>fn</span> <span class='ident'>actual_size</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>compiled</span> <span class='op'>=</span> <span class='number'>0</span>;
-        <span class='kw'>for</span> <span class='ident'>k</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>keys</span>() {
-            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>();
-            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>();
-            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>k</span>.<span class='ident'>data</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>();
-        }
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>states</span> <span class='op'>=</span> <span class='number'>0</span>;
-        <span class='kw'>for</span> <span class='ident'>s</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span> {
-            <span class='ident'>states</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>();
-            <span class='ident'>states</span> <span class='op'>+=</span> <span class='ident'>s</span>.<span class='ident'>data</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>();
-        }
-        <span class='ident'>compiled</span>
-        <span class='op'>+</span> <span class='ident'>states</span>
-        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>trans</span>.<span class='ident'>num_states</span>() <span class='op'>*</span>
-           <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>() <span class='op'>*</span>
-           <span class='self'>self</span>.<span class='ident'>num_byte_classes</span>())
-        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>start_states</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>())
-        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>stack</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>InstPtr</span><span class='op'>&gt;</span>())
-        <span class='op'>+</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>Fsm</span><span class='op'>&gt;</span>()
-        <span class='op'>+</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>CacheInner</span><span class='op'>&gt;</span>()
-        <span class='op'>+</span> <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>approximate_size</span>() <span class='comment'>// OK, not actual, but close enough</span>
+        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>size</span> <span class='op'>+</span> <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>approximate_size</span>()
     }
 }
 
@@ -3546,6 +3511,11 @@ implementation.)
     <span class='doccomment'>/// Returns the transition corresponding to (si, cls).</span>
     <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>si</span>: <span class='ident'>StatePtr</span>, <span class='ident'>cls</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>StatePtr</span> {
         <span class='self'>self</span>.<span class='ident'>table</span>[<span class='ident'>si</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>+</span> <span class='ident'>cls</span>]
+    }
+
+    <span class='doccomment'>/// The heap size, in bytes, of a single state in the transition table.</span>
+    <span class='kw'>fn</span> <span class='ident'>state_heap_size</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='self'>self</span>.<span class='ident'>num_byte_classes</span> <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>()
     }
 
     <span class='doccomment'>/// Like `next`, but uses unchecked access and is therefore unsafe.</span>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/input.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.76/src/input.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>input.rs.html -- source</title>
@@ -639,14 +639,14 @@
         <span class='kw'>match</span> <span class='ident'>empty</span>.<span class='ident'>look</span> {
             <span class='ident'>StartLine</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>previous_char</span>(<span class='ident'>at</span>);
-                <span class='ident'>c</span>.<span class='ident'>is_none</span>() <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
+                <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='number'>0</span> <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
             }
             <span class='ident'>EndLine</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>next_char</span>(<span class='ident'>at</span>);
-                <span class='ident'>c</span>.<span class='ident'>is_none</span>() <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
+                <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>len</span>() <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
             }
-            <span class='ident'>StartText</span> <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>previous_char</span>(<span class='ident'>at</span>).<span class='ident'>is_none</span>(),
-            <span class='ident'>EndText</span> <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>next_char</span>(<span class='ident'>at</span>).<span class='ident'>is_none</span>(),
+            <span class='ident'>StartText</span> <span class='op'>=&gt;</span> <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='number'>0</span>,
+            <span class='ident'>EndText</span> <span class='op'>=&gt;</span> <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='ident'>WordBoundary</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> (<span class='ident'>c1</span>, <span class='ident'>c2</span>) <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>previous_char</span>(<span class='ident'>at</span>), <span class='self'>self</span>.<span class='ident'>next_char</span>(<span class='ident'>at</span>));
                 <span class='ident'>c1</span>.<span class='ident'>is_word_char</span>() <span class='op'>!=</span> <span class='ident'>c2</span>.<span class='ident'>is_word_char</span>()
@@ -735,14 +735,14 @@
         <span class='kw'>match</span> <span class='ident'>empty</span>.<span class='ident'>look</span> {
             <span class='ident'>StartLine</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>previous_char</span>(<span class='ident'>at</span>);
-                <span class='ident'>c</span>.<span class='ident'>is_none</span>() <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
+                <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='number'>0</span> <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
             }
             <span class='ident'>EndLine</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>next_char</span>(<span class='ident'>at</span>);
-                <span class='ident'>c</span>.<span class='ident'>is_none</span>() <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
+                <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>len</span>() <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\n&#39;</span>
             }
-            <span class='ident'>StartText</span> <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>previous_char</span>(<span class='ident'>at</span>).<span class='ident'>is_none</span>(),
-            <span class='ident'>EndText</span> <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>next_char</span>(<span class='ident'>at</span>).<span class='ident'>is_none</span>(),
+            <span class='ident'>StartText</span> <span class='op'>=&gt;</span> <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='number'>0</span>,
+            <span class='ident'>EndText</span> <span class='op'>=&gt;</span> <span class='ident'>at</span>.<span class='ident'>pos</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>len</span>(),
             <span class='ident'>WordBoundary</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> (<span class='ident'>c1</span>, <span class='ident'>c2</span>) <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>previous_char</span>(<span class='ident'>at</span>), <span class='self'>self</span>.<span class='ident'>next_char</span>(<span class='ident'>at</span>));
                 <span class='ident'>c1</span>.<span class='ident'>is_word_char</span>() <span class='op'>!=</span> <span class='ident'>c2</span>.<span class='ident'>is_word_char</span>()

@@ -753,19 +753,19 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>windows</span>))]</span>
 <span class='kw'>mod</span> <span class='ident'>getifaddrs_posix</span> {
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>Ipv6Addr</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>io</span>, <span class='ident'>mem</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>CStr</span>;
 
     <span class='kw'>use</span> <span class='ident'>c_linked_list</span>::<span class='ident'>CLinkedListMut</span>;
     <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>get_if_addrs</span>::{<span class='ident'>IfAddr</span>, <span class='ident'>Ifv4Addr</span>, <span class='ident'>Ifv6Addr</span>, <span class='ident'>Interface</span>};
     <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>AF_INET</span>, <span class='ident'>AF_INET6</span>};
-    <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>getifaddrs</span> <span class='kw'>as</span> <span class='ident'>posix_getifaddrs</span>;
     <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>freeifaddrs</span> <span class='kw'>as</span> <span class='ident'>posix_freeifaddrs</span>;
+    <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>getifaddrs</span> <span class='kw'>as</span> <span class='ident'>posix_getifaddrs</span>;
     <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>ifaddrs</span> <span class='kw'>as</span> <span class='ident'>posix_ifaddrs</span>;
     <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr</span> <span class='kw'>as</span> <span class='ident'>posix_sockaddr</span>;
     <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr_in</span> <span class='kw'>as</span> <span class='ident'>posix_sockaddr_in</span>;
     <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr_in6</span> <span class='kw'>as</span> <span class='ident'>posix_sockaddr_in6</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>io</span>, <span class='ident'>mem</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>CStr</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>Ipv6Addr</span>};
 
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unsafe_code</span>)]</span>
     <span class='kw'>fn</span> <span class='ident'>sockaddr_to_ipaddr</span>(<span class='ident'>sockaddr</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>posix_sockaddr</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>IpAddr</span><span class='op'>&gt;</span> {
@@ -899,14 +899,14 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>getifaddrs_windows</span> {
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>Ipv6Addr</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>io</span>, <span class='ident'>ptr</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>CStr</span>;
 
     <span class='kw'>use</span> <span class='ident'>c_linked_list</span>::<span class='ident'>CLinkedListConst</span>;
     <span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>get_if_addrs</span>::{<span class='ident'>IfAddr</span>, <span class='ident'>Ifv4Addr</span>, <span class='ident'>Ifv6Addr</span>, <span class='ident'>Interface</span>};
-    <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_char</span>, <span class='ident'>c_int</span>, <span class='ident'>c_ulong</span>, <span class='ident'>c_void</span>, <span class='ident'>size_t</span>};
     <span class='kw'>use</span> <span class='ident'>libc</span>;
+    <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_char</span>, <span class='ident'>c_int</span>, <span class='ident'>c_ulong</span>, <span class='ident'>c_void</span>, <span class='ident'>size_t</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>io</span>, <span class='ident'>ptr</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>CStr</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>Ipv6Addr</span>};
     <span class='kw'>use</span> <span class='ident'>winapi</span>::{<span class='ident'>AF_INET</span>, <span class='ident'>AF_INET6</span>, <span class='ident'>DWORD</span>, <span class='ident'>ERROR_SUCCESS</span>, <span class='ident'>sockaddr_in6</span>};
     <span class='kw'>use</span> <span class='ident'>winapi</span>::<span class='ident'>SOCKADDR</span> <span class='kw'>as</span> <span class='ident'>sockaddr</span>;
     <span class='kw'>use</span> <span class='ident'>winapi</span>::<span class='ident'>SOCKADDR_IN</span> <span class='kw'>as</span> <span class='ident'>sockaddr_in</span>;

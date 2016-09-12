@@ -713,23 +713,23 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>, <span class='ident'>HashSet</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hash</span>, <span class='ident'>Hasher</span>, <span class='ident'>SipHasher</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
-<span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>, <span class='ident'>Token</span>};
-<span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
-<span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
-<span class='kw'>use</span> <span class='ident'>rust_sodium</span>;
-<span class='kw'>use</span> <span class='ident'>rust_sodium</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='self'>self</span>, <span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>};
-<span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>config_handler</span>::{<span class='self'>self</span>, <span class='ident'>Config</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Bootstrap</span>, <span class='ident'>Connect</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>ConnectionListener</span>,
            <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
+<span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>config_handler</span>::{<span class='self'>self</span>, <span class='ident'>Config</span>};
+<span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='self'>self</span>, <span class='ident'>EventLoop</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>nat</span>;
+<span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>MappingContext</span>};
+<span class='kw'>use</span> <span class='ident'>rust_sodium</span>;
+<span class='kw'>use</span> <span class='ident'>rust_sodium</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='self'>self</span>, <span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>};
+<span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>, <span class='ident'>HashSet</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hash</span>, <span class='ident'>Hasher</span>, <span class='ident'>SipHasher</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
 
 <span class='kw'>const</span> <span class='ident'>BOOTSTRAP_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>0</span>);
 <span class='kw'>const</span> <span class='ident'>SERVICE_DISCOVERY_TOKEN</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>1</span>);
@@ -1070,18 +1070,18 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
-
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>, <span class='ident'>hash_map</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>ATOMIC_USIZE_INIT</span>, <span class='ident'>AtomicUsize</span>, <span class='ident'>Ordering</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Receiver</span>;
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>, <span class='ident'>mpsc</span>};
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
-    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
     <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Event</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>};
+
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>, <span class='ident'>hash_map</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>, <span class='ident'>mpsc</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>ATOMIC_USIZE_INIT</span>, <span class='ident'>AtomicUsize</span>, <span class='ident'>Ordering</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Receiver</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>tests</span>::{<span class='ident'>get_event_sender</span>, <span class='ident'>timebomb</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
