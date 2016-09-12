@@ -17,13 +17,13 @@
 
 //! Defines the `MappingContext` type
 
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::time::Duration;
 
 use common::get_if_addrs::{self, IfAddr};
 use crossbeam;
 use igd::{self, Gateway};
 use nat;
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::time::Duration;
 use super::NatError;
 
 /// Keeps track of information about external mapping servers

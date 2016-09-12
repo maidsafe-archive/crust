@@ -16,9 +16,9 @@
 // relating to use of the SAFE Network Software.
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use std::io;
 
 use maidsafe_utilities::serialisation::SerialisationError;
+use std::io;
 
 quick_error! {
     /// Common module specific error

@@ -17,6 +17,10 @@
 
 #[macro_use]
 pub mod utils;
+
+use common::SocketAddr;
+use main::{Config, Event, Service};
+use mio;
 pub use self::utils::{gen_config, get_event_sender, timebomb};
 
 use std::collections::HashSet;
@@ -25,10 +29,6 @@ use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::thread;
 use std::time::Duration;
-
-use common::SocketAddr;
-use main::{Config, Event, Service};
-use mio;
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
@@ -262,14 +262,14 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
+
+    use common::{Core, Message, Socket, State};
+    use mio::{EventLoop, EventSet, PollOpt, Token};
+    use mio::tcp::TcpListener;
+    use rust_sodium::crypto::box_;
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
-
-    use common::{Core, Message, Socket, State};
-    use mio::tcp::TcpListener;
-    use mio::{EventLoop, EventSet, PollOpt, Token};
-    use rust_sodium::crypto::box_;
 
     pub struct Listen(TcpListener, Token);
 

@@ -15,11 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::{BTreeMap, VecDeque};
-use std::io::{self, Cursor, ErrorKind, Read, Write};
-use std::mem;
-use std::net::SocketAddr;
-use std::time::Instant;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use common::{CommonError, Core, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result};
@@ -27,6 +22,11 @@ use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
 use mio::tcp::TcpStream;
 use rustc_serialize::{Decodable, Encodable};
+use std::collections::{BTreeMap, VecDeque};
+use std::io::{self, Cursor, ErrorKind, Read, Write};
+use std::mem;
+use std::net::SocketAddr;
+use std::time::Instant;
 
 /// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
 const MAX_MSG_AGE_SECS: u64 = 60;
@@ -210,7 +210,7 @@ impl SockInner {
                            -> ::Res<bool> {
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
-            .skip_while(|&(&priority, ref queue)| {
+            .skip_while(|&(&priority, queue)| {
                 priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
                 queue.front().map_or(false, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS

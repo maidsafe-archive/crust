@@ -15,14 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
-use std::sync::mpsc::{self, Receiver};
-use std::thread;
-use std::time::Duration;
 
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::{Config, Event};
+use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+use std::sync::mpsc::{self, Receiver};
+use std::thread;
+use std::time::Duration;
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.

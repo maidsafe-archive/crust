@@ -15,11 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::any::Any;
-use std::collections::HashSet;
-use std::cell::RefCell;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::rc::Rc;
 
 use common::{Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
@@ -28,6 +23,11 @@ use mio::{EventLoop, Timeout, Token};
 use nat::{MappingContext, NatError, util};
 use net2::TcpBuilder;
 use self::get_ext_addr::GetExtAddr;
+use std::any::Any;
+use std::cell::RefCell;
+use std::collections::HashSet;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::rc::Rc;
 
 mod get_ext_addr;
 

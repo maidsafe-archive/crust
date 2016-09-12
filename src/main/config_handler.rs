@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 use common::SocketAddr;
 use config_file_handler::{self, FileHandler};
+use std::ffi::OsString;
+use std::path::PathBuf;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {

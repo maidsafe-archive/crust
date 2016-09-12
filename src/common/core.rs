@@ -16,12 +16,12 @@
 // relating to use of the SAFE Network Software.
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
 
 use common::State;
 use mio::{EventLoop, EventSet, Handler, Token};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 pub struct CoreMessage(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
 

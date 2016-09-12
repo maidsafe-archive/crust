@@ -15,23 +15,23 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher, SipHasher};
-use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
 
 use common::{self, Core, CoreMessage, Priority};
 use maidsafe_utilities;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop, Token};
-use nat::{MappedTcpSocket, MappingContext};
-use service_discovery::ServiceDiscovery;
-use rust_sodium;
-use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
-use main::config_handler::{self, Config};
 use main::{Bootstrap, Connect, ConnectionId, ConnectionInfoResult, ConnectionListener,
            ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo};
+use main::config_handler::{self, Config};
+use mio::{self, EventLoop, Token};
 use nat;
+use nat::{MappedTcpSocket, MappingContext};
+use rust_sodium;
+use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
+use service_discovery::ServiceDiscovery;
+use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher, SipHasher};
+use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -372,18 +372,18 @@ fn name_hash(network_name: &Option<String>) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    use std::collections::{HashMap, hash_map};
-    use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
-    use std::sync::mpsc::Receiver;
-    use std::sync::{Arc, Barrier, mpsc};
-    use std::thread;
-    use std::time::Duration;
 
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{Event, PrivConnectionInfo, PubConnectionInfo};
+
+    use std::collections::{HashMap, hash_map};
+    use std::sync::{Arc, Barrier, mpsc};
+    use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+    use std::sync::mpsc::Receiver;
+    use std::thread;
+    use std::time::Duration;
+    use super::*;
     use tests::{get_event_sender, timebomb};
 
     #[test]

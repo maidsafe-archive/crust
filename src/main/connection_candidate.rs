@@ -15,15 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+
+use common::{Core, Message, Priority, Socket, State};
+use main::{ConnectionId, ConnectionMap, PeerId};
+use mio::{EventLoop, EventSet, PollOpt, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
-
-use common::{Core, Message, Priority, Socket, State};
-use main::{ConnectionId, ConnectionMap, PeerId};
-use mio::{EventLoop, EventSet, PollOpt, Token};
 
 pub type Finish = Box<FnMut(&mut Core, &mut EventLoop<Core>, Token, Option<Socket>)>;
 

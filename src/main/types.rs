@@ -15,13 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::fmt;
 
 use common;
 use mio::Token;
 use net2::TcpBuilder;
 use rand::{Rand, Rng};
 use rust_sodium::crypto::box_::{self, PublicKey};
+use std::fmt;
 
 // ========================================================================================
 //                                     PeerId

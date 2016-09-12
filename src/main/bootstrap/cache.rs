@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::ffi::OsString;
 
 use common;
 use config_file_handler::{self, FileHandler};
+use std::ffi::OsString;
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
@@ -41,8 +41,7 @@ impl Cache {
         };
 
         Ok(Cache {
-            file_handler: try!(FileHandler::new(&name, true)),
-            // last_updated: Instant::now(),
+            file_handler: try!(FileHandler::new(&name, true)), // last_updated: Instant::now(),
         })
     }
 
@@ -58,7 +57,8 @@ impl Cache {
     //                        -> ::Res<()> {
     //     if ENABLE_BOOTSTRAP_CACHE {
     //         try!(self.insert_contacts(contacts, prune));
-    //         // TODO(Team) this implementation is missing and should be considered in next planning
+    //         // TODO(Team) this implementation is missing and should be considered in next
+    //         // planning
     //         if Instant::now() > self.last_updated + Self::duration_between_updates() {
     //             // self.check_bootstrap_contacts();
     //         }
