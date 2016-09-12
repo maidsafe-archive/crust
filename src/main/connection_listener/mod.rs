@@ -17,11 +17,6 @@
 
 mod exchange_msg;
 
-use std::any::Any;
-use std::cell::RefCell;
-use std::net::SocketAddr;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
 
 use common::{Core, NameHash, Socket, State};
 use main::{ConnectionMap, Event};
@@ -29,8 +24,13 @@ use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
-use self::exchange_msg::ExchangeMsg;
 use rust_sodium::crypto::box_::PublicKey;
+use self::exchange_msg::ExchangeMsg;
+use std::any::Any;
+use std::cell::RefCell;
+use std::net::SocketAddr;
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -166,29 +166,29 @@ impl State for ConnectionListener {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
+
+    use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+    use common::{self, Core, CoreMessage, Message, NameHash};
+    use maidsafe_utilities;
+    use maidsafe_utilities::event_sender::MaidSafeEventCategory;
+    use maidsafe_utilities::serialisation::{deserialise, serialise};
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use main::{Event, PeerId};
+    use mio::{EventLoop, Sender, Token};
+    use nat::MappingContext;
+    use rust_sodium::crypto::box_::{self, PublicKey};
+    use rustc_serialize::Decodable;
 
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
     use std::mem;
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
-    use std::sync::mpsc;
     use std::sync::{Arc, Mutex};
+    use std::sync::mpsc;
     use std::time::Duration;
-
-    use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, Core, CoreMessage, Message, NameHash};
-    use main::{Event, PeerId};
-    use mio::{EventLoop, Sender, Token};
-    use maidsafe_utilities;
-    use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use maidsafe_utilities::serialisation::{deserialise, serialise};
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
-    use nat::MappingContext;
-    use rust_sodium::crypto::box_::{self, PublicKey};
-    use rustc_serialize::Decodable;
+    use super::*;
+    use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
 
     const NAME_HASH: NameHash = 9876543210;
 

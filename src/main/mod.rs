@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 
 pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
 pub use self::bootstrap::Bootstrap;
@@ -24,11 +22,13 @@ pub use self::config_handler::Config;
 pub use self::connect::Connect;
 pub use self::connection_candidate::ConnectionCandidate;
 pub use self::connection_listener::ConnectionListener;
-pub use self::event::Event;
 pub use self::error::CrustError;
+pub use self::event::Event;
 pub use self::service::Service;
 pub use self::types::{ConnectionId, ConnectionInfoResult, PeerId, PrivConnectionInfo,
                       PubConnectionInfo};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 pub type ConnectionMap = Arc<Mutex<HashMap<PeerId, ConnectionId>>>;
 

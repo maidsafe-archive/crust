@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
 
 use common::CoreMessage;
 use mio;
+use std::io;
 
 quick_error! {
     /// Nat Traversal specific error

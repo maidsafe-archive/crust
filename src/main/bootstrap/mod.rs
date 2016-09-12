@@ -18,6 +18,15 @@
 mod cache;
 mod try_peer;
 
+use common::{self, Core, CoreTimerId, Socket, State};
+
+use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
+use mio::{EventLoop, Timeout, Token};
+use rand::{self, Rng};
+use rust_sodium::crypto::box_::PublicKey;
+use self::cache::Cache;
+use self::try_peer::TryPeer;
+use service_discovery::ServiceDiscovery;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -25,15 +34,6 @@ use std::mem;
 use std::net;
 use std::rc::{Rc, Weak};
 use std::sync::mpsc::{self, Receiver};
-
-use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
-use common::{self, Core, CoreTimerId, Socket, State};
-use mio::{EventLoop, Timeout, Token};
-use self::cache::Cache;
-use self::try_peer::TryPeer;
-use service_discovery::ServiceDiscovery;
-use rust_sodium::crypto::box_::PublicKey;
-use rand::{self, Rng};
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 1000;

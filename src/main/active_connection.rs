@@ -15,14 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::any::Any;
-use std::cell::RefCell;
-use std::collections::hash_map::Entry;
-use std::rc::Rc;
 
 use common::{Core, CoreTimerId, Message, Priority, Socket, State};
 use main::{ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, Timeout, Token};
+use std::any::Any;
+use std::cell::RefCell;
+use std::collections::hash_map::Entry;
+use std::rc::Rc;
 
 #[cfg(not(test))]
 pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;

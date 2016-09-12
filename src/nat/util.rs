@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
-use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 use net2::TcpBuilder;
+use std::io;
+use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 pub fn new_reusably_bound_tcp_socket(local_addr: &SocketAddr) -> io::Result<TcpBuilder> {
     let socket = match local_addr.ip() {

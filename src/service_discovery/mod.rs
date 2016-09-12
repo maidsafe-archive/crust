@@ -19,6 +19,13 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
+
+use common::{self, Core, State};
+use maidsafe_utilities::serialisation::{deserialise, serialise};
+use mio::{EventLoop, EventSet, PollOpt, Token};
+
+use mio::udp::UdpSocket;
+use rand;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::VecDeque;
@@ -26,22 +33,13 @@ use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str::FromStr;
-use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 use std::u16;
-
-use common::{self, Core, State};
-use maidsafe_utilities::serialisation::{deserialise, serialise};
-use rand;
-
-use mio::udp::UdpSocket;
-use mio::{EventLoop, EventSet, PollOpt, Token};
 
 #[derive(RustcEncodable, RustcDecodable)]
 enum DiscoveryMsg {
-    Request {
-        guid: u64,
-    },
+    Request { guid: u64 },
     Response(Vec<common::SocketAddr>),
 }
 
@@ -234,18 +232,18 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
-    use std::net;
-    use std::str::FromStr;
-    use std::sync::mpsc;
-    use std::sync::{Arc, Mutex};
-    use std::thread;
-    use std::time::Duration;
 
     use common::{Core, CoreMessage};
     use maidsafe_utilities;
     use mio::{EventLoop, Token};
+
+    use std::net;
+    use std::str::FromStr;
+    use std::sync::{Arc, Mutex};
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Duration;
+    use super::*;
 
     #[test]
     fn service_discovery() {

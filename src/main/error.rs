@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io;
-use std::sync::mpsc;
 
 use common::{self, CoreMessage};
 use config_file_handler;
@@ -25,6 +23,8 @@ use main::PeerId;
 use mio;
 use nat;
 use service_discovery;
+use std::io;
+use std::sync::mpsc;
 
 quick_error! {
     /// Crust's universal error type.

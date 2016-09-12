@@ -16,9 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::SocketAddr;
+use super::ConnectionInfoResult;
 
 use super::PeerId;
-use super::ConnectionInfoResult;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.

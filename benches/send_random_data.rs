@@ -19,7 +19,7 @@
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
 #![forbid(bad_style, exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
           unknown_crate_types, warnings)]
-#![deny(deprecated, drop_with_repr_extern, improper_ctypes, missing_docs,
+#![deny(deprecated, improper_ctypes, missing_docs,
         non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
         private_no_mangle_fns, private_no_mangle_statics, stable_features, unconditional_recursion,
         unknown_lints, unsafe_code, unused, unused_allocation, unused_attributes,
@@ -44,13 +44,13 @@ extern crate test;
 #[macro_use]
 extern crate unwrap;
 
-use rand::random;
-use test::Bencher;
 use crust::*;
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::log::init;
+use rand::random;
 
 use std::sync::mpsc::{Receiver, channel};
+use test::Bencher;
 
 pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);

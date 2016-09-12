@@ -15,9 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use maidsafe_utilities::serialisation::SerialisationError;
 use std::io;
 use std::net::AddrParseError;
-use maidsafe_utilities::serialisation::SerialisationError;
 
 quick_error! {
     #[derive(Debug)]

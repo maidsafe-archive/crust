@@ -17,18 +17,18 @@
 
 mod exchange_msg;
 
-use std::any::Any;
-use std::cell::RefCell;
-use std::collections::HashSet;
-use std::rc::{Rc, Weak};
 
 use common::{Core, CoreTimerId, NameHash, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PeerId,
            PrivConnectionInfo, PubConnectionInfo};
-use mio::tcp::{TcpListener, TcpStream};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
+use mio::tcp::{TcpListener, TcpStream};
 use nat;
 use self::exchange_msg::ExchangeMsg;
+use std::any::Any;
+use std::cell::RefCell;
+use std::collections::HashSet;
+use std::rc::{Rc, Weak};
 
 const TIMEOUT_MS: u64 = 60 * 1000;
 

@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::TcpStream;
 
 use mio::tcp::TcpListener;
 use nat::{NatError, util};
 use net2::TcpBuilder;
+use std::net::TcpStream;
 
 pub fn get_sockets(mapped_socket: TcpBuilder,
                    required: usize)

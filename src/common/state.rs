@@ -16,10 +16,10 @@
 // relating to use of the SAFE Network Software.
 // Defines the `State` trait
 
-use std::any::Any;
 
 use common::Core;
 use mio::{EventLoop, EventSet};
+use std::any::Any;
 
 pub type Priority = u8;
 
