@@ -180,7 +180,10 @@ impl Service {
         let whitelisted_ips = &self.config.bootstrap_whitelisted_ips;
 
         match self.get_peer_socket_addr(peer_id) {
-            Ok(ip) => whitelisted_ips.contains(&common::IpAddr::from(ip)),
+            Ok(ip) => {
+                debug!("Checking whether {:?} is whitelisted in {:?}", ip, whitelisted_ips);
+                whitelisted_ips.contains(&common::IpAddr::from(ip))
+            },
             Err(e) => {
                 debug!("{}", e.description());
                 false
@@ -425,11 +428,14 @@ fn name_hash(network_name: &Option<String>) -> u64 {
 #[cfg(test)]
 mod tests {
 
+    use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{Event, PrivConnectionInfo, PubConnectionInfo};
 
-    use std::collections::{HashMap, hash_map};
+    use std::collections::{HashMap, HashSet, hash_map};
+    use std::net::IpAddr;
+    use std::str::FromStr;
     use std::sync::{Arc, Barrier, mpsc};
     use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
     use std::sync::mpsc::Receiver;
@@ -701,5 +707,38 @@ mod tests {
         timebomb(Duration::from_millis(timeout_ms), move || {
             drop(threads);
         });
+    }
+
+    #[test]
+    fn bootstrap_with_whitelist_ip() {
+        // Setup config with whitelisted IP
+        let mut whitelisted_ips = HashSet::new();
+        whitelisted_ips.insert(common::IpAddr(unwrap!(IpAddr::from_str("192.168.0.1"))));
+
+        let mut config = ::tests::utils::gen_config();
+        config.bootstrap_whitelisted_ips = whitelisted_ips;
+
+        // Connect two peers
+        let (event_tx_0, event_rx_0) = get_event_sender();
+        let mut service_0 = unwrap!(Service::with_config(event_tx_0, config));
+
+        unwrap!(service_0.start_listening_tcp());
+        expect_event!(event_rx_0, Event::ListenerStarted(_));
+
+        let (event_tx_1, event_rx_1) = get_event_sender();
+        let mut service_1 = unwrap!(Service::new(event_tx_1));
+
+        unwrap!(service_1.start_listening_tcp());
+        expect_event!(event_rx_1, Event::ListenerStarted(_));
+
+        connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+
+        // Do checks
+        assert_eq!(service_0.is_peer_whitelisted(&service_1.id()), true);
+        assert_eq!(service_0.is_peer_whitelisted(&service_0.id()), false);
+
+        // service_1 doesn't have a whitelist config, so all peers should be whitelisted
+        assert_eq!(service_1.is_peer_whitelisted(&service_0.id()), true);
+        assert_eq!(service_1.is_peer_whitelisted(&service_1.id()), true);
     }
 }

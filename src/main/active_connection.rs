@@ -17,7 +17,7 @@
 
 
 use common::{Core, CoreTimerId, Message, Priority, Socket, SocketAddr, State};
-use main::{ConnectionId, ConnectionMap, CrustError, Event, PeerId};
+use main::{ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, Timeout, Token};
 use std::any::Any;
 use std::cell::RefCell;
@@ -120,9 +120,18 @@ impl ActiveConnection {
         }
     }
 
+    #[cfg(not(test))]
     /// Helper function that returns a socket address of the connection
     pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+        use main::CrustError;
         self.socket.peer_addr().map(SocketAddr).map_err(CrustError::Common)
+    }
+
+    #[cfg(test)]
+    // TODO(nbaksalyar) find a better way to mock connection IPs
+    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+        use std::str::FromStr;
+        Ok(SocketAddr(unwrap!(FromStr::from_str("192.168.0.1:0"))))
     }
 
     fn write(&mut self,

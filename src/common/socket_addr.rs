@@ -129,7 +129,11 @@ impl Deref for IpAddr {
 
 impl From<SocketAddr> for IpAddr {
     fn from(sa: SocketAddr) -> IpAddr {
-        if let Ok(ia) = net::IpAddr::from_str(&*format!("{}:0", sa)) {
+        let s = format!("{}", sa);
+        let port = s.find(':').unwrap_or(0);
+        let (ip, _) = s.split_at(port);
+
+        if let Ok(ia) = net::IpAddr::from_str(ip) {
             IpAddr(ia)
         } else {
             panic!("Invalid SocketAddr format")
