@@ -127,6 +127,16 @@ impl Deref for IpAddr {
     }
 }
 
+impl From<SocketAddr> for IpAddr {
+    fn from(sa: SocketAddr) -> IpAddr {
+        if let Ok(ia) = net::IpAddr::from_str(&*format!("{}:0", sa)) {
+            IpAddr(ia)
+        } else {
+            panic!("Invalid SocketAddr format")
+        }
+    }
+}
+
 impl fmt::Display for IpAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)

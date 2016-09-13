@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 
-use common::{Core, CoreTimerId, Message, Priority, Socket, State};
-use main::{ConnectionId, ConnectionMap, Event, PeerId};
+use common::{Core, CoreTimerId, Message, Priority, Socket, SocketAddr, State};
+use main::{ConnectionId, ConnectionMap, CrustError, Event, PeerId};
 use mio::{EventLoop, EventSet, Timeout, Token};
 use std::any::Any;
 use std::cell::RefCell;
@@ -118,6 +118,11 @@ impl ActiveConnection {
                 }
             }
         }
+    }
+
+    /// Helper function that returns a socket address of the connection
+    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+        self.socket.peer_addr().map(SocketAddr).map_err(CrustError::Common)
     }
 
     fn write(&mut self,
