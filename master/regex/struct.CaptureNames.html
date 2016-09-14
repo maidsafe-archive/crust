@@ -47,14 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-4420' class='srclink' href='../src/regex/re_unicode.rs.html#688' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-4412' class='srclink' href='../src/regex/re_unicode.rs.html#688' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct CaptureNames&lt;'r&gt;(_);</pre><div class='docblock'><p>An iterator over the names of all possible captures.</p>
 
 <p><code>None</code> indicates an unnamed capture; the first element (capture 0, the
 whole matched region) is always unnamed.</p>
 
 <p><code>&#39;r</code> is the lifetime of the compiled regular expression.</p>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'r&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a> for <a class='struct' href='../regex/struct.CaptureNames.html' title='regex::CaptureNames'>CaptureNames</a>&lt;'r&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-4430' class='srclink' href='../src/regex/re_unicode.rs.html#697-715' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'r&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a> for <a class='struct' href='../regex/struct.CaptureNames.html' title='regex::CaptureNames'>CaptureNames</a>&lt;'r&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-4422' class='srclink' href='../src/regex/re_unicode.rs.html#697-715' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='associatedtype.Item' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html#associatedtype.Item' class='type'>Item</a> = <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'r <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></h4>
 <div class='docblock'><p>The type of the elements being iterated over.</p>
 </div><h4 id='method.next' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html#tymethod.next' class='fnname'>next</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'r <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h4>

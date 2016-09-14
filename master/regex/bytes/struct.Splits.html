@@ -47,14 +47,14 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3651' class='srclink' href='../../src/regex/re_bytes.rs.html#606-609' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3643' class='srclink' href='../../src/regex/re_bytes.rs.html#606-609' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Splits&lt;'r,&nbsp;'t&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Yields all substrings delimited by a regular expression match.</p>
 
 <p><code>&#39;r</code> is the lifetime of the compiled regular expression and <code>&#39;t</code> is the
 lifetime of the byte string being split.</p>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'r,&nbsp;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a> for <a class='struct' href='../../regex/bytes/struct.Splits.html' title='regex::bytes::Splits'>Splits</a>&lt;'r,&nbsp;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3656' class='srclink' href='../../src/regex/re_bytes.rs.html#611-633' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'r,&nbsp;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html' title='core::iter::iterator::Iterator'>Iterator</a> for <a class='struct' href='../../regex/bytes/struct.Splits.html' title='regex::bytes::Splits'>Splits</a>&lt;'r,&nbsp;'t&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-3648' class='srclink' href='../../src/regex/re_bytes.rs.html#611-633' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='associatedtype.Item' class='type'><code>type <a href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html#associatedtype.Item' class='type'>Item</a> = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'t [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
 <div class='docblock'><p>The type of the elements being iterated over.</p>
 </div><h4 id='method.next' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/iterator/trait.Iterator.html#tymethod.next' class='fnname'>next</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'t [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></h4>

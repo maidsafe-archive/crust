@@ -155,6 +155,9 @@
 <span id="111">111</span>
 <span id="112">112</span>
 <span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -173,11 +176,12 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-
-<span class='kw'>use</span> <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>;
-<span class='kw'>use</span> <span class='ident'>config_file_handler</span>::{<span class='self'>self</span>, <span class='ident'>FileHandler</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsString</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>PathBuf</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashSet</span>;
+
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>SocketAddr</span>, <span class='ident'>IpAddr</span>};
+<span class='kw'>use</span> <span class='ident'>config_file_handler</span>::{<span class='self'>self</span>, <span class='ident'>FileHandler</span>};
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>, <span class='ident'>RustcDecodable</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Config</span> {
@@ -185,6 +189,7 @@
     <span class='kw'>pub</span> <span class='ident'>tcp_acceptor_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>service_discovery_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>bootstrap_cache_name</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>bootstrap_whitelisted_ips</span>: <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='ident'>IpAddr</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>network_name</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
 }
 
@@ -195,6 +200,7 @@
             <span class='ident'>tcp_acceptor_port</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>service_discovery_port</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>bootstrap_cache_name</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>bootstrap_whitelisted_ips</span>: <span class='ident'>HashSet</span>::<span class='ident'>new</span>(),
             <span class='ident'>network_name</span>: <span class='prelude-val'>None</span>,
         }
     }
