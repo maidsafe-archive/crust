@@ -15,12 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
 use common::{self, Core, CoreMessage, Priority};
 use maidsafe_utilities;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use main::{Bootstrap, Connect, ConnectionId, ConnectionInfoResult, ConnectionListener,
-           ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo};
+           ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo,
+           ActiveConnection};
 use main::config_handler::{self, Config};
 use mio::{self, EventLoop, Token};
 use nat;
@@ -29,9 +29,10 @@ use rust_sodium;
 use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
 use std::hash::{Hash, Hasher, SipHasher};
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -135,10 +136,64 @@ impl Service {
         });
     }
 
+    fn get_peer_socket_addr(&self, peer_id: &PeerId) -> ::Res<common::SocketAddr> {
+        let token = match unwrap!(self.cm.lock()).get(peer_id) {
+            Some(&ConnectionId { active_connection: Some(token), .. }) => token,
+            _ => return Err(CrustError::PeerNotFound(*peer_id)),
+        };
+
+        let (tx, rx) = mpsc::channel();
+
+        let _ = self.post(move |core, _| {
+            let state = match core.get_state(token) {
+                Some(state) => state,
+                None => {
+                    let _ = tx.send(None);
+                    return;
+                }
+            };
+            match state.borrow_mut().as_any().downcast_mut::<ActiveConnection>() {
+                Some(active_connection) => {
+                    let _ = tx.send(Some(active_connection.peer_addr()));
+                },
+                None => {
+                    debug!("Expected token {:?} to be ActiveConnection", token);
+                    let _ = tx.send(None);
+                }
+            };
+        });
+
+        match rx.recv() {
+            Ok(Some(ip)) => ip,
+            Ok(None) => Err(CrustError::PeerNotFound(*peer_id)),
+            Err(e) => Err(CrustError::ChannelRecv(e))
+        }
+    }
+
+    /// Check if the provided peer address is whitelisted in config.
+    pub fn is_peer_whitelisted(&self, peer_id: &PeerId) -> bool {
+        if self.config.bootstrap_whitelisted_ips.is_empty() {
+            // Whitelisting is not used, so all peers are valid.
+            return true;
+        }
+
+        let whitelisted_ips = &self.config.bootstrap_whitelisted_ips;
+
+        match self.get_peer_socket_addr(peer_id) {
+            Ok(ip) => {
+                debug!("Checking whether {:?} is whitelisted in {:?}", ip, whitelisted_ips);
+                whitelisted_ips.contains(&common::IpAddr::from(ip))
+            },
+            Err(e) => {
+                debug!("{}", e.description());
+                false
+            }
+        }
+    }
+
     // TODO temp remove
     /// Check if we have peers on LAN
     pub fn has_peers_on_lan(&self) -> bool {
-        use std::sync::mpsc;
         use std::time::Duration;
         use std::thread;
 
@@ -373,11 +428,14 @@ fn name_hash(network_name: &Option<String>) -> u64 {
 #[cfg(test)]
 mod tests {
 
+    use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{Event, PrivConnectionInfo, PubConnectionInfo};
 
-    use std::collections::{HashMap, hash_map};
+    use std::collections::{HashMap, HashSet, hash_map};
+    use std::net::IpAddr;
+    use std::str::FromStr;
     use std::sync::{Arc, Barrier, mpsc};
     use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
     use std::sync::mpsc::Receiver;
@@ -649,5 +707,38 @@ mod tests {
         timebomb(Duration::from_millis(timeout_ms), move || {
             drop(threads);
         });
+    }
+
+    #[test]
+    fn bootstrap_with_whitelist_ip() {
+        // Setup config with whitelisted IP
+        let mut whitelisted_ips = HashSet::new();
+        whitelisted_ips.insert(common::IpAddr(unwrap!(IpAddr::from_str("192.168.0.1"))));
+
+        let mut config = ::tests::utils::gen_config();
+        config.bootstrap_whitelisted_ips = whitelisted_ips;
+
+        // Connect two peers
+        let (event_tx_0, event_rx_0) = get_event_sender();
+        let mut service_0 = unwrap!(Service::with_config(event_tx_0, config));
+
+        unwrap!(service_0.start_listening_tcp());
+        expect_event!(event_rx_0, Event::ListenerStarted(_));
+
+        let (event_tx_1, event_rx_1) = get_event_sender();
+        let mut service_1 = unwrap!(Service::new(event_tx_1));
+
+        unwrap!(service_1.start_listening_tcp());
+        expect_event!(event_rx_1, Event::ListenerStarted(_));
+
+        connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+
+        // Do checks
+        assert_eq!(service_0.is_peer_whitelisted(&service_1.id()), true);
+        assert_eq!(service_0.is_peer_whitelisted(&service_0.id()), false);
+
+        // service_1 doesn't have a whitelist config, so all peers should be whitelisted
+        assert_eq!(service_1.is_peer_whitelisted(&service_0.id()), true);
+        assert_eq!(service_1.is_peer_whitelisted(&service_1.id()), true);
     }
 }

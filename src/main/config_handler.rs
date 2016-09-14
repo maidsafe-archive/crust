@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
-use common::SocketAddr;
-use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
 use std::path::PathBuf;
+use std::collections::HashSet;
+
+use common::{SocketAddr, IpAddr};
+use config_file_handler::{self, FileHandler};
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -27,6 +28,7 @@ pub struct Config {
     pub tcp_acceptor_port: Option<u16>,
     pub service_discovery_port: Option<u16>,
     pub bootstrap_cache_name: Option<String>,
+    pub bootstrap_whitelisted_ips: HashSet<IpAddr>,
     pub network_name: Option<String>,
 }
 
@@ -37,6 +39,7 @@ impl Default for Config {
             tcp_acceptor_port: None,
             service_discovery_port: None,
             bootstrap_cache_name: None,
+            bootstrap_whitelisted_ips: HashSet::new(),
             network_name: None,
         }
     }

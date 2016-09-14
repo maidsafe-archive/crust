@@ -114,3 +114,55 @@ impl Decodable for SocketAddrV6 {
         }
     }
 }
+
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+/// Wrapper around `std::net::IpAddr` to enable encoding/decoding of IP addresses without port.
+pub struct IpAddr(pub net::IpAddr);
+
+impl Deref for IpAddr {
+    type Target = net::IpAddr;
+
+    fn deref(&self) -> &net::IpAddr {
+        &self.0
+    }
+}
+
+impl From<SocketAddr> for IpAddr {
+    fn from(sa: SocketAddr) -> IpAddr {
+        let s = format!("{}", sa);
+        let port = s.find(':').unwrap_or(0);
+        let (ip, _) = s.split_at(port);
+
+        if let Ok(ia) = net::IpAddr::from_str(ip) {
+            IpAddr(ia)
+        } else {
+            panic!("Invalid SocketAddr format")
+        }
+    }
+}
+
+impl fmt::Display for IpAddr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Encodable for IpAddr {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let as_string = format!("{}", self.0);
+        s.emit_str(&as_string[..])
+    }
+}
+
+impl Decodable for IpAddr {
+    fn decode<D: Decoder>(d: &mut D) -> Result<IpAddr, D::Error> {
+        let as_string = try!(d.read_str());
+        match net::IpAddr::from_str(&as_string[..]) {
+            Ok(ia) => Ok(IpAddr(ia)),
+            Err(e) => {
+                let err = format!("Failed to decode IpAddr: {}", e);
+                Err(d.error(&err[..]))
+            }
+        }
+    }
+}
