@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.18.0]
+- Provide an API to find out if the connected peer has a whitelisted IP as mentioned in config file.
+
 ## [0.17.0]
 - Use `rust_sodium` instead of `sodiumoxide` crate.
 - Use latest `config_file_handler` (0.4.0) to derive the file paths for config and bootstrap cache on various platforms.
