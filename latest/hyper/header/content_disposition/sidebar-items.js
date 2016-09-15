@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["DispositionParam","A parameter to the disposition type"],["DispositionType","The implied disposition of the content of the HTTP body"]],"struct":[["ContentDisposition","A `Content-Disposition` header, (re)defined in RFC6266"]]});

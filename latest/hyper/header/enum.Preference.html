@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3755' class='srclink' href='../../src/hyper/header/common/prefer.rs.html#77-94' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3753' class='srclink' href='../../src/hyper/header/common/prefer.rs.html#77-94' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Preference {
     RespondAsync,
     ReturnRepresentation,
@@ -55,18 +55,18 @@
     HandlingStrict,
     HandlingLeniant,
     Wait(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
-    Extension(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;),
+    Extension(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;),
 }</pre><div class='docblock'><p>Prefer contains a list of these preferences.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.RespondAsync'><code>RespondAsync</code></td><td><div class='docblock'><p>&quot;respond-async&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.ReturnRepresentation'><code>ReturnRepresentation</code></td><td><div class='docblock'><p>&quot;return=representation&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.ReturnMinimal'><code>ReturnMinimal</code></td><td><div class='docblock'><p>&quot;return=minimal&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.HandlingStrict'><code>HandlingStrict</code></td><td><div class='docblock'><p>&quot;handling=strict&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.HandlingLeniant'><code>HandlingLeniant</code></td><td><div class='docblock'><p>&quot;handling=leniant&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.Wait'><code>Wait</code></td><td><div class='docblock'><p>&quot;wait=delta&quot;</p>
-</div></td><td></td></tr><tr><td id='variant.Extension'><code>Extension</code></td><td><div class='docblock'><p>Extension preferences. Always has a value, if none is specified it is
+<span id='variant.RespondAsync' class='variant'><code>RespondAsync</code></span><div class='docblock'><p>&quot;respond-async&quot;</p>
+</div><span id='variant.ReturnRepresentation' class='variant'><code>ReturnRepresentation</code></span><div class='docblock'><p>&quot;return=representation&quot;</p>
+</div><span id='variant.ReturnMinimal' class='variant'><code>ReturnMinimal</code></span><div class='docblock'><p>&quot;return=minimal&quot;</p>
+</div><span id='variant.HandlingStrict' class='variant'><code>HandlingStrict</code></span><div class='docblock'><p>&quot;handling=strict&quot;</p>
+</div><span id='variant.HandlingLeniant' class='variant'><code>HandlingLeniant</code></span><div class='docblock'><p>&quot;handling=leniant&quot;</p>
+</div><span id='variant.Wait' class='variant'><code>Wait(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></span><div class='docblock'><p>&quot;wait=delta&quot;</p>
+</div><span id='variant.Extension' class='variant'><code>Extension(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;)</code></span><div class='docblock'><p>Extension preferences. Always has a value, if none is specified it is
 just &quot;&quot;. A preference can also have a list of parameters.</p>
-</div></td><td></td></tr></table></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Service","A structure representing a connection manager. This is the main object through which crust is used."]]});

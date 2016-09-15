@@ -269,8 +269,8 @@
 <span class='doccomment'>/// [1]: http://www.w3.org/TR/2006/REC-xml11-20060816/#sec-common-syn</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_whitespace_char</span>(<span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='kw'>match</span> <span class='ident'>c</span> {
-        <span class='string'>&#39;\x20&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\x09&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\x0d&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\x0a&#39;</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-        _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+        <span class='string'>&#39;\x20&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\x09&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\x0d&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\x0a&#39;</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+        _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
     }
 }
 
@@ -286,8 +286,8 @@
         <span class='string'>&#39;\u{200C}&#39;</span>...<span class='string'>&#39;\u{200D}&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\u{2070}&#39;</span>...<span class='string'>&#39;\u{218F}&#39;</span> <span class='op'>|</span>
         <span class='string'>&#39;\u{2C00}&#39;</span>...<span class='string'>&#39;\u{2FEF}&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\u{3001}&#39;</span>...<span class='string'>&#39;\u{D7FF}&#39;</span> <span class='op'>|</span>
         <span class='string'>&#39;\u{F900}&#39;</span>...<span class='string'>&#39;\u{FDCF}&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\u{FDF0}&#39;</span>...<span class='string'>&#39;\u{FFFD}&#39;</span> <span class='op'>|</span>
-        <span class='string'>&#39;\u{10000}&#39;</span>...<span class='string'>&#39;\u{EFFFF}&#39;</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-        _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+        <span class='string'>&#39;\u{10000}&#39;</span>...<span class='string'>&#39;\u{EFFFF}&#39;</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+        _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
     }
 }
 
@@ -297,10 +297,10 @@
 <span class='doccomment'>/// [1]: http://www.w3.org/TR/2006/REC-xml11-20060816/#sec-common-syn</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_name_char</span>(<span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='kw'>match</span> <span class='ident'>c</span> {
-        _ <span class='kw'>if</span> <span class='ident'>is_name_start_char</span>(<span class='ident'>c</span>) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+        _ <span class='kw'>if</span> <span class='ident'>is_name_start_char</span>(<span class='ident'>c</span>) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         <span class='string'>&#39;-&#39;</span> <span class='op'>|</span> <span class='string'>&#39;.&#39;</span> <span class='op'>|</span> <span class='string'>&#39;0&#39;</span>...<span class='string'>&#39;9&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\u{B7}&#39;</span> <span class='op'>|</span>
-        <span class='string'>&#39;\u{300}&#39;</span>...<span class='string'>&#39;\u{3F6}&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\u{203F}&#39;</span>...<span class='string'>&#39;\u{2040}&#39;</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-        _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+        <span class='string'>&#39;\u{300}&#39;</span>...<span class='string'>&#39;\u{3F6}&#39;</span> <span class='op'>|</span> <span class='string'>&#39;\u{203F}&#39;</span>...<span class='string'>&#39;\u{2040}&#39;</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+        _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
     }
 }
 </pre>

@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2821' class='srclink' href='../../src/hyper/header/common/content_range.rs.html#90-109' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2831' class='srclink' href='../../src/hyper/header/common/content_range.rs.html#90-109' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ContentRangeSpec {
     Bytes {
         range: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;,
@@ -76,18 +76,18 @@ other-content-range = other-range-unit SP other-range-resp
 other-range-resp    = *CHAR
 </code></pre>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Bytes'><code>Bytes</code></td><td><div class='docblock'><p>Byte range</p>
+<span id='variant.Bytes' class='variant'><code>Bytes</code></span><div class='docblock'><p>Byte range</p>
 </div><h3 class='fields'>Fields</h3>
 
-                           <table><tr><td id='variant.Bytes.field.range'><code>range</code></td><td><div class='docblock'><p>First and last bytes of the range, omitted if request could not be
+                           <table><tr><td id='variant.Bytes.field.range'><code>range:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></td><td><div class='docblock'><p>First and last bytes of the range, omitted if request could not be
 satisfied</p>
-</div></td></tr><tr><td id='variant.Bytes.field.instance_length'><code>instance_length</code></td><td><div class='docblock'><p>Total length of the instance, can be omitted if unknown</p>
-</div></td></tr></table></td><td></td></tr><tr><td id='variant.Unregistered'><code>Unregistered</code></td><td><div class='docblock'><p>Custom range, with unit not registered at IANA</p>
+</div></td></tr><tr><td id='variant.Bytes.field.instance_length'><code>instance_length:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></td><td><div class='docblock'><p>Total length of the instance, can be omitted if unknown</p>
+</div></td></tr></table><span id='variant.Unregistered' class='variant'><code>Unregistered</code></span><div class='docblock'><p>Custom range, with unit not registered at IANA</p>
 </div><h3 class='fields'>Fields</h3>
 
-                           <table><tr><td id='variant.Unregistered.field.unit'><code>unit</code></td><td><div class='docblock'><p>other-range-unit</p>
-</div></td></tr><tr><td id='variant.Unregistered.field.resp'><code>resp</code></td><td><div class='docblock'><p>other-range-resp</p>
-</div></td></tr></table></td><td></td></tr></table></section>
+                           <table><tr><td id='variant.Unregistered.field.unit'><code>unit:&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></td><td><div class='docblock'><p>other-range-unit</p>
+</div></td></tr><tr><td id='variant.Unregistered.field.resp'><code>resp:&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></td><td><div class='docblock'><p>other-range-resp</p>
+</div></td></tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

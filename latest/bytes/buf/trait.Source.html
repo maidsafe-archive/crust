@@ -47,10 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-499' class='srclink' href='../../src/bytes/buf/mod.rs.html#207-211' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-490' class='srclink' href='../../src/bytes/buf/mod.rs.html#207-211' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Source {
     type <a href='#associatedtype.Error' class='type'>Error</a>;
-    fn <a href='#tymethod.fill' class='fnname'>fill</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Self::<a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Error</a>&gt;;
+    fn <a href='#tymethod.fill' class='fnname'>fill</a>&lt;B:&nbsp;<a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,&nbsp;Self::<a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Error</a>&gt;;
 }</pre><div class='docblock'><p>A value that writes bytes from itself into a <code>MutBuf</code>.</p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
@@ -58,12 +58,12 @@
         <h3 id='associatedtype.Error' class='method stab '><code>type <a href='#associatedtype.Error' class='type'>Error</a></code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.fill' class='method stab '><code>fn <a href='#tymethod.fill' class='fnname'>fill</a>&lt;B: <a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, Self::<a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Error</a>&gt;</code></h3></div>
+        <h3 id='tymethod.fill' class='method stab '><code>fn <a href='#tymethod.fill' class='fnname'>fill</a>&lt;B:&nbsp;<a class='trait' href='../../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>&gt;(self, buf: &amp;mut B) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>,&nbsp;Self::<a class='trait' href='../../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Error</a>&gt;</code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;'a&gt; Source for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></li>
 <li><code>impl&lt;'a&gt; Source for &amp;'a <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code></li>
-<li><code>impl&lt;'a, R: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a> + 'a&gt; Source for &amp;'a mut R</code></li>
+<li><code>impl&lt;'a,&nbsp;R:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a> + 'a&gt; Source for &amp;'a mut R</code></li>
 <li><code>impl&lt;'a&gt; Source for &amp;'a <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></li>
 <li><code>impl&lt;'a&gt; Source for &amp;'a <a class='struct' href='../../bytes/struct.Rope.html' title='bytes::Rope'>Rope</a></code></li>
 </ul><script type="text/javascript" async

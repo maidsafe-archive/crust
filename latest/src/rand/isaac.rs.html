@@ -722,7 +722,7 @@
     <span class='doccomment'>/// fixed seed.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_unseeded</span>() <span class='op'>-&gt;</span> <span class='ident'>IsaacRng</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rng</span> <span class='op'>=</span> <span class='ident'>EMPTY</span>;
-        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='boolvalue'>false</span>);
+        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='bool-val'>false</span>);
         <span class='ident'>rng</span>
     }
 
@@ -894,7 +894,7 @@
         <span class='self'>self</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='self'>self</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
+        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='bool-val'>true</span>);
     }
 
     <span class='doccomment'>/// Create an ISAAC random number generator with a seed. This can</span>
@@ -923,7 +923,7 @@
         <span class='ident'>ret</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='ident'>ret</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
+        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='bool-val'>true</span>);
         <span class='kw'>return</span> <span class='ident'>ret</span>;
     }
 }
@@ -963,7 +963,7 @@
     <span class='doccomment'>/// default fixed seed.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_unseeded</span>() <span class='op'>-&gt;</span> <span class='ident'>Isaac64Rng</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>rng</span> <span class='op'>=</span> <span class='ident'>EMPTY_64</span>;
-        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='boolvalue'>false</span>);
+        <span class='ident'>rng</span>.<span class='ident'>init</span>(<span class='bool-val'>false</span>);
         <span class='ident'>rng</span>
     }
 
@@ -1137,7 +1137,7 @@
         <span class='self'>self</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='self'>self</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
+        <span class='self'>self</span>.<span class='ident'>init</span>(<span class='bool-val'>true</span>);
     }
 
     <span class='doccomment'>/// Create an ISAAC random number generator with a seed. This can</span>
@@ -1166,7 +1166,7 @@
         <span class='ident'>ret</span>.<span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
         <span class='ident'>ret</span>.<span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>w</span>(<span class='number'>0</span>);
 
-        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='boolvalue'>true</span>);
+        <span class='ident'>ret</span>.<span class='ident'>init</span>(<span class='bool-val'>true</span>);
         <span class='kw'>return</span> <span class='ident'>ret</span>;
     }
 }

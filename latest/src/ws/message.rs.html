@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.2/src/message.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.3/src/message.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>message.rs.html -- source</title>
@@ -260,16 +260,16 @@
     <span class='doccomment'>/// Indicates whether a message is a text message.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_text</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Text</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>Binary</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Text</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>Binary</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
     <span class='doccomment'>/// Indicates whether a message is a binary message.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_binary</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Text</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
-            <span class='ident'>Binary</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            <span class='ident'>Text</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
+            <span class='ident'>Binary</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         }
     }
 

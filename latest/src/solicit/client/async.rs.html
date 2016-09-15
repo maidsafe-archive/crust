@@ -1090,7 +1090,7 @@
             <span class='ident'>request_queue</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
             <span class='ident'>client_count</span>: <span class='number'>0</span>,
             <span class='ident'>host</span>: <span class='ident'>host</span>.<span class='ident'>as_bytes</span>().<span class='ident'>to_vec</span>(),
-            <span class='ident'>initialized</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>initialized</span>: <span class='bool-val'>false</span>,
         };
 
         <span class='comment'>// Returns the handles to the channel sender/receiver, so that the client can use them to</span>
@@ -1150,7 +1150,7 @@
             <span class='ident'>WorkItem</span>::<span class='ident'>HandleFrame</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>initialized</span> {
                     <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>conn</span>.<span class='ident'>init</span>());
-                    <span class='self'>self</span>.<span class='ident'>initialized</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                    <span class='self'>self</span>.<span class='ident'>initialized</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                     <span class='prelude-val'>Ok</span>(())
                 } <span class='kw'>else</span> {
                     <span class='self'>self</span>.<span class='ident'>handle_frame</span>()

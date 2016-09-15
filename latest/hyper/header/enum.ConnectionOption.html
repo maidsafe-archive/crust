@@ -47,23 +47,23 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2333' class='srclink' href='../../src/hyper/header/common/connection.rs.html#12-26' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2331' class='srclink' href='../../src/hyper/header/common/connection.rs.html#12-26' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ConnectionOption {
     KeepAlive,
     Close,
     ConnectionHeader(<a class='struct' href='../../unicase/struct.UniCase.html' title='unicase::UniCase'>UniCase</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;),
 }</pre><div class='docblock'><p>Values that can be in the <code>Connection</code> header.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.KeepAlive'><code>KeepAlive</code></td><td><div class='docblock'><p>The <code>keep-alive</code> connection value.</p>
-</div></td><td></td></tr><tr><td id='variant.Close'><code>Close</code></td><td><div class='docblock'><p>The <code>close</code> connection value.</p>
-</div></td><td></td></tr><tr><td id='variant.ConnectionHeader'><code>ConnectionHeader</code></td><td><div class='docblock'><p>Values in the Connection header that are supposed to be names of other Headers.</p>
+<span id='variant.KeepAlive' class='variant'><code>KeepAlive</code></span><div class='docblock'><p>The <code>keep-alive</code> connection value.</p>
+</div><span id='variant.Close' class='variant'><code>Close</code></span><div class='docblock'><p>The <code>close</code> connection value.</p>
+</div><span id='variant.ConnectionHeader' class='variant'><code>ConnectionHeader(<a class='struct' href='../../unicase/struct.UniCase.html' title='unicase::UniCase'>UniCase</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;)</code></span><div class='docblock'><p>Values in the Connection header that are supposed to be names of other Headers.</p>
 
 <blockquote>
 <p>When a header field aside from Connection is used to supply control
 information for or about the current connection, the sender MUST list
 the corresponding field-name within the Connection header field.</p>
 </blockquote>
-</div></td><td></td></tr></table></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/simd_fallback/teddy128.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.77/src/simd_fallback/teddy128.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>teddy128.rs.html -- source</title>
@@ -61,8 +61,16 @@
 <span id="17">17</span>
 <span id="18">18</span>
 <span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>syntax</span>;
+
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_teddy_128_available</span>() <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+    <span class='bool-val'>false</span>
+}
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Teddy</span>(());

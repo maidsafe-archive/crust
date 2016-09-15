@@ -423,8 +423,8 @@
             <span class='ident'>max_age</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>domain</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>path</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>secure</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>httponly</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>secure</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>httponly</span>: <span class='bool-val'>false</span>,
             <span class='ident'>custom</span>: <span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
         }
     }
@@ -447,8 +447,8 @@
         <span class='kw'>for</span> <span class='ident'>attr</span> <span class='kw'>in</span> <span class='ident'>pairs</span> {
             <span class='kw'>let</span> (<span class='ident'>k</span>, <span class='ident'>v</span>) <span class='op'>=</span> <span class='ident'>attr_split</span>(<span class='ident'>attr</span>);
             <span class='kw'>match</span> (<span class='kw-2'>&amp;</span><span class='ident'>k</span>.<span class='ident'>to_ascii_lowercase</span>()[..], <span class='ident'>v</span>) {
-                (<span class='string'>&quot;secure&quot;</span>, _) <span class='op'>=&gt;</span> <span class='ident'>c</span>.<span class='ident'>secure</span> <span class='op'>=</span> <span class='boolvalue'>true</span>,
-                (<span class='string'>&quot;httponly&quot;</span>, _) <span class='op'>=&gt;</span> <span class='ident'>c</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='boolvalue'>true</span>,
+                (<span class='string'>&quot;secure&quot;</span>, _) <span class='op'>=&gt;</span> <span class='ident'>c</span>.<span class='ident'>secure</span> <span class='op'>=</span> <span class='bool-val'>true</span>,
+                (<span class='string'>&quot;httponly&quot;</span>, _) <span class='op'>=&gt;</span> <span class='ident'>c</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='bool-val'>true</span>,
                 (<span class='string'>&quot;max-age&quot;</span>, <span class='prelude-val'>Some</span>(<span class='ident'>v</span>)) <span class='op'>=&gt;</span> {
                     <span class='comment'>// See RFC 6265 Section 5.2.2, negative values</span>
                     <span class='comment'>// indicate that the earliest possible expiration</span>
@@ -621,12 +621,12 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;Domain=&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;Domain= &quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;Ignored&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
-        <span class='ident'>expected</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+        <span class='ident'>expected</span>.<span class='ident'>httponly</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;HttpOnly&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;httponly&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;HTTPONLY=whatever&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ; sekure; HTTPONLY&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
-        <span class='ident'>expected</span>.<span class='ident'>secure</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+        <span class='ident'>expected</span>.<span class='ident'>secure</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;HttpOnly; Secure&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Cookie</span>::<span class='ident'>parse</span>(<span class='string'>&quot; foo=bar ;HttpOnly; Secure=aaaa&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>unwrap</span>(), <span class='ident'>expected</span>);
         <span class='ident'>expected</span>.<span class='ident'>max_age</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='number'>0</span>);
@@ -695,8 +695,8 @@
             <span class='ident'>max_age</span>: <span class='prelude-val'>Some</span>(<span class='number'>42</span>),
             <span class='ident'>domain</span>: <span class='prelude-val'>Some</span>(<span class='string'>&quot;servo.org&quot;</span>.<span class='ident'>to_owned</span>()),
             <span class='ident'>path</span>: <span class='prelude-val'>Some</span>(<span class='string'>&quot;/&quot;</span>.<span class='ident'>to_owned</span>()),
-            <span class='ident'>secure</span>: <span class='boolvalue'>true</span>,
-            <span class='ident'>httponly</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>secure</span>: <span class='bool-val'>true</span>,
+            <span class='ident'>httponly</span>: <span class='bool-val'>false</span>,
             <span class='ident'>custom</span>: <span class='ident'>custom</span>
         };
 

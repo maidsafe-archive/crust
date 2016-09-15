@@ -47,23 +47,23 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-786' class='srclink' href='../../src/log4rs/filter/mod.rs.html#18-33' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-777' class='srclink' href='../../src/log4rs/filter/mod.rs.html#18-33' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Response {
     Accept,
     Neutral,
     Reject,
 }</pre><div class='docblock'><p>The response returned by a filter.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Accept'><code>Accept</code></td><td><div class='docblock'><p>Accept the log event.</p>
+<span id='variant.Accept' class='variant'><code>Accept</code></span><div class='docblock'><p>Accept the log event.</p>
 
 <p>It will be immediately passed to the appender, bypassing any remaining
 filters.</p>
-</div></td><td></td></tr><tr><td id='variant.Neutral'><code>Neutral</code></td><td><div class='docblock'><p>Take no action on the log event.</p>
+</div><span id='variant.Neutral' class='variant'><code>Neutral</code></span><div class='docblock'><p>Take no action on the log event.</p>
 
 <p>It will continue on to remaining filters or pass on to the appender if
 there are none remaining.</p>
-</div></td><td></td></tr><tr><td id='variant.Reject'><code>Reject</code></td><td><div class='docblock'><p>Reject the log event.</p>
-</div></td><td></td></tr></table></section>
+</div><span id='variant.Reject' class='variant'><code>Reject</code></span><div class='docblock'><p>Reject the log event.</p>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

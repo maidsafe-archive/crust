@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.2/src/stream.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.3/src/stream.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>stream.rs.html -- source</title>
@@ -204,14 +204,14 @@
 
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;ssl&quot;</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>tls</span>(<span class='ident'>stream</span>: <span class='ident'>SslStream</span><span class='op'>&lt;</span><span class='ident'>TcpStream</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Stream</span> {
-        <span class='ident'>Tls</span> { <span class='ident'>sock</span>: <span class='ident'>stream</span>, <span class='ident'>negotiating</span>: <span class='boolvalue'>false</span> }
+        <span class='ident'>Tls</span> { <span class='ident'>sock</span>: <span class='ident'>stream</span>, <span class='ident'>negotiating</span>: <span class='bool-val'>false</span> }
     }
 
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;ssl&quot;</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_tls</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Tcp</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
-            <span class='ident'>Tls</span> {..} <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            <span class='ident'>Tcp</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
+            <span class='ident'>Tls</span> {..} <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         }
     }
 
@@ -225,7 +225,7 @@
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_negotiating</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Tcp</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Tcp</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
             <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;ssl&quot;</span>)]</span>
             <span class='ident'>Tls</span> { <span class='ident'>sock</span>: _, <span class='kw-2'>ref</span> <span class='ident'>negotiating</span> } <span class='op'>=&gt;</span> <span class='op'>*</span><span class='ident'>negotiating</span>,
         }
@@ -236,7 +236,7 @@
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>Tcp</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>Kind</span>::<span class='ident'>Internal</span>, <span class='string'>&quot;Attempted to clear negotiating flag on non ssl connection.&quot;</span>)),
             <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;ssl&quot;</span>)]</span>
-            <span class='ident'>Tls</span> { <span class='ident'>sock</span>: _, <span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>negotiating</span> } <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='boolvalue'>false</span>),
+            <span class='ident'>Tls</span> { <span class='ident'>sock</span>: _, <span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>negotiating</span> } <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='bool-val'>false</span>),
         }
     }
 
@@ -267,7 +267,7 @@
                 <span class='kw'>match</span> <span class='ident'>sock</span>.<span class='ident'>ssl_read</span>(<span class='ident'>buf</span>) {
                     <span class='prelude-val'>Ok</span>(<span class='ident'>cnt</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>cnt</span>)),
                     <span class='prelude-val'>Err</span>(<span class='ident'>SslError</span>::<span class='ident'>WantWrite</span>(_)) <span class='op'>=&gt;</span> {
-                        <span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                        <span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                         <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>)
                     },
                     <span class='prelude-val'>Err</span>(<span class='ident'>SslError</span>::<span class='ident'>WantRead</span>(_)) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>),
@@ -287,12 +287,12 @@
             <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;ssl&quot;</span>)]</span>
             <span class='ident'>Tls</span> { <span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>sock</span>, <span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>negotiating</span> } <span class='op'>=&gt;</span> {
 
-                <span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+                <span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
 
                 <span class='kw'>match</span> <span class='ident'>sock</span>.<span class='ident'>ssl_write</span>(<span class='ident'>buf</span>) {
                     <span class='prelude-val'>Ok</span>(<span class='ident'>cnt</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>cnt</span>)),
                     <span class='prelude-val'>Err</span>(<span class='ident'>SslError</span>::<span class='ident'>WantRead</span>(_)) <span class='op'>=&gt;</span> {
-                        <span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;
+                        <span class='op'>*</span><span class='ident'>negotiating</span> <span class='op'>=</span> <span class='bool-val'>true</span>;
                         <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>)
                     },
                     <span class='prelude-val'>Err</span>(<span class='ident'>SslError</span>::<span class='ident'>WantWrite</span>(_)) <span class='op'>=&gt;</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>),

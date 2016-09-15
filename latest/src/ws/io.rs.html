@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.2/src/io.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.3/src/io.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>io.rs.html -- source</title>
@@ -774,8 +774,8 @@
 
     <span class='kw'>fn</span> <span class='ident'>is_active</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>State</span>::<span class='ident'>Active</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>State</span>::<span class='ident'>Inactive</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>State</span>::<span class='ident'>Active</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>State</span>::<span class='ident'>Inactive</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 }
@@ -1034,7 +1034,7 @@
 
         <span class='kw'>match</span> <span class='ident'>token</span> {
             <span class='ident'>SYSTEM</span> <span class='op'>=&gt;</span> {
-                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;System token used for io event. This is a bug!&quot;</span>);
+                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;System token used for io event. This is a bug!&quot;</span>);
                 <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;System token used for io event. This is a bug!&quot;</span>)
             }
             <span class='ident'>ALL</span> <span class='op'>=&gt;</span> {

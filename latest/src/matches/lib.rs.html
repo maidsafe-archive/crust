@@ -76,8 +76,8 @@
     (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span>: <span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> {
         <span class='macro'>_tt_as_expr_hack</span><span class='macro'>!</span> {
             <span class='kw'>match</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span> {
-                $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>)<span class='op'>+</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-                _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+                $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>)<span class='op'>+</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+                _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
             }
         }
     }

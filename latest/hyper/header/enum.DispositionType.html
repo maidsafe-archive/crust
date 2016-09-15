@@ -47,18 +47,18 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2432' class='srclink' href='../../src/hyper/header/common/content_disposition.rs.html#20-28' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2429' class='srclink' href='../../src/hyper/header/common/content_disposition.rs.html#20-28' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum DispositionType {
     Inline,
     Attachment,
     Ext(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
 }</pre><div class='docblock'><p>The implied disposition of the content of the HTTP body</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Inline'><code>Inline</code></td><td><div class='docblock'><p>Inline implies default processing</p>
-</div></td><td></td></tr><tr><td id='variant.Attachment'><code>Attachment</code></td><td><div class='docblock'><p>Attachment implies that the recipient should prompt the user to save the response locally,
+<span id='variant.Inline' class='variant'><code>Inline</code></span><div class='docblock'><p>Inline implies default processing</p>
+</div><span id='variant.Attachment' class='variant'><code>Attachment</code></span><div class='docblock'><p>Attachment implies that the recipient should prompt the user to save the response locally,
 rather than process it normally (as per its media type).</p>
-</div></td><td></td></tr><tr><td id='variant.Ext'><code>Ext</code></td><td><div class='docblock'><p>Extension type.  Should be handled by recipients the same way as Attachment</p>
-</div></td><td></td></tr></table></section>
+</div><span id='variant.Ext' class='variant'><code>Ext(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>)</code></span><div class='docblock'><p>Extension type.  Should be handled by recipients the same way as Attachment</p>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

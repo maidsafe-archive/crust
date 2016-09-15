@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3038' class='srclink' href='../../src/hyper/header/common/mod.rs.html#273' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3022' class='srclink' href='../../src/hyper/header/common/mod.rs.html#273' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ETag(pub <a class='struct' href='../../hyper/header/struct.EntityTag.html' title='hyper::header::EntityTag'>EntityTag</a>);</pre><div class='docblock'><p><code>ETag</code> header, defined in <a href="http://tools.ietf.org/html/rfc7232#section-2.3">RFC7232</a></p>
 
 <p>The <code>ETag</code> header field in a response provides the current entity-tag
@@ -76,13 +76,13 @@ prefixed by a weakness indicator.</p>
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Headers</span>, <span class='ident'>ETag</span>, <span class='ident'>EntityTag</span>};
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
-<span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())));</pre>
+<span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())));</pre>
 
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Headers</span>, <span class='ident'>ETag</span>, <span class='ident'>EntityTag</span>};
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
-<span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>true</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())));</pre>
+<span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>ETag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>true</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())));</pre>
 </div></section>
     <section id='search' class="content hidden"></section>
 

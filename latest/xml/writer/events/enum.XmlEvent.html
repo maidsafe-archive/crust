@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2699' class='srclink' href='../../../src/xml/writer/events.rs.html#14-93' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2670' class='srclink' href='../../../src/xml/writer/events.rs.html#14-93' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum XmlEvent&lt;'a&gt; {
     StartDocument {
         version: <a class='enum' href='../../../xml/common/enum.XmlVersion.html' title='xml::common::XmlVersion'>XmlVersion</a>,
@@ -60,8 +60,8 @@
     },
     StartElement {
         name: <a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;,
-        attributes: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>[</a><a class='struct' href='../../../xml/attribute/struct.Attribute.html' title='xml::attribute::Attribute'>Attribute</a>&lt;'a&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;,
-        namespace: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a, <a class='struct' href='../../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>&gt;,
+        attributes: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a,&nbsp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>[</a><a class='struct' href='../../../xml/attribute/struct.Attribute.html' title='xml::attribute::Attribute'>Attribute</a>&lt;'a&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;,
+        namespace: <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a,&nbsp;<a class='struct' href='../../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>&gt;,
     },
     EndElement {
         name: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;&gt;,
@@ -74,62 +74,62 @@
 <p>Objects of this enum are consumed by <code>EventWriter</code>. They correspond to different parts of
 an XML document.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.StartDocument'><code>StartDocument</code></td><td><div class='docblock'><p>Corresponds to XML document declaration.</p>
+<span id='variant.StartDocument' class='variant'><code>StartDocument</code></span><div class='docblock'><p>Corresponds to XML document declaration.</p>
 
 <p>This event should always be written before any other event. If it is not written
 at all, a default XML declaration will be outputted if the corresponding option
 is set in the configuration. Otherwise an error will be returned.</p>
 </div><h3 class='fields'>Fields</h3>
 
-                           <table><tr><td id='variant.StartDocument.field.version'><code>version</code></td><td><div class='docblock'><p>XML version.</p>
+                           <table><tr><td id='variant.StartDocument.field.version'><code>version:&nbsp;<a class='enum' href='../../../xml/common/enum.XmlVersion.html' title='xml::common::XmlVersion'>XmlVersion</a></code></td><td><div class='docblock'><p>XML version.</p>
 
 <p>Defaults to <code>XmlVersion::Version10</code>.</p>
-</div></td></tr><tr><td id='variant.StartDocument.field.encoding'><code>encoding</code></td><td><div class='docblock'><p>XML document encoding.</p>
+</div></td></tr><tr><td id='variant.StartDocument.field.encoding'><code>encoding:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></td><td><div class='docblock'><p>XML document encoding.</p>
 
 <p>Defaults to <code>Some(&quot;UTF-8&quot;)</code>.</p>
-</div></td></tr><tr><td id='variant.StartDocument.field.standalone'><code>standalone</code></td><td><div class='docblock'><p>XML standalone declaration.</p>
+</div></td></tr><tr><td id='variant.StartDocument.field.standalone'><code>standalone:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></td><td><div class='docblock'><p>XML standalone declaration.</p>
 
 <p>Defaults to <code>None</code>.</p>
-</div></td></tr></table></td><td></td></tr><tr><td id='variant.ProcessingInstruction'><code>ProcessingInstruction</code></td><td><div class='docblock'><p>Denotes an XML processing instruction.</p>
+</div></td></tr></table><span id='variant.ProcessingInstruction' class='variant'><code>ProcessingInstruction</code></span><div class='docblock'><p>Denotes an XML processing instruction.</p>
 </div><h3 class='fields'>Fields</h3>
 
-                           <table><tr><td id='variant.ProcessingInstruction.field.name'><code>name</code></td><td><div class='docblock'><p>Processing instruction target.</p>
-</div></td></tr><tr><td id='variant.ProcessingInstruction.field.data'><code>data</code></td><td><div class='docblock'><p>Processing instruction content.</p>
-</div></td></tr></table></td><td></td></tr><tr><td id='variant.StartElement'><code>StartElement</code></td><td><div class='docblock'><p>Denotes a beginning of an XML element.</p>
+                           <table><tr><td id='variant.ProcessingInstruction.field.name'><code>name:&nbsp;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></td><td><div class='docblock'><p>Processing instruction target.</p>
+</div></td></tr><tr><td id='variant.ProcessingInstruction.field.data'><code>data:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></td><td><div class='docblock'><p>Processing instruction content.</p>
+</div></td></tr></table><span id='variant.StartElement' class='variant'><code>StartElement</code></span><div class='docblock'><p>Denotes a beginning of an XML element.</p>
 </div><h3 class='fields'>Fields</h3>
 
-                           <table><tr><td id='variant.StartElement.field.name'><code>name</code></td><td><div class='docblock'><p>Qualified name of the element.</p>
-</div></td></tr><tr><td id='variant.StartElement.field.attributes'><code>attributes</code></td><td><div class='docblock'><p>A list of attributes associated with the element.</p>
+                           <table><tr><td id='variant.StartElement.field.name'><code>name:&nbsp;<a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;</code></td><td><div class='docblock'><p>Qualified name of the element.</p>
+</div></td></tr><tr><td id='variant.StartElement.field.attributes'><code>attributes:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a,&nbsp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>[</a><a class='struct' href='../../../xml/attribute/struct.Attribute.html' title='xml::attribute::Attribute'>Attribute</a>&lt;'a&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></td><td><div class='docblock'><p>A list of attributes associated with the element.</p>
 
 <p>Currently attributes are not checked for duplicates (TODO). Attribute values
 will be escaped, and all characters invalid for attribute values like <code>&quot;</code> or <code>&lt;</code>
 will be changed into character entities.</p>
-</div></td></tr><tr><td id='variant.StartElement.field.namespace'><code>namespace</code></td><td><div class='docblock'><p>Contents of the namespace mapping at this point of the document.</p>
+</div></td></tr><tr><td id='variant.StartElement.field.namespace'><code>namespace:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'a,&nbsp;<a class='struct' href='../../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>&gt;</code></td><td><div class='docblock'><p>Contents of the namespace mapping at this point of the document.</p>
 
 <p>This mapping will be inspected for &quot;new&quot; entries, and if at this point of the document
 a particular pair of prefix and namespace URI is already defined, no namespace
 attributes will be emitted.</p>
-</div></td></tr></table></td><td></td></tr><tr><td id='variant.EndElement'><code>EndElement</code></td><td><div class='docblock'><p>Denotes an end of an XML element.</p>
+</div></td></tr></table><span id='variant.EndElement' class='variant'><code>EndElement</code></span><div class='docblock'><p>Denotes an end of an XML element.</p>
 </div><h3 class='fields'>Fields</h3>
 
-                           <table><tr><td id='variant.EndElement.field.name'><code>name</code></td><td><div class='docblock'><p>Optional qualified name of the element.</p>
+                           <table><tr><td id='variant.EndElement.field.name'><code>name:&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;&gt;</code></td><td><div class='docblock'><p>Optional qualified name of the element.</p>
 
 <p>If <code>None</code>, then it is assumed that the element name should be the last valid one.
 If <code>Some</code> and element names tracking is enabled, then the writer will check it for
 correctness.</p>
-</div></td></tr></table></td><td></td></tr><tr><td id='variant.CData'><code>CData</code></td><td><div class='docblock'><p>Denotes CDATA content.</p>
+</div></td></tr></table><span id='variant.CData' class='variant'><code>CData(&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></span><div class='docblock'><p>Denotes CDATA content.</p>
 
 <p>This event contains unparsed data, and no escaping will be performed when writing it
 to the output stream.</p>
-</div></td><td></td></tr><tr><td id='variant.Comment'><code>Comment</code></td><td><div class='docblock'><p>Denotes a comment.</p>
+</div><span id='variant.Comment' class='variant'><code>Comment(&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></span><div class='docblock'><p>Denotes a comment.</p>
 
 <p>The string will be checked for invalid sequences and error will be returned by the
 write operation</p>
-</div></td><td></td></tr><tr><td id='variant.Characters'><code>Characters</code></td><td><div class='docblock'><p>Denotes character data outside of tags.</p>
+</div><span id='variant.Characters' class='variant'><code>Characters(&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></span><div class='docblock'><p>Denotes character data outside of tags.</p>
 
 <p>Contents of this event will be escaped if <code>perform_escaping</code> option is enabled,
 that is, every character invalid for PCDATA will appear as a character entity.</p>
-</div></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2720' class='srclink' href='../../../src/xml/writer/events.rs.html#95-141' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2691' class='srclink' href='../../../src/xml/writer/events.rs.html#95-141' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.processing_instruction' class='method'><code>fn <a href='#method.processing_instruction' class='fnname'>processing_instruction</a>(name: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, data: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;) -&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Returns an writer event for a processing instruction.</p>
 </div><h4 id='method.start_element' class='method'><code>fn <a href='#method.start_element' class='fnname'>start_element</a>&lt;S&gt;(name: S) -&gt; <a class='struct' href='../../../xml/writer/events/struct.StartElementBuilder.html' title='xml::writer::events::StartElementBuilder'>StartElementBuilder</a>&lt;'a&gt; <span class='where'>where S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;&gt;</span></code></h4>
@@ -154,13 +154,13 @@ is disabled, it is possible to specify the name with <code>name()</code> method 
 <p>All offending symbols, in particular, <code>&amp;</code> and <code>&lt;</code>, will be escaped by the writer.</p>
 </div><h4 id='method.comment' class='method'><code>fn <a href='#method.comment' class='fnname'>comment</a>(data: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Returns a comment event.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2735' class='srclink' href='../../../src/xml/writer/events.rs.html#143-146' title='goto source code'>[src]</a></span></h3>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2706' class='srclink' href='../../../src/xml/writer/events.rs.html#143-146' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(s: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Performs the conversion.</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='struct' href='../../../xml/writer/events/struct.EndElementBuilder.html' title='xml::writer::events::EndElementBuilder'>EndElementBuilder</a>&lt;'a&gt;&gt; for <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2748' class='srclink' href='../../../src/xml/writer/events.rs.html#167-171' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='struct' href='../../../xml/writer/events/struct.EndElementBuilder.html' title='xml::writer::events::EndElementBuilder'>EndElementBuilder</a>&lt;'a&gt;&gt; for <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2719' class='srclink' href='../../../src/xml/writer/events.rs.html#167-171' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.from-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(b: <a class='struct' href='../../../xml/writer/events/struct.EndElementBuilder.html' title='xml::writer::events::EndElementBuilder'>EndElementBuilder</a>&lt;'a&gt;) -&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Performs the conversion.</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='struct' href='../../../xml/writer/events/struct.StartElementBuilder.html' title='xml::writer::events::StartElementBuilder'>StartElementBuilder</a>&lt;'a&gt;&gt; for <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2774' class='srclink' href='../../../src/xml/writer/events.rs.html#231-240' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl&lt;'a&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='struct' href='../../../xml/writer/events/struct.StartElementBuilder.html' title='xml::writer::events::StartElementBuilder'>StartElementBuilder</a>&lt;'a&gt;&gt; for <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-2745' class='srclink' href='../../../src/xml/writer/events.rs.html#231-240' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.from-2' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(b: <a class='struct' href='../../../xml/writer/events/struct.StartElementBuilder.html' title='xml::writer::events::StartElementBuilder'>StartElementBuilder</a>&lt;'a&gt;) -&gt; <a class='enum' href='../../../xml/writer/events/enum.XmlEvent.html' title='xml::writer::events::XmlEvent'>XmlEvent</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Performs the conversion.</p>
 </div></div></section>

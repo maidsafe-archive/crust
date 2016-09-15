@@ -47,8 +47,8 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-190' class='srclink' href='../src/httparse/lib.rs.html#191-200' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct Request&lt;'headers, 'buf: 'headers&gt; {
+               </span><a id='src-189' class='srclink' href='../src/httparse/lib.rs.html#191-200' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Request&lt;'headers,&nbsp;'buf: 'headers&gt; {
     pub method: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'buf <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
     pub path: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'buf <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
     pub version: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;,
@@ -76,17 +76,16 @@ could be parsed, before reading more, in case you wish to exit early.</p>
         }
     }
 }</pre>
-</div><h2 class='fields'>Fields</h2>
-<table><tr class='stab '>
-                             <td id='structfield.method'><code>method</code></td><td><div class='docblock'><p>The request method, such as <code>GET</code>.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.path'><code>path</code></td><td><div class='docblock'><p>The request path, such as <code>/about-us</code>.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.version'><code>version</code></td><td><div class='docblock'><p>The request version, such as <code>HTTP/1.1</code>.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.headers'><code>headers</code></td><td><div class='docblock'><p>The request headers.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'h, 'b&gt; <a class='struct' href='../httparse/struct.Request.html' title='httparse::Request'>Request</a>&lt;'h, 'b&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-197' class='srclink' href='../src/httparse/lib.rs.html#202-229' title='goto source code'>[src]</a></span></h3>
-<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(headers: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h mut [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../httparse/struct.Request.html' title='httparse::Request'>Request</a>&lt;'h, 'b&gt;</code></h4>
+</div><h2 class='fields'>Fields</h2><span id='structfield.method' class='structfield'><code>method: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'buf <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The request method, such as <code>GET</code>.</p>
+</div><span id='structfield.path' class='structfield'><code>path: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'buf <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The request path, such as <code>/about-us</code>.</p>
+</div><span id='structfield.version' class='structfield'><code>version: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code>
+                           </span><span class='stab '></span><div class='docblock'><p>The request version, such as <code>HTTP/1.1</code>.</p>
+</div><span id='structfield.headers' class='structfield'><code>headers: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'headers mut [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'buf&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>The request headers.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl&lt;'h,&nbsp;'b&gt; <a class='struct' href='../httparse/struct.Request.html' title='httparse::Request'>Request</a>&lt;'h,&nbsp;'b&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a id='src-196' class='srclink' href='../src/httparse/lib.rs.html#202-229' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(headers: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h mut [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../httparse/struct.Request.html' title='httparse::Request'>Request</a>&lt;'h,&nbsp;'b&gt;</code></h4>
 <div class='docblock'><p>Creates a new Request, using a slice of headers you allocate.</p>
 </div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../httparse/type.Result.html' title='httparse::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</code></h4>
 <div class='docblock'><p>Try to parse a buffer of bytes into the Request.</p>

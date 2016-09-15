@@ -312,8 +312,8 @@
     <span class='doccomment'>/// for more words.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>safe</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Get</span> <span class='op'>|</span> <span class='ident'>Head</span> <span class='op'>|</span> <span class='ident'>Options</span> <span class='op'>|</span> <span class='ident'>Trace</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+            <span class='ident'>Get</span> <span class='op'>|</span> <span class='ident'>Head</span> <span class='op'>|</span> <span class='ident'>Options</span> <span class='op'>|</span> <span class='ident'>Trace</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
         }
     }
 
@@ -324,11 +324,11 @@
     <span class='doccomment'>/// more words.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>idempotent</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>safe</span>() {
-            <span class='boolvalue'>true</span>
+            <span class='bool-val'>true</span>
         } <span class='kw'>else</span> {
             <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-                <span class='ident'>Put</span> <span class='op'>|</span> <span class='ident'>Delete</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-                _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>
+                <span class='ident'>Put</span> <span class='op'>|</span> <span class='ident'>Delete</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+                _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>
             }
         }
     }
@@ -398,15 +398,15 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_safe</span>() {
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>true</span>, <span class='ident'>Get</span>.<span class='ident'>safe</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='ident'>Post</span>.<span class='ident'>safe</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='bool-val'>true</span>, <span class='ident'>Get</span>.<span class='ident'>safe</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='bool-val'>false</span>, <span class='ident'>Post</span>.<span class='ident'>safe</span>());
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_idempotent</span>() {
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>true</span>, <span class='ident'>Get</span>.<span class='ident'>idempotent</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>true</span>, <span class='ident'>Put</span>.<span class='ident'>idempotent</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='ident'>Post</span>.<span class='ident'>idempotent</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='bool-val'>true</span>, <span class='ident'>Get</span>.<span class='ident'>idempotent</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='bool-val'>true</span>, <span class='ident'>Put</span>.<span class='ident'>idempotent</span>());
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='bool-val'>false</span>, <span class='ident'>Post</span>.<span class='ident'>idempotent</span>());
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>

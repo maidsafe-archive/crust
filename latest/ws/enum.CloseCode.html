@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1732' class='srclink' href='../src/ws/protocol.rs.html#86-151' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1758' class='srclink' href='../src/ws/protocol.rs.html#86-151' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum CloseCode {
     Normal,
     Away,
@@ -65,72 +65,72 @@
     // some variants omitted
 }</pre><div class='docblock'><p>Status code used to indicate why an endpoint is closing the WebSocket connection.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Normal'><code>Normal</code></td><td><div class='docblock'><p>Indicates a normal closure, meaning that the purpose for
+<span id='variant.Normal' class='variant'><code>Normal</code></span><div class='docblock'><p>Indicates a normal closure, meaning that the purpose for
 which the connection was established has been fulfilled.</p>
-</div></td><td></td></tr><tr><td id='variant.Away'><code>Away</code></td><td><div class='docblock'><p>Indicates that an endpoint is &quot;going away&quot;, such as a server
+</div><span id='variant.Away' class='variant'><code>Away</code></span><div class='docblock'><p>Indicates that an endpoint is &quot;going away&quot;, such as a server
 going down or a browser having navigated away from a page.</p>
-</div></td><td></td></tr><tr><td id='variant.Protocol'><code>Protocol</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection due
+</div><span id='variant.Protocol' class='variant'><code>Protocol</code></span><div class='docblock'><p>Indicates that an endpoint is terminating the connection due
 to a protocol error.</p>
-</div></td><td></td></tr><tr><td id='variant.Unsupported'><code>Unsupported</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+</div><span id='variant.Unsupported' class='variant'><code>Unsupported</code></span><div class='docblock'><p>Indicates that an endpoint is terminating the connection
 because it has received a type of data it cannot accept (e.g., an
 endpoint that understands only text data MAY send this if it
 receives a binary message).</p>
-</div></td><td></td></tr><tr><td id='variant.Status'><code>Status</code></td><td><div class='docblock'><p>Indicates that no status code was included in a closing frame. This
+</div><span id='variant.Status' class='variant'><code>Status</code></span><div class='docblock'><p>Indicates that no status code was included in a closing frame. This
 close code makes it possible to use a single method, <code>on_close</code> to
 handle even cases where no close code was provided.</p>
-</div></td><td></td></tr><tr><td id='variant.Abnormal'><code>Abnormal</code></td><td><div class='docblock'><p>Indicates an abnormal closure. If the abnormal closure was due to an
+</div><span id='variant.Abnormal' class='variant'><code>Abnormal</code></span><div class='docblock'><p>Indicates an abnormal closure. If the abnormal closure was due to an
 error, this close code will not be used. Instead, the <code>on_error</code> method
 of the handler will be called with the error. However, if the connection
 is simply dropped, without an error, this close code will be sent to the
 handler.</p>
-</div></td><td></td></tr><tr><td id='variant.Invalid'><code>Invalid</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+</div><span id='variant.Invalid' class='variant'><code>Invalid</code></span><div class='docblock'><p>Indicates that an endpoint is terminating the connection
 because it has received data within a message that was not
 consistent with the type of the message (e.g., non-UTF-8 [RFC3629]
 data within a text message).</p>
-</div></td><td></td></tr><tr><td id='variant.Policy'><code>Policy</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+</div><span id='variant.Policy' class='variant'><code>Policy</code></span><div class='docblock'><p>Indicates that an endpoint is terminating the connection
 because it has received a message that violates its policy.  This
 is a generic status code that can be returned when there is no
 other more suitable status code (e.g., Unsupported or Size) or if there
 is a need to hide specific details about the policy.</p>
-</div></td><td></td></tr><tr><td id='variant.Size'><code>Size</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+</div><span id='variant.Size' class='variant'><code>Size</code></span><div class='docblock'><p>Indicates that an endpoint is terminating the connection
 because it has received a message that is too big for it to
 process.</p>
-</div></td><td></td></tr><tr><td id='variant.Extension'><code>Extension</code></td><td><div class='docblock'><p>Indicates that an endpoint (client) is terminating the
+</div><span id='variant.Extension' class='variant'><code>Extension</code></span><div class='docblock'><p>Indicates that an endpoint (client) is terminating the
 connection because it has expected the server to negotiate one or
 more extension, but the server didn&#39;t return them in the response
 message of the WebSocket handshake.  The list of extensions that
 are needed should be given as the reason for closing.
 Note that this status code is not used by the server, because it
 can fail the WebSocket handshake instead.</p>
-</div></td><td></td></tr><tr><td id='variant.Error'><code>Error</code></td><td><div class='docblock'><p>Indicates that a server is terminating the connection because
+</div><span id='variant.Error' class='variant'><code>Error</code></span><div class='docblock'><p>Indicates that a server is terminating the connection because
 it encountered an unexpected condition that prevented it from
 fulfilling the request.</p>
-</div></td><td></td></tr><tr><td id='variant.Restart'><code>Restart</code></td><td><div class='docblock'><p>Indicates that the server is restarting. A client may choose to reconnect,
+</div><span id='variant.Restart' class='variant'><code>Restart</code></span><div class='docblock'><p>Indicates that the server is restarting. A client may choose to reconnect,
 and if it does, it should use a randomized delay of 5-30 seconds between attempts.</p>
-</div></td><td></td></tr><tr><td id='variant.Again'><code>Again</code></td><td><div class='docblock'><p>Indicates that the server is overloaded and the client should either connect
+</div><span id='variant.Again' class='variant'><code>Again</code></span><div class='docblock'><p>Indicates that the server is overloaded and the client should either connect
 to a different IP (when multiple targets exist), or reconnect to the same IP
 when a user has performed an action.</p>
-</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt; for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1795' class='srclink' href='../src/ws/protocol.rs.html#153-175' title='goto source code'>[src]</a></span></h3>
-<div class='impl-items'><h4 id='method.into' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html#tymethod.into' class='fnname'>into</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a></code></h4>
-<div class='docblock'><p>Performs the conversion.</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt; for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1814' class='srclink' href='../src/ws/protocol.rs.html#177-199' title='goto source code'>[src]</a></span></h3>
-<div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(code: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h4>
-<div class='docblock'><p>Performs the conversion.</p>
-</div></div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1750' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
-<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1751' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1713' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1714' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h4>
 <div class='docblock'><p>Returns a copy of the value. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#tymethod.clone">Read more</a></p>
 </div><h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code><div class='since' title='Stable since Rust version 1.0.0'>1.0.0</div></h4>
 <div class='docblock'><p>Performs copy-assignment from <code>source</code>. <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from">Read more</a></p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1755' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1718' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>This method tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>. <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq">Read more</a></p>
 </div><h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>This method tests for <code>!=</code>.</p>
-</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1770' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
-<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1774' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1733' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1737' class='srclink' href='../src/ws/protocol.rs.html#85' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt; for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1776' class='srclink' href='../src/ws/protocol.rs.html#153-175' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.into' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html#tymethod.into' class='fnname'>into</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a></code></h4>
+<div class='docblock'><p>Performs the conversion.</p>
+</div></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt; for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1795' class='srclink' href='../src/ws/protocol.rs.html#177-199' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from' class='fnname'>from</a>(code: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h4>
+<div class='docblock'><p>Performs the conversion.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
 

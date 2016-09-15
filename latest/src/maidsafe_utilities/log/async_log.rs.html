@@ -579,7 +579,7 @@
         <span class='ident'>AsyncFileAppenderBuilder</span> {
             <span class='ident'>path</span>: <span class='ident'>path</span>.<span class='ident'>as_ref</span>().<span class='ident'>to_path_buf</span>(),
             <span class='ident'>encoder</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>PatternEncoder</span>::<span class='ident'>default</span>()),
-            <span class='ident'>append</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>append</span>: <span class='bool-val'>true</span>,
         }
     }
 }
@@ -610,15 +610,15 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>build</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>AsyncAppender</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>append</span> {
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>()
-                .<span class='ident'>write</span>(<span class='boolvalue'>true</span>)
-                .<span class='ident'>append</span>(<span class='boolvalue'>true</span>)
-                .<span class='ident'>create</span>(<span class='boolvalue'>true</span>)
+                .<span class='ident'>write</span>(<span class='bool-val'>true</span>)
+                .<span class='ident'>append</span>(<span class='bool-val'>true</span>)
+                .<span class='ident'>create</span>(<span class='bool-val'>true</span>)
                 .<span class='ident'>open</span>(<span class='self'>self</span>.<span class='ident'>path</span>))
         } <span class='kw'>else</span> {
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>OpenOptions</span>::<span class='ident'>new</span>()
-                .<span class='ident'>write</span>(<span class='boolvalue'>true</span>)
-                .<span class='ident'>truncate</span>(<span class='boolvalue'>true</span>)
-                .<span class='ident'>create</span>(<span class='boolvalue'>true</span>)
+                .<span class='ident'>write</span>(<span class='bool-val'>true</span>)
+                .<span class='ident'>truncate</span>(<span class='bool-val'>true</span>)
+                .<span class='ident'>create</span>(<span class='bool-val'>true</span>)
                 .<span class='ident'>open</span>(<span class='self'>self</span>.<span class='ident'>path</span>))
         };
 
@@ -633,7 +633,7 @@
         <span class='ident'>AsyncServerAppenderBuilder</span> {
             <span class='ident'>addr</span>: <span class='ident'>server_addr</span>,
             <span class='ident'>encoder</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>PatternEncoder</span>::<span class='ident'>default</span>()),
-            <span class='ident'>no_delay</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>no_delay</span>: <span class='bool-val'>true</span>,
         }
     }
 }
@@ -712,7 +712,7 @@
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>ConfigError</span>(<span class='string'>&quot;config must be a map&quot;</span>.<span class='ident'>to_owned</span>()))),
         };
 
-        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='boolvalue'>false</span>));
+        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='bool-val'>false</span>));
         <span class='prelude-val'>Ok</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>AsyncConsoleAppender</span>::<span class='ident'>builder</span>().<span class='ident'>encoder</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>)).<span class='ident'>build</span>()))
     }
 }
@@ -739,7 +739,7 @@
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>ConfigError</span>(<span class='string'>&quot;`output_file_name` is required&quot;</span>.<span class='ident'>to_owned</span>()))),
         };
 
-        <span class='kw'>let</span> <span class='ident'>op_path</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>FileHandler</span>::<span class='op'>&lt;</span>()<span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>op_file</span>, <span class='boolvalue'>true</span>) {
+        <span class='kw'>let</span> <span class='ident'>op_path</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>FileHandler</span>::<span class='op'>&lt;</span>()<span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>op_file</span>, <span class='bool-val'>true</span>) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>fh</span>) <span class='op'>=&gt;</span> <span class='ident'>fh</span>.<span class='ident'>path</span>().<span class='ident'>to_path_buf</span>(),
             <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
                 <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>ConfigError</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Could not establish log file path: \
@@ -751,10 +751,10 @@
         <span class='kw'>let</span> <span class='ident'>append</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>map</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>Value</span>::<span class='ident'>String</span>(<span class='string'>&quot;append&quot;</span>.<span class='ident'>to_owned</span>())) {
             <span class='prelude-val'>Some</span>(<span class='ident'>Value</span>::<span class='ident'>Bool</span>(<span class='ident'>append</span>)) <span class='op'>=&gt;</span> <span class='ident'>append</span>,
             <span class='prelude-val'>Some</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>ConfigError</span>(<span class='string'>&quot;`append` must be a bool&quot;</span>.<span class='ident'>to_owned</span>()))),
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         };
 
-        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='boolvalue'>false</span>));
+        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='bool-val'>false</span>));
         <span class='kw'>let</span> <span class='ident'>appender</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>AsyncFileAppender</span>::<span class='ident'>builder</span>(<span class='ident'>op_path</span>)
             .<span class='ident'>encoder</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
             .<span class='ident'>append</span>(<span class='ident'>append</span>)
@@ -788,9 +788,9 @@
         <span class='kw'>let</span> <span class='ident'>no_delay</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>map</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>Value</span>::<span class='ident'>String</span>(<span class='string'>&quot;no_delay&quot;</span>.<span class='ident'>to_owned</span>())) {
             <span class='prelude-val'>Some</span>(<span class='ident'>Value</span>::<span class='ident'>Bool</span>(<span class='ident'>no_delay</span>)) <span class='op'>=&gt;</span> <span class='ident'>no_delay</span>,
             <span class='prelude-val'>Some</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>ConfigError</span>(<span class='string'>&quot;`no_delay` must be a boolean&quot;</span>.<span class='ident'>to_owned</span>()))),
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         };
-        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='boolvalue'>false</span>));
+        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='bool-val'>false</span>));
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>AsyncServerAppender</span>::<span class='ident'>builder</span>(<span class='ident'>server_addr</span>)
             .<span class='ident'>encoder</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
@@ -821,7 +821,7 @@
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>ConfigError</span>(<span class='string'>&quot;`server_url` is required&quot;</span>.<span class='ident'>to_owned</span>()))),
         };
 
-        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='boolvalue'>true</span>));
+        <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>parse_pattern</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>map</span>, <span class='bool-val'>true</span>));
         <span class='prelude-val'>Ok</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>AsyncWebSockAppender</span>::<span class='ident'>builder</span>(<span class='ident'>server_url</span>)
             .<span class='ident'>encoder</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
             .<span class='ident'>build</span>())))

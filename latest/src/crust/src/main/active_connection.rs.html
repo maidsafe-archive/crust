@@ -302,6 +302,20 @@
 <span id="258">258</span>
 <span id="259">259</span>
 <span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -320,14 +334,14 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
+
+<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Core</span>, <span class='ident'>CoreTimerId</span>, <span class='ident'>Message</span>, <span class='ident'>Priority</span>, <span class='ident'>Socket</span>, <span class='ident'>SocketAddr</span>, <span class='ident'>State</span>};
+<span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
+<span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>hash_map</span>::<span class='ident'>Entry</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
-
-<span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Core</span>, <span class='ident'>CoreTimerId</span>, <span class='ident'>Message</span>, <span class='ident'>Priority</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
-<span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
-<span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>EventSet</span>, <span class='ident'>Timeout</span>, <span class='ident'>Token</span>};
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>test</span>))]</span>
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INACTIVITY_TIMEOUT_MS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>120_000</span>;
@@ -423,6 +437,20 @@
                 }
             }
         }
+    }
+
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>test</span>))]</span>
+    <span class='doccomment'>/// Helper function that returns a socket address of the connection</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>peer_addr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> {
+        <span class='kw'>use</span> <span class='ident'>main</span>::<span class='ident'>CrustError</span>;
+        <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>peer_addr</span>().<span class='ident'>map</span>(<span class='ident'>SocketAddr</span>).<span class='ident'>map_err</span>(<span class='ident'>CrustError</span>::<span class='ident'>Common</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+    <span class='comment'>// TODO(nbaksalyar) find a better way to mock connection IPs</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>peer_addr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> ::<span class='ident'>Res</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> {
+        <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
+        <span class='prelude-val'>Ok</span>(<span class='ident'>SocketAddr</span>(<span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>FromStr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;192.168.0.1:0&quot;</span>))))
     }
 
     <span class='kw'>fn</span> <span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,

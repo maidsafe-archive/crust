@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-4310' class='srclink' href='../../src/hyper/header/common/strict_transport_security.rs.html#47-56' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-4279' class='srclink' href='../../src/hyper/header/common/strict_transport_security.rs.html#47-56' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StrictTransportSecurity {
     pub include_subdomains: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>,
     pub max_age: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>,
@@ -85,15 +85,14 @@ such as user agent configuration, for example.</p>
 <span class='ident'>headers</span>.<span class='ident'>set</span>(
    <span class='ident'>StrictTransportSecurity</span>::<span class='ident'>including_subdomains</span>(<span class='number'>31536000u64</span>)
 );</pre>
-</div><h2 class='fields'>Fields</h2>
-<table><tr class='stab '>
-                             <td id='structfield.include_subdomains'><code>include_subdomains</code></td><td><div class='docblock'><p>Signals the UA that the HSTS Policy applies to this HSTS Host as well as
+</div><h2 class='fields'>Fields</h2><span id='structfield.include_subdomains' class='structfield'><code>include_subdomains: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>Signals the UA that the HSTS Policy applies to this HSTS Host as well as
 any subdomains of the host&#39;s domain name.</p>
-</div></td></tr><tr class='stab '>
-                             <td id='structfield.max_age'><code>max_age</code></td><td><div class='docblock'><p>Specifies the number of seconds, after the reception of the STS header
+</div><span id='structfield.max_age' class='structfield'><code>max_age: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code>
+                           </span><span class='stab '></span><div class='docblock'><p>Specifies the number of seconds, after the reception of the STS header
 field, during which the UA regards the host (from whom the message was
 received) as a Known HSTS Host.</p>
-</div></td></tr></table></section>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AccessControlAllowCredentials","`Access-Control-Allow-Credentials` header, part of CORS"]]});

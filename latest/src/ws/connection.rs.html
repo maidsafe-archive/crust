@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.2/src/connection.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/ws-0.5.3/src/connection.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>connection.rs.html -- source</title>
@@ -1063,15 +1063,6 @@
 <span id="1019">1019</span>
 <span id="1020">1020</span>
 <span id="1021">1021</span>
-<span id="1022">1022</span>
-<span id="1023">1023</span>
-<span id="1024">1024</span>
-<span id="1025">1025</span>
-<span id="1026">1026</span>
-<span id="1027">1027</span>
-<span id="1028">1028</span>
-<span id="1029">1029</span>
-<span id="1030">1030</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>replace</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>transmute</span>;
@@ -1125,8 +1116,8 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_connecting</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>State</span>::<span class='ident'>Connecting</span>(..) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>State</span>::<span class='ident'>Connecting</span>(..) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
@@ -1134,17 +1125,17 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_open</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>State</span>::<span class='ident'>Open</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>State</span>::<span class='ident'>Open</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_closing</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>State</span>::<span class='ident'>AwaitingClose</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>State</span>::<span class='ident'>FinishedClose</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>State</span>::<span class='ident'>AwaitingClose</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>State</span>::<span class='ident'>FinishedClose</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 }
@@ -1307,15 +1298,15 @@
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_client</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>endpoint</span> {
-            <span class='ident'>Client</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            <span class='ident'>Server</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Client</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            <span class='ident'>Server</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_server</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>endpoint</span> {
-            <span class='ident'>Client</span> <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
-            <span class='ident'>Server</span> <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
+            <span class='ident'>Client</span> <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
+            <span class='ident'>Server</span> <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
         }
     }
 
@@ -1471,7 +1462,7 @@
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disconnect</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>state</span> {
-            <span class='ident'>RespondingClose</span> <span class='op'>|</span> <span class='ident'>FinishedClose</span> <span class='op'>|</span> <span class='ident'>Connecting</span>(_, _)<span class='op'>=&gt;</span> (),
+            <span class='ident'>AwaitingClose</span> <span class='op'>|</span> <span class='ident'>RespondingClose</span> <span class='op'>|</span> <span class='ident'>FinishedClose</span> <span class='op'>|</span> <span class='ident'>Connecting</span>(_, _)<span class='op'>=&gt;</span> (),
             _ <span class='op'>=&gt;</span> {
                 <span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_close</span>(<span class='ident'>CloseCode</span>::<span class='ident'>Abnormal</span>, <span class='string'>&quot;&quot;</span>);
             }
@@ -1487,10 +1478,10 @@
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>Connecting</span>(<span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>req</span>, <span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>res</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span> {
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>endpoint</span> {
                 <span class='ident'>Server</span> <span class='op'>=&gt;</span> {
-                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>done</span> <span class='op'>=</span> <span class='boolvalue'>false</span>;
+                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>done</span> <span class='op'>=</span> <span class='bool-val'>false</span>;
                     <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(_) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='ident'>res</span>)) {
                         <span class='kw'>if</span> <span class='ident'>res</span>.<span class='ident'>position</span>() <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>==</span> <span class='ident'>res</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() {
-                            <span class='ident'>done</span> <span class='op'>=</span> <span class='boolvalue'>true</span>
+                            <span class='ident'>done</span> <span class='op'>=</span> <span class='bool-val'>true</span>
                         }
                     }
                     <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>done</span> {
@@ -1643,9 +1634,9 @@
                 <span class='self'>self</span>.<span class='ident'>read_handshake</span>()
             } <span class='kw'>else</span> {
                 <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Ready to read messages from {}.&quot;</span>, <span class='self'>self</span>.<span class='ident'>peer_addr</span>());
-                <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(_) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>buffer_in</span>()) {
+                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(_) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>buffer_in</span>()) {
                     <span class='comment'>// consume the whole buffer if possible</span>
-                    <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>read_frames</span>() {
+                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>read_frames</span>() {
                         <span class='comment'>// break on first IO error, other errors don&#39;t imply that the buffer is bad</span>
                         <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>Kind</span>::<span class='ident'>Io</span>(_) <span class='op'>=</span> <span class='ident'>err</span>.<span class='ident'>kind</span> {
                             <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>err</span>)
@@ -1755,10 +1746,10 @@
                                 <span class='kw'>let</span> <span class='ident'>has_reason</span> <span class='op'>=</span> {
                                     <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>reason</span>) <span class='op'>=</span> <span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>data</span>.<span class='ident'>get_ref</span>()[<span class='number'>2</span>..]) {
                                         <span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_close</span>(<span class='ident'>named</span>, <span class='ident'>reason</span>); <span class='comment'>// note reason may be an empty string</span>
-                                        <span class='boolvalue'>true</span>
+                                        <span class='bool-val'>true</span>
                                     } <span class='kw'>else</span> {
                                         <span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_close</span>(<span class='ident'>named</span>, <span class='string'>&quot;&quot;</span>);
-                                        <span class='boolvalue'>false</span>
+                                        <span class='bool-val'>false</span>
                                     }
                                 };
 
@@ -1876,7 +1867,7 @@
                 <span class='comment'>// Start out assuming that this write will clear the whole buffer</span>
                 <span class='self'>self</span>.<span class='ident'>events</span>.<span class='ident'>remove</span>(<span class='ident'>EventSet</span>::<span class='ident'>writable</span>());
 
-                <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>out_buffer</span>)) {
+                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_write_buf</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>out_buffer</span>)) {
                     <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Wrote {} bytes to {}&quot;</span>, <span class='ident'>len</span>, <span class='self'>self</span>.<span class='ident'>peer_addr</span>());
                     <span class='kw'>let</span> <span class='ident'>finished</span> <span class='op'>=</span> <span class='ident'>len</span> <span class='op'>==</span> <span class='number'>0</span> <span class='op'>||</span> <span class='self'>self</span>.<span class='ident'>out_buffer</span>.<span class='ident'>position</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>out_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>u64</span>;
                     <span class='kw'>if</span> <span class='ident'>finished</span> {
@@ -1884,7 +1875,7 @@
                             <span class='comment'>// we are are a server that is closing and just wrote out our confirming</span>
                             <span class='comment'>// close frame, let&#39;s disconnect</span>
                             <span class='ident'>FinishedClose</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>is_server</span>()  <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='self'>self</span>.<span class='ident'>events</span> <span class='op'>=</span> <span class='ident'>EventSet</span>::<span class='ident'>none</span>()),
-                            _ <span class='op'>=&gt;</span> <span class='kw'>break</span>,
+                            _ <span class='op'>=&gt;</span> (),
                         }
                     }
                 }
@@ -1913,7 +1904,7 @@
         <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Message opcode {:?}&quot;</span>, <span class='ident'>opcode</span>);
         <span class='kw'>let</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='ident'>msg</span>.<span class='ident'>into_data</span>();
 
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>frame</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_send_frame</span>(<span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>data</span>, <span class='ident'>opcode</span>, <span class='boolvalue'>true</span>))) {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>frame</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>handler</span>.<span class='ident'>on_send_frame</span>(<span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>data</span>, <span class='ident'>opcode</span>, <span class='bool-val'>true</span>))) {
 
             <span class='kw'>if</span> <span class='ident'>frame</span>.<span class='ident'>payload</span>().<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>fragment_size</span> {
                 <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Chunking at {:?}.&quot;</span>, <span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>fragment_size</span>);
@@ -1921,7 +1912,7 @@
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>chunks</span> <span class='op'>=</span> <span class='ident'>frame</span>.<span class='ident'>payload</span>().<span class='ident'>chunks</span>(<span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>fragment_size</span>).<span class='ident'>peekable</span>();
                 <span class='kw'>let</span> <span class='ident'>chunk</span> <span class='op'>=</span> <span class='ident'>chunks</span>.<span class='ident'>next</span>().<span class='ident'>expect</span>(<span class='string'>&quot;Unable to get initial chunk!&quot;</span>);
 
-                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>first</span> <span class='op'>=</span> <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>Vec</span>::<span class='ident'>from</span>(<span class='ident'>chunk</span>), <span class='ident'>opcode</span>, <span class='boolvalue'>false</span>);
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>first</span> <span class='op'>=</span> <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>Vec</span>::<span class='ident'>from</span>(<span class='ident'>chunk</span>), <span class='ident'>opcode</span>, <span class='bool-val'>false</span>);
 
                 <span class='comment'>// Match reserved bits from original to keep extension status intact</span>
                 <span class='ident'>first</span>.<span class='ident'>set_rsv1</span>(<span class='ident'>frame</span>.<span class='ident'>has_rsv1</span>());
@@ -1933,10 +1924,10 @@
                 <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>chunk</span>) <span class='op'>=</span> <span class='ident'>chunks</span>.<span class='ident'>next</span>() {
                     <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(_) <span class='op'>=</span> <span class='ident'>chunks</span>.<span class='ident'>peek</span>() {
                         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>buffer_frame</span>(
-                            <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>Vec</span>::<span class='ident'>from</span>(<span class='ident'>chunk</span>), <span class='ident'>OpCode</span>::<span class='ident'>Continue</span>, <span class='boolvalue'>false</span>)));
+                            <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>Vec</span>::<span class='ident'>from</span>(<span class='ident'>chunk</span>), <span class='ident'>OpCode</span>::<span class='ident'>Continue</span>, <span class='bool-val'>false</span>)));
                     } <span class='kw'>else</span> {
                         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>buffer_frame</span>(
-                            <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>Vec</span>::<span class='ident'>from</span>(<span class='ident'>chunk</span>), <span class='ident'>OpCode</span>::<span class='ident'>Continue</span>, <span class='boolvalue'>true</span>)));
+                            <span class='ident'>Frame</span>::<span class='ident'>message</span>(<span class='ident'>Vec</span>::<span class='ident'>from</span>(<span class='ident'>chunk</span>), <span class='ident'>OpCode</span>::<span class='ident'>Continue</span>, <span class='bool-val'>true</span>)));
                     }
                 }
 
@@ -2001,7 +1992,7 @@
             <span class='comment'>// We are initiating a closing handshake.</span>
             <span class='ident'>Open</span> <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>AwaitingClose</span>,
             <span class='ident'>Connecting</span>(_, _) <span class='op'>=&gt;</span> {
-                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;Attempted to close connection while not yet open.&quot;</span>)
+                <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;Attempted to close connection while not yet open.&quot;</span>)
             }
         }
 
@@ -2062,41 +2053,32 @@
     <span class='kw'>fn</span> <span class='ident'>buffer_in</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;&gt;</span> {
 
         <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Reading buffer for connection to {}.&quot;</span>, <span class='self'>self</span>.<span class='ident'>peer_addr</span>());
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>mut</span> <span class='ident'>len</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_read_buf</span>(<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_mut</span>())) {
-            <span class='kw'>if</span> <span class='ident'>len</span> <span class='op'>==</span> <span class='number'>0</span> {
-                <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Buffered {}.&quot;</span>, <span class='ident'>len</span>);
-                <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>)
-            }
-            <span class='kw'>loop</span> {
-                <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>capacity</span>() {
-                    <span class='comment'>// extend</span>
-                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>new</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>capacity</span>());
-                    <span class='ident'>new</span>.<span class='ident'>extend</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>()[<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>position</span>() <span class='kw'>as</span> <span class='ident'>usize</span> ..]);
-                    <span class='kw'>if</span> <span class='ident'>new</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>new</span>.<span class='ident'>capacity</span>() {
-                        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>in_buffer_grow</span> {
-                            <span class='ident'>new</span>.<span class='ident'>reserve</span>(<span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>in_buffer_capacity</span>);
-                        } <span class='kw'>else</span> {
-                            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>Kind</span>::<span class='ident'>Capacity</span>, <span class='string'>&quot;Maxed out input buffer for connection.&quot;</span>))
-                        }
-
-                        <span class='self'>self</span>.<span class='ident'>in_buffer</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>new</span>);
-                        <span class='comment'>// return now so that hopefully we will consume some of the buffer so this</span>
-                        <span class='comment'>// won&#39;t happen next time</span>
-                        <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Buffered {}.&quot;</span>, <span class='ident'>len</span>);
-                        <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>len</span>));
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_read_buf</span>(<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_mut</span>())) {
+            <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Buffered {}.&quot;</span>, <span class='ident'>len</span>);
+            <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>capacity</span>() {
+                <span class='comment'>// extend</span>
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>new</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>().<span class='ident'>capacity</span>());
+                <span class='ident'>new</span>.<span class='ident'>extend</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_ref</span>()[<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>position</span>() <span class='kw'>as</span> <span class='ident'>usize</span> ..]);
+                <span class='kw'>if</span> <span class='ident'>new</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='ident'>new</span>.<span class='ident'>capacity</span>() {
+                    <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>in_buffer_grow</span> {
+                        <span class='ident'>new</span>.<span class='ident'>reserve</span>(<span class='self'>self</span>.<span class='ident'>settings</span>.<span class='ident'>in_buffer_capacity</span>);
+                    } <span class='kw'>else</span> {
+                        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>Kind</span>::<span class='ident'>Capacity</span>, <span class='string'>&quot;Maxed out input buffer for connection.&quot;</span>))
                     }
+
                     <span class='self'>self</span>.<span class='ident'>in_buffer</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>new</span>);
-                }
-
-                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>next</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>try_read_buf</span>(<span class='self'>self</span>.<span class='ident'>in_buffer</span>.<span class='ident'>get_mut</span>())) {
-                    <span class='kw'>if</span> <span class='ident'>next</span> <span class='op'>==</span> <span class='number'>0</span> {
-                        <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>len</span>))
-                    }
-                    <span class='ident'>len</span> <span class='op'>+=</span> <span class='ident'>next</span>
-                } <span class='kw'>else</span> {
+                    <span class='comment'>// return now so that hopefully we will consume some of the buffer so this</span>
+                    <span class='comment'>// won&#39;t happen next time</span>
                     <span class='macro'>trace</span><span class='macro'>!</span>(<span class='string'>&quot;Buffered {}.&quot;</span>, <span class='ident'>len</span>);
                     <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>len</span>))
                 }
+                <span class='self'>self</span>.<span class='ident'>in_buffer</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>new</span>);
+            }
+
+            <span class='kw'>if</span> <span class='ident'>len</span> <span class='op'>==</span> <span class='number'>0</span> {
+                <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>)
+            } <span class='kw'>else</span> {
+                <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>len</span>))
             }
         } <span class='kw'>else</span> {
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>)

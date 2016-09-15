@@ -400,7 +400,7 @@
                 <span class='kw'>if</span> <span class='ident'>parser</span>.<span class='ident'>serialization</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='ident'>path_start</span> <span class='op'>+</span> <span class='number'>1</span> {
                     <span class='ident'>parser</span>.<span class='ident'>serialization</span>.<span class='ident'>push</span>(<span class='string'>&#39;/&#39;</span>);
                 }
-                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>has_host</span> <span class='op'>=</span> <span class='boolvalue'>true</span>;  <span class='comment'>// FIXME account for this?</span>
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>has_host</span> <span class='op'>=</span> <span class='bool-val'>true</span>;  <span class='comment'>// FIXME account for this?</span>
                 <span class='ident'>parser</span>.<span class='ident'>parse_path</span>(<span class='ident'>scheme_type</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>has_host</span>, <span class='ident'>path_start</span>,
                                   <span class='ident'>parser</span>::<span class='ident'>Input</span>::<span class='ident'>new</span>(<span class='ident'>segment</span>));
             }

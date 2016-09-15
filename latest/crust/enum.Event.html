@@ -47,10 +47,10 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1111' class='srclink' href='../src/crust/src/main/event.rs.html#26-50' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1145' class='srclink' href='../src/crust/src/main/event.rs.html#26-50' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Event {
     BootstrapAccept(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
-    BootstrapConnect(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>),
+    BootstrapConnect(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>,&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>),
     BootstrapFailed,
     ListenerStarted(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>),
     ListenerFailed,
@@ -58,24 +58,24 @@
     ConnectSuccess(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     ConnectFailure(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     LostPeer(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
-    NewMessage(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
-    WriteMsgSizeProhibitive(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
+    NewMessage(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
+    WriteMsgSizeProhibitive(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
 }</pre><div class='docblock'><p>Enum representing different events that will be sent over the asynchronous channel to the user
 of this module.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.BootstrapAccept'><code>BootstrapAccept</code></td><td><div class='docblock'><p>Invoked when a bootstrap peer connects to us</p>
-</div></td><td></td></tr><tr><td id='variant.BootstrapConnect'><code>BootstrapConnect</code></td><td><div class='docblock'><p>Invoked when we bootstrap to a new peer.</p>
-</div></td><td></td></tr><tr><td id='variant.BootstrapFailed'><code>BootstrapFailed</code></td><td><div class='docblock'><p>Invoked when we failed to connect to all bootstrap contacts.</p>
-</div></td><td></td></tr><tr><td id='variant.ListenerStarted'><code>ListenerStarted</code></td><td><div class='docblock'><p>Invoked when we are ready to listen for incomming connection. Contains
+<span id='variant.BootstrapAccept' class='variant'><code>BootstrapAccept(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>)</code></span><div class='docblock'><p>Invoked when a bootstrap peer connects to us</p>
+</div><span id='variant.BootstrapConnect' class='variant'><code>BootstrapConnect(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>,&nbsp;<a class='enum' href='https://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>)</code></span><div class='docblock'><p>Invoked when we bootstrap to a new peer.</p>
+</div><span id='variant.BootstrapFailed' class='variant'><code>BootstrapFailed</code></span><div class='docblock'><p>Invoked when we failed to connect to all bootstrap contacts.</p>
+</div><span id='variant.ListenerStarted' class='variant'><code>ListenerStarted(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>)</code></span><div class='docblock'><p>Invoked when we are ready to listen for incomming connection. Contains
 the listening port.</p>
-</div></td><td></td></tr><tr><td id='variant.ListenerFailed'><code>ListenerFailed</code></td><td><div class='docblock'><p>Invoked when listener failed to start.</p>
-</div></td><td></td></tr><tr><td id='variant.ConnectionInfoPrepared'><code>ConnectionInfoPrepared</code></td><td><div class='docblock'><p>Invoked as a result to the call of <code>Service::prepare_contact_info</code>.</p>
-</div></td><td></td></tr><tr><td id='variant.ConnectSuccess'><code>ConnectSuccess</code></td><td><div class='docblock'><p>Invoked when connection to a new peer has been established.</p>
-</div></td><td></td></tr><tr><td id='variant.ConnectFailure'><code>ConnectFailure</code></td><td><div class='docblock'><p>Invoked when connection to a new peer has failed.</p>
-</div></td><td></td></tr><tr><td id='variant.LostPeer'><code>LostPeer</code></td><td><div class='docblock'><p>Invoked when a peer disconnects or can no longer be contacted.</p>
-</div></td><td></td></tr><tr><td id='variant.NewMessage'><code>NewMessage</code></td><td><div class='docblock'><p>Invoked when a new message is received. Passes the message.</p>
-</div></td><td></td></tr><tr><td id='variant.WriteMsgSizeProhibitive'><code>WriteMsgSizeProhibitive</code></td><td><div class='docblock'><p>Invoked when trying to sending a too large data.</p>
-</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../crust/enum.Event.html' title='crust::Event'>Event</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1135' class='srclink' href='../src/crust/src/main/event.rs.html#25' title='goto source code'>[src]</a></span></h3>
+</div><span id='variant.ListenerFailed' class='variant'><code>ListenerFailed</code></span><div class='docblock'><p>Invoked when listener failed to start.</p>
+</div><span id='variant.ConnectionInfoPrepared' class='variant'><code>ConnectionInfoPrepared(<a class='struct' href='../crust/struct.ConnectionInfoResult.html' title='crust::ConnectionInfoResult'>ConnectionInfoResult</a>)</code></span><div class='docblock'><p>Invoked as a result to the call of <code>Service::prepare_contact_info</code>.</p>
+</div><span id='variant.ConnectSuccess' class='variant'><code>ConnectSuccess(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>)</code></span><div class='docblock'><p>Invoked when connection to a new peer has been established.</p>
+</div><span id='variant.ConnectFailure' class='variant'><code>ConnectFailure(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>)</code></span><div class='docblock'><p>Invoked when connection to a new peer has failed.</p>
+</div><span id='variant.LostPeer' class='variant'><code>LostPeer(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>)</code></span><div class='docblock'><p>Invoked when a peer disconnects or can no longer be contacted.</p>
+</div><span id='variant.NewMessage' class='variant'><code>NewMessage(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;)</code></span><div class='docblock'><p>Invoked when a new message is received. Passes the message.</p>
+</div><span id='variant.WriteMsgSizeProhibitive' class='variant'><code>WriteMsgSizeProhibitive(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;)</code></span><div class='docblock'><p>Invoked when trying to sending a too large data.</p>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../crust/enum.Event.html' title='crust::Event'>Event</a></code></span><span class='out-of-band'><div class='ghost'></div><a id='src-1118' class='srclink' href='../src/crust/src/main/event.rs.html#25' title='goto source code'>[src]</a></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 <div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div></section>

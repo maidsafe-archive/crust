@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2232' class='srclink' href='../../src/log4rs/encode/mod.rs.html#87-98' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-2212' class='srclink' href='../../src/log4rs/encode/mod.rs.html#87-98' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Write: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a> {
     fn <a href='#method.set_style' class='fnname'>set_style</a>(&amp;mut self, style: &amp;<a class='struct' href='../../log4rs/encode/struct.Style.html' title='log4rs::encode::Style'>Style</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
 }</pre><div class='docblock'><p>A trait for types that an <code>Encode</code>r will write to.</p>
@@ -65,11 +65,11 @@ not support styling should do this as well.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;W: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a>&gt; Write for <a class='struct' href='../../log4rs/encode/writer/struct.AnsiWriter.html' title='log4rs::encode::writer::AnsiWriter'>AnsiWriter</a>&lt;W&gt;</code></li>
+    <li><code>impl&lt;W:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a>&gt; Write for <a class='struct' href='../../log4rs/encode/writer/struct.AnsiWriter.html' title='log4rs::encode::writer::AnsiWriter'>AnsiWriter</a>&lt;W&gt;</code></li>
 <li><code>impl Write for <a class='struct' href='../../log4rs/encode/writer/struct.ConsoleWriter.html' title='log4rs::encode::writer::ConsoleWriter'>ConsoleWriter</a></code></li>
 <li><code>impl&lt;'a&gt; Write for <a class='struct' href='../../log4rs/encode/writer/struct.ConsoleWriterLock.html' title='log4rs::encode::writer::ConsoleWriterLock'>ConsoleWriterLock</a>&lt;'a&gt;</code></li>
-<li><code>impl&lt;W: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a>&gt; Write for <a class='struct' href='../../log4rs/encode/writer/struct.SimpleWriter.html' title='log4rs::encode::writer::SimpleWriter'>SimpleWriter</a>&lt;W&gt;</code></li>
-<li><code>impl&lt;'a, W: <a class='trait' href='../../log4rs/encode/trait.Write.html' title='log4rs::encode::Write'>Write</a> + ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; Write for &amp;'a mut W</code></li>
+<li><code>impl&lt;W:&nbsp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a>&gt; Write for <a class='struct' href='../../log4rs/encode/writer/struct.SimpleWriter.html' title='log4rs::encode::writer::SimpleWriter'>SimpleWriter</a>&lt;W&gt;</code></li>
+<li><code>impl&lt;'a,&nbsp;W:&nbsp;<a class='trait' href='../../log4rs/encode/trait.Write.html' title='log4rs::encode::Write'>Write</a> + ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt; Write for &amp;'a mut W</code></li>
 </ul><script type="text/javascript" async
                          src="../../implementors/log4rs/encode/trait.Write.js">
                  </script></section>

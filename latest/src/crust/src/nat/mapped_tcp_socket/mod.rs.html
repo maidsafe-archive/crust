@@ -254,11 +254,6 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashSet</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>SocketAddr</span>, <span class='ident'>SocketAddrV4</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>CoreTimerId</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>igd</span>::<span class='ident'>PortMappingProtocol</span>;
@@ -267,6 +262,11 @@
 <span class='kw'>use</span> <span class='ident'>nat</span>::{<span class='ident'>MappingContext</span>, <span class='ident'>NatError</span>, <span class='ident'>util</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>get_ext_addr</span>::<span class='ident'>GetExtAddr</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>RefCell</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashSet</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>SocketAddr</span>, <span class='ident'>SocketAddrV4</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 
 <span class='kw'>mod</span> <span class='ident'>get_ext_addr</span>;
 

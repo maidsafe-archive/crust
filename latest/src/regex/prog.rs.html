@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.73/src/prog.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/regex-0.1.77/src/prog.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>prog.rs.html -- source</title>
@@ -556,13 +556,13 @@
             <span class='ident'>capture_name_idx</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>HashMap</span>::<span class='ident'>new</span>()),
             <span class='ident'>start</span>: <span class='number'>0</span>,
             <span class='ident'>byte_classes</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>; <span class='number'>256</span>],
-            <span class='ident'>only_utf8</span>: <span class='boolvalue'>true</span>,
-            <span class='ident'>is_bytes</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>is_dfa</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>is_reverse</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>is_anchored_start</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>is_anchored_end</span>: <span class='boolvalue'>false</span>,
-            <span class='ident'>has_unicode_word_boundary</span>: <span class='boolvalue'>false</span>,
+            <span class='ident'>only_utf8</span>: <span class='bool-val'>true</span>,
+            <span class='ident'>is_bytes</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>is_dfa</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>is_reverse</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>is_anchored_start</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>is_anchored_end</span>: <span class='bool-val'>false</span>,
+            <span class='ident'>has_unicode_word_boundary</span>: <span class='bool-val'>false</span>,
             <span class='ident'>prefixes</span>: <span class='ident'>LiteralSearcher</span>::<span class='ident'>empty</span>(),
             <span class='ident'>dfa_size_limit</span>: <span class='number'>2</span> <span class='op'>*</span> (<span class='number'>1</span><span class='op'>&lt;&lt;</span><span class='number'>20</span>),
         }
@@ -586,11 +586,11 @@
             <span class='comment'>// If we have a regex set, then we have more than one ending</span>
             <span class='comment'>// state, so leading to one of those states is generally</span>
             <span class='comment'>// meaningless.</span>
-            <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+            <span class='kw'>return</span> <span class='bool-val'>false</span>;
         }
         <span class='kw'>match</span> <span class='self'>self</span>[<span class='self'>self</span>.<span class='ident'>skip</span>(<span class='ident'>pc</span>)] {
-            <span class='ident'>Inst</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Inst</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 
@@ -764,8 +764,8 @@
     <span class='doccomment'>/// Returns true if and only if this is a match instruction.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_match</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Inst</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='boolvalue'>true</span>,
-            _ <span class='op'>=&gt;</span> <span class='boolvalue'>false</span>,
+            <span class='ident'>Inst</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='bool-val'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='bool-val'>false</span>,
         }
     }
 }
@@ -850,10 +850,10 @@
         <span class='comment'>// a Unicode class on predominantly ASCII text.</span>
         <span class='kw'>for</span> <span class='ident'>r</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>iter</span>().<span class='ident'>take</span>(<span class='number'>4</span>) {
             <span class='kw'>if</span> <span class='ident'>c</span> <span class='op'>&lt;</span> <span class='ident'>r</span>.<span class='number'>0</span> {
-                <span class='kw'>return</span> <span class='boolvalue'>false</span>;
+                <span class='kw'>return</span> <span class='bool-val'>false</span>;
             }
             <span class='kw'>if</span> <span class='ident'>c</span> <span class='op'>&lt;=</span> <span class='ident'>r</span>.<span class='number'>1</span> {
-                <span class='kw'>return</span> <span class='boolvalue'>true</span>;
+                <span class='kw'>return</span> <span class='bool-val'>true</span>;
             }
         }
         <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>binary_search_by</span>(<span class='op'>|</span><span class='ident'>r</span><span class='op'>|</span> {

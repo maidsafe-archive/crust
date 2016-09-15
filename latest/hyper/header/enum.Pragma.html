@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-3665' class='srclink' href='../../src/hyper/header/common/pragma.rs.html#34-39' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3641' class='srclink' href='../../src/hyper/header/common/pragma.rs.html#34-39' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Pragma {
     NoCache,
     Ext(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
@@ -79,9 +79,9 @@ specification deprecates such extensions to improve interoperability.</p>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
 <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>Pragma</span>::<span class='ident'>Ext</span>(<span class='string'>&quot;foobar&quot;</span>.<span class='ident'>to_owned</span>()));</pre>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.NoCache'><code>NoCache</code></td><td><div class='docblock'><p>Corresponds to the <code>no-cache</code> value.</p>
-</div></td><td></td></tr><tr><td id='variant.Ext'><code>Ext</code></td><td><div class='docblock'><p>Every value other than <code>no-cache</code>.</p>
-</div></td><td></td></tr></table></section>
+<span id='variant.NoCache' class='variant'><code>NoCache</code></span><div class='docblock'><p>Corresponds to the <code>no-cache</code> value.</p>
+</div><span id='variant.Ext' class='variant'><code>Ext(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>)</code></span><div class='docblock'><p>Every value other than <code>no-cache</code>.</p>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

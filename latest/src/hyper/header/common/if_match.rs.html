@@ -165,14 +165,14 @@
             <span class='ident'>test1</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;xyzzy\&quot;&quot;</span>],
             <span class='prelude-val'>Some</span>(<span class='ident'>HeaderField</span>::<span class='ident'>Items</span>(
-                <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())])));
+                <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())])));
         <span class='macro'>test_header</span><span class='macro'>!</span>(
             <span class='ident'>test2</span>,
             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;\&quot;xyzzy\&quot;, \&quot;r2d2xxxx\&quot;, \&quot;c3piozzzz\&quot;&quot;</span>],
             <span class='prelude-val'>Some</span>(<span class='ident'>HeaderField</span>::<span class='ident'>Items</span>(
-                <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>()),
-                     <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;r2d2xxxx&quot;</span>.<span class='ident'>to_owned</span>()),
-                     <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolvalue'>false</span>, <span class='string'>&quot;c3piozzzz&quot;</span>.<span class='ident'>to_owned</span>())])));
+                <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>()),
+                     <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;r2d2xxxx&quot;</span>.<span class='ident'>to_owned</span>()),
+                     <span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='bool-val'>false</span>, <span class='string'>&quot;c3piozzzz&quot;</span>.<span class='ident'>to_owned</span>())])));
         <span class='macro'>test_header</span><span class='macro'>!</span>(<span class='ident'>test3</span>, <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>b&quot;*&quot;</span>], <span class='prelude-val'>Some</span>(<span class='ident'>IfMatch</span>::<span class='ident'>Any</span>));
     }
 }

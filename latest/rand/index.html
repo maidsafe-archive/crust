@@ -242,10 +242,10 @@ steps it will indeed confirm that it is better to switch.</p>
         <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>simulate</span>(<span class='kw-2'>&amp;</span><span class='ident'>random_door</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>rng</span>);
 
         <span class='kw'>match</span> (<span class='ident'>result</span>.<span class='ident'>win</span>, <span class='ident'>result</span>.<span class='ident'>switch</span>) {
-            (<span class='boolvalue'>true</span>, <span class='boolvalue'>true</span>) <span class='op'>=&gt;</span> <span class='ident'>switch_wins</span> <span class='op'>+=</span> <span class='number'>1</span>,
-            (<span class='boolvalue'>true</span>, <span class='boolvalue'>false</span>) <span class='op'>=&gt;</span> <span class='ident'>keep_wins</span> <span class='op'>+=</span> <span class='number'>1</span>,
-            (<span class='boolvalue'>false</span>, <span class='boolvalue'>true</span>) <span class='op'>=&gt;</span> <span class='ident'>switch_losses</span> <span class='op'>+=</span> <span class='number'>1</span>,
-            (<span class='boolvalue'>false</span>, <span class='boolvalue'>false</span>) <span class='op'>=&gt;</span> <span class='ident'>keep_losses</span> <span class='op'>+=</span> <span class='number'>1</span>,
+            (<span class='bool-val'>true</span>, <span class='bool-val'>true</span>) <span class='op'>=&gt;</span> <span class='ident'>switch_wins</span> <span class='op'>+=</span> <span class='number'>1</span>,
+            (<span class='bool-val'>true</span>, <span class='bool-val'>false</span>) <span class='op'>=&gt;</span> <span class='ident'>keep_wins</span> <span class='op'>+=</span> <span class='number'>1</span>,
+            (<span class='bool-val'>false</span>, <span class='bool-val'>true</span>) <span class='op'>=&gt;</span> <span class='ident'>switch_losses</span> <span class='op'>+=</span> <span class='number'>1</span>,
+            (<span class='bool-val'>false</span>, <span class='bool-val'>false</span>) <span class='op'>=&gt;</span> <span class='ident'>keep_losses</span> <span class='op'>+=</span> <span class='number'>1</span>,
         }
     }
 

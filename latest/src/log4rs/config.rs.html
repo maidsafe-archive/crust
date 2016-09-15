@@ -658,7 +658,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>builder</span>() <span class='op'>-&gt;</span> <span class='ident'>LoggerBuilder</span> {
         <span class='ident'>LoggerBuilder</span> {
             <span class='ident'>appenders</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-            <span class='ident'>additive</span>: <span class='boolvalue'>true</span>,
+            <span class='ident'>additive</span>: <span class='bool-val'>true</span>,
         }
     }
 
@@ -965,14 +965,14 @@
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>check_logger_name</span>() {
-        <span class='kw'>let</span> <span class='ident'>tests</span> <span class='op'>=</span> [(<span class='string'>&quot;&quot;</span>, <span class='boolvalue'>false</span>),
-                     (<span class='string'>&quot;asdf&quot;</span>, <span class='boolvalue'>true</span>),
-                     (<span class='string'>&quot;asdf::jkl&quot;</span>, <span class='boolvalue'>true</span>),
-                     (<span class='string'>&quot;::&quot;</span>, <span class='boolvalue'>false</span>),
-                     (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='boolvalue'>false</span>),
-                     (<span class='string'>&quot;asdf:jkl&quot;</span>, <span class='boolvalue'>false</span>),
-                     (<span class='string'>&quot;asdf:::jkl&quot;</span>, <span class='boolvalue'>false</span>),
-                     (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='boolvalue'>false</span>)];
+        <span class='kw'>let</span> <span class='ident'>tests</span> <span class='op'>=</span> [(<span class='string'>&quot;&quot;</span>, <span class='bool-val'>false</span>),
+                     (<span class='string'>&quot;asdf&quot;</span>, <span class='bool-val'>true</span>),
+                     (<span class='string'>&quot;asdf::jkl&quot;</span>, <span class='bool-val'>true</span>),
+                     (<span class='string'>&quot;::&quot;</span>, <span class='bool-val'>false</span>),
+                     (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='bool-val'>false</span>),
+                     (<span class='string'>&quot;asdf:jkl&quot;</span>, <span class='bool-val'>false</span>),
+                     (<span class='string'>&quot;asdf:::jkl&quot;</span>, <span class='bool-val'>false</span>),
+                     (<span class='string'>&quot;asdf::jkl::&quot;</span>, <span class='bool-val'>false</span>)];
 
         <span class='kw'>for</span> <span class='kw-2'>&amp;</span>(<span class='kw-2'>ref</span> <span class='ident'>name</span>, <span class='ident'>expected</span>) <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='ident'>tests</span> {
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>expected</span> <span class='op'>==</span> <span class='kw'>super</span>::<span class='ident'>check_logger_name</span>(<span class='ident'>name</span>).<span class='ident'>is_ok</span>(),
