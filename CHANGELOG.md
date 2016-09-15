@@ -2,6 +2,7 @@
 
 ## [0.18.0]
 - Provide an API to find out if the connected peer has a whitelisted IP as mentioned in config file.
+- This will currently not work properly on Windows due to (mio-bug)[https://github.com/carllerche/mio/issues/397].
 
 ## [0.17.0]
 - Use `rust_sodium` instead of `sodiumoxide` crate.
