@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../../../index.html'>rust_sodium</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>sign</a>::<wbr><a href='index.html'>ed25519</a></p><script>window.sidebarCurrent = {name: 'verify', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-992' class='srclink' href='../../../../src/rust_sodium/crypto/sign/ed25519.rs.html#97-112' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1001' class='srclink' href='../../../../src/rust_sodium/crypto/sign/ed25519.rs.html#99-114' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn verify(sm: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, PublicKey: &amp;<a class='struct' href='../../../../rust_sodium/crypto/sign/ed25519/struct.PublicKey.html' title='rust_sodium::crypto::sign::ed25519::PublicKey'>PublicKey</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;,&nbsp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</pre><div class='docblock'><p><code>verify()</code> verifies the signature in <code>sm</code> using the signer&#39;s public key <code>pk</code>.
 <code>verify()</code> returns the message <code>Ok(m)</code>.
 If the signature fails verification, <code>verify()</code> returns <code>Err(())</code>.</p>

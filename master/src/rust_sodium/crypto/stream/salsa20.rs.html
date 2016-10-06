@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/stream/salsa20.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/stream/salsa20.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>salsa20.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -73,10 +73,13 @@
 <span id="29">29</span>
 <span id="30">30</span>
 <span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! `crypto_stream_salsa20` (Salsa20/20), a particular cipher specified in</span>
-<span class='doccomment'>//! [Cryptography in NaCl](http://nacl.cr.yp.to/valid.html), Section 7.  This</span>
+<span class='doccomment'>//! [Cryptography in `NaCl`](http://nacl.cr.yp.to/valid.html), Section 7.  This</span>
 <span class='doccomment'>//! cipher is conjectured to meet the standard notion of unpredictability.</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>::{<span class='ident'>crypto_stream_salsa20</span>, <span class='ident'>crypto_stream_salsa20_KEYBYTES</span>, <span class='ident'>crypto_stream_salsa20_NONCEBYTES</span>,
           <span class='ident'>crypto_stream_salsa20_xor</span>};
 
@@ -92,6 +95,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_vector_1</span>() {
         <span class='comment'>// corresponding to tests/stream2.c and tests/stream6.cpp from NaCl</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>use</span> <span class='ident'>crypto</span>::<span class='ident'>hash</span>::<span class='ident'>sha256</span>::{<span class='ident'>Digest</span>, <span class='ident'>hash</span>};
         <span class='kw'>let</span> <span class='ident'>secondkey</span> <span class='op'>=</span> <span class='ident'>Key</span>([<span class='number'>0xdc</span>, <span class='number'>0x90</span>, <span class='number'>0x8d</span>, <span class='number'>0xda</span>, <span class='number'>0x0b</span>, <span class='number'>0x93</span>, <span class='number'>0x44</span>, <span class='number'>0xa9</span>, <span class='number'>0x53</span>, <span class='number'>0x62</span>, <span class='number'>0x9b</span>,
                              <span class='number'>0x73</span>, <span class='number'>0x38</span>, <span class='number'>0x20</span>, <span class='number'>0x77</span>, <span class='number'>0x88</span>, <span class='number'>0x80</span>, <span class='number'>0xf3</span>, <span class='number'>0xce</span>, <span class='number'>0xb4</span>, <span class='number'>0x21</span>, <span class='number'>0xbb</span>,

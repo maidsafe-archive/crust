@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-5217' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html?gotosrc=5217' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-5272' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html?gotosrc=5272' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Ipv6Addr {
     // some fields omitted
 }</pre><div class='docblock'><p>Representation of an IPv6 address.</p>
@@ -123,9 +123,8 @@
 neither IPv4-compatible or IPv4-mapped.</p>
 
 <p>::a.b.c.d and ::ffff:a.b.c.d become a.b.c.d</p>
-</div><h4 id='method.octets' class='method'><code>fn <a href='#method.octets' class='fnname'>octets</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 16]</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>ipv6_to_octets</code>)<p>: needs some testing</p>
-</em></div><div class='docblock'><p>Returns the sixteen eight-bit integers the IPv6 address consists of.</p>
+</div><h4 id='method.octets' class='method'><code>fn <a href='#method.octets' class='fnname'>octets</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 16]</a></code><div class='since' title='Stable since Rust version 1.12.0'>1.12.0</div></h4>
+<div class='docblock'><p>Returns the sixteen eight-bit integers the IPv6 address consists of.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../mio/struct.Ipv6Addr.html' title='mio::Ipv6Addr'>Ipv6Addr</a></code></span><span class='out-of-band'></span></h3>
 <div class='impl-items'></div><h3 class='impl'><span class='in-band'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../mio/struct.Ipv6Addr.html' title='mio::Ipv6Addr'>Ipv6Addr</a></code></span><span class='out-of-band'></span></h3>
 <div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>,&nbsp;<a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Error.html' title='core::fmt::Error'>Error</a>&gt;</code></h4>

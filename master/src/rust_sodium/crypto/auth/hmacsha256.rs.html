@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/auth/hmacsha256.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/auth/hmacsha256.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>hmacsha256.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -99,9 +99,13 @@
 <span id="55">55</span>
 <span id="56">56</span>
 <span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! `HMAC-SHA-256` `HMAC-SHA-256` is conjectured to meet the standard notion of</span>
 <span class='doccomment'>//! unforgeability.</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>::{<span class='ident'>crypto_auth_hmacsha256</span>, <span class='ident'>crypto_auth_hmacsha256_BYTES</span>, <span class='ident'>crypto_auth_hmacsha256_KEYBYTES</span>,
           <span class='ident'>crypto_auth_hmacsha256_final</span>, <span class='ident'>crypto_auth_hmacsha256_init</span>, <span class='ident'>crypto_auth_hmacsha256_state</span>,
           <span class='ident'>crypto_auth_hmacsha256_update</span>, <span class='ident'>crypto_auth_hmacsha256_verify</span>};
@@ -124,6 +128,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_vector_1</span>() {
         <span class='comment'>// corresponding to tests/auth2.c from NaCl</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='ident'>Key</span>([<span class='number'>0x01</span>, <span class='number'>0x02</span>, <span class='number'>0x03</span>, <span class='number'>0x04</span>, <span class='number'>0x05</span>, <span class='number'>0x06</span>, <span class='number'>0x07</span>, <span class='number'>0x08</span>, <span class='number'>0x09</span>, <span class='number'>0x0a</span>, <span class='number'>0x0b</span>, <span class='number'>0x0c</span>,
                        <span class='number'>0x0d</span>, <span class='number'>0x0e</span>, <span class='number'>0x0f</span>, <span class='number'>0x10</span>, <span class='number'>0x11</span>, <span class='number'>0x12</span>, <span class='number'>0x13</span>, <span class='number'>0x14</span>, <span class='number'>0x15</span>, <span class='number'>0x16</span>, <span class='number'>0x17</span>, <span class='number'>0x18</span>,
                        <span class='number'>0x19</span>, <span class='number'>0x1a</span>, <span class='number'>0x1b</span>, <span class='number'>0x1c</span>, <span class='number'>0x1d</span>, <span class='number'>0x1e</span>, <span class='number'>0x1f</span>, <span class='number'>0x20</span>]);
@@ -141,6 +146,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_vector_state_1</span>() {
         <span class='comment'>// corresponding to tests/auth2.c from NaCl</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> [<span class='number'>0x01</span>, <span class='number'>0x02</span>, <span class='number'>0x03</span>, <span class='number'>0x04</span>, <span class='number'>0x05</span>, <span class='number'>0x06</span>, <span class='number'>0x07</span>, <span class='number'>0x08</span>, <span class='number'>0x09</span>, <span class='number'>0x0a</span>, <span class='number'>0x0b</span>, <span class='number'>0x0c</span>, <span class='number'>0x0d</span>,
                    <span class='number'>0x0e</span>, <span class='number'>0x0f</span>, <span class='number'>0x10</span>, <span class='number'>0x11</span>, <span class='number'>0x12</span>, <span class='number'>0x13</span>, <span class='number'>0x14</span>, <span class='number'>0x15</span>, <span class='number'>0x16</span>, <span class='number'>0x17</span>, <span class='number'>0x18</span>, <span class='number'>0x19</span>, <span class='number'>0x1a</span>,
                    <span class='number'>0x1b</span>, <span class='number'>0x1c</span>, <span class='number'>0x1d</span>, <span class='number'>0x1e</span>, <span class='number'>0x1f</span>, <span class='number'>0x20</span>];

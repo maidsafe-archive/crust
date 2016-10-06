@@ -50,12 +50,12 @@
                </span><a id='src-849' class='srclink' href='../src/ws/factory.rs.html#5-104' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Factory {
     type <a href='#associatedtype.Handler' class='type'>Handler</a>: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a>;
-    fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a>;
+    fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::Handler;
 
     fn <a href='#method.on_shutdown' class='fnname'>on_shutdown</a>(&amp;mut self) { ... }
-    fn <a href='#method.client_connected' class='fnname'>client_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a> { ... }
-    fn <a href='#method.server_connected' class='fnname'>server_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a> { ... }
-    fn <a href='#method.connection_lost' class='fnname'>connection_lost</a>(&amp;mut self, _: Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a>) { ... }
+    fn <a href='#method.client_connected' class='fnname'>client_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::Handler { ... }
+    fn <a href='#method.server_connected' class='fnname'>server_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::Handler { ... }
+    fn <a href='#method.connection_lost' class='fnname'>connection_lost</a>(&amp;mut self, _: Self::Handler) { ... }
 }</pre><div class='docblock'><p>A trait for creating new WebSocket handlers.</p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
@@ -63,12 +63,12 @@
         <h3 id='associatedtype.Handler' class='method stab '><code>type <a href='#associatedtype.Handler' class='type'>Handler</a>: <a class='trait' href='../ws/trait.Handler.html' title='ws::Handler'>Handler</a></code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.connection_made' class='method stab '><code>fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a></code></h3><div class='docblock'><p>Called when a TCP connection is made.</p>
+        <h3 id='tymethod.connection_made' class='method stab '><code>fn <a href='#tymethod.connection_made' class='fnname'>connection_made</a>(&amp;mut self, <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::Handler</code></h3><div class='docblock'><p>Called when a TCP connection is made.</p>
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
         <h3 id='method.on_shutdown' class='method stab '><code>fn <a href='#method.on_shutdown' class='fnname'>on_shutdown</a>(&amp;mut self)</code></h3><div class='docblock'><p>Called when the WebSocket is shutting down.</p>
-</div><h3 id='method.client_connected' class='method stab '><code>fn <a href='#method.client_connected' class='fnname'>client_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a></code></h3><div class='docblock'><p>Called when a new connection is established for a client endpoint.
+</div><h3 id='method.client_connected' class='method stab '><code>fn <a href='#method.client_connected' class='fnname'>client_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::Handler</code></h3><div class='docblock'><p>Called when a new connection is established for a client endpoint.
 This method can be used to differentiate a client aspect for a handler.</p>
 
 <pre class='rust rust-example-rendered'>
@@ -101,7 +101,7 @@ This method can be used to differentiate a client aspect for a handler.</p>
         }
     }
 }</pre>
-</div><h3 id='method.server_connected' class='method stab '><code>fn <a href='#method.server_connected' class='fnname'>server_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a></code></h3><div class='docblock'><p>Called when a new connection is established for a server endpoint.
+</div><h3 id='method.server_connected' class='method stab '><code>fn <a href='#method.server_connected' class='fnname'>server_connected</a>(&amp;mut self, ws: <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a>) -&gt; Self::Handler</code></h3><div class='docblock'><p>Called when a new connection is established for a server endpoint.
 This method can be used to differentiate a server aspect for a handler.</p>
 
 <pre class='rust rust-example-rendered'>
@@ -134,7 +134,7 @@ This method can be used to differentiate a server aspect for a handler.</p>
         }
     }
 }</pre>
-</div><h3 id='method.connection_lost' class='method stab '><code>fn <a href='#method.connection_lost' class='fnname'>connection_lost</a>(&amp;mut self, _: Self::<a class='trait' href='../ws/trait.Factory.html' title='ws::Factory'>Handler</a>)</code></h3><div class='docblock'><p>Called when a TCP connection is lost with the handler that was
+</div><h3 id='method.connection_lost' class='method stab '><code>fn <a href='#method.connection_lost' class='fnname'>connection_lost</a>(&amp;mut self, _: Self::Handler)</code></h3><div class='docblock'><p>Called when a TCP connection is lost with the handler that was
 setup for that connection.</p>
 
 <p>The default implementation is a noop that simply drops the handler.

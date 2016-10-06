@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/box_/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/box_/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -119,6 +119,7 @@
 <span id="75">75</span>
 <span id="76">76</span>
 <span id="77">77</span>
+<span id="78">78</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Public-key authenticated encryption</span>
 <span class='doccomment'>//!</span>
@@ -150,18 +151,18 @@
 <span class='doccomment'>//! and receiver are nevertheless protected against forgeries by other</span>
 <span class='doccomment'>//! parties. In the terminology of</span>
 <span class='doccomment'>//! http://groups.google.com/group/sci.crypt/msg/ec5c18b23b11d82c,</span>
-<span class='doccomment'>//! crypto_box uses &quot;public-key authenticators&quot; rather than &quot;public-key</span>
+<span class='doccomment'>//! `crypto_box` uses &quot;public-key authenticators&quot; rather than &quot;public-key</span>
 <span class='doccomment'>//! signatures.&quot;</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! Users who want public verifiability (or receiver-assisted public</span>
 <span class='doccomment'>//! verifiability) should instead use signatures (or signcryption).</span>
-<span class='doccomment'>//! Signature support is a high priority for NaCl; a signature API will be</span>
-<span class='doccomment'>//! described in subsequent NaCl documentation.</span>
+<span class='doccomment'>//! Signature support is a high priority for `NaCl`; a signature API will be</span>
+<span class='doccomment'>//! described in subsequent `NaCl` documentation.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Selected primitive</span>
 <span class='doccomment'>//! `seal()` is `crypto_box_curve25519xsalsa20poly1305` , a particular</span>
 <span class='doccomment'>//! combination of Curve25519, Salsa20, and Poly1305 specified in</span>
-<span class='doccomment'>//! [Cryptography in NaCl](http://nacl.cr.yp.to/valid.html).</span>
+<span class='doccomment'>//! [Cryptography in `NaCl`](http://nacl.cr.yp.to/valid.html).</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! This function is conjectured to meet the standard notions of privacy and</span>
 <span class='doccomment'>//! third-party unforgeability.</span>
@@ -195,6 +196,7 @@
 <span class='doccomment'>//!                                              &amp;their_precomputed_key).unwrap();</span>
 <span class='doccomment'>//! assert!(plaintext == &amp;their_plaintext[..]);</span>
 <span class='doccomment'>//! ```</span>
+
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>curve25519xsalsa20poly1305</span>::<span class='op'>*</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>curve25519xsalsa20poly1305</span>;
 </pre>

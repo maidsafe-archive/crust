@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/auth/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/auth/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -115,6 +115,7 @@
 <span id="71">71</span>
 <span id="72">72</span>
 <span id="73">73</span>
+<span id="74">74</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Secret-key authentication</span>
 <span class='doccomment'>//!</span>
@@ -129,9 +130,9 @@
 <span class='doccomment'>//! authentication code,&quot; Journal of Computer and System Sciences 61 (2000),</span>
 <span class='doccomment'>//! 362–399; http://www-cse.ucsd.edu/~mihir/papers/cbc.html.</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! NaCl does not make any promises regarding &quot;strong&quot; unforgeability;</span>
+<span class='doccomment'>//! `NaCl` does not make any promises regarding &quot;strong&quot; unforgeability;</span>
 <span class='doccomment'>//! perhaps one valid authenticator can be converted into another valid</span>
-<span class='doccomment'>//! authenticator for the same message. NaCl also does not make any promises</span>
+<span class='doccomment'>//! authenticator for the same message. `NaCl` also does not make any promises</span>
 <span class='doccomment'>//! regarding &quot;truncated unforgeability.&quot;</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Selected primitive</span>
@@ -141,15 +142,15 @@
 <span class='doccomment'>//! unforgeability.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Alternate primitives</span>
-<span class='doccomment'>//! NaCl supports the following secret-key authentication functions:</span>
+<span class='doccomment'>//! `NaCl` supports the following secret-key authentication functions:</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! ------------------------------------------------------------</span>
-<span class='doccomment'>//! |crypto_auth              |primitive        |BYTES|KEYBYTES|</span>
-<span class='doccomment'>//! |-------------------------|-----------------|-----|--------|</span>
-<span class='doccomment'>//! |crypto_auth_hmacsha256   |HMAC_SHA-256     |32   |32      |</span>
-<span class='doccomment'>//! |crypto_auth_hmacsha512256|HMAC_SHA-512-256 |32   |32      |</span>
-<span class='doccomment'>//! |crypto_auth_hmacsha512   |HMAC_SHA-512     |64   |32      |</span>
-<span class='doccomment'>//! ------------------------------------------------------------</span>
+<span class='doccomment'>//! -----------------------------------------------------------------</span>
+<span class='doccomment'>//! |`crypto_auth`               |primitive          |BYTES|KEYBYTES|</span>
+<span class='doccomment'>//! |----------------------------|-------------------|-----|--------|</span>
+<span class='doccomment'>//! |`crypto_auth_hmacsha256`    |`HMAC_SHA-256`     |32   |32      |</span>
+<span class='doccomment'>//! |`crypto_auth_hmacsha512256` |`HMAC_SHA-512-256` |32   |32      |</span>
+<span class='doccomment'>//! |`crypto_auth_hmacsha512`    |`HMAC_SHA-512`     |64   |32      |</span>
+<span class='doccomment'>//! -----------------------------------------------------------------</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Example (simple interface)</span>
 <span class='doccomment'>//! ```</span>
@@ -183,6 +184,7 @@
 <span class='doccomment'>//! let tag2 = state.finalize();</span>
 <span class='doccomment'>//! assert_eq!(tag1, tag2);</span>
 <span class='doccomment'>//! ```</span>
+
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>hmacsha512256</span>::<span class='op'>*</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>mod</span> <span class='ident'>auth_macros</span>;

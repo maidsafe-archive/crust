@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../../index.html'>rust_sodium</a>::<wbr><a href='../index.html'>crypto</a></p><script>window.sidebarCurrent = {name: 'sign', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-553' class='srclink' href='../../../src/rust_sodium/crypto/sign/mod.rs.html#1-45' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-559' class='srclink' href='../../../src/rust_sodium/crypto/sign/mod.rs.html#1-46' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Public-key signatures</p>
 
 <h1 id='security-model' class='section-header'><a href='#security-model'>Security model</a></h1>
@@ -67,7 +67,7 @@ chosen-message attacks.</p>
 <table>
 <thead>
 <tr>
-<th>crypto_sign</th>
+<th><code>crypto_sign</code></th>
 <th>PUBLICKEYBYTES</th>
 <th>SECRETKEYBYTES</th>
 <th>BYTES</th>
@@ -76,13 +76,13 @@ chosen-message attacks.</p>
 
 <tbody>
 <tr>
-<td>crypto_sign_ed25519</td>
+<td><code>crypto_sign_ed25519</code></td>
 <td>32</td>
 <td>64</td>
 <td>64</td>
 </tr>
 <tr>
-<td>crypto_sign_edwards25519sha512batch</td>
+<td><code>crypto_sign_edwards25519sha512batch</code></td>
 <td>32</td>
 <td>64</td>
 <td>64</td>
@@ -92,7 +92,7 @@ chosen-message attacks.</p>
 
 <hr>
 
-<p>crypto_sign_edwards25519sha512batch is a prototype. It has been replaced with
+<p><code>crypto_sign_edwards25519sha512batch</code> is a prototype. It has been replaced with
 Ed25519 and is only kept here for compatibility reasons.</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>

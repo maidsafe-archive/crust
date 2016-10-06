@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/verify.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/verify.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>verify.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -142,8 +142,13 @@
 <span id="98"> 98</span>
 <span id="99"> 99</span>
 <span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Constant-time comparison of fixed-size vecs</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>;
 
 <span class='doccomment'>/// `verify_16()` returns `true` if `x[0]`, `x[1]`, ..., `x[15]` are the</span>
@@ -193,6 +198,7 @@
     <span class='kw'>fn</span> <span class='ident'>test_verify_16</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes_into</span>;
 
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0usize</span>..<span class='number'>256</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>x</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>16</span>];
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>y</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>16</span>];
@@ -211,6 +217,7 @@
     <span class='kw'>fn</span> <span class='ident'>test_verify_32</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes_into</span>;
 
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0usize</span>..<span class='number'>256</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>x</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>32</span>];
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>y</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>32</span>];
@@ -229,6 +236,7 @@
     <span class='kw'>fn</span> <span class='ident'>test_verify_64</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes_into</span>;
 
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0usize</span>..<span class='number'>256</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>x</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>64</span>];
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>y</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>64</span>];

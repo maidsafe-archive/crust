@@ -487,7 +487,6 @@
 <span id="443">443</span>
 <span id="444">444</span>
 <span id="445">445</span>
-<span id="446">446</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -507,7 +506,6 @@
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
 <span class='kw'>mod</span> <span class='ident'>exchange_msg</span>;
-
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='ident'>Core</span>, <span class='ident'>NameHash</span>, <span class='ident'>Socket</span>, <span class='ident'>State</span>};
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>ConnectionMap</span>, <span class='ident'>Event</span>};
@@ -663,7 +661,7 @@
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::<span class='ident'>MaidSafeEventCategory</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>serialise</span>};
-    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
+    <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
     <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Event</span>, <span class='ident'>PeerId</span>};
     <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Sender</span>, <span class='ident'>Token</span>};
     <span class='kw'>use</span> <span class='ident'>nat</span>::<span class='ident'>MappingContext</span>;
@@ -688,7 +686,7 @@
         <span class='ident'>pk</span>: <span class='ident'>PublicKey</span>,
         <span class='ident'>addr</span>: <span class='ident'>common</span>::<span class='ident'>SocketAddr</span>,
         <span class='ident'>event_rx</span>: <span class='ident'>mpsc</span>::<span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Event</span><span class='op'>&gt;</span>,
-        <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
+        <span class='ident'>_raii_joiner</span>: <span class='ident'>Joiner</span>,
     }
 
     <span class='kw'>impl</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>Listener</span> {

@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-5214' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html?gotosrc=5214' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-5269' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html?gotosrc=5269' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Ipv4Addr {
     // some fields omitted
 }</pre><div class='docblock'><p>Representation of an IPv4 address.</p>
@@ -58,9 +58,12 @@
 <p>The result will represent the IP address <code>a</code>.<code>b</code>.<code>c</code>.<code>d</code>.</p>
 </div><h4 id='method.octets' class='method'><code>fn <a href='#method.octets' class='fnname'>octets</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 4]</a></code></h4>
 <div class='docblock'><p>Returns the four eight-bit integers that make up this address.</p>
-</div><h4 id='method.is_unspecified' class='method'><code>fn <a href='#method.is_unspecified' class='fnname'>is_unspecified</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>ip</code>)<p>: extra functionality has not been scrutinized to the level that it should be stable</p>
-</em></div><div class='docblock'><p>Returns true for the special &#39;unspecified&#39; address (0.0.0.0).</p>
+</div><h4 id='method.is_unspecified' class='method'><code>fn <a href='#method.is_unspecified' class='fnname'>is_unspecified</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.12.0'>1.12.0</div></h4>
+<div class='docblock'><p>Returns true for the special &#39;unspecified&#39; address (0.0.0.0).</p>
+
+<p>This property is defined in <em>UNIX Network Programming, Second Edition</em>,
+W. Richard Stevens, p. 891; see also [ip7]
+[ip7][<a href="http://man7.org/linux/man-pages/man7/ip.7.html">http://man7.org/linux/man-pages/man7/ip.7.html</a>]</p>
 </div><h4 id='method.is_loopback' class='method'><code>fn <a href='#method.is_loopback' class='fnname'>is_loopback</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code><div class='since' title='Stable since Rust version 1.7.0'>1.7.0</div></h4>
 <div class='docblock'><p>Returns true if this is a loopback address (127.0.0.0/8).</p>
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/version.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/version.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>version.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -70,15 +70,18 @@
 <span id="26">26</span>
 <span id="27">27</span>
 <span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Libsodium version functions</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>CStr</span>;
 
 <span class='doccomment'>/// `version_string()` returns the version string from libsodium.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>version_string</span>() <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> {
     <span class='kw'>let</span> <span class='ident'>version</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>CStr</span>::<span class='ident'>from_ptr</span>(<span class='ident'>ffi</span>::<span class='ident'>sodium_version_string</span>()) };
-    <span class='ident'>version</span>.<span class='ident'>to_str</span>().<span class='ident'>unwrap</span>()
+    <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>version</span>.<span class='ident'>to_str</span>())
 }
 
 <span class='doccomment'>/// `version_major()` returns the major version from libsodium.</span>
@@ -96,6 +99,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_version_string</span>() {
         <span class='kw'>use</span> <span class='ident'>version</span>::<span class='ident'>version_string</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>version_string</span>().<span class='ident'>is_empty</span>());
     }
 }

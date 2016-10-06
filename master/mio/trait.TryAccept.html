@@ -50,14 +50,14 @@
                </span><a id='src-651' class='srclink' href='../src/mio/io.rs.html#68-72' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait TryAccept {
     type <a href='#associatedtype.Output' class='type'>Output</a>;
-    fn <a href='#tymethod.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='type' href='../std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self::<a class='trait' href='../mio/trait.TryAccept.html' title='mio::TryAccept'>Output</a>&gt;&gt;;
+    fn <a href='#tymethod.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self::Output&gt;&gt;;
 }</pre>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
         <h3 id='associatedtype.Output' class='method stab '><code>type <a href='#associatedtype.Output' class='type'>Output</a></code></h3></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.accept' class='method stab '><code>fn <a href='#tymethod.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='type' href='../std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self::<a class='trait' href='../mio/trait.TryAccept.html' title='mio::TryAccept'>Output</a>&gt;&gt;</code></h3></div>
+        <h3 id='tymethod.accept' class='method stab '><code>fn <a href='#tymethod.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self::Output&gt;&gt;</code></h3></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl TryAccept for <a class='struct' href='../mio/tcp/struct.TcpListener.html' title='mio::tcp::TcpListener'>TcpListener</a></code></li>

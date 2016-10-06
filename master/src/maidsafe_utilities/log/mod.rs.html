@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.9.0/src/log/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.10.0/src/log/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -767,24 +767,24 @@
 <span class='kw'>mod</span> <span class='ident'>async_log</span>;
 <span class='kw'>mod</span> <span class='ident'>web_socket</span>;
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Borrow</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>env</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Display</span>, <span class='ident'>Formatter</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>ToSocketAddrs</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Once</span>, <span class='ident'>ONCE_INIT</span>};
 
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>::<span class='ident'>FileHandler</span>;
 <span class='kw'>use</span> <span class='ident'>log4rs</span>;
 <span class='kw'>use</span> <span class='ident'>log4rs</span>::<span class='ident'>config</span>::{<span class='ident'>Appender</span>, <span class='ident'>Config</span>, <span class='ident'>Logger</span>, <span class='ident'>Root</span>};
-<span class='kw'>use</span> <span class='ident'>log4rs</span>::<span class='ident'>file</span>::<span class='ident'>Deserializers</span>;
 <span class='kw'>use</span> <span class='ident'>log4rs</span>::<span class='ident'>encode</span>::<span class='ident'>pattern</span>::<span class='ident'>PatternEncoder</span>;
+<span class='kw'>use</span> <span class='ident'>log4rs</span>::<span class='ident'>file</span>::<span class='ident'>Deserializers</span>;
 <span class='kw'>use</span> <span class='ident'>logger</span>::<span class='ident'>LogLevelFilter</span>;
 <span class='kw'>use</span> <span class='ident'>rand</span>;
 
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>async_log</span>::{<span class='ident'>AsyncConsoleAppender</span>, <span class='ident'>AsyncConsoleAppenderCreator</span>, <span class='ident'>AsyncFileAppender</span>,
                       <span class='ident'>AsyncFileAppenderCreator</span>, <span class='ident'>AsyncServerAppender</span>, <span class='ident'>AsyncServerAppenderCreator</span>,
                       <span class='ident'>AsyncWebSockAppender</span>, <span class='ident'>AsyncWebSockAppenderCreator</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Borrow</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>env</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Display</span>, <span class='ident'>Formatter</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>ToSocketAddrs</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>ONCE_INIT</span>, <span class='ident'>Once</span>};
 
 <span class='kw'>static</span> <span class='ident'>INITIALISE_LOGGER</span>: <span class='ident'>Once</span> <span class='op'>=</span> <span class='ident'>ONCE_INIT</span>;
 <span class='kw'>static</span> <span class='ident'>CONFIG_FILE</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;log.toml&quot;</span>;
@@ -1047,9 +1047,9 @@
 
 <span class='kw'>fn</span> <span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>PatternEncoder</span> {
     <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>show_thread_name</span> {
-        <span class='string'>&quot;{l} {d(%H:%M:%S.%f)} {T} [{M} #FS#{f}#FE#:{L}] {m}&quot;</span>
+        <span class='string'>&quot;{l} {d(%H:%M:%S.%f)} {T} [{M} #FS#{f}#FE#:{L}] {m}{n}&quot;</span>
     } <span class='kw'>else</span> {
-        <span class='string'>&quot;{l} {d(%H:%M:%S.%f)} [{M} #FS#{f}#FE#:{L}] {m}&quot;</span>
+        <span class='string'>&quot;{l} {d(%H:%M:%S.%f)} [{M} #FS#{f}#FE#:{L}] {m}{n}&quot;</span>
     };
 
     <span class='ident'>PatternEncoder</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>)
@@ -1117,19 +1117,19 @@
 }
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-<span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>parse_loggers</span>;
+<span class='kw'>mod</span> <span class='ident'>tests</span> {
+
+    <span class='kw'>use</span> <span class='ident'>logger</span>::<span class='ident'>LogLevelFilter</span>;
 
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>TcpListener</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::{<span class='self'>self</span>, <span class='ident'>Sender</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
-
-    <span class='kw'>use</span> <span class='ident'>logger</span>::<span class='ident'>LogLevelFilter</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='ident'>parse_loggers</span>;
     <span class='kw'>use</span> <span class='ident'>ws</span>;
-    <span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>Message</span>, <span class='ident'>Handler</span>};
+    <span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>Handler</span>, <span class='ident'>Message</span>};
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_parse_loggers</span>() {
@@ -1265,7 +1265,7 @@
         <span class='kw'>let</span> (<span class='ident'>tx</span>, <span class='ident'>rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
 
         <span class='comment'>// Start Log Message Server</span>
-        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;LogMessageWebServer&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+        <span class='kw'>let</span> _ <span class='op'>=</span> ::<span class='ident'>thread</span>::<span class='ident'>named</span>(<span class='string'>&quot;LogMessageWebServer&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>struct</span> <span class='ident'>Server</span> {
                 <span class='ident'>tx</span>: <span class='ident'>Sender</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>,
                 <span class='ident'>count</span>: <span class='ident'>usize</span>,

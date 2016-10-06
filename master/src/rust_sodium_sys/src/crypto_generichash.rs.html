@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-sys-0.1.1/src/crypto_generichash.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-sys-0.1.2/src/crypto_generichash.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>crypto_generichash.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../rust_sodium_sys/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -181,7 +181,6 @@
 <span id="137">137</span>
 <span id="138">138</span>
 <span id="139">139</span>
-<span id="140">140</span>
 </pre><pre class='rust '>
 <span class='comment'>// crypto_generichash.h</span>
 
@@ -299,11 +298,10 @@
                <span class='number'>0</span>);
 }
 
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
-
 <span class='attribute'>#[<span class='ident'>test</span>]</span>
 <span class='kw'>fn</span> <span class='ident'>test_crypto_generichash_multipart</span>() {
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
+
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>out</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>crypto_generichash_BYTES</span>];
     <span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='number'>64</span>];
     <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>crypto_generichash_KEYBYTES</span>];

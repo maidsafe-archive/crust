@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.9.0/src/big_endian_sip_hash.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.10.0/src/big_endian_sip_hash.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>big_endian_sip_hash.rs.html -- source</title>
@@ -106,10 +106,10 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hasher</span>, <span class='ident'>SipHasher</span>};
 
 <span class='kw'>use</span> <span class='ident'>bincode</span>::{<span class='self'>self</span>, <span class='ident'>SizeLimit</span>};
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>::<span class='ident'>Encodable</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hasher</span>, <span class='ident'>SipHasher</span>};
 
 <span class='doccomment'>/// Generates a deterministic Sip hash from `data`, regardless of the endianness of the host</span>
 <span class='doccomment'>/// machine.</span>

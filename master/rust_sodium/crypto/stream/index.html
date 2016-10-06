@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../../index.html'>rust_sodium</a>::<wbr><a href='../index.html'>crypto</a></p><script>window.sidebarCurrent = {name: 'stream', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-2973' class='srclink' href='../../../src/rust_sodium/crypto/stream/mod.rs.html#1-96' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-3000' class='srclink' href='../../../src/rust_sodium/crypto/stream/mod.rs.html#1-97' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Secret-key encryption</p>
 
 <h1 id='security-model' class='section-header'><a href='#security-model'>Security Model</a></h1>
@@ -71,25 +71,25 @@ nonce 1 for the first message, nonce 2 for the second message, etc.
 Nonces are long enough that randomly generated nonces have negligible
 risk of collision.</p>
 
-<p>NaCl does not make any promises regarding the resistance of <code>stream()</code> to
+<p><code>NaCl</code> does not make any promises regarding the resistance of <code>stream()</code> to
 &quot;related-key attacks.&quot; It is the caller&#39;s responsibility to use proper
 key-derivation functions.</p>
 
 <h1 id='selected-primitive' class='section-header'><a href='#selected-primitive'>Selected primitive</a></h1>
 <p><code>stream()</code> is <code>crypto_stream_xsalsa20</code>, a particular cipher specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>, Section 7.
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>, Section 7.
 This cipher is conjectured to meet the standard notion of
 unpredictability.</p>
 
 <h1 id='alternate-primitives' class='section-header'><a href='#alternate-primitives'>Alternate primitives</a></h1>
-<p>NaCl supports the following secret-key encryption functions:</p>
+<p><code>NaCl</code> supports the following secret-key encryption functions:</p>
 
 <hr>
 
 <table>
 <thead>
 <tr>
-<th>crypto_stream</th>
+<th><code>crypto_stream</code></th>
 <th>primitive</th>
 <th>KEYBYTES</th>
 <th>NONCEBYTES</th>
@@ -98,38 +98,38 @@ unpredictability.</p>
 
 <tbody>
 <tr>
-<td>crypto_stream_aes128ctr</td>
-<td>AES-128-CTR</td>
+<td><code>crypto_stream_aes128ctr</code></td>
+<td><code>AES-128-CTR</code></td>
 <td>16</td>
 <td>16</td>
 </tr>
 <tr>
-<td>crypto_stream_chacha20</td>
-<td>Chacha20/20</td>
+<td><code>crypto_stream_chacha20</code></td>
+<td><code>Chacha20/20</code></td>
 <td>32</td>
 <td>8</td>
 </tr>
 <tr>
-<td>crypto_stream_salsa208</td>
-<td>Salsa20/8</td>
+<td><code>crypto_stream_salsa208</code></td>
+<td><code>Salsa20/8</code></td>
 <td>32</td>
 <td>8</td>
 </tr>
 <tr>
-<td>crypto_stream_salsa2012</td>
-<td>Salsa20/12</td>
+<td><code>crypto_stream_salsa2012</code></td>
+<td><code>Salsa20/12</code></td>
 <td>32</td>
 <td>8</td>
 </tr>
 <tr>
-<td>crypto_stream_salsa20</td>
-<td>Salsa20/20</td>
+<td><code>crypto_stream_salsa20</code></td>
+<td><code>Salsa20/20</code></td>
 <td>32</td>
 <td>8</td>
 </tr>
 <tr>
-<td>crypto_stream_xsalsa20</td>
-<td>XSalsa20/20</td>
+<td><code>crypto_stream_xsalsa20</code></td>
+<td><code>XSalsa20/20</code></td>
 <td>32</td>
 <td>24</td>
 </tr>
@@ -199,7 +199,7 @@ unpredictability.</p>
                                   title='rust_sodium::crypto::stream::salsa20'>salsa20</a></td>
                            <td class='docblock short'>
                                 <p><code>crypto_stream_salsa20</code> (Salsa20/20), a particular cipher specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>, Section 7.  This
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>, Section 7.  This
 cipher is conjectured to meet the standard notion of unpredictability.</p>
                            </td>
                        </tr>
@@ -208,7 +208,7 @@ cipher is conjectured to meet the standard notion of unpredictability.</p>
                                   title='rust_sodium::crypto::stream::salsa2012'>salsa2012</a></td>
                            <td class='docblock short'>
                                 <p><code>crypto_stream_salsa2012</code> (Salsa20/12), a particular cipher specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>, Section 7.  This
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>, Section 7.  This
 cipher is conjectured to meet the standard notion of unpredictability.</p>
                            </td>
                        </tr>
@@ -217,7 +217,7 @@ cipher is conjectured to meet the standard notion of unpredictability.</p>
                                   title='rust_sodium::crypto::stream::salsa208'>salsa208</a></td>
                            <td class='docblock short'>
                                 <p><code>crypto_stream_salsa208</code> (Salsa20/8), a particular cipher specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>, Section 7.  This
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>, Section 7.  This
 cipher is conjectured to meet the standard notion of unpredictability.</p>
                            </td>
                        </tr>
@@ -226,7 +226,7 @@ cipher is conjectured to meet the standard notion of unpredictability.</p>
                                   title='rust_sodium::crypto::stream::xsalsa20'>xsalsa20</a></td>
                            <td class='docblock short'>
                                 <p><code>crypto_stream_xsalsa20</code>, a particular cipher specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>, Section 7.
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>, Section 7.
 This cipher is conjectured to meet the standard notion of
 unpredictability.</p>
                            </td>

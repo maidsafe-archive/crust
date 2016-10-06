@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.9.0/src/event_sender.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.10.0/src/event_sender.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>event_sender.rs.html -- source</title>
@@ -487,9 +487,9 @@
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>MaidSafeObserver</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>MaidSafeEventCategory</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span>;
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-<span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
+<span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
+    <span class='kw'>use</span> <span class='kw'>super</span>::<span class='op'>*</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>marshall_multiple_events</span>() {

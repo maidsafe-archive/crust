@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/hash/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/hash/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -85,6 +85,7 @@
 <span id="41">41</span>
 <span id="42">42</span>
 <span id="43">43</span>
+<span id="44">44</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Hashing</span>
 <span class='doccomment'>//!</span>
@@ -108,14 +109,14 @@
 <span class='doccomment'>//! SHA-3 competition will improve the situation.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Alternate primitives</span>
-<span class='doccomment'>//! NaCl supports the following hash functions:</span>
+<span class='doccomment'>//! `NaCl` supports the following hash functions:</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! ------------------------------------</span>
-<span class='doccomment'>//! |crypto_hash       |primitive|BYTES|</span>
-<span class='doccomment'>//! |------------------|---------|-----|</span>
-<span class='doccomment'>//! |crypto_hash_sha256|SHA-256  |32   |</span>
-<span class='doccomment'>//! |crypto_hash_sha512|SHA-512  |64   |</span>
-<span class='doccomment'>//! ------------------------------------</span>
+<span class='doccomment'>//! -----------------------------------------</span>
+<span class='doccomment'>//! |`crypto_hash`        |primitive |BYTES |</span>
+<span class='doccomment'>//! |---------------------|----------|------|</span>
+<span class='doccomment'>//! |`crypto_hash_sha256` |`SHA-256` |32    |</span>
+<span class='doccomment'>//! |`crypto_hash_sha512` |`SHA-512` |64    |</span>
+<span class='doccomment'>//! -----------------------------------------</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Example</span>
 <span class='doccomment'>//! ```</span>
@@ -124,6 +125,7 @@
 <span class='doccomment'>//! let data_to_hash = b&quot;some data&quot;;</span>
 <span class='doccomment'>//! let digest = hash::hash(data_to_hash);</span>
 <span class='doccomment'>//! ```</span>
+
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>sha512</span>::<span class='op'>*</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>mod</span> <span class='ident'>hash_macros</span>;

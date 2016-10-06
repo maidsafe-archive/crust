@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../../index.html'>rust_sodium</a>::<wbr><a href='../index.html'>crypto</a></p><script>window.sidebarCurrent = {name: 'auth', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-1211' class='srclink' href='../../../src/rust_sodium/crypto/auth/mod.rs.html#1-73' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-1223' class='srclink' href='../../../src/rust_sodium/crypto/auth/mod.rs.html#1-74' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Secret-key authentication</p>
 
 <h1 id='security-model' class='section-header'><a href='#security-model'>Security model</a></h1>
@@ -61,9 +61,9 @@ Kilian, and Rogaway, &quot;The security of the cipher block chaining message
 authentication code,&quot; Journal of Computer and System Sciences 61 (2000),
 362–399; <a href="http://www-cse.ucsd.edu/%7Emihir/papers/cbc.html">http://www-cse.ucsd.edu/~mihir/papers/cbc.html</a>.</p>
 
-<p>NaCl does not make any promises regarding &quot;strong&quot; unforgeability;
+<p><code>NaCl</code> does not make any promises regarding &quot;strong&quot; unforgeability;
 perhaps one valid authenticator can be converted into another valid
-authenticator for the same message. NaCl also does not make any promises
+authenticator for the same message. <code>NaCl</code> also does not make any promises
 regarding &quot;truncated unforgeability.&quot;</p>
 
 <h1 id='selected-primitive' class='section-header'><a href='#selected-primitive'>Selected primitive</a></h1>
@@ -73,14 +73,14 @@ regarding &quot;truncated unforgeability.&quot;</p>
 unforgeability.</p>
 
 <h1 id='alternate-primitives' class='section-header'><a href='#alternate-primitives'>Alternate primitives</a></h1>
-<p>NaCl supports the following secret-key authentication functions:</p>
+<p><code>NaCl</code> supports the following secret-key authentication functions:</p>
 
 <hr>
 
 <table>
 <thead>
 <tr>
-<th>crypto_auth</th>
+<th><code>crypto_auth</code></th>
 <th>primitive</th>
 <th>BYTES</th>
 <th>KEYBYTES</th>
@@ -89,20 +89,20 @@ unforgeability.</p>
 
 <tbody>
 <tr>
-<td>crypto_auth_hmacsha256</td>
-<td>HMAC_SHA-256</td>
+<td><code>crypto_auth_hmacsha256</code></td>
+<td><code>HMAC_SHA-256</code></td>
 <td>32</td>
 <td>32</td>
 </tr>
 <tr>
-<td>crypto_auth_hmacsha512256</td>
-<td>HMAC_SHA-512-256</td>
+<td><code>crypto_auth_hmacsha512256</code></td>
+<td><code>HMAC_SHA-512-256</code></td>
 <td>32</td>
 <td>32</td>
 </tr>
 <tr>
-<td>crypto_auth_hmacsha512</td>
-<td>HMAC_SHA-512</td>
+<td><code>crypto_auth_hmacsha512</code></td>
+<td><code>HMAC_SHA-512</code></td>
 <td>64</td>
 <td>32</td>
 </tr>

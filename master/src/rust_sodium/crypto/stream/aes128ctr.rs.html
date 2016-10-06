@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/stream/aes128ctr.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/stream/aes128ctr.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>aes128ctr.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -52,10 +52,12 @@
 <span id="8"> 8</span>
 <span id="9"> 9</span>
 <span id="10">10</span>
+<span id="11">11</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! `AES 128` in `CTR`-mode</span>
 <span class='doccomment'>//! This cipher is conjectured to meet the standard notion of</span>
 <span class='doccomment'>//! unpredictability.</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>::{<span class='ident'>crypto_stream_aes128ctr</span>, <span class='ident'>crypto_stream_aes128ctr_KEYBYTES</span>,
           <span class='ident'>crypto_stream_aes128ctr_NONCEBYTES</span>, <span class='ident'>crypto_stream_aes128ctr_xor</span>};
 

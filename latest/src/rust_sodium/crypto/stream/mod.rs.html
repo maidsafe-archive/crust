@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/stream/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/stream/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -138,6 +138,7 @@
 <span id="94">94</span>
 <span id="95">95</span>
 <span id="96">96</span>
+<span id="97">97</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Secret-key encryption</span>
 <span class='doccomment'>//!</span>
@@ -162,29 +163,29 @@
 <span class='doccomment'>//! Nonces are long enough that randomly generated nonces have negligible</span>
 <span class='doccomment'>//! risk of collision.</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! NaCl does not make any promises regarding the resistance of `stream()` to</span>
+<span class='doccomment'>//! `NaCl` does not make any promises regarding the resistance of `stream()` to</span>
 <span class='doccomment'>//! &quot;related-key attacks.&quot; It is the caller&#39;s responsibility to use proper</span>
 <span class='doccomment'>//! key-derivation functions.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Selected primitive</span>
 <span class='doccomment'>//! `stream()` is `crypto_stream_xsalsa20`, a particular cipher specified in</span>
-<span class='doccomment'>//! [Cryptography in NaCl](http://nacl.cr.yp.to/valid.html), Section 7.</span>
+<span class='doccomment'>//! [Cryptography in `NaCl`](http://nacl.cr.yp.to/valid.html), Section 7.</span>
 <span class='doccomment'>//! This cipher is conjectured to meet the standard notion of</span>
 <span class='doccomment'>//! unpredictability.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Alternate primitives</span>
-<span class='doccomment'>//! NaCl supports the following secret-key encryption functions:</span>
+<span class='doccomment'>//! `NaCl` supports the following secret-key encryption functions:</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! ------------------------------------------------------------</span>
-<span class='doccomment'>//! |crypto_stream           |primitive   |KEYBYTES |NONCEBYTES|</span>
-<span class='doccomment'>//! |------------------------|------------|---------|----------|</span>
-<span class='doccomment'>//! |crypto_stream_aes128ctr |AES-128-CTR |16       |16        |</span>
-<span class='doccomment'>//! |crypto_stream_chacha20  |Chacha20/20 |32       |8         |</span>
-<span class='doccomment'>//! |crypto_stream_salsa208  |Salsa20/8   |32       |8         |</span>
-<span class='doccomment'>//! |crypto_stream_salsa2012 |Salsa20/12  |32       |8         |</span>
-<span class='doccomment'>//! |crypto_stream_salsa20   |Salsa20/20  |32       |8         |</span>
-<span class='doccomment'>//! |crypto_stream_xsalsa20  |XSalsa20/20 |32       |24        |</span>
-<span class='doccomment'>//! ------------------------------------------------------------</span>
+<span class='doccomment'>//! ----------------------------------------------------------------</span>
+<span class='doccomment'>//! |`crypto_stream`           |primitive     |KEYBYTES |NONCEBYTES|</span>
+<span class='doccomment'>//! |--------------------------|--------------|---------|----------|</span>
+<span class='doccomment'>//! |`crypto_stream_aes128ctr` |`AES-128-CTR` |16       |16        |</span>
+<span class='doccomment'>//! |`crypto_stream_chacha20`  |`Chacha20/20` |32       |8         |</span>
+<span class='doccomment'>//! |`crypto_stream_salsa208`  |`Salsa20/8`   |32       |8         |</span>
+<span class='doccomment'>//! |`crypto_stream_salsa2012` |`Salsa20/12`  |32       |8         |</span>
+<span class='doccomment'>//! |`crypto_stream_salsa20`   |`Salsa20/20`  |32       |8         |</span>
+<span class='doccomment'>//! |`crypto_stream_xsalsa20`  |`XSalsa20/20` |32       |24        |</span>
+<span class='doccomment'>//! ----------------------------------------------------------------</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! Beware that several of these primitives have 8-byte nonces. For those</span>
 <span class='doccomment'>//! primitives it is no longer true that randomly generated nonces have negligible</span>
@@ -226,6 +227,7 @@
 <span class='doccomment'>//! stream::stream_xor_inplace(plaintext, &amp;nonce, &amp;key);</span>
 <span class='doccomment'>//! assert_eq!(plaintext, &amp;mut [0, 1, 2, 3]);</span>
 <span class='doccomment'>//! ```</span>
+
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>xsalsa20</span>::<span class='op'>*</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>mod</span> <span class='ident'>stream_macros</span>;

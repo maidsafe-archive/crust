@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/bincode-0.5.9/src/serde/writer.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/bincode-0.6.0/src/serde/writer.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>writer.rs.html -- source</title>
@@ -560,6 +560,136 @@
 <span id="516">516</span>
 <span id="517">517</span>
 <span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>::<span class='ident'>Error</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
@@ -652,8 +782,17 @@
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>W</span>: <span class='ident'>Write</span><span class='op'>&gt;</span> <span class='ident'>serde</span>::<span class='ident'>Serializer</span> <span class='kw'>for</span> <span class='ident'>Serializer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>W</span><span class='op'>&gt;</span> {
     <span class='kw'>type</span> <span class='ident'>Error</span> <span class='op'>=</span> <span class='ident'>SerializeError</span>;
+    <span class='kw'>type</span> <span class='ident'>SeqState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>TupleState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>TupleStructState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>TupleVariantState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>MapState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>StructState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>StructVariantState</span> <span class='op'>=</span> ();
 
     <span class='kw'>fn</span> <span class='ident'>serialize_unit</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> { <span class='prelude-val'>Ok</span>(()) }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_unit_struct</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> { <span class='prelude-val'>Ok</span>(()) }
 
     <span class='kw'>fn</span> <span class='ident'>serialize_bool</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>writer</span>.<span class='ident'>write_u8</span>(<span class='kw'>if</span> <span class='ident'>v</span> {<span class='number'>1</span>} <span class='kw'>else</span> {<span class='number'>0</span>}).<span class='ident'>map_err</span>(<span class='ident'>wrap_io</span>)
@@ -675,6 +814,10 @@
         <span class='self'>self</span>.<span class='ident'>writer</span>.<span class='ident'>write_u64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>(<span class='ident'>v</span>).<span class='ident'>map_err</span>(<span class='ident'>wrap_io</span>)
     }
 
+    <span class='kw'>fn</span> <span class='ident'>serialize_usize</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>serialize_u64</span>(<span class='ident'>v</span> <span class='kw'>as</span> <span class='ident'>u64</span>)
+    }
+
     <span class='kw'>fn</span> <span class='ident'>serialize_i8</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>i8</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>writer</span>.<span class='ident'>write_i8</span>(<span class='ident'>v</span>).<span class='ident'>map_err</span>(<span class='ident'>wrap_io</span>)
     }
@@ -689,6 +832,10 @@
 
     <span class='kw'>fn</span> <span class='ident'>serialize_i64</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>i64</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>writer</span>.<span class='ident'>write_i64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>(<span class='ident'>v</span>).<span class='ident'>map_err</span>(<span class='ident'>wrap_io</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_isize</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>isize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>serialize_i64</span>(<span class='ident'>v</span> <span class='kw'>as</span> <span class='ident'>i64</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>serialize_f32</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>f32</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
@@ -708,6 +855,14 @@
         <span class='self'>self</span>.<span class='ident'>writer</span>.<span class='ident'>write_all</span>(<span class='ident'>encode_utf8</span>(<span class='ident'>c</span>).<span class='ident'>as_slice</span>()).<span class='ident'>map_err</span>(<span class='ident'>SerializeError</span>::<span class='ident'>IoError</span>)
     }
 
+    <span class='kw'>fn</span> <span class='ident'>serialize_bytes</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_seq</span>(<span class='prelude-val'>Some</span>(<span class='ident'>v</span>.<span class='ident'>len</span>())));
+        <span class='kw'>for</span> <span class='ident'>c</span> <span class='kw'>in</span> <span class='ident'>v</span> {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_seq_elt</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>state</span>, <span class='ident'>c</span>));
+        }
+        <span class='self'>self</span>.<span class='ident'>serialize_seq_end</span>(<span class='ident'>state</span>)
+    }
+
     <span class='kw'>fn</span> <span class='ident'>serialize_none</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>writer</span>.<span class='ident'>write_u8</span>(<span class='number'>0</span>).<span class='ident'>map_err</span>(<span class='ident'>wrap_io</span>)
     }
@@ -719,113 +874,150 @@
         <span class='ident'>v</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_seq</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>SeqVisitor</span>,
-    {
-        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>visitor</span>.<span class='ident'>len</span>() {
-            <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=&gt;</span> <span class='ident'>len</span>,
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;do not know how to serialize a sequence with no length&quot;</span>),
-        };
-
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>));
-
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>len</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>len</span>.<span class='ident'>expect</span>(<span class='string'>&quot;do not know how to serialize a sequence with no length&quot;</span>);
+        <span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_tuple</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>SeqVisitor</span>,
-    {
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>serialize_seq_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
     {
         <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_map</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>MapVisitor</span>,
-    {
-        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>visitor</span>.<span class='ident'>len</span>() {
-            <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=&gt;</span> <span class='ident'>len</span>,
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;do not know how to serialize a map with no length&quot;</span>),
-        };
-
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>));
-
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='prelude-val'>Ok</span>(())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_map_elt</span><span class='op'>&lt;</span><span class='ident'>K</span>, <span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>key</span>: <span class='ident'>K</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq_fixed_size</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>serialize_seq</span>(<span class='prelude-val'>Some</span>(<span class='ident'>len</span>))
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_struct</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_struct_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_struct_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                              <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                              <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
+                              <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                              <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    {
+        <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_map</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>len</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>len</span>.<span class='ident'>expect</span>(<span class='string'>&quot;do not know how to serialize a map with no length&quot;</span>);
+        <span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_map_key</span><span class='op'>&lt;</span><span class='ident'>K</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>key</span>: <span class='ident'>K</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>K</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
-              <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
     {
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>key</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>));
-        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+        <span class='ident'>key</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_struct</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>MapVisitor</span>,
-    {
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>serialize_struct_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_key</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    <span class='kw'>fn</span> <span class='ident'>serialize_map_value</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
     {
         <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_map_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>_key</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                               <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
+                               <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                               <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    {
+        <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>_key</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
     }
 
     <span class='kw'>fn</span> <span class='ident'>serialize_newtype_struct</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
+                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
                                <span class='ident'>value</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>Serialize</span>,
     {
         <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_unit_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                          <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                          <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
-                          <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                              <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                              <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
-                              <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                              <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>SeqVisitor</span>,
-    {
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>));
-
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
+    <span class='kw'>fn</span> <span class='ident'>serialize_newtype_variant</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
                                <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
-                               <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                               <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>MapVisitor</span>,
+                               <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                               <span class='ident'>value</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>Serialize</span>,
     {
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>));
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
 
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
+    <span class='kw'>fn</span> <span class='ident'>serialize_unit_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                          <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                          <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
+                          <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
     }
 }
 
@@ -867,8 +1059,17 @@
 
 <span class='kw'>impl</span> <span class='ident'>serde</span>::<span class='ident'>Serializer</span> <span class='kw'>for</span> <span class='ident'>SizeChecker</span> {
     <span class='kw'>type</span> <span class='ident'>Error</span> <span class='op'>=</span> <span class='ident'>SerializeError</span>;
+    <span class='kw'>type</span> <span class='ident'>SeqState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>TupleState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>TupleStructState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>TupleVariantState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>MapState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>StructState</span> <span class='op'>=</span> ();
+    <span class='kw'>type</span> <span class='ident'>StructVariantState</span> <span class='op'>=</span> ();
 
     <span class='kw'>fn</span> <span class='ident'>serialize_unit</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> { <span class='prelude-val'>Ok</span>(()) }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_unit_struct</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> { <span class='prelude-val'>Ok</span>(()) }
 
     <span class='kw'>fn</span> <span class='ident'>serialize_bool</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>add_value</span>(<span class='number'>0</span> <span class='kw'>as</span> <span class='ident'>u8</span>)
@@ -890,6 +1091,10 @@
         <span class='self'>self</span>.<span class='ident'>add_value</span>(<span class='ident'>v</span>)
     }
 
+    <span class='kw'>fn</span> <span class='ident'>serialize_usize</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>serialize_u64</span>(<span class='ident'>v</span> <span class='kw'>as</span> <span class='ident'>u64</span>)
+    }
+
     <span class='kw'>fn</span> <span class='ident'>serialize_i8</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>i8</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>add_value</span>(<span class='ident'>v</span>)
     }
@@ -904,6 +1109,10 @@
 
     <span class='kw'>fn</span> <span class='ident'>serialize_i64</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>i64</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>add_value</span>(<span class='ident'>v</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_isize</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>isize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>serialize_i64</span>(<span class='ident'>v</span> <span class='kw'>as</span> <span class='ident'>i64</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>serialize_f32</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='ident'>f32</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
@@ -923,6 +1132,14 @@
         <span class='self'>self</span>.<span class='ident'>add_raw</span>(<span class='ident'>encode_utf8</span>(<span class='ident'>c</span>).<span class='ident'>as_slice</span>().<span class='ident'>len</span>())
     }
 
+    <span class='kw'>fn</span> <span class='ident'>serialize_bytes</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>v</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_seq</span>(<span class='prelude-val'>Some</span>(<span class='ident'>v</span>.<span class='ident'>len</span>())));
+        <span class='kw'>for</span> <span class='ident'>c</span> <span class='kw'>in</span> <span class='ident'>v</span> {
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_seq_elt</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>state</span>, <span class='ident'>c</span>));
+        }
+        <span class='self'>self</span>.<span class='ident'>serialize_seq_end</span>(<span class='ident'>state</span>)
+    }
+
     <span class='kw'>fn</span> <span class='ident'>serialize_none</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>add_value</span>(<span class='number'>0</span> <span class='kw'>as</span> <span class='ident'>u8</span>)
     }
@@ -934,105 +1151,148 @@
         <span class='ident'>v</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_seq</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>SeqVisitor</span>,
-    {
-        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>visitor</span>.<span class='ident'>len</span>() {
-            <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=&gt;</span> <span class='ident'>len</span>,
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;do not know how to serialize a sequence with no length&quot;</span>),
-        };
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>len</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>len</span>.<span class='ident'>expect</span>(<span class='string'>&quot;do not know how to serialize a sequence with no length&quot;</span>);
 
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>));
-
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
+        <span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_tuple</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>SeqVisitor</span>,
-    {
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>serialize_seq_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
     {
         <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_map</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>MapVisitor</span>,
-    {
-        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>visitor</span>.<span class='ident'>len</span>() {
-            <span class='prelude-val'>Some</span>(<span class='ident'>len</span>) <span class='op'>=&gt;</span> <span class='ident'>len</span>,
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;do not know how to serialize a map with no length&quot;</span>),
-        };
-
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>));
-
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='prelude-val'>Ok</span>(())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_map_elt</span><span class='op'>&lt;</span><span class='ident'>K</span>, <span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>key</span>: <span class='ident'>K</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>K</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
-              <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
-    {
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>key</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>));
-        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    <span class='kw'>fn</span> <span class='ident'>serialize_seq_fixed_size</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>serialize_seq</span>(<span class='prelude-val'>Some</span>(<span class='ident'>len</span>))
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_struct</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>MapVisitor</span>,
-    {
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='prelude-val'>Ok</span>(())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_struct_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_key</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
     {
         <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_unit_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                          <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                          <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
-                          <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_struct</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_struct_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_struct_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                         <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                         <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
+                         <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                         <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    {
         <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                         <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                         <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
-                         <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                         <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>SeqVisitor</span>,
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
     {
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>));
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
 
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
+    <span class='kw'>fn</span> <span class='ident'>serialize_tuple_variant_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='prelude-val'>Ok</span>(())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
+    <span class='kw'>fn</span> <span class='ident'>serialize_map</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>len</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    {
+        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>len</span>.<span class='ident'>expect</span>(<span class='string'>&quot;do not know how to serialize a map with no length&quot;</span>);
+
+        <span class='self'>self</span>.<span class='ident'>serialize_usize</span>(<span class='ident'>len</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_map_key</span><span class='op'>&lt;</span><span class='ident'>K</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>key</span>: <span class='ident'>K</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>K</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>key</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_map_value</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_map_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>_key</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
                                <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
-                               <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                               <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
-        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>ser</span>::<span class='ident'>MapVisitor</span>,
+                               <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                               <span class='ident'>_len</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+    {
+        <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant_elt</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> (), <span class='ident'>_field</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span>,
+    {
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_struct_variant_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: ()) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_newtype_struct</span><span class='op'>&lt;</span><span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>, <span class='ident'>v</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='ident'>v</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_unit_variant</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                          <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                          <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
+                          <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>serialize_newtype_variant</span><span class='op'>&lt;</span><span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>Serialize</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                               <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                               <span class='ident'>variant_index</span>: <span class='ident'>usize</span>,
+                               <span class='ident'>_variant</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                               <span class='ident'>value</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>SerializeResult</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>
     {
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>add_enum_tag</span>(<span class='ident'>variant_index</span>));
-
-        <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(()) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>visitor</span>.<span class='ident'>visit</span>(<span class='self'>self</span>)) { }
-
-        <span class='prelude-val'>Ok</span>(())
+        <span class='ident'>value</span>.<span class='ident'>serialize</span>(<span class='self'>self</span>)
     }
 }
 

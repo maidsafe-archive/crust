@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/marshal.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/marshal.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>marshal.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -57,7 +57,6 @@
 <span id="13">13</span>
 <span id="14">14</span>
 <span id="15">15</span>
-<span id="16">16</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_ulonglong</span>;
 
@@ -66,14 +65,13 @@
     <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>Fn</span>(<span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>u8</span>, <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>u8</span>, <span class='ident'>c_ulonglong</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span>
 {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dst</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='ident'>buf</span>.<span class='ident'>len</span>() <span class='op'>+</span> <span class='ident'>padbefore</span>);
-    <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>padbefore</span> {
-        <span class='ident'>dst</span>.<span class='ident'>push</span>(<span class='number'>0</span>);
-    }
-    <span class='ident'>dst</span>.<span class='ident'>extend</span>(<span class='ident'>buf</span>.<span class='ident'>into_iter</span>());
+    <span class='ident'>dst</span>.<span class='ident'>resize</span>(<span class='ident'>padbefore</span>, <span class='number'>0u8</span>);
+    <span class='ident'>dst</span>.<span class='ident'>extend_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>buf</span>[..]);
     <span class='kw'>let</span> <span class='ident'>pdst</span> <span class='op'>=</span> <span class='ident'>dst</span>.<span class='ident'>as_mut_ptr</span>();
     <span class='kw'>let</span> <span class='ident'>psrc</span> <span class='op'>=</span> <span class='ident'>dst</span>.<span class='ident'>as_ptr</span>();
     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>f</span>(<span class='ident'>pdst</span>, <span class='ident'>psrc</span>, <span class='ident'>dst</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>c_ulonglong</span>);
-    (<span class='ident'>dst</span>.<span class='ident'>into_iter</span>().<span class='ident'>skip</span>(<span class='ident'>bytestodrop</span>).<span class='ident'>collect</span>(), <span class='ident'>res</span>)
+    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>dst</span>.<span class='ident'>drain</span>(..<span class='ident'>bytestodrop</span>);
+    (<span class='ident'>dst</span>, <span class='ident'>res</span>)
 }
 </pre>
 </section>

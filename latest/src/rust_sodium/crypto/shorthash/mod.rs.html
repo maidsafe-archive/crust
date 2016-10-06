@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/shorthash/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/shorthash/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -66,6 +66,7 @@
 <span id="22">22</span>
 <span id="23">23</span>
 <span id="24">24</span>
+<span id="25">25</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! A lot of applications and programming language implementations have been</span>
 <span class='doccomment'>//! recently found to be vulnerable to denial-of-service attacks when a hash</span>
@@ -79,7 +80,7 @@
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Selected primitive</span>
 <span class='doccomment'>//! `shorthash()` is currently an implementation of `SipHash-2-4` as specified in</span>
-<span class='doccomment'>//! [SipHash: a fast short-input PRF](https://131002.net/siphash/)</span>
+<span class='doccomment'>//! [`SipHash`: a fast short-input PRF](https://131002.net/siphash/)</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Example</span>
 <span class='doccomment'>//! ```</span>
@@ -89,6 +90,7 @@
 <span class='doccomment'>//! let data_to_hash = b&quot;some data&quot;;</span>
 <span class='doccomment'>//! let digest = shorthash::shorthash(data_to_hash, &amp;key);</span>
 <span class='doccomment'>//! ```</span>
+
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>siphash24</span>::<span class='op'>*</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>siphash24</span>;
 </pre>

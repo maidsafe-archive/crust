@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/box_/curve25519xsalsa20poly1305.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/box_/curve25519xsalsa20poly1305.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>curve25519xsalsa20poly1305.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -444,13 +444,21 @@
 <span id="400">400</span>
 <span id="401">401</span>
 <span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! `crypto_box_curve25519xsalsa20poly1305` , a particular</span>
 <span class='doccomment'>//! combination of Curve25519, Salsa20, and Poly1305 specified in</span>
-<span class='doccomment'>//! [Cryptography in NaCl](http://nacl.cr.yp.to/valid.html).</span>
+<span class='doccomment'>//! [Cryptography in `NaCl`](http://nacl.cr.yp.to/valid.html).</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! This function is conjectured to meet the standard notions of privacy and</span>
 <span class='doccomment'>//! third-party unforgeability.</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>;
 <span class='kw'>use</span> <span class='ident'>marshal</span>::<span class='ident'>marshal</span>;
 <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes_into</span>;
@@ -499,12 +507,13 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// THREAD SAFETY: `gen_keypair()` is thread-safe provided that you have</span>
 <span class='doccomment'>/// called `rust_sodium::init()` once before using any other function</span>
-<span class='doccomment'>/// from rust_sodium.</span>
+<span class='doccomment'>/// from `rust_sodium`.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>gen_keypair</span>() <span class='op'>-&gt;</span> (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>) {
     <span class='kw'>unsafe</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>pk</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>PUBLICKEYBYTES</span>];
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>sk</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>SECRETKEYBYTES</span>];
-        <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305_keypair</span>(<span class='ident'>pk</span>.<span class='ident'>as_mut_ptr</span>(), <span class='ident'>sk</span>.<span class='ident'>as_mut_ptr</span>());
+        <span class='kw'>let</span> <span class='ident'>_todo_use_result</span> <span class='op'>=</span>
+            <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305_keypair</span>(<span class='ident'>pk</span>.<span class='ident'>as_mut_ptr</span>(), <span class='ident'>sk</span>.<span class='ident'>as_mut_ptr</span>());
         (<span class='ident'>PublicKey</span>(<span class='ident'>pk</span>), <span class='ident'>SecretKey</span>(<span class='ident'>sk</span>))
     }
 }
@@ -513,7 +522,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// THREAD SAFETY: `gen_nonce()` is thread-safe provided that you have</span>
 <span class='doccomment'>/// called `rust_sodium::init()` once before using any other function</span>
-<span class='doccomment'>/// from rust_sodium.</span>
+<span class='doccomment'>/// from `rust_sodium`.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>gen_nonce</span>() <span class='op'>-&gt;</span> <span class='ident'>Nonce</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>n</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='ident'>NONCEBYTES</span>];
     <span class='ident'>randombytes_into</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>n</span>);
@@ -529,12 +538,12 @@
             <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> (<span class='ident'>c</span>, _) <span class='op'>=</span> <span class='ident'>marshal</span>(<span class='ident'>m</span>, <span class='ident'>ZEROBYTES</span>, <span class='ident'>BOXZEROBYTES</span>, <span class='op'>|</span><span class='ident'>dst</span>, <span class='ident'>src</span>, <span class='ident'>len</span><span class='op'>|</span> {
         <span class='kw'>unsafe</span> {
-            <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305</span>(<span class='ident'>dst</span>,
-                                                       <span class='ident'>src</span>,
-                                                       <span class='ident'>len</span>,
-                                                       <span class='ident'>n</span>.<span class='ident'>as_ptr</span>(),
-                                                       <span class='ident'>pk</span>.<span class='ident'>as_ptr</span>(),
-                                                       <span class='ident'>sk</span>.<span class='ident'>as_ptr</span>());
+            <span class='kw'>let</span> <span class='ident'>_todo_use_result</span> <span class='op'>=</span> <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305</span>(<span class='ident'>dst</span>,
+                                                                              <span class='ident'>src</span>,
+                                                                              <span class='ident'>len</span>,
+                                                                              <span class='ident'>n</span>.<span class='ident'>as_ptr</span>(),
+                                                                              <span class='ident'>pk</span>.<span class='ident'>as_ptr</span>(),
+                                                                              <span class='ident'>sk</span>.<span class='ident'>as_ptr</span>());
         }
     });
     <span class='ident'>c</span>
@@ -561,11 +570,7 @@
                                                             <span class='ident'>sk</span>.<span class='ident'>as_ptr</span>())
         }
     });
-    <span class='kw'>if</span> <span class='ident'>ret</span> <span class='op'>==</span> <span class='number'>0</span> {
-        <span class='prelude-val'>Ok</span>(<span class='ident'>m</span>)
-    } <span class='kw'>else</span> {
-        <span class='prelude-val'>Err</span>(())
-    }
+    <span class='kw'>if</span> <span class='ident'>ret</span> <span class='op'>==</span> <span class='number'>0</span> { <span class='prelude-val'>Ok</span>(<span class='ident'>m</span>) } <span class='kw'>else</span> { <span class='prelude-val'>Err</span>(()) }
 }
 
 <span class='macro'>new_type</span><span class='macro'>!</span> {
@@ -585,9 +590,10 @@
                   <span class='op'>-&gt;</span> <span class='ident'>PrecomputedKey</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>k</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>PRECOMPUTEDKEYBYTES</span>];
     <span class='kw'>unsafe</span> {
-        <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305_beforenm</span>(<span class='ident'>k</span>.<span class='ident'>as_mut_ptr</span>(),
-                                                            <span class='ident'>pk</span>.<span class='ident'>as_ptr</span>(),
-                                                            <span class='ident'>sk</span>.<span class='ident'>as_ptr</span>());
+        <span class='kw'>let</span> <span class='ident'>_todo_use_result</span> <span class='op'>=</span>
+            <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305_beforenm</span>(<span class='ident'>k</span>.<span class='ident'>as_mut_ptr</span>(),
+                                                                <span class='ident'>pk</span>.<span class='ident'>as_ptr</span>(),
+                                                                <span class='ident'>sk</span>.<span class='ident'>as_ptr</span>());
     }
     <span class='ident'>PrecomputedKey</span>(<span class='ident'>k</span>)
 }
@@ -600,11 +606,12 @@
                         <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> (<span class='ident'>c</span>, _) <span class='op'>=</span> <span class='ident'>marshal</span>(<span class='ident'>m</span>, <span class='ident'>ZEROBYTES</span>, <span class='ident'>BOXZEROBYTES</span>, <span class='op'>|</span><span class='ident'>dst</span>, <span class='ident'>src</span>, <span class='ident'>len</span><span class='op'>|</span> {
         <span class='kw'>unsafe</span> {
-            <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305_afternm</span>(<span class='ident'>dst</span>,
-                                                               <span class='ident'>src</span>,
-                                                               <span class='ident'>len</span>,
-                                                               <span class='ident'>n</span>.<span class='ident'>as_ptr</span>(),
-                                                               <span class='ident'>k</span>.<span class='ident'>as_ptr</span>());
+            <span class='kw'>let</span> <span class='ident'>_todo_use_result</span> <span class='op'>=</span>
+                <span class='ident'>ffi</span>::<span class='ident'>crypto_box_curve25519xsalsa20poly1305_afternm</span>(<span class='ident'>dst</span>,
+                                                                   <span class='ident'>src</span>,
+                                                                   <span class='ident'>len</span>,
+                                                                   <span class='ident'>n</span>.<span class='ident'>as_ptr</span>(),
+                                                                   <span class='ident'>k</span>.<span class='ident'>as_ptr</span>());
         }
     });
     <span class='ident'>c</span>
@@ -629,11 +636,7 @@
                                                                     <span class='ident'>k</span>.<span class='ident'>as_ptr</span>())
         }
     });
-    <span class='kw'>if</span> <span class='ident'>ret</span> <span class='op'>==</span> <span class='number'>0</span> {
-        <span class='prelude-val'>Ok</span>(<span class='ident'>m</span>)
-    } <span class='kw'>else</span> {
-        <span class='prelude-val'>Err</span>(())
-    }
+    <span class='kw'>if</span> <span class='ident'>ret</span> <span class='op'>==</span> <span class='number'>0</span> { <span class='prelude-val'>Ok</span>(<span class='ident'>m</span>) } <span class='kw'>else</span> { <span class='prelude-val'>Err</span>(()) }
 }
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
@@ -643,6 +646,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_seal_open</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>256usize</span> {
             <span class='kw'>let</span> (<span class='ident'>pk1</span>, <span class='ident'>sk1</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
             <span class='kw'>let</span> (<span class='ident'>pk2</span>, <span class='ident'>sk2</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
@@ -657,6 +661,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_seal_open_precomputed</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>256usize</span> {
             <span class='kw'>let</span> (<span class='ident'>pk1</span>, <span class='ident'>sk1</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
             <span class='kw'>let</span> (<span class='ident'>pk2</span>, <span class='ident'>sk2</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
@@ -674,8 +679,10 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>needless_range_loop</span>))]</span>
     <span class='kw'>fn</span> <span class='ident'>test_seal_open_tamper</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>32usize</span> {
             <span class='kw'>let</span> (<span class='ident'>pk1</span>, <span class='ident'>sk1</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
             <span class='kw'>let</span> (<span class='ident'>pk2</span>, <span class='ident'>sk2</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
@@ -684,15 +691,17 @@
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>seal</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk1</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk2</span>);
             <span class='kw'>for</span> <span class='ident'>j</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>c</span>.<span class='ident'>len</span>() {
                 <span class='ident'>c</span>[<span class='ident'>j</span>] <span class='op'>^=</span> <span class='number'>0x20</span>;
-                <span class='macro'>assert</span><span class='macro'>!</span>(<span class='prelude-val'>Err</span>(()) <span class='op'>==</span> <span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>c</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk2</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk1</span>));
+                <span class='macro'>assert</span><span class='macro'>!</span>(<span class='prelude-val'>Err</span>(()) <span class='op'>==</span> <span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>c</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk2</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk1</span>));
                 <span class='ident'>c</span>[<span class='ident'>j</span>] <span class='op'>^=</span> <span class='number'>0x20</span>;
             }
         }
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>needless_range_loop</span>))]</span>
     <span class='kw'>fn</span> <span class='ident'>test_seal_open_precomputed_tamper</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>32usize</span> {
             <span class='kw'>let</span> (<span class='ident'>pk1</span>, <span class='ident'>sk1</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
             <span class='kw'>let</span> (<span class='ident'>pk2</span>, <span class='ident'>sk2</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
@@ -703,7 +712,7 @@
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>seal_precomputed</span>(<span class='kw-2'>&amp;</span><span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>k1</span>);
             <span class='kw'>for</span> <span class='ident'>j</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>c</span>.<span class='ident'>len</span>() {
                 <span class='ident'>c</span>[<span class='ident'>j</span>] <span class='op'>^=</span> <span class='number'>0x20</span>;
-                <span class='macro'>assert</span><span class='macro'>!</span>(<span class='prelude-val'>Err</span>(()) <span class='op'>==</span> <span class='ident'>open_precomputed</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>c</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>k2</span>));
+                <span class='macro'>assert</span><span class='macro'>!</span>(<span class='prelude-val'>Err</span>(()) <span class='op'>==</span> <span class='ident'>open_precomputed</span>(<span class='kw-2'>&amp;</span><span class='ident'>c</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>k2</span>));
                 <span class='ident'>c</span>[<span class='ident'>j</span>] <span class='op'>^=</span> <span class='number'>0x20</span>;
             }
         }
@@ -712,6 +721,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_vector_1</span>() {
         <span class='comment'>// corresponding to tests/box.c and tests/box3.cpp from NaCl</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>let</span> <span class='ident'>alicesk</span> <span class='op'>=</span> <span class='ident'>SecretKey</span>([<span class='number'>0x77</span>, <span class='number'>0x07</span>, <span class='number'>0x6d</span>, <span class='number'>0x0a</span>, <span class='number'>0x73</span>, <span class='number'>0x18</span>, <span class='number'>0xa5</span>, <span class='number'>0x7d</span>, <span class='number'>0x3c</span>, <span class='number'>0x16</span>,
                                  <span class='number'>0xc1</span>, <span class='number'>0x72</span>, <span class='number'>0x51</span>, <span class='number'>0xb2</span>, <span class='number'>0x66</span>, <span class='number'>0x45</span>, <span class='number'>0xdf</span>, <span class='number'>0x4c</span>, <span class='number'>0x2f</span>, <span class='number'>0x87</span>,
                                  <span class='number'>0xeb</span>, <span class='number'>0xc0</span>, <span class='number'>0x99</span>, <span class='number'>0x2a</span>, <span class='number'>0xb1</span>, <span class='number'>0x77</span>, <span class='number'>0xfb</span>, <span class='number'>0xa5</span>, <span class='number'>0x1d</span>, <span class='number'>0xb9</span>,
@@ -756,6 +766,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_vector_2</span>() {
         <span class='comment'>// corresponding to tests/box2.c and tests/box4.cpp from NaCl</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>let</span> <span class='ident'>bobsk</span> <span class='op'>=</span> <span class='ident'>SecretKey</span>([<span class='number'>0x5d</span>, <span class='number'>0xab</span>, <span class='number'>0x08</span>, <span class='number'>0x7e</span>, <span class='number'>0x62</span>, <span class='number'>0x4a</span>, <span class='number'>0x8a</span>, <span class='number'>0x4b</span>, <span class='number'>0x79</span>, <span class='number'>0xe1</span>, <span class='number'>0x7f</span>,
                                <span class='number'>0x8b</span>, <span class='number'>0x83</span>, <span class='number'>0x80</span>, <span class='number'>0x0e</span>, <span class='number'>0xe6</span>, <span class='number'>0x6f</span>, <span class='number'>0x3b</span>, <span class='number'>0xb1</span>, <span class='number'>0x29</span>, <span class='number'>0x26</span>, <span class='number'>0x18</span>,
                                <span class='number'>0xb6</span>, <span class='number'>0xfd</span>, <span class='number'>0x1c</span>, <span class='number'>0x2f</span>, <span class='number'>0x8b</span>, <span class='number'>0x27</span>, <span class='number'>0xff</span>, <span class='number'>0x88</span>, <span class='number'>0xe0</span>, <span class='number'>0xeb</span>]);
@@ -801,6 +812,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_serialisation</span>() {
         <span class='kw'>use</span> <span class='ident'>test_utils</span>::<span class='ident'>round_trip</span>;
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>256usize</span> {
             <span class='kw'>let</span> (<span class='ident'>pk</span>, <span class='ident'>sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>gen_nonce</span>();
@@ -822,6 +834,7 @@
 
     <span class='attribute'>#[<span class='ident'>bench</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>bench_seal_open</span>(<span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>test</span>::<span class='ident'>Bencher</span>) {
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>let</span> (<span class='ident'>pk</span>, <span class='ident'>sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
         <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>gen_nonce</span>();
         <span class='kw'>let</span> <span class='ident'>ms</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> <span class='op'>=</span> <span class='ident'>BENCH_SIZES</span>.<span class='ident'>iter</span>()
@@ -829,13 +842,14 @@
             .<span class='ident'>collect</span>();
         <span class='ident'>b</span>.<span class='ident'>iter</span>(<span class='op'>||</span> {
             <span class='kw'>for</span> <span class='ident'>m</span> <span class='kw'>in</span> <span class='ident'>ms</span>.<span class='ident'>iter</span>() {
-                <span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>seal</span>(<span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk</span>), <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk</span>).<span class='ident'>unwrap</span>();
+                <span class='macro'>unwrap</span><span class='macro'>!</span>(<span class='ident'>open</span>(<span class='kw-2'>&amp;</span><span class='ident'>seal</span>(<span class='ident'>m</span>, <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk</span>), <span class='kw-2'>&amp;</span><span class='ident'>n</span>, <span class='kw-2'>&amp;</span><span class='ident'>pk</span>, <span class='kw-2'>&amp;</span><span class='ident'>sk</span>));
             }
         });
     }
 
     <span class='attribute'>#[<span class='ident'>bench</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>bench_precompute</span>(<span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>test</span>::<span class='ident'>Bencher</span>) {
+        <span class='macro'>assert</span><span class='macro'>!</span>(::<span class='ident'>init</span>());
         <span class='kw'>let</span> (<span class='ident'>pk</span>, <span class='ident'>sk</span>) <span class='op'>=</span> <span class='ident'>gen_keypair</span>();
         <span class='ident'>b</span>.<span class='ident'>iter</span>(<span class='op'>||</span> {
             <span class='comment'>// we do this benchmark as many times as the other benchmarks so</span>

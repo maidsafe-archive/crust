@@ -786,6 +786,8 @@
 <span id="742">742</span>
 <span id="743">743</span>
 <span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -806,7 +808,7 @@
 
 <span class='kw'>use</span> <span class='ident'>common</span>::{<span class='self'>self</span>, <span class='ident'>Core</span>, <span class='ident'>CoreMessage</span>, <span class='ident'>Priority</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>;
-<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
+<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>Joiner</span>;
 <span class='kw'>use</span> <span class='ident'>main</span>::{<span class='ident'>Bootstrap</span>, <span class='ident'>Connect</span>, <span class='ident'>ConnectionId</span>, <span class='ident'>ConnectionInfoResult</span>, <span class='ident'>ConnectionListener</span>,
            <span class='ident'>ConnectionMap</span>, <span class='ident'>CrustError</span>, <span class='ident'>Event</span>, <span class='ident'>PeerId</span>, <span class='ident'>PrivConnectionInfo</span>, <span class='ident'>PubConnectionInfo</span>,
            <span class='ident'>ActiveConnection</span>};
@@ -839,7 +841,7 @@
     <span class='ident'>name_hash</span>: <span class='ident'>u64</span>,
     <span class='ident'>our_keys</span>: (<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>),
     <span class='ident'>our_listeners</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
-    <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
+    <span class='ident'>_raii_joiner</span>: <span class='ident'>Joiner</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Service</span> {
@@ -944,7 +946,7 @@
             <span class='kw'>match</span> <span class='ident'>state</span>.<span class='ident'>borrow_mut</span>().<span class='ident'>as_any</span>().<span class='ident'>downcast_mut</span>::<span class='op'>&lt;</span><span class='ident'>ActiveConnection</span><span class='op'>&gt;</span>() {
                 <span class='prelude-val'>Some</span>(<span class='ident'>active_connection</span>) <span class='op'>=&gt;</span> {
                     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Some</span>(<span class='ident'>active_connection</span>.<span class='ident'>peer_addr</span>()));
-                },
+                }
                 <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
                     <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Expected token {:?} to be ActiveConnection&quot;</span>, <span class='ident'>token</span>);
                     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>None</span>);
@@ -955,7 +957,7 @@
         <span class='kw'>match</span> <span class='ident'>rx</span>.<span class='ident'>recv</span>() {
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='ident'>ip</span>)) <span class='op'>=&gt;</span> <span class='ident'>ip</span>,
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>CrustError</span>::<span class='ident'>PeerNotFound</span>(<span class='op'>*</span><span class='ident'>peer_id</span>)),
-            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>CrustError</span>::<span class='ident'>ChannelRecv</span>(<span class='ident'>e</span>))
+            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>CrustError</span>::<span class='ident'>ChannelRecv</span>(<span class='ident'>e</span>)),
         }
     }
 
@@ -970,9 +972,11 @@
 
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>get_peer_socket_addr</span>(<span class='ident'>peer_id</span>) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>ip</span>) <span class='op'>=&gt;</span> {
-                <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Checking whether {:?} is whitelisted in {:?}&quot;</span>, <span class='ident'>ip</span>, <span class='ident'>whitelisted_ips</span>);
+                <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Checking whether {:?} is whitelisted in {:?}&quot;</span>,
+                       <span class='ident'>ip</span>,
+                       <span class='ident'>whitelisted_ips</span>);
                 <span class='ident'>whitelisted_ips</span>.<span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='ident'>common</span>::<span class='ident'>IpAddr</span>::<span class='ident'>from</span>(<span class='ident'>ip</span>))
-            },
+            }
             <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
                 <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>e</span>.<span class='ident'>description</span>());
                 <span class='bool-val'>false</span>

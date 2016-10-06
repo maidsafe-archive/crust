@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.9.0/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/maidsafe_utilities-0.10.0/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -121,9 +121,6 @@
 <span id="77">77</span>
 <span id="78">78</span>
 <span id="79">79</span>
-<span id="80">80</span>
-<span id="81">81</span>
-<span id="82">82</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -155,11 +152,11 @@
 <span class='comment'>// https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>forbid</span>(<span class='ident'>exceeding_bitshifts</span>, <span class='ident'>mutable_transmutes</span>, <span class='ident'>no_mangle_const_items</span>, <span class='ident'>unknown_crate_types</span>,
           <span class='ident'>warnings</span>)]</span>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>bad_style</span>, <span class='ident'>deprecated</span>, <span class='ident'>drop_with_repr_extern</span>, <span class='ident'>improper_ctypes</span>, <span class='ident'>missing_docs</span>,
-        <span class='ident'>non_shorthand_field_patterns</span>, <span class='ident'>overflowing_literals</span>, <span class='ident'>plugin_as_library</span>,
-        <span class='ident'>private_no_mangle_fns</span>, <span class='ident'>private_no_mangle_statics</span>, <span class='ident'>stable_features</span>, <span class='ident'>unconditional_recursion</span>,
-        <span class='ident'>unknown_lints</span>, <span class='ident'>unsafe_code</span>, <span class='ident'>unused</span>, <span class='ident'>unused_allocation</span>, <span class='ident'>unused_attributes</span>,
-        <span class='ident'>unused_comparisons</span>, <span class='ident'>unused_features</span>, <span class='ident'>unused_parens</span>, <span class='ident'>while_true</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>bad_style</span>, <span class='ident'>deprecated</span>, <span class='ident'>improper_ctypes</span>, <span class='ident'>missing_docs</span>, <span class='ident'>non_shorthand_field_patterns</span>,
+        <span class='ident'>overflowing_literals</span>, <span class='ident'>plugin_as_library</span>, <span class='ident'>private_no_mangle_fns</span>, <span class='ident'>private_no_mangle_statics</span>,
+        <span class='ident'>stable_features</span>, <span class='ident'>unconditional_recursion</span>, <span class='ident'>unknown_lints</span>, <span class='ident'>unsafe_code</span>, <span class='ident'>unused</span>,
+        <span class='ident'>unused_allocation</span>, <span class='ident'>unused_attributes</span>, <span class='ident'>unused_comparisons</span>, <span class='ident'>unused_features</span>, <span class='ident'>unused_parens</span>,
+        <span class='ident'>while_true</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>trivial_casts</span>, <span class='ident'>trivial_numeric_casts</span>, <span class='ident'>unused_extern_crates</span>, <span class='ident'>unused_import_braces</span>,
         <span class='ident'>unused_qualifications</span>, <span class='ident'>unused_results</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>box_pointers</span>, <span class='ident'>fat_ptr_transmutes</span>, <span class='ident'>missing_copy_implementations</span>,
@@ -178,6 +175,7 @@
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span> <span class='kw'>as</span> <span class='ident'>logger</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log4rs</span>;
+<span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>useless_attribute</span>))]</span>
 <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_extern_crates</span>)]</span>
 <span class='comment'>// Needed because the crate is only used for macros</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
@@ -190,11 +188,7 @@
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>unwrap</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>ws</span>;
 
-<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
-<span class='kw'>mod</span> <span class='ident'>unwrap_deprecated</span>;
-
 <span class='doccomment'>/// Utilities related to threading.</span>
-<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>thread</span>;
 <span class='kw'>mod</span> <span class='ident'>big_endian_sip_hash</span>;
 <span class='doccomment'>/// Utilities related to event-subsetting.</span>

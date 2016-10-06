@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/bincode-0.5.9/src/serde/reader.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/bincode-0.6.0/src/serde/reader.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>reader.rs.html -- source</title>
@@ -568,6 +568,51 @@
 <span id="524">524</span>
 <span id="525">525</span>
 <span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>IoError</span>;
@@ -709,9 +754,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>bytes_read</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>u64</span> {
         <span class='self'>self</span>.<span class='ident'>read</span>
     }
-}
 
-<span class='kw'>impl</span> <span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>A</span><span class='op'>&gt;</span> <span class='ident'>Deserializer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>A</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>read_bytes</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>count</span>: <span class='ident'>u64</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>DeserializeError</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>read</span> <span class='op'>+=</span> <span class='ident'>count</span>;
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>size_limit</span> {
@@ -724,6 +767,20 @@
     <span class='kw'>fn</span> <span class='ident'>read_type</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>DeserializeError</span><span class='op'>&gt;</span> {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>size_of</span>;
         <span class='self'>self</span>.<span class='ident'>read_bytes</span>(<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>u64</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>read_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>serde</span>::<span class='ident'>Deserialize</span>::<span class='ident'>deserialize</span>(<span class='self'>self</span>));
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_bytes</span>(<span class='ident'>len</span>));
+
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buffer</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>reader</span>.<span class='ident'>by_ref</span>().<span class='ident'>take</span>(<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>u64</span>).<span class='ident'>read_to_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>));
+
+        <span class='ident'>String</span>::<span class='ident'>from_utf8</span>(<span class='ident'>buffer</span>).<span class='ident'>map_err</span>(<span class='op'>|</span><span class='ident'>err</span><span class='op'>|</span>
+            <span class='ident'>DeserializeError</span>::<span class='ident'>InvalidEncoding</span>(<span class='ident'>InvalidEncoding</span> {
+                <span class='ident'>desc</span>: <span class='string'>&quot;error while decoding utf8 string&quot;</span>,
+                <span class='ident'>detail</span>: <span class='prelude-val'>Some</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Deserialize error: {}&quot;</span>, <span class='ident'>err</span>))
+            }))
     }
 }
 
@@ -862,22 +919,22 @@
         <span class='ident'>visitor</span>.<span class='ident'>visit_char</span>(<span class='ident'>res</span>)
     }
 
+    <span class='kw'>fn</span> <span class='ident'>deserialize_str</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
+    {
+        <span class='ident'>visitor</span>.<span class='ident'>visit_str</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_string</span>()))
+    }
+
     <span class='kw'>fn</span> <span class='ident'>deserialize_string</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
     {
-        <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>serde</span>::<span class='ident'>Deserialize</span>::<span class='ident'>deserialize</span>(<span class='self'>self</span>));
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_bytes</span>(<span class='ident'>len</span>));
+        <span class='ident'>visitor</span>.<span class='ident'>visit_string</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_string</span>()))
+    }
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buffer</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>reader</span>.<span class='ident'>by_ref</span>().<span class='ident'>take</span>(<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>u64</span>).<span class='ident'>read_to_end</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>));
-
-        <span class='kw'>match</span> <span class='ident'>String</span>::<span class='ident'>from_utf8</span>(<span class='ident'>buffer</span>) {
-            <span class='prelude-val'>Ok</span>(<span class='ident'>s</span>) <span class='op'>=&gt;</span> <span class='ident'>visitor</span>.<span class='ident'>visit_string</span>(<span class='ident'>s</span>),
-            <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>DeserializeError</span>::<span class='ident'>InvalidEncoding</span>(<span class='ident'>InvalidEncoding</span> {
-                <span class='ident'>desc</span>: <span class='string'>&quot;error while decoding utf8 string&quot;</span>,
-                <span class='ident'>detail</span>: <span class='prelude-val'>Some</span>(<span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Deserialize error: {}&quot;</span>, <span class='ident'>err</span>))
-            })),
-        }
+    <span class='kw'>fn</span> <span class='ident'>deserialize_bytes</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
+    {
+        <span class='self'>self</span>.<span class='ident'>deserialize_seq</span>(<span class='ident'>visitor</span>)
     }
 
     <span class='kw'>fn</span> <span class='ident'>deserialize_enum</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
@@ -914,7 +971,7 @@
         <span class='ident'>visitor</span>.<span class='ident'>visit_seq</span>(<span class='ident'>TupleVisitor</span>(<span class='self'>self</span>))
     }
 
-    <span class='kw'>fn</span> <span class='ident'>deserialize_fixed_size_array</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+    <span class='kw'>fn</span> <span class='ident'>deserialize_seq_fixed_size</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
                             _: <span class='ident'>usize</span>,
                             <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
@@ -1026,12 +1083,45 @@
         <span class='self'>self</span>.<span class='ident'>deserialize_tuple</span>(<span class='ident'>fields</span>.<span class='ident'>len</span>(), <span class='ident'>visitor</span>)
     }
 
+    <span class='kw'>fn</span> <span class='ident'>deserialize_struct_field</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                                   <span class='ident'>_visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
+    {
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;bincode does not support Deserializer::deserialize_struct_field&quot;</span>;
+        <span class='prelude-val'>Err</span>(<span class='ident'>DeserializeError</span>::<span class='ident'>Serde</span>(<span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>value</span>::<span class='ident'>Error</span>::<span class='ident'>Custom</span>(<span class='ident'>message</span>.<span class='ident'>into</span>())))
+    }
+
     <span class='kw'>fn</span> <span class='ident'>deserialize_newtype_struct</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
                                <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>,
-                               <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span>, <span class='self'>Self</span>::<span class='ident'>Error</span><span class='op'>&gt;</span>
+                               <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
     {
         <span class='ident'>visitor</span>.<span class='ident'>visit_newtype_struct</span>(<span class='self'>self</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>deserialize_unit_struct</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                                  <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                                  <span class='kw-2'>mut</span> <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
+    {
+        <span class='ident'>visitor</span>.<span class='ident'>visit_unit</span>()
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>deserialize_tuple_struct</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                                   <span class='ident'>_name</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span>,
+                                   <span class='ident'>len</span>: <span class='ident'>usize</span>,
+                                   <span class='ident'>visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
+    {
+        <span class='self'>self</span>.<span class='ident'>deserialize_tuple</span>(<span class='ident'>len</span>, <span class='ident'>visitor</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>deserialize_ignored_any</span><span class='op'>&lt;</span><span class='ident'>V</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
+                                  <span class='ident'>_visitor</span>: <span class='ident'>V</span>) <span class='op'>-&gt;</span> <span class='ident'>DeserializeResult</span><span class='op'>&lt;</span><span class='ident'>V</span>::<span class='ident'>Value</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>V</span>: <span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>Visitor</span>,
+    {
+        <span class='kw'>let</span> <span class='ident'>message</span> <span class='op'>=</span> <span class='string'>&quot;bincode does not support Deserializer::deserialize_ignored_any&quot;</span>;
+        <span class='prelude-val'>Err</span>(<span class='ident'>DeserializeError</span>::<span class='ident'>Serde</span>(<span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>value</span>::<span class='ident'>Error</span>::<span class='ident'>Custom</span>(<span class='ident'>message</span>.<span class='ident'>into</span>())))
     }
 }
 

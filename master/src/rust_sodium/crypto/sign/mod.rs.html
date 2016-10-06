@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/crypto/sign/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/crypto/sign/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -87,6 +87,7 @@
 <span id="43">43</span>
 <span id="44">44</span>
 <span id="45">45</span>
+<span id="46">46</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Public-key signatures</span>
 <span class='doccomment'>//!</span>
@@ -103,14 +104,14 @@
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Alternate primitives</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! --------------------------------------------------------------------------------</span>
-<span class='doccomment'>//! |crypto_sign                         | PUBLICKEYBYTES | SECRETKEYBYTES | BYTES |</span>
-<span class='doccomment'>//! |------------------------------------|----------------|----------------|-------|</span>
-<span class='doccomment'>//! |crypto_sign_ed25519                 | 32             | 64             | 64    |</span>
-<span class='doccomment'>//! |crypto_sign_edwards25519sha512batch | 32             | 64             | 64    |</span>
-<span class='doccomment'>//! --------------------------------------------------------------------------------</span>
+<span class='doccomment'>//! ----------------------------------------------------------------------------------</span>
+<span class='doccomment'>//! |`crypto_sign`                         | PUBLICKEYBYTES | SECRETKEYBYTES | BYTES |</span>
+<span class='doccomment'>//! |--------------------------------------|----------------|----------------|-------|</span>
+<span class='doccomment'>//! |`crypto_sign_ed25519`                 | 32             | 64             | 64    |</span>
+<span class='doccomment'>//! |`crypto_sign_edwards25519sha512batch` | 32             | 64             | 64    |</span>
+<span class='doccomment'>//! ----------------------------------------------------------------------------------</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! crypto_sign_edwards25519sha512batch is a prototype. It has been replaced with</span>
+<span class='doccomment'>//! `crypto_sign_edwards25519sha512batch` is a prototype. It has been replaced with</span>
 <span class='doccomment'>//! Ed25519 and is only kept here for compatibility reasons.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Example</span>
@@ -131,6 +132,7 @@
 <span class='doccomment'>//! let signature = sign::sign_detached(data_to_sign, &amp;sk);</span>
 <span class='doccomment'>//! assert!(sign::verify_detached(&amp;signature, data_to_sign, &amp;pk));</span>
 <span class='doccomment'>//! ```</span>
+
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>ed25519</span>::<span class='op'>*</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>ed25519</span>;
 </pre>

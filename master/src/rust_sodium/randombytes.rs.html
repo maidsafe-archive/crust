@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.1/src/randombytes.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rust_sodium-0.1.2/src/randombytes.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>randombytes.rs.html -- source</title>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -71,17 +71,19 @@
 <span id="27">27</span>
 <span id="28">28</span>
 <span id="29">29</span>
+<span id="30">30</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Cryptographic random number generation.</span>
+
 <span class='kw'>use</span> <span class='ident'>ffi</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>repeat</span>;
 <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_void</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>repeat</span>;
 
 <span class='doccomment'>/// `randombytes()` randomly generates size bytes of data.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// THREAD SAFETY: `randombytes()` is thread-safe provided that you have</span>
 <span class='doccomment'>/// called `rust_sodium::init()` once before using any other function</span>
-<span class='doccomment'>/// from rust_sodium.</span>
+<span class='doccomment'>/// from `rust_sodium`.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>randombytes</span>(<span class='ident'>size</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> {
     <span class='kw'>unsafe</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='number'>0u8</span>).<span class='ident'>take</span>(<span class='ident'>size</span>).<span class='ident'>collect</span>();
@@ -95,7 +97,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// THREAD SAFETY: `randombytes_into()` is thread-safe provided that you have</span>
 <span class='doccomment'>/// called `rust_sodium::init()` once before using any other function</span>
-<span class='doccomment'>/// from rust_sodium.</span>
+<span class='doccomment'>/// from `rust_sodium`.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>randombytes_into</span>(<span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>]) {
     <span class='kw'>unsafe</span> {
         <span class='ident'>ffi</span>::<span class='ident'>randombytes_buf</span>(<span class='ident'>buf</span>.<span class='ident'>as_mut_ptr</span>() <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_void</span>, <span class='ident'>buf</span>.<span class='ident'>len</span>());

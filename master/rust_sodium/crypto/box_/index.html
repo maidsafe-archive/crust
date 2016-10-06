@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
-    
+    <link rel="shortcut icon" href="https://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -27,7 +27,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../../rust_sodium/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../../index.html'>rust_sodium</a>::<wbr><a href='../index.html'>crypto</a></p><script>window.sidebarCurrent = {name: 'box_', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -47,7 +47,7 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-50' class='srclink' href='../../../src/rust_sodium/crypto/box_/mod.rs.html#1-77' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-51' class='srclink' href='../../../src/rust_sodium/crypto/box_/mod.rs.html#1-78' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Public-key authenticated encryption</p>
 
 <h1 id='security-model' class='section-header'><a href='#security-model'>Security model</a></h1>
@@ -78,18 +78,18 @@ parties that this particular message came from the sender. The sender
 and receiver are nevertheless protected against forgeries by other
 parties. In the terminology of
 <a href="http://groups.google.com/group/sci.crypt/msg/ec5c18b23b11d82c">http://groups.google.com/group/sci.crypt/msg/ec5c18b23b11d82c</a>,
-crypto_box uses &quot;public-key authenticators&quot; rather than &quot;public-key
+<code>crypto_box</code> uses &quot;public-key authenticators&quot; rather than &quot;public-key
 signatures.&quot;</p>
 
 <p>Users who want public verifiability (or receiver-assisted public
 verifiability) should instead use signatures (or signcryption).
-Signature support is a high priority for NaCl; a signature API will be
-described in subsequent NaCl documentation.</p>
+Signature support is a high priority for <code>NaCl</code>; a signature API will be
+described in subsequent <code>NaCl</code> documentation.</p>
 
 <h1 id='selected-primitive' class='section-header'><a href='#selected-primitive'>Selected primitive</a></h1>
 <p><code>seal()</code> is <code>crypto_box_curve25519xsalsa20poly1305</code> , a particular
 combination of Curve25519, Salsa20, and Poly1305 specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>.</p>
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>.</p>
 
 <p>This function is conjectured to meet the standard notions of privacy and
 third-party unforgeability.</p>
@@ -131,7 +131,7 @@ third-party unforgeability.</p>
                            <td class='docblock short'>
                                 <p><code>crypto_box_curve25519xsalsa20poly1305</code> , a particular
 combination of Curve25519, Salsa20, and Poly1305 specified in
-<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>.</p>
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in <code>NaCl</code></a>.</p>
                            </td>
                        </tr></table></section>
     <section id='search' class="content hidden"></section>
