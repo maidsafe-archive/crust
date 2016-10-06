@@ -354,7 +354,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use std::thread;
 
     use common::{Core, CoreMessage};
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use maidsafe_utilities::thread::Joiner;
     use mio::EventLoop;
     use mio::tcp::TcpListener;
     use self::broken_peer;
@@ -366,7 +366,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     let mut el = unwrap!(EventLoop::new());
     let mio_tx = el.channel();
 
-    let _joiner = RaiiThreadJoiner::new(thread::spawn(move || {
+    let _joiner = Joiner::new(thread::spawn(move || {
         let mut core = Core::new();
         unwrap!(el.run(&mut core));
     }));

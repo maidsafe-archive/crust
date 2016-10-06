@@ -12,17 +12,18 @@ version = "0.18.0"
 [dependencies]
 byteorder = "~0.5.3"
 c_linked_list = "~1.1.0"
-clippy = {version = "~0.0.80", optional = true}
+clippy = {version = "~0.0.94", optional = true}
 config_file_handler = "~0.4.0"
-crossbeam = "~0.2.9"
+crossbeam = "~0.2.10"
 igd = "~0.5.1"
-libc = "~0.2.15"
+libc = "~0.2.16"
 log = "~0.3.6"
-maidsafe_utilities = "~0.9.0"
+#maidsafe_utilities = "~0.9.0"
+maidsafe_utilities = { path = "../../maidsafe-utilities/maidsafe_utilities" }
 net2 = "~0.2.26"
 quick-error = "~1.1.0"
 rand = "~0.3.14"
-rust_sodium = "~0.1.1"
+rust_sodium = "~0.1.2"
 rustc-serialize = "~0.3.19"
 tmp_mio = "~0.5.2"
 unwrap = "~1.1.0"
