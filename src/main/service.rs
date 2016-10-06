@@ -17,7 +17,7 @@
 
 use common::{self, Core, CoreMessage, Priority};
 use maidsafe_utilities;
-use maidsafe_utilities::thread::RaiiThreadJoiner;
+use maidsafe_utilities::thread::Joiner;
 use main::{Bootstrap, Connect, ConnectionId, ConnectionInfoResult, ConnectionListener,
            ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo,
            ActiveConnection};
@@ -50,7 +50,7 @@ pub struct Service {
     name_hash: u64,
     our_keys: (PublicKey, SecretKey),
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-    _raii_joiner: RaiiThreadJoiner,
+    _raii_joiner: Joiner,
 }
 
 impl Service {
@@ -155,7 +155,7 @@ impl Service {
             match state.borrow_mut().as_any().downcast_mut::<ActiveConnection>() {
                 Some(active_connection) => {
                     let _ = tx.send(Some(active_connection.peer_addr()));
-                },
+                }
                 None => {
                     debug!("Expected token {:?} to be ActiveConnection", token);
                     let _ = tx.send(None);
@@ -166,7 +166,7 @@ impl Service {
         match rx.recv() {
             Ok(Some(ip)) => ip,
             Ok(None) => Err(CrustError::PeerNotFound(*peer_id)),
-            Err(e) => Err(CrustError::ChannelRecv(e))
+            Err(e) => Err(CrustError::ChannelRecv(e)),
         }
     }
 
@@ -181,9 +181,11 @@ impl Service {
 
         match self.get_peer_socket_addr(peer_id) {
             Ok(ip) => {
-                debug!("Checking whether {:?} is whitelisted in {:?}", ip, whitelisted_ips);
+                debug!("Checking whether {:?} is whitelisted in {:?}",
+                       ip,
+                       whitelisted_ips);
                 whitelisted_ips.contains(&common::IpAddr::from(ip))
-            },
+            }
             Err(e) => {
                 debug!("{}", e.description());
                 false

@@ -17,7 +17,6 @@
 
 mod exchange_msg;
 
-
 use common::{Core, NameHash, Socket, State};
 use main::{ConnectionMap, Event};
 use mio::{EventLoop, EventSet, PollOpt, Token};
@@ -172,7 +171,7 @@ mod test {
     use maidsafe_utilities;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use maidsafe_utilities::thread::Joiner;
     use main::{Event, PeerId};
     use mio::{EventLoop, Sender, Token};
     use nat::MappingContext;
@@ -197,7 +196,7 @@ mod test {
         pk: PublicKey,
         addr: common::SocketAddr,
         event_rx: mpsc::Receiver<Event>,
-        _raii_joiner: RaiiThreadJoiner,
+        _raii_joiner: Joiner,
     }
 
     impl Drop for Listener {

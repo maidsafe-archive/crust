@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.19.0]
+- Update to maidsafe_utilities v0.10.0 and adapt to its removal of deprecated API's.
+
 ## [0.18.0]
 - Provide an API to find out if the connected peer has a whitelisted IP as mentioned in config file.
 - This will currently not work properly on Windows due to (mio-bug)[https://github.com/carllerche/mio/issues/397].

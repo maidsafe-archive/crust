@@ -12,9 +12,9 @@ clone_depth: 50
 install:
   - ps: |
         $url = "https://github.com/maidsafe/QA/raw/master/Powershell%20Scripts/AppVeyor"
-        Start-FileDownload "$url/Install%20Rustup.ps1" -FileName "Install Rustup.ps1"
-        Start-FileDownload "$url/Build.ps1" -FileName "Build.ps1"
-        Start-FileDownload "$url/Run%20Tests.ps1" -FileName "Run Tests.ps1"
+        cmd /c curl -fsSL -o "Install Rustup.ps1" "$url/Install%20Rustup.ps1"
+        cmd /c curl -fsSL -o "Build.ps1" "$url/Build.ps1"
+        cmd /c curl -fsSL -o "Run Tests.ps1" "$url/Run%20Tests.ps1"
         . ".\Install Rustup.ps1"
 
 platform:
