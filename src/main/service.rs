@@ -30,7 +30,8 @@ use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::hash::{Hash, Hasher, SipHasher};
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 use std::net::SocketAddr;
 use std::sync::{mpsc, Arc, Mutex};
 
@@ -421,7 +422,7 @@ impl Drop for Service {
 
 /// Returns a hash of the network name.
 fn name_hash(network_name: &Option<String>) -> u64 {
-    let mut hasher = SipHasher::new();
+    let mut hasher = DefaultHasher::new();
     debug!("Network name: {:?}", network_name);
     network_name.hash(&mut hasher);
     hasher.finish()
