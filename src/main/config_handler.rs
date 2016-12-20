@@ -15,20 +15,30 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::ffi::OsString;
-use std::path::PathBuf;
-use std::collections::HashSet;
 
 use common::{SocketAddr, IpAddr};
 use config_file_handler::{self, FileHandler};
+use std::collections::HashSet;
+use std::ffi::OsString;
+use std::path::PathBuf;
 
+/// Bootstrap config
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
+    /// Direct contacts one should connect to
     pub hard_coded_contacts: Vec<SocketAddr>,
+    /// Port for TCP acceptor
     pub tcp_acceptor_port: Option<u16>,
+    /// Port for service discovery on local network
     pub service_discovery_port: Option<u16>,
+    /// File for bootstrap cache
     pub bootstrap_cache_name: Option<String>,
+    /// Bootstrap whitelisted IPs
     pub bootstrap_whitelisted_ips: HashSet<IpAddr>,
+    /// Network ID
+    ///
+    /// This is a mechanism to prevent nodes from different decentralized
+    /// networks to connect to each other (issue #209)
     pub network_name: Option<String>,
 }
 

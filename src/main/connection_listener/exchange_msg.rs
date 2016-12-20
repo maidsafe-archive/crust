@@ -32,7 +32,7 @@ pub struct ExchangeMsg {
     token: Token,
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
-    name_hash: u64,
+    name_hash: NameHash,
     next_state: NextState,
     our_pk: PublicKey,
     socket: Socket,

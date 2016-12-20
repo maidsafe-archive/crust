@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 
-use common::{Core, Message, Priority, Socket, State};
+use common::{Core, Message, NameHash, Priority, Socket, State};
 use main::PeerId;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use rust_sodium::crypto::box_::PublicKey;
@@ -47,7 +47,7 @@ impl TryPeer {
                  el: &mut EventLoop<Core>,
                  peer: SocketAddr,
                  our_pk: PublicKey,
-                 name_hash: u64,
+                 name_hash: NameHash,
                  finish: Finish)
                  -> ::Res<Token> {
         let socket = try!(Socket::connect(&peer));

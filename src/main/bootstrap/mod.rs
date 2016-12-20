@@ -18,7 +18,7 @@
 mod cache;
 mod try_peer;
 
-use common::{self, Core, CoreTimerId, Socket, State};
+use common::{self, Core, CoreTimerId, NameHash, Socket, State};
 
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{EventLoop, Timeout, Token};
@@ -46,7 +46,7 @@ pub struct Bootstrap {
     cm: ConnectionMap,
     peers: Vec<common::SocketAddr>,
     blacklist: HashSet<net::SocketAddr>,
-    name_hash: u64,
+    name_hash: NameHash,
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
     sd_meta: Option<ServiceDiscMeta>,
@@ -60,7 +60,7 @@ pub struct Bootstrap {
 impl Bootstrap {
     pub fn start(core: &mut Core,
                  el: &mut EventLoop<Core>,
-                 name_hash: u64,
+                 name_hash: NameHash,
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,

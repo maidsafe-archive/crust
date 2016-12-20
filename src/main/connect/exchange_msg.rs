@@ -43,7 +43,7 @@ impl ExchangeMsg {
                  socket: Socket,
                  our_id: PeerId,
                  expected_id: PeerId,
-                 name_hash: u64,
+                 name_hash: NameHash,
                  cm: ConnectionMap,
                  finish: Finish)
                  -> ::Res<Token> {

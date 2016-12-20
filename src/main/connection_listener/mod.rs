@@ -176,6 +176,7 @@ mod test {
     use mio::{EventLoop, Sender, Token};
     use nat::MappingContext;
     use rust_sodium::crypto::box_::{self, PublicKey};
+    use rust_sodium::crypto::hash::sha256;
     use rustc_serialize::Decodable;
 
     use std::collections::HashMap;
@@ -189,7 +190,8 @@ mod test {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
 
-    const NAME_HASH: NameHash = 9876543210;
+    const NAME_HASH: NameHash = [1; sha256::DIGESTBYTES];
+    const NAME_HASH_2: NameHash = [2; sha256::DIGESTBYTES];
 
     struct Listener {
         tx: Sender<CoreMessage>,
@@ -357,7 +359,7 @@ mod test {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH - 1, pk, listener);
+        bootstrap(NAME_HASH_2, pk, listener);
     }
 
     #[test]
@@ -365,7 +367,7 @@ mod test {
     fn connect_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        connect(NAME_HASH - 1, pk, listener);
+        connect(NAME_HASH_2, pk, listener);
     }
 
     #[test]

@@ -80,7 +80,7 @@ mod service_discovery;
 mod nat;
 
 pub use common::{MSG_DROP_PRIORITY, Priority};
-pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
+pub use main::{ConnectionInfoResult, Config, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
 
 /// Used to receive events from a `Service`.
