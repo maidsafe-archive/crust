@@ -44,9 +44,9 @@ impl GetExtAddr {
                  peer_stun: &SocketAddr,
                  finish: Finish)
                  -> Result<Token, NatError> {
-        let query_socket = try!(util::new_reusably_bound_tcp_socket(&local_addr));
-        let query_socket = try!(query_socket.to_tcp_stream());
-        let socket = try!(TcpStream::connect_stream(query_socket, peer_stun));
+        let query_socket = util::new_reusably_bound_tcp_socket(&local_addr)?;
+        let query_socket = query_socket.to_tcp_stream()?;
+        let socket = TcpStream::connect_stream(query_socket, peer_stun)?;
 
         let socket = Socket::wrap(socket);
         let token = core.get_new_token();
@@ -58,10 +58,10 @@ impl GetExtAddr {
             finish: finish,
         };
 
-        try!(el.register(&state.socket,
-                         token,
-                         EventSet::error() | EventSet::hup() | EventSet::writable(),
-                         PollOpt::edge()));
+        el.register(&state.socket,
+                      token,
+                      EventSet::error() | EventSet::hup() | EventSet::writable(),
+                      PollOpt::edge())?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 

@@ -37,7 +37,7 @@ pub struct Socket {
 
 impl Socket {
     pub fn connect(addr: &SocketAddr) -> Result<Self> {
-        let stream = try!(TcpStream::connect(addr));
+        let stream = TcpStream::connect(addr)?;
         Ok(Self::wrap(stream))
     }
 
@@ -54,8 +54,8 @@ impl Socket {
     }
 
     pub fn peer_addr(&self) -> Result<SocketAddr> {
-        let inner = try!(self.inner.as_ref().ok_or(CommonError::UninitialisedSocket));
-        Ok(try!(inner.stream.peer_addr()))
+        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        Ok(inner.stream.peer_addr()?)
     }
 
     // Read message from the socket. Call this from inside the `ready` handler.
@@ -66,7 +66,7 @@ impl Socket {
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
     pub fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
-        let inner = try!(self.inner.as_mut().ok_or(CommonError::UninitialisedSocket));
+        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
         inner.read()
     }
 
@@ -82,7 +82,7 @@ impl Socket {
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
-        let inner = try!(self.inner.as_mut().ok_or(CommonError::UninitialisedSocket));
+        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
         inner.write(el, token, msg)
     }
 }
@@ -100,9 +100,9 @@ impl Evented for Socket {
                 interest: EventSet,
                 opts: PollOpt)
                 -> io::Result<()> {
-        let inner = try!(self.inner
+        let inner = self.inner
             .as_ref()
-            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket)));
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
         inner.register(selector, token, interest, opts)
     }
 
@@ -112,16 +112,16 @@ impl Evented for Socket {
                   interest: EventSet,
                   opts: PollOpt)
                   -> io::Result<()> {
-        let inner = try!(self.inner
+        let inner = self.inner
             .as_ref()
-            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket)));
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
         inner.reregister(selector, token, interest, opts)
     }
 
     fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
-        let inner = try!(self.inner
+        let inner = self.inner
             .as_ref()
-            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket)));
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
         inner.deregister(selector)
     }
 }
@@ -143,7 +143,7 @@ impl SockInner {
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
     fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
-        if let Some(message) = try!(self.read_from_buffer()) {
+        if let Some(message) = self.read_from_buffer()? {
             return Ok(Some(message));
         }
 
@@ -174,8 +174,7 @@ impl SockInner {
                 return Ok(None);
             }
 
-            self.read_len = try!(Cursor::new(&self.read_buffer)
-                .read_u32::<LittleEndian>()) as usize;
+            self.read_len = Cursor::new(&self.read_buffer).read_u32::<LittleEndian>()? as usize;
 
             if self.read_len > MAX_PAYLOAD_SIZE {
                 return Err(CommonError::PayloadSizeProhibitive);
@@ -188,7 +187,7 @@ impl SockInner {
             return Ok(None);
         }
 
-        let result = try!(deserialise_from(&mut Cursor::new(&self.read_buffer)));
+        let result = deserialise_from(&mut Cursor::new(&self.read_buffer))?;
 
         self.read_buffer = self.read_buffer[self.read_len..].to_owned();
         self.read_len = 0;
@@ -233,11 +232,11 @@ impl SockInner {
 
             let _ = data.write_u32::<LittleEndian>(0);
 
-            try!(serialise_into(&msg, &mut data));
+            serialise_into(&msg, &mut data)?;
 
             let len = data.position() - mem::size_of::<u32>() as u64;
             data.set_position(0);
-            try!(data.write_u32::<LittleEndian>(len as u32));
+            data.write_u32::<LittleEndian>(len as u32)?;
 
             let entry =
                 self.write_queue.entry(priority).or_insert_with(|| VecDeque::with_capacity(10));
@@ -281,7 +280,7 @@ impl SockInner {
             EventSet::error() | EventSet::hup() | EventSet::readable() | EventSet::writable()
         };
 
-        try!(el.reregister(self, token, event_set, PollOpt::edge()));
+        el.reregister(self, token, event_set, PollOpt::edge())?;
 
         Ok(done)
     }

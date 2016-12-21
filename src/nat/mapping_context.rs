@@ -37,7 +37,7 @@ pub struct MappingContext {
 impl MappingContext {
     /// Create a new `MappingContext`
     pub fn new() -> Result<MappingContext, NatError> {
-        let ifs = try!(get_if_addrs::get_if_addrs());
+        let ifs = get_if_addrs::get_if_addrs()?;
         let (mut ifv4s, mut ifv6s) = (Vec::with_capacity(5), Vec::with_capacity(5));
         for interface in ifs {
             match interface.addr {

@@ -16,14 +16,16 @@
 // relating to use of the SAFE Network Software.
 // Defines `Core`, the mio handler and the core of the event loop.
 
+use rust_sodium::crypto::hash::sha256;
+
 pub use self::core::{Core, CoreMessage, CoreTimerId};
 pub use self::error::CommonError;
 pub use self::message::Message;
 pub use self::socket::Socket;
-pub use self::socket_addr::{SocketAddr, IpAddr};
+pub use self::socket_addr::{IpAddr, SocketAddr};
 pub use self::state::State;
 
-pub type NameHash = u64;
+pub type NameHash = [u8; sha256::DIGESTBYTES];
 /// Priority of a message to be sent by Crust. A lower value means a higher priority, so Priority 0
 /// is the highest one. Low-priority messages will be preempted if need be to allow higher priority
 /// messages through. Messages with a value `>= MSG_DROP_PRIORITY` will even be dropped, if

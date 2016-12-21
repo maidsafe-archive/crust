@@ -29,7 +29,7 @@ pub struct Cache {
 
 impl Cache {
     pub fn _cleanup() -> ::Res<()> {
-        try!(config_file_handler::cleanup(&try!(Self::get_default_file_name())));
+        config_file_handler::cleanup(&Self::get_default_file_name()?)?;
         Ok(())
     }
 
@@ -37,7 +37,7 @@ impl Cache {
         let name = if let Some(name) = name.clone() {
             OsString::from(name)
         } else {
-            try!(Self::get_default_file_name())
+            Self::get_default_file_name()?
         };
 
         Ok(Cache {
@@ -46,7 +46,7 @@ impl Cache {
     }
 
     pub fn get_default_file_name() -> ::Res<OsString> {
-        let mut name = try!(config_file_handler::exe_file_stem());
+        let mut name = config_file_handler::exe_file_stem()?;
         name.push(".bootstrap.cache");
         Ok(name)
     }

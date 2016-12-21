@@ -18,7 +18,7 @@
 mod cache;
 mod try_peer;
 
-use common::{self, Core, CoreTimerId, Socket, State};
+use common::{self, Core, CoreTimerId, NameHash, Socket, State};
 
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{EventLoop, Timeout, Token};
@@ -46,7 +46,7 @@ pub struct Bootstrap {
     cm: ConnectionMap,
     peers: Vec<common::SocketAddr>,
     blacklist: HashSet<net::SocketAddr>,
-    name_hash: u64,
+    name_hash: NameHash,
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
     sd_meta: Option<ServiceDiscMeta>,
@@ -60,7 +60,7 @@ pub struct Bootstrap {
 impl Bootstrap {
     pub fn start(core: &mut Core,
                  el: &mut EventLoop<Core>,
-                 name_hash: u64,
+                 name_hash: NameHash,
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,
@@ -71,12 +71,12 @@ impl Bootstrap {
                  -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let mut cache = try!(Cache::new(&config.bootstrap_cache_name));
+        let mut cache = Cache::new(&config.bootstrap_cache_name)?;
         peers.extend(cache.read_file());
         peers.extend(config.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimerId::new(token, BOOTSTRAP_TIMER_ID);
-        let bs_timeout = try!(el.timeout_ms(bs_timer, BOOTSTRAP_TIMEOUT_MS));
+        let bs_timeout = el.timeout_ms(bs_timer, BOOTSTRAP_TIMEOUT_MS)?;
         let sd_meta = match seek_peers(core, el, service_discovery_token, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
@@ -239,9 +239,9 @@ fn seek_peers(core: &mut Core,
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
-        try!(state.seek_peers());
-        let timeout = try!(el.timeout_ms(CoreTimerId::new(token, SERVICE_DISCOVERY_TIMER_ID),
-                                         SERVICE_DISCOVERY_TIMEOUT_MS));
+        state.seek_peers()?;
+        let timeout = el.timeout_ms(CoreTimerId::new(token, SERVICE_DISCOVERY_TIMER_ID),
+                        SERVICE_DISCOVERY_TIMEOUT_MS)?;
 
         Ok((rx, timeout))
     } else {

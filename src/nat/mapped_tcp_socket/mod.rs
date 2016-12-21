@@ -59,8 +59,8 @@ impl<F> MappedTcpSocket<F>
         // TODO(Spandan) Ipv6 is not supported in Listener so dealing only with ipv4 right now
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
-        let socket = try!(util::new_reusably_bound_tcp_socket(&addr));
-        let addr = try!(util::tcp_builder_local_addr(&socket));
+        let socket = util::new_reusably_bound_tcp_socket(&addr)?;
+        let addr = util::tcp_builder_local_addr(&socket)?;
 
         // Ask IGD
         let mut igd_children = 0;
@@ -107,7 +107,7 @@ impl<F> MappedTcpSocket<F>
             igd_children: igd_children,
             stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
             mapped_addrs: mapped_addrs,
-            timeout: try!(el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)),
+            timeout: el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)?,
             finish: Some(finish),
         }));
 

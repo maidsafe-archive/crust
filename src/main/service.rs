@@ -15,24 +15,24 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, Core, CoreMessage, Priority};
+use common::{self, Core, CoreMessage, NameHash, Priority};
 use maidsafe_utilities;
 use maidsafe_utilities::thread::Joiner;
-use main::{Bootstrap, Connect, ConnectionId, ConnectionInfoResult, ConnectionListener,
-           ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo, PubConnectionInfo,
-           ActiveConnection};
+use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
+           ConnectionListener, ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo,
+           PubConnectionInfo};
 use main::config_handler::{self, Config};
 use mio::{self, EventLoop, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
 use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
+use rust_sodium::crypto::hash::sha256;
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::hash::{Hash, Hasher, SipHasher};
 use std::net::SocketAddr;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -47,7 +47,7 @@ pub struct Service {
     event_tx: ::CrustEventSender,
     mc: Arc<MappingContext>,
     mio_tx: mio::Sender<CoreMessage>,
-    name_hash: u64,
+    name_hash: NameHash,
     our_keys: (PublicKey, SecretKey),
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
     _raii_joiner: Joiner,
@@ -57,7 +57,7 @@ impl Service {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
     pub fn new(event_tx: ::CrustEventSender) -> ::Res<Self> {
-        Service::with_config(event_tx, try!(config_handler::read_config_file()))
+        Service::with_config(event_tx, config_handler::read_config_file()?)
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
@@ -66,7 +66,7 @@ impl Service {
     pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> ::Res<Service> {
         rust_sodium::init();
 
-        let mut el = try!(EventLoop::new());
+        let mut el = EventLoop::new()?;
         let mio_tx = el.channel();
         let our_keys = box_::gen_keypair();
         let our_id = PeerId(our_keys.0);
@@ -74,7 +74,7 @@ impl Service {
 
         // Form our initial contact info
         let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
-        let mut mc = try!(MappingContext::new());
+        let mut mc = MappingContext::new()?;
         mc.add_peer_stuns(config.hard_coded_contacts
             .iter()
             .map(|elt| elt.0));
@@ -312,9 +312,9 @@ impl Service {
         let cm = self.cm.clone();
         let our_nh = self.name_hash;
 
-        Ok(try!(self.post(move |core, el| {
-            let _ = Connect::start(core, el, our_ci, their_ci, cm, our_nh, event_tx);
-        })))
+        Ok(self.post(move |core, el| {
+                let _ = Connect::start(core, el, our_ci, their_ci, cm, our_nh, event_tx);
+            })?)
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
@@ -406,10 +406,15 @@ impl Service {
         PeerId(self.our_keys.0)
     }
 
+    /// Returns our config.
+    pub fn config(&self) -> Config {
+        self.config.clone()
+    }
+
     fn post<F>(&self, f: F) -> ::Res<()>
         where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
     {
-        Ok(try!(self.mio_tx.send(CoreMessage::new(f))))
+        Ok(self.mio_tx.send(CoreMessage::new(f))?)
     }
 }
 
@@ -420,11 +425,12 @@ impl Drop for Service {
 }
 
 /// Returns a hash of the network name.
-fn name_hash(network_name: &Option<String>) -> u64 {
-    let mut hasher = SipHasher::new();
+fn name_hash(network_name: &Option<String>) -> NameHash {
     debug!("Network name: {:?}", network_name);
-    network_name.hash(&mut hasher);
-    hasher.finish()
+    match *network_name {
+        Some(ref name) => sha256::hash(name.as_bytes()).0,
+        None => [0; sha256::DIGESTBYTES],
+    }
 }
 
 #[cfg(test)]
@@ -588,12 +594,12 @@ mod tests {
                 }
                 let (ci_tx, ci_rx) = mpsc::channel();
                 (TestNode {
-                    event_rx: event_rx,
-                    service: service,
-                    connection_id_rx: ci_rx,
-                    our_cis: Vec::new(),
-                    our_index: index,
-                },
+                     event_rx: event_rx,
+                     service: service,
+                     connection_id_rx: ci_rx,
+                     our_cis: Vec::new(),
+                     our_index: index,
+                 },
                  ci_tx)
             }
 
@@ -612,9 +618,10 @@ mod tests {
 
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> Joiner {
                 maidsafe_utilities::thread::named("run!", move || {
-                    for (our_ci, their_ci) in self.our_cis
-                        .into_iter()
-                        .zip(self.connection_id_rx.into_iter()) {
+                    for (our_ci, their_ci) in
+                        self.our_cis
+                            .into_iter()
+                            .zip(self.connection_id_rx.into_iter()) {
                         let _ = self.service.connect(our_ci, their_ci);
                     }
                     let mut their_ids = HashMap::new();

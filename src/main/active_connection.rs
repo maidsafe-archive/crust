@@ -226,10 +226,10 @@ struct Heartbeat {
 impl Heartbeat {
     fn new(el: &mut EventLoop<Core>, state_id: Token) -> ::Res<Self> {
         let recv_timer = CoreTimerId::new(state_id, 0);
-        let recv_timeout = try!(el.timeout_ms(recv_timer, INACTIVITY_TIMEOUT_MS));
+        let recv_timeout = el.timeout_ms(recv_timer, INACTIVITY_TIMEOUT_MS)?;
 
         let send_timer = CoreTimerId::new(state_id, 1);
-        let send_timeout = try!(el.timeout_ms(send_timer, HEARTBEAT_PERIOD_MS));
+        let send_timeout = el.timeout_ms(send_timer, HEARTBEAT_PERIOD_MS)?;
 
         Ok(Heartbeat {
             recv_timeout: recv_timeout,
@@ -252,13 +252,13 @@ impl Heartbeat {
 
     fn reset_receive(&mut self, el: &mut EventLoop<Core>) -> ::Res<()> {
         let _ = el.clear_timeout(self.recv_timeout);
-        self.recv_timeout = try!(el.timeout_ms(self.recv_timer, INACTIVITY_TIMEOUT_MS));
+        self.recv_timeout = el.timeout_ms(self.recv_timer, INACTIVITY_TIMEOUT_MS)?;
         Ok(())
     }
 
     fn reset_send(&mut self, el: &mut EventLoop<Core>) -> ::Res<()> {
         let _ = el.clear_timeout(self.send_timeout);
-        self.send_timeout = try!(el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS));
+        self.send_timeout = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS)?;
         Ok(())
     }
 

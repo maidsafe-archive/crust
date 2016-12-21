@@ -1,7 +1,7 @@
 [package]
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
-documentation = "http://docs.maidsafe.net/crust/latest"
+documentation = "https://docs.rs/crust/"
 homepage = "http://maidsafe.net"
 license = "GPL-3.0"
 name = "crust"
@@ -12,7 +12,7 @@ version = "0.19.0"
 [dependencies]
 byteorder = "~0.5.3"
 c_linked_list = "~1.1.0"
-clippy = {version = "~0.0.94", optional = true}
+clippy = {version = "=0.0.99", optional = true}
 config_file_handler = "~0.4.0"
 crossbeam = "~0.2.10"
 igd = "~0.5.1"

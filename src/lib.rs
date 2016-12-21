@@ -21,7 +21,7 @@
 #![doc(html_logo_url =
            "https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
-       html_root_url = "http://maidsafe.github.io/crust/")]
+       html_root_url = "https://docs.rs/crust")]
 
 // For explanation of lint checks, run `rustc -W help` or see
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
@@ -80,7 +80,7 @@ mod service_discovery;
 mod nat;
 
 pub use common::{MSG_DROP_PRIORITY, Priority};
-pub use main::{ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
+pub use main::{Config, ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
 
 /// Used to receive events from a `Service`.
