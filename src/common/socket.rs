@@ -102,7 +102,7 @@ impl Evented for Socket {
                 -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
         inner.register(selector, token, interest, opts)
     }
 
@@ -114,14 +114,14 @@ impl Evented for Socket {
                   -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
         inner.reregister(selector, token, interest, opts)
     }
 
     fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or(io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
+            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
         inner.deregister(selector)
     }
 }
