@@ -1,29 +1,32 @@
 env:
   global:
-    - secure: SkbGQw5IEClmE2l6skYTFbWuXBn7LcX23cV6uwmDK5Ah0vJ+vXGN5AIV9hhPaMIytwIp4HsWOf7LKHlWlc3+ot0qFVDMRFHamg1f8zWEwbvSA8ozSGVjlcXihrWQ/y5DjBefd9kNdrXb7kq0NA/Pqy/loO91m1e7SggujOC1F2M=
+    - RUST_BACKTRACE=1
+    - PATH=$PATH:$HOME/.cargo/bin
 os:
   - linux
   - osx
 language: rust
 rust:
-# - beta
   - stable
   - nightly
-matrix:
-  allow_failures:
-    - rust: nightly
 sudo: false
 branches:
   only:
     - master
 cache:
   cargo: true
-  directories:
-    - $HOME/elfutils
+before_script:
+  - (which cargo-install-update && cargo install-update cargo-update) || cargo install cargo-update
+  - (which rustfmt && cargo install-update rustfmt) || cargo install rustfmt
+  - (which cargo-prune && cargo install-update cargo-prune) || cargo install cargo-prune
 script:
-  - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/build_and_run_tests.sh | bash
+  - if [ "${TRAVIS_RUST_VERSION}" = stable ]; then
+        (
+            set -x;
+            cargo fmt -- --write-mode=diff &&
+            cargo test --verbose --release
+        );
+    fi
+  - curl -sSL https://github.com/maidsafe/QA/raw/master/bash_scripts/travis/run_clippy.sh | bash
 before_cache:
-  - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_elfutils.sh
-  - . install_elfutils.sh
-after_success:
-  - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/after_success.sh | bash
+  - cargo prune
