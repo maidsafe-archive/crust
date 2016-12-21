@@ -1,5 +1,11 @@
 # CRUST - Change Log
 
+## [0.20.0]
+- Expose `Config` structure.
+- Update `rustfmt` options.
+- Update documentation links.
+- Add `crust_peer` example.
+
 ## [0.19.0]
 - Update to maidsafe_utilities v0.10.0 and adapt to its removal of deprecated API's.
 
