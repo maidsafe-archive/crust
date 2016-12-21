@@ -1,7 +1,7 @@
 [package]
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
-documentation = "http://docs.maidsafe.net/crust/latest"
+documentation = "https://docs.rs/crust/"
 homepage = "http://maidsafe.net"
 license = "GPL-3.0"
 name = "crust"
