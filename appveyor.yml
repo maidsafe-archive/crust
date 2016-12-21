@@ -7,14 +7,12 @@ branches:
   only:
     - master
 
-clone_depth: 50
+clone_depth: 1
 
 install:
   - ps: |
         $url = "https://github.com/maidsafe/QA/raw/master/Powershell%20Scripts/AppVeyor"
         cmd /c curl -fsSL -o "Install Rustup.ps1" "$url/Install%20Rustup.ps1"
-        cmd /c curl -fsSL -o "Build.ps1" "$url/Build.ps1"
-        cmd /c curl -fsSL -o "Run Tests.ps1" "$url/Run%20Tests.ps1"
         . ".\Install Rustup.ps1"
 
 platform:
@@ -22,11 +20,10 @@ platform:
   - x64
 
 configuration:
-#  - Debug
   - Release
 
 build_script:
-  - ps: . ".\Build.ps1"
+  - cargo rustc --verbose --release -- --test -Zno-trans
 
 test_script:
-  - ps: . ".\Run Tests.ps1"
+  - cargo test --verbose --release
