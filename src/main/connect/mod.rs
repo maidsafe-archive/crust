@@ -67,7 +67,7 @@ impl Connect {
 
         let state = Rc::new(RefCell::new(Connect {
             token: token,
-            timeout: try!(el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)),
+            timeout: el.timeout_ms(CoreTimerId::new(token, 0), TIMEOUT_MS)?,
             cm: cm,
             our_nh: our_nh,
             our_id: our_ci.id,
@@ -84,12 +84,12 @@ impl Connect {
             .filter_map(|elt| Socket::connect(&elt).ok())
             .collect::<Vec<_>>();
 
-        if let Ok((listener, nat_sockets)) = nat::get_sockets(our_ci.hole_punch_socket,
-                                                              their_hole_punch.len()) {
-            try!(el.register(&listener,
-                             token,
-                             EventSet::readable() | EventSet::error() | EventSet::hup(),
-                             PollOpt::edge()));
+        if let Ok((listener, nat_sockets)) =
+            nat::get_sockets(our_ci.hole_punch_socket, their_hole_punch.len()) {
+            el.register(&listener,
+                          token,
+                          EventSet::readable() | EventSet::error() | EventSet::hup(),
+                          PollOpt::edge())?;
             state.borrow_mut().listener = Some(listener);
             sockets.extend(nat_sockets.into_iter()
                 .zip(their_hole_punch.into_iter().map(|elt| elt.0))

@@ -91,14 +91,14 @@ impl ConnectionListener {
                             token: Token,
                             event_tx: ::CrustEventSender)
                             -> ::Res<()> {
-        let listener = try!(socket.listen(LISTENER_BACKLOG));
-        let local_addr = try!(listener.local_addr());
+        let listener = socket.listen(LISTENER_BACKLOG)?;
+        let local_addr = listener.local_addr()?;
 
-        let listener = try!(TcpListener::from_listener(listener, &local_addr));
-        try!(el.register(&listener,
-                         token,
-                         EventSet::readable() | EventSet::error() | EventSet::hup(),
-                         PollOpt::edge()));
+        let listener = TcpListener::from_listener(listener, &local_addr)?;
+        el.register(&listener,
+                      token,
+                      EventSet::readable() | EventSet::error() | EventSet::hup(),
+                      PollOpt::edge())?;
 
         *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
 
@@ -273,8 +273,8 @@ mod test {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
         unwrap!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
-        try!(stream.write_all(&size_vec));
-        try!(stream.write_all(&message));
+        stream.write_all(&size_vec)?;
+        stream.write_all(&message)?;
 
         Ok(())
     }
@@ -282,7 +282,7 @@ mod test {
     #[allow(unsafe_code)]
     fn read<T: Decodable>(stream: &mut TcpStream) -> ::Res<T> {
         let mut payload_size_buffer = [0; 4];
-        try!(stream.read_exact(&mut payload_size_buffer));
+        stream.read_exact(&mut payload_size_buffer)?;
 
         let payload_size = try!(Cursor::new(&payload_size_buffer[..])
             .read_u32::<LittleEndian>()) as usize;
@@ -291,7 +291,7 @@ mod test {
         unsafe {
             payload.set_len(payload_size);
         }
-        try!(stream.read_exact(&mut payload));
+        stream.read_exact(&mut payload)?;
 
         Ok(unwrap!(deserialise(&payload), "Could not deserialise."))
     }

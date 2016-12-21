@@ -22,12 +22,12 @@ use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 pub fn new_reusably_bound_tcp_socket(local_addr: &SocketAddr) -> io::Result<TcpBuilder> {
     let socket = match local_addr.ip() {
-        IpAddr::V4(..) => try!(TcpBuilder::new_v4()),
-        IpAddr::V6(..) => try!(TcpBuilder::new_v6()),
+        IpAddr::V4(..) => TcpBuilder::new_v4()?,
+        IpAddr::V6(..) => TcpBuilder::new_v6()?,
     };
-    let _ = try!(socket.reuse_address(true));
-    try!(enable_so_reuseport(&socket));
-    let _ = try!(socket.bind(local_addr));
+    let _ = socket.reuse_address(true)?;
+    enable_so_reuseport(&socket)?;
+    let _ = socket.bind(local_addr)?;
 
     Ok(socket)
 }
@@ -35,7 +35,7 @@ pub fn new_reusably_bound_tcp_socket(local_addr: &SocketAddr) -> io::Result<TcpB
 #[cfg(target_family = "unix")]
 pub fn enable_so_reuseport(sock: &TcpBuilder) -> io::Result<()> {
     use net2::unix::UnixTcpBuilderExt;
-    let _ = try!(sock.reuse_port(true));
+    let _ = sock.reuse_port(true)?;
     Ok(())
 }
 

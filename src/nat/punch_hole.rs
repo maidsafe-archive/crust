@@ -24,16 +24,16 @@ use std::net::TcpStream;
 pub fn get_sockets(mapped_socket: TcpBuilder,
                    required: usize)
                    -> Result<(TcpListener, Vec<TcpStream>), NatError> {
-    let local_addr = try!(util::tcp_builder_local_addr(&mapped_socket));
+    let local_addr = util::tcp_builder_local_addr(&mapped_socket)?;
     let mut unconnected_sockets = Vec::with_capacity(required);
     for _ in 0..required {
-        let socket = try!(util::new_reusably_bound_tcp_socket(&local_addr));
-        let socket = try!(socket.to_tcp_stream());
+        let socket = util::new_reusably_bound_tcp_socket(&local_addr)?;
+        let socket = socket.to_tcp_stream()?;
         unconnected_sockets.push(socket);
     }
 
-    let listener = try!(mapped_socket.listen(100));
-    let listener = try!(TcpListener::from_listener(listener, &local_addr));
+    let listener = mapped_socket.listen(100)?;
+    let listener = TcpListener::from_listener(listener, &local_addr)?;
 
     Ok((listener, unconnected_sockets))
 }

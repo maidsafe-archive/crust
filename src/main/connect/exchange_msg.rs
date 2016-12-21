@@ -49,10 +49,10 @@ impl ExchangeMsg {
                  -> ::Res<Token> {
         let token = core.get_new_token();
 
-        try!(el.register(&socket,
-                         token,
-                         EventSet::error() | EventSet::hup() | EventSet::writable(),
-                         PollOpt::edge()));
+        el.register(&socket,
+                      token,
+                      EventSet::error() | EventSet::hup() | EventSet::writable(),
+                      PollOpt::edge())?;
 
         {
             let mut guard = unwrap!(cm.lock());

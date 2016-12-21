@@ -22,7 +22,7 @@ pub use self::core::{Core, CoreMessage, CoreTimerId};
 pub use self::error::CommonError;
 pub use self::message::Message;
 pub use self::socket::Socket;
-pub use self::socket_addr::{SocketAddr, IpAddr};
+pub use self::socket_addr::{IpAddr, SocketAddr};
 pub use self::state::State;
 
 pub type NameHash = [u8; sha256::DIGESTBYTES];

@@ -33,7 +33,7 @@ impl Encodable for SocketAddr {
 
 impl Decodable for SocketAddr {
     fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddr, D::Error> {
-        let as_string = try!(d.read_str());
+        let as_string = d.read_str()?;
         match net::SocketAddr::from_str(&as_string[..]) {
             Ok(sa) => Ok(SocketAddr(sa)),
             Err(e) => {
@@ -72,7 +72,7 @@ impl Encodable for SocketAddrV4 {
 
 impl Decodable for SocketAddrV4 {
     fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV4, D::Error> {
-        let as_string = try!(d.read_str());
+        let as_string = d.read_str()?;
         match net::SocketAddrV4::from_str(&as_string[..]) {
             Ok(sa) => Ok(SocketAddrV4(sa)),
             Err(e) => {
@@ -104,7 +104,7 @@ impl Encodable for SocketAddrV6 {
 
 impl Decodable for SocketAddrV6 {
     fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV6, D::Error> {
-        let as_string = try!(d.read_str());
+        let as_string = d.read_str()?;
         match net::SocketAddrV6::from_str(&as_string[..]) {
             Ok(sa) => Ok(SocketAddrV6(sa)),
             Err(e) => {
@@ -156,7 +156,7 @@ impl Encodable for IpAddr {
 
 impl Decodable for IpAddr {
     fn decode<D: Decoder>(d: &mut D) -> Result<IpAddr, D::Error> {
-        let as_string = try!(d.read_str());
+        let as_string = d.read_str()?;
         match net::IpAddr::from_str(&as_string[..]) {
             Ok(ia) => Ok(IpAddr(ia)),
             Err(e) => {

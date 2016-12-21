@@ -63,11 +63,11 @@ impl ServiceDiscovery {
                  token: Token,
                  port: u16)
                  -> Result<(), ServiceDiscoveryError> {
-        let udp_socket = try!(get_socket(port));
-        try!(udp_socket.set_broadcast(true));
+        let udp_socket = get_socket(port)?;
+        udp_socket.set_broadcast(true)?;
 
         let guid = rand::random();
-        let remote_addr = try!(SocketAddr::from_str(&format!("255.255.255.255:{}", port)));
+        let remote_addr = SocketAddr::from_str(&format!("255.255.255.255:{}", port))?;
 
         let service_discovery = ServiceDiscovery {
             token: token,
@@ -76,16 +76,16 @@ impl ServiceDiscovery {
             listen: false,
             read_buf: [0; 1024],
             our_listeners: our_listeners,
-            seek_peers_req: try!(serialise(&DiscoveryMsg::Request { guid: guid })),
+            seek_peers_req: serialise(&DiscoveryMsg::Request { guid: guid })?,
             reply_to: VecDeque::new(),
             observers: Vec::new(),
             guid: guid,
         };
 
-        try!(el.register(&service_discovery.socket,
-                         token,
-                         EventSet::error() | EventSet::hup() | EventSet::readable(),
-                         PollOpt::edge()));
+        el.register(&service_discovery.socket,
+                      token,
+                      EventSet::error() | EventSet::hup() | EventSet::readable(),
+                      PollOpt::edge())?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(service_discovery)));
 
@@ -100,7 +100,7 @@ impl ServiceDiscovery {
 
     /// Interrogate the network to find peers.
     pub fn seek_peers(&mut self) -> Result<(), ServiceDiscoveryError> {
-        let _ = try!(self.socket.send_to(&self.seek_peers_req, &self.remote_addr));
+        let _ = self.socket.send_to(&self.seek_peers_req, &self.remote_addr)?;
         Ok(())
     }
 
@@ -157,7 +157,7 @@ impl ServiceDiscovery {
             .collect();
         let resp = DiscoveryMsg::Response(our_current_listeners);
 
-        let serialised_resp = try!(serialise(&resp));
+        let serialised_resp = serialise(&resp)?;
 
         if let Some(peer_addr) = self.reply_to.pop_front() {
             match self.socket.send_to(&serialised_resp[..], &peer_addr) {
@@ -179,7 +179,7 @@ impl ServiceDiscovery {
             EventSet::error() | EventSet::hup() | EventSet::readable() | EventSet::writable()
         };
 
-        Ok(try!(el.reregister(&self.socket, self.token, es, PollOpt::edge())))
+        Ok(el.reregister(&self.socket, self.token, es, PollOpt::edge())?)
     }
 }
 
@@ -210,8 +210,8 @@ impl State for ServiceDiscovery {
 fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
     let mut res;
     loop {
-        let bind_addr = try!(SocketAddr::from_str(&format!("0.0.0.0:{}", port)));
-        let udp_socket = try!(UdpSocket::v4());
+        let bind_addr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))?;
+        let udp_socket = UdpSocket::v4()?;
         match udp_socket.bind(&bind_addr) {
             Ok(()) => {
                 res = Ok(udp_socket);

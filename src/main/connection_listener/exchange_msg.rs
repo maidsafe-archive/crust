@@ -52,10 +52,10 @@ impl ExchangeMsg {
         let token = core.get_new_token();
 
         let es = EventSet::error() | EventSet::hup() | EventSet::readable();
-        try!(el.register(&socket, token, es, PollOpt::edge()));
+        el.register(&socket, token, es, PollOpt::edge())?;
 
-        let timeout = try!(el.timeout_ms(CoreTimerId::new(token, 0),
-                                         timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
+        let timeout = el.timeout_ms(CoreTimerId::new(token, 0),
+                        timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS))?;
 
         let state = ExchangeMsg {
             token: token,
