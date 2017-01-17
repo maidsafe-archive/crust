@@ -100,10 +100,9 @@ impl Handler for Core {
 impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        CoreMessage(Box::new(move |core: &mut Core, el: &mut EventLoop<Core>| {
-            if let Some(f) = f.take() {
-                f(core, el)
-            }
+        CoreMessage(Box::new(move |core: &mut Core, el: &mut EventLoop<Core>| if let Some(f) =
+            f.take() {
+            f(core, el)
         }))
     }
 
