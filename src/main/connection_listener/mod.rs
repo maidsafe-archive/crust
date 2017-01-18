@@ -284,8 +284,8 @@ mod test {
         let mut payload_size_buffer = [0; 4];
         stream.read_exact(&mut payload_size_buffer)?;
 
-        let payload_size = try!(Cursor::new(&payload_size_buffer[..])
-            .read_u32::<LittleEndian>()) as usize;
+        let payload_size = Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()? as
+                           usize;
 
         let mut payload = Vec::with_capacity(payload_size);
         unsafe {

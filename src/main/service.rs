@@ -103,15 +103,13 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let port = self.config.service_discovery_port.unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
-        let _ = self.post(move |core, el| {
-            if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
-                if let Err(e) = ServiceDiscovery::start(core,
-                                                        el,
-                                                        our_listeners,
-                                                        SERVICE_DISCOVERY_TOKEN,
-                                                        port) {
-                    warn!("Could not start ServiceDiscovery: {:?}", e);
-                }
+        let _ = self.post(move |core, el| if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
+            if let Err(e) = ServiceDiscovery::start(core,
+                                                    el,
+                                                    our_listeners,
+                                                    SERVICE_DISCOVERY_TOKEN,
+                                                    port) {
+                warn!("Could not start ServiceDiscovery: {:?}", e);
             }
         });
     }
@@ -230,31 +228,27 @@ impl Service {
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, el| {
-            if core.get_state(BOOTSTRAP_TOKEN).is_none() {
-                if let Err(e) = Bootstrap::start(core,
-                                                 el,
-                                                 name_hash,
-                                                 our_pk,
-                                                 cm,
-                                                 &config,
-                                                 blacklist,
-                                                 BOOTSTRAP_TOKEN,
-                                                 SERVICE_DISCOVERY_TOKEN,
-                                                 event_tx.clone()) {
-                    error!("Could not bootstrap: {:?}", e);
-                    let _ = event_tx.send(Event::BootstrapFailed);
-                }
+        self.post(move |core, el| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
+            if let Err(e) = Bootstrap::start(core,
+                                             el,
+                                             name_hash,
+                                             our_pk,
+                                             cm,
+                                             &config,
+                                             blacklist,
+                                             BOOTSTRAP_TOKEN,
+                                             SERVICE_DISCOVERY_TOKEN,
+                                             event_tx.clone()) {
+                error!("Could not bootstrap: {:?}", e);
+                let _ = event_tx.send(Event::BootstrapFailed);
             }
         })
     }
 
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
-        self.post(move |mut core, mut el| {
-            if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
-                state.borrow_mut().terminate(core, el);
-            }
+        self.post(move |mut core, mut el| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
+            state.borrow_mut().terminate(core, el);
         })
     }
 
@@ -269,29 +263,25 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, el| {
-            if core.get_state(LISTENER_TOKEN).is_none() {
-                ConnectionListener::start(core,
-                                          el,
-                                          None,
-                                          port,
-                                          our_pk,
-                                          name_hash,
-                                          cm,
-                                          mc,
-                                          our_listeners,
-                                          LISTENER_TOKEN,
-                                          event_tx);
-            }
+        self.post(move |core, el| if core.get_state(LISTENER_TOKEN).is_none() {
+            ConnectionListener::start(core,
+                                      el,
+                                      None,
+                                      port,
+                                      our_pk,
+                                      name_hash,
+                                      cm,
+                                      mc,
+                                      our_listeners,
+                                      LISTENER_TOKEN,
+                                      event_tx);
         })
     }
 
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
-        self.post(move |core, el| {
-            if let Some(state) = core.get_state(LISTENER_TOKEN) {
-                state.borrow_mut().terminate(core, el);
-            }
+        self.post(move |core, el| if let Some(state) = core.get_state(LISTENER_TOKEN) {
+            state.borrow_mut().terminate(core, el);
         })
     }
 
@@ -324,10 +314,8 @@ impl Service {
             _ => return false,
         };
 
-        let _ = self.post(move |mut core, mut el| {
-            if let Some(state) = core.get_state(token) {
-                state.borrow_mut().terminate(&mut core, &mut el);
-            }
+        let _ = self.post(move |mut core, mut el| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().terminate(&mut core, &mut el);
         });
 
         true
@@ -340,10 +328,8 @@ impl Service {
             _ => return Err(CrustError::PeerNotFound(peer_id)),
         };
 
-        self.post(move |mut core, mut el| {
-            if let Some(state) = core.get_state(token) {
-                state.borrow_mut().write(&mut core, &mut el, msg, priority);
-            }
+        self.post(move |mut core, mut el| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().write(&mut core, &mut el, msg, priority);
         })
     }
 
@@ -713,9 +699,8 @@ mod tests {
         // Wait one hundred millisecond per message
         // TODO(canndrew): drop this limit
         let timeout_ms = 10000 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
-        timebomb(Duration::from_millis(timeout_ms), move || {
-            drop(threads);
-        });
+        timebomb(Duration::from_millis(timeout_ms),
+                 move || { drop(threads); });
     }
 
     #[test]
