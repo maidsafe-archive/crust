@@ -12,7 +12,6 @@ version = "0.19.0"
 [dependencies]
 byteorder = "~0.5.3"
 c_linked_list = "~1.1.0"
-clippy = {version = "=0.0.99", optional = true}
 config_file_handler = "~0.4.0"
 crossbeam = "~0.2.10"
 igd = "~0.5.1"
@@ -37,3 +36,6 @@ winapi = "~0.2"
 bench = false
 name = "crust_peer"
 path = "examples/crust_peer.rs"
+
+[features]
+cargo-clippy = []

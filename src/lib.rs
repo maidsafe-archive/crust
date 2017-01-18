@@ -37,18 +37,14 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations, variant_size_differences)]
 
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", deny(clippy))]
-#![cfg_attr(feature="clippy", allow(use_debug))]
-// TODO: Fix these lints and remove these exceptions.
-#![cfg_attr(feature="clippy", allow(cyclomatic_complexity, single_match, too_many_arguments))]
+#![cfg_attr(feature="cargo-clippy", allow(unknown_lints))]
+#![cfg_attr(feature="cargo-clippy", allow(too_many_arguments))]
 
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
-#[cfg_attr(feature="clippy", allow(useless_attribute))]
+#[cfg_attr(feature="cargo-clippy", allow(useless_attribute))]
 #[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
