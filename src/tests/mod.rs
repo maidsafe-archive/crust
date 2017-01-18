@@ -422,13 +422,11 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
 
     thread::sleep(Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS));
 
-    match event_rx0.try_recv() {
-        Ok(Event::LostPeer(..)) => panic!("peer lost unexpectedly"),
-        _ => (),
+    if let Ok(Event::LostPeer(..)) = event_rx0.try_recv() {
+        panic!("peer lost unexpectedly");
     }
 
-    match event_rx1.try_recv() {
-        Ok(Event::LostPeer(..)) => panic!("peer lost unexpectedly"),
-        _ => (),
+    if let Ok(Event::LostPeer(..)) = event_rx1.try_recv() {
+        panic!("peer lost unexpectedly");
     }
 }

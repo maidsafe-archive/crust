@@ -616,9 +616,8 @@ mod tests {
                             Event::ConnectSuccess(their_id) => their_id,
                             m => panic!("Expected ConnectSuccess message. Got message {:?}", m),
                         };
-                        match their_ids.insert(their_id, 0u32) {
-                            Some(_) => panic!("Received two ConnectSuccess events for same peer!"),
-                            None => (),
+                        if their_ids.insert(their_id, 0u32).is_some() {
+                            panic!("Received two ConnectSuccess events for same peer!");
                         };
                     }
 
