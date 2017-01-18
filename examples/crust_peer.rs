@@ -114,7 +114,7 @@ impl Network {
 
     pub fn print_connected_nodes(&self, service: &Service) {
         println!("Node count: {}", self.nodes.len());
-        for (id, node) in self.nodes.iter() {
+        for (id, node) in &self.nodes {
             let status = if service.is_connected(node) {
                 "Connected   "
             } else {
@@ -281,8 +281,9 @@ fn main() {
                                 println!("Share this info with the peer you want to connect to:");
                                 println!("{}", info_json);
                                 let mut network = unwrap!(network2.lock());
-                                if let Some(_) = network.our_connection_infos
-                                    .insert(result_token, info) {
+                                if network.our_connection_infos
+                                    .insert(result_token, info)
+                                    .is_some() {
                                     panic!("Got the same result_token twice!");
                                 };
                             }
@@ -313,7 +314,7 @@ fn main() {
                                 let mut index = None;
                                 {
                                     let network = unwrap!(network2.lock());
-                                    for (i, id) in network.nodes.iter() {
+                                    for (i, id) in &network.nodes {
                                         if id == &peer_id {
                                             index = Some(*i);
                                             break;
@@ -438,7 +439,7 @@ fn main() {
                 UserCommand::SendAll(message) => {
                     let mut network = unwrap!(network.lock());
                     let msg = message.into_bytes();
-                    for (_, peer_id) in network.nodes.iter_mut() {
+                    for (_, peer_id) in &mut network.nodes {
                         unwrap!(unwrap!(service.lock()).send(peer_id.clone(), msg.clone(), 0));
                     }
                 }
