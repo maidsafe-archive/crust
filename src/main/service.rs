@@ -191,6 +191,22 @@ impl Service {
         }
     }
 
+    /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
+    pub fn is_peer_hard_coded(&self, peer_id: &PeerId) -> bool {
+        match self.get_peer_socket_addr(peer_id) {
+            Ok(ip) => {
+                debug!("Checking whether {:?} is hard-coded in {:?}",
+                       ip,
+                       self.config.hard_coded_contacts);
+                self.config.hard_coded_contacts.iter().any(|addr| addr.0.ip() == ip.0.ip())
+            }
+            Err(e) => {
+                debug!("{}", e.description());
+                false
+            }
+        }
+    }
+
     // TODO temp remove
     /// Check if we have peers on LAN
     pub fn has_peers_on_lan(&self) -> bool {
