@@ -209,14 +209,8 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
     let mut res;
     loop {
         let bind_addr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))?;
-        res = match UdpSocket::bind(&bind_addr) {
-            Ok(udp_socket) => {
-                res = Ok(udp_socket);
-                break;
-            }
-            Err(e) => Err(From::from(e)),
-        };
-        if port == u16::MAX {
+        res = UdpSocket::bind(&bind_addr).map_err(From::from);
+        if res.is_ok() || port == u16::MAX {
             break;
         }
         port += 1;
@@ -240,8 +234,10 @@ mod tests {
 
     #[test]
     fn service_discovery() {
+        const SERVICE_DISCOVERY_TOKEN: usize = 0;
+
         // Poll-0
-        let el0 = unwrap!(common::spawn_event_loop(0, Some("EL0")),
+        let el0 = unwrap!(common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0")),
                           "Could not run el0");
 
         let addr = unwrap!(net::SocketAddr::from_str("138.139.140.150:54321"));
@@ -250,7 +246,7 @@ mod tests {
 
         // ServiceDiscovery-0
         {
-            let token_0 = Token(0);
+            let token_0 = Token(SERVICE_DISCOVERY_TOKEN);
             unwrap!(el0.tx.send(CoreMessage::new(move |core, poll| {
                 unwrap!(ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65530),
                         "Could not spawn ServiceDiscovery_0");
@@ -265,10 +261,10 @@ mod tests {
             })));
         }
 
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
 
         // Poll-1
-        let el1 = unwrap!(common::spawn_event_loop(0, Some("EL1")),
+        let el1 = unwrap!(common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1")),
                           "Could not run el1");
 
         let (tx, rx) = mpsc::channel();
@@ -276,7 +272,7 @@ mod tests {
         // ServiceDiscovery-1
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
-            let token_1 = Token(0);
+            let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
             unwrap!(el1.tx.send(CoreMessage::new(move |core, poll| {
                         unwrap!(ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
                                 "Could not spawn ServiceDiscovery_1");

@@ -386,12 +386,8 @@ mod tests {
         unwrap!(write(&mut us, message), "Could not write.");
 
         let mut buf = [0; 512];
-        if cfg!(windows) {
-            assert!(us.read(&mut buf).is_err());
-        } else {
-            assert_eq!(0,
-                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
-        }
+        assert_eq!(0,
+                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
     }
 
     #[test]
@@ -399,12 +395,8 @@ mod tests {
         let listener = start_listener();
         let mut us = connect_to_listener(&listener);
         let mut buf = [0; 512];
-        if cfg!(windows) {
-            assert!(us.read(&mut buf).is_err());
-        } else {
-            assert_eq!(0,
-                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
-        }
+        assert_eq!(0,
+                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
     }
 
     // TODO(Spandan) Due to mio bug this will fail on windows.
@@ -430,11 +422,7 @@ mod tests {
                    unwrap!(us.local_addr(), "Could not obtain local addr"));
 
         let mut buf = [0; 512];
-        if cfg!(windows) {
-            assert!(us.read(&mut buf).is_err());
-        } else {
-            assert_eq!(0,
-                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
-        }
+        assert_eq!(0,
+                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
     }
 }

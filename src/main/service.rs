@@ -308,8 +308,8 @@ impl Service {
             _ => return false,
         };
 
-        let _ = self.post(move |mut core, mut poll| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().terminate(&mut core, &mut poll);
+        let _ = self.post(move |core, poll| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().terminate(core, poll);
         });
 
         true
@@ -322,8 +322,8 @@ impl Service {
             _ => return Err(CrustError::PeerNotFound(peer_id)),
         };
 
-        self.post(move |mut core, mut poll| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().write(&mut core, &mut poll, msg, priority);
+        self.post(move |core, poll| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().write(core, poll, msg, priority);
         })
     }
 
