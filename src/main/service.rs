@@ -94,15 +94,17 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let port = self.config.service_discovery_port.unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
-        let _ = self.post(move |core, poll| if 
-            core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
-            if let Err(e) = ServiceDiscovery::start(core,
-                                                    poll,
-                                                    our_listeners,
-                                                    SERVICE_DISCOVERY_TOKEN,
-                                                    port) {
-                warn!("Could not start ServiceDiscovery: {:?}", e);
+        let _ = self.post(move |core, poll| {
+            if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
+                if let Err(e) = ServiceDiscovery::start(core,
+                                                        poll,
+                                                        our_listeners,
+                                                        SERVICE_DISCOVERY_TOKEN,
+                                                        port) {
+                    warn!("Could not start ServiceDiscovery: {:?}", e);
+                }
             }
+            () // Only to get rustfmt happy else it corrects it in a way it detects error
         });
     }
 
