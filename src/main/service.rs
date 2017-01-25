@@ -15,14 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, Core, CoreMessage, NameHash, Priority};
-use maidsafe_utilities;
-use maidsafe_utilities::thread::Joiner;
+use common::{self, Core, CoreMessage, EventLoop, NameHash, Priority};
 use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
            ConnectionListener, ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo,
            PubConnectionInfo};
 use main::config_handler::{self, Config};
-use mio::{self, EventLoop, Token};
+use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
@@ -46,11 +44,10 @@ pub struct Service {
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     mc: Arc<MappingContext>,
-    mio_tx: mio::Sender<CoreMessage>,
+    el: EventLoop,
     name_hash: NameHash,
     our_keys: (PublicKey, SecretKey),
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-    _raii_joiner: Joiner,
 }
 
 impl Service {
@@ -66,8 +63,6 @@ impl Service {
     pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> ::Res<Service> {
         rust_sodium::init();
 
-        let mut el = EventLoop::new()?;
-        let mio_tx = el.channel();
         let our_keys = box_::gen_keypair();
         let our_id = PeerId(our_keys.0);
         let name_hash = name_hash(&config.network_name);
@@ -79,22 +74,18 @@ impl Service {
             .iter()
             .map(|elt| elt.0));
 
-        let joiner =
-            maidsafe_utilities::thread::named(format!("Crust {:?} event loop", our_id), move || {
-                let mut core = Core::with_token_counter(3);
-                unwrap!(el.run(&mut core), "EventLoop failed to run");
-            });
+        let el = common::spawn_event_loop(3, Some(&format!("{:?}", our_id)))?;
+        trace!("Event loop started");
 
         Ok(Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: config,
             event_tx: event_tx,
             mc: Arc::new(mc),
-            mio_tx: mio_tx,
+            el: el,
             name_hash: name_hash,
             our_keys: our_keys,
             our_listeners: our_listeners,
-            _raii_joiner: joiner,
         })
     }
 
@@ -398,15 +389,17 @@ impl Service {
     }
 
     fn post<F>(&self, f: F) -> ::Res<()>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
+        where F: FnOnce(&mut Core, &mut Poll) + Send + 'static
     {
-        Ok(self.mio_tx.send(CoreMessage::new(f))?)
+        Ok(self.el.tx.send(CoreMessage::new(f))?)
     }
 }
 
+// Do not remvoe this as clones of mio-tx are give to IGD thread thus the drop of tx here alone is
+// not sufficient to trigger rx-error in core event loop for exit condition.
 impl Drop for Service {
     fn drop(&mut self) {
-        let _ = self.post(|_, el| el.shutdown());
+        let _ = self.el.tx.send(CoreMessage::build_terminator());
     }
 }
 
@@ -421,7 +414,7 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
@@ -435,7 +428,6 @@ mod tests {
     use std::sync::mpsc::Receiver;
     use std::thread;
     use std::time::Duration;
-    use super::*;
     use tests::{get_event_sender, timebomb};
 
     #[test]

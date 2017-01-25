@@ -16,13 +16,15 @@
 // relating to use of the SAFE Network Software.
 
 
-use common::{Core, CoreTimerId, Message, Priority, Socket, SocketAddr, State};
+use common::{Core, CoreTimer, Message, Priority, Socket, SocketAddr, State};
 use main::{ConnectionId, ConnectionMap, Event, PeerId};
-use mio::{EventLoop, EventSet, Timeout, Token};
+use mio::{Poll, Ready, Token};
+use mio::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
+use std::time::Duration;
 
 #[cfg(not(test))]
 pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
@@ -46,7 +48,7 @@ pub struct ActiveConnection {
 
 impl ActiveConnection {
     pub fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
+                 poll: &mut Poll,
                  token: Token,
                  socket: Socket,
                  cm: ConnectionMap,
@@ -58,11 +60,11 @@ impl ActiveConnection {
                our_id,
                their_id);
 
-        let heartbeat = match Heartbeat::new(el, token) {
+        let heartbeat = match Heartbeat::new(core, token) {
             Ok(heartbeat) => heartbeat,
             Err(error) => {
                 warn!("{:?} - Failed to initialize heartbeat: {:?}", our_id, error);
-                let _ = el.deregister(&socket);
+                let _ = poll.deregister(&socket);
                 let _ = event_tx.send(Event::LostPeer(their_id));
                 // TODO See if this plays well with ConnectionMap manipulation below
                 return;
@@ -92,29 +94,29 @@ impl ActiveConnection {
             conn_id.active_connection = Some(token);
         }
         let _ = state_mut.event_tx.send(event);
-        state_mut.read(core, el);
+        state_mut.read(core, poll);
     }
 
-    fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn read(&mut self, core: &mut Core, poll: &mut Poll) {
         loop {
             match self.socket.read::<Message>() {
                 Ok(Some(Message::Data(data))) => {
                     let _ = self.event_tx.send(Event::NewMessage(self.their_id, data));
-                    self.reset_receive_heartbeat(core, el);
+                    self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(Some(Message::Heartbeat)) => {
-                    self.reset_receive_heartbeat(core, el);
+                    self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(Some(message)) => {
                     warn!("{:?} - Unexpected message: {:?}", self.our_id, message);
-                    self.reset_receive_heartbeat(core, el);
+                    self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(None) => return,
                 Err(error) => {
                     debug!("{:?} - Failed to read from socket: {:?}",
                            self.our_id,
                            error);
-                    return self.terminate(core, el);
+                    return self.terminate(core, poll);
                 }
             }
         }
@@ -134,57 +136,50 @@ impl ActiveConnection {
         Ok(SocketAddr(unwrap!(FromStr::from_str("192.168.0.1:0"))))
     }
 
-    fn write(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             msg: Option<(Message, Priority)>) {
-        if let Err(error) = self.socket.write(el, self.token, msg) {
+    fn write(&mut self, core: &mut Core, poll: &mut Poll, msg: Option<(Message, Priority)>) {
+        if let Err(error) = self.socket.write(poll, self.token, msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, error);
-            self.terminate(core, el);
+            self.terminate(core, poll);
         }
     }
 
-    fn reset_receive_heartbeat(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        if let Err(error) = self.heartbeat.reset_receive(el) {
+    fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &mut Poll) {
+        if let Err(error) = self.heartbeat.reset_receive(core) {
             warn!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, error);
-            self.terminate(core, el);
+            self.terminate(core, poll);
         }
     }
 
-    fn reset_send_heartbeat(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        if let Err(error) = self.heartbeat.reset_send(el) {
+    fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &mut Poll) {
+        if let Err(error) = self.heartbeat.reset_send(core) {
             warn!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, error);
-            self.terminate(core, el);
+            self.terminate(core, poll);
         }
     }
 }
 
 impl State for ActiveConnection {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
-        if es.is_error() || es.is_hup() {
-            self.terminate(core, el);
+    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+        if kind.is_error() || kind.is_hup() {
+            self.terminate(core, poll);
         } else {
-            if es.is_writable() {
-                self.write(core, el, None);
+            if kind.is_writable() {
+                self.write(core, poll, None);
             }
-            if es.is_readable() {
-                self.read(core, el);
+            if kind.is_readable() {
+                self.read(core, poll);
             }
         }
     }
 
-    fn write(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             data: Vec<u8>,
-             priority: Priority) {
-        self.write(core, el, Some((Message::Data(data), priority)));
-        self.reset_send_heartbeat(core, el);
+    fn write(&mut self, core: &mut Core, poll: &mut Poll, data: Vec<u8>, priority: Priority) {
+        self.write(core, poll, Some((Message::Data(data), priority)));
+        self.reset_send_heartbeat(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        self.heartbeat.terminate(el);
-        let _ = el.deregister(&self.socket);
+    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+        self.heartbeat.terminate(core);
+        let _ = poll.deregister(&self.socket);
         let _ = core.remove_state(self.token);
 
         {
@@ -200,13 +195,13 @@ impl State for ActiveConnection {
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
     }
 
-    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, timer_id: u8) {
-        match self.heartbeat.timeout(el, timer_id) {
-            HeartbeatAction::Send => self.write(core, el, Some((Message::Heartbeat, 0))),
+    fn timeout(&mut self, core: &mut Core, poll: &mut Poll, timer_id: u8) {
+        match self.heartbeat.timeout(core, timer_id) {
+            HeartbeatAction::Send => self.write(core, poll, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {
                 debug!("Dropping connection to {:?} due to peer inactivity",
                        self.their_id);
-                self.terminate(core, el);
+                self.terminate(core, poll);
             }
         }
     }
@@ -218,18 +213,20 @@ impl State for ActiveConnection {
 
 struct Heartbeat {
     recv_timeout: Timeout,
-    recv_timer: CoreTimerId,
+    recv_timer: CoreTimer,
     send_timeout: Timeout,
-    send_timer: CoreTimerId,
+    send_timer: CoreTimer,
 }
 
 impl Heartbeat {
-    fn new(el: &mut EventLoop<Core>, state_id: Token) -> ::Res<Self> {
-        let recv_timer = CoreTimerId::new(state_id, 0);
-        let recv_timeout = el.timeout_ms(recv_timer, INACTIVITY_TIMEOUT_MS)?;
+    fn new(core: &mut Core, state_id: Token) -> ::Res<Self> {
+        let recv_timer = CoreTimer::new(state_id, 0);
+        let recv_timeout =
+            core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer)?;
 
-        let send_timer = CoreTimerId::new(state_id, 1);
-        let send_timeout = el.timeout_ms(send_timer, HEARTBEAT_PERIOD_MS)?;
+        let send_timer = CoreTimer::new(state_id, 1);
+        let send_timeout =
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), send_timer)?;
 
         Ok(Heartbeat {
             recv_timeout: recv_timeout,
@@ -239,10 +236,11 @@ impl Heartbeat {
         })
     }
 
-    fn timeout(&self, el: &mut EventLoop<Core>, timer_id: u8) -> HeartbeatAction {
+    fn timeout(&self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
-        } else if let Err(error) = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS) {
+        } else if let Err(error) =
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer) {
             warn!("Failed to reschedule heartbeat send timer: {:?}", error);
             HeartbeatAction::Terminate
         } else {
@@ -250,21 +248,23 @@ impl Heartbeat {
         }
     }
 
-    fn reset_receive(&mut self, el: &mut EventLoop<Core>) -> ::Res<()> {
-        let _ = el.clear_timeout(self.recv_timeout);
-        self.recv_timeout = el.timeout_ms(self.recv_timer, INACTIVITY_TIMEOUT_MS)?;
+    fn reset_receive(&mut self, core: &mut Core) -> ::Res<()> {
+        let _ = core.cancel_timeout(&self.recv_timeout);
+        self.recv_timeout = core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS),
+                         self.recv_timer)?;
         Ok(())
     }
 
-    fn reset_send(&mut self, el: &mut EventLoop<Core>) -> ::Res<()> {
-        let _ = el.clear_timeout(self.send_timeout);
-        self.send_timeout = el.timeout_ms(self.send_timer, HEARTBEAT_PERIOD_MS)?;
+    fn reset_send(&mut self, core: &mut Core) -> ::Res<()> {
+        let _ = core.cancel_timeout(&self.send_timeout);
+        self.send_timeout =
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)?;
         Ok(())
     }
 
-    fn terminate(&mut self, el: &mut EventLoop<Core>) {
-        let _ = el.clear_timeout(self.recv_timeout);
-        let _ = el.clear_timeout(self.send_timeout);
+    fn terminate(&mut self, core: &mut Core) {
+        let _ = core.cancel_timeout(&self.recv_timeout);
+        let _ = core.cancel_timeout(&self.send_timeout);
     }
 }
 

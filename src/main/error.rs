@@ -31,24 +31,24 @@ quick_error! {
     #[derive(Debug)]
     pub enum CrustError {
         /// Failed receiving from an mpsc::channel
-        ChannelRecv(err: mpsc::RecvError) {
+        ChannelRecv(e: mpsc::RecvError) {
             description("Channel receive error")
-            display("Channel receive error: {}", err)
-            cause(err)
+            display("Channel receive error: {}", e)
+            cause(e)
             from()
         }
         /// Config file handling errors
-        ConfigFileHandler(err: config_file_handler::Error) {
+        ConfigFileHandler(e: config_file_handler::Error) {
             description("Config file handling error")
-            display("Config file handling error: {}", err)
-            cause(err)
+            display("Config file handling error: {}", e)
+            cause(e)
             from()
         }
         /// Wrapper for a `std::io::Error`
-        Io(err: io::Error) {
+        Io(e: io::Error) {
             description("IO error")
-            display("IO error: {}", err)
-            cause(err)
+            display("IO error: {}", e)
+            cause(e)
             from()
         }
         /// ServiceDiscovery not enabled yet
@@ -56,7 +56,7 @@ quick_error! {
             description("ServiceDiscovery is not yet enabled or registered")
         }
         /// ServiceDiscovery Errors
-        ServiceDisc(err: service_discovery::ServiceDiscoveryError) {
+        ServiceDisc(e: service_discovery::ServiceDiscoveryError) {
             description("ServiceDiscovery error")
             from()
         }
@@ -65,25 +65,20 @@ quick_error! {
             description("Not enough information to initiate connection to peer")
         }
         /// Nat Traversal errors
-        Nat(err: nat::NatError) {
+        Nat(e: nat::NatError) {
             description("Nat Traversal module error")
             from()
         }
-        /// Mio Timer errors
-        MioTimer(err: mio::TimerError) {
-            description("Mio timer error")
-            from()
-        }
         /// Common module errors
-        Common(err: common::CommonError) {
+        Common(e: common::CommonError) {
             description("Common module error")
             from()
         }
-        /// Mio notify errors
-        MioNotify(err: mio::NotifyError<CoreMessage>) {
-            description("Mio notify error")
-            display("Mio notify error: {}", err)
-            cause(err)
+        /// CoreMsg send error
+        CoreMsgTx(e: mio::channel::SendError<CoreMessage>) {
+            description(e.description())
+            display("CoreMessage send error: {}", e)
+            cause(e)
             from()
         }
         /// Peer not found
@@ -92,10 +87,10 @@ quick_error! {
             display("Peer {:?} not found", peer_id)
         }
         /// Serialisation error
-        Serialisation(err: SerialisationError) {
+        Serialisation(e: SerialisationError) {
             description("Serialisation error")
-            display("Serialisation error: {}", err)
-            cause(err)
+            display("Serialisation error: {}", e)
+            cause(e)
             from()
         }
     }
