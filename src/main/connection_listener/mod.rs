@@ -162,7 +162,7 @@ impl State for ConnectionListener {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -185,6 +185,10 @@ mod test {
     use std::sync::mpsc;
     use std::time::Duration;
 
+    // Make sure this is < EXCHANGE_MSG_TIMEOUT_SEC blocking reader socket in this test will exit
+    // with an EAGAIN error (unless this is what is wanted).
+    const HANDSHAKE_TIMEOUT_SEC: u64 = 5;
+    const LISTENER_TOKEN: usize = 0;
     const NAME_HASH: NameHash = [1; sha256::DIGESTBYTES];
     const NAME_HASH_2: NameHash = [2; sha256::DIGESTBYTES];
 
@@ -203,7 +207,8 @@ mod test {
     }
 
     fn start_listener() -> Listener {
-        let el = unwrap!(common::spawn_event_loop(1, Some("Connection Listener Test")));
+        let el = unwrap!(common::spawn_event_loop(LISTENER_TOKEN + 1,
+                                                  Some("Connection Listener Test")));
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
@@ -218,14 +223,14 @@ mod test {
         unwrap!(el.tx.send(CoreMessage::new(move |core, poll| {
             ConnectionListener::start(core,
                                       poll,
-                                      Some(5000),
+                                      Some(HANDSHAKE_TIMEOUT_SEC),
                                       0,
                                       pk,
                                       NAME_HASH,
                                       cm,
                                       mc,
                                       listeners_clone,
-                                      Token(0),
+                                      Token(LISTENER_TOKEN),
                                       crust_sender);
         })),
                 "Could not send to tx");
@@ -251,8 +256,7 @@ mod test {
         let listener_addr = StdSocketAddr::new(listener.addr.ip(), listener.addr.port());
         let stream = unwrap!(TcpStream::connect(listener_addr),
                              "Could not connect to listener");
-        unwrap!(stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_SEC +
-                                                                   1000))),
+        unwrap!(stream.set_read_timeout(Some(Duration::from_secs(EXCHANGE_MSG_TIMEOUT_SEC + 1))),
                 "Could not set read timeout.");
 
         stream

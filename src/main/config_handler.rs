@@ -96,7 +96,7 @@ fn get_file_name() -> ::Res<OsString> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     #[test]
     fn parse_sample_config_file() {
         use std::path::Path;

@@ -108,8 +108,3 @@ impl Cache {
     //     Ok(try!(self.file_handler.write_file(&bootstrap_contacts)))
     // }
 }
-
-#[cfg(test)]
-mod test {
-    // TODO(canndrew): Add some unit tests.
-}

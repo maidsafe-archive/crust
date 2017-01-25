@@ -209,15 +209,13 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
     let mut res;
     loop {
         let bind_addr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))?;
-        match UdpSocket::bind(&bind_addr) {
+        res = match UdpSocket::bind(&bind_addr) {
             Ok(udp_socket) => {
                 res = Ok(udp_socket);
                 break;
             }
-            Err(e) => {
-                res = Err(From::from(e));
-            }
-        }
+            Err(e) => Err(From::from(e)),
+        };
         if port == u16::MAX {
             break;
         }
@@ -228,7 +226,7 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use common::{self, CoreMessage};
     use mio::Token;
@@ -257,7 +255,7 @@ mod test {
                 unwrap!(ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65530),
                         "Could not spawn ServiceDiscovery_0");
             })),
-                    "Could not send to tx0");
+                    "Could not send to el0");
 
             // Start listening for peers
             unwrap!(el0.tx.send(CoreMessage::new(move |core, _| {
@@ -267,7 +265,7 @@ mod test {
             })));
         }
 
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(1000));
 
         // Poll-1
         let el1 = unwrap!(common::spawn_event_loop(0, Some("EL1")),
@@ -283,7 +281,7 @@ mod test {
                         unwrap!(ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
                                 "Could not spawn ServiceDiscovery_1");
                     })),
-                    "Could not send to tx1");
+                    "Could not send to el1");
 
             // Register observer
             unwrap!(el1.tx.send(CoreMessage::new(move |core, _| {
@@ -301,7 +299,7 @@ mod test {
                         let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
                         unwrap!(sd.seek_peers());
                     })),
-                    "Could not send to tx1");
+                    "Could not send to el1");
         }
 
         let peer_listeners = unwrap!(rx.recv());
