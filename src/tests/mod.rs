@@ -275,7 +275,7 @@ mod broken_peer {
     pub struct Listen(TcpListener, Token);
 
     impl Listen {
-        pub fn start(core: &mut Core, poll: &mut Poll, listener: TcpListener) {
+        pub fn start(core: &mut Core, poll: &Poll, listener: TcpListener) {
             let token = core.get_new_token();
 
             unwrap!(poll.register(&listener, token, Ready::readable(), PollOpt::edge()));
@@ -286,7 +286,7 @@ mod broken_peer {
     }
 
     impl State for Listen {
-        fn ready(&mut self, core: &mut Core, poll: &mut Poll, _: Ready) {
+        fn ready(&mut self, core: &mut Core, poll: &Poll, _: Ready) {
             let (socket, _) = unwrap!(self.0.accept());
             unwrap!(poll.deregister(&self.0));
 
@@ -302,7 +302,7 @@ mod broken_peer {
     struct Connection(Socket, Token);
 
     impl Connection {
-        fn start(core: &mut Core, poll: &mut Poll, token: Token, socket: Socket) {
+        fn start(core: &mut Core, poll: &Poll, token: Token, socket: Socket) {
             unwrap!(poll.register(&socket, token, Ready::readable(), PollOpt::edge()));
 
             let state = Connection(socket, token);
@@ -311,7 +311,7 @@ mod broken_peer {
     }
 
     impl State for Connection {
-        fn ready(&mut self, _: &mut Core, poll: &mut Poll, kind: Ready) {
+        fn ready(&mut self, _: &mut Core, poll: &Poll, kind: Ready) {
 
             if kind.is_readable() {
                 match unwrap!(self.0.read::<Message>()) {

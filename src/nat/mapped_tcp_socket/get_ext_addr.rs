@@ -25,7 +25,7 @@ use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &mut Poll, Token, Result<SocketAddr, ()>)>;
+pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Result<SocketAddr, ()>)>;
 
 pub struct GetExtAddr {
     token: Token,
@@ -36,7 +36,7 @@ pub struct GetExtAddr {
 
 impl GetExtAddr {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  local_addr: SocketAddr,
                  peer_stun: &SocketAddr,
                  finish: Finish)
@@ -65,13 +65,13 @@ impl GetExtAddr {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);
@@ -83,7 +83,7 @@ impl GetExtAddr {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, Err(()));
@@ -91,7 +91,7 @@ impl GetExtAddr {
 }
 
 impl State for GetExtAddr {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.handle_error(core, poll);
         } else {
@@ -105,7 +105,7 @@ impl State for GetExtAddr {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
     }

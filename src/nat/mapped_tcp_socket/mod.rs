@@ -47,11 +47,11 @@ pub struct MappedTcpSocket<F> {
 }
 
 impl<F> MappedTcpSocket<F>
-    where F: FnOnce(&mut Core, &mut Poll, TcpBuilder, Vec<SocketAddr>) + Any
+    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any
 {
     /// Start mapping a tcp socket
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  port: u16,
                  mc: &MappingContext,
                  finish: F)
@@ -116,7 +116,7 @@ impl<F> MappedTcpSocket<F>
         // Ask Stuns
         for stun in mc.peer_stuns() {
             let self_weak = Rc::downgrade(&state);
-            let handler = move |core: &mut Core, poll: &mut Poll, child_token, res| {
+            let handler = move |core: &mut Core, poll: &Poll, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_stun_resp(core, poll, child_token, res)
                 }
@@ -138,7 +138,7 @@ impl<F> MappedTcpSocket<F>
 
     fn handle_stun_resp(&mut self,
                         core: &mut Core,
-                        poll: &mut Poll,
+                        poll: &Poll,
                         child: Token,
                         res: Result<SocketAddr, ()>) {
         let _ = self.stun_children.remove(&child);
@@ -150,7 +150,7 @@ impl<F> MappedTcpSocket<F>
         }
     }
 
-    fn handle_igd_resp(&mut self, core: &mut Core, poll: &mut Poll, our_ext_addr: SocketAddr) {
+    fn handle_igd_resp(&mut self, core: &mut Core, poll: &Poll, our_ext_addr: SocketAddr) {
         self.igd_children -= 1;
         self.mapped_addrs.push(our_ext_addr);
         if self.stun_children.is_empty() && self.igd_children == 0 {
@@ -158,7 +158,7 @@ impl<F> MappedTcpSocket<F>
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
         for token in self.stun_children.drain() {
             let child = match core.get_state(token) {
                 Some(state) => state,
@@ -171,13 +171,13 @@ impl<F> MappedTcpSocket<F>
 }
 
 impl<F> State for MappedTcpSocket<F>
-    where F: FnOnce(&mut Core, &mut Poll, TcpBuilder, Vec<SocketAddr>) + Any
+    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any
 {
-    fn timeout(&mut self, core: &mut Core, poll: &mut Poll, _: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &Poll, _: u8) {
         self.terminate(core, poll)
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         self.terminate_children(core, poll);
         let _ = core.remove_state(self.token);
         let _ = core.cancel_timeout(&self.timeout);

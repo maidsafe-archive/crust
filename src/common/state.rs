@@ -26,11 +26,11 @@ pub type Priority = u8;
 pub trait State {
     fn as_any(&mut self) -> &mut Any;
 
-    fn ready(&mut self, _core: &mut Core, _poll: &mut Poll, _kind: Ready) {}
+    fn ready(&mut self, _core: &mut Core, _poll: &Poll, _kind: Ready) {}
 
-    fn terminate(&mut self, _core: &mut Core, _poll: &mut Poll) {}
+    fn terminate(&mut self, _core: &mut Core, _poll: &Poll) {}
 
-    fn timeout(&mut self, _core: &mut Core, _poll: &mut Poll, _timer_id: u8) {}
+    fn timeout(&mut self, _core: &mut Core, _poll: &Poll, _timer_id: u8) {}
 
-    fn write(&mut self, _core: &mut Core, _poll: &mut Poll, _data: Vec<u8>, _priority: Priority) {}
+    fn write(&mut self, _core: &mut Core, _poll: &Poll, _data: Vec<u8>, _priority: Priority) {}
 }

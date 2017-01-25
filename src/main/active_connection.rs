@@ -48,7 +48,7 @@ pub struct ActiveConnection {
 
 impl ActiveConnection {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  token: Token,
                  socket: Socket,
                  cm: ConnectionMap,
@@ -97,7 +97,7 @@ impl ActiveConnection {
         state_mut.read(core, poll);
     }
 
-    fn read(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn read(&mut self, core: &mut Core, poll: &Poll) {
         loop {
             match self.socket.read::<Message>() {
                 Ok(Some(Message::Data(data))) => {
@@ -136,21 +136,21 @@ impl ActiveConnection {
         Ok(SocketAddr(unwrap!(FromStr::from_str("192.168.0.1:0"))))
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
         if let Err(error) = self.socket.write(poll, self.token, msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, error);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
         if let Err(error) = self.heartbeat.reset_receive(core) {
             warn!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, error);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
         if let Err(error) = self.heartbeat.reset_send(core) {
             warn!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, error);
             self.terminate(core, poll);
@@ -159,7 +159,7 @@ impl ActiveConnection {
 }
 
 impl State for ActiveConnection {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.terminate(core, poll);
         } else {
@@ -172,12 +172,12 @@ impl State for ActiveConnection {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll, data: Vec<u8>, priority: Priority) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, data: Vec<u8>, priority: Priority) {
         self.write(core, poll, Some((Message::Data(data), priority)));
         self.reset_send_heartbeat(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         self.heartbeat.terminate(core);
         let _ = poll.deregister(&self.socket);
         let _ = core.remove_state(self.token);
@@ -195,7 +195,7 @@ impl State for ActiveConnection {
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &mut Poll, timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
         match self.heartbeat.timeout(core, timer_id) {
             HeartbeatAction::Send => self.write(core, poll, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {

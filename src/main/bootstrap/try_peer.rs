@@ -30,7 +30,7 @@ use std::rc::Rc;
 // obtain peer address from a connected socket. Track https://github.com/carllerche/mio/issues/397
 // and remove this once that is solved.
 pub type Finish = Box<FnMut(&mut Core,
-                            &mut Poll,
+                            &Poll,
                             Token,
                             Result<(Socket, SocketAddr, PeerId), SocketAddr>)>;
 
@@ -44,7 +44,7 @@ pub struct TryPeer {
 
 impl TryPeer {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  peer: SocketAddr,
                  our_pk: PublicKey,
                  name_hash: NameHash,
@@ -71,13 +71,13 @@ impl TryPeer {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapResponse(peer_pk))) => {
                 let _ = core.remove_state(self.token);
@@ -91,7 +91,7 @@ impl TryPeer {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         let peer = self.peer;
@@ -100,7 +100,7 @@ impl TryPeer {
 }
 
 impl State for TryPeer {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.handle_error(core, poll);
         } else {
@@ -114,7 +114,7 @@ impl State for TryPeer {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
     }

@@ -94,9 +94,10 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let port = self.config.service_discovery_port.unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
-        let _ = self.post(move |core, el| if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
+        let _ = self.post(move |core, poll| if 
+            core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
             if let Err(e) = ServiceDiscovery::start(core,
-                                                    el,
+                                                    poll,
                                                     our_listeners,
                                                     SERVICE_DISCOVERY_TOKEN,
                                                     port) {
@@ -219,9 +220,9 @@ impl Service {
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, el| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
+        self.post(move |core, poll| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
             if let Err(e) = Bootstrap::start(core,
-                                             el,
+                                             poll,
                                              name_hash,
                                              our_pk,
                                              cm,
@@ -238,8 +239,8 @@ impl Service {
 
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
-        self.post(move |mut core, mut el| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
-            state.borrow_mut().terminate(core, el);
+        self.post(move |core, poll| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
+            state.borrow_mut().terminate(core, poll);
         })
     }
 
@@ -254,9 +255,9 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, el| if core.get_state(LISTENER_TOKEN).is_none() {
+        self.post(move |core, poll| if core.get_state(LISTENER_TOKEN).is_none() {
             ConnectionListener::start(core,
-                                      el,
+                                      poll,
                                       None,
                                       port,
                                       our_pk,
@@ -271,8 +272,8 @@ impl Service {
 
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
-        self.post(move |core, el| if let Some(state) = core.get_state(LISTENER_TOKEN) {
-            state.borrow_mut().terminate(core, el);
+        self.post(move |core, poll| if let Some(state) = core.get_state(LISTENER_TOKEN) {
+            state.borrow_mut().terminate(core, poll);
         })
     }
 
@@ -293,8 +294,8 @@ impl Service {
         let cm = self.cm.clone();
         let our_nh = self.name_hash;
 
-        Ok(self.post(move |core, el| {
-                let _ = Connect::start(core, el, our_ci, their_ci, cm, our_nh, event_tx);
+        Ok(self.post(move |core, poll| {
+                let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
             })?)
     }
 
@@ -305,8 +306,8 @@ impl Service {
             _ => return false,
         };
 
-        let _ = self.post(move |mut core, mut el| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().terminate(&mut core, &mut el);
+        let _ = self.post(move |mut core, mut poll| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().terminate(&mut core, &mut poll);
         });
 
         true
@@ -319,8 +320,8 @@ impl Service {
             _ => return Err(CrustError::PeerNotFound(peer_id)),
         };
 
-        self.post(move |mut core, mut el| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().write(&mut core, &mut el, msg, priority);
+        self.post(move |mut core, mut poll| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().write(&mut core, &mut poll, msg, priority);
         })
     }
 
@@ -334,9 +335,9 @@ impl Service {
         let our_listeners =
             unwrap!(self.our_listeners.lock()).iter().map(|e| common::SocketAddr(*e)).collect();
         let mc = self.mc.clone();
-        if let Err(e) = self.post(move |mut core, mut el| {
+        if let Err(e) = self.post(move |core, poll| {
             let event_tx_clone = event_tx.clone();
-            match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
+            match MappedTcpSocket::start(core, poll, 0, &mc, move |_, _, socket, addrs| {
                 let hole_punch_addrs = addrs.into_iter()
                     .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
                     .map(common::SocketAddr)
@@ -389,7 +390,7 @@ impl Service {
     }
 
     fn post<F>(&self, f: F) -> ::Res<()>
-        where F: FnOnce(&mut Core, &mut Poll) + Send + 'static
+        where F: FnOnce(&mut Core, &Poll) + Send + 'static
     {
         Ok(self.el.tx.send(CoreMessage::new(f))?)
     }

@@ -61,7 +61,7 @@ pub struct Bootstrap {
 
 impl Bootstrap {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  name_hash: NameHash,
                  our_pk: PublicKey,
                  cm: ConnectionMap,
@@ -120,7 +120,7 @@ impl Bootstrap {
         Ok(())
     }
 
-    fn begin_bootstrap(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn begin_bootstrap(&mut self, core: &mut Core, poll: &Poll) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
         peers.retain(|addr| !self.blacklist.contains(&addr.0));
         if peers.is_empty() {
@@ -131,10 +131,9 @@ impl Bootstrap {
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
-            let finish = move |core: &mut Core, poll: &mut Poll, child, res| {
-                if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc.borrow_mut().handle_result(core, poll, child, res)
-                }
+            let finish = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
+                self_weak.upgrade() {
+                self_rc.borrow_mut().handle_result(core, poll, child, res)
             };
 
             if let Ok(child) = TryPeer::start(core,
@@ -151,7 +150,7 @@ impl Bootstrap {
 
     fn handle_result(&mut self,
                      core: &mut Core,
-                     poll: &mut Poll,
+                     poll: &Poll,
                      child: Token,
                      res: Result<(Socket, net::SocketAddr, PeerId), net::SocketAddr>) {
         let _ = self.children.remove(&child);
@@ -175,14 +174,14 @@ impl Bootstrap {
         self.maybe_terminate(core, poll);
     }
 
-    fn maybe_terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
         if self.children.is_empty() {
             self.terminate(core, poll);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -195,7 +194,7 @@ impl Bootstrap {
 }
 
 impl State for Bootstrap {
-    fn timeout(&mut self, core: &mut Core, poll: &mut Poll, timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -210,7 +209,7 @@ impl State for Bootstrap {
         self.begin_bootstrap(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         self.terminate_children(core, poll);
         if let Some(sd_meta) = self.sd_meta.take() {
             let _ = core.cancel_timeout(&sd_meta.timeout);

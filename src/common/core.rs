@@ -77,7 +77,7 @@ pub fn spawn_event_loop(token_counter_start: usize,
 }
 
 fn event_loop_impl(token_counter_start: usize,
-                   mut poll: Poll,
+                   poll: Poll,
                    rx: Receiver<CoreMessage>,
                    mut core: Core)
                    -> Result<()> {
@@ -102,15 +102,15 @@ fn event_loop_impl(token_counter_start: usize,
                             Err(TryRecvError::Disconnected) => break 'event_loop,
                         };
                         match msg.0 {
-                            Some(mut f) => f(&mut core, &mut poll),
+                            Some(mut f) => f(&mut core, &poll),
                             None => break 'event_loop,
                         }
                     }
                 }
                 Token(t) if t == token_counter_start + TIMER_TOKEN_OFFSET => {
-                    core.handle_timer(&mut poll, event.kind())
+                    core.handle_timer(&poll, event.kind())
                 }
-                _ => core.handle_event(&mut poll, event),
+                _ => core.handle_event(&poll, event),
             }
         }
     }
@@ -118,7 +118,7 @@ fn event_loop_impl(token_counter_start: usize,
     Ok(())
 }
 
-pub struct CoreMessage(Option<Box<FnMut(&mut Core, &mut Poll) + Send>>);
+pub struct CoreMessage(Option<Box<FnMut(&mut Core, &Poll) + Send>>);
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
 pub struct CoreTimer {
@@ -176,13 +176,13 @@ impl Core {
         self.states.get(&key).cloned()
     }
 
-    fn handle_event(&mut self, poll: &mut Poll, event: Event) {
+    fn handle_event(&mut self, poll: &Poll, event: Event) {
         if let Some(state) = self.get_state(event.token()) {
             state.borrow_mut().ready(self, poll, event.kind());
         }
     }
 
-    fn handle_timer(&mut self, poll: &mut Poll, kind: Ready) {
+    fn handle_timer(&mut self, poll: &Poll, kind: Ready) {
         if !kind.is_readable() {
             warn!("Timer errored out: {:?}", kind);
             return;
@@ -196,10 +196,9 @@ impl Core {
 }
 
 impl CoreMessage {
-    pub fn new<F: FnOnce(&mut Core, &mut Poll) + Send + 'static>(f: F) -> Self {
+    pub fn new<F: FnOnce(&mut Core, &Poll) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        CoreMessage(Some(Box::new(move |core: &mut Core, poll: &mut Poll| if let Some(f) =
-            f.take() {
+        CoreMessage(Some(Box::new(move |core: &mut Core, poll: &Poll| if let Some(f) = f.take() {
             f(core, poll)
         })))
     }

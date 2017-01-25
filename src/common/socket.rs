@@ -77,7 +77,7 @@ impl Socket {
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
     pub fn write<T: Encodable>(&mut self,
-                               poll: &mut Poll,
+                               poll: &Poll,
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
@@ -202,7 +202,7 @@ impl SockInner {
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
     fn write<T: Encodable>(&mut self,
-                           poll: &mut Poll,
+                           poll: &Poll,
                            token: Token,
                            msg: Option<(T, Priority)>)
                            -> ::Res<bool> {

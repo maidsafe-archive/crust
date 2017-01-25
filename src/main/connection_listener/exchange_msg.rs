@@ -43,7 +43,7 @@ pub struct ExchangeMsg {
 
 impl ExchangeMsg {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  timeout_sec: Option<u64>,
                  socket: Socket,
                  our_pk: PublicKey,
@@ -76,7 +76,7 @@ impl ExchangeMsg {
         Ok(())
     }
 
-    fn read(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn read(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
                 self.handle_bootstrap_req(core, poll, their_public_key, name_hash)
@@ -99,7 +99,7 @@ impl ExchangeMsg {
 
     fn handle_bootstrap_req(&mut self,
                             core: &mut Core,
-                            poll: &mut Poll,
+                            poll: &Poll,
                             their_public_key: PublicKey,
                             name_hash: NameHash) {
         let their_id = match self.get_peer_id(their_public_key, name_hash) {
@@ -114,7 +114,7 @@ impl ExchangeMsg {
 
     fn handle_connect(&mut self,
                       core: &mut Core,
-                      poll: &mut Poll,
+                      poll: &Poll,
                       their_public_key: PublicKey,
                       name_hash: NameHash) {
         let their_id = match self.get_peer_id(their_public_key, name_hash) {
@@ -128,7 +128,7 @@ impl ExchangeMsg {
         self.write(core, poll, Some((Message::Connect(our_pk, name_hash), 0)));
     }
 
-    fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &Poll) {
         self.next_state = NextState::None;
         if let Ok(peer_addr) = self.socket.peer_addr() {
             self.write(core,
@@ -165,7 +165,7 @@ impl ExchangeMsg {
         Ok(their_id)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_id) = self.next_state {
             let terminate = match unwrap!(self.cm.lock()).get(&their_id).cloned() {
@@ -187,7 +187,7 @@ impl ExchangeMsg {
         }
     }
 
-    fn done(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn done(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = core.cancel_timeout(&self.timeout);
 
@@ -210,7 +210,7 @@ impl ExchangeMsg {
             NextState::ConnectionCandidate(their_id) => {
                 let cm = self.cm.clone();
                 let handler =
-                    move |core: &mut Core, poll: &mut Poll, token, res| if let Some(socket) = res {
+                    move |core: &mut Core, poll: &Poll, token, res| if let Some(socket) = res {
                         ActiveConnection::start(core,
                                                 poll,
                                                 token,
@@ -238,7 +238,7 @@ impl ExchangeMsg {
 }
 
 impl State for ExchangeMsg {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.terminate(core, poll);
         } else {
@@ -251,7 +251,7 @@ impl State for ExchangeMsg {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
 
         match self.next_state {
@@ -272,7 +272,7 @@ impl State for ExchangeMsg {
         let _ = poll.deregister(&self.socket);
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &mut Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
         debug!("Exchange message timed out. Terminating direct connection request.");
         self.terminate(core, poll)
     }

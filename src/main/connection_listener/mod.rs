@@ -45,7 +45,7 @@ pub struct ConnectionListener {
 
 impl ConnectionListener {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  handshake_timeout_sec: Option<u64>,
                  port: u16,
                  our_pk: PublicKey,
@@ -56,21 +56,20 @@ impl ConnectionListener {
                  token: Token,
                  event_tx: ::CrustEventSender) {
         let event_tx_0 = event_tx.clone();
-        let finish = move |core: &mut Core, poll: &mut Poll, socket, mapped_addrs| {
-            if let Err(e) = ConnectionListener::handle_mapped_socket(core,
-                                                                     poll,
-                                                                     handshake_timeout_sec,
-                                                                     socket,
-                                                                     mapped_addrs,
-                                                                     our_pk,
-                                                                     name_hash,
-                                                                     cm,
-                                                                     our_listeners,
-                                                                     token,
-                                                                     event_tx.clone()) {
-                error!("TCP Listener failed to handle mapped socket: {:?}", e);
-                let _ = event_tx.send(Event::ListenerFailed);
-            }
+        let finish = move |core: &mut Core, poll: &Poll, socket, mapped_addrs| if let Err(e) =
+            ConnectionListener::handle_mapped_socket(core,
+                                                     poll,
+                                                     handshake_timeout_sec,
+                                                     socket,
+                                                     mapped_addrs,
+                                                     our_pk,
+                                                     name_hash,
+                                                     cm,
+                                                     our_listeners,
+                                                     token,
+                                                     event_tx.clone()) {
+            error!("TCP Listener failed to handle mapped socket: {:?}", e);
+            let _ = event_tx.send(Event::ListenerFailed);
         };
 
         if let Err(e) = MappedTcpSocket::start(core, poll, port, &mc, finish) {
@@ -80,7 +79,7 @@ impl ConnectionListener {
     }
 
     fn handle_mapped_socket(core: &mut Core,
-                            poll: &mut Poll,
+                            poll: &Poll,
                             timeout_sec: Option<u64>,
                             socket: TcpBuilder,
                             mapped_addrs: Vec<SocketAddr>,
@@ -118,7 +117,7 @@ impl ConnectionListener {
         Ok(())
     }
 
-    fn accept(&self, core: &mut Core, poll: &mut Poll) {
+    fn accept(&self, core: &mut Core, poll: &Poll) {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
@@ -143,7 +142,7 @@ impl ConnectionListener {
 }
 
 impl State for ConnectionListener {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.terminate(core, poll);
             let _ = self.event_tx.send(Event::ListenerFailed);
@@ -152,7 +151,7 @@ impl State for ConnectionListener {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = poll.deregister(&self.listener);
         let _ = core.remove_state(self.token);
     }

@@ -56,7 +56,7 @@ pub struct ServiceDiscovery {
 
 impl ServiceDiscovery {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                  token: Token,
                  port: u16)
@@ -107,7 +107,7 @@ impl ServiceDiscovery {
         self.observers.push(obs);
     }
 
-    fn read(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn read(&mut self, core: &mut Core, poll: &Poll) {
         let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
             Ok(Some((bytes_rxd, peer_addr))) => (bytes_rxd, peer_addr),
             Ok(None) => return,
@@ -140,14 +140,14 @@ impl ServiceDiscovery {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn write(&mut self, core: &mut Core, poll: &Poll) {
         if let Err(e) = self.write_impl(poll) {
             warn!("Error in ServiceDiscovery write: {:?}", e);
             self.terminate(core, poll);
         }
     }
 
-    fn write_impl(&mut self, poll: &mut Poll) -> Result<(), ServiceDiscoveryError> {
+    fn write_impl(&mut self, poll: &Poll) -> Result<(), ServiceDiscoveryError> {
         let our_current_listeners = unwrap!(self.our_listeners
                 .lock())
             .iter()
@@ -182,7 +182,7 @@ impl ServiceDiscovery {
 }
 
 impl State for ServiceDiscovery {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.terminate(core, poll);
         } else {
@@ -195,7 +195,7 @@ impl State for ServiceDiscovery {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = poll.deregister(&self.socket);
         let _ = core.remove_state(self.token);
     }

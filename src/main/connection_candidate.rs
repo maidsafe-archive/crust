@@ -25,7 +25,7 @@ use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &mut Poll, Token, Option<Socket>)>;
+pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
 
 pub struct ConnectionCandidate {
     token: Token,
@@ -38,7 +38,7 @@ pub struct ConnectionCandidate {
 
 impl ConnectionCandidate {
     pub fn start(core: &mut Core,
-                 poll: &mut Poll,
+                 poll: &Poll,
                  token: Token,
                  socket: Socket,
                  cm: ConnectionMap,
@@ -70,7 +70,7 @@ impl ConnectionCandidate {
         Ok(token)
     }
 
-    fn read(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn read(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, poll),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
@@ -78,7 +78,7 @@ impl ConnectionCandidate {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &mut Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
         let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
@@ -94,7 +94,7 @@ impl ConnectionCandidate {
         }
     }
 
-    fn done(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn done(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let token = self.token;
         let socket = mem::replace(&mut self.socket, Socket::default());
@@ -102,7 +102,7 @@ impl ConnectionCandidate {
         (*self.finish)(core, poll, token, Some(socket));
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
@@ -110,7 +110,7 @@ impl ConnectionCandidate {
 }
 
 impl State for ConnectionCandidate {
-    fn ready(&mut self, core: &mut Core, poll: &mut Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             return self.handle_error(core, poll);
         }
@@ -123,7 +123,7 @@ impl State for ConnectionCandidate {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &mut Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
 
