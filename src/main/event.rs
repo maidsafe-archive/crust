@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::SocketAddr;
 use super::ConnectionInfoResult;
 
 use super::PeerId;
+use std::net::SocketAddr;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.

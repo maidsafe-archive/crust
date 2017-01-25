@@ -18,6 +18,7 @@
 
 
 use maidsafe_utilities::serialisation::SerialisationError;
+use mio::timer::TimerError;
 use std::io;
 
 quick_error! {
@@ -40,10 +41,17 @@ quick_error! {
             description("Payload is too large")
         }
         /// Serialisation error
-        Serialisation(err: SerialisationError) {
+        Serialisation(e: SerialisationError) {
             description("Serialisation error")
-            display("Serialisation error: {}", err)
-            cause(err)
+            display("Serialisation error: {}", e)
+            cause(e)
+            from()
+        }
+        /// Timer error
+        Timer(e: TimerError) {
+            description(e.description())
+            display("Timer error: {}", e)
+            cause(e)
             from()
         }
     }

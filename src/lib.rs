@@ -45,7 +45,6 @@ extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
 #[cfg_attr(feature="cargo-clippy", allow(useless_attribute))]
-#[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
 
@@ -59,7 +58,7 @@ extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate rust_sodium;
-extern crate tmp_mio as mio;
+extern crate mio;
 #[macro_use]
 extern crate unwrap;
 

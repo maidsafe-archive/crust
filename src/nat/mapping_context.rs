@@ -18,13 +18,13 @@
 //! Defines the `MappingContext` type
 
 
+use super::NatError;
 use common::get_if_addrs::{self, IfAddr};
 use crossbeam;
 use igd::{self, Gateway};
 use nat;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::time::Duration;
-use super::NatError;
 
 /// Keeps track of information about external mapping servers
 #[derive(Debug, Clone)]
@@ -84,7 +84,7 @@ impl MappingContext {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     // Run with `cargo test igd -- --ignored` to find if IGD is available for you

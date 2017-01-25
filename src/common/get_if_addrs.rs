@@ -509,7 +509,7 @@ pub fn get_if_addrs() -> io::Result<Vec<Interface>> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use common::get_if_addrs::get_if_addrs;
     use std::error::Error;
     use std::io::Read;

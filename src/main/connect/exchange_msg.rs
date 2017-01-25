@@ -18,14 +18,14 @@
 
 use common::{Core, Message, NameHash, Priority, Socket, State};
 use main::{ConnectionId, ConnectionMap, PeerId};
-use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &mut EventLoop<Core>, Token, Option<Socket>)>;
+pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
 
 pub struct ExchangeMsg {
     token: Token,
@@ -39,7 +39,7 @@ pub struct ExchangeMsg {
 
 impl ExchangeMsg {
     pub fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
+                 poll: &Poll,
                  socket: Socket,
                  our_id: PeerId,
                  expected_id: PeerId,
@@ -49,9 +49,9 @@ impl ExchangeMsg {
                  -> ::Res<Token> {
         let token = core.get_new_token();
 
-        el.register(&socket,
+        poll.register(&socket,
                       token,
-                      EventSet::error() | EventSet::hup() | EventSet::writable(),
+                      Ready::error() | Ready::hup() | Ready::writable(),
                       PollOpt::edge())?;
 
         {
@@ -79,57 +79,54 @@ impl ExchangeMsg {
         Ok(token)
     }
 
-    fn write(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             msg: Option<(Message, Priority)>) {
-        if self.socket.write(el, self.token, msg).is_err() {
-            self.handle_error(core, el);
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+        if self.socket.write(poll, self.token, msg).is_err() {
+            self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::Connect(their_pk, name_hash))) => {
                 if their_pk != self.expected_id.0 || name_hash != self.expected_nh {
-                    return self.handle_error(core, el);
+                    return self.handle_error(core, poll);
                 }
                 let _ = core.remove_state(self.token);
                 let token = self.token;
                 let socket = mem::replace(&mut self.socket, Socket::default());
 
-                (*self.finish)(core, el, token, Some(socket));
+                (*self.finish)(core, poll, token, Some(socket));
             }
             Ok(None) => (),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, el),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        self.terminate(core, el);
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+        self.terminate(core, poll);
         let token = self.token;
-        (*self.finish)(core, el, token, None);
+        (*self.finish)(core, poll, token, None);
     }
 }
 
 impl State for ExchangeMsg {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
-        if es.is_error() || es.is_hup() {
-            self.handle_error(core, el);
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+        if kind.is_error() || kind.is_hup() {
+            self.handle_error(core, poll);
         } else {
-            if es.is_writable() {
+            if kind.is_writable() {
                 let req = self.msg.take();
-                self.write(core, el, req);
+                self.write(core, poll, req);
             }
-            if es.is_readable() {
-                self.receive_response(core, el)
+            if kind.is_readable() {
+                self.receive_response(core, poll)
             }
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket);
+        let _ = poll.deregister(&self.socket);
 
         let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.expected_id) {

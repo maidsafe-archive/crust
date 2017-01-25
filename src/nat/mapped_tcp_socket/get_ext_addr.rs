@@ -17,7 +17,7 @@
 
 
 use common::{Core, Message, Priority, Socket, State};
-use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
 use nat::{NatError, util};
 use std::any::Any;
@@ -25,10 +25,7 @@ use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core,
-                            &mut EventLoop<Core>,
-                            Token,
-                            Result<SocketAddr, ()>)>;
+pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Result<SocketAddr, ()>)>;
 
 pub struct GetExtAddr {
     token: Token,
@@ -39,7 +36,7 @@ pub struct GetExtAddr {
 
 impl GetExtAddr {
     pub fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
+                 poll: &Poll,
                  local_addr: SocketAddr,
                  peer_stun: &SocketAddr,
                  finish: Finish)
@@ -58,9 +55,9 @@ impl GetExtAddr {
             finish: finish,
         };
 
-        el.register(&state.socket,
+        poll.register(&state.socket,
                       token,
-                      EventSet::error() | EventSet::hup() | EventSet::writable(),
+                      Ready::error() | Ready::hup() | Ready::writable(),
                       PollOpt::edge())?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -68,52 +65,49 @@ impl GetExtAddr {
         Ok(token)
     }
 
-    fn write(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             msg: Option<(Message, Priority)>) {
-        if self.socket.write(el, self.token, msg).is_err() {
-            self.handle_error(core, el);
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+        if self.socket.write(poll, self.token, msg).is_err() {
+            self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
-                self.terminate(core, el);
+                self.terminate(core, poll);
                 let token = self.token;
-                (*self.finish)(core, el, token, Ok(ext_addr.0))
+                (*self.finish)(core, poll, token, Ok(ext_addr.0))
             }
             Ok(None) => (),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, el),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        self.terminate(core, el);
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+        self.terminate(core, poll);
         let token = self.token;
-        (*self.finish)(core, el, token, Err(()));
+        (*self.finish)(core, poll, token, Err(()));
     }
 }
 
 impl State for GetExtAddr {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
-        if es.is_error() || es.is_hup() {
-            self.handle_error(core, el);
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+        if kind.is_error() || kind.is_hup() {
+            self.handle_error(core, poll);
         } else {
-            if es.is_writable() {
+            if kind.is_writable() {
                 let req = self.request.take();
-                self.write(core, el, req);
+                self.write(core, poll, req);
             }
-            if es.is_readable() {
-                self.receive_response(core, el)
+            if kind.is_readable() {
+                self.receive_response(core, poll)
             }
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket);
+        let _ = poll.deregister(&self.socket);
     }
 
     fn as_any(&mut self) -> &mut Any {
