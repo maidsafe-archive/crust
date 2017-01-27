@@ -18,10 +18,10 @@
 #[macro_use]
 pub mod utils;
 
+pub use self::utils::{gen_config, get_event_sender, timebomb};
 use common::SocketAddr;
 use main::{Config, Event, Service};
 use mio;
-pub use self::utils::{gen_config, get_event_sender, timebomb};
 
 use std::collections::HashSet;
 use std::net::SocketAddr as StdSocketAddr;

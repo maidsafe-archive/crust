@@ -233,6 +233,7 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
 #[cfg(test)]
 mod test {
 
+    use super::*;
     use common::{Core, CoreMessage};
     use maidsafe_utilities;
     use mio::{EventLoop, Token};
@@ -243,7 +244,6 @@ mod test {
     use std::sync::mpsc;
     use std::thread;
     use std::time::Duration;
-    use super::*;
 
     #[test]
     fn service_discovery() {

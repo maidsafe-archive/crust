@@ -17,6 +17,7 @@
 
 mod exchange_msg;
 
+use self::exchange_msg::ExchangeMsg;
 use common::{Core, NameHash, Socket, State};
 use main::{ConnectionMap, Event};
 use mio::{EventLoop, EventSet, PollOpt, Token};
@@ -24,7 +25,6 @@ use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
 use rust_sodium::crypto::box_::PublicKey;
-use self::exchange_msg::ExchangeMsg;
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -166,6 +166,8 @@ impl State for ConnectionListener {
 #[cfg(test)]
 mod test {
 
+    use super::*;
+    use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
     use common::{self, Core, CoreMessage, Message, NameHash};
     use maidsafe_utilities;
@@ -187,8 +189,6 @@ mod test {
     use std::sync::{Arc, Mutex};
     use std::sync::mpsc;
     use std::time::Duration;
-    use super::*;
-    use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
 
     const NAME_HASH: NameHash = [1; sha256::DIGESTBYTES];
     const NAME_HASH_2: NameHash = [2; sha256::DIGESTBYTES];

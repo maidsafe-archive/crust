@@ -438,6 +438,7 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 #[cfg(test)]
 mod tests {
 
+    use super::*;
     use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
@@ -451,7 +452,6 @@ mod tests {
     use std::sync::mpsc::Receiver;
     use std::thread;
     use std::time::Duration;
-    use super::*;
     use tests::{get_event_sender, timebomb};
 
     #[test]
