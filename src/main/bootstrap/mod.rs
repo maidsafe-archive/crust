@@ -18,14 +18,14 @@
 mod cache;
 mod try_peer;
 
+use self::cache::Cache;
+use self::try_peer::TryPeer;
 use common::{self, Core, CoreTimerId, NameHash, Socket, State};
 
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{EventLoop, Timeout, Token};
 use rand::{self, Rng};
 use rust_sodium::crypto::box_::PublicKey;
-use self::cache::Cache;
-use self::try_peer::TryPeer;
 use service_discovery::ServiceDiscovery;
 use std::any::Any;
 use std::cell::RefCell;

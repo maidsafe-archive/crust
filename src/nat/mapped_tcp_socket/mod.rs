@@ -16,13 +16,13 @@
 // relating to use of the SAFE Network Software.
 
 
+use self::get_ext_addr::GetExtAddr;
 use common::{Core, CoreMessage, CoreTimerId, State};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
 use mio::{EventLoop, Timeout, Token};
 use nat::{MappingContext, NatError, util};
 use net2::TcpBuilder;
-use self::get_ext_addr::GetExtAddr;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
