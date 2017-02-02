@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.20.1]
+- Expose functionality to check if the connected peer is one of the hard-coded contacts from the config.
+
 ## [0.20.0]
 - Expose `Config` structure.
 - Update `rustfmt` options.
