@@ -489,13 +489,13 @@ mod tests {
         let pub_info_1 = priv_info_1.to_pub_connection_info();
 
         unwrap!(service_0.connect(priv_info_0, pub_info_1));
-        if cfg!(windows) {
-            thread::sleep(Duration::from_millis(100));
-        }
         unwrap!(service_1.connect(priv_info_1, pub_info_0));
 
+        println!("============ -2");
         expect_event!(event_rx_0, Event::ConnectSuccess(id) => assert_eq!(id, service_1.id()));
+        println!("============ -1");
         expect_event!(event_rx_1, Event::ConnectSuccess(id) => assert_eq!(id, service_0.id()));
+        println!("============ 0");
     }
 
     fn exchange_messages(service_0: &Service,
@@ -514,17 +514,21 @@ mod tests {
         let send_1 = data_1.clone();
 
         unwrap!(service_0.send(id_1, data_0, 0));
+        println!("============ 1");
         unwrap!(service_1.send(id_0, data_1, 0));
+        println!("============ 2");
 
         let recv_1 = expect_event!(event_rx_0, Event::NewMessage(id, recv) => {
             assert_eq!(id, id_1);
             recv
         });
 
+        println!("============ 3");
         let recv_0 = expect_event!(event_rx_1, Event::NewMessage(id, recv) => {
             assert_eq!(id, id_0);
             recv
         });
+        println!("============ 4");
 
         assert_eq!(recv_0, send_0);
         assert_eq!(recv_1, send_1);

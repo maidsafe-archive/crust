@@ -148,18 +148,26 @@ impl SockInner {
 
         // the mio reading window is max at 64k (64 * 1024)
         let mut buffer = [0; 65536];
+        let mut is_something_read = false;
 
-        match self.stream.read(&mut buffer) {
-            Ok(bytes_read) => {
-                self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
-                self.read_from_buffer()
-            }
+        loop {
+            match self.stream.read(&mut buffer) {
+                Ok(bytes_read) => {
+                    self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
+                    is_something_read = true;
+                }
 
-            Err(error) => {
-                if error.kind() == ErrorKind::WouldBlock || error.kind() == ErrorKind::Interrupted {
-                    Ok(None)
-                } else {
-                    Err(From::from(error))
+                Err(error) => {
+                    return if error.kind() == ErrorKind::WouldBlock ||
+                              error.kind() == ErrorKind::Interrupted {
+                        if is_something_read {
+                            self.read_from_buffer()
+                        } else {
+                            Ok(None)
+                        }
+                    } else {
+                        Err(From::from(error))
+                    }
                 }
             }
         }

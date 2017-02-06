@@ -26,8 +26,8 @@ rustc-serialize = "~0.3.19"
 mio = "~0.6.3"
 unwrap = "~1.1.0"
 
-#[dev-dependencies]
-#clap = "~2.20.0"
+[dev-dependencies]
+clap = "~2.20.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = "~0.2"
@@ -36,7 +36,7 @@ winapi = "~0.2"
 bench = false
 name = "crust_peer"
 path = "examples/crust_peer.rs"
-test = false
+test = true
 
 [features]
 cargo-clippy = []
