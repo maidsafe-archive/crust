@@ -158,7 +158,10 @@ impl ExchangeMsg {
 
                 child.borrow_mut().terminate(core, el);
             }
-            return self.send_bootstrap_resp(core, el, state_data.their_public_key, state_data.name_hash);
+            return self.send_bootstrap_resp(core,
+                                            el,
+                                            state_data.their_public_key,
+                                            state_data.name_hash);
         }
         if self.reachability_children.is_empty() {
             debug!("Bootstrapper failed to pass requisite condition of external recheability. \
