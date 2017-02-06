@@ -16,15 +16,18 @@
 // relating to use of the SAFE Network Software.
 
 
-use common::{self, Core, CoreTimerId, Message, NameHash, Priority, Socket, State};
+use super::check_reachability::CheckReachability;
+use common::{self, Core, CoreTimerId, ExternalReachability, Message, NameHash, Priority, Socket,
+             State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use rust_sodium::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::collections::hash_map::Entry;
 use std::mem;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 
@@ -37,6 +40,8 @@ pub struct ExchangeMsg {
     our_pk: PublicKey,
     socket: Socket,
     timeout: Timeout,
+    reachability_children: HashSet<Token>,
+    self_weak: Weak<RefCell<ExchangeMsg>>,
 }
 
 impl ExchangeMsg {
@@ -57,7 +62,7 @@ impl ExchangeMsg {
         let timeout = el.timeout_ms(CoreTimerId::new(token, 0),
                         timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS))?;
 
-        let state = ExchangeMsg {
+        let state = Rc::new(RefCell::new(ExchangeMsg {
             token: token,
             cm: cm,
             event_tx: event_tx,
@@ -66,17 +71,21 @@ impl ExchangeMsg {
             our_pk: our_pk,
             socket: socket,
             timeout: timeout,
-        };
+            reachability_children: HashSet::with_capacity(4),
+            self_weak: Default::default(),
+        }));
 
-        let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
+        state.borrow_mut().self_weak = Rc::downgrade(&state);
+
+        let _ = core.insert_state(token, state);
 
         Ok(())
     }
 
     fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         match self.socket.read::<Message>() {
-            Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
-                self.handle_bootstrap_req(core, el, their_public_key, name_hash)
+            Ok(Some(Message::BootstrapRequest(their_public_key, name_hash, ext_reachability))) => {
+                self.handle_bootstrap_req(core, el, their_public_key, name_hash, ext_reachability)
             }
             Ok(Some(Message::Connect(their_public_key, name_hash))) => {
                 self.handle_connect(core, el, their_public_key, name_hash)
@@ -98,7 +107,71 @@ impl ExchangeMsg {
                             core: &mut Core,
                             el: &mut EventLoop<Core>,
                             their_public_key: PublicKey,
-                            name_hash: NameHash) {
+                            name_hash: NameHash,
+                            ext_reachability: ExternalReachability) {
+        match ext_reachability {
+            ExternalReachability::Required { direct_listeners } => {
+                let state_data = StateData {
+                    their_public_key: their_public_key,
+                    name_hash: name_hash,
+                };
+                for their_listener in direct_listeners {
+                    let self_weak = self.self_weak.clone();
+                    let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
+                        if let Some(self_rc) = self_weak.upgrade() {
+                            self_rc.borrow_mut().handle_check_reachability(core, el, child, res)
+                        }
+                    };
+
+                    if let Ok(child) = CheckReachability::<StateData>::start(core,
+                                                                             el,
+                                                                             their_listener,
+                                                                             state_data,
+                                                                             Box::new(finish)) {
+                        let _ = self.reachability_children.insert(child);
+                    }
+                }
+                if self.reachability_children.is_empty() {
+                    debug!("Bootstrapper failed to pass requisite condition of external \
+                            recheability. Denying bootstrap.");
+                    return self.terminate(core, el);
+                }
+            }
+            ExternalReachability::NotRequired => {
+                self.send_bootstrap_resp(core, el, their_public_key, name_hash)
+            }
+        }
+    }
+
+    fn handle_check_reachability(&mut self,
+                                 core: &mut Core,
+                                 el: &mut EventLoop<Core>,
+                                 child: Token,
+                                 res: Result<StateData, ()>) {
+        let _ = self.reachability_children.remove(&child);
+        if let Ok(state_data) = res {
+            for child in self.reachability_children.drain() {
+                let child = match core.get_state(child) {
+                    Some(state) => state,
+                    None => continue,
+                };
+
+                child.borrow_mut().terminate(core, el);
+            }
+            return self.send_bootstrap_resp(core, el, state_data.their_public_key, state_data.name_hash);
+        }
+        if self.reachability_children.is_empty() {
+            debug!("Bootstrapper failed to pass requisite condition of external recheability. \
+                    Denying bootstrap.");
+            self.terminate(core, el);
+        }
+    }
+
+    fn send_bootstrap_resp(&mut self,
+                           core: &mut Core,
+                           el: &mut EventLoop<Core>,
+                           their_public_key: PublicKey,
+                           name_hash: NameHash) {
         let their_id = match self.get_peer_id(their_public_key, name_hash) {
             Ok(their_id) => their_id,
             Err(()) => return self.terminate(core, el),
@@ -287,4 +360,10 @@ enum NextState {
     None,
     ActiveConnection(PeerId),
     ConnectionCandidate(PeerId),
+}
+
+#[derive(Debug, Clone, Copy)]
+struct StateData {
+    their_public_key: PublicKey,
+    name_hash: NameHash,
 }

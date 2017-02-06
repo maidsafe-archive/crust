@@ -85,7 +85,7 @@ pub struct PrivConnectionInfo {
     #[doc(hidden)]
     pub for_hole_punch: Vec<common::SocketAddr>,
     #[doc(hidden)]
-    pub hole_punch_socket: TcpBuilder,
+    pub hole_punch_socket: Option<TcpBuilder>,
 }
 
 impl PrivConnectionInfo {

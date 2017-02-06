@@ -37,6 +37,25 @@ pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 /// Minimum priority for droppable messages. Messages with lower values will never be dropped.
 pub const MSG_DROP_PRIORITY: u8 = 2;
 
+/// Specify crust user. Behaviour (for example in bootstrap phase) will be different for different
+/// variants. Node will request the Bootstrapee to connect back to this crust failing which it
+/// would mean it's not reachable from outside and hence should be rejected bootstrap attempts.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CrustUser {
+    /// Crust user is a Node and should not be allowed to bootstrap if it's not reachable from
+    /// outside.
+    Node,
+    /// Crust user is a Client and should be allowed to bootstrap even if it's not reachable from
+    /// outside.
+    Client,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, RustcEncodable, RustcDecodable)]
+pub enum ExternalReachability {
+    NotRequired,
+    Required { direct_listeners: Vec<SocketAddr> },
+}
+
 pub mod get_if_addrs;
 mod core;
 mod error;

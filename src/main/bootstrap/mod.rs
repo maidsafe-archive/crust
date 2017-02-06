@@ -20,7 +20,7 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{self, Core, CoreTimerId, NameHash, Socket, State};
+use common::{self, Core, CoreTimerId, ExternalReachability, NameHash, Socket, State};
 
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{EventLoop, Timeout, Token};
@@ -47,6 +47,7 @@ pub struct Bootstrap {
     peers: Vec<common::SocketAddr>,
     blacklist: HashSet<net::SocketAddr>,
     name_hash: NameHash,
+    ext_reachability: ExternalReachability,
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
     sd_meta: Option<ServiceDiscMeta>,
@@ -61,6 +62,7 @@ impl Bootstrap {
     pub fn start(core: &mut Core,
                  el: &mut EventLoop<Core>,
                  name_hash: NameHash,
+                 ext_reachability: ExternalReachability,
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,
@@ -97,6 +99,7 @@ impl Bootstrap {
             peers: peers,
             blacklist: blacklist,
             name_hash: name_hash,
+            ext_reachability: ext_reachability,
             our_pk: our_pk,
             event_tx: event_tx,
             sd_meta: sd_meta,
@@ -140,6 +143,7 @@ impl Bootstrap {
                                               *peer,
                                               self.our_pk,
                                               self.name_hash,
+                                              self.ext_reachability.clone(),
                                               Box::new(finish)) {
                 let _ = self.children.insert(child);
             }

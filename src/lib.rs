@@ -75,7 +75,7 @@ mod common;
 mod service_discovery;
 mod nat;
 
-pub use common::{MSG_DROP_PRIORITY, Priority};
+pub use common::{CrustUser, MSG_DROP_PRIORITY, Priority};
 pub use main::{Config, ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
                PubConnectionInfo, Service};
 

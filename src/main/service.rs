@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, Core, CoreMessage, NameHash, Priority};
+use common::{self, Core, CoreMessage, CrustUser, ExternalReachability, NameHash, Priority};
 use maidsafe_utilities;
 use maidsafe_utilities::thread::Joiner;
 use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
@@ -39,6 +39,9 @@ const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
 const LISTENER_TOKEN: Token = Token(2);
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
+
+const DISABLE_NAT: bool = true;
+
 /// A structure representing a connection manager. This is the main object through which crust is
 /// used.
 pub struct Service {
@@ -237,17 +240,32 @@ impl Service {
 
     /// Start the bootstrapping procedure. It will auto terminate after indicating success or
     /// failure via the event channel.
-    pub fn start_bootstrap(&mut self, blacklist: HashSet<SocketAddr>) -> ::Res<()> {
+    pub fn start_bootstrap(&mut self,
+                           blacklist: HashSet<SocketAddr>,
+                           crust_user: CrustUser)
+                           -> ::Res<()> {
         let config = self.config.clone();
         let our_pk = self.our_keys.0;
         let name_hash = self.name_hash;
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
+        let ext_reachability = match crust_user {
+            CrustUser::Node => {
+                ExternalReachability::Required {
+                    direct_listeners: unwrap!(self.our_listeners.lock())
+                        .iter()
+                        .map(|s| common::SocketAddr(*s))
+                        .collect(),
+                }
+            }
+            CrustUser::Client => ExternalReachability::NotRequired,
+        };
 
         self.post(move |core, el| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
             if let Err(e) = Bootstrap::start(core,
                                              el,
                                              name_hash,
+                                             ext_reachability,
                                              our_pk,
                                              cm,
                                              &config,
@@ -354,44 +372,57 @@ impl Service {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let event_tx = self.event_tx.clone();
-        let our_pub_key = self.our_keys.0;
         let our_listeners =
             unwrap!(self.our_listeners.lock()).iter().map(|e| common::SocketAddr(*e)).collect();
-        let mc = self.mc.clone();
-        if let Err(e) = self.post(move |mut core, mut el| {
-            let event_tx_clone = event_tx.clone();
-            match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
-                let hole_punch_addrs = addrs.into_iter()
-                    .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
-                    .map(common::SocketAddr)
-                    .collect();
-                let event_tx = event_tx_clone;
-                let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                    result_token: result_token,
-                    result: Ok(PrivConnectionInfo {
-                        id: PeerId(our_pub_key),
-                        for_direct: our_listeners,
-                        for_hole_punch: hole_punch_addrs,
-                        hole_punch_socket: socket,
-                    }),
-                });
-                let _ = event_tx.send(event);
-            }) {
-                Ok(()) => (),
-                Err(e) => {
-                    debug!("Error mapping tcp socket: {}", e);
-                    let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token: result_token,
-                        result: Err(From::from(e)),
-                    }));
-                }
-            };
-        }) {
-            let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+        if DISABLE_NAT {
+            let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token: result_token,
-                result: Err(From::from(e)),
-            }));
+                result: Ok(PrivConnectionInfo {
+                    id: PeerId(self.our_keys.0),
+                    for_direct: our_listeners,
+                    for_hole_punch: Default::default(),
+                    hole_punch_socket: None,
+                }),
+            });
+            let _ = self.event_tx.send(event);
+        } else {
+            let event_tx = self.event_tx.clone();
+            let our_pub_key = self.our_keys.0;
+            let mc = self.mc.clone();
+            if let Err(e) = self.post(move |mut core, mut el| {
+                let event_tx_clone = event_tx.clone();
+                match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
+                    let hole_punch_addrs = addrs.into_iter()
+                        .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
+                        .map(common::SocketAddr)
+                        .collect();
+                    let event_tx = event_tx_clone;
+                    let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                        result_token: result_token,
+                        result: Ok(PrivConnectionInfo {
+                            id: PeerId(our_pub_key),
+                            for_direct: our_listeners,
+                            for_hole_punch: hole_punch_addrs,
+                            hole_punch_socket: Some(socket),
+                        }),
+                    });
+                    let _ = event_tx.send(event);
+                }) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        debug!("Error mapping tcp socket: {}", e);
+                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                result_token: result_token,
+                                result: Err(From::from(e)),
+                            }));
+                    }
+                };
+            }) {
+                let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                    result_token: result_token,
+                    result: Err(From::from(e)),
+                }));
+            }
         }
     }
 
