@@ -15,8 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
-use common::{Core, Message, NameHash, Priority, Socket, State};
+use common::{Core, ExternalReachability, Message, NameHash, Priority, Socket, State};
 use main::PeerId;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use rust_sodium::crypto::box_::PublicKey;
@@ -48,6 +47,7 @@ impl TryPeer {
                  peer: SocketAddr,
                  our_pk: PublicKey,
                  name_hash: NameHash,
+                 ext_reachability: ExternalReachability,
                  finish: Finish)
                  -> ::Res<Token> {
         let socket = Socket::connect(&peer)?;
@@ -62,7 +62,7 @@ impl TryPeer {
             token: token,
             peer: peer,
             socket: socket,
-            request: Some((Message::BootstrapRequest(our_pk, name_hash), 0)),
+            request: Some((Message::BootstrapRequest(our_pk, name_hash, ext_reachability), 0)),
             finish: finish,
         };
 

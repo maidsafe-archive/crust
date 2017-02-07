@@ -113,9 +113,6 @@ impl<F> MappedTcpSocket<F>
 
         // Ask Stuns
         for stun in mc.peer_stuns() {
-            if true {
-                break;
-            }
             let self_weak = Rc::downgrade(&state);
             let handler = move |core: &mut Core, el: &mut EventLoop<Core>, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {

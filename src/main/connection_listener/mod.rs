@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
@@ -164,12 +165,11 @@ impl State for ConnectionListener {
 }
 
 #[cfg(test)]
-mod test {
-
+mod tests {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, Core, CoreMessage, Message, NameHash};
+    use common::{self, Core, CoreMessage, ExternalReachability, Message, NameHash};
     use maidsafe_utilities;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -180,7 +180,6 @@ mod test {
     use rust_sodium::crypto::box_::{self, PublicKey};
     use rust_sodium::crypto::hash::sha256;
     use rustc_serialize::Decodable;
-
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
     use std::mem;
@@ -296,10 +295,14 @@ mod test {
         Ok(unwrap!(deserialise(&payload), "Could not deserialise."))
     }
 
-    fn bootstrap(name_hash: NameHash, pk: PublicKey, listener: Listener) {
+    fn bootstrap(name_hash: NameHash,
+                 ext_reachability: ExternalReachability,
+                 pk: PublicKey,
+                 listener: Listener) {
         let mut us = connect_to_listener(&listener);
 
-        let message = unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash)));
+        let message =
+            unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash, ext_reachability)));
         unwrap!(write(&mut us, message), "Could not write.");
 
         match unwrap!(read(&mut us), "Could not read.") {
@@ -344,7 +347,7 @@ mod test {
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH, pk, listener);
+        bootstrap(NAME_HASH, ExternalReachability::NotRequired, pk, listener);
     }
 
     #[test]
@@ -359,7 +362,7 @@ mod test {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH_2, pk, listener);
+        bootstrap(NAME_HASH_2, ExternalReachability::NotRequired, pk, listener);
     }
 
     #[test]
@@ -374,7 +377,10 @@ mod test {
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener();
-        bootstrap(NAME_HASH, listener.pk, listener);
+        bootstrap(NAME_HASH,
+                  ExternalReachability::NotRequired,
+                  listener.pk,
+                  listener);
     }
 
     #[test]
