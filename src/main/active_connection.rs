@@ -162,6 +162,11 @@ impl ActiveConnection {
 impl State for ActiveConnection {
     fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
         if es.is_error() || es.is_hup() {
+            trace!("Terminating connection to peer: {:?}. \
+                    Event reason: {:?} - Optional error: {:?}",
+                   self.their_id,
+                   es,
+                   self.socket.take_socket_error());
             self.terminate(core, el);
         } else {
             if es.is_writable() {

@@ -58,6 +58,11 @@ impl Socket {
         Ok(inner.stream.peer_addr()?)
     }
 
+    pub fn take_socket_error(&self) -> Result<()> {
+        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        Ok(inner.stream.take_socket_error()?)
+    }
+
     // Read message from the socket. Call this from inside the `ready` handler.
     //
     // Returns:
