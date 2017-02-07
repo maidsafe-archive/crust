@@ -17,8 +17,8 @@
 
 
 use super::check_reachability::CheckReachability;
-use common::{self, Core, CoreTimerId, ExternalReachability, Message, NameHash, Priority, Socket,
-             State};
+use common::{self, BootstrapDenyReason, Core, CoreTimerId, ExternalReachability, Message, NameHash,
+             Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use rust_sodium::crypto::box_::PublicKey;
@@ -85,10 +85,18 @@ impl ExchangeMsg {
     fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_public_key, name_hash, ext_reachability))) => {
-                self.handle_bootstrap_req(core, el, their_public_key, name_hash, ext_reachability)
+                match self.get_peer_id(their_public_key) {
+                    Ok(their_id) => {
+                        self.handle_bootstrap_req(core, el, their_id, name_hash, ext_reachability)
+                    }
+                    Err(()) => self.terminate(core, el),
+                }
             }
             Ok(Some(Message::Connect(their_public_key, name_hash))) => {
-                self.handle_connect(core, el, their_public_key, name_hash)
+                match self.get_peer_id(their_public_key) {
+                    Ok(their_id) => self.handle_connect(core, el, their_id, name_hash),
+                    Err(()) => self.terminate(core, el),
+                }
             }
             Ok(Some(Message::EchoAddrReq)) => self.handle_echo_addr_req(core, el),
             Ok(Some(message)) => {
@@ -106,15 +114,17 @@ impl ExchangeMsg {
     fn handle_bootstrap_req(&mut self,
                             core: &mut Core,
                             el: &mut EventLoop<Core>,
-                            their_public_key: PublicKey,
+                            their_id: PeerId,
                             name_hash: NameHash,
                             ext_reachability: ExternalReachability) {
+        if !self.is_valid_name_hash(name_hash) {
+            trace!("Rejecting Bootstrapper with an invalid name hash.");
+            return self.write(core,
+                       el,
+                       Some((Message::BootstrapDenied(BootstrapDenyReason::InvalidNameHash), 0)));
+        }
         match ext_reachability {
             ExternalReachability::Required { direct_listeners } => {
-                let state_data = StateData {
-                    their_public_key: their_public_key,
-                    name_hash: name_hash,
-                };
                 for their_listener in direct_listeners {
                     let self_weak = self.self_weak.clone();
                     let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
@@ -123,23 +133,22 @@ impl ExchangeMsg {
                         }
                     };
 
-                    if let Ok(child) = CheckReachability::<StateData>::start(core,
-                                                                             el,
-                                                                             their_listener,
-                                                                             state_data,
-                                                                             Box::new(finish)) {
+                    if let Ok(child) = CheckReachability::<PeerId>::start(core,
+                                                                          el,
+                                                                          their_listener,
+                                                                          their_id,
+                                                                          Box::new(finish)) {
                         let _ = self.reachability_children.insert(child);
                     }
                 }
                 if self.reachability_children.is_empty() {
-                    debug!("Bootstrapper failed to pass requisite condition of external \
+                    trace!("Bootstrapper failed to pass requisite condition of external \
                             recheability. Denying bootstrap.");
-                    return self.terminate(core, el);
+                    let reason = BootstrapDenyReason::FailedExternalReachability;
+                    self.write(core, el, Some((Message::BootstrapDenied(reason), 0)));
                 }
             }
-            ExternalReachability::NotRequired => {
-                self.send_bootstrap_resp(core, el, their_public_key, name_hash)
-            }
+            ExternalReachability::NotRequired => self.send_bootstrap_resp(core, el, their_id),
         }
     }
 
@@ -147,9 +156,9 @@ impl ExchangeMsg {
                                  core: &mut Core,
                                  el: &mut EventLoop<Core>,
                                  child: Token,
-                                 res: Result<StateData, ()>) {
+                                 res: Result<PeerId, ()>) {
         let _ = self.reachability_children.remove(&child);
-        if let Ok(state_data) = res {
+        if let Ok(their_id) = res {
             for child in self.reachability_children.drain() {
                 let child = match core.get_state(child) {
                     Some(state) => state,
@@ -158,42 +167,33 @@ impl ExchangeMsg {
 
                 child.borrow_mut().terminate(core, el);
             }
-            return self.send_bootstrap_resp(core,
-                                            el,
-                                            state_data.their_public_key,
-                                            state_data.name_hash);
+            return self.send_bootstrap_resp(core, el, their_id);
         }
         if self.reachability_children.is_empty() {
-            debug!("Bootstrapper failed to pass requisite condition of external recheability. \
+            trace!("Bootstrapper failed to pass requisite condition of external recheability. \
                     Denying bootstrap.");
-            self.terminate(core, el);
+            let reason = BootstrapDenyReason::FailedExternalReachability;
+            self.write(core, el, Some((Message::BootstrapDenied(reason), 0)));
         }
     }
 
     fn send_bootstrap_resp(&mut self,
                            core: &mut Core,
                            el: &mut EventLoop<Core>,
-                           their_public_key: PublicKey,
-                           name_hash: NameHash) {
-        let their_id = match self.get_peer_id(their_public_key, name_hash) {
-            Ok(their_id) => their_id,
-            Err(()) => return self.terminate(core, el),
-        };
-
+                           their_id: PeerId) {
         let our_pk = self.our_pk;
         self.next_state = NextState::ActiveConnection(their_id);
-        self.write(core, el, Some((Message::BootstrapResponse(our_pk), 0)))
+        self.write(core, el, Some((Message::BootstrapGranted(our_pk), 0)))
     }
 
     fn handle_connect(&mut self,
                       core: &mut Core,
                       el: &mut EventLoop<Core>,
-                      their_public_key: PublicKey,
+                      their_id: PeerId,
                       name_hash: NameHash) {
-        let their_id = match self.get_peer_id(their_public_key, name_hash) {
-            Ok(their_id) => their_id,
-            Err(()) => return self.terminate(core, el),
-        };
+        if !self.is_valid_name_hash(name_hash) {
+            return self.terminate(core, el);
+        }
 
         let our_pk = self.our_pk;
         let name_hash = self.name_hash;
@@ -212,14 +212,14 @@ impl ExchangeMsg {
         }
     }
 
-    fn get_peer_id(&self, their_public_key: PublicKey, name_hash: NameHash) -> Result<PeerId, ()> {
+    fn is_valid_name_hash(&self, name_hash: NameHash) -> bool {
+        warn!("Incompatible protocol version");
+        self.name_hash == name_hash
+    }
+
+    fn get_peer_id(&self, their_public_key: PublicKey) -> Result<PeerId, ()> {
         if self.our_pk == their_public_key {
             warn!("Accepted connection from ourselves");
-            return Err(());
-        }
-
-        if self.name_hash != name_hash {
-            warn!("Incompatible protocol version");
             return Err(());
         }
 
@@ -363,10 +363,4 @@ enum NextState {
     None,
     ActiveConnection(PeerId),
     ConnectionCandidate(PeerId),
-}
-
-#[derive(Debug, Clone, Copy)]
-struct StateData {
-    their_public_key: PublicKey,
-    name_hash: NameHash,
 }

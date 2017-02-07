@@ -347,7 +347,7 @@ mod broken_peer {
                         let public_key = box_::gen_keypair().0;
                         unwrap!(self.0.write(el,
                                                     self.1,
-                                                    Some((Message::BootstrapResponse(public_key),
+                                                    Some((Message::BootstrapGranted(public_key),
                                                           0))));
                     }
                     Some(_) | None => (),

@@ -306,7 +306,7 @@ mod tests {
         unwrap!(write(&mut us, message), "Could not write.");
 
         match unwrap!(read(&mut us), "Could not read.") {
-            Message::BootstrapResponse(peer_pk) => assert_eq!(peer_pk, listener.pk),
+            Message::BootstrapGranted(peer_pk) => assert_eq!(peer_pk, listener.pk),
             msg => panic!("Unexpected message: {:?}", msg),
         }
 

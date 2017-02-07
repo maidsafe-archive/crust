@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, ExternalReachability, Message, NameHash, Priority, Socket, State};
+use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket,
+             State};
 use main::PeerId;
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use rust_sodium::crypto::box_::PublicKey;
@@ -31,7 +32,8 @@ use std::rc::Rc;
 pub type Finish = Box<FnMut(&mut Core,
                             &mut EventLoop<Core>,
                             Token,
-                            Result<(Socket, SocketAddr, PeerId), SocketAddr>)>;
+                            Result<(Socket, SocketAddr, PeerId),
+                                   (SocketAddr, Option<BootstrapDenyReason>)>)>;
 
 pub struct TryPeer {
     token: Token,
@@ -76,43 +78,47 @@ impl TryPeer {
              el: &mut EventLoop<Core>,
              msg: Option<(Message, Priority)>) {
         if self.socket.write(el, self.token, msg).is_err() {
-            self.handle_error(core, el);
+            self.handle_error(core, el, None);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         match self.socket.read::<Message>() {
-            Ok(Some(Message::BootstrapResponse(peer_pk))) => {
+            Ok(Some(Message::BootstrapGranted(peer_pk))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
                 let socket = mem::replace(&mut self.socket, Socket::default());
                 let data = (socket, self.peer, PeerId(peer_pk));
                 (*self.finish)(core, el, token, Ok(data));
             }
+            Ok(Some(Message::BootstrapDenied(reason))) => self.handle_error(core, el, Some(reason)),
             Ok(None) => (),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, el),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, el, None),
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn handle_error(&mut self,
+                    core: &mut Core,
+                    el: &mut EventLoop<Core>,
+                    reason: Option<BootstrapDenyReason>) {
         self.terminate(core, el);
         let token = self.token;
         let peer = self.peer;
-        (*self.finish)(core, el, token, Err(peer));
+        (*self.finish)(core, el, token, Err((peer, reason)));
     }
 }
 
 impl State for TryPeer {
     fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
         if es.is_error() || es.is_hup() {
-            self.handle_error(core, el);
+            self.handle_error(core, el, None);
         } else {
             if es.is_writable() {
                 let req = self.request.take();
                 self.write(core, el, req);
             }
             if es.is_readable() {
-                self.receive_response(core, el)
+                self.read(core, el)
             }
         }
     }

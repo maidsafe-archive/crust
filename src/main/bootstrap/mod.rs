@@ -20,7 +20,8 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{self, Core, CoreTimerId, ExternalReachability, NameHash, Socket, State};
+use common::{self, BootstrapDenyReason, Core, CoreTimerId, ExternalReachability, NameHash, Socket,
+             State};
 
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{EventLoop, Timeout, Token};
@@ -155,7 +156,8 @@ impl Bootstrap {
                      core: &mut Core,
                      el: &mut EventLoop<Core>,
                      child: Token,
-                     res: Result<(Socket, net::SocketAddr, PeerId), net::SocketAddr>) {
+                     res: Result<(Socket, net::SocketAddr, PeerId),
+                                 (net::SocketAddr, Option<BootstrapDenyReason>)>) {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_addr, peer_id)) => {
@@ -170,8 +172,14 @@ impl Bootstrap {
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
             }
-            Err(bad_peer) => {
+            Err((bad_peer, opt_reason)) => {
                 self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
+                if let Some(reason) = opt_reason {
+                    error!("Failed to Bootstrap: {:?}", reason);
+                    self.terminate(core, el);
+                    let _ = self.event_tx.send(Event::BootstrapFailed);
+                    return;
+                }
             }
         }
         self.maybe_terminate(core, el);
