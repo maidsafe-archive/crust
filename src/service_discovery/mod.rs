@@ -115,7 +115,7 @@ impl ServiceDiscovery {
             Ok(None) => return,
             Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
             Err(e) => {
-                warn!("ServiceDiscovery error in read: {:?}", e);
+                debug!("ServiceDiscovery error in read: {:?}", e);
                 self.terminate(core, el);
                 return;
             }
@@ -124,7 +124,7 @@ impl ServiceDiscovery {
         let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
             Ok(msg) => msg,
             Err(e) => {
-                warn!("Bogus message serialisation error: {:?}", e);
+                debug!("Bogus message serialisation error: {:?}", e);
                 return;
             }
         };
@@ -144,7 +144,7 @@ impl ServiceDiscovery {
 
     fn write(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         if let Err(e) = self.write_impl(el) {
-            warn!("Error in ServiceDiscovery write: {:?}", e);
+            debug!("Error in ServiceDiscovery write: {:?}", e);
             self.terminate(core, el);
         }
     }

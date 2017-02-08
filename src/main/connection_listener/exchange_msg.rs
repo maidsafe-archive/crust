@@ -101,12 +101,12 @@ impl ExchangeMsg {
             }
             Ok(Some(Message::EchoAddrReq)) => self.handle_echo_addr_req(core, el),
             Ok(Some(message)) => {
-                warn!("Unexpected message in direct connect: {:?}", message);
+                debug!("Unexpected message in direct connect: {:?}", message);
                 self.terminate(core, el)
             }
             Ok(None) => (),
             Err(error) => {
-                error!("Failed to read from socket: {:?}", error);
+                debug!("Failed to read from socket: {:?}", error);
                 self.terminate(core, el);
             }
         }
@@ -237,7 +237,7 @@ impl ExchangeMsg {
 
     fn get_peer_id(&self, their_public_key: PublicKey) -> Result<PeerId, ()> {
         if self.our_pk == their_public_key {
-            warn!("Accepted connection from ourselves");
+            debug!("Accepted connection from ourselves");
             return Err(());
         }
 
@@ -265,7 +265,7 @@ impl ExchangeMsg {
             Ok(true) => self.done(core, el),
             Ok(false) => (),
             Err(e) => {
-                warn!("Error in writting: {:?}", e);
+                debug!("Error in writting: {:?}", e);
                 self.terminate(core, el)
             }
         }

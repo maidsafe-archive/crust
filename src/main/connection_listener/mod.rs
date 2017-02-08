@@ -131,12 +131,12 @@ impl ConnectionListener {
                                                        self.name_hash,
                                                        self.cm.clone(),
                                                        self.event_tx.clone()) {
-                        warn!("Error accepting direct connection: {:?}", e);
+                        debug!("Error accepting direct connection: {:?}", e);
                     }
                 }
                 Ok(None) => return,
                 Err(err) => {
-                    warn!("Failed to accept new socket: {:?}", err);
+                    debug!("Failed to accept new socket: {:?}", err);
                     return;
                 }
             }

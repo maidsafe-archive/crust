@@ -175,7 +175,13 @@ impl Bootstrap {
             Err((bad_peer, opt_reason)) => {
                 self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
                 if let Some(reason) = opt_reason {
-                    error!("Failed to Bootstrap: {:?}", reason);
+                    let err_msg = match reason {
+                        BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
+                        BootstrapDenyReason::FailedExternalReachability => {
+                            "Bootstrapee node could not establish connection to us."
+                        }
+                    };
+                    error!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
                     self.terminate(core, el);
                     let _ = self.event_tx.send(Event::BootstrapFailed);
                     return;

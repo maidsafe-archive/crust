@@ -112,7 +112,7 @@ impl Service {
                                                     our_listeners,
                                                     SERVICE_DISCOVERY_TOKEN,
                                                     port) {
-                warn!("Could not start ServiceDiscovery: {:?}", e);
+                debug!("Could not start ServiceDiscovery: {:?}", e);
             }
         });
     }
@@ -327,8 +327,8 @@ impl Service {
     ///    obtained from the peer
     pub fn connect(&self, our_ci: PrivConnectionInfo, their_ci: PubConnectionInfo) -> ::Res<()> {
         if unwrap!(self.cm.lock()).contains_key(&their_ci.id) {
-            warn!("Already connected OR already in process of connecting to {:?}",
-                  their_ci.id);
+            debug!("Already connected OR already in process of connecting to {:?}",
+                   their_ci.id);
             return Ok(());
         }
 
