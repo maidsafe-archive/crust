@@ -97,7 +97,7 @@ impl<T> State for CheckReachability<T>
     }
 
     fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {
-        trace!("Bootstrapper is external reachability timed out to one of the given IP's. \
+        trace!("Bootstrapper's external reachability check timed out to one of its given IP's. \
                 Erroring out for this remote endpoint.");
         self.handle_error(core, el)
     }
