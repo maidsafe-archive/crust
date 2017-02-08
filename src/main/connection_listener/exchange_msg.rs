@@ -21,6 +21,7 @@ use common::{self, BootstrapDenyReason, Core, CoreTimerId, ExternalReachability,
              Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
+use nat::ip_addr_is_global;
 use rust_sodium::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
@@ -125,7 +126,8 @@ impl ExchangeMsg {
         }
         match ext_reachability {
             ExternalReachability::Required { direct_listeners } => {
-                for their_listener in direct_listeners {
+                for their_listener in direct_listeners.into_iter()
+                    .filter(|addr| ip_addr_is_global(&addr.ip())) {
                     let self_weak = self.self_weak.clone();
                     let finish = move |core: &mut Core, el: &mut EventLoop<Core>, child, res| {
                         if let Some(self_rc) = self_weak.upgrade() {
@@ -181,6 +183,8 @@ impl ExchangeMsg {
                            core: &mut Core,
                            el: &mut EventLoop<Core>,
                            their_id: PeerId) {
+        self.enter_handshaking_mode(their_id);
+
         let our_pk = self.our_pk;
         self.next_state = NextState::ActiveConnection(their_id);
         self.write(core, el, Some((Message::BootstrapGranted(our_pk), 0)))
@@ -194,6 +198,8 @@ impl ExchangeMsg {
         if !self.is_valid_name_hash(name_hash) {
             return self.terminate(core, el);
         }
+
+        self.enter_handshaking_mode(their_id);
 
         let our_pk = self.our_pk;
         let name_hash = self.name_hash;
@@ -212,8 +218,17 @@ impl ExchangeMsg {
         }
     }
 
+    fn enter_handshaking_mode(&self, their_id: PeerId) {
+        let mut guard = unwrap!(self.cm.lock());
+        guard.entry(their_id)
+            .or_insert(ConnectionId {
+                active_connection: None,
+                currently_handshaking: 0,
+            })
+            .currently_handshaking += 1;
+    }
+
     fn is_valid_name_hash(&self, name_hash: NameHash) -> bool {
-        warn!("Incompatible protocol version");
         self.name_hash == name_hash
     }
 
@@ -224,16 +239,6 @@ impl ExchangeMsg {
         }
 
         let their_id = PeerId(their_public_key);
-
-        {
-            let mut guard = unwrap!(self.cm.lock());
-            guard.entry(their_id)
-                .or_insert(ConnectionId {
-                    active_connection: None,
-                    currently_handshaking: 0,
-                })
-                .currently_handshaking += 1;
-        }
 
         Ok(their_id)
     }
