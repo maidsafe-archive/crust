@@ -84,12 +84,17 @@ impl ActiveConnection {
         let mut state_mut = state.borrow_mut();
         {
             let mut guard = unwrap!(state_mut.cm.lock());
-            let conn_id = guard.entry(their_id).or_insert(ConnectionId {
-                active_connection: None,
-                currently_handshaking: 1,
-            });
-            conn_id.currently_handshaking -= 1;
-            conn_id.active_connection = Some(token);
+            {
+                let conn_id = guard.entry(their_id).or_insert(ConnectionId {
+                    active_connection: None,
+                    currently_handshaking: 1,
+                });
+                conn_id.currently_handshaking -= 1;
+                conn_id.active_connection = Some(token);
+            }
+            trace!("Connection Map inserted: {:?} -> {:?}",
+                   their_id,
+                   guard.get(&their_id));
         }
         let _ = state_mut.event_tx.send(event);
         state_mut.read(core, el);
@@ -200,6 +205,9 @@ impl State for ActiveConnection {
                     let _ = oe.remove();
                 }
             }
+            trace!("Connection Map removed: {:?} -> {:?}",
+                   self.their_id,
+                   guard.get(&self.their_id));
         }
 
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));

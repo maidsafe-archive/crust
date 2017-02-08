@@ -62,6 +62,9 @@ impl ExchangeMsg {
                     currently_handshaking: 0,
                 })
                 .currently_handshaking += 1;
+            trace!("Connection Map inserted: {:?} -> {:?}",
+                   expected_id,
+                   guard.get(&expected_id));
         }
 
         let state = ExchangeMsg {
@@ -138,6 +141,9 @@ impl State for ExchangeMsg {
                 let _ = oe.remove();
             }
         }
+        trace!("Connection Map removed: {:?} -> {:?}",
+               self.expected_id,
+               guard.get(&self.expected_id));
     }
 
     fn as_any(&mut self) -> &mut Any {

@@ -226,6 +226,9 @@ impl ExchangeMsg {
                 currently_handshaking: 0,
             })
             .currently_handshaking += 1;
+        trace!("Connection Map inserted: {:?} -> {:?}",
+               their_id,
+               guard.get(&their_id));
     }
 
     fn is_valid_name_hash(&self, name_hash: NameHash) -> bool {
@@ -346,6 +349,9 @@ impl State for ExchangeMsg {
                         let _ = oe.remove();
                     }
                 }
+                trace!("Connection Map removed: {:?} -> {:?}",
+                       their_id,
+                       guard.get(&their_id));
             }
             NextState::None => (),
         }
