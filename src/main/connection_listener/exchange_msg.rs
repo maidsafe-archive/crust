@@ -104,12 +104,12 @@ impl ExchangeMsg {
             }
             Ok(Some(Message::EchoAddrReq)) => self.handle_echo_addr_req(core, poll),
             Ok(Some(message)) => {
-                warn!("Unexpected message in direct connect: {:?}", message);
+                trace!("Unexpected message in direct connect: {:?}", message);
                 self.terminate(core, poll)
             }
             Ok(None) => (),
-            Err(error) => {
-                error!("Failed to read from socket: {:?}", error);
+            Err(e) => {
+                trace!("Failed to read from socket: {:?}", e);
                 self.terminate(core, poll);
             }
         }
