@@ -113,7 +113,7 @@ impl ServiceDiscovery {
             Ok(None) => return,
             Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
             Err(e) => {
-                warn!("ServiceDiscovery error in read: {:?}", e);
+                debug!("ServiceDiscovery error in read: {:?}", e);
                 self.terminate(core, poll);
                 return;
             }
@@ -122,7 +122,7 @@ impl ServiceDiscovery {
         let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
             Ok(msg) => msg,
             Err(e) => {
-                warn!("Bogus message serialisation error: {:?}", e);
+                debug!("Bogus message serialisation error: {:?}", e);
                 return;
             }
         };
@@ -142,7 +142,7 @@ impl ServiceDiscovery {
 
     fn write(&mut self, core: &mut Core, poll: &Poll) {
         if let Err(e) = self.write_impl(poll) {
-            warn!("Error in ServiceDiscovery write: {:?}", e);
+            debug!("Error in ServiceDiscovery write: {:?}", e);
             self.terminate(core, poll);
         }
     }
@@ -224,12 +224,10 @@ mod tests {
     use super::*;
     use common::{self, CoreMessage};
     use mio::Token;
-
-    use std::net;
+    use std::{net, thread};
     use std::str::FromStr;
     use std::sync::{Arc, Mutex};
     use std::sync::mpsc;
-    use std::thread;
     use std::time::Duration;
 
     #[test]

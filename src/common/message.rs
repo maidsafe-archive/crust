@@ -15,17 +15,24 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, NameHash};
+use common::{self, ExternalReachability, NameHash};
 use rust_sodium::crypto::box_::PublicKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum Message {
     Heartbeat,
-    BootstrapRequest(PublicKey, NameHash),
-    BootstrapResponse(PublicKey),
+    BootstrapRequest(PublicKey, NameHash, ExternalReachability),
+    BootstrapGranted(PublicKey),
+    BootstrapDenied(BootstrapDenyReason),
     EchoAddrReq,
     EchoAddrResp(common::SocketAddr),
     ChooseConnection,
     Connect(PublicKey, NameHash),
     Data(Vec<u8>),
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
+pub enum BootstrapDenyReason {
+    InvalidNameHash,
+    FailedExternalReachability,
 }

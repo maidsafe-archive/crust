@@ -85,18 +85,20 @@ impl Connect {
             .filter_map(|elt| Socket::connect(&elt).ok())
             .collect::<Vec<_>>();
 
-        if let Ok((listener, nat_sockets)) =
-            nat::get_sockets(our_ci.hole_punch_socket, their_hole_punch.len()) {
-            poll.register(&listener,
-                          token,
-                          Ready::readable() | Ready::error() | Ready::hup(),
-                          PollOpt::edge())?;
-            state.borrow_mut().listener = Some(listener);
-            sockets.extend(nat_sockets.into_iter()
-                .zip(their_hole_punch.into_iter().map(|elt| elt.0))
-                .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
-                .map(Socket::wrap)
-                .collect::<Vec<_>>());
+        if let Some(hole_punch_sock) = our_ci.hole_punch_socket {
+            if let Ok((listener, nat_sockets)) =
+                nat::get_sockets(hole_punch_sock, their_hole_punch.len()) {
+                poll.register(&listener,
+                              token,
+                              Ready::readable() | Ready::error() | Ready::hup(),
+                              PollOpt::edge())?;
+                state.borrow_mut().listener = Some(listener);
+                sockets.extend(nat_sockets.into_iter()
+                    .zip(their_hole_punch.into_iter().map(|elt| elt.0))
+                    .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
+                    .map(Socket::wrap)
+                    .collect::<Vec<_>>());
+            }
         }
 
         for socket in sockets {

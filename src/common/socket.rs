@@ -57,6 +57,11 @@ impl Socket {
         Ok(inner.stream.peer_addr()?)
     }
 
+    pub fn take_socket_error(&self) -> Result<Option<io::Error>> {
+        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        Ok(inner.stream.take_error()?)
+    }
+
     // Read message from the socket. Call this from inside the `ready` handler.
     //
     // Returns:
@@ -159,7 +164,6 @@ impl SockInner {
                     self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
                     is_something_read = true;
                 }
-
                 Err(error) => {
                     return if error.kind() == ErrorKind::WouldBlock ||
                               error.kind() == ErrorKind::Interrupted {

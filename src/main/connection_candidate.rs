@@ -144,6 +144,9 @@ impl State for ConnectionCandidate {
                 let _ = oe.remove();
             }
         }
+        trace!("Connection Map removed: {:?} -> {:?}",
+               self.their_id,
+               guard.get(&self.their_id));
     }
 
     fn as_any(&mut self) -> &mut Any {

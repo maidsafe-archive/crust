@@ -62,8 +62,12 @@ impl ActiveConnection {
 
         let heartbeat = match Heartbeat::new(core, token) {
             Ok(heartbeat) => heartbeat,
-            Err(error) => {
-                warn!("{:?} - Failed to initialize heartbeat: {:?}", our_id, error);
+            Err(e) => {
+                debug!("{:?} - Failed to initialize heartbeat: {:?} - killing ActiveConnection \
+                        to {:?}",
+                       our_id,
+                       e,
+                       their_id);
                 let _ = poll.deregister(&socket);
                 let _ = event_tx.send(Event::LostPeer(their_id));
                 // TODO See if this plays well with ConnectionMap manipulation below
@@ -86,12 +90,17 @@ impl ActiveConnection {
         let mut state_mut = state.borrow_mut();
         {
             let mut guard = unwrap!(state_mut.cm.lock());
-            let conn_id = guard.entry(their_id).or_insert(ConnectionId {
-                active_connection: None,
-                currently_handshaking: 1,
-            });
-            conn_id.currently_handshaking -= 1;
-            conn_id.active_connection = Some(token);
+            {
+                let conn_id = guard.entry(their_id).or_insert(ConnectionId {
+                    active_connection: None,
+                    currently_handshaking: 1,
+                });
+                conn_id.currently_handshaking -= 1;
+                conn_id.active_connection = Some(token);
+            }
+            trace!("Connection Map inserted: {:?} -> {:?}",
+                   their_id,
+                   guard.get(&their_id));
         }
         let _ = state_mut.event_tx.send(event);
         state_mut.read(core, poll);
@@ -108,14 +117,12 @@ impl ActiveConnection {
                     self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(Some(message)) => {
-                    warn!("{:?} - Unexpected message: {:?}", self.our_id, message);
+                    debug!("{:?} - Unexpected message: {:?}", self.our_id, message);
                     self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(None) => return,
-                Err(error) => {
-                    debug!("{:?} - Failed to read from socket: {:?}",
-                           self.our_id,
-                           error);
+                Err(e) => {
+                    debug!("{:?} - Failed to read from socket: {:?}", self.our_id, e);
                     return self.terminate(core, poll);
                 }
             }
@@ -137,22 +144,22 @@ impl ActiveConnection {
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
-        if let Err(error) = self.socket.write(poll, self.token, msg) {
-            debug!("{:?} - Failed to write socket: {:?}", self.our_id, error);
+        if let Err(e) = self.socket.write(poll, self.token, msg) {
+            debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
     fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
-        if let Err(error) = self.heartbeat.reset_receive(core) {
-            warn!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, error);
+        if let Err(e) = self.heartbeat.reset_receive(core) {
+            debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
     fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
-        if let Err(error) = self.heartbeat.reset_send(core) {
-            warn!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, error);
+        if let Err(e) = self.heartbeat.reset_send(core) {
+            debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
@@ -161,6 +168,12 @@ impl ActiveConnection {
 impl State for ActiveConnection {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
+            trace!("{:?} Terminating connection to peer: {:?}. \
+                    Event reason: {:?} - Optional Error: {:?}",
+                   self.our_id,
+                   self.their_id,
+                   kind,
+                   self.socket.take_socket_error());
             self.terminate(core, poll);
         } else {
             if kind.is_writable() {
@@ -190,6 +203,9 @@ impl State for ActiveConnection {
                     let _ = oe.remove();
                 }
             }
+            trace!("Connection Map removed: {:?} -> {:?}",
+                   self.their_id,
+                   guard.get(&self.their_id));
         }
 
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
@@ -239,9 +255,9 @@ impl Heartbeat {
     fn timeout(&self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
-        } else if let Err(error) =
+        } else if let Err(e) =
             core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer) {
-            warn!("Failed to reschedule heartbeat send timer: {:?}", error);
+            debug!("Failed to reschedule heartbeat send timer: {:?}", e);
             HeartbeatAction::Terminate
         } else {
             HeartbeatAction::Send

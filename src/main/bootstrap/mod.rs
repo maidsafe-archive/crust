@@ -20,7 +20,8 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{self, Core, CoreTimer, NameHash, Socket, State};
+use common::{self, BootstrapDenyReason, Core, CoreTimer, ExternalReachability, NameHash, Socket,
+             State};
 
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{Poll, Token};
@@ -49,6 +50,7 @@ pub struct Bootstrap {
     peers: Vec<common::SocketAddr>,
     blacklist: HashSet<net::SocketAddr>,
     name_hash: NameHash,
+    ext_reachability: ExternalReachability,
     our_pk: PublicKey,
     event_tx: ::CrustEventSender,
     sd_meta: Option<ServiceDiscMeta>,
@@ -63,6 +65,7 @@ impl Bootstrap {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  name_hash: NameHash,
+                 ext_reachability: ExternalReachability,
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,
@@ -99,6 +102,7 @@ impl Bootstrap {
             peers: peers,
             blacklist: blacklist,
             name_hash: name_hash,
+            ext_reachability: ext_reachability,
             our_pk: our_pk,
             event_tx: event_tx,
             sd_meta: sd_meta,
@@ -141,6 +145,7 @@ impl Bootstrap {
                                               *peer,
                                               self.our_pk,
                                               self.name_hash,
+                                              self.ext_reachability.clone(),
                                               Box::new(finish)) {
                 let _ = self.children.insert(child);
             }
@@ -152,7 +157,8 @@ impl Bootstrap {
                      core: &mut Core,
                      poll: &Poll,
                      child: Token,
-                     res: Result<(Socket, net::SocketAddr, PeerId), net::SocketAddr>) {
+                     res: Result<(Socket, net::SocketAddr, PeerId),
+                                 (net::SocketAddr, Option<BootstrapDenyReason>)>) {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_addr, peer_id)) => {
@@ -167,8 +173,20 @@ impl Bootstrap {
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
             }
-            Err(bad_peer) => {
+            Err((bad_peer, opt_reason)) => {
                 self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
+                if let Some(reason) = opt_reason {
+                    let err_msg = match reason {
+                        BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
+                        BootstrapDenyReason::FailedExternalReachability => {
+                            "Bootstrapee node could not establish connection to us."
+                        }
+                    };
+                    error!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
+                    self.terminate(core, poll);
+                    let _ = self.event_tx.send(Event::BootstrapFailed);
+                    return;
+                }
             }
         }
         self.maybe_terminate(core, poll);

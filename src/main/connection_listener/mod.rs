@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
@@ -129,11 +130,11 @@ impl ConnectionListener {
                                                        self.name_hash,
                                                        self.cm.clone(),
                                                        self.event_tx.clone()) {
-                        warn!("Error accepting direct connection: {:?}", e);
+                        debug!("Error accepting direct connection: {:?}", e);
                     }
                 }
                 Err(e) => {
-                    warn!("Failed to accept new socket: {:?}", e);
+                    debug!("Failed to accept new socket: {:?}", e);
                     return;
                 }
             }
@@ -166,7 +167,7 @@ mod tests {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, CoreMessage, EventLoop, Message, NameHash};
+    use common::{self, CoreMessage, EventLoop, ExternalReachability, Message, NameHash};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use main::{Event, PeerId};
@@ -175,7 +176,6 @@ mod tests {
     use rust_sodium::crypto::box_::{self, PublicKey};
     use rust_sodium::crypto::hash::sha256;
     use rustc_serialize::Decodable;
-
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
     use std::mem;
@@ -185,8 +185,8 @@ mod tests {
     use std::sync::mpsc;
     use std::time::Duration;
 
-    // Make sure this is < EXCHANGE_MSG_TIMEOUT_SEC blocking reader socket in this test will exit
-    // with an EAGAIN error (unless this is what is wanted).
+    // Make sure this is < EXCHANGE_MSG_TIMEOUT_SEC else blocking reader socket in this test will
+    // exit with an EAGAIN error (unless this is what is wanted).
     const HANDSHAKE_TIMEOUT_SEC: u64 = 5;
     const LISTENER_TOKEN: usize = 0;
     const NAME_HASH: NameHash = [1; sha256::DIGESTBYTES];
@@ -289,14 +289,18 @@ mod tests {
         Ok(unwrap!(deserialise(&payload), "Could not deserialise."))
     }
 
-    fn bootstrap(name_hash: NameHash, pk: PublicKey, listener: Listener) {
+    fn bootstrap(name_hash: NameHash,
+                 ext_reachability: ExternalReachability,
+                 pk: PublicKey,
+                 listener: Listener) {
         let mut us = connect_to_listener(&listener);
 
-        let message = unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash)));
+        let message =
+            unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash, ext_reachability)));
         unwrap!(write(&mut us, message), "Could not write.");
 
         match unwrap!(read(&mut us), "Could not read.") {
-            Message::BootstrapResponse(peer_pk) => assert_eq!(peer_pk, listener.pk),
+            Message::BootstrapGranted(peer_pk) => assert_eq!(peer_pk, listener.pk),
             msg => panic!("Unexpected message: {:?}", msg),
         }
 
@@ -337,7 +341,7 @@ mod tests {
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH, pk, listener);
+        bootstrap(NAME_HASH, ExternalReachability::NotRequired, pk, listener);
     }
 
     #[test]
@@ -352,7 +356,7 @@ mod tests {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH_2, pk, listener);
+        bootstrap(NAME_HASH_2, ExternalReachability::NotRequired, pk, listener);
     }
 
     #[test]
@@ -367,7 +371,10 @@ mod tests {
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener();
-        bootstrap(NAME_HASH, listener.pk, listener);
+        bootstrap(NAME_HASH,
+                  ExternalReachability::NotRequired,
+                  listener.pk,
+                  listener);
     }
 
     #[test]
