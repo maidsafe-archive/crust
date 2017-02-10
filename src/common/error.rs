@@ -27,7 +27,7 @@ quick_error! {
     pub enum CommonError {
         /// IO error
         Io(e: io::Error) {
-            description("Io error")
+            description(e.description())
             display("Io error: {}", e)
             cause(e)
             from()
@@ -42,7 +42,7 @@ quick_error! {
         }
         /// Serialisation error
         Serialisation(e: SerialisationError) {
-            description("Serialisation error")
+            description(e.description())
             display("Serialisation error: {}", e)
             cause(e)
             from()
@@ -53,6 +53,10 @@ quick_error! {
             display("Timer error: {}", e)
             cause(e)
             from()
+        }
+        /// A zero byte socket read - means EOF
+        ZeroByteRead {
+            description("Read zero bytes from the socket - indicates EOF")
         }
     }
 }

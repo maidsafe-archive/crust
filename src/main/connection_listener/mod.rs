@@ -324,7 +324,6 @@ mod tests {
 
         if our_id > their_id {
             let message = unwrap!(serialise(&Message::ChooseConnection));
-            println!("Blocking Id > Async Id");
             unwrap!(write(&mut us, message), "Could not write.");
         }
 

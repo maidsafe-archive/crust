@@ -153,6 +153,9 @@ impl SockInner {
         loop {
             match self.stream.read(&mut buffer) {
                 Ok(bytes_read) => {
+                    if bytes_read == 0 {
+                        return Err(CommonError::ZeroByteRead);
+                    }
                     self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
                     is_something_read = true;
                 }

@@ -311,24 +311,32 @@ mod broken_peer {
     }
 
     impl State for Connection {
-        fn ready(&mut self, _: &mut Core, poll: &Poll, kind: Ready) {
-
+        fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+            if kind.is_error() || kind.is_hup() {
+                return self.terminate(core, poll);
+            }
             if kind.is_readable() {
-                match unwrap!(self.0.read::<Message>()) {
-                    Some(Message::BootstrapRequest(..)) => {
+                match self.0.read::<Message>() {
+                    Ok(Some(Message::BootstrapRequest(..))) => {
                         let public_key = box_::gen_keypair().0;
                         unwrap!(self.0.write(poll,
                                              self.1,
                                              Some((Message::BootstrapResponse(public_key),
                                                    0))));
                     }
-                    Some(_) | None => (),
+                    Ok(Some(_)) | Ok(None) => (),
+                    Err(_) => self.terminate(core, poll),
                 }
             }
 
             if kind.is_writable() {
                 unwrap!(self.0.write::<Message>(poll, self.1, None));
             }
+        }
+
+        fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+            let _ = core.remove_state(self.1);
+            unwrap!(poll.deregister(&self.0));
         }
 
         fn as_any(&mut self) -> &mut Any {

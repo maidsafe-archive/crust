@@ -56,7 +56,7 @@ impl ActiveConnection {
                  their_id: PeerId,
                  event: Event,
                  event_tx: ::CrustEventSender) {
-        debug!("Entered state ActiveConnection: {:?} -> {:?}",
+        trace!("Entered state ActiveConnection: {:?} -> {:?}",
                our_id,
                their_id);
 

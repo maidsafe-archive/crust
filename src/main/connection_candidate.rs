@@ -31,6 +31,7 @@ pub struct ConnectionCandidate {
     token: Token,
     cm: ConnectionMap,
     socket: Socket,
+    our_id: PeerId,
     their_id: PeerId,
     msg: Option<(Message, Priority)>,
     finish: Finish,
@@ -50,6 +51,7 @@ impl ConnectionCandidate {
             token: token,
             cm: cm,
             socket: socket,
+            our_id: our_id,
             their_id: their_id,
             msg: Some((Message::ChooseConnection, 0)),
             finish: finish,
@@ -57,14 +59,12 @@ impl ConnectionCandidate {
 
         let _ = core.insert_state(token, state.clone());
 
-        if our_id > their_id {
-            if let Err(e) = poll.reregister(&state.borrow().socket,
-                                            token,
-                                            Ready::writable() | Ready::error() | Ready::hup(),
-                                            PollOpt::edge()) {
-                state.borrow_mut().terminate(core, poll);
-                return Err(From::from(e));
-            }
+        if let Err(e) = poll.reregister(&state.borrow().socket,
+                                        token,
+                                        Ready::writable() | Ready::error() | Ready::hup(),
+                                        PollOpt::edge()) {
+            state.borrow_mut().terminate(core, poll);
+            return Err(From::from(e));
         }
 
         Ok(token)
@@ -87,10 +87,20 @@ impl ConnectionCandidate {
             return self.handle_error(core, poll);
         }
 
-        match self.socket.write(poll, self.token, msg) {
-            Ok(true) => self.done(core, poll),
-            Ok(false) => (),
-            Err(_) => self.handle_error(core, poll),
+        if self.our_id > self.their_id {
+            match self.socket.write(poll, self.token, msg) {
+                Ok(true) => self.done(core, poll),
+                Ok(false) => (),
+                Err(_) => self.handle_error(core, poll),
+            }
+        } else if let Err(e) = poll.reregister(&self.socket,
+                                               self.token,
+                                               Ready::readable() | Ready::error() | Ready::hup(),
+                                               PollOpt::edge()) {
+            debug!("Error in re-registeration: {:?}", e);
+            self.handle_error(core, poll);
+        } else {
+            self.read(core, poll)
         }
     }
 
