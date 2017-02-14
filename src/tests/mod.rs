@@ -371,7 +371,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
     let address = SocketAddr(unwrap!(listener.local_addr()));
 
-    unwrap!(el.tx.send(CoreMessage::new(|core, poll| {
+    unwrap!(el.send(CoreMessage::new(|core, poll| {
         broken_peer::Listen::start(core, poll, listener)
     })));
 
@@ -389,8 +389,6 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     expect_event!(event_rx, Event::LostPeer(lost_peer_id) => {
         assert_eq!(lost_peer_id, peer_id)
     });
-
-    unwrap!(el.tx.send(CoreMessage::build_terminator()));
 }
 
 #[test]

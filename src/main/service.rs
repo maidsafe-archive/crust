@@ -445,15 +445,7 @@ impl Service {
     fn post<F>(&self, f: F) -> ::Res<()>
         where F: FnOnce(&mut Core, &Poll) + Send + 'static
     {
-        Ok(self.el.tx.send(CoreMessage::new(f))?)
-    }
-}
-
-// Do not remove this as clones of mio-tx are give to IGD thread thus the drop of tx here alone is
-// not sufficient to trigger rx-error in core event loop for exit condition.
-impl Drop for Service {
-    fn drop(&mut self) {
-        let _ = self.el.tx.send(CoreMessage::build_terminator());
+        Ok(self.el.send(CoreMessage::new(f))?)
     }
 }
 

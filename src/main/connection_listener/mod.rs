@@ -193,17 +193,10 @@ mod tests {
     const NAME_HASH_2: NameHash = [2; sha256::DIGESTBYTES];
 
     struct Listener {
-        el: EventLoop,
+        _el: EventLoop,
         pk: PublicKey,
         addr: common::SocketAddr,
         event_rx: mpsc::Receiver<Event>,
-    }
-
-    impl Drop for Listener {
-        fn drop(&mut self) {
-            unwrap!(self.el.tx.send(CoreMessage::build_terminator()),
-                    "Could not send shutdown to poll");
-        }
     }
 
     fn start_listener() -> Listener {
@@ -220,7 +213,7 @@ mod tests {
 
         let listeners_clone = listeners.clone();
         let (pk, _) = box_::gen_keypair();
-        unwrap!(el.tx.send(CoreMessage::new(move |core, poll| {
+        unwrap!(el.send(CoreMessage::new(move |core, poll| {
             ConnectionListener::start(core,
                                       poll,
                                       Some(HANDSHAKE_TIMEOUT_SEC),
@@ -245,7 +238,7 @@ mod tests {
         let addr = common::SocketAddr(unwrap!(listeners.lock())[0]);
 
         Listener {
-            el: el,
+            _el: el,
             pk: pk,
             addr: addr,
             event_rx: event_rx,

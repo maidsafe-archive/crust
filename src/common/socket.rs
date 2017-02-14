@@ -106,7 +106,10 @@ impl Evented for Socket {
                 -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
+            .ok_or_else(|| {
+                io::Error::new(ErrorKind::Other,
+                               format!("{}", CommonError::UninitialisedSocket))
+            })?;
         inner.register(poll, token, interest, opts)
     }
 
@@ -118,14 +121,20 @@ impl Evented for Socket {
                   -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
+            .ok_or_else(|| {
+                io::Error::new(ErrorKind::Other,
+                               format!("{}", CommonError::UninitialisedSocket))
+            })?;
         inner.reregister(poll, token, interest, opts)
     }
 
     fn deregister(&self, poll: &Poll) -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
+            .ok_or_else(|| {
+                io::Error::new(ErrorKind::Other,
+                               format!("{}", CommonError::UninitialisedSocket))
+            })?;
         inner.deregister(poll)
     }
 }

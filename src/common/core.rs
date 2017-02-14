@@ -35,8 +35,24 @@ const TIMER_TOKEN_OFFSET: usize = CHANNEL_TOKEN_OFFSET + 1;
 const USER_TOKEN_OFFSET: usize = TIMER_TOKEN_OFFSET + 1;
 
 pub struct EventLoop {
-    pub tx: Sender<CoreMessage>,
-    pub joiner: Joiner,
+    tx: Sender<CoreMessage>,
+    _joiner: Joiner,
+}
+
+impl EventLoop {
+    pub fn send(&self, msg: CoreMessage) -> Result<()> {
+        Ok(self.tx.send(msg)?)
+    }
+}
+
+impl Drop for EventLoop {
+    fn drop(&mut self) {
+        if let Err(e) = self.tx.send(CoreMessage(None)) {
+            warn!("Could not send a terminator to event-loop. We will possibly not be able to \
+                   gracefully exit. Error: {:?}",
+                  e);
+        }
+    }
 }
 
 pub fn spawn_event_loop(token_counter_start: usize,
@@ -72,7 +88,7 @@ pub fn spawn_event_loop(token_counter_start: usize,
 
     Ok(EventLoop {
         tx: tx,
-        joiner: joiner,
+        _joiner: joiner,
     })
 }
 
@@ -201,10 +217,6 @@ impl CoreMessage {
         CoreMessage(Some(Box::new(move |core: &mut Core, poll: &Poll| if let Some(f) = f.take() {
             f(core, poll)
         })))
-    }
-
-    pub fn build_terminator() -> Self {
-        CoreMessage(None)
     }
 }
 

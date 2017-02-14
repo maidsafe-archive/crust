@@ -245,14 +245,14 @@ mod tests {
         // ServiceDiscovery-0
         {
             let token_0 = Token(SERVICE_DISCOVERY_TOKEN);
-            unwrap!(el0.tx.send(CoreMessage::new(move |core, poll| {
+            unwrap!(el0.send(CoreMessage::new(move |core, poll| {
                 unwrap!(ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65530),
                         "Could not spawn ServiceDiscovery_0");
             })),
                     "Could not send to el0");
 
             // Start listening for peers
-            unwrap!(el0.tx.send(CoreMessage::new(move |core, _| {
+            unwrap!(el0.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_0));
                 let mut inner = state.borrow_mut();
                 unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>()).set_listen(true);
@@ -271,14 +271,14 @@ mod tests {
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
-            unwrap!(el1.tx.send(CoreMessage::new(move |core, poll| {
+            unwrap!(el1.send(CoreMessage::new(move |core, poll| {
                         unwrap!(ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
                                 "Could not spawn ServiceDiscovery_1");
                     })),
                     "Could not send to el1");
 
             // Register observer
-            unwrap!(el1.tx.send(CoreMessage::new(move |core, _| {
+            unwrap!(el1.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_1));
                 let mut inner = state.borrow_mut();
                 unwrap!(inner.as_any()
@@ -287,7 +287,7 @@ mod tests {
             })));
 
             // Seek peers
-            unwrap!(el1.tx.send(CoreMessage::new(move |core, _| {
+            unwrap!(el1.send(CoreMessage::new(move |core, _| {
                         let state = unwrap!(core.get_state(token_1));
                         let mut inner = state.borrow_mut();
                         let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
@@ -299,10 +299,5 @@ mod tests {
         let peer_listeners = unwrap!(rx.recv());
         assert_eq!(peer_listeners.into_iter().map(|elt| elt.0).collect::<Vec<_>>(),
                    *unwrap!(listeners_0.lock()));
-
-        unwrap!(el0.tx.send(CoreMessage::build_terminator()),
-                "Could not shutdown el0");
-        unwrap!(el1.tx.send(CoreMessage::build_terminator()),
-                "Could not shutdown el1");
     }
 }
