@@ -173,7 +173,7 @@ impl State for ActiveConnection {
                    self.our_id,
                    self.their_id,
                    kind,
-                   self.socket.take_socket_error());
+                   self.socket.take_error());
             self.terminate(core, poll);
         } else {
             if kind.is_writable() {

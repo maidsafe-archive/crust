@@ -103,9 +103,9 @@ impl TryPeer {
 
 impl State for TryPeer {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
-            self.handle_error(core, poll, None);
-        } else {
+        if kind.is_error() {
+            return self.handle_error(core, poll, None);
+        } else if kind.is_writable() || kind.is_readable() {
             if kind.is_writable() {
                 let req = self.request.take();
                 self.write(core, poll, req);
@@ -113,7 +113,12 @@ impl State for TryPeer {
             if kind.is_readable() {
                 self.read(core, poll)
             }
+            return;
         }
+
+        debug!("Considering the following event to indicate dirupted connection: {:?}",
+               kind);
+        self.handle_error(core, poll, None);
     }
 
     fn terminate(&mut self, core: &mut Core, poll: &Poll) {

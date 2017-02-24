@@ -194,6 +194,7 @@ impl Bootstrap {
 
     fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
         if self.children.is_empty() {
+            error!("Bootrapper has no active children left - bootstrap has failed");
             self.terminate(core, poll);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }

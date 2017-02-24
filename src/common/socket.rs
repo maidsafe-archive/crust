@@ -57,7 +57,7 @@ impl Socket {
         Ok(inner.stream.peer_addr()?)
     }
 
-    pub fn take_socket_error(&self) -> Result<Option<io::Error>> {
+    pub fn take_error(&self) -> Result<Option<io::Error>> {
         let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.take_error()?)
     }
@@ -168,7 +168,15 @@ impl SockInner {
             match self.stream.read(&mut buffer) {
                 Ok(bytes_read) => {
                     if bytes_read == 0 {
-                        return Err(CommonError::ZeroByteRead);
+                        let e = Err(CommonError::ZeroByteRead);
+                        if is_something_read {
+                            return match self.read_from_buffer() {
+                                r @ Ok(Some(_)) | r @ Err(_) => r,
+                                Ok(None) => e,
+                            };
+                        } else {
+                            return e;
+                        }
                     }
                     self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
                     is_something_read = true;
