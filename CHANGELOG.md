@@ -1,5 +1,10 @@
 # CRUST - Change Log
 
+## [0.22.0]
+- Port to the new paradigm of mio-v6.
+- Crust can now do echo/stun service on Windows too.
+- Re-enable tests which were ignored on Windows due to prior mio bugs.
+
 ## [0.21.0]
 - Allow routing to indicate whether we want to bootstrap as a node or as a client. If bootstrapping as a node, message to the bootstrapee will be sent indicating so and bootstrapee will check if we are reacheable externally. Only if this condition is satisfied will we be allowed to successfully bootstrap else it will trigger an immediate BootstrapFailed event.
 
