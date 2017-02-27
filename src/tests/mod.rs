@@ -19,10 +19,10 @@
 pub mod utils;
 
 pub use self::utils::{gen_config, get_event_sender, timebomb};
+
 use common::{CrustUser, SocketAddr};
 use main::{Config, Event, Service};
 use mio;
-
 use std::collections::HashSet;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
@@ -184,8 +184,10 @@ fn bootstrap_with_blacklist() {
             mio::tcp::TcpListener::from_listener(blacklisted_listener, &*blacklisted_address)
     );
     thread::sleep(Duration::from_secs(5));
-    let stream_opt = unwrap!(mio::TryAccept::accept(&blacklisted_listener));
-    assert!(stream_opt.is_none())
+    // TODO See if these are doing the right thing - wait for Adam to explain as he might have
+    // written this test case. Also check the similar one below.
+    let res = blacklisted_listener.accept();
+    assert!(res.is_err())
 }
 
 #[test]
@@ -210,8 +212,8 @@ fn bootstrap_fails_only_blacklisted_contact() {
             mio::tcp::TcpListener::from_listener(blacklisted_listener, &*blacklisted_address)
     );
     thread::sleep(Duration::from_secs(5));
-    let stream_opt = unwrap!(mio::TryAccept::accept(&blacklisted_listener));
-    assert!(stream_opt.is_none())
+    let res = blacklisted_listener.accept();
+    assert!(res.is_err())
 }
 
 #[test]
@@ -272,9 +274,8 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
-
     use common::{Core, Message, Socket, State};
-    use mio::{EventLoop, EventSet, PollOpt, Token};
+    use mio::{Poll, PollOpt, Ready, Token};
     use mio::tcp::TcpListener;
     use rust_sodium::crypto::box_;
     use std::any::Any;
@@ -284,10 +285,10 @@ mod broken_peer {
     pub struct Listen(TcpListener, Token);
 
     impl Listen {
-        pub fn start(core: &mut Core, el: &mut EventLoop<Core>, listener: TcpListener) {
+        pub fn start(core: &mut Core, poll: &Poll, listener: TcpListener) {
             let token = core.get_new_token();
 
-            unwrap!(el.register(&listener, token, EventSet::readable(), PollOpt::edge()));
+            unwrap!(poll.register(&listener, token, Ready::readable(), PollOpt::edge()));
 
             let state = Listen(listener, token);
             let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -295,22 +296,12 @@ mod broken_peer {
     }
 
     impl State for Listen {
-        fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _: EventSet) {
-            match unwrap!(self.0.accept()) {
-                Some((socket, _)) => {
-                    unwrap!(el.deregister(&self.0));
+        fn ready(&mut self, core: &mut Core, poll: &Poll, _: Ready) {
+            let (socket, _) = unwrap!(self.0.accept());
+            unwrap!(poll.deregister(&self.0));
 
-                    let socket = Socket::wrap(socket);
-                    Connection::start(core, el, self.1, socket);
-                }
-
-                None => {
-                    unwrap!(el.register(&self.0,
-                                                       self.1,
-                                                       EventSet::readable(),
-                                                       PollOpt::edge()));
-                }
-            }
+            let socket = Socket::wrap(socket);
+            Connection::start(core, poll, self.1, socket);
         }
 
         fn as_any(&mut self) -> &mut Any {
@@ -321,11 +312,8 @@ mod broken_peer {
     struct Connection(Socket, Token);
 
     impl Connection {
-        fn start(core: &mut Core, el: &mut EventLoop<Core>, token: Token, socket: Socket) {
-            unwrap!(el.register(&socket,
-                                       token,
-                                       EventSet::readable(),
-                                       PollOpt::edge()));
+        fn start(core: &mut Core, poll: &Poll, token: Token, socket: Socket) {
+            unwrap!(poll.register(&socket, token, Ready::readable(), PollOpt::edge()));
 
             let state = Connection(socket, token);
             let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -333,24 +321,32 @@ mod broken_peer {
     }
 
     impl State for Connection {
-        fn ready(&mut self, _: &mut Core, el: &mut EventLoop<Core>, event_set: EventSet) {
-
-            if event_set.is_readable() {
-                match unwrap!(self.0.read::<Message>()) {
-                    Some(Message::BootstrapRequest(..)) => {
+        fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+            if kind.is_error() || kind.is_hup() {
+                return self.terminate(core, poll);
+            }
+            if kind.is_readable() {
+                match self.0.read::<Message>() {
+                    Ok(Some(Message::BootstrapRequest(..))) => {
                         let public_key = box_::gen_keypair().0;
-                        unwrap!(self.0.write(el,
-                                                    self.1,
-                                                    Some((Message::BootstrapGranted(public_key),
-                                                          0))));
+                        unwrap!(self.0.write(poll,
+                                             self.1,
+                                             Some((Message::BootstrapGranted(public_key),
+                                                   0))));
                     }
-                    Some(_) | None => (),
+                    Ok(Some(_)) | Ok(None) => (),
+                    Err(_) => self.terminate(core, poll),
                 }
             }
 
-            if event_set.is_writable() {
-                unwrap!(self.0.write::<Message>(el, self.1, None));
+            if kind.is_writable() {
+                unwrap!(self.0.write::<Message>(poll, self.1, None));
             }
+        }
+
+        fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+            let _ = core.remove_state(self.1);
+            unwrap!(poll.deregister(&self.0));
         }
 
         fn as_any(&mut self) -> &mut Any {
@@ -361,11 +357,7 @@ mod broken_peer {
 
 #[test]
 fn drop_peer_when_no_message_received_within_inactivity_period() {
-    use std::thread;
-
-    use common::{Core, CoreMessage};
-    use maidsafe_utilities::thread::Joiner;
-    use mio::EventLoop;
+    use common::{CoreMessage, spawn_event_loop};
     use mio::tcp::TcpListener;
     use self::broken_peer;
     use rust_sodium;
@@ -373,20 +365,14 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     rust_sodium::init();
 
     // Spin up the non-responsive peer.
-    let mut el = unwrap!(EventLoop::new());
-    let mio_tx = el.channel();
-
-    let _joiner = Joiner::new(thread::spawn(move || {
-        let mut core = Core::new();
-        unwrap!(el.run(&mut core));
-    }));
+    let el = unwrap!(spawn_event_loop(0, None));
 
     let bind_addr = unwrap!(StdSocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
     let address = SocketAddr(unwrap!(listener.local_addr()));
 
-    unwrap!(mio_tx.send(CoreMessage::new(|core, el| {
-        broken_peer::Listen::start(core, el, listener)
+    unwrap!(el.send(CoreMessage::new(|core, poll| {
+        broken_peer::Listen::start(core, poll, listener)
     })));
 
     // Spin up normal service that will connect to the above guy.
@@ -403,8 +389,6 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     expect_event!(event_rx, Event::LostPeer(lost_peer_id) => {
         assert_eq!(lost_peer_id, peer_id)
     });
-
-    unwrap!(mio_tx.send(CoreMessage::new(|_, el| el.shutdown())));
 }
 
 #[test]

@@ -18,7 +18,7 @@
 use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket,
              State};
 use main::PeerId;
-use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::{Poll, PollOpt, Ready, Token};
 use rust_sodium::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
@@ -26,11 +26,8 @@ use std::mem;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-// TODO(Spandan) Result contains socket address too as currently due to bug in mio we are unable to
-// obtain peer address from a connected socket. Track https://github.com/carllerche/mio/issues/397
-// and remove this once that is solved.
 pub type Finish = Box<FnMut(&mut Core,
-                            &mut EventLoop<Core>,
+                            &Poll,
                             Token,
                             Result<(Socket, SocketAddr, PeerId),
                                    (SocketAddr, Option<BootstrapDenyReason>)>)>;
@@ -45,7 +42,7 @@ pub struct TryPeer {
 
 impl TryPeer {
     pub fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
+                 poll: &Poll,
                  peer: SocketAddr,
                  our_pk: PublicKey,
                  name_hash: NameHash,
@@ -55,9 +52,9 @@ impl TryPeer {
         let socket = Socket::connect(&peer)?;
         let token = core.get_new_token();
 
-        el.register(&socket,
+        poll.register(&socket,
                       token,
-                      EventSet::error() | EventSet::hup() | EventSet::writable(),
+                      Ready::error() | Ready::hup() | Ready::writable(),
                       PollOpt::edge())?;
 
         let state = TryPeer {
@@ -73,59 +70,60 @@ impl TryPeer {
         Ok(token)
     }
 
-    fn write(&mut self,
-             core: &mut Core,
-             el: &mut EventLoop<Core>,
-             msg: Option<(Message, Priority)>) {
-        if self.socket.write(el, self.token, msg).is_err() {
-            self.handle_error(core, el, None);
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+        if self.socket.write(poll, self.token, msg).is_err() {
+            self.handle_error(core, poll, None);
         }
     }
 
-    fn read(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn read(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapGranted(peer_pk))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
                 let socket = mem::replace(&mut self.socket, Socket::default());
                 let data = (socket, self.peer, PeerId(peer_pk));
-                (*self.finish)(core, el, token, Ok(data));
+                (*self.finish)(core, poll, token, Ok(data));
             }
-            Ok(Some(Message::BootstrapDenied(reason))) => self.handle_error(core, el, Some(reason)),
+            Ok(Some(Message::BootstrapDenied(reason))) => {
+                self.handle_error(core, poll, Some(reason))
+            }
             Ok(None) => (),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, el, None),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, poll, None),
         }
     }
 
-    fn handle_error(&mut self,
-                    core: &mut Core,
-                    el: &mut EventLoop<Core>,
-                    reason: Option<BootstrapDenyReason>) {
-        self.terminate(core, el);
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll, reason: Option<BootstrapDenyReason>) {
+        self.terminate(core, poll);
         let token = self.token;
         let peer = self.peer;
-        (*self.finish)(core, el, token, Err((peer, reason)));
+        (*self.finish)(core, poll, token, Err((peer, reason)));
     }
 }
 
 impl State for TryPeer {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
-        if es.is_error() || es.is_hup() {
-            self.handle_error(core, el, None);
-        } else {
-            if es.is_writable() {
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+        if kind.is_error() {
+            return self.handle_error(core, poll, None);
+        } else if kind.is_writable() || kind.is_readable() {
+            if kind.is_writable() {
                 let req = self.request.take();
-                self.write(core, el, req);
+                self.write(core, poll, req);
             }
-            if es.is_readable() {
-                self.read(core, el)
+            if kind.is_readable() {
+                self.read(core, poll)
             }
+            return;
         }
+
+        debug!("Considering the following event to indicate dirupted connection: {:?}",
+               kind);
+        self.handle_error(core, poll, None);
     }
 
-    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket);
+        let _ = poll.deregister(&self.socket);
     }
 
     fn as_any(&mut self) -> &mut Any {

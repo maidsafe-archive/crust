@@ -15,11 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use common::{CommonError, Core, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result};
+use common::{CommonError, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
-use mio::{EventLoop, EventSet, Evented, PollOpt, Selector, Token};
+use mio::{Evented, Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
 use rustc_serialize::{Decodable, Encodable};
 use std::collections::{BTreeMap, VecDeque};
@@ -58,9 +57,9 @@ impl Socket {
         Ok(inner.stream.peer_addr()?)
     }
 
-    pub fn take_socket_error(&self) -> Result<()> {
+    pub fn take_error(&self) -> Result<Option<io::Error>> {
         let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
-        Ok(inner.stream.take_socket_error()?)
+        Ok(inner.stream.take_error()?)
     }
 
     // Read message from the socket. Call this from inside the `ready` handler.
@@ -83,12 +82,12 @@ impl Socket {
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
     pub fn write<T: Encodable>(&mut self,
-                               el: &mut EventLoop<Core>,
+                               poll: &Poll,
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
         let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
-        inner.write(el, token, msg)
+        inner.write(poll, token, msg)
     }
 }
 
@@ -100,34 +99,43 @@ impl Default for Socket {
 
 impl Evented for Socket {
     fn register(&self,
-                selector: &mut Selector,
+                poll: &Poll,
                 token: Token,
-                interest: EventSet,
+                interest: Ready,
                 opts: PollOpt)
                 -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
-        inner.register(selector, token, interest, opts)
+            .ok_or_else(|| {
+                io::Error::new(ErrorKind::Other,
+                               format!("{}", CommonError::UninitialisedSocket))
+            })?;
+        inner.register(poll, token, interest, opts)
     }
 
     fn reregister(&self,
-                  selector: &mut Selector,
+                  poll: &Poll,
                   token: Token,
-                  interest: EventSet,
+                  interest: Ready,
                   opts: PollOpt)
                   -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
-        inner.reregister(selector, token, interest, opts)
+            .ok_or_else(|| {
+                io::Error::new(ErrorKind::Other,
+                               format!("{}", CommonError::UninitialisedSocket))
+            })?;
+        inner.reregister(poll, token, interest, opts)
     }
 
-    fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
+    fn deregister(&self, poll: &Poll) -> io::Result<()> {
         let inner = self.inner
             .as_ref()
-            .ok_or_else(|| io::Error::new(ErrorKind::Other, CommonError::UninitialisedSocket))?;
-        inner.deregister(selector)
+            .ok_or_else(|| {
+                io::Error::new(ErrorKind::Other,
+                               format!("{}", CommonError::UninitialisedSocket))
+            })?;
+        inner.deregister(poll)
     }
 }
 
@@ -154,18 +162,36 @@ impl SockInner {
 
         // the mio reading window is max at 64k (64 * 1024)
         let mut buffer = [0; 65536];
+        let mut is_something_read = false;
 
-        match self.stream.read(&mut buffer) {
-            Ok(bytes_read) => {
-                self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
-                self.read_from_buffer()
-            }
-
-            Err(error) => {
-                if error.kind() == ErrorKind::WouldBlock || error.kind() == ErrorKind::Interrupted {
-                    Ok(None)
-                } else {
-                    Err(From::from(error))
+        loop {
+            match self.stream.read(&mut buffer) {
+                Ok(bytes_read) => {
+                    if bytes_read == 0 {
+                        let e = Err(CommonError::ZeroByteRead);
+                        if is_something_read {
+                            return match self.read_from_buffer() {
+                                r @ Ok(Some(_)) | r @ Err(_) => r,
+                                Ok(None) => e,
+                            };
+                        } else {
+                            return e;
+                        }
+                    }
+                    self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
+                    is_something_read = true;
+                }
+                Err(error) => {
+                    return if error.kind() == ErrorKind::WouldBlock ||
+                              error.kind() == ErrorKind::Interrupted {
+                        if is_something_read {
+                            self.read_from_buffer()
+                        } else {
+                            Ok(None)
+                        }
+                    } else {
+                        Err(From::from(error))
+                    }
                 }
             }
         }
@@ -208,7 +234,7 @@ impl SockInner {
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
     fn write<T: Encodable>(&mut self,
-                           el: &mut EventLoop<Core>,
+                           poll: &Poll,
                            token: Token,
                            msg: Option<(T, Priority)>)
                            -> ::Res<bool> {
@@ -280,12 +306,12 @@ impl SockInner {
         let done = self.current_write.is_none() && self.write_queue.is_empty();
 
         let event_set = if done {
-            EventSet::error() | EventSet::hup() | EventSet::readable()
+            Ready::error() | Ready::hup() | Ready::readable()
         } else {
-            EventSet::error() | EventSet::hup() | EventSet::readable() | EventSet::writable()
+            Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
         };
 
-        el.reregister(self, token, event_set, PollOpt::edge())?;
+        poll.reregister(self, token, event_set, PollOpt::edge())?;
 
         Ok(done)
     }
@@ -293,24 +319,24 @@ impl SockInner {
 
 impl Evented for SockInner {
     fn register(&self,
-                selector: &mut Selector,
+                poll: &Poll,
                 token: Token,
-                interest: EventSet,
+                interest: Ready,
                 opts: PollOpt)
                 -> io::Result<()> {
-        self.stream.register(selector, token, interest, opts)
+        self.stream.register(poll, token, interest, opts)
     }
 
     fn reregister(&self,
-                  selector: &mut Selector,
+                  poll: &Poll,
                   token: Token,
-                  interest: EventSet,
+                  interest: Ready,
                   opts: PollOpt)
                   -> io::Result<()> {
-        self.stream.reregister(selector, token, interest, opts)
+        self.stream.reregister(poll, token, interest, opts)
     }
 
-    fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
-        self.stream.deregister(selector)
+    fn deregister(&self, poll: &Poll) -> io::Result<()> {
+        self.stream.deregister(poll)
     }
 }

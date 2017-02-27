@@ -15,14 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, Core, CoreMessage, CrustUser, ExternalReachability, NameHash, Priority};
-use maidsafe_utilities;
-use maidsafe_utilities::thread::Joiner;
+// FIXME combine common::self with others if rustfmt does not choke - right now it chokes with
+// v0.7.1
+
+use common;
+use common::{Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Priority};
 use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
            ConnectionListener, ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo,
            PubConnectionInfo};
 use main::config_handler::{self, Config};
-use mio::{self, EventLoop, Token};
+use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
@@ -42,18 +44,17 @@ const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
 const DISABLE_NAT: bool = true;
 
-/// A structure representing a connection manager. This is the main object through which crust is
+/// A structure representing all the Crust services. This is the main object through which crust is
 /// used.
 pub struct Service {
     config: Config,
     cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     mc: Arc<MappingContext>,
-    mio_tx: mio::Sender<CoreMessage>,
+    el: EventLoop,
     name_hash: NameHash,
     our_keys: (PublicKey, SecretKey),
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-    _raii_joiner: Joiner,
 }
 
 impl Service {
@@ -69,8 +70,6 @@ impl Service {
     pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> ::Res<Service> {
         rust_sodium::init();
 
-        let mut el = EventLoop::new()?;
-        let mio_tx = el.channel();
         let our_keys = box_::gen_keypair();
         let our_id = PeerId(our_keys.0);
         let name_hash = name_hash(&config.network_name);
@@ -82,22 +81,18 @@ impl Service {
             .iter()
             .map(|elt| elt.0));
 
-        let joiner =
-            maidsafe_utilities::thread::named(format!("Crust {:?} event loop", our_id), move || {
-                let mut core = Core::with_token_counter(3);
-                unwrap!(el.run(&mut core), "EventLoop failed to run");
-            });
+        let el = common::spawn_event_loop(3, Some(&format!("{:?}", our_id)))?;
+        trace!("Event loop started");
 
         Ok(Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: config,
             event_tx: event_tx,
             mc: Arc::new(mc),
-            mio_tx: mio_tx,
+            el: el,
             name_hash: name_hash,
             our_keys: our_keys,
             our_listeners: our_listeners,
-            _raii_joiner: joiner,
         })
     }
 
@@ -106,14 +101,17 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let port = self.config.service_discovery_port.unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
-        let _ = self.post(move |core, el| if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
-            if let Err(e) = ServiceDiscovery::start(core,
-                                                    el,
-                                                    our_listeners,
-                                                    SERVICE_DISCOVERY_TOKEN,
-                                                    port) {
-                debug!("Could not start ServiceDiscovery: {:?}", e);
+        let _ = self.post(move |core, poll| {
+            if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
+                if let Err(e) = ServiceDiscovery::start(core,
+                                                        poll,
+                                                        our_listeners,
+                                                        SERVICE_DISCOVERY_TOKEN,
+                                                        port) {
+                    debug!("Could not start ServiceDiscovery: {:?}", e);
+                }
             }
+            () // Only to get rustfmt happy else it corrects it in a way it detects error
         });
     }
 
@@ -261,9 +259,9 @@ impl Service {
             CrustUser::Client => ExternalReachability::NotRequired,
         };
 
-        self.post(move |core, el| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
+        self.post(move |core, poll| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
             if let Err(e) = Bootstrap::start(core,
-                                             el,
+                                             poll,
                                              name_hash,
                                              ext_reachability,
                                              our_pk,
@@ -281,8 +279,8 @@ impl Service {
 
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
-        self.post(move |mut core, mut el| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
-            state.borrow_mut().terminate(core, el);
+        self.post(move |core, poll| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
+            state.borrow_mut().terminate(core, poll);
         })
     }
 
@@ -297,9 +295,9 @@ impl Service {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, el| if core.get_state(LISTENER_TOKEN).is_none() {
+        self.post(move |core, poll| if core.get_state(LISTENER_TOKEN).is_none() {
             ConnectionListener::start(core,
-                                      el,
+                                      poll,
                                       None,
                                       port,
                                       our_pk,
@@ -314,8 +312,8 @@ impl Service {
 
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
-        self.post(move |core, el| if let Some(state) = core.get_state(LISTENER_TOKEN) {
-            state.borrow_mut().terminate(core, el);
+        self.post(move |core, poll| if let Some(state) = core.get_state(LISTENER_TOKEN) {
+            state.borrow_mut().terminate(core, poll);
         })
     }
 
@@ -336,8 +334,8 @@ impl Service {
         let cm = self.cm.clone();
         let our_nh = self.name_hash;
 
-        Ok(self.post(move |core, el| {
-                let _ = Connect::start(core, el, our_ci, their_ci, cm, our_nh, event_tx);
+        Ok(self.post(move |core, poll| {
+                let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
             })?)
     }
 
@@ -348,8 +346,8 @@ impl Service {
             _ => return false,
         };
 
-        let _ = self.post(move |mut core, mut el| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().terminate(&mut core, &mut el);
+        let _ = self.post(move |core, poll| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().terminate(core, poll);
         });
 
         true
@@ -362,8 +360,8 @@ impl Service {
             _ => return Err(CrustError::PeerNotFound(peer_id)),
         };
 
-        self.post(move |mut core, mut el| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().write(&mut core, &mut el, msg, priority);
+        self.post(move |core, poll| if let Some(state) = core.get_state(token) {
+            state.borrow_mut().write(core, poll, msg, priority);
         })
     }
 
@@ -389,9 +387,9 @@ impl Service {
             let event_tx = self.event_tx.clone();
             let our_pub_key = self.our_keys.0;
             let mc = self.mc.clone();
-            if let Err(e) = self.post(move |mut core, mut el| {
+            if let Err(e) = self.post(move |mut core, poll| {
                 let event_tx_clone = event_tx.clone();
-                match MappedTcpSocket::start(core, el, 0, &mc, move |_, _, socket, addrs| {
+                match MappedTcpSocket::start(core, poll, 0, &mc, move |_, _, socket, addrs| {
                     let hole_punch_addrs = addrs.into_iter()
                         .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
                         .map(common::SocketAddr)
@@ -445,15 +443,9 @@ impl Service {
     }
 
     fn post<F>(&self, f: F) -> ::Res<()>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
+        where F: FnOnce(&mut Core, &Poll) + Send + 'static
     {
-        Ok(self.mio_tx.send(CoreMessage::new(f))?)
-    }
-}
-
-impl Drop for Service {
-    fn drop(&mut self) {
-        let _ = self.post(|_, el| el.shutdown());
+        Ok(self.el.send(CoreMessage::new(f))?)
     }
 }
 
@@ -468,13 +460,11 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{Event, PrivConnectionInfo, PubConnectionInfo};
-
     use std::collections::{HashMap, HashSet, hash_map};
     use std::net::IpAddr;
     use std::str::FromStr;
@@ -541,9 +531,6 @@ mod tests {
         let pub_info_1 = priv_info_1.to_pub_connection_info();
 
         unwrap!(service_0.connect(priv_info_0, pub_info_1));
-        if cfg!(windows) {
-            thread::sleep(Duration::from_millis(100));
-        }
         unwrap!(service_1.connect(priv_info_1, pub_info_0));
 
         expect_event!(event_rx_0, Event::ConnectSuccess(id) => assert_eq!(id, service_1.id()));

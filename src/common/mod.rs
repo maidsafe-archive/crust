@@ -16,8 +16,7 @@
 // relating to use of the SAFE Network Software.
 // Defines `Core`, the mio handler and the core of the event loop.
 
-
-pub use self::core::{Core, CoreMessage, CoreTimerId};
+pub use self::core::{Core, CoreMessage, CoreTimer, EventLoop, spawn_event_loop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::socket::Socket;

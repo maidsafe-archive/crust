@@ -21,7 +21,7 @@ mod exchange_msg;
 use self::exchange_msg::ExchangeMsg;
 use common::{Core, NameHash, Socket, State};
 use main::{ConnectionMap, Event};
-use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
@@ -41,13 +41,13 @@ pub struct ConnectionListener {
     listener: TcpListener,
     name_hash: NameHash,
     our_pk: PublicKey,
-    timeout_ms: Option<u64>,
+    timeout_sec: Option<u64>,
 }
 
 impl ConnectionListener {
     pub fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
-                 handshake_timeout_ms: Option<u64>,
+                 poll: &Poll,
+                 handshake_timeout_sec: Option<u64>,
                  port: u16,
                  our_pk: PublicKey,
                  name_hash: NameHash,
@@ -57,32 +57,31 @@ impl ConnectionListener {
                  token: Token,
                  event_tx: ::CrustEventSender) {
         let event_tx_0 = event_tx.clone();
-        let finish = move |core: &mut Core, el: &mut EventLoop<Core>, socket, mapped_addrs| {
-            if let Err(e) = ConnectionListener::handle_mapped_socket(core,
-                                                                     el,
-                                                                     handshake_timeout_ms,
-                                                                     socket,
-                                                                     mapped_addrs,
-                                                                     our_pk,
-                                                                     name_hash,
-                                                                     cm,
-                                                                     our_listeners,
-                                                                     token,
-                                                                     event_tx.clone()) {
-                error!("TCP Listener failed to handle mapped socket: {:?}", e);
-                let _ = event_tx.send(Event::ListenerFailed);
-            }
+        let finish = move |core: &mut Core, poll: &Poll, socket, mapped_addrs| if let Err(e) =
+            ConnectionListener::handle_mapped_socket(core,
+                                                     poll,
+                                                     handshake_timeout_sec,
+                                                     socket,
+                                                     mapped_addrs,
+                                                     our_pk,
+                                                     name_hash,
+                                                     cm,
+                                                     our_listeners,
+                                                     token,
+                                                     event_tx.clone()) {
+            error!("TCP Listener failed to handle mapped socket: {:?}", e);
+            let _ = event_tx.send(Event::ListenerFailed);
         };
 
-        if let Err(e) = MappedTcpSocket::start(core, el, port, &mc, finish) {
+        if let Err(e) = MappedTcpSocket::start(core, poll, port, &mc, finish) {
             error!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
     }
 
     fn handle_mapped_socket(core: &mut Core,
-                            el: &mut EventLoop<Core>,
-                            timeout_ms: Option<u64>,
+                            poll: &Poll,
+                            timeout_sec: Option<u64>,
                             socket: TcpBuilder,
                             mapped_addrs: Vec<SocketAddr>,
                             our_pk: PublicKey,
@@ -96,9 +95,9 @@ impl ConnectionListener {
         let local_addr = listener.local_addr()?;
 
         let listener = TcpListener::from_listener(listener, &local_addr)?;
-        el.register(&listener,
+        poll.register(&listener,
                       token,
-                      EventSet::readable() | EventSet::error() | EventSet::hup(),
+                      Ready::readable() | Ready::error() | Ready::hup(),
                       PollOpt::edge())?;
 
         *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
@@ -110,7 +109,7 @@ impl ConnectionListener {
             listener: listener,
             name_hash: name_hash,
             our_pk: our_pk,
-            timeout_ms: timeout_ms,
+            timeout_sec: timeout_sec,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -119,13 +118,13 @@ impl ConnectionListener {
         Ok(())
     }
 
-    fn accept(&self, core: &mut Core, el: &mut EventLoop<Core>) {
+    fn accept(&self, core: &mut Core, poll: &Poll) {
         loop {
             match self.listener.accept() {
-                Ok(Some((socket, _))) => {
+                Ok((socket, _)) => {
                     if let Err(e) = ExchangeMsg::start(core,
-                                                       el,
-                                                       self.timeout_ms,
+                                                       poll,
+                                                       self.timeout_sec,
                                                        Socket::wrap(socket),
                                                        self.our_pk,
                                                        self.name_hash,
@@ -134,9 +133,8 @@ impl ConnectionListener {
                         debug!("Error accepting direct connection: {:?}", e);
                     }
                 }
-                Ok(None) => return,
-                Err(err) => {
-                    debug!("Failed to accept new socket: {:?}", err);
+                Err(e) => {
+                    debug!("Failed to accept new socket: {:?}", e);
                     return;
                 }
             }
@@ -145,17 +143,17 @@ impl ConnectionListener {
 }
 
 impl State for ConnectionListener {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
-        if es.is_error() || es.is_hup() {
-            self.terminate(core, el);
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+        if kind.is_error() || kind.is_hup() {
+            self.terminate(core, poll);
             let _ = self.event_tx.send(Event::ListenerFailed);
-        } else if es.is_readable() {
-            self.accept(core, el);
+        } else if kind.is_readable() {
+            self.accept(core, poll);
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = el.deregister(&self.listener);
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+        let _ = poll.deregister(&self.listener);
         let _ = core.remove_state(self.token);
     }
 
@@ -167,15 +165,13 @@ impl State for ConnectionListener {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
+    use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, Core, CoreMessage, ExternalReachability, Message, NameHash};
-    use maidsafe_utilities;
+    use common::{self, CoreMessage, EventLoop, ExternalReachability, Message, NameHash};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
-    use maidsafe_utilities::thread::Joiner;
     use main::{Event, PeerId};
-    use mio::{EventLoop, Sender, Token};
+    use mio::Token;
     use nat::MappingContext;
     use rust_sodium::crypto::box_::{self, PublicKey};
     use rust_sodium::crypto::hash::sha256;
@@ -189,31 +185,23 @@ mod tests {
     use std::sync::mpsc;
     use std::time::Duration;
 
+    // Make sure this is < EXCHANGE_MSG_TIMEOUT_SEC else blocking reader socket in this test will
+    // exit with an EAGAIN error (unless this is what is wanted).
+    const HANDSHAKE_TIMEOUT_SEC: u64 = 5;
+    const LISTENER_TOKEN: usize = 0;
     const NAME_HASH: NameHash = [1; sha256::DIGESTBYTES];
     const NAME_HASH_2: NameHash = [2; sha256::DIGESTBYTES];
 
     struct Listener {
-        tx: Sender<CoreMessage>,
+        _el: EventLoop,
         pk: PublicKey,
         addr: common::SocketAddr,
         event_rx: mpsc::Receiver<Event>,
-        _raii_joiner: Joiner,
-    }
-
-    impl Drop for Listener {
-        fn drop(&mut self) {
-            unwrap!(self.tx
-                        .send(CoreMessage::new(|_, el| el.shutdown())),
-                    "Could not send shutdown to el");
-        }
     }
 
     fn start_listener() -> Listener {
-        let mut el = unwrap!(EventLoop::new(), "Could not spawn el");
-        let tx = el.channel();
-        let raii_joiner = maidsafe_utilities::thread::named("EL", move || {
-            unwrap!(el.run(&mut Core::with_token_counter(1)), "Could not run el");
-        });
+        let el = unwrap!(common::spawn_event_loop(LISTENER_TOKEN + 1,
+                                                  Some("Connection Listener Test")));
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
@@ -225,17 +213,17 @@ mod tests {
 
         let listeners_clone = listeners.clone();
         let (pk, _) = box_::gen_keypair();
-        unwrap!(tx.send(CoreMessage::new(move |core, el| {
+        unwrap!(el.send(CoreMessage::new(move |core, poll| {
             ConnectionListener::start(core,
-                                      el,
-                                      Some(5000),
+                                      poll,
+                                      Some(HANDSHAKE_TIMEOUT_SEC),
                                       0,
                                       pk,
                                       NAME_HASH,
                                       cm,
                                       mc,
                                       listeners_clone,
-                                      Token(0),
+                                      Token(LISTENER_TOKEN),
                                       crust_sender);
         })),
                 "Could not send to tx");
@@ -250,11 +238,10 @@ mod tests {
         let addr = common::SocketAddr(unwrap!(listeners.lock())[0]);
 
         Listener {
-            tx: tx,
+            _el: el,
             pk: pk,
             addr: addr,
             event_rx: event_rx,
-            _raii_joiner: raii_joiner,
         }
     }
 
@@ -262,8 +249,8 @@ mod tests {
         let listener_addr = StdSocketAddr::new(listener.addr.ip(), listener.addr.port());
         let stream = unwrap!(TcpStream::connect(listener_addr),
                              "Could not connect to listener");
-        unwrap!(stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000)))
-            , "Could not set read timeout.");
+        unwrap!(stream.set_read_timeout(Some(Duration::from_secs(EXCHANGE_MSG_TIMEOUT_SEC + 1))),
+                "Could not set read timeout.");
 
         stream
     }
@@ -399,12 +386,8 @@ mod tests {
         unwrap!(write(&mut us, message), "Could not write.");
 
         let mut buf = [0; 512];
-        if cfg!(windows) {
-            assert!(us.read(&mut buf).is_err());
-        } else {
-            assert_eq!(0,
-                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
-        }
+        assert_eq!(0,
+                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
     }
 
     #[test]
@@ -412,17 +395,10 @@ mod tests {
         let listener = start_listener();
         let mut us = connect_to_listener(&listener);
         let mut buf = [0; 512];
-        if cfg!(windows) {
-            assert!(us.read(&mut buf).is_err());
-        } else {
-            assert_eq!(0,
-                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
-        }
+        assert_eq!(0,
+                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
     }
 
-    // TODO(Spandan) Due to mio bug this will fail on windows.
-    //               Track https://github.com/carllerche/mio/issues/397
-    #[cfg(target_family = "unix")]
     #[test]
     fn stun_service() {
         let listener = start_listener();
@@ -443,11 +419,7 @@ mod tests {
                    unwrap!(us.local_addr(), "Could not obtain local addr"));
 
         let mut buf = [0; 512];
-        if cfg!(windows) {
-            assert!(us.read(&mut buf).is_err());
-        } else {
-            assert_eq!(0,
-                       unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
-        }
+        assert_eq!(0,
+                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
     }
 }

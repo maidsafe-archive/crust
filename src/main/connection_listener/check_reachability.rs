@@ -15,15 +15,17 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimerId, Socket, SocketAddr, State};
-use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
+use common::{Core, CoreTimer, Socket, SocketAddr, State};
+use mio::{Poll, PollOpt, Ready, Token};
+use mio::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::Duration;
 
-const CHECK_REACHABILITY_TIMEOUT_MS: u64 = 3 * 1000;
+const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 
-pub type Finish<T> = Box<FnMut(&mut Core, &mut EventLoop<Core>, Token, Result<T, ()>)>;
+pub type Finish<T> = Box<FnMut(&mut Core, &Poll, Token, Result<T, ()>)>;
 
 pub struct CheckReachability<T> {
     token: Token,
@@ -37,7 +39,7 @@ impl<T> CheckReachability<T>
     where T: 'static + Clone
 {
     pub fn start(core: &mut Core,
-                 el: &mut EventLoop<Core>,
+                 poll: &Poll,
                  their_listener: SocketAddr,
                  t: T,
                  finish: Finish<T>)
@@ -45,12 +47,13 @@ impl<T> CheckReachability<T>
         let socket = Socket::connect(&their_listener)?;
         let token = core.get_new_token();
 
-        el.register(&socket,
+        poll.register(&socket,
                       token,
-                      EventSet::error() | EventSet::hup() | EventSet::writable(),
+                      Ready::error() | Ready::hup() | Ready::writable(),
                       PollOpt::edge())?;
 
-        let timeout = el.timeout_ms(CoreTimerId::new(token, 0), CHECK_REACHABILITY_TIMEOUT_MS)?;
+        let timeout = core.set_timeout(Duration::from_secs(CHECK_REACHABILITY_TIMEOUT_SEC),
+                         CoreTimer::new(token, 0))?;
 
         let state = CheckReachability {
             token: token,
@@ -65,41 +68,41 @@ impl<T> CheckReachability<T>
         Ok(token)
     }
 
-    fn handle_success(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        self.terminate(core, el);
+    fn handle_success(&mut self, core: &mut Core, poll: &Poll) {
+        self.terminate(core, poll);
         let token = self.token;
         let t = self.t.clone();
-        (*self.finish)(core, el, token, Ok(t));
+        (*self.finish)(core, poll, token, Ok(t));
     }
 
-    fn handle_error(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        self.terminate(core, el);
+    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+        self.terminate(core, poll);
         let token = self.token;
-        (*self.finish)(core, el, token, Err(()));
+        (*self.finish)(core, poll, token, Err(()));
     }
 }
 
 impl<T> State for CheckReachability<T>
     where T: 'static + Clone
 {
-    fn ready(&mut self, core: &mut Core, el: &mut EventLoop<Core>, es: EventSet) {
-        if es.is_error() || es.is_hup() || !es.is_writable() {
-            self.handle_error(core, el);
+    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+        if kind.is_error() || kind.is_hup() || !kind.is_writable() {
+            self.handle_error(core, poll);
         } else {
-            self.handle_success(core, el);
+            self.handle_success(core, poll);
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        let _ = el.clear_timeout(self.timeout);
+    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+        let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
-        let _ = el.deregister(&self.socket);
+        let _ = poll.deregister(&self.socket);
     }
 
-    fn timeout(&mut self, core: &mut Core, el: &mut EventLoop<Core>, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
         trace!("Bootstrapper's external reachability check timed out to one of its given IP's. \
                 Erroring out for this remote endpoint.");
-        self.handle_error(core, el)
+        self.handle_error(core, poll)
     }
 
     fn as_any(&mut self) -> &mut Any {

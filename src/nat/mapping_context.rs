@@ -84,7 +84,7 @@ impl MappingContext {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     // Run with `cargo test igd -- --ignored` to find if IGD is available for you

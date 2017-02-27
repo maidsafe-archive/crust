@@ -16,8 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 
-use common::CoreMessage;
-use mio;
+use common::CommonError;
 use std::io;
 
 quick_error! {
@@ -31,16 +30,11 @@ quick_error! {
             cause(e)
             from()
         }
-        /// Mio Timer errors
-        MioTimer(err: mio::TimerError) {
-            description("Mio timer error")
-            from()
-        }
-        /// Mio notify errors
-        MioNotify(err: mio::NotifyError<CoreMessage>) {
-            description("Mio notify error")
-            display("Mio notify error: {}", err)
-            cause(err)
+        /// Common error
+        CommonError(e: CommonError) {
+            description(e.description())
+            display("NatError: {}", e)
+            cause(e)
             from()
         }
     }
