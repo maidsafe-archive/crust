@@ -346,6 +346,13 @@ mod tests {
 
     #[test]
     #[should_panic]
+    fn connect_to_self() {
+        let listener = start_listener();
+        connect(NAME_HASH, listener.pk, listener);
+    }
+
+    #[test]
+    #[should_panic]
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
