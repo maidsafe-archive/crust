@@ -93,5 +93,10 @@ quick_error! {
             cause(e)
             from()
         }
+        /// Requested connect to self
+        RequestedConnectToSelf {
+            description("Requested connection to self")
+            display("Requested connection to self")
+        }
     }
 }

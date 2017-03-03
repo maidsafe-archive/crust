@@ -324,6 +324,12 @@ impl Service {
     ///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`
     ///    obtained from the peer
     pub fn connect(&self, our_ci: PrivConnectionInfo, their_ci: PubConnectionInfo) -> ::Res<()> {
+        if their_ci.id == PeerId(self.our_keys.0) {
+            debug!("Requested connect to {:?}, which is our peer ID",
+                   their_ci.id);
+            return Err(CrustError::RequestedConnectToSelf);
+        }
+
         if unwrap!(self.cm.lock()).contains_key(&their_ci.id) {
             debug!("Already connected OR already in process of connecting to {:?}",
                    their_ci.id);
@@ -474,6 +480,30 @@ mod tests {
     use std::thread;
     use std::time::Duration;
     use tests::{get_event_sender, timebomb};
+
+    #[test]
+    fn connect_self() {
+        timebomb(Duration::from_secs(30), || {
+            let (event_tx, event_rx) = get_event_sender();
+            let mut service = unwrap!(Service::new(event_tx));
+
+            unwrap!(service.start_listening_tcp());
+            expect_event!(event_rx, Event::ListenerStarted(_));
+
+            service.prepare_connection_info(0);
+
+            let conn_info_result =
+                expect_event!(event_rx, Event::ConnectionInfoPrepared(result) => result);
+
+            let priv_info = unwrap!(conn_info_result.result);
+            let pub_info = priv_info.to_pub_connection_info();
+
+            match service.connect(priv_info, pub_info) {
+                Err(CrustError::RequestedConnectToSelf) => (),
+                Ok(()) | Err(..) => panic!("Expected CrustError::RequestedConnectedToSelf"),
+            }
+        })
+    }
 
     #[test]
     fn direct_connect_two_peers() {
