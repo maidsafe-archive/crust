@@ -28,6 +28,7 @@ use net2::TcpBuilder;
 use rust_sodium::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
+use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -133,7 +134,9 @@ impl ConnectionListener {
                         debug!("Error accepting direct connection: {:?}", e);
                     }
                 }
-                Err(e) => {
+                Err(ref e) if e.kind() == ErrorKind::WouldBlock ||
+                              e.kind() == ErrorKind::Interrupted => return,
+                Err(ref e) => {
                     debug!("Failed to accept new socket: {:?}", e);
                     return;
                 }
