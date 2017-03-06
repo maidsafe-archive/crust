@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -85,9 +85,9 @@ impl Bootstrap {
         let sd_meta = match seek_peers(core, service_discovery_token, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
-                    rx: rx,
-                    timeout: timeout,
-                })
+                         rx: rx,
+                         timeout: timeout,
+                     })
             }
             Err(CrustError::ServiceDiscNotEnabled) => None,
             Err(e) => {
@@ -97,21 +97,22 @@ impl Bootstrap {
         };
 
         let state = Rc::new(RefCell::new(Bootstrap {
-            token: token,
-            cm: cm,
-            peers: peers,
-            blacklist: blacklist,
-            name_hash: name_hash,
-            ext_reachability: ext_reachability,
-            our_pk: our_pk,
-            event_tx: event_tx,
-            sd_meta: sd_meta,
-            bs_timer: bs_timer,
-            bs_timeout: bs_timeout,
-            cache: cache,
-            children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
-            self_weak: Weak::new(),
-        }));
+                                             token: token,
+                                             cm: cm,
+                                             peers: peers,
+                                             blacklist: blacklist,
+                                             name_hash: name_hash,
+                                             ext_reachability: ext_reachability,
+                                             our_pk: our_pk,
+                                             event_tx: event_tx,
+                                             sd_meta: sd_meta,
+                                             bs_timer: bs_timer,
+                                             bs_timeout: bs_timeout,
+                                             cache: cache,
+                                             children:
+                                                 HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
+                                             self_weak: Weak::new(),
+                                         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
@@ -153,6 +154,7 @@ impl Bootstrap {
         self.maybe_terminate(core, poll);
     }
 
+
     fn handle_result(&mut self,
                      core: &mut Core,
                      poll: &Poll,
@@ -173,13 +175,14 @@ impl Bootstrap {
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
             }
+            #[cfg_attr(rustfmt, rustfmt_skip)]
             Err((bad_peer, opt_reason)) => {
                 self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
                 if let Some(reason) = opt_reason {
                     let err_msg = match reason {
                         BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
                         BootstrapDenyReason::FailedExternalReachability => {
-                            "Bootstrapee node could not establish connection to us."
+                            "Bootstrappee node could not establish connection to us."
                         }
                     };
                     error!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
@@ -194,7 +197,7 @@ impl Bootstrap {
 
     fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
         if self.children.is_empty() {
-            error!("Bootrapper has no active children left - bootstrap has failed");
+            error!("Bootstrapper has no active children left - bootstrap has failed");
             self.terminate(core, poll);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }
@@ -253,14 +256,14 @@ fn seek_peers(core: &mut Core,
               -> ::Res<(Receiver<Vec<common::SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let mut state = unwrap!(state.as_any()
-            .downcast_mut::<ServiceDiscovery>());
+        let mut state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
         state.seek_peers()?;
-        let timeout = core.set_timeout(Duration::from_secs(SERVICE_DISCOVERY_TIMEOUT_SEC),
-                         CoreTimer::new(token, SERVICE_DISCOVERY_TIMER_ID))?;
+        let timeout =
+            core.set_timeout(Duration::from_secs(SERVICE_DISCOVERY_TIMEOUT_SEC),
+                             CoreTimer::new(token, SERVICE_DISCOVERY_TIMER_ID))?;
 
         Ok((rx, timeout))
     } else {

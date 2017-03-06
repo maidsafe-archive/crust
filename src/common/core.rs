@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -14,8 +14,8 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-// Defines `Core`, the mio handler and the core of the event loop.
 
+// Defines `Core`, the mio handler and the core of the event loop.
 
 use common::{Result, State};
 use maidsafe_utilities::thread::{self, Joiner};
@@ -87,9 +87,9 @@ pub fn spawn_event_loop(token_counter_start: usize,
     });
 
     Ok(EventLoop {
-        tx: tx,
-        _joiner: joiner,
-    })
+           tx: tx,
+           _joiner: joiner,
+       })
 }
 
 fn event_loop_impl(token_counter_start: usize,
@@ -215,8 +215,8 @@ impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &Poll) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
         CoreMessage(Some(Box::new(move |core: &mut Core, poll: &Poll| if let Some(f) = f.take() {
-            f(core, poll)
-        })))
+                                      f(core, poll)
+                                  })))
     }
 }
 

@@ -28,16 +28,16 @@ before_script:
     fi
 script:
   - if [ "${TRAVIS_RUST_VERSION}" = stable ]; then
-        (
-            set -x;
-            cargo fmt -- --write-mode=diff &&
-            cargo test --verbose --release
-        );
+      (
+        set -x;
+        cargo fmt -- --write-mode=diff &&
+        cargo test --release --verbose
+      );
     elif [ "${TRAVIS_OS_NAME}" = linux ]; then
-        (
-            set -x;
-            cargo clippy && cargo clippy --profile=test
-        )
+      (
+        set -x;
+        cargo clippy && cargo clippy --profile=test
+      );
     fi
 before_cache:
   - cargo prune

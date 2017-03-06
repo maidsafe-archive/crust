@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -30,11 +30,6 @@
         unused_qualifications, unused_results)]
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations, variant_size_differences)]
-
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", deny(clippy))]
-#![cfg_attr(feature="clippy", allow(use_debug))]
 
 #[macro_use]
 extern crate log;
@@ -190,17 +185,17 @@ fn main() {
         .about("The crust peer will run, using any config file it can find to \
                 try and bootstrap off any provided peers.")
         .arg(Arg::with_name("discovery-port")
-            .long("discovery-port")
-            .value_name("PORT")
-            .help("Set the port for local network service discovery")
-            .takes_value(true))
+                 .long("discovery-port")
+                 .value_name("PORT")
+                 .help("Set the port for local network service discovery")
+                 .takes_value(true))
         .arg(Arg::with_name("speed")
-            .short("s")
-            .long("speed")
-            .value_name("RATE")
-            .help("Keep sending random data at a maximum speed of RATE bytes/second to the \
+                 .short("s")
+                 .long("speed")
+                 .value_name("RATE")
+                 .help("Keep sending random data at a maximum speed of RATE bytes/second to the \
                    first connected peer.")
-            .takes_value(true))
+                 .takes_value(true))
         .get_matches();
 
     // Construct Service and start listening
@@ -282,8 +277,8 @@ fn main() {
                                 println!("{}", info_json);
                                 let mut network = unwrap!(network2.lock());
                                 if network.our_connection_infos
-                                    .insert(result_token, info)
-                                    .is_some() {
+                                       .insert(result_token, info)
+                                       .is_some() {
                                     panic!("Got the same result_token twice!");
                                 };
                             }
@@ -363,7 +358,7 @@ fn main() {
 
         let speed: u64 = unwrap!(unwrap!(matches.value_of("speed"),
                                          "Safe due to `running_speed_test` == true")
-                                     .parse(),
+                                         .parse(),
                                  "Expected number for <speed>");
         let mut rng = rand::thread_rng();
         loop {
@@ -371,8 +366,9 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                unwrap!(unwrap!(service.lock())
-                    .send(peer_id.clone(), generate_random_vec_u8(length as usize), 0));
+                unwrap!(unwrap!(service.lock()).send(peer_id.clone(),
+                                                     generate_random_vec_u8(length as usize),
+                                                     0));
                 debug!("Sent a message with length of {} bytes to {:?}",
                        length,
                        peer_id);
@@ -430,8 +426,9 @@ fn main() {
                     let network = unwrap!(network.lock());
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
-                            unwrap!(unwrap!(service.lock())
-                                .send(peer_id.clone(), message.into_bytes(), 0));
+                            unwrap!(unwrap!(service.lock()).send(peer_id.clone(),
+                                                                 message.into_bytes(),
+                                                                 0));
                         }
                         None => println!("Invalid connection #"),
                     }
@@ -507,8 +504,8 @@ fn parse_user_command(cmd: String) -> Option<UserCommand> {
     unwrap!(app.write_help(&mut help_message));
     let help_message = unwrap!(String::from_utf8(help_message));
     let matches = app.get_matches_from_safe(cmd.trim_right_matches(|c| c == '\r' || c == '\n')
-        .split(' ')
-        .collect::<Vec<_>>());
+                                                .split(' ')
+                                                .collect::<Vec<_>>());
 
     let matches = match matches {
         Ok(v) => v,

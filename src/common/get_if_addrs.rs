@@ -1,3 +1,20 @@
+// Copyright 2016 MaidSafe.net limited.
+//
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
+// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
+// licence you accepted on initial access to the Software (the "Licences").
+//
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+//
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.
+//
+// Please review the Licences for the specific language governing permissions and limitations
+// relating to use of the SAFE Network Software.
+
 use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr};
 #[cfg(test)]
@@ -190,10 +207,10 @@ mod getifaddrs_posix {
                         None
                     };
                     IfAddr::V4(Ifv4Addr {
-                        ip: ipv4_addr,
-                        netmask: netmask,
-                        broadcast: broadcast,
-                    })
+                                   ip: ipv4_addr,
+                                   netmask: netmask,
+                                   broadcast: broadcast,
+                               })
                 }
                 Some(IpAddr::V6(ipv6_addr)) => {
                     let netmask = match sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
@@ -209,16 +226,16 @@ mod getifaddrs_posix {
                         None
                     };
                     IfAddr::V6(Ifv6Addr {
-                        ip: ipv6_addr,
-                        netmask: netmask,
-                        broadcast: broadcast,
-                    })
+                                   ip: ipv6_addr,
+                                   netmask: netmask,
+                                   broadcast: broadcast,
+                               })
                 }
             };
             ret.push(Interface {
-                name: name,
-                addr: addr,
-            });
+                         name: name,
+                         addr: addr,
+                     });
         }
         unsafe {
             posix_freeifaddrs(ifaddrs);
@@ -309,17 +326,17 @@ mod getifaddrs_windows {
             return None;
         }
         if unsafe { *sockaddr }.sa_family as u32 == AF_INET as u32 {
-            let ref sa = unsafe { *(sockaddr as *const sockaddr_in) };
+            let sa = &unsafe { *(sockaddr as *const sockaddr_in) };
             // Ignore all 169.254.x.x addresses as these are not active interfaces
             if sa.sin_addr.S_un & 65535 == 0xfea9 {
                 return None;
             }
-            Some(IpAddr::V4(Ipv4Addr::new(((sa.sin_addr.S_un >> 0) & 255) as u8,
+            Some(IpAddr::V4(Ipv4Addr::new(((sa.sin_addr.S_un) & 255) as u8,
                                           ((sa.sin_addr.S_un >> 8) & 255) as u8,
                                           ((sa.sin_addr.S_un >> 16) & 255) as u8,
                                           ((sa.sin_addr.S_un >> 24) & 255) as u8)))
         } else if unsafe { *sockaddr }.sa_family as u32 == AF_INET6 as u32 {
-            let ref sa = unsafe { *(sockaddr as *const sockaddr_in6) };
+            let sa = &unsafe { *(sockaddr as *const sockaddr_in6) };
             // Ignore all fe80:: addresses as these are link locals
             if sa.sin6_addr.s6_addr[0] == 0xfe && sa.sin6_addr.s6_addr[1] == 0x80 {
                 return None;
@@ -373,7 +390,7 @@ mod getifaddrs_windows {
                     ERROR_SUCCESS => break,
                     111 => {
                         libc::free(ifaddrs as *mut c_void);
-                        buffersize = buffersize * 2;
+                        buffersize *= 2;
                         continue;
                     }
                     _ => return Err(io::Error::last_os_error()),
@@ -383,9 +400,9 @@ mod getifaddrs_windows {
 
         for ifaddr in unsafe { CLinkedListConst::from_ptr(ifaddrs, |a| a.next) }.iter() {
             for addr in unsafe {
-                    CLinkedListConst::from_ptr(ifaddr.first_unicast_address, |a| a.next)
-                }
-                .iter() {
+                        CLinkedListConst::from_ptr(ifaddr.first_unicast_address, |a| a.next)
+                    }
+                    .iter() {
                 let name =
                     unsafe { CStr::from_ptr(ifaddr.adapter_name) }.to_string_lossy().into_owned();
 
@@ -395,15 +412,17 @@ mod getifaddrs_windows {
                         let mut item_netmask = Ipv4Addr::new(0, 0, 0, 0);
                         let mut item_broadcast = None;
                         // Search prefixes for a prefix matching addr
-                        'prefixloopv4: for prefix in unsafe {
-                                CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next)
-                            }
-                            .iter() {
+                        'prefixloopv4: for prefix in
+                            unsafe { CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next) }
+                                .iter() {
                             let ipprefix = sockaddr_to_ipaddr(prefix.address.lp_socket_address);
                             match ipprefix {
                                 Some(IpAddr::V4(ref a)) => {
                                     let mut netmask: [u8; 4] = [0; 4];
-                                    for n in 0..((prefix.prefix_length as usize + 7) / 8) {
+                                    for (n, netmask_elt) in
+                                        netmask.iter_mut()
+                                            .enumerate()
+                                            .take(((prefix.prefix_length as usize + 7) / 8)) {
                                         let x_byte = ipv4_addr.octets()[n];
                                         let y_byte = a.octets()[n];
                                         for m in 0..8 {
@@ -412,7 +431,7 @@ mod getifaddrs_windows {
                                             }
                                             let bit = 1 << m;
                                             if (x_byte & bit) == (y_byte & bit) {
-                                                netmask[n] = netmask[n] | bit;
+                                                *netmask_elt |= bit;
                                             } else {
                                                 continue 'prefixloopv4;
                                             }
@@ -424,7 +443,7 @@ mod getifaddrs_windows {
                                                                  netmask[3]);
                                     let mut broadcast: [u8; 4] = ipv4_addr.octets();
                                     for n in 0..4 {
-                                        broadcast[n] = broadcast[n] | !netmask[n];
+                                        broadcast[n] |= !netmask[n];
                                     }
                                     item_broadcast = Some(Ipv4Addr::new(broadcast[0],
                                                                         broadcast[1],
@@ -436,25 +455,27 @@ mod getifaddrs_windows {
                             };
                         }
                         IfAddr::V4(Ifv4Addr {
-                            ip: ipv4_addr,
-                            netmask: item_netmask,
-                            broadcast: item_broadcast,
-                        })
+                                       ip: ipv4_addr,
+                                       netmask: item_netmask,
+                                       broadcast: item_broadcast,
+                                   })
                     }
                     Some(IpAddr::V6(ipv6_addr)) => {
                         let mut item_netmask = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0);
                         // Search prefixes for a prefix matching addr
-                        'prefixloopv6: for prefix in unsafe {
-                                CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next)
-                            }
-                            .iter() {
+                        'prefixloopv6: for prefix in
+                            unsafe { CLinkedListConst::from_ptr(ifaddr.first_prefix, |p| p.next) }
+                                .iter() {
                             let ipprefix = sockaddr_to_ipaddr(prefix.address.lp_socket_address);
                             match ipprefix {
                                 Some(IpAddr::V6(ref a)) => {
                                     // Iterate the bits in the prefix, if they all match this prefix
                                     // is the right one, else try the next prefix
                                     let mut netmask: [u16; 8] = [0; 8];
-                                    for n in 0..((prefix.prefix_length as usize + 15) / 16) {
+                                    for (n, netmask_elt) in
+                                        netmask.iter_mut()
+                                            .enumerate()
+                                            .take(((prefix.prefix_length as usize + 15) / 16)) {
                                         let x_word = ipv6_addr.segments()[n];
                                         let y_word = a.segments()[n];
                                         for m in 0..16 {
@@ -463,7 +484,7 @@ mod getifaddrs_windows {
                                             }
                                             let bit = 1 << m;
                                             if (x_word & bit) == (y_word & bit) {
-                                                netmask[n] = netmask[n] | bit;
+                                                *netmask_elt |= bit;
                                             } else {
                                                 continue 'prefixloopv6;
                                             }
@@ -483,16 +504,16 @@ mod getifaddrs_windows {
                             };
                         }
                         IfAddr::V6(Ifv6Addr {
-                            ip: ipv6_addr,
-                            netmask: item_netmask,
-                            broadcast: None,
-                        })
+                                       ip: ipv6_addr,
+                                       netmask: item_netmask,
+                                       broadcast: None,
+                                   })
                     }
                 };
                 ret.push(Interface {
-                    name: name,
-                    addr: addr,
-                });
+                             name: name,
+                             addr: addr,
+                         });
             }
         }
         unsafe {
@@ -510,6 +531,7 @@ pub fn get_if_addrs() -> io::Result<Vec<Interface>> {
 
 #[cfg(test)]
 mod tests {
+    use super::Interface;
     use common::get_if_addrs::get_if_addrs;
     use std::error::Error;
     use std::io::Read;
@@ -597,10 +619,9 @@ mod tests {
         // at least one loop back address
         assert!(1 <= ifaces.iter().filter(|interface| interface.is_loopback()).count());
         // one address of IpV4(127.0.0.1)
-        assert!(1 ==
-                ifaces.iter()
-            .filter(|interface| interface.addr.ip() == IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)))
-            .count());
+        let is_loopback =
+            |interface: &&Interface| interface.addr.ip() == IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+        assert!(1 == ifaces.iter().filter(is_loopback).count());
 
         // each system address shall be listed
         let system_addrs = list_system_addrs();
