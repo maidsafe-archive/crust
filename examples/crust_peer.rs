@@ -436,8 +436,8 @@ fn main() {
                 UserCommand::SendAll(message) => {
                     let mut network = unwrap!(network.lock());
                     let msg = message.into_bytes();
-                    for (_, peer_id) in &mut network.nodes {
-                        unwrap!(unwrap!(service.lock()).send(peer_id.clone(), msg.clone(), 0));
+                    for peer_id in network.nodes.values_mut() {
+                        unwrap!(unwrap!(service.lock()).send(*peer_id, msg.clone(), 0));
                     }
                 }
                 UserCommand::List => {
