@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -43,22 +43,26 @@ impl Socket {
     pub fn wrap(stream: TcpStream) -> Self {
         Socket {
             inner: Some(SockInner {
-                stream: stream,
-                read_buffer: Vec::new(),
-                read_len: 0,
-                write_queue: BTreeMap::new(),
-                current_write: None,
-            }),
+                            stream: stream,
+                            read_buffer: Vec::new(),
+                            read_len: 0,
+                            write_queue: BTreeMap::new(),
+                            current_write: None,
+                        }),
         }
     }
 
     pub fn peer_addr(&self) -> Result<SocketAddr> {
-        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner
+            .as_ref()
+            .ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.peer_addr()?)
     }
 
     pub fn take_error(&self) -> Result<Option<io::Error>> {
-        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner
+            .as_ref()
+            .ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.take_error()?)
     }
 
@@ -70,7 +74,9 @@ impl Socket {
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
     pub fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
-        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner
+            .as_mut()
+            .ok_or(CommonError::UninitialisedSocket)?;
         inner.read()
     }
 
@@ -86,7 +92,9 @@ impl Socket {
                                token: Token,
                                msg: Option<(T, Priority)>)
                                -> ::Res<bool> {
-        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner
+            .as_mut()
+            .ok_or(CommonError::UninitialisedSocket)?;
         inner.write(poll, token, msg)
     }
 }
@@ -107,9 +115,9 @@ impl Evented for Socket {
         let inner = self.inner
             .as_ref()
             .ok_or_else(|| {
-                io::Error::new(ErrorKind::Other,
-                               format!("{}", CommonError::UninitialisedSocket))
-            })?;
+                            io::Error::new(ErrorKind::Other,
+                                           format!("{}", CommonError::UninitialisedSocket))
+                        })?;
         inner.register(poll, token, interest, opts)
     }
 
@@ -122,9 +130,9 @@ impl Evented for Socket {
         let inner = self.inner
             .as_ref()
             .ok_or_else(|| {
-                io::Error::new(ErrorKind::Other,
-                               format!("{}", CommonError::UninitialisedSocket))
-            })?;
+                            io::Error::new(ErrorKind::Other,
+                                           format!("{}", CommonError::UninitialisedSocket))
+                        })?;
         inner.reregister(poll, token, interest, opts)
     }
 
@@ -132,9 +140,9 @@ impl Evented for Socket {
         let inner = self.inner
             .as_ref()
             .ok_or_else(|| {
-                io::Error::new(ErrorKind::Other,
-                               format!("{}", CommonError::UninitialisedSocket))
-            })?;
+                            io::Error::new(ErrorKind::Other,
+                                           format!("{}", CommonError::UninitialisedSocket))
+                        })?;
         inner.deregister(poll)
     }
 }
@@ -171,9 +179,9 @@ impl SockInner {
                         let e = Err(CommonError::ZeroByteRead);
                         if is_something_read {
                             return match self.read_from_buffer() {
-                                r @ Ok(Some(_)) | r @ Err(_) => r,
-                                Ok(None) => e,
-                            };
+                                       r @ Ok(Some(_)) | r @ Err(_) => r,
+                                       Ok(None) => e,
+                                   };
                         } else {
                             return e;
                         }
@@ -184,14 +192,14 @@ impl SockInner {
                 Err(error) => {
                     return if error.kind() == ErrorKind::WouldBlock ||
                               error.kind() == ErrorKind::Interrupted {
-                        if is_something_read {
-                            self.read_from_buffer()
-                        } else {
-                            Ok(None)
-                        }
-                    } else {
-                        Err(From::from(error))
-                    }
+                               if is_something_read {
+                                   self.read_from_buffer()
+                               } else {
+                                   Ok(None)
+                               }
+                           } else {
+                               Err(From::from(error))
+                           }
                 }
             }
         }
@@ -241,11 +249,11 @@ impl SockInner {
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
             .skip_while(|&(&priority, queue)| {
-                priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
+                            priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
                 queue.front().map_or(false, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
                 })
-            })
+                        })
             .map(|(&priority, _)| priority)
             .collect();
         let dropped_msgs: usize = expired_keys.iter()

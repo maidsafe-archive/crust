@@ -3,9 +3,14 @@ environment:
     RUST_BACKTRACE: 1
   matrix:
     - RUST_VERSION: stable
+
 branches:
   only:
     - master
+
+cache:
+  - '%USERPROFILE%\.cargo'
+  - '%APPVEYOR_BUILD_FOLDER%\target'
 
 clone_depth: 1
 

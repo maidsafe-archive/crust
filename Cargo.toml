@@ -1,8 +1,8 @@
 [package]
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
-documentation = "https://docs.rs/crust/"
-homepage = "http://maidsafe.net"
+documentation = "https://docs.rs/crust"
+homepage = "https://maidsafe.net"
 license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
@@ -36,7 +36,3 @@ winapi = "~0.2"
 bench = false
 name = "crust_peer"
 path = "examples/crust_peer.rs"
-test = true
-
-[features]
-cargo-clippy = []

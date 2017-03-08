@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -148,11 +148,8 @@ impl ServiceDiscovery {
     }
 
     fn write_impl(&mut self, poll: &Poll) -> Result<(), ServiceDiscoveryError> {
-        let our_current_listeners = unwrap!(self.our_listeners
-                .lock())
-            .iter()
-            .map(|elt| common::SocketAddr(*elt))
-            .collect();
+        let our_current_listeners =
+            unwrap!(self.our_listeners.lock()).iter().map(|elt| common::SocketAddr(*elt)).collect();
         let resp = DiscoveryMsg::Response(our_current_listeners);
 
         let serialised_resp = serialise(&resp)?;
@@ -164,8 +161,7 @@ impl ServiceDiscovery {
                 Ok(None) => self.reply_to.push_front(peer_addr),
                 Err(ref e) if e.kind() == ErrorKind::Interrupted ||
                               e.kind() == ErrorKind::WouldBlock => {
-                    self.reply_to
-                        .push_front(peer_addr)
+                    self.reply_to.push_front(peer_addr)
                 }
                 Err(e) => return Err(From::from(e)),
             }
@@ -272,18 +268,16 @@ mod tests {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
             unwrap!(el1.send(CoreMessage::new(move |core, poll| {
-                        unwrap!(ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
-                                "Could not spawn ServiceDiscovery_1");
-                    })),
+                unwrap!(ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
+                        "Could not spawn ServiceDiscovery_1");
+            })),
                     "Could not send to el1");
 
             // Register observer
             unwrap!(el1.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_1));
                 let mut inner = state.borrow_mut();
-                unwrap!(inner.as_any()
-                        .downcast_mut::<ServiceDiscovery>())
-                    .register_observer(tx);
+                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>()).register_observer(tx);
             })));
 
             // Seek peers

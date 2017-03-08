@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -59,10 +59,10 @@ impl MappingContext {
         });
 
         Ok(MappingContext {
-            our_ifv4s: ifv4s,
-            our_ifv6s: ifv6s,
-            peer_stuns: Vec::with_capacity(10),
-        })
+               our_ifv4s: ifv4s,
+               our_ifv6s: ifv6s,
+               peer_stuns: Vec::with_capacity(10),
+           })
     }
 
     /// Inform the context about external "STUN" servers. Note that crust does not actually use
