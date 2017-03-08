@@ -163,14 +163,7 @@ impl ExchangeMsg {
                                  res: Result<PeerId, ()>) {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_id) = res {
-            for child in self.reachability_children.drain() {
-                let child = match core.get_state(child) {
-                    Some(state) => state,
-                    None => continue,
-                };
-
-                child.borrow_mut().terminate(core, poll);
-            }
+            self.terminate_childern(core, poll);
             return self.send_bootstrap_resp(core, poll, their_id);
         }
         if self.reachability_children.is_empty() {
@@ -315,6 +308,12 @@ impl ExchangeMsg {
             NextState::None => self.terminate(core, poll),
         }
     }
+
+    fn terminate_childern(&mut self, core: &mut Core, poll: &Poll) {
+        for child in self.reachability_children.drain() {
+            core.get_state(child).map_or((), |c| c.borrow_mut().terminate(core, poll));
+        }
+    }
 }
 
 impl State for ExchangeMsg {
@@ -332,6 +331,7 @@ impl State for ExchangeMsg {
     }
 
     fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+        self.terminate_childern(core, poll);
         let _ = core.remove_state(self.token);
 
         match self.next_state {

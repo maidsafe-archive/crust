@@ -24,6 +24,7 @@ use main::{ConnectionMap, Event};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
+use nat::ip_addr_is_global;
 use net2::TcpBuilder;
 use rust_sodium::crypto::box_::PublicKey;
 use std::any::Any;
@@ -50,6 +51,7 @@ impl ConnectionListener {
                  poll: &Poll,
                  handshake_timeout_sec: Option<u64>,
                  port: u16,
+                 force_include_port: bool,
                  our_pk: PublicKey,
                  name_hash: NameHash,
                  cm: ConnectionMap,
@@ -58,21 +60,37 @@ impl ConnectionListener {
                  token: Token,
                  event_tx: ::CrustEventSender) {
         let event_tx_0 = event_tx.clone();
-        let finish = move |core: &mut Core, poll: &Poll, socket, mapped_addrs| if let Err(e) =
-            ConnectionListener::handle_mapped_socket(core,
-                                                     poll,
-                                                     handshake_timeout_sec,
-                                                     socket,
-                                                     mapped_addrs,
-                                                     our_pk,
-                                                     name_hash,
-                                                     cm,
-                                                     our_listeners,
-                                                     token,
-                                                     event_tx.clone()) {
-            error!("TCP Listener failed to handle mapped socket: {:?}", e);
-            let _ = event_tx.send(Event::ListenerFailed);
-        };
+        let finish =
+            move |core: &mut Core, poll: &Poll, socket, mut mapped_addrs: Vec<SocketAddr>| {
+                if port != 0 && force_include_port &&
+                   !mapped_addrs.iter().any(|s| ip_addr_is_global(&s.ip()) && s.port() == port) {
+                    let mut global_addrs: Vec<_> = mapped_addrs.iter()
+                        .filter_map(|s| if ip_addr_is_global(&s.ip()) {
+                                        Some(*s)
+                                    } else {
+                                        None
+                                    })
+                        .collect();
+                    for addr in &mut global_addrs {
+                        addr.set_port(port);
+                    }
+                    mapped_addrs.extend(global_addrs);
+                }
+                if let Err(e) = ConnectionListener::handle_mapped_socket(core,
+                                                                         poll,
+                                                                         handshake_timeout_sec,
+                                                                         socket,
+                                                                         mapped_addrs,
+                                                                         our_pk,
+                                                                         name_hash,
+                                                                         cm,
+                                                                         our_listeners,
+                                                                         token,
+                                                                         event_tx.clone()) {
+                    error!("TCP Listener failed to handle mapped socket: {:?}", e);
+                    let _ = event_tx.send(Event::ListenerFailed);
+                }
+            };
 
         if let Err(e) = MappedTcpSocket::start(core, poll, port, &mc, finish) {
             error!("Error starting tcp_listening_socket: {:?}", e);
@@ -221,6 +239,7 @@ mod tests {
                                       poll,
                                       Some(HANDSHAKE_TIMEOUT_SEC),
                                       0,
+                                      false,
                                       pk,
                                       NAME_HASH,
                                       cm,

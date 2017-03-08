@@ -291,6 +291,7 @@ impl Service {
         let cm = self.cm.clone();
         let mc = self.mc.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
+        let force_include_port = self.config.force_acceptor_port_in_ext_ep;
         let our_pk = self.our_keys.0;
         let name_hash = self.name_hash;
         let our_listeners = self.our_listeners.clone();
@@ -301,6 +302,7 @@ impl Service {
                                                 poll,
                                                 None,
                                                 port,
+                                                force_include_port,
                                                 our_pk,
                                                 name_hash,
                                                 cm,
