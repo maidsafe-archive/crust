@@ -254,15 +254,19 @@ impl Heartbeat {
            })
     }
 
-    fn timeout(&self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
+    fn timeout(&mut self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
-        } else if let Err(e) = core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS),
-                                                self.send_timer) {
-            debug!("Failed to reschedule heartbeat send timer: {:?}", e);
-            HeartbeatAction::Terminate
         } else {
-            HeartbeatAction::Send
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)
+                .and_then(|t| {
+                              self.send_timeout = t;
+                              Ok(HeartbeatAction::Send)
+                          })
+                .unwrap_or_else(|e| {
+                                    debug!("Failed to reschedule heartbeat send timer: {:?}", e);
+                                    HeartbeatAction::Terminate
+                                })
         }
     }
 
