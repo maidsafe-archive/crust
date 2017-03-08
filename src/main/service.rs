@@ -178,7 +178,7 @@ impl Service {
 
         match self.get_peer_socket_addr(peer_id) {
             Ok(ip) => {
-                debug!("Checking whether {:?} is whitelisted in {:?}",
+                trace!("Checking whether {:?} is whitelisted in {:?}",
                        ip,
                        whitelisted_ips);
                 whitelisted_ips.contains(&common::IpAddr::from(ip))
@@ -194,7 +194,7 @@ impl Service {
     pub fn is_peer_hard_coded(&self, peer_id: &PeerId) -> bool {
         match self.get_peer_socket_addr(peer_id) {
             Ok(ip) => {
-                debug!("Checking whether {:?} is hard-coded in {:?}",
+                trace!("Checking whether {:?} is hard-coded in {:?}",
                        ip,
                        self.config.hard_coded_contacts);
                 self.config
@@ -466,7 +466,7 @@ impl Service {
 
 /// Returns a hash of the network name.
 fn name_hash(network_name: &Option<String>) -> NameHash {
-    debug!("Network name: {:?}", network_name);
+    trace!("Network name: {:?}", network_name);
     match *network_name {
         Some(ref name) => sha256::hash(name.as_bytes()).0,
         None => [0; sha256::DIGESTBYTES],

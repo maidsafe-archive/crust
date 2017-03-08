@@ -261,7 +261,7 @@ impl SockInner {
             .map(|queue| queue.len())
             .fold(0, |s, len| s + len); // TODO: Use `sum` once that's stable.
         if dropped_msgs > 0 {
-            debug!("Insufficient bandwidth. Dropping {} messages with priority >= {}.",
+            trace!("Insufficient bandwidth. Dropping {} messages with priority >= {}.",
                    dropped_msgs,
                    expired_keys[0]);
         }
