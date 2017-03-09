@@ -259,10 +259,10 @@ impl Heartbeat {
             HeartbeatAction::Terminate
         } else {
             core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)
-                .and_then(|t| {
-                              self.send_timeout = t;
-                              Ok(HeartbeatAction::Send)
-                          })
+                .map(|t| {
+                         self.send_timeout = t;
+                         HeartbeatAction::Send
+                     })
                 .unwrap_or_else(|e| {
                                     debug!("Failed to reschedule heartbeat send timer: {:?}", e);
                                     HeartbeatAction::Terminate

@@ -62,18 +62,17 @@ impl ConnectionListener {
         let event_tx_0 = event_tx.clone();
         let finish =
             move |core: &mut Core, poll: &Poll, socket, mut mapped_addrs: Vec<SocketAddr>| {
-                if port != 0 && force_include_port &&
+                if force_include_port && port != 0 &&
                    !mapped_addrs.iter().any(|s| ip_addr_is_global(&s.ip()) && s.port() == port) {
-                    let mut global_addrs: Vec<_> = mapped_addrs.iter()
+                    let global_addrs: Vec<_> = mapped_addrs.iter()
                         .filter_map(|s| if ip_addr_is_global(&s.ip()) {
-                                        Some(*s)
+                                        let mut s = *s;
+                                        s.set_port(port);
+                                        Some(s)
                                     } else {
                                         None
                                     })
                         .collect();
-                    for addr in &mut global_addrs {
-                        addr.set_port(port);
-                    }
                     mapped_addrs.extend(global_addrs);
                 }
                 if let Err(e) = ConnectionListener::handle_mapped_socket(core,
