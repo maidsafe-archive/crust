@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -14,7 +14,6 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
 
 use super::check_reachability::CheckReachability;
 use common::{self, BootstrapDenyReason, Core, CoreTimer, ExternalReachability, Message, NameHash,
@@ -67,17 +66,17 @@ impl ExchangeMsg {
                              CoreTimer::new(token, 0))?;
 
         let state = Rc::new(RefCell::new(ExchangeMsg {
-            token: token,
-            cm: cm,
-            event_tx: event_tx,
-            name_hash: name_hash,
-            next_state: NextState::None,
-            our_pk: our_pk,
-            socket: socket,
-            timeout: timeout,
-            reachability_children: HashSet::with_capacity(4),
-            self_weak: Default::default(),
-        }));
+                                             token: token,
+                                             cm: cm,
+                                             event_tx: event_tx,
+                                             name_hash: name_hash,
+                                             next_state: NextState::None,
+                                             our_pk: our_pk,
+                                             socket: socket,
+                                             timeout: timeout,
+                                             reachability_children: HashSet::with_capacity(4),
+                                             self_weak: Default::default(),
+                                         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
@@ -129,8 +128,8 @@ impl ExchangeMsg {
         }
         match ext_reachability {
             ExternalReachability::Required { direct_listeners } => {
-                for their_listener in direct_listeners.into_iter()
-                    .filter(|addr| ip_addr_is_global(&addr.ip())) {
+                for their_listener in
+                    direct_listeners.into_iter().filter(|addr| ip_addr_is_global(&addr.ip())) {
                     let self_weak = self.self_weak.clone();
                     let finish = move |core: &mut Core, poll: &Poll, child, res| {
                         if let Some(self_rc) = self_weak.upgrade() {
@@ -164,14 +163,7 @@ impl ExchangeMsg {
                                  res: Result<PeerId, ()>) {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_id) = res {
-            for child in self.reachability_children.drain() {
-                let child = match core.get_state(child) {
-                    Some(state) => state,
-                    None => continue,
-                };
-
-                child.borrow_mut().terminate(core, poll);
-            }
+            self.terminate_childern(core, poll);
             return self.send_bootstrap_resp(core, poll, their_id);
         }
         if self.reachability_children.is_empty() {
@@ -222,9 +214,9 @@ impl ExchangeMsg {
         let mut guard = unwrap!(self.cm.lock());
         guard.entry(their_id)
             .or_insert(ConnectionId {
-                active_connection: None,
-                currently_handshaking: 0,
-            })
+                           active_connection: None,
+                           currently_handshaking: 0,
+                       })
             .currently_handshaking += 1;
         trace!("Connection Map inserted: {:?} -> {:?}",
                their_id,
@@ -316,6 +308,12 @@ impl ExchangeMsg {
             NextState::None => self.terminate(core, poll),
         }
     }
+
+    fn terminate_childern(&mut self, core: &mut Core, poll: &Poll) {
+        for child in self.reachability_children.drain() {
+            core.get_state(child).map_or((), |c| c.borrow_mut().terminate(core, poll));
+        }
+    }
 }
 
 impl State for ExchangeMsg {
@@ -333,6 +331,7 @@ impl State for ExchangeMsg {
     }
 
     fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+        self.terminate_childern(core, poll);
         let _ = core.remove_state(self.token);
 
         match self.next_state {

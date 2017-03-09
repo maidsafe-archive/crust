@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -77,23 +77,21 @@ impl Service {
         // Form our initial contact info
         let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let mut mc = MappingContext::new()?;
-        mc.add_peer_stuns(config.hard_coded_contacts
-            .iter()
-            .map(|elt| elt.0));
+        mc.add_peer_stuns(config.hard_coded_contacts.iter().map(|elt| elt.0));
 
         let el = common::spawn_event_loop(3, Some(&format!("{:?}", our_id)))?;
         trace!("Event loop started");
 
         Ok(Service {
-            cm: Arc::new(Mutex::new(HashMap::new())),
-            config: config,
-            event_tx: event_tx,
-            mc: Arc::new(mc),
-            el: el,
-            name_hash: name_hash,
-            our_keys: our_keys,
-            our_listeners: our_listeners,
-        })
+               cm: Arc::new(Mutex::new(HashMap::new())),
+               config: config,
+               event_tx: event_tx,
+               mc: Arc::new(mc),
+               el: el,
+               name_hash: name_hash,
+               our_keys: our_keys,
+               our_listeners: our_listeners,
+           })
     }
 
     /// Starts listening for beacon broadcasts.
@@ -180,7 +178,7 @@ impl Service {
 
         match self.get_peer_socket_addr(peer_id) {
             Ok(ip) => {
-                debug!("Checking whether {:?} is whitelisted in {:?}",
+                trace!("Checking whether {:?} is whitelisted in {:?}",
                        ip,
                        whitelisted_ips);
                 whitelisted_ips.contains(&common::IpAddr::from(ip))
@@ -196,10 +194,13 @@ impl Service {
     pub fn is_peer_hard_coded(&self, peer_id: &PeerId) -> bool {
         match self.get_peer_socket_addr(peer_id) {
             Ok(ip) => {
-                debug!("Checking whether {:?} is hard-coded in {:?}",
+                trace!("Checking whether {:?} is hard-coded in {:?}",
                        ip,
                        self.config.hard_coded_contacts);
-                self.config.hard_coded_contacts.iter().any(|addr| addr.0.ip() == ip.0.ip())
+                self.config
+                    .hard_coded_contacts
+                    .iter()
+                    .any(|addr| addr.0.ip() == ip.0.ip())
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -260,28 +261,28 @@ impl Service {
         };
 
         self.post(move |core, poll| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
-            if let Err(e) = Bootstrap::start(core,
-                                             poll,
-                                             name_hash,
-                                             ext_reachability,
-                                             our_pk,
-                                             cm,
-                                             &config,
-                                             blacklist,
-                                             BOOTSTRAP_TOKEN,
-                                             SERVICE_DISCOVERY_TOKEN,
-                                             event_tx.clone()) {
-                error!("Could not bootstrap: {:?}", e);
-                let _ = event_tx.send(Event::BootstrapFailed);
-            }
-        })
+                      if let Err(e) = Bootstrap::start(core,
+                                                       poll,
+                                                       name_hash,
+                                                       ext_reachability,
+                                                       our_pk,
+                                                       cm,
+                                                       &config,
+                                                       blacklist,
+                                                       BOOTSTRAP_TOKEN,
+                                                       SERVICE_DISCOVERY_TOKEN,
+                                                       event_tx.clone()) {
+                          error!("Could not bootstrap: {:?}", e);
+                          let _ = event_tx.send(Event::BootstrapFailed);
+                      }
+                  })
     }
 
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
         self.post(move |core, poll| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
-            state.borrow_mut().terminate(core, poll);
-        })
+                      state.borrow_mut().terminate(core, poll);
+                  })
     }
 
     /// Starts accepting TCP connections. This is persistant until it errors out or is stopped
@@ -290,31 +291,33 @@ impl Service {
         let cm = self.cm.clone();
         let mc = self.mc.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
+        let force_include_port = self.config.force_acceptor_port_in_ext_ep;
         let our_pk = self.our_keys.0;
         let name_hash = self.name_hash;
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, poll| if core.get_state(LISTENER_TOKEN).is_none() {
-            ConnectionListener::start(core,
-                                      poll,
-                                      None,
-                                      port,
-                                      our_pk,
-                                      name_hash,
-                                      cm,
-                                      mc,
-                                      our_listeners,
-                                      LISTENER_TOKEN,
-                                      event_tx);
-        })
+                      ConnectionListener::start(core,
+                                                poll,
+                                                None,
+                                                port,
+                                                force_include_port,
+                                                our_pk,
+                                                name_hash,
+                                                cm,
+                                                mc,
+                                                our_listeners,
+                                                LISTENER_TOKEN,
+                                                event_tx);
+                  })
     }
 
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
         self.post(move |core, poll| if let Some(state) = core.get_state(LISTENER_TOKEN) {
-            state.borrow_mut().terminate(core, poll);
-        })
+                      state.borrow_mut().terminate(core, poll);
+                  })
     }
 
     /// Connect to a peer. To call this method you must follow these steps:
@@ -353,8 +356,8 @@ impl Service {
         };
 
         let _ = self.post(move |core, poll| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().terminate(core, poll);
-        });
+                              state.borrow_mut().terminate(core, poll);
+                          });
 
         true
     }
@@ -367,8 +370,8 @@ impl Service {
         };
 
         self.post(move |core, poll| if let Some(state) = core.get_state(token) {
-            state.borrow_mut().write(core, poll, msg, priority);
-        })
+                      state.borrow_mut().write(core, poll, msg, priority);
+                  })
     }
 
     /// Generate connection info. The connection info is returned via the `ConnectionInfoPrepared`
@@ -379,15 +382,16 @@ impl Service {
         let our_listeners =
             unwrap!(self.our_listeners.lock()).iter().map(|e| common::SocketAddr(*e)).collect();
         if DISABLE_NAT {
-            let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token: result_token,
-                result: Ok(PrivConnectionInfo {
-                    id: PeerId(self.our_keys.0),
-                    for_direct: our_listeners,
-                    for_hole_punch: Default::default(),
-                    hole_punch_socket: None,
-                }),
-            });
+            let event =
+                Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                  result_token: result_token,
+                                                  result: Ok(PrivConnectionInfo {
+                                                                 id: PeerId(self.our_keys.0),
+                                                                 for_direct: our_listeners,
+                                                                 for_hole_punch: Default::default(),
+                                                                 hole_punch_socket: None,
+                                                             }),
+                                              });
             let _ = self.event_tx.send(event);
         } else {
             let event_tx = self.event_tx.clone();
@@ -401,31 +405,38 @@ impl Service {
                         .map(common::SocketAddr)
                         .collect();
                     let event_tx = event_tx_clone;
-                    let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token: result_token,
-                        result: Ok(PrivConnectionInfo {
-                            id: PeerId(our_pub_key),
-                            for_direct: our_listeners,
-                            for_hole_punch: hole_punch_addrs,
-                            hole_punch_socket: Some(socket),
-                        }),
-                    });
+                    let event =
+                        Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                          result_token: result_token,
+                                                          result: Ok(PrivConnectionInfo {
+                                                                         id: PeerId(our_pub_key),
+                                                                         for_direct: our_listeners,
+                                                                         for_hole_punch:
+                                                                             hole_punch_addrs,
+                                                                         hole_punch_socket:
+                                                                             Some(socket),
+                                                                     }),
+                                                      });
                     let _ = event_tx.send(event);
                 }) {
                     Ok(()) => (),
                     Err(e) => {
                         debug!("Error mapping tcp socket: {}", e);
-                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                result_token: result_token,
-                                result: Err(From::from(e)),
-                            }));
+                        let _ =
+                            event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                                            result_token:
+                                                                                result_token,
+                                                                            result:
+                                                                                Err(From::from(e)),
+                                                                        }));
                     }
                 };
             }) {
-                let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                    result_token: result_token,
-                    result: Err(From::from(e)),
-                }));
+                let _ =
+                    self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                                         result_token: result_token,
+                                                                         result: Err(From::from(e)),
+                                                                     }));
             }
         }
     }
@@ -457,7 +468,7 @@ impl Service {
 
 /// Returns a hash of the network name.
 fn name_hash(network_name: &Option<String>) -> NameHash {
-    debug!("Network name: {:?}", network_name);
+    trace!("Network name: {:?}", network_name);
     match *network_name {
         Some(ref name) => sha256::hash(name.as_bytes()).0,
         None => [0; sha256::DIGESTBYTES],
@@ -467,6 +478,7 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use CrustError;
     use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
@@ -669,9 +681,7 @@ mod tests {
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> Joiner {
                 maidsafe_utilities::thread::named("run!", move || {
                     for (our_ci, their_ci) in
-                        self.our_cis
-                            .into_iter()
-                            .zip(self.connection_id_rx.into_iter()) {
+                        self.our_cis.into_iter().zip(self.connection_id_rx.into_iter()) {
                         let _ = self.service.connect(our_ci, their_ci);
                     }
                     let mut their_ids = HashMap::new();

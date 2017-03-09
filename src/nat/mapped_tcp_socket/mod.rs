@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -14,7 +14,6 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
 
 use self::get_ext_addr::GetExtAddr;
 use common::{Core, CoreMessage, CoreTimer, State};
@@ -88,7 +87,7 @@ impl<F> MappedTcpSocket<F>
 
                     let mut state = state.borrow_mut();
                     let mapping_tcp_sock = match state.as_any()
-                        .downcast_mut::<MappedTcpSocket<F>>() {
+                              .downcast_mut::<MappedTcpSocket<F>>() {
                         Some(mapping_sock) => mapping_sock,
                         None => return,
                     };
@@ -103,15 +102,17 @@ impl<F> MappedTcpSocket<F>
             .map(|&(ip, _)| SocketAddr::new(IpAddr::V4(ip), addr.port()))
             .collect();
 
-        let state = Rc::new(RefCell::new(MappedTcpSocket {
-            token: token,
-            socket: Some(socket),
-            igd_children: igd_children,
-            stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
-            mapped_addrs: mapped_addrs,
-            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
-            finish: Some(finish),
-        }));
+        let state =
+            Rc::new(RefCell::new(MappedTcpSocket {
+                                     token: token,
+                                     socket: Some(socket),
+                                     igd_children: igd_children,
+                                     stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
+                                     mapped_addrs: mapped_addrs,
+                                     timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC),
+                                                               CoreTimer::new(token, 0))?,
+                                     finish: Some(finish),
+                                 }));
 
         // Ask Stuns
         for stun in mc.peer_stuns() {

@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -14,7 +14,6 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
 
 use common::{IpAddr, SocketAddr};
 use config_file_handler::{self, FileHandler};
@@ -29,6 +28,17 @@ pub struct Config {
     pub hard_coded_contacts: Vec<SocketAddr>,
     /// Port for TCP acceptor
     pub tcp_acceptor_port: Option<u16>,
+    /// Force usage of `tcp_acceptor_port` as our router mapped port. Normally if there is a port
+    /// forwarding, crust will find out what the external world sees our local tcp acceptor
+    /// endpoint as and include this information in our connection info that we share with others.
+    /// However there are routers/firewalls in the wild which behave differently when a port is
+    /// forwarded. They allow inbound connection through the forwarded port, but all outbound
+    /// connections through the forwarded port get remapped to some ephemeral port. This prevents
+    /// crust from knowing what the world sees our `tcp_acceptor_port` as because outbound
+    /// connections get remapped although the port had been forwarded. In such scenarios, the user
+    /// can specify this value as true, which will force crust to add the above `tcp_acceptor_port`
+    /// to one of our externally reachable endpoint.
+    pub force_acceptor_port_in_ext_ep: bool,
     /// Port for service discovery on local network
     pub service_discovery_port: Option<u16>,
     /// File for bootstrap cache
@@ -47,6 +57,7 @@ impl Default for Config {
         Config {
             hard_coded_contacts: vec![],
             tcp_acceptor_port: None,
+            force_acceptor_port_in_ext_ep: false,
             service_discovery_port: None,
             bootstrap_cache_name: None,
             bootstrap_whitelisted_ips: HashSet::new(),

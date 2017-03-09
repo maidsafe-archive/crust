@@ -5,8 +5,8 @@
 // licence you accepted on initial access to the Software (the "Licences").
 //
 // By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
-// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
+// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
 //
 // Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -14,7 +14,6 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
 
 use common::{Core, CoreTimer, Message, Priority, Socket, SocketAddr, State};
 use main::{ConnectionId, ConnectionMap, Event, PeerId};
@@ -76,14 +75,14 @@ impl ActiveConnection {
         };
 
         let state = Rc::new(RefCell::new(ActiveConnection {
-            token: token,
-            socket: socket,
-            cm: cm,
-            our_id: our_id,
-            their_id: their_id,
-            event_tx: event_tx,
-            heartbeat: heartbeat,
-        }));
+                                             token: token,
+                                             socket: socket,
+                                             cm: cm,
+                                             our_id: our_id,
+                                             their_id: their_id,
+                                             event_tx: event_tx,
+                                             heartbeat: heartbeat,
+                                         }));
 
         let _ = core.insert_state(token, state.clone());
 
@@ -92,9 +91,9 @@ impl ActiveConnection {
             let mut guard = unwrap!(state_mut.cm.lock());
             {
                 let conn_id = guard.entry(their_id).or_insert(ConnectionId {
-                    active_connection: None,
-                    currently_handshaking: 1,
-                });
+                                                                  active_connection: None,
+                                                                  currently_handshaking: 1,
+                                                              });
                 conn_id.currently_handshaking -= 1;
                 conn_id.active_connection = Some(token);
             }
@@ -133,7 +132,10 @@ impl ActiveConnection {
     /// Helper function that returns a socket address of the connection
     pub fn peer_addr(&self) -> ::Res<SocketAddr> {
         use main::CrustError;
-        self.socket.peer_addr().map(SocketAddr).map_err(CrustError::Common)
+        self.socket
+            .peer_addr()
+            .map(SocketAddr)
+            .map_err(CrustError::Common)
     }
 
     #[cfg(test)]
@@ -237,44 +239,48 @@ struct Heartbeat {
 impl Heartbeat {
     fn new(core: &mut Core, state_id: Token) -> ::Res<Self> {
         let recv_timer = CoreTimer::new(state_id, 0);
-        let recv_timeout =
-            core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer)?;
+        let recv_timeout = core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS),
+                                            recv_timer)?;
 
         let send_timer = CoreTimer::new(state_id, 1);
         let send_timeout =
             core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), send_timer)?;
 
         Ok(Heartbeat {
-            recv_timeout: recv_timeout,
-            recv_timer: recv_timer,
-            send_timeout: send_timeout,
-            send_timer: send_timer,
-        })
+               recv_timeout: recv_timeout,
+               recv_timer: recv_timer,
+               send_timeout: send_timeout,
+               send_timer: send_timer,
+           })
     }
 
-    fn timeout(&self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
+    fn timeout(&mut self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
-        } else if let Err(e) =
-            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer) {
-            debug!("Failed to reschedule heartbeat send timer: {:?}", e);
-            HeartbeatAction::Terminate
         } else {
-            HeartbeatAction::Send
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)
+                .and_then(|t| {
+                              self.send_timeout = t;
+                              Ok(HeartbeatAction::Send)
+                          })
+                .unwrap_or_else(|e| {
+                                    debug!("Failed to reschedule heartbeat send timer: {:?}", e);
+                                    HeartbeatAction::Terminate
+                                })
         }
     }
 
     fn reset_receive(&mut self, core: &mut Core) -> ::Res<()> {
         let _ = core.cancel_timeout(&self.recv_timeout);
         self.recv_timeout = core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS),
-                         self.recv_timer)?;
+                                             self.recv_timer)?;
         Ok(())
     }
 
     fn reset_send(&mut self, core: &mut Core) -> ::Res<()> {
         let _ = core.cancel_timeout(&self.send_timeout);
-        self.send_timeout =
-            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)?;
+        self.send_timeout = core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS),
+                                             self.send_timer)?;
         Ok(())
     }
 
