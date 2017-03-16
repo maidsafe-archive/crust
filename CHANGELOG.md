@@ -1,5 +1,15 @@
 # CRUST - Change Log
 
+## [0.22.1]
+- Add tests for checking the handling of connection to ourselves.
+- Do not spam log Listener wouldblocks.
+- CI, README, Contributor Agreement and clippy clean up.
+- rustfmt 0.8.0 refactor.
+- Fix timer overflow bug.
+- Allow users to force include TCP acceptor port in connection info via new option in crust config file.
+- `Debug`, `Info`, `Warn` and `Error` levels are reserved strictly for error logging. `Trace` to log logic flows, specific code-path hits etc.
+- Fix mio to 0.6.4 as 0.6.5 has deprecations and hence breaking changes for us (we treat deprecation warnings as errors currently).
+
 ## [0.22.0]
 - Port to the new paradigm of mio-v6.
 - Crust can now do echo/stun service on Windows too.
