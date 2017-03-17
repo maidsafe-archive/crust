@@ -621,7 +621,7 @@ mod tests {
         // one address of IpV4(127.0.0.1)
         let is_loopback =
             |interface: &&Interface| interface.addr.ip() == IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-        assert!(1 == ifaces.iter().filter(is_loopback).count());
+        assert_eq!(1, ifaces.iter().filter(is_loopback).count());
 
         // each system address shall be listed
         let system_addrs = list_system_addrs();
