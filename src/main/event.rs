@@ -18,6 +18,7 @@
 use super::ConnectionInfoResult;
 
 use super::PeerId;
+use common::CrustUser;
 use std::net::SocketAddr;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -25,7 +26,7 @@ use std::net::SocketAddr;
 #[derive(Debug)]
 pub enum Event {
     /// Invoked when a bootstrap peer connects to us
-    BootstrapAccept(PeerId),
+    BootstrapAccept(PeerId, CrustUser),
     /// Invoked when we bootstrap to a new peer.
     BootstrapConnect(PeerId, SocketAddr),
     /// Invoked when we failed to connect to all bootstrap contacts.

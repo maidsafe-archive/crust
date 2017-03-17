@@ -291,7 +291,7 @@ fn main() {
                                                                  peer_id);
                                 let _ = bs_sender.send(peer_index);
                             }
-                            crust::Event::BootstrapAccept(peer_id) => {
+                            crust::Event::BootstrapAccept(peer_id, _) => {
                                 println!("\nBootstrapAccept with peer {:?}", peer_id);
                                 let peer_index = handle_new_peer(&unwrap!(service.lock()),
                                                                  network2.clone(),
