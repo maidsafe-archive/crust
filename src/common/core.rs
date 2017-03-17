@@ -80,7 +80,7 @@ pub fn spawn_event_loop(token_counter_start: usize,
     let tx_clone = tx.clone();
     let joiner = thread::named(name, move || {
         let core = Core::new(token_counter_start + USER_TOKEN_OFFSET, tx_clone, timer);
-        match event_loop_impl(token_counter_start, poll, rx, core) {
+        match event_loop_impl(token_counter_start, &poll, &rx, core) {
             Ok(()) => trace!("Graceful event loop exit."),
             Err(e) => error!("Event loop killed due to {:?}", e),
         }
@@ -93,8 +93,8 @@ pub fn spawn_event_loop(token_counter_start: usize,
 }
 
 fn event_loop_impl(token_counter_start: usize,
-                   poll: Poll,
-                   rx: Receiver<CoreMessage>,
+                   poll: &Poll,
+                   rx: &Receiver<CoreMessage>,
                    mut core: Core)
                    -> Result<()> {
     let mut events = Events::with_capacity(EVENT_CAPACITY);
@@ -118,15 +118,15 @@ fn event_loop_impl(token_counter_start: usize,
                             Err(TryRecvError::Disconnected) => break 'event_loop,
                         };
                         match msg.0 {
-                            Some(mut f) => f(&mut core, &poll),
+                            Some(mut f) => f(&mut core, poll),
                             None => break 'event_loop,
                         }
                     }
                 }
                 Token(t) if t == token_counter_start + TIMER_TOKEN_OFFSET => {
-                    core.handle_timer(&poll, event.kind())
+                    core.handle_timer(poll, event.kind())
                 }
-                _ => core.handle_event(&poll, event),
+                _ => core.handle_event(poll, event),
             }
         }
     }

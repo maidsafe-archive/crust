@@ -276,12 +276,12 @@ mod tests {
         stream
     }
 
-    fn write(stream: &mut TcpStream, message: Vec<u8>) -> ::Res<()> {
+    fn write(stream: &mut TcpStream, message: &[u8]) -> ::Res<()> {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
         unwrap!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
         stream.write_all(&size_vec)?;
-        stream.write_all(&message)?;
+        stream.write_all(message)?;
 
         Ok(())
     }
@@ -306,12 +306,12 @@ mod tests {
     fn bootstrap(name_hash: NameHash,
                  ext_reachability: ExternalReachability,
                  pk: PublicKey,
-                 listener: Listener) {
-        let mut us = connect_to_listener(&listener);
+                 listener: &Listener) {
+        let mut us = connect_to_listener(listener);
 
         let message =
             unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash, ext_reachability)));
-        unwrap!(write(&mut us, message), "Could not write.");
+        unwrap!(write(&mut us, &message), "Could not write.");
 
         match unwrap!(read(&mut us), "Could not read.") {
             Message::BootstrapGranted(peer_pk) => assert_eq!(peer_pk, listener.pk),
@@ -324,11 +324,11 @@ mod tests {
         }
     }
 
-    fn connect(name_hash: NameHash, pk: PublicKey, listener: Listener) {
-        let mut us = connect_to_listener(&listener);
+    fn connect(name_hash: NameHash, pk: PublicKey, listener: &Listener) {
+        let mut us = connect_to_listener(listener);
 
         let message = unwrap!(serialise(&Message::Connect(pk, name_hash)));
-        unwrap!(write(&mut us, message), "Could not write.");
+        unwrap!(write(&mut us, &message), "Could not write.");
 
         let our_id = PeerId(pk);
         let their_id = match unwrap!(read(&mut us), "Could not read.") {
@@ -342,7 +342,7 @@ mod tests {
 
         if our_id > their_id {
             let message = unwrap!(serialise(&Message::ChooseConnection));
-            unwrap!(write(&mut us, message), "Could not write.");
+            unwrap!(write(&mut us, &message), "Could not write.");
         }
 
         match unwrap!(listener.event_rx.recv(), "Could not read event channel") {
@@ -355,21 +355,21 @@ mod tests {
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH, ExternalReachability::NotRequired, pk, listener);
+        bootstrap(NAME_HASH, ExternalReachability::NotRequired, pk, &listener);
     }
 
     #[test]
     fn connect_with_correct_parameters() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        connect(NAME_HASH, pk, listener);
+        connect(NAME_HASH, pk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn connect_to_self() {
         let listener = start_listener();
-        connect(NAME_HASH, listener.pk, listener);
+        connect(NAME_HASH, listener.pk, &listener);
     }
 
     #[test]
@@ -377,7 +377,10 @@ mod tests {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        bootstrap(NAME_HASH_2, ExternalReachability::NotRequired, pk, listener);
+        bootstrap(NAME_HASH_2,
+                  ExternalReachability::NotRequired,
+                  pk,
+                  &listener);
     }
 
     #[test]
@@ -385,7 +388,7 @@ mod tests {
     fn connect_with_invalid_version_hash() {
         let listener = start_listener();
         let (pk, _) = box_::gen_keypair();
-        connect(NAME_HASH_2, pk, listener);
+        connect(NAME_HASH_2, pk, &listener);
     }
 
     #[test]
@@ -395,14 +398,14 @@ mod tests {
         bootstrap(NAME_HASH,
                   ExternalReachability::NotRequired,
                   listener.pk,
-                  listener);
+                  &listener);
     }
 
     #[test]
     #[should_panic]
     fn connect_with_invalid_pub_key() {
         let listener = start_listener();
-        connect(NAME_HASH, listener.pk, listener);
+        connect(NAME_HASH, listener.pk, &listener);
     }
 
     #[test]
@@ -411,7 +414,7 @@ mod tests {
         let mut us = connect_to_listener(&listener);
 
         let message = unwrap!(serialise(&Message::Heartbeat));
-        unwrap!(write(&mut us, message), "Could not write.");
+        unwrap!(write(&mut us, &message), "Could not write.");
 
         let mut buf = [0; 512];
         assert_eq!(0,
@@ -433,7 +436,7 @@ mod tests {
         let mut us = connect_to_listener(&listener);
 
         let message = unwrap!(serialise(&Message::EchoAddrReq));
-        unwrap!(write(&mut us, message), "Could not write.");
+        unwrap!(write(&mut us, &message), "Could not write.");
 
         let our_addr = match unwrap!(read(&mut us), "Could not read.") {
             Message::EchoAddrResp(addr) => addr,

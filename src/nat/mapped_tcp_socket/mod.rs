@@ -61,7 +61,7 @@ impl<F> MappedTcpSocket<F>
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
         let socket = util::new_reusably_bound_tcp_socket(&addr)?;
-        let addr = util::tcp_builder_local_addr(&socket)?;
+        let addr = socket.local_addr()?;
 
         // Ask IGD
         let mut igd_children = 0;
