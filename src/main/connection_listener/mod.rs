@@ -187,7 +187,7 @@ mod tests {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, CoreMessage, EventLoop, ExternalReachability, Message, NameHash};
+    use common::{self, CoreMessage, CrustUser, EventLoop, ExternalReachability, Message, NameHash};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use main::{Event, PeerId};
@@ -309,6 +309,11 @@ mod tests {
                  listener: &Listener) {
         let mut us = connect_to_listener(listener);
 
+        let expected_kind = match ext_reachability {
+            ExternalReachability::NotRequired => CrustUser::Client,
+            ExternalReachability::Required { .. } => CrustUser::Node,
+        };
+
         let message =
             unwrap!(serialise(&Message::BootstrapRequest(pk, name_hash, ext_reachability)));
         unwrap!(write(&mut us, &message), "Could not write.");
@@ -319,7 +324,10 @@ mod tests {
         }
 
         match unwrap!(listener.event_rx.recv(), "Could not read event channel") {
-            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, PeerId(pk)),
+            Event::BootstrapAccept(peer_id, peer_kind) => {
+                assert_eq!(peer_id, PeerId(pk));
+                assert_eq!(peer_kind, expected_kind);
+            }
             event => panic!("Unexpected event notification: {:?}", event),
         }
     }

@@ -66,7 +66,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
-    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
     assert_eq!(peer_id1, service1.id());
 
     let message0 = b"hello from 0".to_vec();
@@ -114,7 +114,7 @@ fn bootstrap_two_services_using_service_discovery() {
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
-    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
     assert_eq!(peer_id1, service1.id());
 }
 
@@ -144,7 +144,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
-    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
     assert_eq!(peer_id1, service1.id());
 }
 
@@ -176,7 +176,7 @@ fn bootstrap_with_blacklist() {
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
-    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
     assert_eq!(peer_id1, service1.id());
 
     let blacklisted_listener = unwrap!(
@@ -260,7 +260,7 @@ fn drop_disconnects() {
     unwrap!(service_1.start_bootstrap(HashSet::new(), CrustUser::Client));
 
     let peer_id_0 = expect_event!(event_rx_1, Event::BootstrapConnect(peer_id, _) => peer_id);
-    expect_event!(event_rx_0, Event::BootstrapAccept(_peer_id));
+    expect_event!(event_rx_0, Event::BootstrapAccept(_peer_id, _));
 
     // Dropping service_0 should make service_1 receive a LostPeer event.
     drop(service_0);
@@ -411,7 +411,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
 
     unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
     expect_event!(event_rx1, Event::BootstrapConnect(_peer_id, _));
-    expect_event!(event_rx0, Event::BootstrapAccept(_peer_id));
+    expect_event!(event_rx0, Event::BootstrapAccept(_peer_id, _));
 
     thread::sleep(Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS));
 

@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use super::check_reachability::CheckReachability;
-use common::{self, BootstrapDenyReason, Core, CoreTimer, ExternalReachability, Message, NameHash,
-             Priority, Socket, State};
+use common::{self, BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
+             NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::timer::Timeout;
@@ -152,7 +152,9 @@ impl ExchangeMsg {
                     self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
                 }
             }
-            ExternalReachability::NotRequired => self.send_bootstrap_resp(core, poll, their_id),
+            ExternalReachability::NotRequired => {
+                self.send_bootstrap_resp(core, poll, their_id, CrustUser::Client)
+            }
         }
     }
 
@@ -164,7 +166,7 @@ impl ExchangeMsg {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_id) = res {
             self.terminate_childern(core, poll);
-            return self.send_bootstrap_resp(core, poll, their_id);
+            return self.send_bootstrap_resp(core, poll, their_id, CrustUser::Node);
         }
         if self.reachability_children.is_empty() {
             trace!("Bootstrapper failed to pass requisite condition of external recheability. \
@@ -174,11 +176,15 @@ impl ExchangeMsg {
         }
     }
 
-    fn send_bootstrap_resp(&mut self, core: &mut Core, poll: &Poll, their_id: PeerId) {
+    fn send_bootstrap_resp(&mut self,
+                           core: &mut Core,
+                           poll: &Poll,
+                           their_id: PeerId,
+                           peer_kind: CrustUser) {
         self.enter_handshaking_mode(their_id);
 
         let our_pk = self.our_pk;
-        self.next_state = NextState::ActiveConnection(their_id);
+        self.next_state = NextState::ActiveConnection(their_id, peer_kind);
         self.write(core, poll, Some((Message::BootstrapGranted(our_pk), 0)))
     }
 
@@ -240,7 +246,7 @@ impl ExchangeMsg {
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
         // Do not accept multiple bootstraps from same peer
-        if let NextState::ActiveConnection(their_id) = self.next_state {
+        if let NextState::ActiveConnection(their_id, _) = self.next_state {
             let terminate = match unwrap!(self.cm.lock()).get(&their_id).cloned() {
                 Some(ConnectionId { active_connection: Some(_), .. }) => true,
                 _ => false,
@@ -268,7 +274,7 @@ impl ExchangeMsg {
         let event_tx = self.event_tx.clone();
 
         match self.next_state {
-            NextState::ActiveConnection(their_id) => {
+            NextState::ActiveConnection(their_id, peer_kind) => {
                 let socket = mem::replace(&mut self.socket, Socket::default());
                 ActiveConnection::start(core,
                                         poll,
@@ -277,7 +283,7 @@ impl ExchangeMsg {
                                         self.cm.clone(),
                                         our_id,
                                         their_id,
-                                        Event::BootstrapAccept(their_id),
+                                        Event::BootstrapAccept(their_id, peer_kind),
                                         event_tx);
             }
             NextState::ConnectionCandidate(their_id) => {
@@ -336,7 +342,7 @@ impl State for ExchangeMsg {
 
         match self.next_state {
             NextState::ConnectionCandidate(their_id) |
-            NextState::ActiveConnection(their_id) => {
+            NextState::ActiveConnection(their_id, _) => {
                 let mut guard = unwrap!(self.cm.lock());
                 if let Entry::Occupied(mut oe) = guard.entry(their_id) {
                     oe.get_mut().currently_handshaking -= 1;
@@ -367,6 +373,6 @@ impl State for ExchangeMsg {
 
 enum NextState {
     None,
-    ActiveConnection(PeerId),
+    ActiveConnection(PeerId, CrustUser),
     ConnectionCandidate(PeerId),
 }
