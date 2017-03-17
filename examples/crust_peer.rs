@@ -385,7 +385,7 @@ fn main() {
             let mut command = String::new();
             assert!(io::stdin().read_line(&mut command).is_ok());
 
-            let cmd = match parse_user_command(command) {
+            let cmd = match parse_user_command(&command) {
                 Some(cmd) => cmd,
                 None => continue,
             };
@@ -465,7 +465,7 @@ enum UserCommand {
     List,
 }
 
-fn parse_user_command(cmd: String) -> Option<UserCommand> {
+fn parse_user_command(cmd: &str) -> Option<UserCommand> {
     let app = App::new("cli")
         .setting(AppSettings::NoBinaryName)
         .subcommand(SubCommand::with_name("prepare-connection-info")

@@ -17,7 +17,7 @@
 
 use net2::TcpBuilder;
 use std::io;
-use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
 pub fn new_reusably_bound_tcp_socket(local_addr: &SocketAddr) -> io::Result<TcpBuilder> {
     let socket = match local_addr.ip() {
@@ -62,29 +62,4 @@ pub fn ipv4_addr_is_global(ipv4: &Ipv4Addr) -> bool {
 pub fn ipv6_addr_is_global(ipv6: &Ipv6Addr) -> bool {
     // TODO(canndrew): This function is incomplete and may return false-positives.
     !(ipv6.is_loopback() || ipv6.is_unspecified())
-}
-
-// TODO(canndrew): This function should be deprecated once this issue
-// (https://github.com/rust-lang-nursery/net2-rs/issues/26) is resolved.
-#[cfg(target_family = "unix")]
-#[allow(unsafe_code)]
-pub fn tcp_builder_local_addr(sock: &TcpBuilder) -> io::Result<SocketAddr> {
-    use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
-    let fd = sock.as_raw_fd();
-    let stream = unsafe { net::TcpStream::from_raw_fd(fd) };
-    let ret = stream.local_addr();
-    let _ = stream.into_raw_fd();
-    ret
-}
-
-#[cfg(target_family = "windows")]
-#[allow(unsafe_code)]
-pub fn tcp_builder_local_addr(sock: &TcpBuilder) -> io::Result<SocketAddr> {
-    use std::mem;
-    use std::os::windows::io::{AsRawSocket, FromRawSocket};
-    let fd = sock.as_raw_socket();
-    let stream = unsafe { net::TcpStream::from_raw_socket(fd) };
-    let ret = stream.local_addr();
-    mem::forget(stream); // TODO(canndrew): Is this completely safe?
-    ret
 }

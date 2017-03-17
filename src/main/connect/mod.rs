@@ -90,7 +90,7 @@ impl Connect {
 
         if let Some(hole_punch_sock) = our_ci.hole_punch_socket {
             if let Ok((listener, nat_sockets)) =
-                nat::get_sockets(hole_punch_sock, their_hole_punch.len()) {
+                nat::get_sockets(&hole_punch_sock, their_hole_punch.len()) {
                 poll.register(&listener,
                               token,
                               Ready::readable() | Ready::error() | Ready::hup(),
