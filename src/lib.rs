@@ -37,7 +37,6 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations, variant_size_differences)]
 
-#![cfg_attr(feature="cargo-clippy", allow(unknown_lints))]
 #![cfg_attr(feature="cargo-clippy", allow(too_many_arguments))]
 
 #[macro_use]
