@@ -84,7 +84,8 @@ impl Connect {
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
-        let mut sockets = their_direct.into_iter()
+        let mut sockets = their_direct
+            .into_iter()
             .filter_map(|elt| Socket::connect(&elt).ok())
             .collect::<Vec<_>>();
 
@@ -96,8 +97,9 @@ impl Connect {
                               Ready::readable() | Ready::error() | Ready::hup(),
                               PollOpt::edge())?;
                 state.borrow_mut().listener = Some(listener);
-                sockets.extend(nat_sockets.into_iter()
-                                   .zip(their_hole_punch.into_iter().map(|elt| elt.0))
+                sockets.extend(nat_sockets
+                                   .into_iter()
+                                   .zip(their_hole_punch.into_iter().map(|elt| elt))
                                    .filter_map(|elt| {
                                                    TcpStream::connect_stream(elt.0, &elt.1).ok()
                                                })
@@ -119,7 +121,9 @@ impl Connect {
         let self_weak = self.self_weak.clone();
         let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
             self_weak.upgrade() {
-            self_rc.borrow_mut().handle_exchange_msg(core, poll, child, res);
+            self_rc
+                .borrow_mut()
+                .handle_exchange_msg(core, poll, child, res);
         };
 
         if let Ok(child) = ExchangeMsg::start(core,
@@ -145,7 +149,9 @@ impl Connect {
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
                 self_weak.upgrade() {
-                self_rc.borrow_mut().handle_connection_candidate(core, poll, child, res);
+                self_rc
+                    .borrow_mut()
+                    .handle_connection_candidate(core, poll, child, res);
             };
 
             if let Ok(child) = ConnectionCandidate::start(core,

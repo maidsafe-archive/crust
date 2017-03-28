@@ -205,7 +205,9 @@ impl Core {
         }
         while let Some(core_timer) = self.timer.poll() {
             if let Some(state) = self.get_state(core_timer.state_id) {
-                state.borrow_mut().timeout(self, poll, core_timer.timer_id);
+                state
+                    .borrow_mut()
+                    .timeout(self, poll, core_timer.timer_id);
             }
         }
     }

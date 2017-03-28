@@ -15,14 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{IpAddr, SocketAddr};
 use config_file_handler::{self, FileHandler};
 use std::collections::HashSet;
 use std::ffi::OsString;
+use std::net::{IpAddr, SocketAddr};
+
+#[cfg(test)]
 use std::path::PathBuf;
 
 /// Bootstrap config
-#[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     /// Direct contacts one should connect to
     pub hard_coded_contacts: Vec<SocketAddr>,
@@ -80,9 +82,11 @@ pub fn read_config_file() -> ::Res<Config> {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-#[allow(unused)]
+#[cfg(test)]
+#[allow(dead_code)]
 pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<PathBuf> {
     use std::io::Write;
+    use serde_json;
 
     let mut config = Config::default();
 
@@ -95,7 +99,7 @@ pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<
     let mut file = ::std::fs::File::create(&config_path)?;
     write!(&mut file,
            "{}",
-           ::rustc_serialize::json::as_pretty_json(&config))?;
+           unwrap!(serde_json::to_string_pretty(&config)))?;
     file.sync_all()?;
     Ok(config_path)
 }
@@ -108,13 +112,13 @@ fn get_file_name() -> ::Res<OsString> {
 
 #[cfg(test)]
 mod tests {
+    use super::Config;
+    use serde_json;
+    use std::io::Read;
+    use std::path::Path;
+
     #[test]
     fn parse_sample_config_file() {
-        use std::path::Path;
-        use std::io::Read;
-        use super::Config;
-        use rustc_serialize::json;
-
         let path = Path::new("installer/sample.config").to_path_buf();
 
         let mut file = match ::std::fs::File::open(path) {
@@ -130,7 +134,7 @@ mod tests {
             panic!(format!("CrustError reading sample.config: {:?}", what));
         }
 
-        if let Err(what) = json::decode::<Config>(&encoded_contents) {
+        if let Err(what) = serde_json::from_str::<Config>(&encoded_contents) {
             panic!(format!("CrustError parsing sample.config: {:?}", what));
         }
     }

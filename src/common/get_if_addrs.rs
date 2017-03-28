@@ -403,8 +403,9 @@ mod getifaddrs_windows {
                         CLinkedListConst::from_ptr(ifaddr.first_unicast_address, |a| a.next)
                     }
                     .iter() {
-                let name =
-                    unsafe { CStr::from_ptr(ifaddr.adapter_name) }.to_string_lossy().into_owned();
+                let name = unsafe { CStr::from_ptr(ifaddr.adapter_name) }
+                    .to_string_lossy()
+                    .into_owned();
 
                 let addr = match sockaddr_to_ipaddr(addr.address.lp_socket_address) {
                     None => continue,
@@ -420,7 +421,8 @@ mod getifaddrs_windows {
                                 Some(IpAddr::V4(ref a)) => {
                                     let mut netmask: [u8; 4] = [0; 4];
                                     for (n, netmask_elt) in
-                                        netmask.iter_mut()
+                                        netmask
+                                            .iter_mut()
                                             .enumerate()
                                             .take(((prefix.prefix_length as usize + 7) / 8)) {
                                         let x_byte = ipv4_addr.octets()[n];
@@ -473,7 +475,8 @@ mod getifaddrs_windows {
                                     // is the right one, else try the next prefix
                                     let mut netmask: [u16; 8] = [0; 8];
                                     for (n, netmask_elt) in
-                                        netmask.iter_mut()
+                                        netmask
+                                            .iter_mut()
                                             .enumerate()
                                             .take(((prefix.prefix_length as usize + 15) / 16)) {
                                         let x_word = ipv6_addr.segments()[n];
@@ -545,7 +548,10 @@ mod tests {
         let start_cmd = if arg == "" {
             Command::new(cmd).stdout(Stdio::piped()).spawn()
         } else {
-            Command::new(cmd).arg(arg).stdout(Stdio::piped()).spawn()
+            Command::new(cmd)
+                .arg(arg)
+                .stdout(Stdio::piped())
+                .spawn()
         };
         let mut process = match start_cmd {
             Err(why) => {
@@ -556,7 +562,10 @@ mod tests {
         };
         thread::sleep(Duration::from_millis(1000));
         let _ = process.kill();
-        let result: Vec<u8> = unwrap!(process.stdout).bytes().map(|x| unwrap!(x)).collect();
+        let result: Vec<u8> = unwrap!(process.stdout)
+            .bytes()
+            .map(|x| unwrap!(x))
+            .collect();
         unwrap!(String::from_utf8(result))
     }
 
@@ -601,13 +610,13 @@ mod tests {
         list_system_interfaces("ifconfig", "")
             .lines()
             .filter_map(|line| {
-                println!("{}", line);
-                if line.contains("inet ") {
-                    let addr_s: Vec<&str> = line.split_whitespace().collect();
-                    return Some(IpAddr::V4(unwrap!(Ipv4Addr::from_str(addr_s[1]))));
-                }
-                None
-            })
+                            println!("{}", line);
+                            if line.contains("inet ") {
+                                let addr_s: Vec<&str> = line.split_whitespace().collect();
+                                return Some(IpAddr::V4(unwrap!(Ipv4Addr::from_str(addr_s[1]))));
+                            }
+                            None
+                        })
             .collect()
     }
 
@@ -617,7 +626,11 @@ mod tests {
         println!("Local interfaces:");
         println!("{:#?}", ifaces);
         // at least one loop back address
-        assert!(1 <= ifaces.iter().filter(|interface| interface.is_loopback()).count());
+        assert!(1 <=
+                ifaces
+                    .iter()
+                    .filter(|interface| interface.is_loopback())
+                    .count());
         // one address of IpV4(127.0.0.1)
         let is_loopback =
             |interface: &&Interface| interface.addr.ip() == IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));

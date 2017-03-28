@@ -25,7 +25,7 @@
 
 // For explanation of lint checks, run `rustc -W help` or see
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
-#![forbid(bad_style, exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
+#![forbid(exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
           unknown_crate_types, warnings)]
 #![deny(deprecated, improper_ctypes, missing_docs,
         non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
@@ -44,6 +44,10 @@ extern crate log;
 #[cfg_attr(feature="cargo-clippy", allow(useless_attribute))]
 #[macro_use]
 extern crate quick_error;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate unwrap;
 
 extern crate byteorder;
 extern crate c_linked_list;
@@ -52,17 +56,17 @@ extern crate crossbeam;
 extern crate igd;
 extern crate libc;
 extern crate maidsafe_utilities;
+extern crate mio;
 extern crate net2;
 extern crate rand;
-extern crate rustc_serialize;
 extern crate rust_sodium;
-extern crate mio;
-#[macro_use]
-extern crate unwrap;
+extern crate serde;
 
 #[cfg(windows)]
 extern crate winapi;
 
+#[cfg(test)]
+extern crate serde_json;
 #[cfg(test)]
 #[macro_use]
 mod tests;

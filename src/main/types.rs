@@ -15,18 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common;
 use mio::Token;
 use net2::TcpBuilder;
 use rand::{Rand, Rng};
 use rust_sodium::crypto::box_::{self, PublicKey};
 use std::fmt;
+use std::net::SocketAddr;
 
 // ========================================================================================
 //                                     PeerId
 // ========================================================================================
 /// An identifier of a peer node.
-#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub struct PeerId(pub PublicKey);
 
 impl fmt::Debug for PeerId {
@@ -87,9 +87,9 @@ pub struct PrivConnectionInfo {
     #[doc(hidden)]
     pub id: PeerId,
     #[doc(hidden)]
-    pub for_direct: Vec<common::SocketAddr>,
+    pub for_direct: Vec<SocketAddr>,
     #[doc(hidden)]
-    pub for_hole_punch: Vec<common::SocketAddr>,
+    pub for_hole_punch: Vec<SocketAddr>,
     #[doc(hidden)]
     pub hole_punch_socket: Option<TcpBuilder>,
 }
@@ -110,14 +110,14 @@ impl PrivConnectionInfo {
 //                                     PubConnectionInfo
 // ========================================================================================
 /// Contact info used to connect to another peer.
-#[derive(Debug, RustcEncodable, RustcDecodable)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PubConnectionInfo {
     #[doc(hidden)]
     pub id: PeerId,
     #[doc(hidden)]
-    pub for_hole_punch: Vec<common::SocketAddr>,
+    pub for_hole_punch: Vec<SocketAddr>,
     #[doc(hidden)]
-    pub for_direct: Vec<common::SocketAddr>,
+    pub for_direct: Vec<SocketAddr>,
 }
 
 impl PubConnectionInfo {

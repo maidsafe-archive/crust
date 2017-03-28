@@ -12,18 +12,23 @@ version = "0.23.0"
 [dependencies]
 byteorder = "~0.5.3"
 c_linked_list = "~1.1.0"
-config_file_handler = "~0.4.0"
+#config_file_handler = "~0.4.0"
+config_file_handler = { git = "https://github.com/maidsafe/config_file_handler", branch = "master" }
 crossbeam = "~0.2.10"
 igd = "~0.5.1"
 libc = "~0.2.20"
 log = "~0.3.6"
-maidsafe_utilities = "~0.10.0"
+#maidsafe_utilities = "~0.10.0"
+maidsafe_utilities = { git = "https://github.com/maidsafe/maidsafe_utilities", branch = "master" }
+mio = "=0.6.4"
 net2 = "~0.2.26"
 quick-error = "~1.1.0"
 rand = "~0.3.14"
-rust_sodium = "~0.1.2"
-rustc-serialize = "~0.3.19"
-mio = "=0.6.4"
+#rust_sodium = "~0.1.2"
+rust_sodium = { git = "https://github.com/maidsafe/rust_sodium", branch = "master" }
+serde = "~0.9.11"
+serde_derive = "~0.9.11"
+serde_json = "~0.9.9"
 unwrap = "~1.1.0"
 
 [dev-dependencies]

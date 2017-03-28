@@ -75,7 +75,7 @@ impl GetExtAddr {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);
                 let token = self.token;
-                (*self.finish)(core, poll, token, Ok(ext_addr.0))
+                (*self.finish)(core, poll, token, Ok(ext_addr))
             }
             Ok(None) => (),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
