@@ -37,16 +37,15 @@ extern crate log;
 extern crate unwrap;
 extern crate maidsafe_utilities;
 extern crate crust;
-extern crate rustc_serialize;
 extern crate clap;
 extern crate rand;
+extern crate serde_json;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
 use crust::{Config, ConnectionInfoResult, PeerId, PrivConnectionInfo, Service};
 use rand::Rng;
 use rand::random;
-use rustc_serialize::json;
 use std::cmp;
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -262,7 +261,10 @@ fn main() {
                                                                 message_length)));
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
-                                let ConnectionInfoResult { result_token, result } = result;
+                                let ConnectionInfoResult {
+                                    result_token,
+                                    result,
+                                } = result;
                                 let info = match result {
                                     Ok(i) => i,
                                     Err(e) => {
@@ -272,11 +274,12 @@ fn main() {
                                 };
                                 println!("Prepared connection info with id {}", result_token);
                                 let their_info = info.to_pub_connection_info();
-                                let info_json = unwrap!(json::encode(&their_info));
+                                let info_json = unwrap!(serde_json::to_string(&their_info));
                                 println!("Share this info with the peer you want to connect to:");
                                 println!("{}", info_json);
                                 let mut network = unwrap!(network2.lock());
-                                if network.our_connection_infos
+                                if network
+                                       .our_connection_infos
                                        .insert(result_token, info)
                                        .is_some() {
                                     panic!("Got the same result_token twice!");
@@ -342,10 +345,12 @@ fn main() {
         let tx = on_time_out(Duration::from_secs(5), running_speed_test);
 
         // Block until we get one bootstrap connection
-        let peer_index = bs_receiver.recv().unwrap_or_else(|e| {
-            println!("CrustNode event handler closed; error : {}", e);
-            std::process::exit(6);
-        });
+        let peer_index = bs_receiver
+            .recv()
+            .unwrap_or_else(|e| {
+                                println!("CrustNode event handler closed; error : {}", e);
+                                std::process::exit(6);
+                            });
         let network = unwrap!(network.lock());
         let peer_id = unwrap!(network.get_peer_id(peer_index), "No such peer index");
 
@@ -412,7 +417,7 @@ fn main() {
                             continue;
                         }
                     };
-                    let their_info = match json::decode(&their_info) {
+                    let their_info = match serde_json::from_str(&their_info) {
                         Ok(info) => info,
                         Err(e) => {
                             println!("Error decoding their connection info");

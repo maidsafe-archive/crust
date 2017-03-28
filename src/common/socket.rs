@@ -20,7 +20,8 @@ use common::{CommonError, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result}
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{Evented, Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
-use rustc_serialize::{Decodable, Encodable};
+use serde::de::Deserialize;
+use serde::ser::Serialize;
 use std::collections::{BTreeMap, VecDeque};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use std::mem;
@@ -73,7 +74,7 @@ impl Socket {
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
-    pub fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
+    pub fn read<T: Deserialize>(&mut self) -> Result<Option<T>> {
         let inner = self.inner
             .as_mut()
             .ok_or(CommonError::UninitialisedSocket)?;
@@ -87,7 +88,7 @@ impl Socket {
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
-    pub fn write<T: Encodable>(&mut self,
+    pub fn write<T: Serialize>(&mut self,
                                poll: &Poll,
                                token: Token,
                                msg: Option<(T, Priority)>)
@@ -163,7 +164,7 @@ impl SockInner {
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
-    fn read<T: Decodable>(&mut self) -> Result<Option<T>> {
+    fn read<T: Deserialize>(&mut self) -> Result<Option<T>> {
         if let Some(message) = self.read_from_buffer()? {
             return Ok(Some(message));
         }
@@ -186,7 +187,8 @@ impl SockInner {
                             return e;
                         }
                     }
-                    self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
+                    self.read_buffer
+                        .extend_from_slice(&buffer[0..bytes_read]);
                     is_something_read = true;
                 }
                 Err(error) => {
@@ -205,7 +207,7 @@ impl SockInner {
         }
     }
 
-    fn read_from_buffer<T: Decodable>(&mut self) -> Result<Option<T>> {
+    fn read_from_buffer<T: Deserialize>(&mut self) -> Result<Option<T>> {
         let u32_size = mem::size_of::<u32>();
 
         if self.read_len == 0 {
@@ -241,7 +243,7 @@ impl SockInner {
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
-    fn write<T: Encodable>(&mut self,
+    fn write<T: Serialize>(&mut self,
                            poll: &Poll,
                            token: Token,
                            msg: Option<(T, Priority)>)
@@ -256,7 +258,8 @@ impl SockInner {
                         })
             .map(|(&priority, _)| priority)
             .collect();
-        let dropped_msgs: usize = expired_keys.iter()
+        let dropped_msgs: usize = expired_keys
+            .iter()
             .filter_map(|priority| self.write_queue.remove(priority))
             .map(|queue| queue.len())
             .fold(0, |s, len| s + len); // TODO: Use `sum` once that's stable.
@@ -277,8 +280,9 @@ impl SockInner {
             data.set_position(0);
             data.write_u32::<LittleEndian>(len as u32)?;
 
-            let entry =
-                self.write_queue.entry(priority).or_insert_with(|| VecDeque::with_capacity(10));
+            let entry = self.write_queue
+                .entry(priority)
+                .or_insert_with(|| VecDeque::with_capacity(10));
             entry.push_back((Instant::now(), data.into_inner()));
         }
 

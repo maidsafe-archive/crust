@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, Socket, SocketAddr, State};
+use common::{Core, CoreTimer, Socket, State};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::time::Duration;
 

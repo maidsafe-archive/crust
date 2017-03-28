@@ -19,11 +19,11 @@
 pub mod utils;
 pub use self::utils::{gen_config, get_event_sender, timebomb};
 
-use common::{CrustUser, SocketAddr};
+use common::CrustUser;
 use main::{Config, Event, Service};
 use mio;
 use std::collections::HashSet;
-use std::net::SocketAddr as StdSocketAddr;
+use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::thread;
@@ -31,7 +31,7 @@ use std::time::Duration;
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
-    SocketAddr(StdSocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port))
+    SocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port)
 }
 
 fn localhost_contact_info(port: u16) -> SocketAddr {
@@ -129,7 +129,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let valid_address = localhost(port);
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let invalid_address = SocketAddr(unwrap!(deaf_listener.local_addr()));
+    let invalid_address = unwrap!(deaf_listener.local_addr());
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![invalid_address, valid_address];
@@ -159,7 +159,7 @@ fn bootstrap_with_blacklist() {
     let valid_address = localhost(port);
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let blacklisted_address = SocketAddr(unwrap!(blacklisted_listener.local_addr()));
+    let blacklisted_address = unwrap!(blacklisted_listener.local_addr());
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![blacklisted_address, valid_address];
@@ -167,7 +167,7 @@ fn bootstrap_with_blacklist() {
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1));
     let mut blacklist = HashSet::new();
-    blacklist.insert(*blacklisted_address);
+    blacklist.insert(blacklisted_address);
     unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
@@ -180,7 +180,7 @@ fn bootstrap_with_blacklist() {
     assert_eq!(peer_id1, service1.id());
 
     let blacklisted_listener = unwrap!(
-            mio::tcp::TcpListener::from_listener(blacklisted_listener, &*blacklisted_address)
+            mio::tcp::TcpListener::from_listener(blacklisted_listener, &blacklisted_address)
     );
     thread::sleep(Duration::from_secs(5));
     // TODO See if these are doing the right thing - wait for Adam to explain as he might have
@@ -194,7 +194,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
     use std::net::TcpListener;
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let blacklisted_address = SocketAddr(unwrap!(blacklisted_listener.local_addr()));
+    let blacklisted_address = unwrap!(blacklisted_listener.local_addr());
 
     let mut config = gen_config();
     config.hard_coded_contacts = vec![blacklisted_address];
@@ -202,13 +202,13 @@ fn bootstrap_fails_only_blacklisted_contact() {
     let mut service = unwrap!(Service::with_config(event_tx, config));
 
     let mut blacklist = HashSet::new();
-    blacklist.insert(*blacklisted_address);
+    blacklist.insert(blacklisted_address);
     unwrap!(service.start_bootstrap(blacklist, CrustUser::Client));
 
     expect_event!(event_rx, Event::BootstrapFailed);
 
     let blacklisted_listener = unwrap!(
-            mio::tcp::TcpListener::from_listener(blacklisted_listener, &*blacklisted_address)
+            mio::tcp::TcpListener::from_listener(blacklisted_listener, &blacklisted_address)
     );
     thread::sleep(Duration::from_secs(5));
     let res = blacklisted_listener.accept();
@@ -230,7 +230,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     use std::net::TcpListener;
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let address = SocketAddr(unwrap!(deaf_listener.local_addr()));
+    let address = unwrap!(deaf_listener.local_addr());
 
     let mut config = gen_config();
     config.hard_coded_contacts = vec![address];
@@ -366,9 +366,9 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     // Spin up the non-responsive peer.
     let el = unwrap!(spawn_event_loop(0, None));
 
-    let bind_addr = unwrap!(StdSocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
+    let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
-    let address = SocketAddr(unwrap!(listener.local_addr()));
+    let address = unwrap!(listener.local_addr());
 
     unwrap!(el.send(CoreMessage::new(|core, poll| {
         broken_peer::Listen::start(core, poll, listener)

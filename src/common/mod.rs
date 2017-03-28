@@ -19,9 +19,9 @@ pub use self::core::{Core, CoreMessage, CoreTimer, EventLoop, spawn_event_loop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::socket::Socket;
-pub use self::socket_addr::{IpAddr, SocketAddr};
 pub use self::state::State;
 use rust_sodium::crypto::hash::sha256;
+use std::net::SocketAddr;
 
 pub type NameHash = [u8; sha256::DIGESTBYTES];
 /// Priority of a message to be sent by Crust. A lower value means a higher priority, so Priority 0
@@ -48,7 +48,7 @@ pub enum CrustUser {
     Client,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, RustcEncodable, RustcDecodable)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ExternalReachability {
     NotRequired,
     Required { direct_listeners: Vec<SocketAddr> },
@@ -59,5 +59,4 @@ mod core;
 mod error;
 mod message;
 mod socket;
-mod socket_addr;
 mod state;

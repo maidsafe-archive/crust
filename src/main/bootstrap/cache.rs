@@ -15,15 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common;
 use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
+use std::net::SocketAddr;
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
 
 pub struct Cache {
-    file_handler: FileHandler<Vec<common::SocketAddr>>,
+    file_handler: FileHandler<Vec<SocketAddr>>,
 }
 
 impl Cache {
@@ -66,14 +66,14 @@ impl Cache {
     //     Ok(())
     // }
 
-    pub fn read_file(&mut self) -> Vec<common::SocketAddr> {
+    pub fn read_file(&mut self) -> Vec<SocketAddr> {
         self.file_handler
             .read_file()
             .ok()
             .unwrap_or_else(|| vec![])
     }
 
-    pub fn remove_peer_acceptor(&mut self, _peer: common::SocketAddr) {}
+    pub fn remove_peer_acceptor(&mut self, _peer: SocketAddr) {}
 
     // fn duration_between_updates() -> Duration {
     //     Duration::from_secs(4 * 60 * 60)

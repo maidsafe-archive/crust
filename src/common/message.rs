@@ -19,7 +19,7 @@
 use common::{self, ExternalReachability, NameHash};
 use rust_sodium::crypto::box_::PublicKey;
 
-#[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Message {
     Heartbeat,
     BootstrapRequest(PublicKey, NameHash, ExternalReachability),
@@ -32,7 +32,7 @@ pub enum Message {
     Data(Vec<u8>),
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum BootstrapDenyReason {
     InvalidNameHash,
     FailedExternalReachability,

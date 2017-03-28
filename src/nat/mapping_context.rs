@@ -68,7 +68,9 @@ impl MappingContext {
     /// Inform the context about external "STUN" servers. Note that crust does not actually use
     /// STUN but a custom STUN-like protocol.
     pub fn add_peer_stuns<A: IntoIterator<Item = SocketAddr>>(&mut self, stun_addrs: A) {
-        let listeners = stun_addrs.into_iter().filter(|elt| nat::ip_addr_is_global(&elt.ip()));
+        let listeners = stun_addrs
+            .into_iter()
+            .filter(|elt| nat::ip_addr_is_global(&elt.ip()));
         self.peer_stuns.extend(listeners);
     }
 

@@ -55,7 +55,8 @@ impl ExchangeMsg {
 
         {
             let mut guard = unwrap!(cm.lock());
-            guard.entry(expected_id)
+            guard
+                .entry(expected_id)
                 .or_insert(ConnectionId {
                                active_connection: None,
                                currently_handshaking: 0,

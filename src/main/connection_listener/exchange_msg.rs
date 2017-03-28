@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use super::check_reachability::CheckReachability;
-use common::{self, BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
+use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
              NameHash, Priority, Socket, State};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{Poll, PollOpt, Ready, Token};
@@ -128,12 +128,15 @@ impl ExchangeMsg {
         }
         match ext_reachability {
             ExternalReachability::Required { direct_listeners } => {
-                for their_listener in
-                    direct_listeners.into_iter().filter(|addr| ip_addr_is_global(&addr.ip())) {
+                for their_listener in direct_listeners
+                        .into_iter()
+                        .filter(|addr| ip_addr_is_global(&addr.ip())) {
                     let self_weak = self.self_weak.clone();
                     let finish = move |core: &mut Core, poll: &Poll, child, res| {
                         if let Some(self_rc) = self_weak.upgrade() {
-                            self_rc.borrow_mut().handle_check_reachability(core, poll, child, res)
+                            self_rc
+                                .borrow_mut()
+                                .handle_check_reachability(core, poll, child, res)
                         }
                     };
 
@@ -208,9 +211,7 @@ impl ExchangeMsg {
     fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &Poll) {
         self.next_state = NextState::None;
         if let Ok(peer_addr) = self.socket.peer_addr() {
-            self.write(core,
-                       poll,
-                       Some((Message::EchoAddrResp(common::SocketAddr(peer_addr)), 0)));
+            self.write(core, poll, Some((Message::EchoAddrResp(peer_addr), 0)));
         } else {
             self.terminate(core, poll);
         }
@@ -218,7 +219,8 @@ impl ExchangeMsg {
 
     fn enter_handshaking_mode(&self, their_id: PeerId) {
         let mut guard = unwrap!(self.cm.lock());
-        guard.entry(their_id)
+        guard
+            .entry(their_id)
             .or_insert(ConnectionId {
                            active_connection: None,
                            currently_handshaking: 0,
@@ -317,7 +319,8 @@ impl ExchangeMsg {
 
     fn terminate_childern(&mut self, core: &mut Core, poll: &Poll) {
         for child in self.reachability_children.drain() {
-            core.get_state(child).map_or((), |c| c.borrow_mut().terminate(core, poll));
+            core.get_state(child)
+                .map_or((), |c| c.borrow_mut().terminate(core, poll));
         }
     }
 }

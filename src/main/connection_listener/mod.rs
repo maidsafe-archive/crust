@@ -63,8 +63,11 @@ impl ConnectionListener {
         let finish =
             move |core: &mut Core, poll: &Poll, socket, mut mapped_addrs: Vec<SocketAddr>| {
                 if force_include_port && port != 0 &&
-                   !mapped_addrs.iter().any(|s| ip_addr_is_global(&s.ip()) && s.port() == port) {
-                    let global_addrs: Vec<_> = mapped_addrs.iter()
+                   !mapped_addrs
+                        .iter()
+                        .any(|s| ip_addr_is_global(&s.ip()) && s.port() == port) {
+                    let global_addrs: Vec<_> = mapped_addrs
+                        .iter()
                         .filter_map(|s| if ip_addr_is_global(&s.ip()) {
                                         let mut s = *s;
                                         s.set_port(port);
@@ -195,7 +198,7 @@ mod tests {
     use nat::MappingContext;
     use rust_sodium::crypto::box_::{self, PublicKey};
     use rust_sodium::crypto::hash::sha256;
-    use rustc_serialize::Decodable;
+    use serde::de::Deserialize;
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
     use std::mem;
@@ -215,7 +218,7 @@ mod tests {
     struct Listener {
         _el: EventLoop,
         pk: PublicKey,
-        addr: common::SocketAddr,
+        addr: SocketAddr,
         event_rx: mpsc::Receiver<Event>,
     }
 
@@ -256,7 +259,7 @@ mod tests {
             }
         }
 
-        let addr = common::SocketAddr(unwrap!(listeners.lock())[0]);
+        let addr = unwrap!(listeners.lock())[0];
 
         Listener {
             _el: el,
@@ -287,7 +290,7 @@ mod tests {
     }
 
     #[allow(unsafe_code)]
-    fn read<T: Decodable>(stream: &mut TcpStream) -> ::Res<T> {
+    fn read<T: Deserialize>(stream: &mut TcpStream) -> ::Res<T> {
         let mut payload_size_buffer = [0; 4];
         stream.read_exact(&mut payload_size_buffer)?;
 
@@ -454,7 +457,7 @@ mod tests {
         // This will not work if we are behind a NAT and are using a true STUN service. In that
         // case the following assertion should be commented out. Till then it is useful to have
         // this testing for conformity on local host.
-        assert_eq!(our_addr.0,
+        assert_eq!(our_addr,
                    unwrap!(us.local_addr(), "Could not obtain local addr"));
 
         let mut buf = [0; 512];

@@ -15,11 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-// FIXME combine common::self with others if rustfmt does not choke - right now it chokes with
-// v0.7.1
-
-use common;
-use common::{Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Priority};
+use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash,
+             Priority};
 use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
            ConnectionListener, ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo,
            PubConnectionInfo};
@@ -77,7 +74,7 @@ impl Service {
         // Form our initial contact info
         let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let mut mc = MappingContext::new()?;
-        mc.add_peer_stuns(config.hard_coded_contacts.iter().map(|elt| elt.0));
+        mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
         let el = common::spawn_event_loop(3, Some(&format!("{:?}", our_id)))?;
         trace!("Event loop started");
@@ -97,7 +94,9 @@ impl Service {
     /// Starts listening for beacon broadcasts.
     pub fn start_service_discovery(&mut self) {
         let our_listeners = self.our_listeners.clone();
-        let port = self.config.service_discovery_port.unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+        let port = self.config
+            .service_discovery_port
+            .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
@@ -133,7 +132,7 @@ impl Service {
         });
     }
 
-    fn get_peer_socket_addr(&self, peer_id: &PeerId) -> ::Res<common::SocketAddr> {
+    fn get_peer_socket_addr(&self, peer_id: &PeerId) -> ::Res<SocketAddr> {
         let token = match unwrap!(self.cm.lock()).get(peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return Err(CrustError::PeerNotFound(*peer_id)),
@@ -149,7 +148,10 @@ impl Service {
                     return;
                 }
             };
-            match state.borrow_mut().as_any().downcast_mut::<ActiveConnection>() {
+            match state
+                      .borrow_mut()
+                      .as_any()
+                      .downcast_mut::<ActiveConnection>() {
                 Some(active_connection) => {
                     let _ = tx.send(Some(active_connection.peer_addr()));
                 }
@@ -177,11 +179,11 @@ impl Service {
         let whitelisted_ips = &self.config.bootstrap_whitelisted_ips;
 
         match self.get_peer_socket_addr(peer_id) {
-            Ok(ip) => {
+            Ok(s) => {
                 trace!("Checking whether {:?} is whitelisted in {:?}",
-                       ip,
+                       s,
                        whitelisted_ips);
-                whitelisted_ips.contains(&common::IpAddr::from(ip))
+                whitelisted_ips.contains(&s.ip())
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -193,14 +195,14 @@ impl Service {
     /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
     pub fn is_peer_hard_coded(&self, peer_id: &PeerId) -> bool {
         match self.get_peer_socket_addr(peer_id) {
-            Ok(ip) => {
+            Ok(s) => {
                 trace!("Checking whether {:?} is hard-coded in {:?}",
-                       ip,
+                       s,
                        self.config.hard_coded_contacts);
                 self.config
                     .hard_coded_contacts
                     .iter()
-                    .any(|addr| addr.0.ip() == ip.0.ip())
+                    .any(|addr| addr.ip() == s.ip())
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -253,7 +255,7 @@ impl Service {
                 ExternalReachability::Required {
                     direct_listeners: unwrap!(self.our_listeners.lock())
                         .iter()
-                        .map(|s| common::SocketAddr(*s))
+                        .cloned()
                         .collect(),
                 }
             }
@@ -344,8 +346,8 @@ impl Service {
         let our_nh = self.name_hash;
 
         Ok(self.post(move |core, poll| {
-                let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
-            })?)
+                         let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
+                     })?)
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
@@ -379,8 +381,10 @@ impl Service {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_listeners =
-            unwrap!(self.our_listeners.lock()).iter().map(|e| common::SocketAddr(*e)).collect();
+        let our_listeners = unwrap!(self.our_listeners.lock())
+            .iter()
+            .cloned()
+            .collect();
         if DISABLE_NAT {
             let event =
                 Event::ConnectionInfoPrepared(ConnectionInfoResult {
@@ -400,9 +404,9 @@ impl Service {
             if let Err(e) = self.post(move |mut core, poll| {
                 let event_tx_clone = event_tx.clone();
                 match MappedTcpSocket::start(core, poll, 0, &mc, move |_, _, socket, addrs| {
-                    let hole_punch_addrs = addrs.into_iter()
+                    let hole_punch_addrs = addrs
+                        .into_iter()
                         .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
-                        .map(common::SocketAddr)
                         .collect();
                     let event_tx = event_tx_clone;
                     let event =
@@ -422,21 +426,19 @@ impl Service {
                     Ok(()) => (),
                     Err(e) => {
                         debug!("Error mapping tcp socket: {}", e);
-                        let _ =
-                            event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                                            result_token:
-                                                                                result_token,
-                                                                            result:
-                                                                                Err(From::from(e)),
-                                                                        }));
+                        let _ = event_tx
+                            .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                                    result_token: result_token,
+                                                                    result: Err(From::from(e)),
+                                                                }));
                     }
                 };
             }) {
-                let _ =
-                    self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                                         result_token: result_token,
-                                                                         result: Err(From::from(e)),
-                                                                     }));
+                let _ = self.event_tx
+                    .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                            result_token: result_token,
+                                                            result: Err(From::from(e)),
+                                                        }));
             }
         }
     }
@@ -479,7 +481,6 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 mod tests {
     use super::*;
     use CrustError;
-    use common;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{Event, PrivConnectionInfo, PubConnectionInfo};
@@ -681,7 +682,9 @@ mod tests {
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> Joiner {
                 maidsafe_utilities::thread::named("run!", move || {
                     for (our_ci, their_ci) in
-                        self.our_cis.into_iter().zip(self.connection_id_rx.into_iter()) {
+                        self.our_cis
+                            .into_iter()
+                            .zip(self.connection_id_rx.into_iter()) {
                         let _ = self.service.connect(our_ci, their_ci);
                     }
                     let mut their_ids = HashMap::new();
@@ -780,7 +783,7 @@ mod tests {
     fn bootstrap_with_whitelist_ip() {
         // Setup config with whitelisted IP
         let mut whitelisted_ips = HashSet::new();
-        whitelisted_ips.insert(common::IpAddr(unwrap!(IpAddr::from_str("192.168.0.1"))));
+        whitelisted_ips.insert(unwrap!(IpAddr::from_str("192.168.0.1")));
 
         let mut config = ::tests::utils::gen_config();
         config.bootstrap_whitelisted_ips = whitelisted_ips;

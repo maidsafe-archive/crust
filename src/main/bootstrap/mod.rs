@@ -20,9 +20,7 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{self, BootstrapDenyReason, Core, CoreTimer, ExternalReachability, NameHash, Socket,
-             State};
-
+use common::{BootstrapDenyReason, Core, CoreTimer, ExternalReachability, NameHash, Socket, State};
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
@@ -33,7 +31,7 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::mem;
-use std::net;
+use std::net::SocketAddr;
 use std::rc::{Rc, Weak};
 use std::sync::mpsc::{self, Receiver};
 use std::time::Duration;
@@ -47,8 +45,8 @@ const MAX_CONTACTS_EXPECTED: usize = 1500;
 pub struct Bootstrap {
     token: Token,
     cm: ConnectionMap,
-    peers: Vec<common::SocketAddr>,
-    blacklist: HashSet<net::SocketAddr>,
+    peers: Vec<SocketAddr>,
+    blacklist: HashSet<SocketAddr>,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
     our_pk: PublicKey,
@@ -69,7 +67,7 @@ impl Bootstrap {
                  our_pk: PublicKey,
                  cm: ConnectionMap,
                  config: &Config,
-                 blacklist: HashSet<net::SocketAddr>,
+                 blacklist: HashSet<SocketAddr>,
                  token: Token,
                  service_discovery_token: Token,
                  event_tx: ::CrustEventSender)
@@ -127,7 +125,7 @@ impl Bootstrap {
 
     fn begin_bootstrap(&mut self, core: &mut Core, poll: &Poll) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
-        peers.retain(|addr| !self.blacklist.contains(&addr.0));
+        peers.retain(|addr| !self.blacklist.contains(addr));
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -138,12 +136,14 @@ impl Bootstrap {
             let self_weak = self.self_weak.clone();
             let finish = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
                 self_weak.upgrade() {
-                self_rc.borrow_mut().handle_result(core, poll, child, res)
+                self_rc
+                    .borrow_mut()
+                    .handle_result(core, poll, child, res)
             };
 
             if let Ok(child) = TryPeer::start(core,
                                               poll,
-                                              *peer,
+                                              peer,
                                               self.our_pk,
                                               self.name_hash,
                                               self.ext_reachability.clone(),
@@ -159,8 +159,8 @@ impl Bootstrap {
                      core: &mut Core,
                      poll: &Poll,
                      child: Token,
-                     res: Result<(Socket, net::SocketAddr, PeerId),
-                                 (net::SocketAddr, Option<BootstrapDenyReason>)>) {
+                     res: Result<(Socket, SocketAddr, PeerId),
+                                 (SocketAddr, Option<BootstrapDenyReason>)>) {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_addr, peer_id)) => {
@@ -177,7 +177,7 @@ impl Bootstrap {
             }
             #[cfg_attr(rustfmt, rustfmt_skip)]
             Err((bad_peer, opt_reason)) => {
-                self.cache.remove_peer_acceptor(common::SocketAddr(bad_peer));
+                self.cache.remove_peer_acceptor(bad_peer);
                 if let Some(reason) = opt_reason {
                     let err_msg = match reason {
                         BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
@@ -246,14 +246,14 @@ impl State for Bootstrap {
 }
 
 struct ServiceDiscMeta {
-    rx: Receiver<Vec<common::SocketAddr>>,
+    rx: Receiver<Vec<SocketAddr>>,
     timeout: Timeout,
 }
 
 fn seek_peers(core: &mut Core,
               service_discovery_token: Token,
               token: Token)
-              -> ::Res<(Receiver<Vec<common::SocketAddr>>, Timeout)> {
+              -> ::Res<(Receiver<Vec<SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
         let mut state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());

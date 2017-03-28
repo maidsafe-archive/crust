@@ -86,11 +86,11 @@ impl<F> MappedTcpSocket<F>
                     };
 
                     let mut state = state.borrow_mut();
-                    let mapping_tcp_sock = match state.as_any()
-                              .downcast_mut::<MappedTcpSocket<F>>() {
-                        Some(mapping_sock) => mapping_sock,
-                        None => return,
-                    };
+                    let mapping_tcp_sock =
+                        match state.as_any().downcast_mut::<MappedTcpSocket<F>>() {
+                            Some(mapping_sock) => mapping_sock,
+                            None => return,
+                        };
                     mapping_tcp_sock.handle_igd_resp(core, poll, SocketAddr::V4(ext_addr));
                 }));
             });
@@ -119,7 +119,9 @@ impl<F> MappedTcpSocket<F>
             let self_weak = Rc::downgrade(&state);
             let handler = move |core: &mut Core, poll: &Poll, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc.borrow_mut().handle_stun_resp(core, poll, child_token, res)
+                    self_rc
+                        .borrow_mut()
+                        .handle_stun_resp(core, poll, child_token, res)
                 }
             };
 

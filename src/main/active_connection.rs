@@ -15,13 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, Message, Priority, Socket, SocketAddr, State};
+use common::{Core, CoreTimer, Message, Priority, Socket, State};
 use main::{ConnectionId, ConnectionMap, Event, PeerId};
 use mio::{Poll, Ready, Token};
 use mio::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -90,10 +91,12 @@ impl ActiveConnection {
         {
             let mut guard = unwrap!(state_mut.cm.lock());
             {
-                let conn_id = guard.entry(their_id).or_insert(ConnectionId {
-                                                                  active_connection: None,
-                                                                  currently_handshaking: 1,
-                                                              });
+                let conn_id = guard
+                    .entry(their_id)
+                    .or_insert(ConnectionId {
+                                   active_connection: None,
+                                   currently_handshaking: 1,
+                               });
                 conn_id.currently_handshaking -= 1;
                 conn_id.active_connection = Some(token);
             }
@@ -109,7 +112,8 @@ impl ActiveConnection {
         loop {
             match self.socket.read::<Message>() {
                 Ok(Some(Message::Data(data))) => {
-                    let _ = self.event_tx.send(Event::NewMessage(self.their_id, data));
+                    let _ = self.event_tx
+                        .send(Event::NewMessage(self.their_id, data));
                     self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(Some(Message::Heartbeat)) => {
@@ -132,17 +136,14 @@ impl ActiveConnection {
     /// Helper function that returns a socket address of the connection
     pub fn peer_addr(&self) -> ::Res<SocketAddr> {
         use main::CrustError;
-        self.socket
-            .peer_addr()
-            .map(SocketAddr)
-            .map_err(CrustError::Common)
+        self.socket.peer_addr().map_err(CrustError::Common)
     }
 
     #[cfg(test)]
     // TODO(nbaksalyar) find a better way to mock connection IPs
     pub fn peer_addr(&self) -> ::Res<SocketAddr> {
         use std::str::FromStr;
-        Ok(SocketAddr(unwrap!(FromStr::from_str("192.168.0.1:0"))))
+        Ok(unwrap!(FromStr::from_str("192.168.0.1:0")))
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {

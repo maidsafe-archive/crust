@@ -19,7 +19,7 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{self, Core, State};
+use common::{Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::udp::UdpSocket;
@@ -35,10 +35,10 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::u16;
 
-#[derive(RustcEncodable, RustcDecodable)]
+#[derive(Serialize, Deserialize)]
 enum DiscoveryMsg {
     Request { guid: u64 },
-    Response(Vec<common::SocketAddr>),
+    Response(Vec<SocketAddr>),
 }
 
 pub struct ServiceDiscovery {
@@ -50,7 +50,7 @@ pub struct ServiceDiscovery {
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
     seek_peers_req: Vec<u8>,
     reply_to: VecDeque<SocketAddr>,
-    observers: Vec<Sender<Vec<common::SocketAddr>>>,
+    observers: Vec<Sender<Vec<SocketAddr>>>,
     guid: u64,
 }
 
@@ -98,12 +98,13 @@ impl ServiceDiscovery {
 
     /// Interrogate the network to find peers.
     pub fn seek_peers(&mut self) -> Result<(), ServiceDiscoveryError> {
-        let _ = self.socket.send_to(&self.seek_peers_req, &self.remote_addr)?;
+        let _ = self.socket
+            .send_to(&self.seek_peers_req, &self.remote_addr)?;
         Ok(())
     }
 
     /// Register service discovery observer
-    pub fn register_observer(&mut self, obs: Sender<Vec<common::SocketAddr>>) {
+    pub fn register_observer(&mut self, obs: Sender<Vec<SocketAddr>>) {
         self.observers.push(obs);
     }
 
@@ -135,7 +136,8 @@ impl ServiceDiscovery {
                 }
             }
             DiscoveryMsg::Response(peer_listeners) => {
-                self.observers.retain(|obs| obs.send(peer_listeners.clone()).is_ok());
+                self.observers
+                    .retain(|obs| obs.send(peer_listeners.clone()).is_ok());
             }
         }
     }
@@ -148,8 +150,10 @@ impl ServiceDiscovery {
     }
 
     fn write_impl(&mut self, poll: &Poll) -> Result<(), ServiceDiscoveryError> {
-        let our_current_listeners =
-            unwrap!(self.our_listeners.lock()).iter().map(|elt| common::SocketAddr(*elt)).collect();
+        let our_current_listeners = unwrap!(self.our_listeners.lock())
+            .iter()
+            .cloned()
+            .collect();
         let resp = DiscoveryMsg::Response(our_current_listeners);
 
         let serialised_resp = serialise(&resp)?;
@@ -268,9 +272,13 @@ mod tests {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
             unwrap!(el1.send(CoreMessage::new(move |core, poll| {
-                unwrap!(ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
-                        "Could not spawn ServiceDiscovery_1");
-            })),
+                                                  unwrap!(ServiceDiscovery::start(core,
+                                                                                  poll,
+                                                                                  listeners_1,
+                                                                                  token_1,
+                                                                                  65530),
+                                                          "Could not spawn ServiceDiscovery_1");
+                                              })),
                     "Could not send to el1");
 
             // Register observer
@@ -291,7 +299,7 @@ mod tests {
         }
 
         let peer_listeners = unwrap!(rx.recv());
-        assert_eq!(peer_listeners.into_iter().map(|elt| elt.0).collect::<Vec<_>>(),
+        assert_eq!(peer_listeners.into_iter().collect::<Vec<_>>(),
                    *unwrap!(listeners_0.lock()));
     }
 }
