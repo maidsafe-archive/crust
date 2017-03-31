@@ -38,6 +38,8 @@
          missing_debug_implementations, variant_size_differences)]
 
 #![cfg_attr(feature="cargo-clippy", allow(too_many_arguments))]
+// TODO FIXME Remove this soon
+#![allow(deprecated)]
 
 #[macro_use]
 extern crate log;
