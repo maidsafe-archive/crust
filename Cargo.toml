@@ -10,7 +10,7 @@ repository = "https://github.com/maidsafe/crust"
 version = "0.23.0"
 
 [dependencies]
-byteorder = "~0.5.3"
+byteorder = "~1.0.0"
 c_linked_list = "~1.1.0"
 #config_file_handler = "~0.4.0"
 config_file_handler = { git = "https://github.com/maidsafe/config_file_handler", branch = "master" }
@@ -20,19 +20,19 @@ libc = "~0.2.20"
 log = "~0.3.6"
 #maidsafe_utilities = "~0.10.0"
 maidsafe_utilities = { git = "https://github.com/maidsafe/maidsafe_utilities", branch = "master" }
-mio = "=0.6.4"
-net2 = "~0.2.26"
+mio = "~0.6.6"
+net2 = "~0.2.27"
 quick-error = "~1.1.0"
 rand = "~0.3.14"
 #rust_sodium = "~0.1.2"
 rust_sodium = { git = "https://github.com/maidsafe/rust_sodium", branch = "master" }
-serde = "~0.9.11"
-serde_derive = "~0.9.11"
+serde = "~0.9.12"
+serde_derive = "~0.9.12"
 serde_json = "~0.9.9"
 unwrap = "~1.1.0"
 
 [dev-dependencies]
-clap = "~2.20.3"
+clap = "~2.22.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = "~0.2"
