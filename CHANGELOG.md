@@ -1,5 +1,10 @@
 # CRUST - Change Log
 
+## [0.24.0]
+- Update to mio-v0.6.6
+- Switch from rustc-serialize to serde
+- Remove module containing custom SocketAddr and IpAddr and use `std::net` equivalents with serde
+
 ## [0.23.0]
 - Indicate to the crust user if the remote crust trying to bootstrap off us presents itself as a `CrustUser::Client` (in which case external reacheability check will be subverted) or a `CrustUser::Node` (in which case external reacheability check will be mandated).
 
