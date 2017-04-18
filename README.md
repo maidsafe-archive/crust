@@ -1,4 +1,4 @@
-# Crust
+# Crust.
 
 **Maintainer:** Spandan Sharma (spandan.sharma@maidsafe.net)
 
