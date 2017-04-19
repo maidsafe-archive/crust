@@ -19,9 +19,9 @@
 
 // For explanation of lint checks, run `rustc -W help` or see
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
-#![forbid(bad_style, exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
+#![forbid(exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
           unknown_crate_types, warnings)]
-#![deny(deprecated, improper_ctypes, missing_docs,
+#![deny(bad_style, deprecated, improper_ctypes, missing_docs,
         non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
         private_no_mangle_fns, private_no_mangle_statics, stable_features,
         unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
@@ -34,6 +34,8 @@
 #[macro_use]
 extern crate log;
 #[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate unwrap;
 extern crate maidsafe_utilities;
 extern crate crust;
@@ -43,9 +45,8 @@ extern crate serde_json;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
-use crust::{Config, ConnectionInfoResult, PeerId, PrivConnectionInfo, Service};
-use rand::Rng;
-use rand::random;
+use crust::{Config, ConnectionInfoResult, Uid};
+use rand::{Rand, Rng};
 use std::cmp;
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -55,10 +56,24 @@ use std::sync::mpsc::{RecvTimeoutError, Sender, channel};
 use std::thread;
 use std::time::{Duration, Instant};
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd, Hash)]
+struct UniqueId([u8; 20]);
+impl Uid for UniqueId {}
+impl Rand for UniqueId {
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        let mut inner = [0; 20];
+        rng.fill_bytes(&mut inner);
+        UniqueId(inner)
+    }
+}
+
+type PrivConnectionInfo = crust::PrivConnectionInfo<UniqueId>;
+type Service = crust::Service<UniqueId>;
+
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
     for _ in 0..size {
-        vec.push(random::<u8>());
+        vec.push(rand::random::<u8>());
     }
     vec
 }
@@ -69,7 +84,7 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 ///
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
-    nodes: HashMap<usize, PeerId>,
+    nodes: HashMap<usize, UniqueId>,
     our_connection_infos: BTreeMap<u32, PrivConnectionInfo>,
     performance_start: Instant,
     performance_interval: Duration,
@@ -115,13 +130,13 @@ impl Network {
                 "Disconnected"
             };
 
-            println!("[{}] {} {}", id, status, node);
+            println!("[{}] {} {:?}", id, status, node);
         }
 
         println!("");
     }
 
-    pub fn get_peer_id(&self, n: usize) -> Option<&PeerId> {
+    pub fn get_peer_id(&self, n: usize) -> Option<&UniqueId> {
         self.nodes.get(&n)
     }
 
@@ -168,7 +183,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
 
 fn handle_new_peer(service: &Service,
                    protected_network: Arc<Mutex<Network>>,
-                   peer_id: PeerId)
+                   peer_id: UniqueId)
                    -> usize {
     let mut network = unwrap!(protected_network.lock());
     let peer_index = network.next_peer_index();
@@ -220,7 +235,7 @@ fn main() {
         None
     };
 
-    let mut service = unwrap!(Service::with_config(event_sender, config));
+    let mut service = unwrap!(Service::with_config(event_sender, config, rand::random()));
     unwrap!(service.start_listening_tcp());
     service.start_service_discovery();
     let service = Arc::new(Mutex::new(service));
@@ -261,7 +276,7 @@ fn main() {
                                                                 message_length)));
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
-                                let ConnectionInfoResult {
+                                let ConnectionInfoResult::<UniqueId> {
                                     result_token,
                                     result,
                                 } = result;

@@ -18,8 +18,8 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, NameHash, Socket, State};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PeerId,
+use common::{Core, CoreTimer, NameHash, Socket, State, Uid};
+use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::{TcpListener, TcpStream};
@@ -33,27 +33,27 @@ use std::time::Duration;
 
 const TIMEOUT_SEC: u64 = 60;
 
-pub struct Connect {
+pub struct Connect<UID: Uid> {
     token: Token,
     timeout: Timeout,
-    cm: ConnectionMap,
+    cm: ConnectionMap<UID>,
     our_nh: NameHash,
-    our_id: PeerId,
-    their_id: PeerId,
-    self_weak: Weak<RefCell<Connect>>,
+    our_id: UID,
+    their_id: UID,
+    self_weak: Weak<RefCell<Connect<UID>>>,
     listener: Option<TcpListener>,
     children: HashSet<Token>,
-    event_tx: ::CrustEventSender,
+    event_tx: ::CrustEventSender<UID>,
 }
 
-impl Connect {
+impl<UID: Uid> Connect<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
-                 our_ci: PrivConnectionInfo,
-                 their_ci: PubConnectionInfo,
-                 cm: ConnectionMap,
+                 our_ci: PrivConnectionInfo<UID>,
+                 their_ci: PubConnectionInfo<UID>,
+                 cm: ConnectionMap<UID>,
                  our_nh: NameHash,
-                 event_tx: ::CrustEventSender)
+                 event_tx: ::CrustEventSender<UID>)
                  -> ::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
@@ -67,7 +67,7 @@ impl Connect {
         let token = core.get_new_token();
 
         let state =
-            Rc::new(RefCell::new(Connect {
+            Rc::new(RefCell::new(Self {
                                      token: token,
                                      timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC),
                                                                CoreTimer::new(token, 0))?,
@@ -216,7 +216,7 @@ impl Connect {
     }
 }
 
-impl State for Connect {
+impl<UID: Uid> State for Connect<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if !kind.is_error() && !kind.is_hup() && kind.is_readable() {
             self.accept(core, poll);

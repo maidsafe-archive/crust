@@ -16,38 +16,36 @@
 // relating to use of the SAFE Network Software.
 
 use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket,
-             State};
-use main::PeerId;
+             State, Uid};
 use mio::{Poll, PollOpt, Ready, Token};
-use rust_sodium::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
 use std::mem;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core,
-                            &Poll,
-                            Token,
-                            Result<(Socket, SocketAddr, PeerId),
-                                   (SocketAddr, Option<BootstrapDenyReason>)>)>;
+pub type Finish<UID> = Box<FnMut(&mut Core,
+                                 &Poll,
+                                 Token,
+                                 Result<(Socket, SocketAddr, UID),
+                                        (SocketAddr, Option<BootstrapDenyReason>)>)>;
 
-pub struct TryPeer {
+pub struct TryPeer<UID: Uid> {
     token: Token,
     peer: SocketAddr,
     socket: Socket,
-    request: Option<(Message, Priority)>,
-    finish: Finish,
+    request: Option<(Message<UID>, Priority)>,
+    finish: Finish<UID>,
 }
 
-impl TryPeer {
+impl<UID: Uid> TryPeer<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  peer: SocketAddr,
-                 our_pk: PublicKey,
+                 our_uid: UID,
                  name_hash: NameHash,
                  ext_reachability: ExternalReachability,
-                 finish: Finish)
+                 finish: Finish<UID>)
                  -> ::Res<Token> {
         let socket = Socket::connect(&peer)?;
         let token = core.get_new_token();
@@ -61,7 +59,7 @@ impl TryPeer {
             token: token,
             peer: peer,
             socket: socket,
-            request: Some((Message::BootstrapRequest(our_pk, name_hash, ext_reachability), 0)),
+            request: Some((Message::BootstrapRequest(our_uid, name_hash, ext_reachability), 0)),
             finish: finish,
         };
 
@@ -70,19 +68,19 @@ impl TryPeer {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll, None);
         }
     }
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
-        match self.socket.read::<Message>() {
-            Ok(Some(Message::BootstrapGranted(peer_pk))) => {
+        match self.socket.read::<Message<UID>>() {
+            Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
                 let socket = mem::replace(&mut self.socket, Socket::default());
-                let data = (socket, self.peer, PeerId(peer_pk));
+                let data = (socket, self.peer, peer_uid);
                 (*self.finish)(core, poll, token, Ok(data));
             }
             Ok(Some(Message::BootstrapDenied(reason))) => {
@@ -101,7 +99,7 @@ impl TryPeer {
     }
 }
 
-impl State for TryPeer {
+impl<UID: Uid> State for TryPeer<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() {
             return self.handle_error(core, poll, None);

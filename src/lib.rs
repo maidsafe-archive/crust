@@ -78,11 +78,11 @@ mod common;
 mod service_discovery;
 mod nat;
 
-pub use common::{CrustUser, MSG_DROP_PRIORITY, Priority};
-pub use main::{Config, ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
+pub use common::{CrustUser, MSG_DROP_PRIORITY, Priority, Uid};
+pub use main::{Config, ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
                PubConnectionInfo, Service};
 
 /// Used to receive events from a `Service`.
-pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
+pub type CrustEventSender<UID> = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event<UID>>;
 /// Crust's result type
 pub type Res<T> = Result<T, CrustError>;

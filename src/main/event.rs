@@ -17,18 +17,17 @@
 
 use super::ConnectionInfoResult;
 
-use super::PeerId;
-use common::CrustUser;
+use common::{CrustUser, Uid};
 use std::net::SocketAddr;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
 #[derive(Debug)]
-pub enum Event {
+pub enum Event<UID: Uid> {
     /// Invoked when a bootstrap peer connects to us
-    BootstrapAccept(PeerId, CrustUser),
+    BootstrapAccept(UID, CrustUser),
     /// Invoked when we bootstrap to a new peer.
-    BootstrapConnect(PeerId, SocketAddr),
+    BootstrapConnect(UID, SocketAddr),
     /// Invoked when we failed to connect to all bootstrap contacts.
     BootstrapFailed,
     /// Invoked when we are ready to listen for incomming connection. Contains
@@ -37,15 +36,15 @@ pub enum Event {
     /// Invoked when listener failed to start.
     ListenerFailed,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
-    ConnectionInfoPrepared(ConnectionInfoResult),
+    ConnectionInfoPrepared(ConnectionInfoResult<UID>),
     /// Invoked when connection to a new peer has been established.
-    ConnectSuccess(PeerId),
+    ConnectSuccess(UID),
     /// Invoked when connection to a new peer has failed.
-    ConnectFailure(PeerId),
+    ConnectFailure(UID),
     /// Invoked when a peer disconnects or can no longer be contacted.
-    LostPeer(PeerId),
+    LostPeer(UID),
     /// Invoked when a new message is received. Passes the message.
-    NewMessage(PeerId, Vec<u8>),
+    NewMessage(UID, Vec<u8>),
     /// Invoked when trying to sending a too large data.
-    WriteMsgSizeProhibitive(PeerId, Vec<u8>),
+    WriteMsgSizeProhibitive(UID, Vec<u8>),
 }

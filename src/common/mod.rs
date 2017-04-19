@@ -21,6 +21,10 @@ pub use self::message::{BootstrapDenyReason, Message};
 pub use self::socket::Socket;
 pub use self::state::State;
 use rust_sodium::crypto::hash::sha256;
+use serde::de::Deserialize;
+use serde::ser::Serialize;
+use std::fmt;
+use std::hash::Hash;
 use std::net::SocketAddr;
 
 pub type NameHash = [u8; sha256::DIGESTBYTES];
@@ -52,6 +56,12 @@ pub enum CrustUser {
 pub enum ExternalReachability {
     NotRequired,
     Required { direct_listeners: Vec<SocketAddr> },
+}
+
+/// Trait for specifying a unique identifier for a Crust peer
+pub trait Uid
+    : 'static + Send + fmt::Debug + Clone + Copy + Eq + PartialEq + Ord + PartialOrd + Hash +
+      Serialize + Deserialize {
 }
 
 pub mod get_if_addrs;

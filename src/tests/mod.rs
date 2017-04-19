@@ -17,17 +17,21 @@
 
 #[macro_use]
 pub mod utils;
-pub use self::utils::{gen_config, get_event_sender, timebomb};
+
+pub use self::utils::{UniqueId, gen_config, get_event_sender, timebomb};
 
 use common::CrustUser;
-use main::{Config, Event, Service};
+use main::{self, Config, Event};
 use mio;
+use rand;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::thread;
 use std::time::Duration;
+
+type Service = main::Service<UniqueId>;
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
@@ -49,7 +53,7 @@ fn gen_service_discovery_port() -> u16 {
 fn bootstrap_two_services_and_exchange_messages() {
     let config0 = gen_config();
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, config0));
+    let mut service0 = unwrap!(Service::with_config(event_tx0, config0, rand::random()));
 
     unwrap!(service0.start_listening_tcp());
 
@@ -59,7 +63,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
 
     let (event_tx1, event_rx1) = get_event_sender();
-    let mut service1 = unwrap!(Service::with_config(event_tx1, config1));
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
 
     unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
 
@@ -94,10 +98,10 @@ fn bootstrap_two_services_using_service_discovery() {
     config.service_discovery_port = Some(service_discovery_port);
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, config.clone()));
+    let mut service0 = unwrap!(Service::with_config(event_tx0, config.clone(), rand::random()));
 
     let (event_tx1, event_rx1) = get_event_sender();
-    let mut service1 = unwrap!(Service::with_config(event_tx1, config));
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config, rand::random()));
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
@@ -123,7 +127,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     use std::net::TcpListener;
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default()));
+    let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default(), rand::random()));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     let valid_address = localhost(port);
@@ -135,7 +139,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     config1.hard_coded_contacts = vec![invalid_address, valid_address];
 
     let (event_tx1, event_rx1) = get_event_sender();
-    let mut service1 = unwrap!(Service::with_config(event_tx1, config1));
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
@@ -153,7 +157,7 @@ fn bootstrap_with_blacklist() {
     use std::net::TcpListener;
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default()));
+    let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default(), rand::random()));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     let valid_address = localhost(port);
@@ -165,7 +169,7 @@ fn bootstrap_with_blacklist() {
     config1.hard_coded_contacts = vec![blacklisted_address, valid_address];
 
     let (event_tx1, event_rx1) = get_event_sender();
-    let mut service1 = unwrap!(Service::with_config(event_tx1, config1));
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     let mut blacklist = HashSet::new();
     blacklist.insert(blacklisted_address);
     unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
@@ -199,7 +203,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
     let mut config = gen_config();
     config.hard_coded_contacts = vec![blacklisted_address];
     let (event_tx, event_rx) = get_event_sender();
-    let mut service = unwrap!(Service::with_config(event_tx, config));
+    let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     let mut blacklist = HashSet::new();
     blacklist.insert(blacklisted_address);
@@ -219,7 +223,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
 fn bootstrap_fails_if_there_are_no_contacts() {
     let config = gen_config();
     let (event_tx, event_rx) = get_event_sender();
-    let mut service = unwrap!(Service::with_config(event_tx, config));
+    let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     unwrap!(service.start_bootstrap(HashSet::new(), CrustUser::Client));
     expect_event!(event_rx, Event::BootstrapFailed);
@@ -236,7 +240,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     config.hard_coded_contacts = vec![address];
 
     let (event_tx, event_rx) = get_event_sender();
-    let mut service = unwrap!(Service::with_config(event_tx, config));
+    let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     unwrap!(service.start_bootstrap(HashSet::new(), CrustUser::Client));
     expect_event!(event_rx, Event::BootstrapFailed);
@@ -246,7 +250,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
 fn drop_disconnects() {
     let config_0 = gen_config();
     let (event_tx_0, event_rx_0) = get_event_sender();
-    let mut service_0 = unwrap!(Service::with_config(event_tx_0, config_0));
+    let mut service_0 = unwrap!(Service::with_config(event_tx_0, config_0, rand::random()));
 
     unwrap!(service_0.start_listening_tcp());
     let port = expect_event!(event_rx_0, Event::ListenerStarted(port) => port);
@@ -255,7 +259,7 @@ fn drop_disconnects() {
     config_1.hard_coded_contacts = vec![localhost_contact_info(port)];
 
     let (event_tx_1, event_rx_1) = get_event_sender();
-    let mut service_1 = unwrap!(Service::with_config(event_tx_1, config_1));
+    let mut service_1 = unwrap!(Service::with_config(event_tx_1, config_1, rand::random()));
 
     unwrap!(service_1.start_bootstrap(HashSet::new(), CrustUser::Client));
 
@@ -276,10 +280,11 @@ mod broken_peer {
     use common::{Core, Message, Socket, State};
     use mio::{Poll, PollOpt, Ready, Token};
     use mio::tcp::TcpListener;
-    use rust_sodium::crypto::box_;
+    use rand;
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
+    use tests::UniqueId;
 
     pub struct Listen(TcpListener, Token);
 
@@ -325,12 +330,12 @@ mod broken_peer {
                 return self.terminate(core, poll);
             }
             if kind.is_readable() {
-                match self.0.read::<Message>() {
+                match self.0.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(..))) => {
-                        let public_key = box_::gen_keypair().0;
+                        let public_id: UniqueId = rand::random();
                         unwrap!(self.0.write(poll,
                                              self.1,
-                                             Some((Message::BootstrapGranted(public_key),
+                                             Some((Message::BootstrapGranted(public_id),
                                                    0))));
                     }
                     Ok(Some(_)) | Ok(None) => (),
@@ -339,7 +344,7 @@ mod broken_peer {
             }
 
             if kind.is_writable() {
-                unwrap!(self.0.write::<Message>(poll, self.1, None));
+                unwrap!(self.0.write::<Message<UniqueId>>(poll, self.1, None));
             }
         }
 
@@ -379,7 +384,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     config.hard_coded_contacts = vec![address];
 
     let (event_tx, event_rx) = get_event_sender();
-    let mut service = unwrap!(Service::with_config(event_tx, config));
+    let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     unwrap!(service.start_bootstrap(HashSet::new(), CrustUser::Client));
     let peer_id = expect_event!(event_rx, Event::BootstrapConnect(peer_id, _) => peer_id);
@@ -398,7 +403,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
 
     let config0 = gen_config();
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, config0));
+    let mut service0 = unwrap!(Service::with_config(event_tx0, config0, rand::random()));
 
     unwrap!(service0.start_listening_tcp());
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
@@ -407,7 +412,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
 
     let (event_tx1, event_rx1) = get_event_sender();
-    let mut service1 = unwrap!(Service::with_config(event_tx1, config1));
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
 
     unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
     expect_event!(event_rx1, Event::BootstrapConnect(_peer_id, _));
