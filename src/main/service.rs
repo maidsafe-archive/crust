@@ -16,16 +16,15 @@
 // relating to use of the SAFE Network Software.
 
 use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash,
-             Priority};
+             Priority, Uid};
 use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
-           ConnectionListener, ConnectionMap, CrustError, Event, PeerId, PrivConnectionInfo,
+           ConnectionListener, ConnectionMap, CrustError, Event, PrivConnectionInfo,
            PubConnectionInfo};
 use main::config_handler::{self, Config};
 use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
-use rust_sodium::crypto::box_::{self, PublicKey, SecretKey};
 use rust_sodium::crypto::hash::sha256;
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
@@ -43,32 +42,33 @@ const DISABLE_NAT: bool = true;
 
 /// A structure representing all the Crust services. This is the main object through which crust is
 /// used.
-pub struct Service {
+pub struct Service<UID: Uid> {
     config: Config,
-    cm: ConnectionMap,
-    event_tx: ::CrustEventSender,
+    cm: ConnectionMap<UID>,
+    event_tx: ::CrustEventSender<UID>,
     mc: Arc<MappingContext>,
     el: EventLoop,
     name_hash: NameHash,
-    our_keys: (PublicKey, SecretKey),
+    our_uid: UID,
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
 }
 
-impl Service {
+impl<UID: Uid> Service<UID> {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
-    pub fn new(event_tx: ::CrustEventSender) -> ::Res<Self> {
-        Service::with_config(event_tx, config_handler::read_config_file()?)
+    pub fn new(event_tx: ::CrustEventSender<UID>, our_uid: UID) -> ::Res<Self> {
+        Service::with_config(event_tx, config_handler::read_config_file()?, our_uid)
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
-    pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> ::Res<Service> {
+    pub fn with_config(event_tx: ::CrustEventSender<UID>,
+                       config: Config,
+                       our_uid: UID)
+                       -> ::Res<Self> {
         rust_sodium::init();
 
-        let our_keys = box_::gen_keypair();
-        let our_id = PeerId(our_keys.0);
         let name_hash = name_hash(&config.network_name);
 
         // Form our initial contact info
@@ -76,7 +76,7 @@ impl Service {
         let mut mc = MappingContext::new()?;
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
-        let el = common::spawn_event_loop(3, Some(&format!("{:?}", our_id)))?;
+        let el = common::spawn_event_loop(3, Some(&format!("{:?}", our_uid)))?;
         trace!("Event loop started");
 
         Ok(Service {
@@ -86,7 +86,7 @@ impl Service {
                mc: Arc::new(mc),
                el: el,
                name_hash: name_hash,
-               our_keys: our_keys,
+               our_uid: our_uid,
                our_listeners: our_listeners,
            })
     }
@@ -132,10 +132,10 @@ impl Service {
         });
     }
 
-    fn get_peer_socket_addr(&self, peer_id: &PeerId) -> ::Res<SocketAddr> {
+    fn get_peer_socket_addr(&self, peer_id: &UID) -> ::Res<SocketAddr> {
         let token = match unwrap!(self.cm.lock()).get(peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
-            _ => return Err(CrustError::PeerNotFound(*peer_id)),
+            _ => return Err(CrustError::PeerNotFound),
         };
 
         let (tx, rx) = mpsc::channel();
@@ -151,7 +151,7 @@ impl Service {
             match state
                       .borrow_mut()
                       .as_any()
-                      .downcast_mut::<ActiveConnection>() {
+                      .downcast_mut::<ActiveConnection<UID>>() {
                 Some(active_connection) => {
                     let _ = tx.send(Some(active_connection.peer_addr()));
                 }
@@ -164,13 +164,13 @@ impl Service {
 
         match rx.recv() {
             Ok(Some(ip)) => ip,
-            Ok(None) => Err(CrustError::PeerNotFound(*peer_id)),
+            Ok(None) => Err(CrustError::PeerNotFound),
             Err(e) => Err(CrustError::ChannelRecv(e)),
         }
     }
 
     /// Check if the provided peer address is whitelisted in config.
-    pub fn is_peer_whitelisted(&self, peer_id: &PeerId) -> bool {
+    pub fn is_peer_whitelisted(&self, peer_id: &UID) -> bool {
         if self.config.bootstrap_whitelisted_ips.is_empty() {
             // Whitelisting is not used, so all peers are valid.
             return true;
@@ -193,7 +193,7 @@ impl Service {
     }
 
     /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
-    pub fn is_peer_hard_coded(&self, peer_id: &PeerId) -> bool {
+    pub fn is_peer_hard_coded(&self, peer_id: &UID) -> bool {
         match self.get_peer_socket_addr(peer_id) {
             Ok(s) => {
                 trace!("Checking whether {:?} is hard-coded in {:?}",
@@ -246,7 +246,7 @@ impl Service {
                            crust_user: CrustUser)
                            -> ::Res<()> {
         let config = self.config.clone();
-        let our_pk = self.our_keys.0;
+        let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
@@ -267,7 +267,7 @@ impl Service {
                                                        poll,
                                                        name_hash,
                                                        ext_reachability,
-                                                       our_pk,
+                                                       our_uid,
                                                        cm,
                                                        &config,
                                                        blacklist,
@@ -294,7 +294,7 @@ impl Service {
         let mc = self.mc.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
         let force_include_port = self.config.force_acceptor_port_in_ext_ep;
-        let our_pk = self.our_keys.0;
+        let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
@@ -305,7 +305,7 @@ impl Service {
                                                 None,
                                                 port,
                                                 force_include_port,
-                                                our_pk,
+                                                our_uid,
                                                 name_hash,
                                                 cm,
                                                 mc,
@@ -328,8 +328,11 @@ impl Service {
     ///  * Swap `PubConnectionInfo`s out-of-band with the peer you are connecting to.
     ///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`
     ///    obtained from the peer
-    pub fn connect(&self, our_ci: PrivConnectionInfo, their_ci: PubConnectionInfo) -> ::Res<()> {
-        if their_ci.id == PeerId(self.our_keys.0) {
+    pub fn connect(&self,
+                   our_ci: PrivConnectionInfo<UID>,
+                   their_ci: PubConnectionInfo<UID>)
+                   -> ::Res<()> {
+        if their_ci.id == self.our_uid {
             debug!("Requested connect to {:?}, which is our peer ID",
                    their_ci.id);
             return Err(CrustError::RequestedConnectToSelf);
@@ -351,7 +354,7 @@ impl Service {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, peer_id: PeerId) -> bool {
+    pub fn disconnect(&self, peer_id: UID) -> bool {
         let token = match unwrap!(self.cm.lock()).get(&peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return false,
@@ -365,10 +368,10 @@ impl Service {
     }
 
     /// Send data to a peer.
-    pub fn send(&self, peer_id: PeerId, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
+    pub fn send(&self, peer_id: UID, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
         let token = match unwrap!(self.cm.lock()).get(&peer_id) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
-            _ => return Err(CrustError::PeerNotFound(peer_id)),
+            _ => return Err(CrustError::PeerNotFound),
         };
 
         self.post(move |core, poll| if let Some(state) = core.get_state(token) {
@@ -386,24 +389,28 @@ impl Service {
             .cloned()
             .collect();
         if DISABLE_NAT {
-            let event =
-                Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                  result_token: result_token,
-                                                  result: Ok(PrivConnectionInfo {
-                                                                 id: PeerId(self.our_keys.0),
-                                                                 for_direct: our_listeners,
-                                                                 for_hole_punch: Default::default(),
-                                                                 hole_punch_socket: None,
-                                                             }),
-                                              });
+            let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                                          result_token: result_token,
+                                                          result: Ok(PrivConnectionInfo {
+                                                                         id: self.our_uid,
+                                                                         for_direct: our_listeners,
+                                                                         for_hole_punch:
+                                                                             Default::default(),
+                                                                         hole_punch_socket: None,
+                                                                     }),
+                                                      });
             let _ = self.event_tx.send(event);
         } else {
             let event_tx = self.event_tx.clone();
-            let our_pub_key = self.our_keys.0;
+            let our_uid = self.our_uid;
             let mc = self.mc.clone();
             if let Err(e) = self.post(move |mut core, poll| {
                 let event_tx_clone = event_tx.clone();
-                match MappedTcpSocket::start(core, poll, 0, &mc, move |_, _, socket, addrs| {
+                match MappedTcpSocket::<_, UID>::start(core,
+                                                       poll,
+                                                       0,
+                                                       &mc,
+                                                       move |_, _, socket, addrs| {
                     let hole_punch_addrs = addrs
                         .into_iter()
                         .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
@@ -413,7 +420,7 @@ impl Service {
                         Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                                           result_token: result_token,
                                                           result: Ok(PrivConnectionInfo {
-                                                                         id: PeerId(our_pub_key),
+                                                                         id: our_uid,
                                                                          for_direct: our_listeners,
                                                                          for_hole_punch:
                                                                              hole_punch_addrs,
@@ -444,7 +451,7 @@ impl Service {
     }
 
     /// Check if we are connected to the given peer
-    pub fn is_connected(&self, peer_id: &PeerId) -> bool {
+    pub fn is_connected(&self, peer_id: &UID) -> bool {
         match unwrap!(self.cm.lock()).get(peer_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
@@ -452,8 +459,8 @@ impl Service {
     }
 
     /// Returns our ID.
-    pub fn id(&self) -> PeerId {
-        PeerId(self.our_keys.0)
+    pub fn id(&self) -> UID {
+        self.our_uid
     }
 
     /// Returns our config.
@@ -479,11 +486,11 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use CrustError;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
-    use main::{Event, PrivConnectionInfo, PubConnectionInfo};
+    use main::{self, Event};
+    use rand;
     use std::collections::{HashMap, HashSet, hash_map};
     use std::net::IpAddr;
     use std::str::FromStr;
@@ -492,13 +499,17 @@ mod tests {
     use std::sync::mpsc::Receiver;
     use std::thread;
     use std::time::Duration;
-    use tests::{get_event_sender, timebomb};
+    use tests::{UniqueId, get_event_sender, timebomb};
+
+    type Service = super::Service<UniqueId>;
+    type PrivConnectionInfo = main::PrivConnectionInfo<UniqueId>;
+    type PubConnectionInfo = main::PubConnectionInfo<UniqueId>;
 
     #[test]
     fn connect_self() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx, event_rx) = get_event_sender();
-            let mut service = unwrap!(Service::new(event_tx));
+            let mut service = unwrap!(Service::new(event_tx, rand::random()));
 
             unwrap!(service.start_listening_tcp());
             expect_event!(event_rx, Event::ListenerStarted(_));
@@ -522,13 +533,13 @@ mod tests {
     fn direct_connect_two_peers() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let mut service_0 = unwrap!(Service::new(event_tx_0));
+            let mut service_0 = unwrap!(Service::new(event_tx_0, rand::random()));
 
             unwrap!(service_0.start_listening_tcp());
             expect_event!(event_rx_0, Event::ListenerStarted(_));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let mut service_1 = unwrap!(Service::new(event_tx_1));
+            let mut service_1 = unwrap!(Service::new(event_tx_1, rand::random()));
 
             unwrap!(service_1.start_listening_tcp());
             expect_event!(event_rx_1, Event::ListenerStarted(_));
@@ -544,10 +555,10 @@ mod tests {
         unwrap!(maidsafe_utilities::log::init(true));
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let service_0 = unwrap!(Service::new(event_tx_0));
+            let service_0 = unwrap!(Service::new(event_tx_0, rand::random()));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let service_1 = unwrap!(Service::new(event_tx_1));
+            let service_1 = unwrap!(Service::new(event_tx_1, rand::random()));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
             debug!("Exchanging messages ...");
@@ -557,9 +568,9 @@ mod tests {
     }
 
     fn connect(service_0: &Service,
-               event_rx_0: &Receiver<Event>,
+               event_rx_0: &Receiver<Event<UniqueId>>,
                service_1: &Service,
-               event_rx_1: &Receiver<Event>) {
+               event_rx_1: &Receiver<Event<UniqueId>>) {
         service_0.prepare_connection_info(0);
         service_1.prepare_connection_info(0);
 
@@ -581,9 +592,9 @@ mod tests {
     }
 
     fn exchange_messages(service_0: &Service,
-                         event_rx_0: &Receiver<Event>,
+                         event_rx_0: &Receiver<Event<UniqueId>>,
                          service_1: &Service,
-                         event_rx_1: &Receiver<Event>) {
+                         event_rx_1: &Receiver<Event<UniqueId>>) {
         use rand;
         use std::iter;
 
@@ -613,7 +624,7 @@ mod tests {
     }
 
     fn prepare_connection_info(service: &mut Service,
-                               event_rx: &Receiver<Event>)
+                               event_rx: &Receiver<Event<UniqueId>>)
                                -> PrivConnectionInfo {
         static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
         let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
@@ -637,7 +648,7 @@ mod tests {
         const NUM_MSGS: usize = 100;
 
         struct TestNode {
-            event_rx: Receiver<Event>,
+            event_rx: Receiver<Event<UniqueId>>,
             service: Service,
             connection_id_rx: Receiver<PubConnectionInfo>,
             our_cis: Vec<PrivConnectionInfo>,
@@ -648,7 +659,8 @@ mod tests {
             fn new(index: usize) -> (TestNode, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
                 let config = unwrap!(::main::config_handler::read_config_file());
-                let mut service = unwrap!(Service::with_config(event_sender, config));
+                let mut service =
+                    unwrap!(Service::with_config(event_sender, config, rand::random()));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());
                 match unwrap!(event_rx.recv()) {
@@ -790,13 +802,13 @@ mod tests {
 
         // Connect two peers
         let (event_tx_0, event_rx_0) = get_event_sender();
-        let mut service_0 = unwrap!(Service::with_config(event_tx_0, config));
+        let mut service_0 = unwrap!(Service::with_config(event_tx_0, config, rand::random()));
 
         unwrap!(service_0.start_listening_tcp());
         expect_event!(event_rx_0, Event::ListenerStarted(_));
 
         let (event_tx_1, event_rx_1) = get_event_sender();
-        let mut service_1 = unwrap!(Service::new(event_tx_1));
+        let mut service_1 = unwrap!(Service::new(event_tx_1, rand::random()));
 
         unwrap!(service_1.start_listening_tcp());
         expect_event!(event_rx_1, Event::ListenerStarted(_));

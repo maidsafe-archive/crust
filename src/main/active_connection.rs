@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, Message, Priority, Socket, State};
-use main::{ConnectionId, ConnectionMap, Event, PeerId};
+use common::{Core, CoreTimer, Message, Priority, Socket, State, Uid};
+use main::{ConnectionId, ConnectionMap, Event};
 use mio::{Poll, Ready, Token};
 use mio::timer::Timeout;
 use std::any::Any;
@@ -36,26 +36,26 @@ pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
 #[cfg(test)]
 const HEARTBEAT_PERIOD_MS: u64 = 300;
 
-pub struct ActiveConnection {
+pub struct ActiveConnection<UID: Uid> {
     token: Token,
     socket: Socket,
-    cm: ConnectionMap,
-    our_id: PeerId,
-    their_id: PeerId,
-    event_tx: ::CrustEventSender,
+    cm: ConnectionMap<UID>,
+    our_id: UID,
+    their_id: UID,
+    event_tx: ::CrustEventSender<UID>,
     heartbeat: Heartbeat,
 }
 
-impl ActiveConnection {
+impl<UID: Uid> ActiveConnection<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  token: Token,
                  socket: Socket,
-                 cm: ConnectionMap,
-                 our_id: PeerId,
-                 their_id: PeerId,
-                 event: Event,
-                 event_tx: ::CrustEventSender) {
+                 cm: ConnectionMap<UID>,
+                 our_id: UID,
+                 their_id: UID,
+                 event: Event<UID>,
+                 event_tx: ::CrustEventSender<UID>) {
         trace!("Entered state ActiveConnection: {:?} -> {:?}",
                our_id,
                their_id);
@@ -70,7 +70,7 @@ impl ActiveConnection {
                        their_id);
                 let _ = poll.deregister(&socket);
                 let _ = event_tx.send(Event::LostPeer(their_id));
-                // TODO See if this plays well with ConnectionMap manipulation below
+                // TODO See if this plays well with ConnectionMap<UID> manipulation below
                 return;
             }
         };
@@ -110,7 +110,7 @@ impl ActiveConnection {
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
         loop {
-            match self.socket.read::<Message>() {
+            match self.socket.read::<Message<UID>>() {
                 Ok(Some(Message::Data(data))) => {
                     let _ = self.event_tx
                         .send(Event::NewMessage(self.their_id, data));
@@ -146,7 +146,7 @@ impl ActiveConnection {
         Ok(unwrap!(FromStr::from_str("192.168.0.1:0")))
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         if let Err(e) = self.socket.write(poll, self.token, msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
@@ -168,7 +168,7 @@ impl ActiveConnection {
     }
 }
 
-impl State for ActiveConnection {
+impl<UID: Uid> State for ActiveConnection<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             trace!("{:?} Terminating connection to peer: {:?}. \

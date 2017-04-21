@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, Message, Priority, Socket, State};
-use main::{ConnectionId, ConnectionMap, PeerId};
+use common::{Core, Message, Priority, Socket, State, Uid};
+use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
@@ -26,24 +26,24 @@ use std::rc::Rc;
 
 pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
 
-pub struct ConnectionCandidate {
+pub struct ConnectionCandidate<UID: Uid> {
     token: Token,
-    cm: ConnectionMap,
+    cm: ConnectionMap<UID>,
     socket: Socket,
-    our_id: PeerId,
-    their_id: PeerId,
-    msg: Option<(Message, Priority)>,
+    our_id: UID,
+    their_id: UID,
+    msg: Option<(Message<UID>, Priority)>,
     finish: Finish,
 }
 
-impl ConnectionCandidate {
+impl<UID: Uid> ConnectionCandidate<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  token: Token,
                  socket: Socket,
-                 cm: ConnectionMap,
-                 our_id: PeerId,
-                 their_id: PeerId,
+                 cm: ConnectionMap<UID>,
+                 our_id: UID,
+                 their_id: UID,
                  finish: Finish)
                  -> ::Res<Token> {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
@@ -70,14 +70,14 @@ impl ConnectionCandidate {
     }
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
-        match self.socket.read::<Message>() {
+        match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, poll),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
             Ok(None) => (),
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
@@ -118,7 +118,7 @@ impl ConnectionCandidate {
     }
 }
 
-impl State for ConnectionCandidate {
+impl<UID: Uid> State for ConnectionCandidate<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             return self.handle_error(core, poll);

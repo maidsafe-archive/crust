@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use common::Uid;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::{Config, Event};
@@ -41,7 +42,10 @@ macro_rules! expect_event {
     }
 }
 
-pub fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
+pub type UniqueId = [u8; 20];
+impl Uid for UniqueId {}
+
+pub fn get_event_sender() -> (::CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 

@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use self::get_ext_addr::GetExtAddr;
-use common::{Core, CoreMessage, CoreTimer, State};
+use common::{Core, CoreMessage, CoreTimer, State, Uid};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
 use mio::{Poll, Token};
@@ -26,6 +26,7 @@ use net2::TcpBuilder;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::marker::PhantomData;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::rc::Rc;
 use std::time::Duration;
@@ -35,7 +36,7 @@ mod get_ext_addr;
 const TIMEOUT_SEC: u64 = 3;
 
 /// A state which represents the in-progress mapping of a tcp socket.
-pub struct MappedTcpSocket<F> {
+pub struct MappedTcpSocket<F, UID> {
     token: Token,
     socket: Option<TcpBuilder>,
     igd_children: usize,
@@ -43,10 +44,12 @@ pub struct MappedTcpSocket<F> {
     mapped_addrs: Vec<SocketAddr>,
     timeout: Timeout,
     finish: Option<F>,
+    phantom: PhantomData<UID>,
 }
 
-impl<F> MappedTcpSocket<F>
-    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any
+impl<F, UID> MappedTcpSocket<F, UID>
+    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
+          UID: Uid
 {
     /// Start mapping a tcp socket
     pub fn start(core: &mut Core,
@@ -87,7 +90,7 @@ impl<F> MappedTcpSocket<F>
 
                     let mut state = state.borrow_mut();
                     let mapping_tcp_sock =
-                        match state.as_any().downcast_mut::<MappedTcpSocket<F>>() {
+                        match state.as_any().downcast_mut::<MappedTcpSocket<F, UID>>() {
                             Some(mapping_sock) => mapping_sock,
                             None => return,
                         };
@@ -103,7 +106,7 @@ impl<F> MappedTcpSocket<F>
             .collect();
 
         let state =
-            Rc::new(RefCell::new(MappedTcpSocket {
+            Rc::new(RefCell::new(Self {
                                      token: token,
                                      socket: Some(socket),
                                      igd_children: igd_children,
@@ -112,6 +115,7 @@ impl<F> MappedTcpSocket<F>
                                      timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC),
                                                                CoreTimer::new(token, 0))?,
                                      finish: Some(finish),
+                                     phantom: PhantomData,
                                  }));
 
         // Ask Stuns
@@ -125,7 +129,7 @@ impl<F> MappedTcpSocket<F>
                 }
             };
 
-            if let Ok(child) = GetExtAddr::start(core, poll, addr, stun, Box::new(handler)) {
+            if let Ok(child) = GetExtAddr::<UID>::start(core, poll, addr, stun, Box::new(handler)) {
                 let _ = state.borrow_mut().stun_children.insert(child);
             }
         }
@@ -173,8 +177,9 @@ impl<F> MappedTcpSocket<F>
     }
 }
 
-impl<F> State for MappedTcpSocket<F>
-    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any
+impl<F, UID> State for MappedTcpSocket<F, UID>
+    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
+          UID: Uid
 {
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _: u8) {
         self.terminate(core, poll)

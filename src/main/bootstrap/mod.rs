@@ -20,12 +20,12 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, Core, CoreTimer, ExternalReachability, NameHash, Socket, State};
-use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event, PeerId};
+use common::{BootstrapDenyReason, Core, CoreTimer, ExternalReachability, NameHash, Socket, State,
+             Uid};
+use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use rand::{self, Rng};
-use rust_sodium::crypto::box_::PublicKey;
 use service_discovery::ServiceDiscovery;
 use std::any::Any;
 use std::cell::RefCell;
@@ -42,35 +42,35 @@ const BOOTSTRAP_TIMER_ID: u8 = 0;
 const SERVICE_DISCOVERY_TIMER_ID: u8 = BOOTSTRAP_TIMER_ID + 1;
 const MAX_CONTACTS_EXPECTED: usize = 1500;
 
-pub struct Bootstrap {
+pub struct Bootstrap<UID: Uid> {
     token: Token,
-    cm: ConnectionMap,
+    cm: ConnectionMap<UID>,
     peers: Vec<SocketAddr>,
     blacklist: HashSet<SocketAddr>,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
-    our_pk: PublicKey,
-    event_tx: ::CrustEventSender,
+    our_uid: UID,
+    event_tx: ::CrustEventSender<UID>,
     sd_meta: Option<ServiceDiscMeta>,
     bs_timer: CoreTimer,
     bs_timeout: Timeout,
     cache: Cache,
     children: HashSet<Token>,
-    self_weak: Weak<RefCell<Bootstrap>>,
+    self_weak: Weak<RefCell<Bootstrap<UID>>>,
 }
 
-impl Bootstrap {
+impl<UID: Uid> Bootstrap<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  name_hash: NameHash,
                  ext_reachability: ExternalReachability,
-                 our_pk: PublicKey,
-                 cm: ConnectionMap,
+                 our_uid: UID,
+                 cm: ConnectionMap<UID>,
                  config: &Config,
                  blacklist: HashSet<SocketAddr>,
                  token: Token,
                  service_discovery_token: Token,
-                 event_tx: ::CrustEventSender)
+                 event_tx: ::CrustEventSender<UID>)
                  -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
@@ -94,14 +94,14 @@ impl Bootstrap {
             }
         };
 
-        let state = Rc::new(RefCell::new(Bootstrap {
+        let state = Rc::new(RefCell::new(Self {
                                              token: token,
                                              cm: cm,
                                              peers: peers,
                                              blacklist: blacklist,
                                              name_hash: name_hash,
                                              ext_reachability: ext_reachability,
-                                             our_pk: our_pk,
+                                             our_uid: our_uid,
                                              event_tx: event_tx,
                                              sd_meta: sd_meta,
                                              bs_timer: bs_timer,
@@ -144,7 +144,7 @@ impl Bootstrap {
             if let Ok(child) = TryPeer::start(core,
                                               poll,
                                               peer,
-                                              self.our_pk,
+                                              self.our_uid,
                                               self.name_hash,
                                               self.ext_reachability.clone(),
                                               Box::new(finish)) {
@@ -159,7 +159,7 @@ impl Bootstrap {
                      core: &mut Core,
                      poll: &Poll,
                      child: Token,
-                     res: Result<(Socket, SocketAddr, PeerId),
+                     res: Result<(Socket, SocketAddr, UID),
                                  (SocketAddr, Option<BootstrapDenyReason>)>) {
         let _ = self.children.remove(&child);
         match res {
@@ -170,7 +170,7 @@ impl Bootstrap {
                                                child,
                                                socket,
                                                self.cm.clone(),
-                                               PeerId(self.our_pk),
+                                               self.our_uid,
                                                peer_id,
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
@@ -185,7 +185,7 @@ impl Bootstrap {
                             "Bootstrappee node could not establish connection to us."
                         }
                     };
-                    error!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
+                    error!("Failed to Bootstrap<UID>: ({:?}) {}", reason, err_msg);
                     self.terminate(core, poll);
                     let _ = self.event_tx.send(Event::BootstrapFailed);
                     return;
@@ -215,7 +215,7 @@ impl Bootstrap {
     }
 }
 
-impl State for Bootstrap {
+impl<UID: Uid> State for Bootstrap<UID> {
     fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);

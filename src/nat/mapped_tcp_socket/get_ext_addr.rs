@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, Message, Priority, Socket, State};
+use common::{Core, Message, Priority, Socket, State, Uid};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
 use nat::{NatError, util};
@@ -26,14 +26,14 @@ use std::rc::Rc;
 
 pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Result<SocketAddr, ()>)>;
 
-pub struct GetExtAddr {
+pub struct GetExtAddr<UID: Uid> {
     token: Token,
     socket: Socket,
-    request: Option<(Message, Priority)>,
+    request: Option<(Message<UID>, Priority)>,
     finish: Finish,
 }
 
-impl GetExtAddr {
+impl<UID: Uid> GetExtAddr<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  local_addr: SocketAddr,
@@ -47,7 +47,7 @@ impl GetExtAddr {
         let socket = Socket::wrap(socket);
         let token = core.get_new_token();
 
-        let state = GetExtAddr {
+        let state = Self {
             token: token,
             socket: socket,
             request: Some((Message::EchoAddrReq, 0)),
@@ -64,14 +64,14 @@ impl GetExtAddr {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
-        match self.socket.read::<Message>() {
+        match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);
                 let token = self.token;
@@ -89,7 +89,7 @@ impl GetExtAddr {
     }
 }
 
-impl State for GetExtAddr {
+impl<UID: Uid> State for GetExtAddr<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.handle_error(core, poll);

@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, Message, NameHash, Priority, Socket, State};
-use main::{ConnectionId, ConnectionMap, PeerId};
+use common::{Core, Message, NameHash, Priority, Socket, State, Uid};
+use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
@@ -26,24 +26,24 @@ use std::rc::Rc;
 
 pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
 
-pub struct ExchangeMsg {
+pub struct ExchangeMsg<UID: Uid> {
     token: Token,
-    expected_id: PeerId,
+    expected_id: UID,
     expected_nh: NameHash,
     socket: Socket,
-    cm: ConnectionMap,
-    msg: Option<(Message, Priority)>,
+    cm: ConnectionMap<UID>,
+    msg: Option<(Message<UID>, Priority)>,
     finish: Finish,
 }
 
-impl ExchangeMsg {
+impl<UID: Uid> ExchangeMsg<UID> {
     pub fn start(core: &mut Core,
                  poll: &Poll,
                  socket: Socket,
-                 our_id: PeerId,
-                 expected_id: PeerId,
+                 our_id: UID,
+                 expected_id: UID,
                  name_hash: NameHash,
-                 cm: ConnectionMap,
+                 cm: ConnectionMap<UID>,
                  finish: Finish)
                  -> ::Res<Token> {
         let token = core.get_new_token();
@@ -67,13 +67,13 @@ impl ExchangeMsg {
                    guard.get(&expected_id));
         }
 
-        let state = ExchangeMsg {
+        let state = Self {
             token: token,
             expected_id: expected_id,
             expected_nh: name_hash,
             socket: socket,
             cm: cm,
-            msg: Some((Message::Connect(our_id.0, name_hash), 0)),
+            msg: Some((Message::Connect(our_id, name_hash), 0)),
             finish: finish,
         };
 
@@ -82,16 +82,16 @@ impl ExchangeMsg {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
-        match self.socket.read::<Message>() {
-            Ok(Some(Message::Connect(their_pk, name_hash))) => {
-                if their_pk != self.expected_id.0 || name_hash != self.expected_nh {
+        match self.socket.read::<Message<UID>>() {
+            Ok(Some(Message::Connect(their_uid, name_hash))) => {
+                if their_uid != self.expected_id || name_hash != self.expected_nh {
                     return self.handle_error(core, poll);
                 }
                 let _ = core.remove_state(self.token);
@@ -112,7 +112,7 @@ impl ExchangeMsg {
     }
 }
 
-impl State for ExchangeMsg {
+impl<UID: Uid> State for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.handle_error(core, poll);

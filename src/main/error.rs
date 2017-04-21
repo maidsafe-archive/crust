@@ -18,7 +18,6 @@
 use common::{self, CoreMessage};
 use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
-use main::PeerId;
 use mio;
 use nat;
 use service_discovery;
@@ -81,9 +80,8 @@ quick_error! {
             from()
         }
         /// Peer not found
-        PeerNotFound(peer_id: PeerId) {
+        PeerNotFound {
             description("Peer not found")
-            display("Peer {:?} not found", peer_id)
         }
         /// Serialisation error
         Serialisation(e: SerialisationError) {
