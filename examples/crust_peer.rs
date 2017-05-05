@@ -272,8 +272,9 @@ fn main() {
                                 println!("\nReceived from {:?} message: {}",
                                          peer_id,
                                          String::from_utf8(bytes)
-                                             .unwrap_or_else(|_| format!("non-UTF-8 message of {} bytes",
-                                                                message_length)));
+                                             .unwrap_or_else(|_|
+                                                  format!("non-UTF-8 message of {} bytes",
+                                                          message_length)));
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
                                 let ConnectionInfoResult::<UniqueId> {

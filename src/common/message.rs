@@ -16,13 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 use common::{self, ExternalReachability, NameHash};
-use std::fmt;
-use serde::ser::Serialize;
-use std::hash::Hash;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum Message<UID: 'static + Send + fmt::Debug + Clone + Copy + Eq + PartialEq + Ord +
-                        PartialOrd + Hash + Serialize> {
+pub enum Message<UID> {
     Heartbeat,
     BootstrapRequest(UID, NameHash, ExternalReachability),
     BootstrapGranted(UID),
