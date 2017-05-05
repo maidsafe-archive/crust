@@ -63,6 +63,7 @@ extern crate net2;
 extern crate rand;
 extern crate rust_sodium;
 extern crate serde;
+extern crate tiny_keccak;
 
 #[cfg(windows)]
 extern crate winapi;
