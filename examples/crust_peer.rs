@@ -272,7 +272,7 @@ fn main() {
                                 println!("\nReceived from {:?} message: {}",
                                          peer_id,
                                          String::from_utf8(bytes)
-                                             .unwrap_or(format!("non-UTF-8 message of {} bytes",
+                                             .unwrap_or_else(|_| format!("non-UTF-8 message of {} bytes",
                                                                 message_length)));
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
@@ -386,7 +386,7 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                unwrap!(unwrap!(service.lock()).send(peer_id.clone(),
+                unwrap!(unwrap!(service.lock()).send(*peer_id,
                                                      generate_random_vec_u8(length as usize),
                                                      0));
                 debug!("Sent a message with length of {} bytes to {:?}",
@@ -446,7 +446,7 @@ fn main() {
                     let network = unwrap!(network.lock());
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
-                            unwrap!(unwrap!(service.lock()).send(peer_id.clone(),
+                            unwrap!(unwrap!(service.lock()).send(**peer_id,
                                                                  message.into_bytes(),
                                                                  0));
                         }

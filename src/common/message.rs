@@ -15,10 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, ExternalReachability, NameHash, Uid};
+use common::{self, ExternalReachability, NameHash};
+use std::fmt;
+use serde::ser::Serialize;
+use std::hash::Hash;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum Message<UID: Uid> {
+pub enum Message<UID: 'static + Send + fmt::Debug + Clone + Copy + Eq + PartialEq + Ord +
+                        PartialOrd + Hash + Serialize> {
     Heartbeat,
     BootstrapRequest(UID, NameHash, ExternalReachability),
     BootstrapGranted(UID),
