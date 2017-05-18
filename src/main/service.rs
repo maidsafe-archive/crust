@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash,
-             Priority, Uid};
+use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
+             NameHash, Priority, Uid};
 use main::{ActiveConnection, Bootstrap, Connect, ConnectionId, ConnectionInfoResult,
            ConnectionListener, ConnectionMap, CrustError, Event, PrivConnectionInfo,
            PubConnectionInfo};
@@ -25,12 +25,12 @@ use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
-use rust_sodium::crypto::hash::sha256;
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, mpsc};
+use tiny_keccak::sha3_256;
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -479,8 +479,8 @@ impl<UID: Uid> Service<UID> {
 fn name_hash(network_name: &Option<String>) -> NameHash {
     trace!("Network name: {:?}", network_name);
     match *network_name {
-        Some(ref name) => sha256::hash(name.as_bytes()).0,
-        None => [0; sha256::DIGESTBYTES],
+        Some(ref name) => sha3_256(name.as_bytes()),
+        None => [0; HASH_SIZE],
     }
 }
 

@@ -189,15 +189,15 @@ mod tests {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, CoreMessage, CrustUser, EventLoop, ExternalReachability, Message, NameHash};
+    use common::{self, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
+                 Message, NameHash};
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use main::Event;
     use mio::Token;
     use nat::MappingContext;
     use rand;
-    use rust_sodium::crypto::hash::sha256;
-    use serde::de::Deserialize;
+    use serde::de::DeserializeOwned;
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
     use std::mem;
@@ -214,8 +214,8 @@ mod tests {
     // exit with an EAGAIN error (unless this is what is wanted).
     const HANDSHAKE_TIMEOUT_SEC: u64 = 5;
     const LISTENER_TOKEN: usize = 0;
-    const NAME_HASH: NameHash = [1; sha256::DIGESTBYTES];
-    const NAME_HASH_2: NameHash = [2; sha256::DIGESTBYTES];
+    const NAME_HASH: NameHash = [1; HASH_SIZE];
+    const NAME_HASH_2: NameHash = [2; HASH_SIZE];
 
     struct Listener {
         _el: EventLoop,
@@ -292,7 +292,7 @@ mod tests {
     }
 
     #[allow(unsafe_code)]
-    fn read<T: Deserialize>(stream: &mut TcpStream) -> ::Res<T> {
+    fn read<T: DeserializeOwned>(stream: &mut TcpStream) -> ::Res<T> {
         let mut payload_size_buffer = [0; 4];
         stream.read_exact(&mut payload_size_buffer)?;
 

@@ -1,5 +1,11 @@
 # CRUST - Change Log
 
+## [0.25.0]
+- Crust is not templatised on a Uid
+- Replace rust_sodium sha256 with tiny-keccak sha3_256
+- Rustfmt 0.8.3 and clippy 0.0.128.
+- Rust stable 1.17
+
 ## [0.24.0]
 - Update to mio-v0.6.6
 - Switch from rustc-serialize to serde

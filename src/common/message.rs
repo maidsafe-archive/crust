@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, ExternalReachability, NameHash, Uid};
+use common::{self, ExternalReachability, NameHash};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum Message<UID: Uid> {
+pub enum Message<UID> {
     Heartbeat,
     BootstrapRequest(UID, NameHash, ExternalReachability),
     BootstrapGranted(UID),

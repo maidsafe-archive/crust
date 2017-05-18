@@ -7,8 +7,8 @@ os:
   - osx
 language: rust
 rust:
-  - stable
-  - nightly-2017-03-16
+  - 1.17.0
+  - nightly-2017-04-28
 sudo: false
 branches:
   only:
@@ -16,18 +16,15 @@ branches:
 cache:
   cargo: true
 before_script:
-  - (which cargo-install-update && cargo install-update cargo-update) || cargo install cargo-update
-  - (which cargo-prune && cargo install-update cargo-prune) || cargo install cargo-prune
-  - if [ "${TRAVIS_RUST_VERSION}" = stable ]; then
-      (which rustfmt && cargo install-update rustfmt) || cargo install rustfmt;
+  - curl -sSL https://github.com/maidsafe/QA/raw/master/travis/cargo_install.sh > cargo_install.sh
+  - bash cargo_install.sh cargo-prune;
+  - if [ "${TRAVIS_RUST_VERSION}" = 1.17.0 ]; then
+      bash cargo_install.sh rustfmt 0.8.3;
     elif [ "${TRAVIS_OS_NAME}" = linux ]; then
-      clippy_vers=0.0.120;
-      if ! cargo clippy --version | grep -q $clippy_vers; then
-        cargo install clippy --vers=$clippy_vers --force;
-      fi
+      bash cargo_install.sh clippy 0.0.128;
     fi
 script:
-  - if [ "${TRAVIS_RUST_VERSION}" = stable ]; then
+  - if [ "${TRAVIS_RUST_VERSION}" = 1.17.0 ]; then
       (
         set -x;
         cargo fmt -- --write-mode=diff &&

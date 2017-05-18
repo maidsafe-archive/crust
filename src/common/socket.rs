@@ -20,7 +20,7 @@ use common::{CommonError, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result}
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{Evented, Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
-use serde::de::Deserialize;
+use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::collections::{BTreeMap, VecDeque};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
@@ -74,7 +74,7 @@ impl Socket {
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
-    pub fn read<T: Deserialize>(&mut self) -> Result<Option<T>> {
+    pub fn read<T: DeserializeOwned>(&mut self) -> Result<Option<T>> {
         let inner = self.inner
             .as_mut()
             .ok_or(CommonError::UninitialisedSocket)?;
@@ -164,7 +164,7 @@ impl SockInner {
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
-    fn read<T: Deserialize>(&mut self) -> Result<Option<T>> {
+    fn read<T: DeserializeOwned>(&mut self) -> Result<Option<T>> {
         if let Some(message) = self.read_from_buffer()? {
             return Ok(Some(message));
         }
@@ -207,7 +207,7 @@ impl SockInner {
         }
     }
 
-    fn read_from_buffer<T: Deserialize>(&mut self) -> Result<Option<T>> {
+    fn read_from_buffer<T: DeserializeOwned>(&mut self) -> Result<Option<T>> {
         let u32_size = mem::size_of::<u32>();
 
         if self.read_len == 0 {
