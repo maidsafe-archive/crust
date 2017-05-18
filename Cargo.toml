@@ -7,22 +7,22 @@ license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.24.0"
+version = "0.25.0"
 
 [dependencies]
 byteorder = "~1.0.0"
 c_linked_list = "~1.1.0"
-config_file_handler = { git = "https://github.com/maqi/config_file_handler", branch = "update" }
+config_file_handler = "~0.7.0"
 crossbeam = "~0.2.10"
 igd = "~0.5.1"
 libc = "~0.2.20"
 log = "~0.3.6"
-maidsafe_utilities = { git = "https://github.com/maqi/maidsafe_utilities", branch = "update" }
+maidsafe_utilities = "~0.12.0"
 mio = "~0.6.6"
 net2 = "~0.2.27"
 quick-error = "~1.1.0"
 rand = "~0.3.14"
-rust_sodium = { git = "https://github.com/maidsafe/rust_sodium", branch = "master" }
+rust_sodium = "~0.3.0"
 serde = "~1.0.2"
 serde_derive = "~1.0.2"
 serde_json = "~1.0.1"

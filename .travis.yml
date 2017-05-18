@@ -16,18 +16,12 @@ branches:
 cache:
   cargo: true
 before_script:
-  - (which cargo-install-update && cargo install-update cargo-update) || cargo install cargo-update
-  - (which cargo-prune && cargo install-update cargo-prune) || cargo install cargo-prune
+  - curl -sSL https://github.com/maidsafe/QA/raw/master/travis/cargo_install.sh > cargo_install.sh
+  - bash cargo_install.sh cargo-prune;
   - if [ "${TRAVIS_RUST_VERSION}" = 1.17.0 ]; then
-      rustfmt_vers=0.8.3;
-      if ! rustfmt --version | grep -q $rustfmt_vers; then
-        cargo install rustfmt --vers=$rustfmt_vers --force;
-      fi
+      bash cargo_install.sh rustfmt 0.8.3;
     elif [ "${TRAVIS_OS_NAME}" = linux ]; then
-      clippy_vers=0.0.128;
-      if ! cargo clippy --version | grep -q $clippy_vers; then
-        cargo install clippy --vers=$clippy_vers --force;
-      fi
+      bash cargo_install.sh clippy 0.0.128;
     fi
 script:
   - if [ "${TRAVIS_RUST_VERSION}" = 1.17.0 ]; then

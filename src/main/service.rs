@@ -30,7 +30,7 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, mpsc};
-use tiny_keccak::Keccak;
+use tiny_keccak::sha3_256;
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -479,13 +479,7 @@ impl<UID: Uid> Service<UID> {
 fn name_hash(network_name: &Option<String>) -> NameHash {
     trace!("Network name: {:?}", network_name);
     match *network_name {
-        Some(ref name) => {
-            let mut sha3 = Keccak::new_sha3_256();
-            sha3.update(name.as_bytes());
-            let mut result: [u8; HASH_SIZE] = [0; HASH_SIZE];
-            sha3.finalize(&mut result);
-            result
-        }
+        Some(ref name) => sha3_256(name.as_bytes()),
         None => [0; HASH_SIZE],
     }
 }
