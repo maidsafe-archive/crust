@@ -91,7 +91,34 @@ impl<UID: Uid> Service<UID> {
            })
     }
 
-    /// Starts listening for beacon broadcasts.
+    /// Allow (or disallow) peers from bootstrapping off us.
+    pub fn set_accept_bootstrap(&self, accept: bool) -> ::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        let _ = self.post(move |core, _| {
+            let state = match core.get_state(LISTENER_TOKEN) {
+                Some(state) => state,
+                None => {
+                    let _ = tx.send(Err(CrustError::ListenerNotIntialised));
+                    return;
+                }
+            };
+            let mut state = state.borrow_mut();
+            let listener = match state.as_any().downcast_mut::<ConnectionListener<UID>>() {
+                Some(l) => l,
+                None => {
+                    warn!("Token reserved for ConnectionListener has something else.");
+                    return;
+                }
+            };
+            listener.set_accept_bootstrap(accept);
+            let _ = tx.send(Ok(()));
+        });
+
+        rx.recv()?
+    }
+
+    /// Initialises Service Discovery module and starts listening for responses to our beacon
+    /// broadcasts.
     pub fn start_service_discovery(&mut self) {
         let our_listeners = self.our_listeners.clone();
         let port = self.config
