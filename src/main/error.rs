@@ -95,5 +95,10 @@ quick_error! {
             description("Requested connection to self")
             display("Requested connection to self")
         }
+        /// Listener is not initialised yet.
+        ListenerNotIntialised {
+            description("Listener is not initialised yet")
+            display("Listener is not initialised yet")
+        }
     }
 }
