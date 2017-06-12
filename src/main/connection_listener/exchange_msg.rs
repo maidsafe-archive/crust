@@ -42,6 +42,7 @@ pub struct ExchangeMsg<UID: Uid> {
     socket: Socket,
     timeout: Timeout,
     reachability_children: HashSet<Token>,
+    accept_bootstrap: bool,
     self_weak: Weak<RefCell<ExchangeMsg<UID>>>,
 }
 
@@ -50,6 +51,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                  poll: &Poll,
                  timeout_sec: Option<u64>,
                  socket: Socket,
+                 accept_bootstrap: bool,
                  our_uid: UID,
                  name_hash: NameHash,
                  cm: ConnectionMap<UID>,
@@ -74,6 +76,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                                              socket: socket,
                                              timeout: timeout,
                                              reachability_children: HashSet::with_capacity(4),
+                                             accept_bootstrap: accept_bootstrap,
                                              self_weak: Default::default(),
                                          }));
 
@@ -87,6 +90,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
     fn read(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::BootstrapRequest(their_uid, name_hash, ext_reachability))) => {
+                if !self.accept_bootstrap {
+                    trace!("Bootstrapping off us is not allowed");
+                    return self.terminate(core, poll);
+                }
+
                 match self.validate_peer_uid(their_uid) {
                     Ok(their_uid) => {
                         self.handle_bootstrap_req(core,

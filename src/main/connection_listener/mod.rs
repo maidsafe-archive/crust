@@ -43,6 +43,7 @@ pub struct ConnectionListener<UID: Uid> {
     name_hash: NameHash,
     our_uid: UID,
     timeout_sec: Option<u64>,
+    accept_bootstrap: bool,
 }
 
 impl<UID: Uid> ConnectionListener<UID> {
@@ -99,6 +100,10 @@ impl<UID: Uid> ConnectionListener<UID> {
         }
     }
 
+    pub fn set_accept_bootstrap(&mut self, accept: bool) {
+        self.accept_bootstrap = accept;
+    }
+
     fn handle_mapped_socket(core: &mut Core,
                             poll: &Poll,
                             timeout_sec: Option<u64>,
@@ -130,6 +135,7 @@ impl<UID: Uid> ConnectionListener<UID> {
             name_hash: name_hash,
             our_uid: our_uid,
             timeout_sec: timeout_sec,
+            accept_bootstrap: false,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -146,6 +152,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                                                        poll,
                                                        self.timeout_sec,
                                                        Socket::wrap(socket),
+                                                       self.accept_bootstrap,
                                                        self.our_uid,
                                                        self.name_hash,
                                                        self.cm.clone(),
@@ -224,7 +231,7 @@ mod tests {
         event_rx: mpsc::Receiver<Event<UniqueId>>,
     }
 
-    fn start_listener() -> Listener {
+    fn start_listener(accept_bootstrap: bool) -> Listener {
         let el = unwrap!(common::spawn_event_loop(LISTENER_TOKEN + 1,
                                                   Some("Connection Listener Test")));
 
@@ -260,6 +267,23 @@ mod tests {
                 _ => panic!("Unexpected event notification - {:?}", it),
             }
         }
+
+        let (tx, rx) = mpsc::channel();
+        unwrap!(el.send(CoreMessage::new(move |core, _| {
+            let state = match core.get_state(Token(LISTENER_TOKEN)) {
+                Some(state) => state,
+                None => panic!("Listener not initialised"),
+            };
+            let mut state = state.borrow_mut();
+            let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
+                Some(l) => l,
+                None => panic!("Token reserved for ConnectionListener has something else."),
+            };
+            listener.set_accept_bootstrap(accept_bootstrap);
+            unwrap!(tx.send(()));
+        })),
+                "Could not send to tx");
+        unwrap!(rx.recv());
 
         let addr = unwrap!(listeners.lock())[0];
 
@@ -365,14 +389,22 @@ mod tests {
 
     #[test]
     fn bootstrap_with_correct_parameters() {
-        let listener = start_listener();
+        let listener = start_listener(true);
+        let uid = rand::random();
+        bootstrap(NAME_HASH, ExternalReachability::NotRequired, uid, &listener);
+    }
+
+    #[test]
+    #[should_panic]
+    fn bootstrap_when_bootstrapping_is_disabled() {
+        let listener = start_listener(false);
         let uid = rand::random();
         bootstrap(NAME_HASH, ExternalReachability::NotRequired, uid, &listener);
     }
 
     #[test]
     fn connect_with_correct_parameters() {
-        let listener = start_listener();
+        let listener = start_listener(false);
         let uid = rand::random();
         connect(NAME_HASH, uid, &listener);
     }
@@ -380,14 +412,14 @@ mod tests {
     #[test]
     #[should_panic]
     fn connect_to_self() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         connect(NAME_HASH, listener.uid, &listener);
     }
 
     #[test]
     #[should_panic]
     fn bootstrap_with_invalid_version_hash() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         let uid = rand::random();
         bootstrap(NAME_HASH_2,
                   ExternalReachability::NotRequired,
@@ -398,7 +430,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn connect_with_invalid_version_hash() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         let uid = rand::random();
         connect(NAME_HASH_2, uid, &listener);
     }
@@ -406,7 +438,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         bootstrap(NAME_HASH,
                   ExternalReachability::NotRequired,
                   listener.uid,
@@ -416,13 +448,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn connect_with_invalid_pub_key() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         connect(NAME_HASH, listener.uid, &listener);
     }
 
     #[test]
     fn invalid_msg_exchange() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         let mut us = connect_to_listener(&listener);
 
         let message = unwrap!(serialise(&Message::Heartbeat::<UniqueId>));
@@ -435,7 +467,7 @@ mod tests {
 
     #[test]
     fn listener_timeout() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         let mut us = connect_to_listener(&listener);
         let mut buf = [0; 512];
         assert_eq!(0,
@@ -444,7 +476,7 @@ mod tests {
 
     #[test]
     fn stun_service() {
-        let listener = start_listener();
+        let listener = start_listener(true);
         let mut us = connect_to_listener(&listener);
 
         let message = unwrap!(serialise(&Message::EchoAddrReq::<UniqueId>));

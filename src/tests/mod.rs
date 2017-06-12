@@ -58,6 +58,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     unwrap!(service0.start_listening_tcp());
 
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
@@ -111,6 +112,7 @@ fn bootstrap_two_services_using_service_discovery() {
     unwrap!(service0.start_listening_tcp());
 
     expect_event!(event_rx0, Event::ListenerStarted(_port));
+    unwrap!(service0.set_accept_bootstrap(true));
 
     service1.start_service_discovery();
     unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
@@ -130,6 +132,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default(), rand::random()));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    unwrap!(service0.set_accept_bootstrap(true));
     let valid_address = localhost(port);
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
@@ -160,6 +163,7 @@ fn bootstrap_with_blacklist() {
     let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default(), rand::random()));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    unwrap!(service0.set_accept_bootstrap(true));
     let valid_address = localhost(port);
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
@@ -254,6 +258,7 @@ fn drop_disconnects() {
 
     unwrap!(service_0.start_listening_tcp());
     let port = expect_event!(event_rx_0, Event::ListenerStarted(port) => port);
+    unwrap!(service_0.set_accept_bootstrap(true));
 
     let mut config_1 = gen_config();
     config_1.hard_coded_contacts = vec![localhost_contact_info(port)];
@@ -407,6 +412,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
 
     unwrap!(service0.start_listening_tcp());
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
