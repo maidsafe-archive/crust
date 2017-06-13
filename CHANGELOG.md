@@ -1,7 +1,10 @@
 # CRUST - Change Log
 
+## [0.26.0]
+- Deny bootstrapping off us until explicitly allowed.
+
 ## [0.25.0]
-- Crust is not templatised on a Uid
+- Crust is now templatised on a Uid
 - Replace rust_sodium sha256 with tiny-keccak sha3_256
 - Rustfmt 0.8.3 and clippy 0.0.128.
 - Rust stable 1.17
