@@ -387,7 +387,7 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                unwrap!(unwrap!(service.lock()).send(*peer_id,
+                unwrap!(unwrap!(service.lock()).send(peer_id,
                                                      generate_random_vec_u8(length as usize),
                                                      0));
                 debug!("Sent a message with length of {} bytes to {:?}",
@@ -447,7 +447,7 @@ fn main() {
                     let network = unwrap!(network.lock());
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
-                            unwrap!(unwrap!(service.lock()).send(**peer_id,
+                            unwrap!(unwrap!(service.lock()).send(*peer_id,
                                                                  message.into_bytes(),
                                                                  0));
                         }
@@ -458,7 +458,7 @@ fn main() {
                     let mut network = unwrap!(network.lock());
                     let msg = message.into_bytes();
                     for peer_id in network.nodes.values_mut() {
-                        unwrap!(unwrap!(service.lock()).send(*peer_id, msg.clone(), 0));
+                        unwrap!(unwrap!(service.lock()).send(peer_id, msg.clone(), 0));
                     }
                 }
                 UserCommand::List => {

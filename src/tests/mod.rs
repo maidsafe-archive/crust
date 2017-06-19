@@ -75,7 +75,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     assert_eq!(peer_id1, service1.id());
 
     let message0 = b"hello from 0".to_vec();
-    unwrap!(service0.send(peer_id1, message0.clone(), 0));
+    unwrap!(service0.send(&peer_id1, message0.clone(), 0));
 
     expect_event!(event_rx1, Event::NewMessage(peer_id, data) => {
         assert_eq!(peer_id, peer_id0);
@@ -83,7 +83,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     });
 
     let message1 = b"hello from 1".to_vec();
-    unwrap!(service1.send(peer_id0, message1.clone(), 0));
+    unwrap!(service1.send(&peer_id0, message1.clone(), 0));
 
     expect_event!(event_rx0, Event::NewMessage(peer_id, data) => {
         assert_eq!(peer_id, peer_id1);
