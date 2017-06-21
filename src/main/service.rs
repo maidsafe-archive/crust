@@ -28,7 +28,7 @@ use rust_sodium;
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::{Arc, Mutex, mpsc};
 use tiny_keccak::sha3_256;
 
@@ -159,8 +159,8 @@ impl<UID: Uid> Service<UID> {
         });
     }
 
-    fn get_peer_socket_addr(&self, peer_id: &UID) -> ::Res<SocketAddr> {
-        let token = match unwrap!(self.cm.lock()).get(peer_id) {
+    fn get_peer_socket_addr(&self, peer_uid: &UID) -> ::Res<SocketAddr> {
+        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return Err(CrustError::PeerNotFound),
         };
@@ -196,8 +196,13 @@ impl<UID: Uid> Service<UID> {
         }
     }
 
+    /// Return the ip address of the peer.
+    pub fn get_peer_ip_addr(&self, peer_uid: &UID) -> ::Res<IpAddr> {
+        self.get_peer_socket_addr(peer_uid).map(|s| s.ip())
+    }
+
     /// Check if the provided peer address is whitelisted in config.
-    pub fn is_peer_whitelisted(&self, peer_id: &UID) -> bool {
+    pub fn is_peer_whitelisted(&self, peer_uid: &UID) -> bool {
         if self.config.bootstrap_whitelisted_ips.is_empty() {
             // Whitelisting is not used, so all peers are valid.
             return true;
@@ -205,7 +210,7 @@ impl<UID: Uid> Service<UID> {
 
         let whitelisted_ips = &self.config.bootstrap_whitelisted_ips;
 
-        match self.get_peer_socket_addr(peer_id) {
+        match self.get_peer_socket_addr(peer_uid) {
             Ok(s) => {
                 trace!("Checking whether {:?} is whitelisted in {:?}",
                        s,
@@ -220,8 +225,8 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
-    pub fn is_peer_hard_coded(&self, peer_id: &UID) -> bool {
-        match self.get_peer_socket_addr(peer_id) {
+    pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
+        match self.get_peer_socket_addr(peer_uid) {
             Ok(s) => {
                 trace!("Checking whether {:?} is hard-coded in {:?}",
                        s,
@@ -381,8 +386,8 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, peer_id: UID) -> bool {
-        let token = match unwrap!(self.cm.lock()).get(&peer_id) {
+    pub fn disconnect(&self, peer_uid: &UID) -> bool {
+        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return false,
         };
@@ -395,8 +400,8 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Send data to a peer.
-    pub fn send(&self, peer_id: UID, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
-        let token = match unwrap!(self.cm.lock()).get(&peer_id) {
+    pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
+        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
             Some(&ConnectionId { active_connection: Some(token), .. }) => token,
             _ => return Err(CrustError::PeerNotFound),
         };
@@ -478,8 +483,8 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Check if we are connected to the given peer
-    pub fn is_connected(&self, peer_id: &UID) -> bool {
-        match unwrap!(self.cm.lock()).get(peer_id) {
+    pub fn is_connected(&self, peer_uid: &UID) -> bool {
+        match unwrap!(self.cm.lock()).get(peer_uid) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
         }
@@ -633,8 +638,8 @@ mod tests {
         let data_1: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
         let send_1 = data_1.clone();
 
-        unwrap!(service_0.send(id_1, data_0, 0));
-        unwrap!(service_1.send(id_0, data_1, 0));
+        unwrap!(service_0.send(&id_1, data_0, 0));
+        unwrap!(service_1.send(&id_0, data_1, 0));
 
         let recv_1 = expect_event!(event_rx_0, Event::NewMessage(id, recv) => {
             assert_eq!(id, id_1);
@@ -747,7 +752,7 @@ mod tests {
                             for _ in 0..MSG_SIZE {
                                 msg.push(n as u8);
                             }
-                            let _ = self.service.send(*their_id, msg, 0);
+                            let _ = self.service.send(their_id, msg, 0);
                         }
                     }
 
