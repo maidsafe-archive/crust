@@ -20,8 +20,8 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, Core, CoreTimer, ExternalReachability, NameHash, Socket, State,
-             Uid};
+use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
+             Socket, State, Uid};
 use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
@@ -172,6 +172,8 @@ impl<UID: Uid> Bootstrap<UID> {
                                                self.cm.clone(),
                                                self.our_uid,
                                                peer_id,
+                                               // Note; We bootstrap only to Nodes
+                                               CrustUser::Node,
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
             }

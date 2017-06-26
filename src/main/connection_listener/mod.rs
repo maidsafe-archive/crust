@@ -205,6 +205,7 @@ mod tests {
     use nat::MappingContext;
     use rand;
     use serde::de::DeserializeOwned;
+    use serde::ser::Serialize;
     use std::collections::HashMap;
     use std::io::{Cursor, Read, Write};
     use std::mem;
@@ -316,7 +317,7 @@ mod tests {
     }
 
     #[allow(unsafe_code)]
-    fn read<T: DeserializeOwned>(stream: &mut TcpStream) -> ::Res<T> {
+    fn read<T: DeserializeOwned + Serialize>(stream: &mut TcpStream) -> ::Res<T> {
         let mut payload_size_buffer = [0; 4];
         stream.read_exact(&mut payload_size_buffer)?;
 

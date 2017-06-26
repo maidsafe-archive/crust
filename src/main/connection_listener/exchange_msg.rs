@@ -294,6 +294,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                                         self.cm.clone(),
                                         our_uid,
                                         their_uid,
+                                        peer_kind,
                                         Event::BootstrapAccept(their_uid, peer_kind),
                                         event_tx);
             }
@@ -308,6 +309,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
                                                 cm.clone(),
                                                 our_uid,
                                                 their_uid,
+                                                // Note; We enter ConnectionCandidate only with
+                                                //       Nodes
+                                                CrustUser::Node,
                                                 Event::ConnectSuccess(their_uid),
                                                 event_tx.clone());
                     };

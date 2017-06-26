@@ -265,7 +265,7 @@ fn main() {
                 ::maidsafe_utilities::event_sender::MaidSafeEventCategory::Crust => {
                     if let Ok(event) = channel_receiver.try_recv() {
                         match event {
-                            crust::Event::NewMessage(peer_id, bytes) => {
+                            crust::Event::NewMessage(peer_id, _, bytes) => {
                                 let message_length = bytes.len();
                                 let mut network = unwrap!(network2.lock());
                                 network.record_received(message_length);
