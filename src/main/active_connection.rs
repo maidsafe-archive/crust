@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, Message, Priority, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, Message, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap, Event};
 use mio::{Poll, Ready, Token};
 use mio::timer::Timeout;
@@ -42,6 +42,7 @@ pub struct ActiveConnection<UID: Uid> {
     cm: ConnectionMap<UID>,
     our_id: UID,
     their_id: UID,
+    their_role: CrustUser,
     event_tx: ::CrustEventSender<UID>,
     heartbeat: Heartbeat,
 }
@@ -54,6 +55,7 @@ impl<UID: Uid> ActiveConnection<UID> {
                  cm: ConnectionMap<UID>,
                  our_id: UID,
                  their_id: UID,
+                 their_role: CrustUser,
                  event: Event<UID>,
                  event_tx: ::CrustEventSender<UID>) {
         trace!("Entered state ActiveConnection: {:?} -> {:?}",
@@ -81,6 +83,7 @@ impl<UID: Uid> ActiveConnection<UID> {
                                              cm: cm,
                                              our_id: our_id,
                                              their_id: their_id,
+                                             their_role: their_role,
                                              event_tx: event_tx,
                                              heartbeat: heartbeat,
                                          }));
@@ -113,7 +116,7 @@ impl<UID: Uid> ActiveConnection<UID> {
             match self.socket.read::<Message<UID>>() {
                 Ok(Some(Message::Data(data))) => {
                     let _ = self.event_tx
-                        .send(Event::NewMessage(self.their_id, data));
+                        .send(Event::NewMessage(self.their_id, self.their_role, data));
                     self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(Some(Message::Heartbeat)) => {

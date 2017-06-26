@@ -519,6 +519,7 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 #[cfg(test)]
 mod tests {
     use CrustError;
+    use common::CrustUser;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{self, Event};
@@ -641,12 +642,12 @@ mod tests {
         unwrap!(service_0.send(&id_1, data_0, 0));
         unwrap!(service_1.send(&id_0, data_1, 0));
 
-        let recv_1 = expect_event!(event_rx_0, Event::NewMessage(id, recv) => {
+        let recv_1 = expect_event!(event_rx_0, Event::NewMessage(id, CrustUser::Node, recv) => {
             assert_eq!(id, id_1);
             recv
         });
 
-        let recv_0 = expect_event!(event_rx_1, Event::NewMessage(id, recv) => {
+        let recv_0 = expect_event!(event_rx_1, Event::NewMessage(id, CrustUser::Node, recv) => {
             assert_eq!(id, id_0);
             recv
         });
@@ -758,7 +759,7 @@ mod tests {
 
                     for _ in 0..((NUM_SERVICES - 1) * NUM_MSGS) {
                         match unwrap!(self.event_rx.recv()) {
-                            Event::NewMessage(their_id, msg) => {
+                            Event::NewMessage(their_id, CrustUser::Node, msg) => {
                                 let n = msg[0];
                                 assert_eq!(msg.len(), MSG_SIZE);
                                 for m in msg {

@@ -44,7 +44,7 @@ pub enum Event<UID: Uid> {
     /// Invoked when a peer disconnects or can no longer be contacted.
     LostPeer(UID),
     /// Invoked when a new message is received. Passes the message.
-    NewMessage(UID, Vec<u8>),
+    NewMessage(UID, CrustUser, Vec<u8>),
     /// Invoked when trying to sending a too large data.
     WriteMsgSizeProhibitive(UID, Vec<u8>),
 }

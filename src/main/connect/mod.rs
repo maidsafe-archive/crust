@@ -18,7 +18,7 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, NameHash, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, NameHash, Socket, State, Uid};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::{Poll, PollOpt, Ready, Token};
@@ -183,6 +183,8 @@ impl<UID: Uid> Connect<UID> {
                                            self.cm.clone(),
                                            self.our_id,
                                            self.their_id,
+                                           // Note; We connect only to Nodes
+                                           CrustUser::Node,
                                            Event::ConnectSuccess(self.their_id),
                                            self.event_tx.clone());
         }
