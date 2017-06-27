@@ -495,11 +495,6 @@ impl<UID: Uid> Service<UID> {
         self.our_uid
     }
 
-    /// Returns our config.
-    pub fn config(&self) -> Config {
-        self.config.clone()
-    }
-
     fn post<F>(&self, f: F) -> ::Res<()>
         where F: FnOnce(&mut Core, &Poll) + Send + 'static
     {
