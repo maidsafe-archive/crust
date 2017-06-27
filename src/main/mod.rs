@@ -40,3 +40,5 @@ mod event;
 mod error;
 mod service;
 mod types;
+
+pub use self::config_handler::read_config_file;
