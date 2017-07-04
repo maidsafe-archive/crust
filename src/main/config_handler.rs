@@ -45,8 +45,10 @@ pub struct Config {
     pub service_discovery_port: Option<u16>,
     /// File for bootstrap cache
     pub bootstrap_cache_name: Option<String>,
-    /// Bootstrap whitelisted IPs
-    pub bootstrap_whitelisted_ips: HashSet<IpAddr>,
+    /// Whitelisted nodes who are allowed to bootstrap off us
+    pub whitelisted_bootstrapper_node_ips: Option<HashSet<IpAddr>>,
+    /// Whitelisted clients who are allowed to bootstrap off us
+    pub whitelisted_bootstrapper_client_ips: Option<HashSet<IpAddr>>,
     /// Network ID
     ///
     /// This is a mechanism to prevent nodes from different decentralized
@@ -62,7 +64,8 @@ impl Default for Config {
             force_acceptor_port_in_ext_ep: false,
             service_discovery_port: None,
             bootstrap_cache_name: None,
-            bootstrap_whitelisted_ips: HashSet::new(),
+            whitelisted_bootstrapper_node_ips: None,
+            whitelisted_bootstrapper_client_ips: None,
             network_name: None,
         }
     }
