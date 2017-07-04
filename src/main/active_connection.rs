@@ -149,6 +149,10 @@ impl<UID: Uid> ActiveConnection<UID> {
         Ok(unwrap!(FromStr::from_str("192.168.0.1:0")))
     }
 
+    pub fn peer_kind(&self) -> CrustUser {
+        self.their_role
+    }
+
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         if let Err(e) = self.socket.write(poll, self.token, msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);

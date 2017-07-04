@@ -20,7 +20,7 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use common::{Core, NameHash, Socket, State, Uid};
-use main::{ConnectionMap, Event};
+use main::{ConnectionMap, CrustConfig, Event};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
@@ -38,6 +38,7 @@ const LISTENER_BACKLOG: i32 = 100;
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
+    config: CrustConfig,
     event_tx: ::CrustEventSender<UID>,
     listener: TcpListener,
     name_hash: NameHash,
@@ -55,6 +56,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                  our_uid: UID,
                  name_hash: NameHash,
                  cm: ConnectionMap<UID>,
+                 config: CrustConfig,
                  mc: Arc<MappingContext>,
                  our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                  token: Token,
@@ -86,6 +88,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                                                            our_uid,
                                                            name_hash,
                                                            cm,
+                                                           config,
                                                            our_listeners,
                                                            token,
                                                            event_tx.clone()) {
@@ -112,6 +115,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                             our_uid: UID,
                             name_hash: NameHash,
                             cm: ConnectionMap<UID>,
+                            config: CrustConfig,
                             our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
                             token: Token,
                             event_tx: ::CrustEventSender<UID>)
@@ -130,6 +134,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         let state = Self {
             token: token,
             cm: cm,
+            config: config,
             event_tx: event_tx.clone(),
             listener: listener,
             name_hash: name_hash,
@@ -156,6 +161,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                                                        self.our_uid,
                                                        self.name_hash,
                                                        self.cm.clone(),
+                                                       self.config.clone(),
                                                        self.event_tx.clone()) {
                         debug!("Error accepting direct connection: {:?}", e);
                     }
@@ -242,6 +248,7 @@ mod tests {
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
         let mc = Arc::new(unwrap!(MappingContext::new(), "Could not get MC"));
+        let config = Arc::new(Mutex::new(Default::default()));
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
 
         let listeners_clone = listeners.clone();
@@ -255,6 +262,7 @@ mod tests {
                                       uid,
                                       NAME_HASH,
                                       cm,
+                                      config,
                                       mc,
                                       listeners_clone,
                                       Token(LISTENER_TOKEN),

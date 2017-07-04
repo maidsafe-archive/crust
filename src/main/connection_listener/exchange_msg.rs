@@ -18,7 +18,8 @@
 use super::check_reachability::CheckReachability;
 use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
              NameHash, Priority, Socket, State, Uid};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event};
+use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, CrustConfig, Event,
+           read_config_file};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::timer::Timeout;
 use nat::ip_addr_is_global;
@@ -35,6 +36,7 @@ pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
+    config: CrustConfig,
     event_tx: ::CrustEventSender<UID>,
     name_hash: NameHash,
     next_state: NextState<UID>,
@@ -55,6 +57,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                  our_uid: UID,
                  name_hash: NameHash,
                  cm: ConnectionMap<UID>,
+                 config: CrustConfig,
                  event_tx: ::CrustEventSender<UID>)
                  -> ::Res<()> {
         let token = core.get_new_token();
@@ -69,6 +72,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         let state = Rc::new(RefCell::new(Self {
                                              token: token,
                                              cm: cm,
+                                             config: config,
                                              event_tx: event_tx,
                                              name_hash: name_hash,
                                              next_state: NextState::None,
@@ -137,8 +141,17 @@ impl<UID: Uid> ExchangeMsg<UID> {
                        poll,
                        Some((Message::BootstrapDenied(BootstrapDenyReason::InvalidNameHash), 0)));
         }
+
+        self.try_update_crust_config();
+
         match ext_reachability {
             ExternalReachability::Required { direct_listeners } => {
+                if !self.is_peer_whitelisted(CrustUser::Node) {
+                    trace!("Bootstrapper Node is not whitelisted. Denying bootstrap.");
+                    let reason = BootstrapDenyReason::NodeNotWhitelisted;
+                    return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+                }
+
                 for their_listener in direct_listeners
                         .into_iter()
                         .filter(|addr| ip_addr_is_global(&addr.ip())) {
@@ -167,9 +180,47 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 }
             }
             ExternalReachability::NotRequired => {
-                self.send_bootstrap_resp(core, poll, their_uid, CrustUser::Client)
+                if !self.is_peer_whitelisted(CrustUser::Client) {
+                    trace!("Bootstrapper Client is not whitelisted. Denying bootstrap.");
+                    let reason = BootstrapDenyReason::ClientNotWhitelisted;
+                    return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+                }
+
+                self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Client)
             }
         }
+    }
+
+    fn is_peer_whitelisted(&self, peer_kind: CrustUser) -> bool {
+        let peer_ip = match self.socket.peer_addr() {
+            Ok(s) => s.ip(),
+            Err(e) => {
+                debug!("Could not obtain IP Address of peer: {:?}. Denying handshake.",
+                       e);
+                return false;
+            }
+        };
+
+        let res = match peer_kind {
+            CrustUser::Node => {
+                unwrap!(self.config.lock())
+                    .whitelisted_bootstrapper_node_ips
+                    .as_ref()
+                    .map_or(true, |ips| ips.contains(&peer_ip))
+            }
+            CrustUser::Client => {
+                unwrap!(self.config.lock())
+                    .whitelisted_bootstrapper_client_ips
+                    .as_ref()
+                    .map_or(true, |ips| ips.contains(&peer_ip))
+            }
+        };
+
+        if !res {
+            trace!("IP: {} is not whitelisted.", peer_ip);
+        }
+
+        res
     }
 
     fn handle_check_reachability(&mut self,
@@ -180,7 +231,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_uid) = res {
             self.terminate_childern(core, poll);
-            return self.send_bootstrap_resp(core, poll, their_uid, CrustUser::Node);
+            return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
         }
         if self.reachability_children.is_empty() {
             trace!("Bootstrapper failed to pass requisite condition of external recheability. \
@@ -190,11 +241,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn send_bootstrap_resp(&mut self,
-                           core: &mut Core,
-                           poll: &Poll,
-                           their_uid: UID,
-                           peer_kind: CrustUser) {
+    fn send_bootstrap_grant(&mut self,
+                            core: &mut Core,
+                            poll: &Poll,
+                            their_uid: UID,
+                            peer_kind: CrustUser) {
         self.enter_handshaking_mode(their_uid);
 
         let our_uid = self.our_uid;
@@ -208,6 +259,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
                       their_uid: UID,
                       name_hash: NameHash) {
         if !self.is_valid_name_hash(name_hash) {
+            trace!("Invalid name hash given. Denying connection.");
+            return self.terminate(core, poll);
+        }
+
+        self.try_update_crust_config();
+
+        if !self.is_peer_whitelisted(CrustUser::Node) {
+            trace!("Connecting Node is not whitelisted. Denying connection.");
             return self.terminate(core, poll);
         }
 
@@ -253,6 +312,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
 
         Ok(their_uid)
+    }
+
+    fn try_update_crust_config(&self) {
+        match read_config_file() {
+            Ok(cfg) => *unwrap!(self.config.lock()) = cfg,
+            Err(e) => debug!("Could not read Crust config file: {:?}", e),
+        }
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
