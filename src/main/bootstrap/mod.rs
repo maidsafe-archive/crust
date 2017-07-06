@@ -22,7 +22,7 @@ use self::cache::Cache;
 use self::try_peer::TryPeer;
 use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
              Socket, State, Uid};
-use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event};
+use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use rand::{self, Rng};
@@ -33,7 +33,6 @@ use std::collections::HashSet;
 use std::mem;
 use std::net::SocketAddr;
 use std::rc::{Rc, Weak};
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{self, Receiver};
 use std::time::Duration;
 
@@ -67,7 +66,7 @@ impl<UID: Uid> Bootstrap<UID> {
                  ext_reachability: ExternalReachability,
                  our_uid: UID,
                  cm: ConnectionMap<UID>,
-                 config: Arc<Mutex<Config>>,
+                 config: CrustConfig,
                  blacklist: HashSet<SocketAddr>,
                  token: Token,
                  service_discovery_token: Token,
@@ -75,9 +74,9 @@ impl<UID: Uid> Bootstrap<UID> {
                  -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let mut cache = Cache::new(&unwrap!(config.lock()).bootstrap_cache_name)?;
+        let mut cache = Cache::new(&unwrap!(config.lock()).cfg.bootstrap_cache_name)?;
         peers.extend(cache.read_file());
-        peers.extend(unwrap!(config.lock()).hard_coded_contacts.clone());
+        peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
         let bs_timeout = core.set_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), bs_timer)?;

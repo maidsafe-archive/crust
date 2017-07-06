@@ -25,12 +25,13 @@ pub use self::connection_listener::ConnectionListener;
 pub use self::error::CrustError;
 pub use self::event::Event;
 pub use self::service::Service;
-pub use self::types::{ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo};
+pub use self::types::{ConfigWrapper, ConnectionId, ConnectionInfoResult, PrivConnectionInfo,
+                      PubConnectionInfo};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 pub type ConnectionMap<UID> = Arc<Mutex<HashMap<UID, ConnectionId>>>;
-pub type CrustConfig = Arc<Mutex<Config>>;
+pub type CrustConfig = Arc<Mutex<ConfigWrapper>>;
 
 mod active_connection;
 mod bootstrap;

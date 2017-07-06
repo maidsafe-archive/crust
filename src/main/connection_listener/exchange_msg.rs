@@ -204,12 +204,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
         let res = match peer_kind {
             CrustUser::Node => {
                 unwrap!(self.config.lock())
+                    .cfg
                     .whitelisted_bootstrapper_node_ips
                     .as_ref()
                     .map_or(true, |ips| ips.contains(&peer_ip))
             }
             CrustUser::Client => {
                 unwrap!(self.config.lock())
+                    .cfg
                     .whitelisted_bootstrapper_client_ips
                     .as_ref()
                     .map_or(true, |ips| ips.contains(&peer_ip))
@@ -316,7 +318,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn try_update_crust_config(&self) {
         match read_config_file() {
-            Ok(cfg) => *unwrap!(self.config.lock()) = cfg,
+            Ok(cfg) => unwrap!(self.config.lock()).check_for_update_and_mark_modified(cfg),
             Err(e) => debug!("Could not read Crust config file: {:?}", e),
         }
     }

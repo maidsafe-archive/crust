@@ -17,7 +17,7 @@
 
 use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
              NameHash, Priority, Uid};
-use main::{ActiveConnection, Bootstrap, ConfigRefresher, Connect, ConnectionId,
+use main::{ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
            ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError,
            Event, PrivConnectionInfo, PubConnectionInfo};
 use main::config_handler::{self, Config};
@@ -82,7 +82,7 @@ impl<UID: Uid> Service<UID> {
 
         let service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
-            config: Arc::new(Mutex::new(config)),
+            config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
             event_tx: event_tx,
             mc: Arc::new(mc),
             el: el,
@@ -141,6 +141,7 @@ impl<UID: Uid> Service<UID> {
     pub fn start_service_discovery(&mut self) {
         let our_listeners = self.our_listeners.clone();
         let port = unwrap!(self.config.lock())
+            .cfg
             .service_discovery_port
             .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
@@ -226,6 +227,7 @@ impl<UID: Uid> Service<UID> {
             Ok(s) => {
                 let config = unwrap!(self.config.lock());
                 config
+                    .cfg
                     .hard_coded_contacts
                     .iter()
                     .any(|addr| addr.ip() == s.ip())
@@ -320,9 +322,12 @@ impl<UID: Uid> Service<UID> {
         let mc = self.mc.clone();
         let config = self.config.clone();
         let port = unwrap!(self.config.lock())
+            .cfg
             .tcp_acceptor_port
             .unwrap_or(0);
-        let force_include_port = unwrap!(self.config.lock()).force_acceptor_port_in_ext_ep;
+        let force_include_port = unwrap!(self.config.lock())
+            .cfg
+            .force_acceptor_port_in_ext_ep;
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let our_listeners = self.our_listeners.clone();
