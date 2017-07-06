@@ -205,14 +205,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
             CrustUser::Node => {
                 unwrap!(self.config.lock())
                     .cfg
-                    .whitelisted_bootstrapper_node_ips
+                    .whitelisted_node_ips
                     .as_ref()
                     .map_or(true, |ips| ips.contains(&peer_ip))
             }
             CrustUser::Client => {
                 unwrap!(self.config.lock())
                     .cfg
-                    .whitelisted_bootstrapper_client_ips
+                    .whitelisted_client_ips
                     .as_ref()
                     .map_or(true, |ips| ips.contains(&peer_ip))
             }

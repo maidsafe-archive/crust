@@ -365,7 +365,7 @@ impl<UID: Uid> Service<UID> {
     ///    obtained from the peer
     pub fn connect(&self,
                    our_ci: PrivConnectionInfo<UID>,
-                   their_ci: PubConnectionInfo<UID>)
+                   mut their_ci: PubConnectionInfo<UID>)
                    -> ::Res<()> {
         if their_ci.id == self.our_uid {
             debug!("Requested connect to {:?}, which is our peer ID",
@@ -377,6 +377,25 @@ impl<UID: Uid> Service<UID> {
             debug!("Already connected OR already in process of connecting to {:?}",
                    their_ci.id);
             return Ok(());
+        }
+
+        {
+            let guard = unwrap!(self.config.lock());
+            if let Some(ref whitelisted_node_ips) = guard.cfg.whitelisted_node_ips {
+                let their_direct = their_ci
+                    .for_direct
+                    .drain(..)
+                    .filter(|s| whitelisted_node_ips.contains(&s.ip()))
+                    .collect();
+                their_ci.for_direct = their_direct;
+
+                let their_hole_punch = their_ci
+                    .for_hole_punch
+                    .drain(..)
+                    .filter(|s| whitelisted_node_ips.contains(&s.ip()))
+                    .collect();
+                their_ci.for_hole_punch = their_hole_punch;
+            }
         }
 
         let event_tx = self.event_tx.clone();
@@ -828,7 +847,7 @@ mod tests {
     //     whitelisted_ips.insert(unwrap!(IpAddr::from_str("192.168.0.1")));
 
     //     let mut config = ::tests::utils::gen_config();
-    //     config.whitelisted_bootstrapper_node_ips = Some(whitelisted_ips);
+    //     config.whitelisted_node_ips = Some(whitelisted_ips);
 
     //     // Connect two peers
     //     let (event_tx_0, event_rx_0) = get_event_sender();

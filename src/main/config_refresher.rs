@@ -83,21 +83,18 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
             }
         };
 
-        let whitelisted_bootstrapper_node_ips = config.whitelisted_bootstrapper_node_ips.clone();
-        let whitelisted_bootstrapper_client_ips =
-            config.whitelisted_bootstrapper_client_ips.clone();
+        let whitelisted_node_ips = config.whitelisted_node_ips.clone();
+        let whitelisted_client_ips = config.whitelisted_client_ips.clone();
 
         if !unwrap!(self.config.lock()).check_for_refresh_and_reset_modified(config) ||
-           (whitelisted_bootstrapper_node_ips.is_none() &&
-            whitelisted_bootstrapper_client_ips.is_none()) {
+           (whitelisted_node_ips.is_none() && whitelisted_client_ips.is_none()) {
             return;
         }
 
         trace!("Crust config has been updated - going to purge any nodes or clients that are no \
                longer whitelisted");
 
-        // Cloned and collected to avoid keeping the mutex lock alive which might lead to
-        // deadlock
+        // Peers collected to avoid keeping the mutex lock alive which might lead to deadlock
         let peers_to_terminate: Vec<_> = unwrap!(self.cm.lock())
             .values()
             .filter_map(|cid| {
@@ -119,10 +116,10 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
                             Ok(s) => {
                                 match ac.peer_kind() {
                                     CrustUser::Node =>
-                                        whitelisted_bootstrapper_node_ips.as_ref()
+                                        whitelisted_node_ips.as_ref()
                                               .map_or(false, |ips| !ips.contains(&s.ip())),
                                     CrustUser::Client =>
-                                        whitelisted_bootstrapper_client_ips.as_ref()
+                                        whitelisted_client_ips.as_ref()
                                               .map_or(false, |ips| !ips.contains(&s.ip())),
                                 }
                             }
