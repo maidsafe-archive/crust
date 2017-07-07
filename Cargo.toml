@@ -7,7 +7,7 @@ license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.26.0"
+version = "0.27.0"
 
 [dependencies]
 byteorder = "~1.0.0"
