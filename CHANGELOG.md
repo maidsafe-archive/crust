@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.27.0]
+- Crust handles the whitelist completely by itself instead of delegating it to the upper layers.
+- Config file expanded to cover the cases for node and client whitelists separately.
+
 ## [0.26.0]
 - Deny bootstrapping off us until explicitly allowed.
 
