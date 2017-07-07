@@ -22,7 +22,7 @@ use self::cache::Cache;
 use self::try_peer::TryPeer;
 use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
              Socket, State, Uid};
-use main::{ActiveConnection, Config, ConnectionMap, CrustError, Event};
+use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use rand::{self, Rng};
@@ -66,7 +66,7 @@ impl<UID: Uid> Bootstrap<UID> {
                  ext_reachability: ExternalReachability,
                  our_uid: UID,
                  cm: ConnectionMap<UID>,
-                 config: &Config,
+                 config: CrustConfig,
                  blacklist: HashSet<SocketAddr>,
                  token: Token,
                  service_discovery_token: Token,
@@ -74,9 +74,9 @@ impl<UID: Uid> Bootstrap<UID> {
                  -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let mut cache = Cache::new(&config.bootstrap_cache_name)?;
+        let mut cache = Cache::new(&unwrap!(config.lock()).cfg.bootstrap_cache_name)?;
         peers.extend(cache.read_file());
-        peers.extend(config.hard_coded_contacts.clone());
+        peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
         let bs_timeout = core.set_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), bs_timer)?;
@@ -177,20 +177,36 @@ impl<UID: Uid> Bootstrap<UID> {
                                                Event::BootstrapConnect(peer_id, peer_addr),
                                                self.event_tx.clone());
             }
-            #[cfg_attr(rustfmt, rustfmt_skip)]
             Err((bad_peer, opt_reason)) => {
                 self.cache.remove_peer_acceptor(bad_peer);
                 if let Some(reason) = opt_reason {
+                    let mut is_err_fatal = true;
                     let err_msg = match reason {
                         BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
+                        #[cfg_attr(rustfmt, rustfmt_skip)]
                         BootstrapDenyReason::FailedExternalReachability => {
                             "Bootstrappee node could not establish connection to us."
                         }
+                        BootstrapDenyReason::NodeNotWhitelisted => {
+                            is_err_fatal = false;
+                            "Our Node is not whitelisted"
+                        }
+                        BootstrapDenyReason::ClientNotWhitelisted => {
+                            is_err_fatal = false;
+                            "Our Client is not whitelisted"
+                        }
                     };
-                    error!("Failed to Bootstrap<UID>: ({:?}) {}", reason, err_msg);
-                    self.terminate(core, poll);
-                    let _ = self.event_tx.send(Event::BootstrapFailed);
-                    return;
+                    if is_err_fatal {
+                        error!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
+                        self.terminate(core, poll);
+                        let _ = self.event_tx.send(Event::BootstrapFailed);
+                        return;
+                    } else {
+                        info!("Failed to Bootstrap with {}: ({:?}) {}",
+                              bad_peer,
+                              reason,
+                              err_msg);
+                    }
                 }
             }
         }

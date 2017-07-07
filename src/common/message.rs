@@ -34,4 +34,6 @@ pub enum Message<UID> {
 pub enum BootstrapDenyReason {
     InvalidNameHash,
     FailedExternalReachability,
+    NodeNotWhitelisted,
+    ClientNotWhitelisted,
 }
