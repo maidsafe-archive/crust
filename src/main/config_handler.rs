@@ -54,6 +54,15 @@ pub struct Config {
     /// This is a mechanism to prevent nodes from different decentralized
     /// networks to connect to each other (issue #209)
     pub network_name: Option<String>,
+    /// Optional developer configuration
+    pub dev: Option<DevConfig>,
+}
+
+/// Developer options
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DevConfig {
+    /// If `true`, then the mandatory external reachability test is disabled.
+    pub disable_external_reachability_requirement: bool,
 }
 
 impl Default for Config {
@@ -67,6 +76,7 @@ impl Default for Config {
             whitelisted_node_ips: None,
             whitelisted_client_ips: None,
             network_name: None,
+            dev: None,
         }
     }
 }

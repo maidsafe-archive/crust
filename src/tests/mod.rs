@@ -21,7 +21,7 @@ pub mod utils;
 pub use self::utils::{UniqueId, gen_config, get_event_sender, timebomb};
 
 use common::CrustUser;
-use main::{self, Config, Event};
+use main::{self, Config, DevConfig, Event};
 use mio;
 use rand;
 use std::collections::HashSet;
@@ -92,6 +92,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     });
 }
 
+// Note: if this test fails, make sure that a firewall on your system allows UDP broadcasts
 #[test]
 fn bootstrap_two_services_using_service_discovery() {
     let service_discovery_port = gen_service_discovery_port();
@@ -148,6 +149,31 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
+
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
+    assert_eq!(peer_id0, service0.id());
+
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
+    assert_eq!(peer_id1, service1.id());
+}
+
+#[test]
+fn bootstrap_with_skipped_external_reachability_test() {
+    let mut config = Config::default();
+    config.dev = Some(DevConfig { disable_external_reachability_requirement: true });
+
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap!(Service::with_config(event_tx0, config, rand::random()));
+    unwrap!(service0.start_listening_tcp());
+    let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    unwrap!(service0.set_accept_bootstrap(true));
+
+    let mut config1 = gen_config();
+    config1.hard_coded_contacts = vec![localhost(port)];
+
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
+    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Node));
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());

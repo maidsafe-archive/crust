@@ -298,7 +298,7 @@ mod tests {
                     "Could not send to el1");
         }
 
-        let peer_listeners = unwrap!(rx.recv());
+        let peer_listeners = unwrap!(rx.recv_timeout(Duration::from_secs(30)));
         assert_eq!(peer_listeners.into_iter().collect::<Vec<_>>(),
                    *unwrap!(listeners_0.lock()));
     }
