@@ -70,7 +70,7 @@ impl Socket {
     // Read message from the socket. Call this from inside the `ready` handler.
     //
     // Returns:
-    //   - Ok(Some(data)): data has been successfuly read from the socket
+    //   - Ok(Some(data)): data has been successfully read from the socket
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
@@ -84,7 +84,7 @@ impl Socket {
     // Write a message to the socket.
     //
     // Returns:
-    //   - Ok(true):   the message has been successfuly written.
+    //   - Ok(true):   the message has been successfully written.
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
@@ -160,7 +160,7 @@ impl SockInner {
     // Read message from the socket. Call this from inside the `ready` handler.
     //
     // Returns:
-    //   - Ok(Some(data)): data has been successfuly read from the socket
+    //   - Ok(Some(data)): data has been successfully read from the socket.
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
@@ -240,7 +240,7 @@ impl SockInner {
     // Write a message to the socket.
     //
     // Returns:
-    //   - Ok(true):   the message has been successfuly written.
+    //   - Ok(true):   the message has been successfully written.
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
@@ -253,7 +253,7 @@ impl SockInner {
             .iter()
             .skip_while(|&(&priority, queue)| {
                             priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
-                queue.front().map_or(false, |&(ref timestamp, _)| {
+                queue.front().map_or(true, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
                 })
                         })
@@ -263,7 +263,7 @@ impl SockInner {
             .iter()
             .filter_map(|priority| self.write_queue.remove(priority))
             .map(|queue| queue.len())
-            .fold(0, |s, len| s + len); // TODO: Use `sum` once that's stable.
+            .sum();
         if dropped_msgs > 0 {
             trace!("Insufficient bandwidth. Dropping {} messages with priority >= {}.",
                    dropped_msgs,
