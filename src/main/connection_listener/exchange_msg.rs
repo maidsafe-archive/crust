@@ -45,6 +45,7 @@ pub struct ExchangeMsg<UID: Uid> {
     timeout: Timeout,
     reachability_children: HashSet<Token>,
     accept_bootstrap: bool,
+    require_reachability: bool,
     self_weak: Weak<RefCell<ExchangeMsg<UID>>>,
 }
 
@@ -69,6 +70,16 @@ impl<UID: Uid> ExchangeMsg<UID> {
             core.set_timeout(Duration::from_secs(timeout_sec.unwrap_or(EXCHANGE_MSG_TIMEOUT_SEC)),
                              CoreTimer::new(token, 0))?;
 
+        // Cache the reachability requirement config option, to make sure that it won't be updated
+        // with the rest of the configuration.
+        let require_reachability =
+            unwrap!(config.lock())
+                .cfg
+                .dev
+                .as_ref()
+                .map_or(true,
+                        |dev_cfg| !dev_cfg.disable_external_reachability_requirement);
+
         let state = Rc::new(RefCell::new(Self {
                                              token: token,
                                              cm: cm,
@@ -81,6 +92,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                                              timeout: timeout,
                                              reachability_children: HashSet::with_capacity(4),
                                              accept_bootstrap: accept_bootstrap,
+                                             require_reachability: require_reachability,
                                              self_weak: Default::default(),
                                          }));
 
@@ -150,6 +162,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     trace!("Bootstrapper Node is not whitelisted. Denying bootstrap.");
                     let reason = BootstrapDenyReason::NodeNotWhitelisted;
                     return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+                }
+
+                if !self.require_reachability {
+                    // Skip external reachability checks and allow bootstrap
+                    return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
                 }
 
                 for their_listener in direct_listeners

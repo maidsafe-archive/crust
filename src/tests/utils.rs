@@ -28,14 +28,14 @@ use std::time::Duration;
 // given pattern.
 macro_rules! expect_event {
     ($rx:expr, $pattern:pat) => {
-        match unwrap!($rx.recv()) {
+        match unwrap!($rx.recv_timeout(::std::time::Duration::from_secs(30))) {
             $pattern => (),
             e => panic!("unexpected event {:?}", e),
         }
     };
 
     ($rx:expr, $pattern:pat => $arm:expr) => {
-        match unwrap!($rx.recv()) {
+        match unwrap!($rx.recv_timeout(::std::time::Duration::from_secs(30))) {
             $pattern => $arm,
             e => panic!("unexpected event {:?}", e),
         }
