@@ -50,51 +50,54 @@ pub struct ExchangeMsg<UID: Uid> {
 }
 
 impl<UID: Uid> ExchangeMsg<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 timeout_sec: Option<u64>,
-                 socket: Socket,
-                 accept_bootstrap: bool,
-                 our_uid: UID,
-                 name_hash: NameHash,
-                 cm: ConnectionMap<UID>,
-                 config: CrustConfig,
-                 event_tx: ::CrustEventSender<UID>)
-                 -> ::Res<()> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        timeout_sec: Option<u64>,
+        socket: Socket,
+        accept_bootstrap: bool,
+        our_uid: UID,
+        name_hash: NameHash,
+        cm: ConnectionMap<UID>,
+        config: CrustConfig,
+        event_tx: ::CrustEventSender<UID>,
+    ) -> ::Res<()> {
         let token = core.get_new_token();
 
         let kind = Ready::error() | Ready::hup() | Ready::readable();
         poll.register(&socket, token, kind, PollOpt::edge())?;
 
-        let timeout =
-            core.set_timeout(Duration::from_secs(timeout_sec.unwrap_or(EXCHANGE_MSG_TIMEOUT_SEC)),
-                             CoreTimer::new(token, 0))?;
+        let timeout = core.set_timeout(
+            Duration::from_secs(
+                timeout_sec.unwrap_or(EXCHANGE_MSG_TIMEOUT_SEC),
+            ),
+            CoreTimer::new(token, 0),
+        )?;
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
-        let require_reachability =
-            unwrap!(config.lock())
-                .cfg
-                .dev
-                .as_ref()
-                .map_or(true,
-                        |dev_cfg| !dev_cfg.disable_external_reachability_requirement);
+        let require_reachability = unwrap!(config.lock()).cfg.dev.as_ref().map_or(
+            true,
+            |dev_cfg| {
+                !dev_cfg.disable_external_reachability_requirement
+            },
+        );
 
         let state = Rc::new(RefCell::new(Self {
-                                             token: token,
-                                             cm: cm,
-                                             config: config,
-                                             event_tx: event_tx,
-                                             name_hash: name_hash,
-                                             next_state: NextState::None,
-                                             our_uid: our_uid,
-                                             socket: socket,
-                                             timeout: timeout,
-                                             reachability_children: HashSet::with_capacity(4),
-                                             accept_bootstrap: accept_bootstrap,
-                                             require_reachability: require_reachability,
-                                             self_weak: Default::default(),
-                                         }));
+            token: token,
+            cm: cm,
+            config: config,
+            event_tx: event_tx,
+            name_hash: name_hash,
+            next_state: NextState::None,
+            our_uid: our_uid,
+            socket: socket,
+            timeout: timeout,
+            reachability_children: HashSet::with_capacity(4),
+            accept_bootstrap: accept_bootstrap,
+            require_reachability: require_reachability,
+            self_weak: Default::default(),
+        }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
@@ -113,11 +116,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
                 match self.validate_peer_uid(their_uid) {
                     Ok(their_uid) => {
-                        self.handle_bootstrap_req(core,
-                                                  poll,
-                                                  their_uid,
-                                                  name_hash,
-                                                  ext_reachability)
+                        self.handle_bootstrap_req(
+                            core,
+                            poll,
+                            their_uid,
+                            name_hash,
+                            ext_reachability,
+                        )
                     }
                     Err(()) => self.terminate(core, poll),
                 }
@@ -141,17 +146,26 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn handle_bootstrap_req(&mut self,
-                            core: &mut Core,
-                            poll: &Poll,
-                            their_uid: UID,
-                            name_hash: NameHash,
-                            ext_reachability: ExternalReachability) {
+    fn handle_bootstrap_req(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        their_uid: UID,
+        name_hash: NameHash,
+        ext_reachability: ExternalReachability,
+    ) {
         if !self.is_valid_name_hash(name_hash) {
             trace!("Rejecting Bootstrapper with an invalid name hash.");
-            return self.write(core,
-                       poll,
-                       Some((Message::BootstrapDenied(BootstrapDenyReason::InvalidNameHash), 0)));
+            return self.write(
+                core,
+                poll,
+                Some((
+                    Message::BootstrapDenied(
+                        BootstrapDenyReason::InvalidNameHash,
+                    ),
+                    0,
+                )),
+            );
         }
 
         self.try_update_crust_config();
@@ -169,29 +183,38 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
                 }
 
-                for their_listener in direct_listeners
-                        .into_iter()
-                        .filter(|addr| ip_addr_is_global(&addr.ip())) {
+                for their_listener in direct_listeners.into_iter().filter(|addr| {
+                    ip_addr_is_global(&addr.ip())
+                })
+                {
                     let self_weak = self.self_weak.clone();
                     let finish = move |core: &mut Core, poll: &Poll, child, res| {
                         if let Some(self_rc) = self_weak.upgrade() {
-                            self_rc
-                                .borrow_mut()
-                                .handle_check_reachability(core, poll, child, res)
+                            self_rc.borrow_mut().handle_check_reachability(
+                                core,
+                                poll,
+                                child,
+                                res,
+                            )
                         }
                     };
 
-                    if let Ok(child) = CheckReachability::<UID>::start(core,
-                                                                       poll,
-                                                                       their_listener,
-                                                                       their_uid,
-                                                                       Box::new(finish)) {
+                    if let Ok(child) = CheckReachability::<UID>::start(
+                        core,
+                        poll,
+                        their_listener,
+                        their_uid,
+                        Box::new(finish),
+                    )
+                    {
                         let _ = self.reachability_children.insert(child);
                     }
                 }
                 if self.reachability_children.is_empty() {
-                    trace!("Bootstrapper failed to pass requisite condition of external \
-                            recheability. Denying bootstrap.");
+                    trace!(
+                        "Bootstrapper failed to pass requisite condition of external \
+                            recheability. Denying bootstrap."
+                    );
                     let reason = BootstrapDenyReason::FailedExternalReachability;
                     self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
                 }
@@ -212,8 +235,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
         let peer_ip = match self.socket.peer_addr() {
             Ok(s) => s.ip(),
             Err(e) => {
-                debug!("Could not obtain IP Address of peer: {:?}. Denying handshake.",
-                       e);
+                debug!(
+                    "Could not obtain IP Address of peer: {:?}. Denying handshake.",
+                    e
+                );
                 return false;
             }
         };
@@ -242,29 +267,35 @@ impl<UID: Uid> ExchangeMsg<UID> {
         res
     }
 
-    fn handle_check_reachability(&mut self,
-                                 core: &mut Core,
-                                 poll: &Poll,
-                                 child: Token,
-                                 res: Result<UID, ()>) {
+    fn handle_check_reachability(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        child: Token,
+        res: Result<UID, ()>,
+    ) {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_uid) = res {
             self.terminate_childern(core, poll);
             return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
         }
         if self.reachability_children.is_empty() {
-            trace!("Bootstrapper failed to pass requisite condition of external recheability. \
-                    Denying bootstrap.");
+            trace!(
+                "Bootstrapper failed to pass requisite condition of external recheability. \
+                    Denying bootstrap."
+            );
             let reason = BootstrapDenyReason::FailedExternalReachability;
             self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
         }
     }
 
-    fn send_bootstrap_grant(&mut self,
-                            core: &mut Core,
-                            poll: &Poll,
-                            their_uid: UID,
-                            peer_kind: CrustUser) {
+    fn send_bootstrap_grant(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        their_uid: UID,
+        peer_kind: CrustUser,
+    ) {
         self.enter_handshaking_mode(their_uid);
 
         let our_uid = self.our_uid;
@@ -272,11 +303,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
         self.write(core, poll, Some((Message::BootstrapGranted(our_uid), 0)))
     }
 
-    fn handle_connect(&mut self,
-                      core: &mut Core,
-                      poll: &Poll,
-                      their_uid: UID,
-                      name_hash: NameHash) {
+    fn handle_connect(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        their_uid: UID,
+        name_hash: NameHash,
+    ) {
         if !self.is_valid_name_hash(name_hash) {
             trace!("Invalid name hash given. Denying connection.");
             return self.terminate(core, poll);
@@ -311,13 +344,15 @@ impl<UID: Uid> ExchangeMsg<UID> {
         guard
             .entry(their_uid)
             .or_insert(ConnectionId {
-                           active_connection: None,
-                           currently_handshaking: 0,
-                       })
+                active_connection: None,
+                currently_handshaking: 0,
+            })
             .currently_handshaking += 1;
-        trace!("Connection Map inserted: {:?} -> {:?}",
-               their_uid,
-               guard.get(&their_uid));
+        trace!(
+            "Connection Map inserted: {:?} -> {:?}",
+            their_uid,
+            guard.get(&their_uid)
+        );
     }
 
     fn is_valid_name_hash(&self, name_hash: NameHash) -> bool {
@@ -372,44 +407,50 @@ impl<UID: Uid> ExchangeMsg<UID> {
         match self.next_state {
             NextState::ActiveConnection(their_uid, peer_kind) => {
                 let socket = mem::replace(&mut self.socket, Socket::default());
-                ActiveConnection::start(core,
-                                        poll,
-                                        self.token,
-                                        socket,
-                                        self.cm.clone(),
-                                        our_uid,
-                                        their_uid,
-                                        peer_kind,
-                                        Event::BootstrapAccept(their_uid, peer_kind),
-                                        event_tx);
+                ActiveConnection::start(
+                    core,
+                    poll,
+                    self.token,
+                    socket,
+                    self.cm.clone(),
+                    our_uid,
+                    their_uid,
+                    peer_kind,
+                    Event::BootstrapAccept(their_uid, peer_kind),
+                    event_tx,
+                );
             }
             NextState::ConnectionCandidate(their_uid) => {
                 let cm = self.cm.clone();
                 let handler =
                     move |core: &mut Core, poll: &Poll, token, res| if let Some(socket) = res {
-                        ActiveConnection::start(core,
-                                                poll,
-                                                token,
-                                                socket,
-                                                cm.clone(),
-                                                our_uid,
-                                                their_uid,
-                                                // Note; We enter ConnectionCandidate only with
-                                                //       Nodes
-                                                CrustUser::Node,
-                                                Event::ConnectSuccess(their_uid),
-                                                event_tx.clone());
+                        ActiveConnection::start(
+                            core,
+                            poll,
+                            token,
+                            socket,
+                            cm.clone(),
+                            our_uid,
+                            their_uid,
+                            // Note; We enter ConnectionCandidate only with
+                            //       Nodes
+                            CrustUser::Node,
+                            Event::ConnectSuccess(their_uid),
+                            event_tx.clone(),
+                        );
                     };
 
                 let socket = mem::replace(&mut self.socket, Socket::default());
-                let _ = ConnectionCandidate::start(core,
-                                                   poll,
-                                                   self.token,
-                                                   socket,
-                                                   self.cm.clone(),
-                                                   our_uid,
-                                                   their_uid,
-                                                   Box::new(handler));
+                let _ = ConnectionCandidate::start(
+                    core,
+                    poll,
+                    self.token,
+                    socket,
+                    self.cm.clone(),
+                    our_uid,
+                    their_uid,
+                    Box::new(handler),
+                );
             }
             NextState::None => self.terminate(core, poll),
         }
@@ -417,8 +458,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn terminate_childern(&mut self, core: &mut Core, poll: &Poll) {
         for child in self.reachability_children.drain() {
-            core.get_state(child)
-                .map_or((), |c| c.borrow_mut().terminate(core, poll));
+            core.get_state(child).map_or((), |c| {
+                c.borrow_mut().terminate(core, poll)
+            });
         }
     }
 }
@@ -451,9 +493,11 @@ impl<UID: Uid> State for ExchangeMsg<UID> {
                         let _ = oe.remove();
                     }
                 }
-                trace!("Connection Map removed: {:?} -> {:?}",
-                       their_uid,
-                       guard.get(&their_uid));
+                trace!(
+                    "Connection Map removed: {:?} -> {:?}",
+                    their_uid,
+                    guard.get(&their_uid)
+                );
             }
             NextState::None => (),
         }

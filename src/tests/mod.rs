@@ -71,8 +71,8 @@ fn bootstrap_two_services_and_exchange_messages() {
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
 
-    let peer_id1 =
-        expect_event!(event_rx0, Event::BootstrapAccept(peer_id, CrustUser::Client) => peer_id);
+    let peer_id1 = expect_event!(event_rx0,
+                                 Event::BootstrapAccept(peer_id, CrustUser::Client) => peer_id);
     assert_eq!(peer_id1, service1.id());
 
     let message0 = b"hello from 0".to_vec();
@@ -160,7 +160,9 @@ fn bootstrap_with_multiple_contact_endpoints() {
 #[test]
 fn bootstrap_with_skipped_external_reachability_test() {
     let mut config = Config::default();
-    config.dev = Some(DevConfig { disable_external_reachability_requirement: true });
+    config.dev = Some(DevConfig {
+        disable_external_reachability_requirement: true,
+    });
 
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap!(Service::with_config(event_tx0, config, rand::random()));

@@ -34,12 +34,13 @@ pub struct GetExtAddr<UID: Uid> {
 }
 
 impl<UID: Uid> GetExtAddr<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 local_addr: SocketAddr,
-                 peer_stun: &SocketAddr,
-                 finish: Finish)
-                 -> Result<Token, NatError> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        local_addr: SocketAddr,
+        peer_stun: &SocketAddr,
+        finish: Finish,
+    ) -> Result<Token, NatError> {
         let query_socket = util::new_reusably_bound_tcp_socket(&local_addr)?;
         let query_socket = query_socket.to_tcp_stream()?;
         let socket = TcpStream::connect_stream(query_socket, peer_stun)?;
@@ -54,10 +55,12 @@ impl<UID: Uid> GetExtAddr<UID> {
             finish: finish,
         };
 
-        poll.register(&state.socket,
-                      token,
-                      Ready::error() | Ready::hup() | Ready::writable(),
-                      PollOpt::edge())?;
+        poll.register(
+            &state.socket,
+            token,
+            Ready::error() | Ready::hup() | Ready::writable(),
+            PollOpt::edge(),
+        )?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 

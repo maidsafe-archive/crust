@@ -47,14 +47,15 @@ pub struct Connect<UID: Uid> {
 }
 
 impl<UID: Uid> Connect<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 our_ci: PrivConnectionInfo<UID>,
-                 their_ci: PubConnectionInfo<UID>,
-                 cm: ConnectionMap<UID>,
-                 our_nh: NameHash,
-                 event_tx: ::CrustEventSender<UID>)
-                 -> ::Res<()> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        our_ci: PrivConnectionInfo<UID>,
+        their_ci: PubConnectionInfo<UID>,
+        cm: ConnectionMap<UID>,
+        our_nh: NameHash,
+        event_tx: ::CrustEventSender<UID>,
+    ) -> ::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
         let their_hole_punch = their_ci.for_hole_punch;
@@ -66,21 +67,21 @@ impl<UID: Uid> Connect<UID> {
 
         let token = core.get_new_token();
 
-        let state =
-            Rc::new(RefCell::new(Self {
-                                     token: token,
-                                     timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC),
-                                                               CoreTimer::new(token, 0))?,
-                                     cm: cm,
-                                     our_nh: our_nh,
-                                     our_id: our_ci.id,
-                                     their_id: their_id,
-                                     self_weak: Weak::new(),
-                                     listener: None,
-                                     children: HashSet::with_capacity(their_direct.len() +
-                                                                      their_hole_punch.len()),
-                                     event_tx: event_tx,
-                                 }));
+        let state = Rc::new(RefCell::new(Self {
+            token: token,
+            timeout: core.set_timeout(
+                Duration::from_secs(TIMEOUT_SEC),
+                CoreTimer::new(token, 0),
+            )?,
+            cm: cm,
+            our_nh: our_nh,
+            our_id: our_ci.id,
+            their_id: their_id,
+            self_weak: Weak::new(),
+            listener: None,
+            children: HashSet::with_capacity(their_direct.len() + their_hole_punch.len()),
+            event_tx: event_tx,
+        }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
@@ -91,20 +92,23 @@ impl<UID: Uid> Connect<UID> {
 
         if let Some(hole_punch_sock) = our_ci.hole_punch_socket {
             if let Ok((listener, nat_sockets)) =
-                nat::get_sockets(&hole_punch_sock, their_hole_punch.len()) {
-                poll.register(&listener,
-                              token,
-                              Ready::readable() | Ready::error() | Ready::hup(),
-                              PollOpt::edge())?;
+                nat::get_sockets(&hole_punch_sock, their_hole_punch.len())
+            {
+                poll.register(
+                    &listener,
+                    token,
+                    Ready::readable() | Ready::error() | Ready::hup(),
+                    PollOpt::edge(),
+                )?;
                 state.borrow_mut().listener = Some(listener);
-                sockets.extend(nat_sockets
-                                   .into_iter()
-                                   .zip(their_hole_punch.into_iter().map(|elt| elt))
-                                   .filter_map(|elt| {
-                                                   TcpStream::connect_stream(elt.0, &elt.1).ok()
-                                               })
-                                   .map(Socket::wrap)
-                                   .collect::<Vec<_>>());
+                sockets.extend(
+                    nat_sockets
+                        .into_iter()
+                        .zip(their_hole_punch.into_iter().map(|elt| elt))
+                        .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
+                        .map(Socket::wrap)
+                        .collect::<Vec<_>>(),
+                );
             }
         }
 
@@ -120,73 +124,93 @@ impl<UID: Uid> Connect<UID> {
     fn exchange_msg(&mut self, core: &mut Core, poll: &Poll, socket: Socket) {
         let self_weak = self.self_weak.clone();
         let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-            self_weak.upgrade() {
-            self_rc
-                .borrow_mut()
-                .handle_exchange_msg(core, poll, child, res);
+            self_weak.upgrade()
+        {
+            self_rc.borrow_mut().handle_exchange_msg(
+                core,
+                poll,
+                child,
+                res,
+            );
         };
 
-        if let Ok(child) = ExchangeMsg::start(core,
-                                              poll,
-                                              socket,
-                                              self.our_id,
-                                              self.their_id,
-                                              self.our_nh,
-                                              self.cm.clone(),
-                                              Box::new(handler)) {
+        if let Ok(child) = ExchangeMsg::start(
+            core,
+            poll,
+            socket,
+            self.our_id,
+            self.their_id,
+            self.our_nh,
+            self.cm.clone(),
+            Box::new(handler),
+        )
+        {
             let _ = self.children.insert(child);
         }
         self.maybe_terminate(core, poll);
     }
 
-    fn handle_exchange_msg(&mut self,
-                           core: &mut Core,
-                           poll: &Poll,
-                           child: Token,
-                           res: Option<Socket>) {
+    fn handle_exchange_msg(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        child: Token,
+        res: Option<Socket>,
+    ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-                self_weak.upgrade() {
-                self_rc
-                    .borrow_mut()
-                    .handle_connection_candidate(core, poll, child, res);
+                self_weak.upgrade()
+            {
+                self_rc.borrow_mut().handle_connection_candidate(
+                    core,
+                    poll,
+                    child,
+                    res,
+                );
             };
 
-            if let Ok(child) = ConnectionCandidate::start(core,
-                                                          poll,
-                                                          child,
-                                                          socket,
-                                                          self.cm.clone(),
-                                                          self.our_id,
-                                                          self.their_id,
-                                                          Box::new(handler)) {
+            if let Ok(child) = ConnectionCandidate::start(
+                core,
+                poll,
+                child,
+                socket,
+                self.cm.clone(),
+                self.our_id,
+                self.their_id,
+                Box::new(handler),
+            )
+            {
                 let _ = self.children.insert(child);
             }
         }
         self.maybe_terminate(core, poll);
     }
 
-    fn handle_connection_candidate(&mut self,
-                                   core: &mut Core,
-                                   poll: &Poll,
-                                   child: Token,
-                                   res: Option<Socket>) {
+    fn handle_connection_candidate(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        child: Token,
+        res: Option<Socket>,
+    ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
             self.terminate(core, poll);
-            return ActiveConnection::start(core,
-                                           poll,
-                                           child,
-                                           socket,
-                                           self.cm.clone(),
-                                           self.our_id,
-                                           self.their_id,
-                                           // Note; We connect only to Nodes
-                                           CrustUser::Node,
-                                           Event::ConnectSuccess(self.their_id),
-                                           self.event_tx.clone());
+            return ActiveConnection::start(
+                core,
+                poll,
+                child,
+                socket,
+                self.cm.clone(),
+                self.our_id,
+                self.their_id,
+                // Note; We connect only to Nodes
+                CrustUser::Node,
+                Event::ConnectSuccess(self.their_id),
+                self.event_tx.clone(),
+            );
         }
         self.maybe_terminate(core, poll);
     }

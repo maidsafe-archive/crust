@@ -20,9 +20,10 @@ use nat::{NatError, util};
 use net2::TcpBuilder;
 use std::net::TcpStream;
 
-pub fn get_sockets(mapped_socket: &TcpBuilder,
-                   required: usize)
-                   -> Result<(TcpListener, Vec<TcpStream>), NatError> {
+pub fn get_sockets(
+    mapped_socket: &TcpBuilder,
+    required: usize,
+) -> Result<(TcpListener, Vec<TcpStream>), NatError> {
     let local_addr = mapped_socket.local_addr()?;
     let mut unconnected_sockets = Vec::with_capacity(required);
     for _ in 0..required {

@@ -48,28 +48,35 @@ impl EventLoop {
 impl Drop for EventLoop {
     fn drop(&mut self) {
         if let Err(e) = self.tx.send(CoreMessage(None)) {
-            warn!("Could not send a terminator to event-loop. We will possibly not be able to \
+            warn!(
+                "Could not send a terminator to event-loop. We will possibly not be able to \
                    gracefully exit. Error: {:?}",
-                  e);
+                e
+            );
         }
     }
 }
 
-pub fn spawn_event_loop(token_counter_start: usize,
-                        event_loop_id: Option<&str>)
-                        -> Result<EventLoop> {
+pub fn spawn_event_loop(
+    token_counter_start: usize,
+    event_loop_id: Option<&str>,
+) -> Result<EventLoop> {
     let poll = Poll::new()?;
     let (tx, rx) = channel::channel();
     let timer = Timer::default();
 
-    poll.register(&rx,
-                  Token(token_counter_start + CHANNEL_TOKEN_OFFSET),
-                  Ready::readable() | Ready::error() | Ready::hup(),
-                  PollOpt::edge())?;
-    poll.register(&timer,
-                  Token(token_counter_start + TIMER_TOKEN_OFFSET),
-                  Ready::readable() | Ready::error() | Ready::hup(),
-                  PollOpt::edge())?;
+    poll.register(
+        &rx,
+        Token(token_counter_start + CHANNEL_TOKEN_OFFSET),
+        Ready::readable() | Ready::error() | Ready::hup(),
+        PollOpt::edge(),
+    )?;
+    poll.register(
+        &timer,
+        Token(token_counter_start + TIMER_TOKEN_OFFSET),
+        Ready::readable() | Ready::error() | Ready::hup(),
+        PollOpt::edge(),
+    )?;
 
     let mut name = "CRUST-Event-Loop".to_string();
     if let Some(id) = event_loop_id {
@@ -87,16 +94,17 @@ pub fn spawn_event_loop(token_counter_start: usize,
     });
 
     Ok(EventLoop {
-           tx: tx,
-           _joiner: joiner,
-       })
+        tx: tx,
+        _joiner: joiner,
+    })
 }
 
-fn event_loop_impl(token_counter_start: usize,
-                   poll: &Poll,
-                   rx: &Receiver<CoreMessage>,
-                   mut core: Core)
-                   -> Result<()> {
+fn event_loop_impl(
+    token_counter_start: usize,
+    poll: &Poll,
+    rx: &Receiver<CoreMessage>,
+    mut core: Core,
+) -> Result<()> {
     let mut events = Events::with_capacity(EVENT_CAPACITY);
 
     'event_loop: loop {
@@ -106,8 +114,10 @@ fn event_loop_impl(token_counter_start: usize,
             match event.token() {
                 Token(t) if t == token_counter_start + CHANNEL_TOKEN_OFFSET => {
                     if !event.kind().is_readable() {
-                        warn!("Communication channel to event loop errored out: {:?}",
-                              event);
+                        warn!(
+                            "Communication channel to event loop errored out: {:?}",
+                            event
+                        );
                         continue;
                     }
 
@@ -177,10 +187,11 @@ impl Core {
         token
     }
 
-    pub fn insert_state(&mut self,
-                        token: Token,
-                        state: Rc<RefCell<State>>)
-                        -> Option<Rc<RefCell<State>>> {
+    pub fn insert_state(
+        &mut self,
+        token: Token,
+        state: Rc<RefCell<State>>,
+    ) -> Option<Rc<RefCell<State>>> {
         self.states.insert(token, state)
     }
 
@@ -205,9 +216,7 @@ impl Core {
         }
         while let Some(core_timer) = self.timer.poll() {
             if let Some(state) = self.get_state(core_timer.state_id) {
-                state
-                    .borrow_mut()
-                    .timeout(self, poll, core_timer.timer_id);
+                state.borrow_mut().timeout(self, poll, core_timer.timer_id);
             }
         }
     }
@@ -216,9 +225,13 @@ impl Core {
 impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &Poll) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        CoreMessage(Some(Box::new(move |core: &mut Core, poll: &Poll| if let Some(f) = f.take() {
-                                      f(core, poll)
-                                  })))
+        CoreMessage(Some(Box::new(
+            move |core: &mut Core, poll: &Poll| if let Some(f) =
+                f.take()
+            {
+                f(core, poll)
+            },
+        )))
     }
 }
 

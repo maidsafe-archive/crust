@@ -59,18 +59,18 @@ impl MappingContext {
         });
 
         Ok(MappingContext {
-               our_ifv4s: ifv4s,
-               our_ifv6s: ifv6s,
-               peer_stuns: Vec::with_capacity(10),
-           })
+            our_ifv4s: ifv4s,
+            our_ifv6s: ifv6s,
+            peer_stuns: Vec::with_capacity(10),
+        })
     }
 
     /// Inform the context about external "STUN" servers. Note that crust does not actually use
     /// STUN but a custom STUN-like protocol.
     pub fn add_peer_stuns<A: IntoIterator<Item = SocketAddr>>(&mut self, stun_addrs: A) {
-        let listeners = stun_addrs
-            .into_iter()
-            .filter(|elt| nat::ip_addr_is_global(&elt.ip()));
+        let listeners = stun_addrs.into_iter().filter(|elt| {
+            nat::ip_addr_is_global(&elt.ip())
+        });
         self.peer_stuns.extend(listeners);
     }
 

@@ -43,7 +43,7 @@
 
 #[macro_use]
 extern crate log;
-#[cfg_attr(feature="cargo-clippy", allow(useless_attribute))]
+#[cfg_attr(feature = "cargo-clippy", allow(useless_attribute))]
 #[macro_use]
 extern crate quick_error;
 #[macro_use]

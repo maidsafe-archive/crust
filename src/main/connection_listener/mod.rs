@@ -48,50 +48,56 @@ pub struct ConnectionListener<UID: Uid> {
 }
 
 impl<UID: Uid> ConnectionListener<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 handshake_timeout_sec: Option<u64>,
-                 port: u16,
-                 force_include_port: bool,
-                 our_uid: UID,
-                 name_hash: NameHash,
-                 cm: ConnectionMap<UID>,
-                 config: CrustConfig,
-                 mc: Arc<MappingContext>,
-                 our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-                 token: Token,
-                 event_tx: ::CrustEventSender<UID>) {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        handshake_timeout_sec: Option<u64>,
+        port: u16,
+        force_include_port: bool,
+        our_uid: UID,
+        name_hash: NameHash,
+        cm: ConnectionMap<UID>,
+        config: CrustConfig,
+        mc: Arc<MappingContext>,
+        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        token: Token,
+        event_tx: ::CrustEventSender<UID>,
+    ) {
         let event_tx_0 = event_tx.clone();
         let finish =
             move |core: &mut Core, poll: &Poll, socket, mut mapped_addrs: Vec<SocketAddr>| {
                 if force_include_port && port != 0 &&
-                   !mapped_addrs
-                        .iter()
-                        .any(|s| ip_addr_is_global(&s.ip()) && s.port() == port) {
+                    !mapped_addrs.iter().any(|s| {
+                        ip_addr_is_global(&s.ip()) && s.port() == port
+                    })
+                {
                     let global_addrs: Vec<_> = mapped_addrs
                         .iter()
                         .filter_map(|s| if ip_addr_is_global(&s.ip()) {
-                                        let mut s = *s;
-                                        s.set_port(port);
-                                        Some(s)
-                                    } else {
-                                        None
-                                    })
+                            let mut s = *s;
+                            s.set_port(port);
+                            Some(s)
+                        } else {
+                            None
+                        })
                         .collect();
                     mapped_addrs.extend(global_addrs);
                 }
-                if let Err(e) = Self::handle_mapped_socket(core,
-                                                           poll,
-                                                           handshake_timeout_sec,
-                                                           socket,
-                                                           mapped_addrs,
-                                                           our_uid,
-                                                           name_hash,
-                                                           cm,
-                                                           config,
-                                                           our_listeners,
-                                                           token,
-                                                           event_tx.clone()) {
+                if let Err(e) = Self::handle_mapped_socket(
+                    core,
+                    poll,
+                    handshake_timeout_sec,
+                    socket,
+                    mapped_addrs,
+                    our_uid,
+                    name_hash,
+                    cm,
+                    config,
+                    our_listeners,
+                    token,
+                    event_tx.clone(),
+                )
+                {
                     error!("TCP Listener failed to handle mapped socket: {:?}", e);
                     let _ = event_tx.send(Event::ListenerFailed);
                 }
@@ -107,27 +113,30 @@ impl<UID: Uid> ConnectionListener<UID> {
         self.accept_bootstrap = accept;
     }
 
-    fn handle_mapped_socket(core: &mut Core,
-                            poll: &Poll,
-                            timeout_sec: Option<u64>,
-                            socket: TcpBuilder,
-                            mapped_addrs: Vec<SocketAddr>,
-                            our_uid: UID,
-                            name_hash: NameHash,
-                            cm: ConnectionMap<UID>,
-                            config: CrustConfig,
-                            our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-                            token: Token,
-                            event_tx: ::CrustEventSender<UID>)
-                            -> ::Res<()> {
+    fn handle_mapped_socket(
+        core: &mut Core,
+        poll: &Poll,
+        timeout_sec: Option<u64>,
+        socket: TcpBuilder,
+        mapped_addrs: Vec<SocketAddr>,
+        our_uid: UID,
+        name_hash: NameHash,
+        cm: ConnectionMap<UID>,
+        config: CrustConfig,
+        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        token: Token,
+        event_tx: ::CrustEventSender<UID>,
+    ) -> ::Res<()> {
         let listener = socket.listen(LISTENER_BACKLOG)?;
         let local_addr = listener.local_addr()?;
 
         let listener = TcpListener::from_listener(listener, &local_addr)?;
-        poll.register(&listener,
-                      token,
-                      Ready::readable() | Ready::error() | Ready::hup(),
-                      PollOpt::edge())?;
+        poll.register(
+            &listener,
+            token,
+            Ready::readable() | Ready::error() | Ready::hup(),
+            PollOpt::edge(),
+        )?;
 
         *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
 
@@ -153,21 +162,26 @@ impl<UID: Uid> ConnectionListener<UID> {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
-                    if let Err(e) = ExchangeMsg::start(core,
-                                                       poll,
-                                                       self.timeout_sec,
-                                                       Socket::wrap(socket),
-                                                       self.accept_bootstrap,
-                                                       self.our_uid,
-                                                       self.name_hash,
-                                                       self.cm.clone(),
-                                                       self.config.clone(),
-                                                       self.event_tx.clone()) {
+                    if let Err(e) = ExchangeMsg::start(
+                        core,
+                        poll,
+                        self.timeout_sec,
+                        Socket::wrap(socket),
+                        self.accept_bootstrap,
+                        self.our_uid,
+                        self.name_hash,
+                        self.cm.clone(),
+                        self.config.clone(),
+                        self.event_tx.clone(),
+                    )
+                    {
                         debug!("Error accepting direct connection: {:?}", e);
                     }
                 }
-                Err(ref e) if e.kind() == ErrorKind::WouldBlock ||
-                              e.kind() == ErrorKind::Interrupted => return,
+                Err(ref e)
+                    if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted => {
+                    return
+                }
                 Err(ref e) => {
                     debug!("Failed to accept new socket: {:?}", e);
                     return;
@@ -239,8 +253,10 @@ mod tests {
     }
 
     fn start_listener(accept_bootstrap: bool) -> Listener {
-        let el = unwrap!(common::spawn_event_loop(LISTENER_TOKEN + 1,
-                                                  Some("Connection Listener Test")));
+        let el = unwrap!(common::spawn_event_loop(
+            LISTENER_TOKEN + 1,
+            Some("Connection Listener Test"),
+        ));
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
@@ -253,22 +269,26 @@ mod tests {
 
         let listeners_clone = listeners.clone();
         let uid = rand::random();
-        unwrap!(el.send(CoreMessage::new(move |core, poll| {
-            ConnectionListener::start(core,
-                                      poll,
-                                      Some(HANDSHAKE_TIMEOUT_SEC),
-                                      0,
-                                      false,
-                                      uid,
-                                      NAME_HASH,
-                                      cm,
-                                      config,
-                                      mc,
-                                      listeners_clone,
-                                      Token(LISTENER_TOKEN),
-                                      crust_sender);
-        })),
-                "Could not send to tx");
+        unwrap!(
+            el.send(CoreMessage::new(move |core, poll| {
+                ConnectionListener::start(
+                    core,
+                    poll,
+                    Some(HANDSHAKE_TIMEOUT_SEC),
+                    0,
+                    false,
+                    uid,
+                    NAME_HASH,
+                    cm,
+                    config,
+                    mc,
+                    listeners_clone,
+                    Token(LISTENER_TOKEN),
+                    crust_sender,
+                );
+            })),
+            "Could not send to tx"
+        );
 
         for it in event_rx.iter() {
             match it {
@@ -278,20 +298,22 @@ mod tests {
         }
 
         let (tx, rx) = mpsc::channel();
-        unwrap!(el.send(CoreMessage::new(move |core, _| {
-            let state = match core.get_state(Token(LISTENER_TOKEN)) {
-                Some(state) => state,
-                None => panic!("Listener not initialised"),
-            };
-            let mut state = state.borrow_mut();
-            let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
-                Some(l) => l,
-                None => panic!("Token reserved for ConnectionListener has something else."),
-            };
-            listener.set_accept_bootstrap(accept_bootstrap);
-            unwrap!(tx.send(()));
-        })),
-                "Could not send to tx");
+        unwrap!(
+            el.send(CoreMessage::new(move |core, _| {
+                let state = match core.get_state(Token(LISTENER_TOKEN)) {
+                    Some(state) => state,
+                    None => panic!("Listener not initialised"),
+                };
+                let mut state = state.borrow_mut();
+                let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
+                    Some(l) => l,
+                    None => panic!("Token reserved for ConnectionListener has something else."),
+                };
+                listener.set_accept_bootstrap(accept_bootstrap);
+                unwrap!(tx.send(()));
+            })),
+            "Could not send to tx"
+        );
         unwrap!(rx.recv());
 
         let addr = unwrap!(listeners.lock())[0];
@@ -306,10 +328,14 @@ mod tests {
 
     fn connect_to_listener(listener: &Listener) -> TcpStream {
         let listener_addr = StdSocketAddr::new(listener.addr.ip(), listener.addr.port());
-        let stream = unwrap!(TcpStream::connect(listener_addr),
-                             "Could not connect to listener");
-        unwrap!(stream.set_read_timeout(Some(Duration::from_secs(EXCHANGE_MSG_TIMEOUT_SEC + 1))),
-                "Could not set read timeout.");
+        let stream = unwrap!(
+            TcpStream::connect(listener_addr),
+            "Could not connect to listener"
+        );
+        unwrap!(
+            stream.set_read_timeout(Some(Duration::from_secs(EXCHANGE_MSG_TIMEOUT_SEC + 1))),
+            "Could not set read timeout."
+        );
 
         stream
     }
@@ -341,10 +367,12 @@ mod tests {
         Ok(unwrap!(deserialise(&payload), "Could not deserialise."))
     }
 
-    fn bootstrap(name_hash: NameHash,
-                 ext_reachability: ExternalReachability,
-                 our_uid: UniqueId,
-                 listener: &Listener) {
+    fn bootstrap(
+        name_hash: NameHash,
+        ext_reachability: ExternalReachability,
+        our_uid: UniqueId,
+        listener: &Listener,
+    ) {
         let mut us = connect_to_listener(listener);
 
         let expected_kind = match ext_reachability {
@@ -352,8 +380,11 @@ mod tests {
             ExternalReachability::Required { .. } => CrustUser::Node,
         };
 
-        let message =
-            unwrap!(serialise(&Message::BootstrapRequest(our_uid, name_hash, ext_reachability)));
+        let message = unwrap!(serialise(&Message::BootstrapRequest(
+            our_uid,
+            name_hash,
+            ext_reachability,
+        )));
         unwrap!(write(&mut us, &message), "Could not write.");
 
         match unwrap!(read::<Message<UniqueId>>(&mut us), "Could not read.") {
@@ -430,10 +461,12 @@ mod tests {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener(true);
         let uid = rand::random();
-        bootstrap(NAME_HASH_2,
-                  ExternalReachability::NotRequired,
-                  uid,
-                  &listener);
+        bootstrap(
+            NAME_HASH_2,
+            ExternalReachability::NotRequired,
+            uid,
+            &listener,
+        );
     }
 
     #[test]
@@ -448,10 +481,12 @@ mod tests {
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener(true);
-        bootstrap(NAME_HASH,
-                  ExternalReachability::NotRequired,
-                  listener.uid,
-                  &listener);
+        bootstrap(
+            NAME_HASH,
+            ExternalReachability::NotRequired,
+            listener.uid,
+            &listener,
+        );
     }
 
     #[test]
@@ -470,8 +505,10 @@ mod tests {
         unwrap!(write(&mut us, &message), "Could not write.");
 
         let mut buf = [0; 512];
-        assert_eq!(0,
-                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
+        assert_eq!(
+            0,
+            unwrap!(us.read(&mut buf), "read should have returned EOF (0)")
+        );
     }
 
     #[test]
@@ -479,8 +516,10 @@ mod tests {
         let listener = start_listener(true);
         let mut us = connect_to_listener(&listener);
         let mut buf = [0; 512];
-        assert_eq!(0,
-                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
+        assert_eq!(
+            0,
+            unwrap!(us.read(&mut buf), "read should have returned EOF (0)")
+        );
     }
 
     #[test]
@@ -499,11 +538,15 @@ mod tests {
         // This will not work if we are behind a NAT and are using a true STUN service. In that
         // case the following assertion should be commented out. Till then it is useful to have
         // this testing for conformity on local host.
-        assert_eq!(our_addr,
-                   unwrap!(us.local_addr(), "Could not obtain local addr"));
+        assert_eq!(
+            our_addr,
+            unwrap!(us.local_addr(), "Could not obtain local addr")
+        );
 
         let mut buf = [0; 512];
-        assert_eq!(0,
-                   unwrap!(us.read(&mut buf), "read should have returned EOF (0)"));
+        assert_eq!(
+            0,
+            unwrap!(us.read(&mut buf), "read should have returned EOF (0)")
+        );
     }
 }

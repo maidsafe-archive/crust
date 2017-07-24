@@ -24,11 +24,15 @@ use std::mem;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-pub type Finish<UID> = Box<FnMut(&mut Core,
-                                 &Poll,
-                                 Token,
-                                 Result<(Socket, SocketAddr, UID),
-                                        (SocketAddr, Option<BootstrapDenyReason>)>)>;
+pub type Finish<UID> = Box<
+    FnMut(&mut Core,
+          &Poll,
+          Token,
+          Result<
+        (Socket, SocketAddr, UID),
+        (SocketAddr, Option<BootstrapDenyReason>),
+    >),
+>;
 
 pub struct TryPeer<UID: Uid> {
     token: Token,
@@ -39,27 +43,37 @@ pub struct TryPeer<UID: Uid> {
 }
 
 impl<UID: Uid> TryPeer<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 peer: SocketAddr,
-                 our_uid: UID,
-                 name_hash: NameHash,
-                 ext_reachability: ExternalReachability,
-                 finish: Finish<UID>)
-                 -> ::Res<Token> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        peer: SocketAddr,
+        our_uid: UID,
+        name_hash: NameHash,
+        ext_reachability: ExternalReachability,
+        finish: Finish<UID>,
+    ) -> ::Res<Token> {
         let socket = Socket::connect(&peer)?;
         let token = core.get_new_token();
 
-        poll.register(&socket,
-                      token,
-                      Ready::error() | Ready::hup() | Ready::writable(),
-                      PollOpt::edge())?;
+        poll.register(
+            &socket,
+            token,
+            Ready::error() | Ready::hup() | Ready::writable(),
+            PollOpt::edge(),
+        )?;
 
         let state = TryPeer {
             token: token,
             peer: peer,
             socket: socket,
-            request: Some((Message::BootstrapRequest(our_uid, name_hash, ext_reachability), 0)),
+            request: Some((
+                Message::BootstrapRequest(
+                    our_uid,
+                    name_hash,
+                    ext_reachability,
+                ),
+                0,
+            )),
             finish: finish,
         };
 
@@ -114,8 +128,10 @@ impl<UID: Uid> State for TryPeer<UID> {
             return;
         }
 
-        debug!("Considering the following event to indicate dirupted connection: {:?}",
-               kind);
+        debug!(
+            "Considering the following event to indicate dirupted connection: {:?}",
+            kind
+        );
         self.handle_error(core, poll, None);
     }
 

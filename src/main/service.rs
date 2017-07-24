@@ -64,10 +64,11 @@ impl<UID: Uid> Service<UID> {
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
-    pub fn with_config(event_tx: ::CrustEventSender<UID>,
-                       config: Config,
-                       our_uid: UID)
-                       -> ::Res<Self> {
+    pub fn with_config(
+        event_tx: ::CrustEventSender<UID>,
+        config: Config,
+        our_uid: UID,
+    ) -> ::Res<Self> {
         rust_sodium::init();
 
         let name_hash = name_hash(&config.network_name);
@@ -101,12 +102,16 @@ impl<UID: Uid> Service<UID> {
         let config = self.config.clone();
         let cm = self.cm.clone();
         self.post(move |core, _| {
-                if core.get_state(CONFIG_REFRESHER_TOKEN).is_none() {
-                    let _ =
-                        tx.send(ConfigRefresher::start(core, CONFIG_REFRESHER_TOKEN, cm, config));
-                }
-                let _ = tx.send(Ok(()));
-            })?;
+            if core.get_state(CONFIG_REFRESHER_TOKEN).is_none() {
+                let _ = tx.send(ConfigRefresher::start(
+                    core,
+                    CONFIG_REFRESHER_TOKEN,
+                    cm,
+                    config,
+                ));
+            }
+            let _ = tx.send(Ok(()));
+        })?;
         rx.recv()?
     }
 
@@ -147,11 +152,14 @@ impl<UID: Uid> Service<UID> {
 
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
-                if let Err(e) = ServiceDiscovery::start(core,
-                                                        poll,
-                                                        our_listeners,
-                                                        SERVICE_DISCOVERY_TOKEN,
-                                                        port) {
+                if let Err(e) = ServiceDiscovery::start(
+                    core,
+                    poll,
+                    our_listeners,
+                    SERVICE_DISCOVERY_TOKEN,
+                    port,
+                )
+                {
                     debug!("Could not start ServiceDiscovery: {:?}", e);
                 }
             }
@@ -196,9 +204,9 @@ impl<UID: Uid> Service<UID> {
                 }
             };
             match state
-                      .borrow_mut()
-                      .as_any()
-                      .downcast_mut::<ActiveConnection<UID>>() {
+                .borrow_mut()
+                .as_any()
+                .downcast_mut::<ActiveConnection<UID>>() {
                 Some(active_connection) => {
                     let _ = tx.send(Some(active_connection.peer_addr()));
                 }
@@ -226,11 +234,9 @@ impl<UID: Uid> Service<UID> {
         match self.get_peer_socket_addr(peer_uid) {
             Ok(s) => {
                 let config = unwrap!(self.config.lock());
-                config
-                    .cfg
-                    .hard_coded_contacts
-                    .iter()
-                    .any(|addr| addr.ip() == s.ip())
+                config.cfg.hard_coded_contacts.iter().any(|addr| {
+                    addr.ip() == s.ip()
+                })
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -269,10 +275,11 @@ impl<UID: Uid> Service<UID> {
 
     /// Start the bootstrapping procedure. It will auto terminate after indicating success or
     /// failure via the event channel.
-    pub fn start_bootstrap(&mut self,
-                           blacklist: HashSet<SocketAddr>,
-                           crust_user: CrustUser)
-                           -> ::Res<()> {
+    pub fn start_bootstrap(
+        &mut self,
+        blacklist: HashSet<SocketAddr>,
+        crust_user: CrustUser,
+    ) -> ::Res<()> {
         let config = self.config.clone();
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
@@ -281,38 +288,43 @@ impl<UID: Uid> Service<UID> {
         let ext_reachability = match crust_user {
             CrustUser::Node => {
                 ExternalReachability::Required {
-                    direct_listeners: unwrap!(self.our_listeners.lock())
-                        .iter()
-                        .cloned()
-                        .collect(),
+                    direct_listeners: unwrap!(self.our_listeners.lock()).iter().cloned().collect(),
                 }
             }
             CrustUser::Client => ExternalReachability::NotRequired,
         };
 
-        self.post(move |core, poll| if core.get_state(BOOTSTRAP_TOKEN).is_none() {
-                      if let Err(e) = Bootstrap::start(core,
-                                                       poll,
-                                                       name_hash,
-                                                       ext_reachability,
-                                                       our_uid,
-                                                       cm,
-                                                       config,
-                                                       blacklist,
-                                                       BOOTSTRAP_TOKEN,
-                                                       SERVICE_DISCOVERY_TOKEN,
-                                                       event_tx.clone()) {
-                          error!("Could not bootstrap: {:?}", e);
-                          let _ = event_tx.send(Event::BootstrapFailed);
-                      }
-                  })
+        self.post(move |core, poll| if core.get_state(BOOTSTRAP_TOKEN)
+            .is_none()
+        {
+            if let Err(e) = Bootstrap::start(
+                core,
+                poll,
+                name_hash,
+                ext_reachability,
+                our_uid,
+                cm,
+                config,
+                blacklist,
+                BOOTSTRAP_TOKEN,
+                SERVICE_DISCOVERY_TOKEN,
+                event_tx.clone(),
+            )
+            {
+                error!("Could not bootstrap: {:?}", e);
+                let _ = event_tx.send(Event::BootstrapFailed);
+            }
+        })
     }
 
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
-        self.post(move |core, poll| if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
-                      state.borrow_mut().terminate(core, poll);
-                  })
+        self.post(move |core, poll| if let Some(state) = core.get_state(
+            BOOTSTRAP_TOKEN,
+        )
+        {
+            state.borrow_mut().terminate(core, poll);
+        })
     }
 
     /// Starts accepting TCP connections. This is persistant until it errors out or is stopped
@@ -333,28 +345,35 @@ impl<UID: Uid> Service<UID> {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, poll| if core.get_state(LISTENER_TOKEN).is_none() {
-                      ConnectionListener::start(core,
-                                                poll,
-                                                None,
-                                                port,
-                                                force_include_port,
-                                                our_uid,
-                                                name_hash,
-                                                cm,
-                                                config,
-                                                mc,
-                                                our_listeners,
-                                                LISTENER_TOKEN,
-                                                event_tx);
-                  })
+        self.post(move |core, poll| if core.get_state(LISTENER_TOKEN)
+            .is_none()
+        {
+            ConnectionListener::start(
+                core,
+                poll,
+                None,
+                port,
+                force_include_port,
+                our_uid,
+                name_hash,
+                cm,
+                config,
+                mc,
+                our_listeners,
+                LISTENER_TOKEN,
+                event_tx,
+            );
+        })
     }
 
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
-        self.post(move |core, poll| if let Some(state) = core.get_state(LISTENER_TOKEN) {
-                      state.borrow_mut().terminate(core, poll);
-                  })
+        self.post(move |core, poll| if let Some(state) = core.get_state(
+            LISTENER_TOKEN,
+        )
+        {
+            state.borrow_mut().terminate(core, poll);
+        })
     }
 
     /// Connect to a peer. To call this method you must follow these steps:
@@ -363,19 +382,24 @@ impl<UID: Uid> Service<UID> {
     ///  * Swap `PubConnectionInfo`s out-of-band with the peer you are connecting to.
     ///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`
     ///    obtained from the peer
-    pub fn connect(&self,
-                   our_ci: PrivConnectionInfo<UID>,
-                   mut their_ci: PubConnectionInfo<UID>)
-                   -> ::Res<()> {
+    pub fn connect(
+        &self,
+        our_ci: PrivConnectionInfo<UID>,
+        mut their_ci: PubConnectionInfo<UID>,
+    ) -> ::Res<()> {
         if their_ci.id == self.our_uid {
-            debug!("Requested connect to {:?}, which is our peer ID",
-                   their_ci.id);
+            debug!(
+                "Requested connect to {:?}, which is our peer ID",
+                their_ci.id
+            );
             return Err(CrustError::RequestedConnectToSelf);
         }
 
         if unwrap!(self.cm.lock()).contains_key(&their_ci.id) {
-            debug!("Already connected OR already in process of connecting to {:?}",
-                   their_ci.id);
+            debug!(
+                "Already connected OR already in process of connecting to {:?}",
+                their_ci.id
+            );
             return Ok(());
         }
 
@@ -403,8 +427,8 @@ impl<UID: Uid> Service<UID> {
         let our_nh = self.name_hash;
 
         Ok(self.post(move |core, poll| {
-                         let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
-                     })?)
+            let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
+        })?)
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
@@ -414,9 +438,12 @@ impl<UID: Uid> Service<UID> {
             _ => return false,
         };
 
-        let _ = self.post(move |core, poll| if let Some(state) = core.get_state(token) {
-                              state.borrow_mut().terminate(core, poll);
-                          });
+        let _ = self.post(move |core, poll| if let Some(state) = core.get_state(
+            token,
+        )
+        {
+            state.borrow_mut().terminate(core, poll);
+        });
 
         true
     }
@@ -428,9 +455,12 @@ impl<UID: Uid> Service<UID> {
             _ => return Err(CrustError::PeerNotFound),
         };
 
-        self.post(move |core, poll| if let Some(state) = core.get_state(token) {
-                      state.borrow_mut().write(core, poll, msg, priority);
-                  })
+        self.post(move |core, poll| if let Some(state) = core.get_state(
+            token,
+        )
+        {
+            state.borrow_mut().write(core, poll, msg, priority);
+        })
     }
 
     /// Generate connection info. The connection info is returned via the `ConnectionInfoPrepared`
@@ -438,21 +468,17 @@ impl<UID: Uid> Service<UID> {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_listeners = unwrap!(self.our_listeners.lock())
-            .iter()
-            .cloned()
-            .collect();
+        let our_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
         if DISABLE_NAT {
             let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                          result_token: result_token,
-                                                          result: Ok(PrivConnectionInfo {
-                                                                         id: self.our_uid,
-                                                                         for_direct: our_listeners,
-                                                                         for_hole_punch:
-                                                                             Default::default(),
-                                                                         hole_punch_socket: None,
-                                                                     }),
-                                                      });
+                result_token: result_token,
+                result: Ok(PrivConnectionInfo {
+                    id: self.our_uid,
+                    for_direct: our_listeners,
+                    for_hole_punch: Default::default(),
+                    hole_punch_socket: None,
+                }),
+            });
             let _ = self.event_tx.send(event);
         } else {
             let event_tx = self.event_tx.clone();
@@ -460,46 +486,46 @@ impl<UID: Uid> Service<UID> {
             let mc = self.mc.clone();
             if let Err(e) = self.post(move |mut core, poll| {
                 let event_tx_clone = event_tx.clone();
-                match MappedTcpSocket::<_, UID>::start(core,
-                                                       poll,
-                                                       0,
-                                                       &mc,
-                                                       move |_, _, socket, addrs| {
-                    let hole_punch_addrs = addrs
-                        .into_iter()
-                        .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
-                        .collect();
-                    let event_tx = event_tx_clone;
-                    let event =
-                        Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                          result_token: result_token,
-                                                          result: Ok(PrivConnectionInfo {
-                                                                         id: our_uid,
-                                                                         for_direct: our_listeners,
-                                                                         for_hole_punch:
-                                                                             hole_punch_addrs,
-                                                                         hole_punch_socket:
-                                                                             Some(socket),
-                                                                     }),
-                                                      });
-                    let _ = event_tx.send(event);
-                }) {
+                match MappedTcpSocket::<_, UID>::start(
+                    core,
+                    poll,
+                    0,
+                    &mc,
+                    move |_, _, socket, addrs| {
+                        let hole_punch_addrs = addrs
+                            .into_iter()
+                            .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
+                            .collect();
+                        let event_tx = event_tx_clone;
+                        let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                            result_token: result_token,
+                            result: Ok(PrivConnectionInfo {
+                                id: our_uid,
+                                for_direct: our_listeners,
+                                for_hole_punch: hole_punch_addrs,
+                                hole_punch_socket: Some(socket),
+                            }),
+                        });
+                        let _ = event_tx.send(event);
+                    },
+                ) {
                     Ok(()) => (),
                     Err(e) => {
                         debug!("Error mapping tcp socket: {}", e);
-                        let _ = event_tx
-                            .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                                    result_token: result_token,
-                                                                    result: Err(From::from(e)),
-                                                                }));
+                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                            result_token: result_token,
+                            result: Err(From::from(e)),
+                        }));
                     }
                 };
-            }) {
-                let _ = self.event_tx
-                    .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                                                            result_token: result_token,
-                                                            result: Err(From::from(e)),
-                                                        }));
+            })
+            {
+                let _ = self.event_tx.send(Event::ConnectionInfoPrepared(
+                    ConnectionInfoResult {
+                        result_token: result_token,
+                        result: Err(From::from(e)),
+                    },
+                ));
             }
         }
     }
@@ -518,7 +544,8 @@ impl<UID: Uid> Service<UID> {
     }
 
     fn post<F>(&self, f: F) -> ::Res<()>
-        where F: FnOnce(&mut Core, &Poll) + Send + 'static
+    where
+        F: FnOnce(&mut Core, &Poll) + Send + 'static,
     {
         Ok(self.el.send(CoreMessage::new(f))?)
     }
@@ -564,8 +591,8 @@ mod tests {
 
             service.prepare_connection_info(0);
 
-            let conn_info_result =
-                expect_event!(event_rx, Event::ConnectionInfoPrepared(result) => result);
+            let conn_info_result = expect_event!(event_rx,
+                                                 Event::ConnectionInfoPrepared(result) => result);
 
             let priv_info = unwrap!(conn_info_result.result);
             let pub_info = priv_info.to_pub_connection_info();
@@ -615,17 +642,19 @@ mod tests {
         thread::sleep(Duration::from_secs(1));
     }
 
-    fn connect(service_0: &Service,
-               event_rx_0: &Receiver<Event<UniqueId>>,
-               service_1: &Service,
-               event_rx_1: &Receiver<Event<UniqueId>>) {
+    fn connect(
+        service_0: &Service,
+        event_rx_0: &Receiver<Event<UniqueId>>,
+        service_1: &Service,
+        event_rx_1: &Receiver<Event<UniqueId>>,
+    ) {
         service_0.prepare_connection_info(0);
         service_1.prepare_connection_info(0);
 
-        let conn_info_result_0 =
-            expect_event!(event_rx_0, Event::ConnectionInfoPrepared(result) => result);
-        let conn_info_result_1 =
-            expect_event!(event_rx_1, Event::ConnectionInfoPrepared(result) => result);
+        let conn_info_result_0 = expect_event!(event_rx_0,
+                                               Event::ConnectionInfoPrepared(result) => result);
+        let conn_info_result_1 = expect_event!(event_rx_1,
+                                               Event::ConnectionInfoPrepared(result) => result);
 
         let priv_info_0 = unwrap!(conn_info_result_0.result);
         let priv_info_1 = unwrap!(conn_info_result_1.result);
@@ -639,10 +668,12 @@ mod tests {
         expect_event!(event_rx_1, Event::ConnectSuccess(id) => assert_eq!(id, service_0.id()));
     }
 
-    fn exchange_messages(service_0: &Service,
-                         event_rx_0: &Receiver<Event<UniqueId>>,
-                         service_1: &Service,
-                         event_rx_1: &Receiver<Event<UniqueId>>) {
+    fn exchange_messages(
+        service_0: &Service,
+        event_rx_0: &Receiver<Event<UniqueId>>,
+        service_1: &Service,
+        event_rx_1: &Receiver<Event<UniqueId>>,
+    ) {
         use rand;
         use std::iter;
 
@@ -671,9 +702,10 @@ mod tests {
         assert_eq!(recv_1, send_1);
     }
 
-    fn prepare_connection_info(service: &mut Service,
-                               event_rx: &Receiver<Event<UniqueId>>)
-                               -> PrivConnectionInfo {
+    fn prepare_connection_info(
+        service: &mut Service,
+        event_rx: &Receiver<Event<UniqueId>>,
+    ) -> PrivConnectionInfo {
         static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
         let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
 
@@ -707,8 +739,9 @@ mod tests {
             fn new(index: usize) -> (TestNode, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
                 let config = unwrap!(::main::config_handler::read_config_file());
-                let mut service =
-                    unwrap!(Service::with_config(event_sender, config, rand::random()));
+                let mut service = unwrap!(Service::with_config(event_sender,
+                                                               config,
+                                                               rand::random()));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());
                 match unwrap!(event_rx.recv()) {
@@ -716,14 +749,16 @@ mod tests {
                     m => panic!("Unexpected event: {:?}", m),
                 }
                 let (ci_tx, ci_rx) = mpsc::channel();
-                (TestNode {
-                     event_rx: event_rx,
-                     service: service,
-                     connection_id_rx: ci_rx,
-                     our_cis: Vec::new(),
-                     our_index: index,
-                 },
-                 ci_tx)
+                (
+                    TestNode {
+                        event_rx: event_rx,
+                        service: service,
+                        connection_id_rx: ci_rx,
+                        our_cis: Vec::new(),
+                        our_index: index,
+                    },
+                    ci_tx,
+                )
             }
 
             fn make_connection_infos(&mut self, ci_txs: &[mpsc::Sender<PubConnectionInfo>]) {
@@ -742,9 +777,10 @@ mod tests {
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> Joiner {
                 maidsafe_utilities::thread::named("run!", move || {
                     for (our_ci, their_ci) in
-                        self.our_cis
-                            .into_iter()
-                            .zip(self.connection_id_rx.into_iter()) {
+                        self.our_cis.into_iter().zip(
+                            self.connection_id_rx.into_iter(),
+                        )
+                    {
                         let _ = self.service.connect(our_ci, their_ci);
                     }
                     let mut their_ids = HashMap::new();
@@ -835,8 +871,10 @@ mod tests {
         // Wait one hundred millisecond per message
         // TODO(canndrew): drop this limit
         let timeout_ms = 10000 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
-        timebomb(Duration::from_millis(timeout_ms),
-                 move || { drop(threads); });
+        timebomb(
+            Duration::from_millis(timeout_ms),
+            move || { drop(threads); },
+        );
     }
 
     // TODO See how to now do this test

@@ -110,9 +110,11 @@ pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<
     let mut config_path = config_file_handler::current_bin_dir()?;
     config_path.push(get_file_name()?);
     let mut file = ::std::fs::File::create(&config_path)?;
-    write!(&mut file,
-           "{}",
-           unwrap!(serde_json::to_string_pretty(&config)))?;
+    write!(
+        &mut file,
+        "{}",
+        unwrap!(serde_json::to_string_pretty(&config))
+    )?;
     file.sync_all()?;
     Ok(config_path)
 }

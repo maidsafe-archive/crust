@@ -60,18 +60,19 @@ pub struct Bootstrap<UID: Uid> {
 }
 
 impl<UID: Uid> Bootstrap<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 name_hash: NameHash,
-                 ext_reachability: ExternalReachability,
-                 our_uid: UID,
-                 cm: ConnectionMap<UID>,
-                 config: CrustConfig,
-                 blacklist: HashSet<SocketAddr>,
-                 token: Token,
-                 service_discovery_token: Token,
-                 event_tx: ::CrustEventSender<UID>)
-                 -> ::Res<()> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        name_hash: NameHash,
+        ext_reachability: ExternalReachability,
+        our_uid: UID,
+        cm: ConnectionMap<UID>,
+        config: CrustConfig,
+        blacklist: HashSet<SocketAddr>,
+        token: Token,
+        service_discovery_token: Token,
+        event_tx: ::CrustEventSender<UID>,
+    ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
         let mut cache = Cache::new(&unwrap!(config.lock()).cfg.bootstrap_cache_name)?;
@@ -79,13 +80,16 @@ impl<UID: Uid> Bootstrap<UID> {
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
-        let bs_timeout = core.set_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), bs_timer)?;
+        let bs_timeout = core.set_timeout(
+            Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC),
+            bs_timer,
+        )?;
         let sd_meta = match seek_peers(core, service_discovery_token, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
-                         rx: rx,
-                         timeout: timeout,
-                     })
+                    rx: rx,
+                    timeout: timeout,
+                })
             }
             Err(CrustError::ServiceDiscNotEnabled) => None,
             Err(e) => {
@@ -95,22 +99,21 @@ impl<UID: Uid> Bootstrap<UID> {
         };
 
         let state = Rc::new(RefCell::new(Self {
-                                             token: token,
-                                             cm: cm,
-                                             peers: peers,
-                                             blacklist: blacklist,
-                                             name_hash: name_hash,
-                                             ext_reachability: ext_reachability,
-                                             our_uid: our_uid,
-                                             event_tx: event_tx,
-                                             sd_meta: sd_meta,
-                                             bs_timer: bs_timer,
-                                             bs_timeout: bs_timeout,
-                                             cache: cache,
-                                             children:
-                                                 HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
-                                             self_weak: Weak::new(),
-                                         }));
+            token: token,
+            cm: cm,
+            peers: peers,
+            blacklist: blacklist,
+            name_hash: name_hash,
+            ext_reachability: ext_reachability,
+            our_uid: our_uid,
+            event_tx: event_tx,
+            sd_meta: sd_meta,
+            bs_timer: bs_timer,
+            bs_timeout: bs_timeout,
+            cache: cache,
+            children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
+            self_weak: Weak::new(),
+        }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
@@ -135,19 +138,21 @@ impl<UID: Uid> Bootstrap<UID> {
         for peer in peers {
             let self_weak = self.self_weak.clone();
             let finish = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-                self_weak.upgrade() {
-                self_rc
-                    .borrow_mut()
-                    .handle_result(core, poll, child, res)
+                self_weak.upgrade()
+            {
+                self_rc.borrow_mut().handle_result(core, poll, child, res)
             };
 
-            if let Ok(child) = TryPeer::start(core,
-                                              poll,
-                                              peer,
-                                              self.our_uid,
-                                              self.name_hash,
-                                              self.ext_reachability.clone(),
-                                              Box::new(finish)) {
+            if let Ok(child) = TryPeer::start(
+                core,
+                poll,
+                peer,
+                self.our_uid,
+                self.name_hash,
+                self.ext_reachability.clone(),
+                Box::new(finish),
+            )
+            {
                 let _ = self.children.insert(child);
             }
         }
@@ -155,27 +160,30 @@ impl<UID: Uid> Bootstrap<UID> {
     }
 
 
-    fn handle_result(&mut self,
-                     core: &mut Core,
-                     poll: &Poll,
-                     child: Token,
-                     res: Result<(Socket, SocketAddr, UID),
-                                 (SocketAddr, Option<BootstrapDenyReason>)>) {
+    fn handle_result(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        child: Token,
+        res: Result<(Socket, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+    ) {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_addr, peer_id)) => {
                 self.terminate(core, poll);
-                return ActiveConnection::start(core,
-                                               poll,
-                                               child,
-                                               socket,
-                                               self.cm.clone(),
-                                               self.our_uid,
-                                               peer_id,
-                                               // Note; We bootstrap only to Nodes
-                                               CrustUser::Node,
-                                               Event::BootstrapConnect(peer_id, peer_addr),
-                                               self.event_tx.clone());
+                return ActiveConnection::start(
+                    core,
+                    poll,
+                    child,
+                    socket,
+                    self.cm.clone(),
+                    self.our_uid,
+                    peer_id,
+                    // Note; We bootstrap only to Nodes
+                    CrustUser::Node,
+                    Event::BootstrapConnect(peer_id, peer_addr),
+                    self.event_tx.clone(),
+                );
             }
             Err((bad_peer, opt_reason)) => {
                 self.cache.remove_peer_acceptor(bad_peer);
@@ -202,10 +210,12 @@ impl<UID: Uid> Bootstrap<UID> {
                         let _ = self.event_tx.send(Event::BootstrapFailed);
                         return;
                     } else {
-                        info!("Failed to Bootstrap with {}: ({:?}) {}",
-                              bad_peer,
-                              reason,
-                              err_msg);
+                        info!(
+                            "Failed to Bootstrap with {}: ({:?}) {}",
+                            bad_peer,
+                            reason,
+                            err_msg
+                        );
                     }
                 }
             }
@@ -268,10 +278,11 @@ struct ServiceDiscMeta {
     timeout: Timeout,
 }
 
-fn seek_peers(core: &mut Core,
-              service_discovery_token: Token,
-              token: Token)
-              -> ::Res<(Receiver<Vec<SocketAddr>>, Timeout)> {
+fn seek_peers(
+    core: &mut Core,
+    service_discovery_token: Token,
+    token: Token,
+) -> ::Res<(Receiver<Vec<SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
         let mut state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());
@@ -279,9 +290,10 @@ fn seek_peers(core: &mut Core,
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
         state.seek_peers()?;
-        let timeout =
-            core.set_timeout(Duration::from_secs(SERVICE_DISCOVERY_TIMEOUT_SEC),
-                             CoreTimer::new(token, SERVICE_DISCOVERY_TIMER_ID))?;
+        let timeout = core.set_timeout(
+            Duration::from_secs(SERVICE_DISCOVERY_TIMEOUT_SEC),
+            CoreTimer::new(token, SERVICE_DISCOVERY_TIMER_ID),
+        )?;
 
         Ok((rx, timeout))
     } else {
