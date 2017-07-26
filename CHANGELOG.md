@@ -1,5 +1,13 @@
 # CRUST - Change Log
 
+## [0.28.0]
+- Use rust 1.19 stable / 2017-07-20 nightly
+- rustfmt 0.9.0 and clippy-0.0.144
+- Replace -Zno-trans with cargo check
+- Make appveyor script using fixed version of stable
+- Add dev config option
+- Avoid dropping unexpired messages unnecessarily
+
 ## [0.27.0]
 - Crust handles the whitelist completely by itself instead of delegating it to the upper layers.
 - Config file expanded to cover the cases for node and client whitelists separately.

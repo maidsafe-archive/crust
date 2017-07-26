@@ -64,9 +64,9 @@ impl<UID: Uid> ConnectionListener<UID> {
         event_tx: ::CrustEventSender<UID>,
     ) {
         let event_tx_0 = event_tx.clone();
-        let checker = move |s: &SocketAddr| ip_addr_is_global(&s.ip()) && s.port() == port;
         let finish =
             move |core: &mut Core, poll: &Poll, socket, mut mapped_addrs: Vec<SocketAddr>| {
+                let checker = |s: &SocketAddr| ip_addr_is_global(&s.ip()) && s.port() == port;
                 if force_include_port && port != 0 && !mapped_addrs.iter().any(checker) {
                     let global_addrs: Vec<_> = mapped_addrs
                         .iter()
