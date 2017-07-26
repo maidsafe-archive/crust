@@ -40,7 +40,7 @@ impl Cache {
         };
 
         Ok(Cache {
-            file_handler: try!(FileHandler::new(&name, true)), // last_updated: Instant::now(),
+            file_handler: FileHandler::new(&name, true)?, // last_updated: Instant::now(),
         })
     }
 
@@ -67,10 +67,7 @@ impl Cache {
     // }
 
     pub fn read_file(&mut self) -> Vec<SocketAddr> {
-        self.file_handler
-            .read_file()
-            .ok()
-            .unwrap_or_else(|| vec![])
+        self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 
     pub fn remove_peer_acceptor(&mut self, _peer: SocketAddr) {}

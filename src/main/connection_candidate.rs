@@ -37,31 +37,35 @@ pub struct ConnectionCandidate<UID: Uid> {
 }
 
 impl<UID: Uid> ConnectionCandidate<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 token: Token,
-                 socket: Socket,
-                 cm: ConnectionMap<UID>,
-                 our_id: UID,
-                 their_id: UID,
-                 finish: Finish)
-                 -> ::Res<Token> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        token: Token,
+        socket: Socket,
+        cm: ConnectionMap<UID>,
+        our_id: UID,
+        their_id: UID,
+        finish: Finish,
+    ) -> ::Res<Token> {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
-                                             token: token,
-                                             cm: cm,
-                                             socket: socket,
-                                             our_id: our_id,
-                                             their_id: their_id,
-                                             msg: Some((Message::ChooseConnection, 0)),
-                                             finish: finish,
-                                         }));
+            token: token,
+            cm: cm,
+            socket: socket,
+            our_id: our_id,
+            their_id: their_id,
+            msg: Some((Message::ChooseConnection, 0)),
+            finish: finish,
+        }));
 
         let _ = core.insert_state(token, state.clone());
 
-        if let Err(e) = poll.reregister(&state.borrow().socket,
-                                        token,
-                                        Ready::writable() | Ready::error() | Ready::hup(),
-                                        PollOpt::edge()) {
+        if let Err(e) = poll.reregister(
+            &state.borrow().socket,
+            token,
+            Ready::writable() | Ready::error() | Ready::hup(),
+            PollOpt::edge(),
+        )
+        {
             state.borrow_mut().terminate(core, poll);
             return Err(From::from(e));
         }
@@ -92,10 +96,13 @@ impl<UID: Uid> ConnectionCandidate<UID> {
                 Ok(false) => (),
                 Err(_) => self.handle_error(core, poll),
             }
-        } else if let Err(e) = poll.reregister(&self.socket,
-                                               self.token,
-                                               Ready::readable() | Ready::error() | Ready::hup(),
-                                               PollOpt::edge()) {
+        } else if let Err(e) = poll.reregister(
+            &self.socket,
+            self.token,
+            Ready::readable() | Ready::error() | Ready::hup(),
+            PollOpt::edge(),
+        )
+        {
             debug!("Error in re-registeration: {:?}", e);
             self.handle_error(core, poll);
         } else {
@@ -143,9 +150,11 @@ impl<UID: Uid> State for ConnectionCandidate<UID> {
                 let _ = oe.remove();
             }
         }
-        trace!("Connection Map removed: {:?} -> {:?}",
-               self.their_id,
-               guard.get(&self.their_id));
+        trace!(
+            "Connection Map removed: {:?} -> {:?}",
+            self.their_id,
+            guard.get(&self.their_id)
+        );
     }
 
     fn as_any(&mut self) -> &mut Any {

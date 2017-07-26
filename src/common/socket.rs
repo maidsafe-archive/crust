@@ -44,26 +44,22 @@ impl Socket {
     pub fn wrap(stream: TcpStream) -> Self {
         Socket {
             inner: Some(SockInner {
-                            stream: stream,
-                            read_buffer: Vec::new(),
-                            read_len: 0,
-                            write_queue: BTreeMap::new(),
-                            current_write: None,
-                        }),
+                stream: stream,
+                read_buffer: Vec::new(),
+                read_len: 0,
+                write_queue: BTreeMap::new(),
+                current_write: None,
+            }),
         }
     }
 
     pub fn peer_addr(&self) -> Result<SocketAddr> {
-        let inner = self.inner
-            .as_ref()
-            .ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.peer_addr()?)
     }
 
     pub fn take_error(&self) -> Result<Option<io::Error>> {
-        let inner = self.inner
-            .as_ref()
-            .ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.take_error()?)
     }
 
@@ -75,9 +71,7 @@ impl Socket {
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
     pub fn read<T: DeserializeOwned>(&mut self) -> Result<Option<T>> {
-        let inner = self.inner
-            .as_mut()
-            .ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
         inner.read()
     }
 
@@ -88,14 +82,13 @@ impl Socket {
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
-    pub fn write<T: Serialize>(&mut self,
-                               poll: &Poll,
-                               token: Token,
-                               msg: Option<(T, Priority)>)
-                               -> ::Res<bool> {
-        let inner = self.inner
-            .as_mut()
-            .ok_or(CommonError::UninitialisedSocket)?;
+    pub fn write<T: Serialize>(
+        &mut self,
+        poll: &Poll,
+        token: Token,
+        msg: Option<(T, Priority)>,
+    ) -> ::Res<bool> {
+        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
         inner.write(poll, token, msg)
     }
 }
@@ -107,43 +100,45 @@ impl Default for Socket {
 }
 
 impl Evented for Socket {
-    fn register(&self,
-                poll: &Poll,
-                token: Token,
-                interest: Ready,
-                opts: PollOpt)
-                -> io::Result<()> {
-        let inner = self.inner
-            .as_ref()
-            .ok_or_else(|| {
-                            io::Error::new(ErrorKind::Other,
-                                           format!("{}", CommonError::UninitialisedSocket))
-                        })?;
+    fn register(
+        &self,
+        poll: &Poll,
+        token: Token,
+        interest: Ready,
+        opts: PollOpt,
+    ) -> io::Result<()> {
+        let inner = self.inner.as_ref().ok_or_else(|| {
+            io::Error::new(
+                ErrorKind::Other,
+                format!("{}", CommonError::UninitialisedSocket),
+            )
+        })?;
         inner.register(poll, token, interest, opts)
     }
 
-    fn reregister(&self,
-                  poll: &Poll,
-                  token: Token,
-                  interest: Ready,
-                  opts: PollOpt)
-                  -> io::Result<()> {
-        let inner = self.inner
-            .as_ref()
-            .ok_or_else(|| {
-                            io::Error::new(ErrorKind::Other,
-                                           format!("{}", CommonError::UninitialisedSocket))
-                        })?;
+    fn reregister(
+        &self,
+        poll: &Poll,
+        token: Token,
+        interest: Ready,
+        opts: PollOpt,
+    ) -> io::Result<()> {
+        let inner = self.inner.as_ref().ok_or_else(|| {
+            io::Error::new(
+                ErrorKind::Other,
+                format!("{}", CommonError::UninitialisedSocket),
+            )
+        })?;
         inner.reregister(poll, token, interest, opts)
     }
 
     fn deregister(&self, poll: &Poll) -> io::Result<()> {
-        let inner = self.inner
-            .as_ref()
-            .ok_or_else(|| {
-                            io::Error::new(ErrorKind::Other,
-                                           format!("{}", CommonError::UninitialisedSocket))
-                        })?;
+        let inner = self.inner.as_ref().ok_or_else(|| {
+            io::Error::new(
+                ErrorKind::Other,
+                format!("{}", CommonError::UninitialisedSocket),
+            )
+        })?;
         inner.deregister(poll)
     }
 }
@@ -180,28 +175,28 @@ impl SockInner {
                         let e = Err(CommonError::ZeroByteRead);
                         if is_something_read {
                             return match self.read_from_buffer() {
-                                       r @ Ok(Some(_)) | r @ Err(_) => r,
-                                       Ok(None) => e,
-                                   };
+                                r @ Ok(Some(_)) | r @ Err(_) => r,
+                                Ok(None) => e,
+                            };
                         } else {
                             return e;
                         }
                     }
-                    self.read_buffer
-                        .extend_from_slice(&buffer[0..bytes_read]);
+                    self.read_buffer.extend_from_slice(&buffer[0..bytes_read]);
                     is_something_read = true;
                 }
                 Err(error) => {
                     return if error.kind() == ErrorKind::WouldBlock ||
-                              error.kind() == ErrorKind::Interrupted {
-                               if is_something_read {
-                                   self.read_from_buffer()
-                               } else {
-                                   Ok(None)
-                               }
-                           } else {
-                               Err(From::from(error))
-                           }
+                        error.kind() == ErrorKind::Interrupted
+                    {
+                        if is_something_read {
+                            self.read_from_buffer()
+                        } else {
+                            Ok(None)
+                        }
+                    } else {
+                        Err(From::from(error))
+                    }
                 }
             }
         }
@@ -215,8 +210,7 @@ impl SockInner {
                 return Ok(None);
             }
 
-            self.read_len = Cursor::new(&self.read_buffer)
-                .read_u32::<LittleEndian>()? as usize;
+            self.read_len = Cursor::new(&self.read_buffer).read_u32::<LittleEndian>()? as usize;
 
             if self.read_len > MAX_PAYLOAD_SIZE {
                 return Err(CommonError::PayloadSizeProhibitive);
@@ -244,19 +238,20 @@ impl SockInner {
     //   - Ok(false):  the message has been queued, but not yet fully written.
     //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
-    fn write<T: Serialize>(&mut self,
-                           poll: &Poll,
-                           token: Token,
-                           msg: Option<(T, Priority)>)
-                           -> ::Res<bool> {
+    fn write<T: Serialize>(
+        &mut self,
+        poll: &Poll,
+        token: Token,
+        msg: Option<(T, Priority)>,
+    ) -> ::Res<bool> {
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
             .skip_while(|&(&priority, queue)| {
-                            priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
+                priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
                 queue.front().map_or(true, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
                 })
-                        })
+            })
             .map(|(&priority, _)| priority)
             .collect();
         let dropped_msgs: usize = expired_keys
@@ -265,9 +260,11 @@ impl SockInner {
             .map(|queue| queue.len())
             .sum();
         if dropped_msgs > 0 {
-            trace!("Insufficient bandwidth. Dropping {} messages with priority >= {}.",
-                   dropped_msgs,
-                   expired_keys[0]);
+            trace!(
+                "Insufficient bandwidth. Dropping {} messages with priority >= {}.",
+                dropped_msgs,
+                expired_keys[0]
+            );
         }
 
         if let Some((msg, priority)) = msg {
@@ -281,9 +278,9 @@ impl SockInner {
             data.set_position(0);
             data.write_u32::<LittleEndian>(len as u32)?;
 
-            let entry = self.write_queue
-                .entry(priority)
-                .or_insert_with(|| VecDeque::with_capacity(10));
+            let entry = self.write_queue.entry(priority).or_insert_with(|| {
+                VecDeque::with_capacity(10)
+            });
             entry.push_back((Instant::now(), data.into_inner()));
         }
 
@@ -307,7 +304,8 @@ impl SockInner {
                 }
                 Err(error) => {
                     if error.kind() == ErrorKind::WouldBlock ||
-                       error.kind() == ErrorKind::Interrupted {
+                        error.kind() == ErrorKind::Interrupted
+                    {
                         self.current_write = Some(data);
                     } else {
                         return Err(From::from(error));
@@ -331,21 +329,23 @@ impl SockInner {
 }
 
 impl Evented for SockInner {
-    fn register(&self,
-                poll: &Poll,
-                token: Token,
-                interest: Ready,
-                opts: PollOpt)
-                -> io::Result<()> {
+    fn register(
+        &self,
+        poll: &Poll,
+        token: Token,
+        interest: Ready,
+        opts: PollOpt,
+    ) -> io::Result<()> {
         self.stream.register(poll, token, interest, opts)
     }
 
-    fn reregister(&self,
-                  poll: &Poll,
-                  token: Token,
-                  interest: Ready,
-                  opts: PollOpt)
-                  -> io::Result<()> {
+    fn reregister(
+        &self,
+        poll: &Poll,
+        token: Token,
+        interest: Ready,
+        opts: PollOpt,
+    ) -> io::Result<()> {
         self.stream.reregister(poll, token, interest, opts)
     }
 

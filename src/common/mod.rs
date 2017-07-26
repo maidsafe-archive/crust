@@ -59,8 +59,20 @@ pub enum ExternalReachability {
 }
 
 /// Trait for specifying a unique identifier for a Crust peer
-pub trait Uid: 'static + Send + fmt::Debug + Clone + Copy + Eq + PartialEq + Ord + PartialOrd +
-               Hash + Serialize + DeserializeOwned {}
+pub trait Uid
+    : 'static
+    + Send
+    + fmt::Debug
+    + Clone
+    + Copy
+    + Eq
+    + PartialEq
+    + Ord
+    + PartialOrd
+    + Hash
+    + Serialize
+    + DeserializeOwned {
+}
 
 pub mod get_if_addrs;
 mod core;

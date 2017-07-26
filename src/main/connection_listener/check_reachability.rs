@@ -37,24 +37,30 @@ pub struct CheckReachability<T> {
 }
 
 impl<T> CheckReachability<T>
-    where T: 'static + Clone
+where
+    T: 'static + Clone,
 {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 their_listener: SocketAddr,
-                 t: T,
-                 finish: Finish<T>)
-                 -> ::Res<Token> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        their_listener: SocketAddr,
+        t: T,
+        finish: Finish<T>,
+    ) -> ::Res<Token> {
         let socket = Socket::connect(&their_listener)?;
         let token = core.get_new_token();
 
-        poll.register(&socket,
-                      token,
-                      Ready::error() | Ready::hup() | Ready::writable(),
-                      PollOpt::edge())?;
+        poll.register(
+            &socket,
+            token,
+            Ready::error() | Ready::hup() | Ready::writable(),
+            PollOpt::edge(),
+        )?;
 
-        let timeout = core.set_timeout(Duration::from_secs(CHECK_REACHABILITY_TIMEOUT_SEC),
-                                       CoreTimer::new(token, 0))?;
+        let timeout = core.set_timeout(
+            Duration::from_secs(CHECK_REACHABILITY_TIMEOUT_SEC),
+            CoreTimer::new(token, 0),
+        )?;
 
         let state = CheckReachability {
             token: token,
@@ -84,7 +90,8 @@ impl<T> CheckReachability<T>
 }
 
 impl<T> State for CheckReachability<T>
-    where T: 'static + Clone
+where
+    T: 'static + Clone,
 {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
         if kind.is_error() || kind.is_hup() || !kind.is_writable() {
@@ -101,8 +108,10 @@ impl<T> State for CheckReachability<T>
     }
 
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
-        trace!("Bootstrapper's external reachability check timed out to one of its given IP's. \
-                Erroring out for this remote endpoint.");
+        trace!(
+            "Bootstrapper's external reachability check timed out to one of its given IP's. \
+                Erroring out for this remote endpoint."
+        );
         self.handle_error(core, poll)
     }
 

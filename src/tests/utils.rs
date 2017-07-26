@@ -49,7 +49,10 @@ pub fn get_event_sender() -> (::CrustEventSender<UniqueId>, Receiver<Event<Uniqu
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 
-    (MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx), event_rx)
+    (
+        MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx),
+        event_rx,
+    )
 }
 
 // Generate config with unique bootstrap cache name.
@@ -61,18 +64,19 @@ pub fn gen_config() -> Config {
 
 #[allow(unused)]
 pub fn timebomb<R, F>(dur: Duration, f: F) -> R
-    where R: Send,
-          F: Send + FnOnce() -> R
+where
+    R: Send,
+    F: Send + FnOnce() -> R,
 {
     crossbeam::scope(|scope| {
         let thread_handle = thread::current();
         let (done_tx, done_rx) = mpsc::channel::<()>();
         let jh = scope.spawn(move || {
-                                 let ret = f();
-                                 drop(done_tx);
-                                 thread_handle.unpark();
-                                 ret
-                             });
+            let ret = f();
+            drop(done_tx);
+            thread_handle.unpark();
+            ret
+        });
         thread::park_timeout(dur);
         match done_rx.try_recv() {
             Err(mpsc::TryRecvError::Empty) => panic!("Timed out!"),
@@ -85,6 +89,8 @@ pub fn timebomb<R, F>(dur: Duration, f: F) -> R
 // Generate unique name for the bootstrap cache.
 fn gen_bootstrap_cache_name() -> String {
     static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
-    format!("test{}.bootstrap.cache",
-            COUNTER.fetch_add(1, Ordering::Relaxed))
+    format!(
+        "test{}.bootstrap.cache",
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    )
 }

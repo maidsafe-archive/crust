@@ -2,7 +2,7 @@ environment:
   global:
     RUST_BACKTRACE: 1
   matrix:
-    - RUST_VERSION: stable
+    - RUST_TOOLCHAIN: 1.19.0
 
 branches:
   only:
@@ -28,7 +28,7 @@ configuration:
   - Release
 
 build_script:
-  - cargo rustc --verbose --release -- --test -Zno-trans
+  - cargo check --verbose --release --lib --tests
 
 test_script:
   - cargo test --verbose --release

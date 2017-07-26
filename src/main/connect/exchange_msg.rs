@@ -37,34 +37,39 @@ pub struct ExchangeMsg<UID: Uid> {
 }
 
 impl<UID: Uid> ExchangeMsg<UID> {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 socket: Socket,
-                 our_id: UID,
-                 expected_id: UID,
-                 name_hash: NameHash,
-                 cm: ConnectionMap<UID>,
-                 finish: Finish)
-                 -> ::Res<Token> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        socket: Socket,
+        our_id: UID,
+        expected_id: UID,
+        name_hash: NameHash,
+        cm: ConnectionMap<UID>,
+        finish: Finish,
+    ) -> ::Res<Token> {
         let token = core.get_new_token();
 
-        poll.register(&socket,
-                      token,
-                      Ready::error() | Ready::hup() | Ready::writable(),
-                      PollOpt::edge())?;
+        poll.register(
+            &socket,
+            token,
+            Ready::error() | Ready::hup() | Ready::writable(),
+            PollOpt::edge(),
+        )?;
 
         {
             let mut guard = unwrap!(cm.lock());
             guard
                 .entry(expected_id)
                 .or_insert(ConnectionId {
-                               active_connection: None,
-                               currently_handshaking: 0,
-                           })
+                    active_connection: None,
+                    currently_handshaking: 0,
+                })
                 .currently_handshaking += 1;
-            trace!("Connection Map inserted: {:?} -> {:?}",
-                   expected_id,
-                   guard.get(&expected_id));
+            trace!(
+                "Connection Map inserted: {:?} -> {:?}",
+                expected_id,
+                guard.get(&expected_id)
+            );
         }
 
         let state = Self {
@@ -138,9 +143,11 @@ impl<UID: Uid> State for ExchangeMsg<UID> {
                 let _ = oe.remove();
             }
         }
-        trace!("Connection Map removed: {:?} -> {:?}",
-               self.expected_id,
-               guard.get(&self.expected_id));
+        trace!(
+            "Connection Map removed: {:?} -> {:?}",
+            self.expected_id,
+            guard.get(&self.expected_id)
+        );
     }
 
     fn as_any(&mut self) -> &mut Any {

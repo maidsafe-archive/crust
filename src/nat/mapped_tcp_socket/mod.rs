@@ -48,16 +48,18 @@ pub struct MappedTcpSocket<F, UID> {
 }
 
 impl<F, UID> MappedTcpSocket<F, UID>
-    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
-          UID: Uid
+where
+    F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
+    UID: Uid,
 {
     /// Start mapping a tcp socket
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 port: u16,
-                 mc: &MappingContext,
-                 finish: F)
-                 -> Result<(), NatError> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        port: u16,
+        mc: &MappingContext,
+        finish: F,
+    ) -> Result<(), NatError> {
         let token = core.get_new_token();
 
         // TODO(Spandan) Ipv6 is not supported in Listener so dealing only with ipv4 right now
@@ -105,27 +107,31 @@ impl<F, UID> MappedTcpSocket<F, UID>
             .map(|&(ip, _)| SocketAddr::new(IpAddr::V4(ip), addr.port()))
             .collect();
 
-        let state =
-            Rc::new(RefCell::new(Self {
-                                     token: token,
-                                     socket: Some(socket),
-                                     igd_children: igd_children,
-                                     stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
-                                     mapped_addrs: mapped_addrs,
-                                     timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC),
-                                                               CoreTimer::new(token, 0))?,
-                                     finish: Some(finish),
-                                     phantom: PhantomData,
-                                 }));
+        let state = Rc::new(RefCell::new(Self {
+            token: token,
+            socket: Some(socket),
+            igd_children: igd_children,
+            stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
+            mapped_addrs: mapped_addrs,
+            timeout: core.set_timeout(
+                Duration::from_secs(TIMEOUT_SEC),
+                CoreTimer::new(token, 0),
+            )?,
+            finish: Some(finish),
+            phantom: PhantomData,
+        }));
 
         // Ask Stuns
         for stun in mc.peer_stuns() {
             let self_weak = Rc::downgrade(&state);
             let handler = move |core: &mut Core, poll: &Poll, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc
-                        .borrow_mut()
-                        .handle_stun_resp(core, poll, child_token, res)
+                    self_rc.borrow_mut().handle_stun_resp(
+                        core,
+                        poll,
+                        child_token,
+                        res,
+                    )
                 }
             };
 
@@ -143,11 +149,13 @@ impl<F, UID> MappedTcpSocket<F, UID>
         Ok(())
     }
 
-    fn handle_stun_resp(&mut self,
-                        core: &mut Core,
-                        poll: &Poll,
-                        child: Token,
-                        res: Result<SocketAddr, ()>) {
+    fn handle_stun_resp(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        child: Token,
+        res: Result<SocketAddr, ()>,
+    ) {
         let _ = self.stun_children.remove(&child);
         if let Ok(our_ext_addr) = res {
             self.mapped_addrs.push(our_ext_addr);
@@ -178,8 +186,10 @@ impl<F, UID> MappedTcpSocket<F, UID>
 }
 
 impl<F, UID> State for MappedTcpSocket<F, UID>
-    where F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
-          UID: Uid
+where
+    F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>)
+        + Any,
+    UID: Uid,
 {
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _: u8) {
         self.terminate(core, poll)

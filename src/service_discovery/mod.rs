@@ -55,12 +55,13 @@ pub struct ServiceDiscovery {
 }
 
 impl ServiceDiscovery {
-    pub fn start(core: &mut Core,
-                 poll: &Poll,
-                 our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-                 token: Token,
-                 port: u16)
-                 -> Result<(), ServiceDiscoveryError> {
+    pub fn start(
+        core: &mut Core,
+        poll: &Poll,
+        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        token: Token,
+        port: u16,
+    ) -> Result<(), ServiceDiscoveryError> {
         let udp_socket = get_socket(port)?;
         udp_socket.set_broadcast(true)?;
 
@@ -80,10 +81,12 @@ impl ServiceDiscovery {
             guid: guid,
         };
 
-        poll.register(&service_discovery.socket,
-                      token,
-                      Ready::error() | Ready::hup() | Ready::readable(),
-                      PollOpt::edge())?;
+        poll.register(
+            &service_discovery.socket,
+            token,
+            Ready::error() | Ready::hup() | Ready::readable(),
+            PollOpt::edge(),
+        )?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(service_discovery)));
 
@@ -98,8 +101,7 @@ impl ServiceDiscovery {
 
     /// Interrogate the network to find peers.
     pub fn seek_peers(&mut self) -> Result<(), ServiceDiscoveryError> {
-        let _ = self.socket
-            .send_to(&self.seek_peers_req, &self.remote_addr)?;
+        let _ = self.socket.send_to(&self.seek_peers_req, &self.remote_addr)?;
         Ok(())
     }
 
@@ -136,8 +138,9 @@ impl ServiceDiscovery {
                 }
             }
             DiscoveryMsg::Response(peer_listeners) => {
-                self.observers
-                    .retain(|obs| obs.send(peer_listeners.clone()).is_ok());
+                self.observers.retain(
+                    |obs| obs.send(peer_listeners.clone()).is_ok(),
+                );
             }
         }
     }
@@ -150,10 +153,7 @@ impl ServiceDiscovery {
     }
 
     fn write_impl(&mut self, poll: &Poll) -> Result<(), ServiceDiscoveryError> {
-        let our_current_listeners = unwrap!(self.our_listeners.lock())
-            .iter()
-            .cloned()
-            .collect();
+        let our_current_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
         let resp = DiscoveryMsg::Response(our_current_listeners);
 
         let serialised_resp = serialise(&resp)?;
@@ -163,8 +163,8 @@ impl ServiceDiscovery {
                 // UDP is all or none so if anything is written we consider it written
                 Ok(Some(_)) => (),
                 Ok(None) => self.reply_to.push_front(peer_addr),
-                Err(ref e) if e.kind() == ErrorKind::Interrupted ||
-                              e.kind() == ErrorKind::WouldBlock => {
+                Err(ref e)
+                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {
                     self.reply_to.push_front(peer_addr)
                 }
                 Err(e) => return Err(From::from(e)),
@@ -177,7 +177,12 @@ impl ServiceDiscovery {
             Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
         };
 
-        Ok(poll.reregister(&self.socket, self.token, kind, PollOpt::edge())?)
+        Ok(poll.reregister(
+            &self.socket,
+            self.token,
+            kind,
+            PollOpt::edge(),
+        )?)
     }
 }
 
@@ -235,8 +240,10 @@ mod tests {
         const SERVICE_DISCOVERY_TOKEN: usize = 0;
 
         // Poll-0
-        let el0 = unwrap!(common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0")),
-                          "Could not run el0");
+        let el0 = unwrap!(
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0")),
+            "Could not run el0"
+        );
 
         let addr = unwrap!(net::SocketAddr::from_str("138.139.140.150:54321"));
         let listeners_0 = Arc::new(Mutex::new(vec![addr]));
@@ -245,11 +252,15 @@ mod tests {
         // ServiceDiscovery-0
         {
             let token_0 = Token(SERVICE_DISCOVERY_TOKEN);
-            unwrap!(el0.send(CoreMessage::new(move |core, poll| {
-                unwrap!(ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65530),
-                        "Could not spawn ServiceDiscovery_0");
-            })),
-                    "Could not send to el0");
+            unwrap!(
+                el0.send(CoreMessage::new(move |core, poll| {
+                    unwrap!(
+                        ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65530),
+                        "Could not spawn ServiceDiscovery_0"
+                    );
+                })),
+                "Could not send to el0"
+            );
 
             // Start listening for peers
             unwrap!(el0.send(CoreMessage::new(move |core, _| {
@@ -262,8 +273,10 @@ mod tests {
         thread::sleep(Duration::from_millis(100));
 
         // Poll-1
-        let el1 = unwrap!(common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1")),
-                          "Could not run el1");
+        let el1 = unwrap!(
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1")),
+            "Could not run el1"
+        );
 
         let (tx, rx) = mpsc::channel();
 
@@ -271,15 +284,15 @@ mod tests {
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
-            unwrap!(el1.send(CoreMessage::new(move |core, poll| {
-                                                  unwrap!(ServiceDiscovery::start(core,
-                                                                                  poll,
-                                                                                  listeners_1,
-                                                                                  token_1,
-                                                                                  65530),
-                                                          "Could not spawn ServiceDiscovery_1");
-                                              })),
-                    "Could not send to el1");
+            unwrap!(
+                el1.send(CoreMessage::new(move |core, poll| {
+                    unwrap!(
+                        ServiceDiscovery::start(core, poll, listeners_1, token_1, 65530),
+                        "Could not spawn ServiceDiscovery_1"
+                    );
+                })),
+                "Could not send to el1"
+            );
 
             // Register observer
             unwrap!(el1.send(CoreMessage::new(move |core, _| {
@@ -289,17 +302,21 @@ mod tests {
             })));
 
             // Seek peers
-            unwrap!(el1.send(CoreMessage::new(move |core, _| {
-                        let state = unwrap!(core.get_state(token_1));
-                        let mut inner = state.borrow_mut();
-                        let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
-                        unwrap!(sd.seek_peers());
-                    })),
-                    "Could not send to el1");
+            unwrap!(
+                el1.send(CoreMessage::new(move |core, _| {
+                    let state = unwrap!(core.get_state(token_1));
+                    let mut inner = state.borrow_mut();
+                    let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
+                    unwrap!(sd.seek_peers());
+                })),
+                "Could not send to el1"
+            );
         }
 
         let peer_listeners = unwrap!(rx.recv_timeout(Duration::from_secs(30)));
-        assert_eq!(peer_listeners.into_iter().collect::<Vec<_>>(),
-                   *unwrap!(listeners_0.lock()));
+        assert_eq!(
+            peer_listeners.into_iter().collect::<Vec<_>>(),
+            *unwrap!(listeners_0.lock())
+        );
     }
 }
