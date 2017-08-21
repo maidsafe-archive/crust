@@ -59,9 +59,8 @@ impl ConfigFile {
         })
     }
 
-    /// Reload the config file from disc and report if the file had been modified since it was
-    /// last read/written.
-    pub fn reload_and_check_modified(&self) -> ::Res<bool> {
+    /// Reload the config file from disc.
+    pub fn reload(&self) -> ::Res<()> {
         let mut current_config = unwrap!(self.inner.write());
         let file_handler = FileHandler::new(&current_config.file_name, false)?;
         let new_config = file_handler.read_file()?;
@@ -69,7 +68,14 @@ impl ConfigFile {
         if modified {
             current_config.cfg = new_config;
         }
-        Ok(modified)
+        Ok(())
+    }
+
+    /// Get the full path to the file.
+    pub fn get_file_path(&self) -> ::Res<PathBuf> {
+        let config_wrapper = unwrap!(self.inner.read());
+        let file_handler = FileHandler::<ConfigSettings>::new(&config_wrapper.file_name, false)?;
+        Ok(file_handler.path().to_owned())
     }
 }
 

@@ -34,7 +34,6 @@ use tiny_keccak::sha3_256;
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
 const LISTENER_TOKEN: Token = Token(2);
-const CONFIG_REFRESHER_TOKEN: Token = Token(3);
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -51,6 +50,7 @@ pub struct Service<UID: Uid> {
     name_hash: NameHash,
     our_uid: UID,
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    config_refresher: Option<ConfigRefresher>,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -86,7 +86,7 @@ impl<UID: Uid> Service<UID> {
         let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)))?;
         trace!("Event loop started");
 
-        let service = Service {
+        let mut service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: config,
             event_tx: event_tx,
@@ -95,6 +95,7 @@ impl<UID: Uid> Service<UID> {
             name_hash: name_hash,
             our_uid: our_uid,
             our_listeners: our_listeners,
+            config_refresher: None,
         };
 
         service.start_config_refresher()?;
@@ -102,22 +103,17 @@ impl<UID: Uid> Service<UID> {
         Ok(service)
     }
 
-    fn start_config_refresher(&self) -> ::Res<()> {
-        let (tx, rx) = mpsc::channel();
-        let config = self.config.clone();
-        let cm = self.cm.clone();
-        self.post(move |core, _| {
-            if core.get_state(CONFIG_REFRESHER_TOKEN).is_none() {
-                let _ = tx.send(ConfigRefresher::start(
-                    core,
-                    CONFIG_REFRESHER_TOKEN,
-                    cm,
-                    config,
-                ));
-            }
-            let _ = tx.send(Ok(()));
-        })?;
-        rx.recv()?
+    fn start_config_refresher(&mut self) -> ::Res<()> {
+        if self.config_refresher.is_none() {
+            let (tx, rx) = mpsc::channel();
+            let config = self.config.clone();
+            let cm = self.cm.clone();
+            self.post(move |core, _| {
+                let _ = tx.send(ConfigRefresher::start(core, cm, config));
+            })?;
+            self.config_refresher = Some(rx.recv()??);
+        }
+        Ok(())
     }
 
     /// Allow (or disallow) peers from bootstrapping off us.

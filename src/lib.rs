@@ -41,6 +41,8 @@
 // TODO FIXME Remove this soon
 #![allow(deprecated)]
 
+#![recursion_limit="128"]
+
 #[macro_use]
 extern crate log;
 #[cfg_attr(feature = "cargo-clippy", allow(useless_attribute))]
@@ -64,6 +66,7 @@ extern crate rand;
 extern crate rust_sodium;
 extern crate serde;
 extern crate tiny_keccak;
+extern crate notify;
 
 #[cfg(windows)]
 extern crate winapi;

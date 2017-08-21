@@ -239,22 +239,15 @@ impl<UID: Uid> ExchangeMsg<UID> {
             }
         };
 
-        let res = match peer_kind {
-            CrustUser::Node => {
-                self.config.read().whitelisted_node_ips.as_ref().map_or(
-                    true,
-                    |ips| {
-                        ips.contains(&peer_ip)
-                    },
-                )
-            }
-            CrustUser::Client => {
-                self.config.read().whitelisted_client_ips.as_ref().map_or(
-                    true,
-                    |ips| {
-                        ips.contains(&peer_ip)
-                    },
-                )
+        let res = {
+            let config = self.config.read();
+            let whitelist_opt = match peer_kind {
+                CrustUser::Node => config.whitelisted_node_ips.as_ref(),
+                CrustUser::Client => config.whitelisted_client_ips.as_ref(),
+            };
+            match whitelist_opt {
+                None => true,
+                Some(whitelist) => whitelist.contains(&peer_ip),
             }
         };
 
@@ -367,10 +360,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 
     fn try_update_crust_config(&self) {
-        match self.config.reload_and_check_modified() {
-            Ok(_) => (),
+        match self.config.reload() {
+            Ok(()) => (),
             Err(e) => debug!("Could not read Crust config file: {:?}", e),
-        }
+        };
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {

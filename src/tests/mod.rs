@@ -495,7 +495,7 @@ fn only_allow_whitelisted_peers() {
     // Add ourselves to the whitelist.
 
     unwrap!(unwrap!(config0.write()).whitelisted_client_ips.as_mut()).insert(localhost);
-    thread::sleep(Duration::from_secs(31));
+    thread::sleep(Duration::from_millis(100));
 
 
     // We're whitelisted. Bootstrapping should now succeed.
