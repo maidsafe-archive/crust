@@ -145,10 +145,11 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
-    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
+
+    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
@@ -206,10 +207,11 @@ fn bootstrap_with_blacklist() {
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     let mut blacklist = HashSet::new();
     blacklist.insert(blacklisted_address);
-    unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
+
+    unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
@@ -221,8 +223,6 @@ fn bootstrap_with_blacklist() {
             mio::tcp::TcpListener::from_listener(blacklisted_listener, &blacklisted_address)
     );
     thread::sleep(Duration::from_secs(5));
-    // TODO See if these are doing the right thing - wait for Adam to explain as he might have
-    // written this test case. Also check the similar one below.
     let res = blacklisted_listener.accept();
     assert!(res.is_err())
 }
