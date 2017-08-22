@@ -20,9 +20,9 @@ use config_file_handler;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::Event;
+use std::path::PathBuf;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver};
-use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
@@ -107,4 +107,3 @@ fn gen_file_name() -> PathBuf {
         COUNTER.fetch_add(1, Ordering::Relaxed)
     ).into()
 }
-

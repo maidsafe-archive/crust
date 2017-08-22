@@ -20,7 +20,7 @@ pub mod utils;
 
 pub use self::utils::{UniqueId, gen_config, get_event_sender, timebomb};
 
-use common::{DevConfigSettings, CrustUser};
+use common::{CrustUser, DevConfigSettings};
 use main::{self, Event};
 use mio;
 use rand;

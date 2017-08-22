@@ -20,8 +20,8 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, ConfigFile, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
-             Socket, State, Uid};
+use common::{BootstrapDenyReason, ConfigFile, Core, CoreTimer, CrustUser, ExternalReachability,
+             NameHash, Socket, State, Uid};
 use main::{ActiveConnection, ConnectionMap, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;

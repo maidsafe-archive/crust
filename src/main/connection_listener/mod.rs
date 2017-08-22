@@ -231,7 +231,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use std::sync::mpsc;
     use std::time::Duration;
-    use tests::{gen_config, UniqueId};
+    use tests::{UniqueId, gen_config};
 
     type ConnectionListener = super::ConnectionListener<UniqueId>;
 

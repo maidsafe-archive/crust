@@ -86,7 +86,7 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
                     "Could not read Crust config (it's rescheduled to be read): {:?}",
                     e
                 );
-            },
+            }
         };
 
         let config = self.config.read();

@@ -17,8 +17,8 @@
 
 use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
-use std::path::PathBuf;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;

@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, ConfigFile, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
-             NameHash, Priority, Uid};
+use common::{self, ConfigFile, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability,
+             HASH_SIZE, NameHash, Priority, Uid};
 use main::{ActiveConnection, Bootstrap, ConfigRefresher, Connect, ConnectionId,
-           ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustError,
-           Event, PrivConnectionInfo, PubConnectionInfo};
+           ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustError, Event,
+           PrivConnectionInfo, PubConnectionInfo};
 use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
@@ -150,9 +150,9 @@ impl<UID: Uid> Service<UID> {
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
         let our_listeners = self.our_listeners.clone();
-        let port = self.config.read()
-            .service_discovery_port
-            .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+        let port = self.config.read().service_discovery_port.unwrap_or(
+            SERVICE_DISCOVERY_DEFAULT_PORT,
+        );
 
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
@@ -238,9 +238,9 @@ impl<UID: Uid> Service<UID> {
         match self.get_peer_socket_addr(peer_uid) {
             Ok(s) => {
                 let config = self.config.read();
-                config.hard_coded_contacts.iter().any(|addr| {
-                    addr.ip() == s.ip()
-                })
+                config.hard_coded_contacts.iter().any(
+                    |addr| addr.ip() == s.ip(),
+                )
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -337,11 +337,8 @@ impl<UID: Uid> Service<UID> {
         let cm = self.cm.clone();
         let mc = self.mc.clone();
         let config = self.config.clone();
-        let port = self.config.read()
-            .tcp_acceptor_port
-            .unwrap_or(0);
-        let force_include_port = self.config.read()
-            .force_acceptor_port_in_ext_ep;
+        let port = self.config.read().tcp_acceptor_port.unwrap_or(0);
+        let force_include_port = self.config.read().force_acceptor_port_in_ext_ep;
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let our_listeners = self.our_listeners.clone();

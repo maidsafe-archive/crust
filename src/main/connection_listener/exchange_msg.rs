@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use super::check_reachability::CheckReachability;
-use common::{BootstrapDenyReason, ConfigFile, Core, CoreTimer, CrustUser, ExternalReachability, Message,
-             NameHash, Priority, Socket, State, Uid};
+use common::{BootstrapDenyReason, ConfigFile, Core, CoreTimer, CrustUser, ExternalReachability,
+             Message, NameHash, Priority, Socket, State, Uid};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, Event};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::timer::Timeout;
@@ -75,12 +75,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
-        let require_reachability = config.read().dev.as_ref().map_or(
-            true,
-            |dev_cfg| {
-                !dev_cfg.disable_external_reachability_requirement
-            },
-        );
+        let require_reachability = config.read().dev.as_ref().map_or(true, |dev_cfg| {
+            !dev_cfg.disable_external_reachability_requirement
+        });
 
         let state = Rc::new(RefCell::new(Self {
             token: token,
@@ -244,16 +241,20 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         let res = match peer_kind {
             CrustUser::Node => {
-                self.config.read()
-                    .whitelisted_node_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
+                self.config.read().whitelisted_node_ips.as_ref().map_or(
+                    true,
+                    |ips| {
+                        ips.contains(&peer_ip)
+                    },
+                )
             }
             CrustUser::Client => {
-                self.config.read()
-                    .whitelisted_client_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
+                self.config.read().whitelisted_client_ips.as_ref().map_or(
+                    true,
+                    |ips| {
+                        ips.contains(&peer_ip)
+                    },
+                )
             }
         };
 

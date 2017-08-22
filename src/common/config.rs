@@ -16,11 +16,11 @@
 // relating to use of the SAFE Network Software.
 
 use config_file_handler::{self, FileHandler};
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use std::path::{PathBuf, Path};
-use std::ops::{Deref, DerefMut};
-use std::net::{SocketAddr, IpAddr};
 use std::collections::HashSet;
+use std::net::{IpAddr, SocketAddr};
+use std::ops::{Deref, DerefMut};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// A handle to a crust config file. This handle can be cloned and shared throughout the program.
 #[derive(Clone)]
@@ -32,9 +32,7 @@ impl ConfigFile {
     /// Open a crust config file with the give file name.
     pub fn open_path(file_name: PathBuf) -> ::Res<ConfigFile> {
         let config_wrapper = ConfigWrapper::open(file_name)?;
-        Ok(ConfigFile {
-            inner: Arc::new(RwLock::new(config_wrapper)),
-        })
+        Ok(ConfigFile { inner: Arc::new(RwLock::new(config_wrapper)) })
     }
 
     /// Open a crust config file with the default file name.
@@ -42,16 +40,12 @@ impl ConfigFile {
         let mut name = config_file_handler::exe_file_stem()?;
         name.push(".crust.config");
         let config_wrapper = ConfigWrapper::open(name.into())?;
-        Ok(ConfigFile {
-            inner: Arc::new(RwLock::new(config_wrapper)),
-        })
+        Ok(ConfigFile { inner: Arc::new(RwLock::new(config_wrapper)) })
     }
 
     /// Lock the config for reading.
     pub fn read(&self) -> ConfigReadGuard {
-        ConfigReadGuard {
-            guard: unwrap!(self.inner.read()),
-        }
+        ConfigReadGuard { guard: unwrap!(self.inner.read()) }
     }
 
     /// Lock the config for writing. Any changes made to the config will be synced to disc when the
@@ -93,8 +87,9 @@ impl<'c> Deref for ConfigReadGuard<'c> {
     }
 }
 
-/// Returned by `ConfigFile::write`. Locks the config for reading/writing and be used to mutate the config
-/// settings. Any changes made to the settings will be synced to disc when then guard is dropped.
+/// Returned by `ConfigFile::write`. Locks the config for reading/writing and be used to mutate the
+/// config settings. Any changes made to the settings will be synced to disc when then guard is
+/// dropped.
 pub struct ConfigWriteGuard<'c> {
     file_handler: FileHandler<ConfigSettings>,
     guard: RwLockWriteGuard<'c, ConfigWrapper>,
@@ -119,8 +114,12 @@ impl<'c> Drop for ConfigWriteGuard<'c> {
         match self.file_handler.write_file(&self.guard.cfg) {
             Ok(()) => (),
             Err(e) => {
-                error!("Unable to write config file {:?}: {}", self.guard.file_name, e);
-            },
+                error!(
+                    "Unable to write config file {:?}: {}",
+                    self.guard.file_name,
+                    e
+                );
+            }
         };
     }
 }
@@ -211,8 +210,8 @@ impl ConfigSettings {
 #[cfg(test)]
 mod tests {
     use super::ConfigFile;
-    use std::fs;
     use config_file_handler;
+    use std::fs;
     use std::path::PathBuf;
 
     #[test]
@@ -230,4 +229,3 @@ mod tests {
         let _ = unwrap!(ConfigFile::open_path(path));
     }
 }
-

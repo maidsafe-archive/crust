@@ -89,4 +89,3 @@ impl<UID: Uid> PubConnectionInfo<UID> {
         self.id
     }
 }
-
