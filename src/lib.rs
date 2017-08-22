@@ -69,8 +69,6 @@ extern crate tiny_keccak;
 extern crate winapi;
 
 #[cfg(test)]
-extern crate serde_json;
-#[cfg(test)]
 #[macro_use]
 mod tests;
 
@@ -79,9 +77,9 @@ mod common;
 mod service_discovery;
 mod nat;
 
-pub use common::{CrustUser, MSG_DROP_PRIORITY, Priority, Uid};
-pub use main::{Config, ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
-               PubConnectionInfo, Service, read_config_file};
+pub use common::{ConfigFile, ConfigSettings, CrustUser, MSG_DROP_PRIORITY, Priority, Uid};
+pub use main::{ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
+               PubConnectionInfo, Service};
 
 /// Used to receive events from a `Service`.
 pub type CrustEventSender<UID> = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event<UID>>;

@@ -19,8 +19,8 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, NameHash, Socket, State, Uid};
-use main::{ConnectionMap, CrustConfig, Event};
+use common::{ConfigFile, Core, NameHash, Socket, State, Uid};
+use main::{ConnectionMap, Event};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};
@@ -38,7 +38,7 @@ const LISTENER_BACKLOG: i32 = 100;
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    config: CrustConfig,
+    config: ConfigFile,
     event_tx: ::CrustEventSender<UID>,
     listener: TcpListener,
     name_hash: NameHash,
@@ -57,7 +57,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         our_uid: UID,
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
         mc: Arc<MappingContext>,
         our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
         token: Token,
@@ -119,7 +119,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         our_uid: UID,
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
         our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
         token: Token,
         event_tx: ::CrustEventSender<UID>,
@@ -231,7 +231,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use std::sync::mpsc;
     use std::time::Duration;
-    use tests::UniqueId;
+    use tests::{gen_config, UniqueId};
 
     type ConnectionListener = super::ConnectionListener<UniqueId>;
 
@@ -261,7 +261,7 @@ mod tests {
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
         let mc = Arc::new(unwrap!(MappingContext::new(), "Could not get MC"));
-        let config = Arc::new(Mutex::new(Default::default()));
+        let config = gen_config();
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
 
         let listeners_clone = listeners.clone();

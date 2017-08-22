@@ -20,9 +20,9 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
+use common::{BootstrapDenyReason, ConfigFile, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
              Socket, State, Uid};
-use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
+use main::{ActiveConnection, ConnectionMap, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use rand::{self, Rng};
@@ -67,7 +67,7 @@ impl<UID: Uid> Bootstrap<UID> {
         ext_reachability: ExternalReachability,
         our_uid: UID,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
         blacklist: HashSet<SocketAddr>,
         token: Token,
         service_discovery_token: Token,
@@ -75,9 +75,9 @@ impl<UID: Uid> Bootstrap<UID> {
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let mut cache = Cache::new(&unwrap!(config.lock()).cfg.bootstrap_cache_name)?;
+        let mut cache = Cache::new(&config.read().bootstrap_cache_name)?;
         peers.extend(cache.read_file());
-        peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
+        peers.extend(config.read().hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
         let bs_timeout = core.set_timeout(

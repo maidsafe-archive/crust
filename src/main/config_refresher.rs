@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, CrustUser, State, Uid};
-use main::{ActiveConnection, ConnectionMap, CrustConfig, read_config_file};
+use common::{ConfigFile, Core, CoreTimer, CrustUser, State, Uid};
+use main::{ActiveConnection, ConnectionMap};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use std::any::Any;
@@ -31,7 +31,7 @@ pub struct ConfigRefresher<UID: Uid> {
     timer: CoreTimer,
     timeout: Timeout,
     cm: ConnectionMap<UID>,
-    config: CrustConfig,
+    config: ConfigFile,
 }
 
 impl<UID: Uid> ConfigRefresher<UID> {
@@ -39,7 +39,7 @@ impl<UID: Uid> ConfigRefresher<UID> {
         core: &mut Core,
         token: Token,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
     ) -> ::Res<()> {
         trace!("Entered state ConfigRefresher");
 
@@ -78,23 +78,22 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
                 }
             };
 
-        let config = match read_config_file() {
-            Ok(cfg) => cfg,
+        match self.config.reload_and_check_modified() {
+            Ok(true) => (),
+            Ok(false) => return,
             Err(e) => {
                 debug!(
                     "Could not read Crust config (it's rescheduled to be read): {:?}",
                     e
                 );
-                return;
-            }
+            },
         };
 
+        let config = self.config.read();
         let whitelisted_node_ips = config.whitelisted_node_ips.clone();
         let whitelisted_client_ips = config.whitelisted_client_ips.clone();
 
-        if !unwrap!(self.config.lock()).check_for_refresh_and_reset_modified(config) ||
-            (whitelisted_node_ips.is_none() && whitelisted_client_ips.is_none())
-        {
+        if whitelisted_node_ips.is_none() && whitelisted_client_ips.is_none() {
             return;
         }
 

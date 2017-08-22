@@ -20,6 +20,7 @@ pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::socket::Socket;
 pub use self::state::State;
+pub use self::config::{ConfigFile, ConfigSettings, DevConfigSettings};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fmt;
@@ -80,3 +81,5 @@ mod error;
 mod message;
 mod socket;
 mod state;
+mod config;
+

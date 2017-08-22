@@ -15,12 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::Uid;
+use common::{ConfigFile, Uid};
+use config_file_handler;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use main::{Config, Event};
+use main::Event;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, Receiver};
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
@@ -55,10 +57,12 @@ pub fn get_event_sender() -> (::CrustEventSender<UniqueId>, Receiver<Event<Uniqu
     )
 }
 
-// Generate config with unique bootstrap cache name.
-pub fn gen_config() -> Config {
-    let mut config = Config::default();
-    config.bootstrap_cache_name = Some(gen_bootstrap_cache_name());
+// Generate config with unique file name and bootstrap cache name.
+pub fn gen_config() -> ConfigFile {
+    let file_name = gen_file_name();
+    unwrap!(config_file_handler::cleanup(&file_name));
+    let config = unwrap!(ConfigFile::open_path(file_name));
+    unwrap!(config.write()).bootstrap_cache_name = Some(gen_bootstrap_cache_name());
     config
 }
 
@@ -87,10 +91,20 @@ where
 }
 
 // Generate unique name for the bootstrap cache.
-fn gen_bootstrap_cache_name() -> String {
+fn gen_bootstrap_cache_name() -> PathBuf {
     static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
     format!(
         "test{}.bootstrap.cache",
         COUNTER.fetch_add(1, Ordering::Relaxed)
-    )
+    ).into()
 }
+
+// Generate unique name for the config file.
+fn gen_file_name() -> PathBuf {
+    static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+    format!(
+        "test{}.crust.config",
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    ).into()
+}
+

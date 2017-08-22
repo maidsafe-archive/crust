@@ -16,7 +16,6 @@
 // relating to use of the SAFE Network Software.
 
 use common::Uid;
-use main::Config;
 use mio::Token;
 use net2::TcpBuilder;
 use std::net::SocketAddr;
@@ -91,40 +90,3 @@ impl<UID: Uid> PubConnectionInfo<UID> {
     }
 }
 
-// ========================================================================================
-//                                     ConfigWrapper
-// ========================================================================================
-#[derive(Default)]
-pub struct ConfigWrapper {
-    pub cfg: Config,
-    pub is_modified_for_next_refresh: bool,
-}
-
-impl ConfigWrapper {
-    pub fn new(cfg: Config) -> Self {
-        Self {
-            cfg: cfg,
-            is_modified_for_next_refresh: false,
-        }
-    }
-
-    pub fn check_for_update_and_mark_modified(&mut self, new_cfg: Config) {
-        if self.cfg != new_cfg {
-            self.cfg = new_cfg;
-            self.is_modified_for_next_refresh = true;
-        }
-    }
-
-    /// Checks if `ActiveConnection` refresh is needed.
-    pub fn check_for_refresh_and_reset_modified(&mut self, new_cfg: Config) -> bool {
-        let should_refresh = if self.cfg != new_cfg {
-            self.cfg = new_cfg;
-            true
-        } else {
-            self.is_modified_for_next_refresh
-        };
-
-        self.is_modified_for_next_refresh = false;
-        should_refresh
-    }
-}
