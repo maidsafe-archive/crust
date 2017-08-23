@@ -79,8 +79,7 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
             };
 
         match self.config.reload_and_check_modified() {
-            Ok(true) => (),
-            Ok(false) => return,
+            Ok(_) => (),
             Err(e) => {
                 debug!(
                     "Could not read Crust config (it's rescheduled to be read): {:?}",
