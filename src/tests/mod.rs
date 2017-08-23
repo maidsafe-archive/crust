@@ -25,7 +25,7 @@ use main::{self, DevConfigSettings, Event};
 use mio;
 use rand;
 use std::collections::HashSet;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
 use std::thread;
@@ -34,7 +34,6 @@ use std::time::Duration;
 type Service = main::Service<UniqueId>;
 
 fn localhost(port: u16) -> SocketAddr {
-    use std::net::IpAddr;
     SocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port)
 }
 
@@ -464,4 +463,62 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     if let Ok(Event::LostPeer(..)) = event_rx1.try_recv() {
         panic!("peer lost unexpectedly");
     }
+}
+
+#[test]
+fn only_allow_whitelisted_peers() {
+    let localhost = unwrap!(IpAddr::from_str("127.0.0.1"));
+
+    // Create node to bootstrap to, with empty whitelist.
+
+    let config0 = gen_config();
+    unwrap!(config0.write()).whitelisted_client_ips = Some(HashSet::new());
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap!(Service::with_config(event_tx0, config0.clone(), rand::random()));
+
+    unwrap!(service0.start_listening_tcp());
+    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    unwrap!(service0.set_accept_bootstrap(true));
+
+
+    // We're not whitelisted. Bootstrapping should fail.
+
+    let config1 = gen_config();
+    unwrap!(config1.write()).hard_coded_contacts = vec![localhost_contact_info(port0)];
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
+
+    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
+    expect_event!(event_rx1, Event::BootstrapFailed);
+
+
+    // Add ourselves to the whitelist.
+
+    unwrap!(unwrap!(config0.write()).whitelisted_client_ips.as_mut()).insert(localhost);
+    thread::sleep(Duration::from_secs(31));
+
+
+    // We're whitelisted. Bootstrapping should now succeed.
+
+    let config2 = gen_config();
+    unwrap!(config2.write()).hard_coded_contacts = vec![localhost_contact_info(port0)];
+    let (event_tx2, event_rx2) = get_event_sender();
+    let mut service2 = unwrap!(Service::with_config(event_tx2, config2, rand::random()));
+
+    unwrap!(service2.start_bootstrap(HashSet::new(), CrustUser::Client));
+    let peer0 = expect_event!(event_rx2, Event::BootstrapConnect(peer0, _) => peer0);
+    let peer2 = expect_event!(event_rx0, Event::BootstrapAccept(peer2, _) => peer2);
+
+
+    // Remove ourselves again.
+
+    unwrap!(unwrap!(config0.write()).whitelisted_client_ips.as_mut()).remove(&localhost);
+
+
+    // We should get disconnected.
+
+    let peer0_dropped = expect_event!(event_rx2, Event::LostPeer(peer0) => peer0);
+    let peer2_dropped = expect_event!(event_rx0, Event::LostPeer(peer2) => peer2);
+    assert_eq!(peer0, peer0_dropped);
+    assert_eq!(peer2, peer2_dropped);
 }
