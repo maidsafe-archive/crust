@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::config::{ConfigFile, ConfigSettings, DevConfigSettings};
 pub use self::core::{Core, CoreMessage, CoreTimer, EventLoop, spawn_event_loop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
@@ -81,4 +80,3 @@ mod error;
 mod message;
 mod socket;
 mod state;
-mod config;

@@ -19,8 +19,8 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{ConfigFile, Core, NameHash, Socket, State, Uid};
-use main::{ConnectionMap, Event};
+use common::{Core, NameHash, Socket, State, Uid};
+use main::{ConfigFile, ConnectionMap, Event};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpListener;
 use nat::{MappedTcpSocket, MappingContext};

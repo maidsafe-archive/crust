@@ -20,8 +20,8 @@ pub mod utils;
 
 pub use self::utils::{UniqueId, gen_config, get_event_sender, timebomb};
 
-use common::{CrustUser, DevConfigSettings};
-use main::{self, Event};
+use common::CrustUser;
+use main::{self, DevConfigSettings, Event};
 use mio;
 use rand;
 use std::collections::HashSet;

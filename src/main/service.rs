@@ -15,9 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, ConfigFile, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability,
-             HASH_SIZE, NameHash, Priority, Uid};
-use main::{ActiveConnection, Bootstrap, ConfigRefresher, Connect, ConnectionId,
+use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
+             NameHash, Priority, Uid};
+use main::{ActiveConnection, Bootstrap, ConfigFile, ConfigRefresher, Connect, ConnectionId,
            ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustError, Event,
            PrivConnectionInfo, PubConnectionInfo};
 use mio::{Poll, Token};
@@ -561,10 +561,10 @@ fn gen_name_hash(network_name: &Option<String>) -> NameHash {
 #[cfg(test)]
 mod tests {
     use CrustError;
-    use common::{ConfigFile, CrustUser};
+    use common::CrustUser;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
-    use main::{self, Event};
+    use main::{self, ConfigFile, Event};
     use rand;
     use std::collections::{HashMap, hash_map};
     use std::sync::{Arc, Barrier, mpsc};

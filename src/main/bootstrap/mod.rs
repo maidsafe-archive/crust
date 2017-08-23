@@ -20,9 +20,9 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, ConfigFile, Core, CoreTimer, CrustUser, ExternalReachability,
-             NameHash, Socket, State, Uid};
-use main::{ActiveConnection, ConnectionMap, CrustError, Event};
+use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
+             Socket, State, Uid};
+use main::{ActiveConnection, ConfigFile, ConnectionMap, CrustError, Event};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use rand::{self, Rng};

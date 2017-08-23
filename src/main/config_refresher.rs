@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{ConfigFile, Core, CoreTimer, CrustUser, State, Uid};
-use main::{ActiveConnection, ConnectionMap};
+use common::{Core, CoreTimer, CrustUser, State, Uid};
+use main::{ActiveConnection, ConfigFile, ConnectionMap};
 use mio::{Poll, Token};
 use mio::timer::Timeout;
 use std::any::Any;

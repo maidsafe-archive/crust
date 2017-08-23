@@ -17,6 +17,7 @@
 
 pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
 pub use self::bootstrap::Bootstrap;
+pub use self::config::{ConfigFile, ConfigSettings, DevConfigSettings};
 pub use self::config_refresher::ConfigRefresher;
 pub use self::connect::Connect;
 pub use self::connection_candidate::ConnectionCandidate;
@@ -32,6 +33,7 @@ pub type ConnectionMap<UID> = Arc<Mutex<HashMap<UID, ConnectionId>>>;
 
 mod active_connection;
 mod bootstrap;
+mod config;
 mod config_refresher;
 mod connect;
 mod connection_candidate;
