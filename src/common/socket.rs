@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use common::{CommonError, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result};
+use common::{CommonError, FakePoll, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::{Evented, Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
@@ -84,7 +84,7 @@ impl Socket {
     //   - Err(error): there was an error while writing to the socket.
     pub fn write<T: Serialize>(
         &mut self,
-        poll: &Poll,
+        poll: &FakePoll,
         token: Token,
         msg: Option<(T, Priority)>,
     ) -> ::Res<bool> {
@@ -240,7 +240,7 @@ impl SockInner {
     //   - Err(error): there was an error while writing to the socket.
     fn write<T: Serialize>(
         &mut self,
-        poll: &Poll,
+        poll: &FakePoll,
         token: Token,
         msg: Option<(T, Priority)>,
     ) -> ::Res<bool> {
@@ -322,7 +322,7 @@ impl SockInner {
             Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
         };
 
-        poll.reregister(self, token, event_set, PollOpt::edge())?;
+        poll.reregister(self, token, event_set)?;
 
         Ok(done)
     }

@@ -67,6 +67,8 @@ extern crate rust_sodium;
 extern crate serde;
 extern crate tiny_keccak;
 extern crate notify;
+extern crate futures;
+extern crate tokio_core;
 
 #[cfg(windows)]
 extern crate winapi;

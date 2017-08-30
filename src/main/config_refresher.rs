@@ -15,10 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreMessage, CrustUser, Uid};
+use common::{Core, CoreMessage, CrustUser, FakePoll, Uid};
 use maidsafe_utilities;
 use main::{ActiveConnection, ConfigFile, ConnectionMap};
-use mio::Poll;
 use notify::{self, DebouncedEvent, Watcher};
 use std::sync::mpsc::{self, Sender};
 use std::time::Duration;
@@ -79,7 +78,7 @@ impl ConfigRefresher {
 
     fn refresh_config<UID: Uid>(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         config: ConfigFile,
         cm: &ConnectionMap<UID>,
     ) {

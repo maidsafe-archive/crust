@@ -15,12 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
-             NameHash, Priority, Uid};
+use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, FakePoll,
+             HASH_SIZE, NameHash, Priority, Uid};
 use main::{ActiveConnection, Bootstrap, ConfigFile, ConfigRefresher, Connect, ConnectionId,
            ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustError, Event,
            PrivConnectionInfo, PubConnectionInfo};
-use mio::{Poll, Token};
+use mio::Token;
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
@@ -539,7 +539,7 @@ impl<UID: Uid> Service<UID> {
 
     fn post<F>(&self, f: F) -> ::Res<()>
     where
-        F: FnOnce(&mut Core, &Poll) + Send + 'static,
+        F: FnOnce(&mut Core, &FakePoll) + Send + 'static,
     {
         Ok(self.el.send(CoreMessage::new(f))?)
     }

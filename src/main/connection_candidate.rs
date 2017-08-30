@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, Message, Priority, Socket, State, Uid};
+use common::{Core, FakePoll, Message, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap};
-use mio::{Poll, PollOpt, Ready, Token};
+use mio::{Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
+pub type Finish = Box<FnMut(&mut Core, &FakePoll, Token, Option<Socket>)>;
 
 pub struct ConnectionCandidate<UID: Uid> {
     token: Token,
@@ -39,7 +39,7 @@ pub struct ConnectionCandidate<UID: Uid> {
 impl<UID: Uid> ConnectionCandidate<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         token: Token,
         socket: Socket,
         cm: ConnectionMap<UID>,
@@ -63,7 +63,6 @@ impl<UID: Uid> ConnectionCandidate<UID> {
             &state.borrow().socket,
             token,
             Ready::writable() | Ready::error() | Ready::hup(),
-            PollOpt::edge(),
         )
         {
             state.borrow_mut().terminate(core, poll);
@@ -73,7 +72,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         Ok(token)
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut Core, poll: &FakePoll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, poll),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
@@ -81,7 +80,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, msg: Option<(Message<UID>, Priority)>) {
         let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
             Some(&ConnectionId { active_connection: Some(_), .. }) => true,
             _ => false,
@@ -100,7 +99,6 @@ impl<UID: Uid> ConnectionCandidate<UID> {
             &self.socket,
             self.token,
             Ready::readable() | Ready::error() | Ready::hup(),
-            PollOpt::edge(),
         )
         {
             debug!("Error in re-registeration: {:?}", e);
@@ -110,7 +108,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
     }
 
-    fn done(&mut self, core: &mut Core, poll: &Poll) {
+    fn done(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.remove_state(self.token);
         let token = self.token;
         let socket = mem::replace(&mut self.socket, Socket::default());
@@ -118,7 +116,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         (*self.finish)(core, poll, token, Some(socket));
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
@@ -126,7 +124,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
 }
 
 impl<UID: Uid> State for ConnectionCandidate<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             return self.handle_error(core, poll);
         }
@@ -139,9 +137,9 @@ impl<UID: Uid> State for ConnectionCandidate<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.remove_state(self.token);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
 
         let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.their_id) {

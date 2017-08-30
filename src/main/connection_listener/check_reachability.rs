@@ -15,9 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, Socket, State};
-use mio::{Poll, PollOpt, Ready, Token};
-use mio::timer::Timeout;
+use common::{Core, CoreTimer, FakePoll, Socket, State, Timeout};
+use mio::{Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -26,11 +25,11 @@ use std::time::Duration;
 
 const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 
-pub type Finish<T> = Box<FnMut(&mut Core, &Poll, Token, Result<T, ()>)>;
+pub type Finish<T> = Box<FnMut(&mut Core, &FakePoll, Token, Result<T, ()>)>;
 
 pub struct CheckReachability<T> {
     token: Token,
-    socket: Socket,
+    _socket: Socket,
     timeout: Timeout,
     finish: Finish<T>,
     t: T,
@@ -42,7 +41,7 @@ where
 {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         their_listener: SocketAddr,
         t: T,
         finish: Finish<T>,
@@ -54,7 +53,6 @@ where
             &socket,
             token,
             Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
         )?;
 
         let timeout = core.set_timeout(
@@ -64,7 +62,7 @@ where
 
         let state = CheckReachability {
             token: token,
-            socket: socket,
+            _socket: socket,
             timeout: timeout,
             finish: finish,
             t: t,
@@ -75,14 +73,14 @@ where
         Ok(token)
     }
 
-    fn handle_success(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_success(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate(core, poll);
         let token = self.token;
         let t = self.t.clone();
         (*self.finish)(core, poll, token, Ok(t));
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, Err(()));
@@ -93,7 +91,7 @@ impl<T> State for CheckReachability<T>
 where
     T: 'static + Clone,
 {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() || !kind.is_writable() {
             self.handle_error(core, poll);
         } else {
@@ -101,13 +99,13 @@ where
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &FakePoll, _timer_id: u8) {
         trace!(
             "Bootstrapper's external reachability check timed out to one of its given IP's. \
                 Erroring out for this remote endpoint."

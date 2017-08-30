@@ -17,8 +17,8 @@
 
 use common::{self, CoreMessage};
 use config_file_handler;
+use futures;
 use maidsafe_utilities::serialisation::SerialisationError;
-use mio;
 use nat;
 use notify;
 use service_discovery;
@@ -74,7 +74,7 @@ quick_error! {
             from()
         }
         /// CoreMsg send error
-        CoreMsgTx(e: mio::channel::SendError<CoreMessage>) {
+        CoreMsgTx(e: futures::sync::mpsc::SendError<CoreMessage>) {
             description(e.description())
             display("CoreMessage send error: {}", e)
             cause(e)

@@ -15,9 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket,
-             State, Uid};
-use mio::{Poll, PollOpt, Ready, Token};
+use common::{BootstrapDenyReason, Core, ExternalReachability, FakePoll, Message, NameHash,
+             Priority, Socket, State, Uid};
+use mio::{Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::mem;
@@ -26,7 +26,7 @@ use std::rc::Rc;
 
 pub type Finish<UID> = Box<
     FnMut(&mut Core,
-          &Poll,
+          &FakePoll,
           Token,
           Result<
         (Socket, SocketAddr, UID),
@@ -45,7 +45,7 @@ pub struct TryPeer<UID: Uid> {
 impl<UID: Uid> TryPeer<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         peer: SocketAddr,
         our_uid: UID,
         name_hash: NameHash,
@@ -59,7 +59,6 @@ impl<UID: Uid> TryPeer<UID> {
             &socket,
             token,
             Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
         )?;
 
         let state = TryPeer {
@@ -82,13 +81,13 @@ impl<UID: Uid> TryPeer<UID> {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll, None);
         }
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut Core, poll: &FakePoll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
@@ -105,7 +104,12 @@ impl<UID: Uid> TryPeer<UID> {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll, reason: Option<BootstrapDenyReason>) {
+    fn handle_error(
+        &mut self,
+        core: &mut Core,
+        poll: &FakePoll,
+        reason: Option<BootstrapDenyReason>,
+    ) {
         self.terminate(core, poll);
         let token = self.token;
         let peer = self.peer;
@@ -114,7 +118,7 @@ impl<UID: Uid> TryPeer<UID> {
 }
 
 impl<UID: Uid> State for TryPeer<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() {
             return self.handle_error(core, poll, None);
         } else if kind.is_writable() || kind.is_readable() {
@@ -135,9 +139,9 @@ impl<UID: Uid> State for TryPeer<UID> {
         self.handle_error(core, poll, None);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.remove_state(self.token);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
     }
 
     fn as_any(&mut self) -> &mut Any {
