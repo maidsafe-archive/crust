@@ -508,6 +508,7 @@ impl FakeEvented {
 }
 
 impl Evented for FakeEvented {
+    #[allow(unsafe_code)]
     fn register(
         &self,
         poll: &Poll,
@@ -524,15 +525,15 @@ impl Evented for FakeEvented {
 
     fn reregister(
         &self,
-        poll: &Poll,
-        token: Token,
-        interest: Ready,
-        opts: PollOpt,
+        _poll: &Poll,
+        _token: Token,
+        _interest: Ready,
+        _opts: PollOpt,
     ) -> io::Result<()> {
-        unsafe { (*unwrap!(self.ptr)).reregister(poll, token, interest, opts) }
+        panic!("tokio should never call this");
     }
 
-    fn deregister(&self, poll: &Poll) -> io::Result<()> {
-        unsafe { (*unwrap!(self.ptr)).deregister(poll) }
+    fn deregister(&self, _poll: &Poll) -> io::Result<()> {
+        panic!("tokio should never call this");
     }
 }
