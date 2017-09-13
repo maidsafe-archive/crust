@@ -25,7 +25,7 @@ use serde::ser::Serialize;
 use std::collections::{BTreeMap, VecDeque};
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use std::mem;
-use std::net::SocketAddr;
+use std::net::{Shutdown, SocketAddr};
 use std::time::Instant;
 
 /// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
@@ -351,5 +351,11 @@ impl Evented for SockInner {
 
     fn deregister(&self, poll: &Poll) -> io::Result<()> {
         self.stream.deregister(poll)
+    }
+}
+
+impl Drop for SockInner {
+    fn drop(&mut self) {
+        let _ = self.stream.shutdown(Shutdown::Both);
     }
 }
