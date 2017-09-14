@@ -17,10 +17,9 @@
 
 use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
              NameHash, Priority, Uid};
-use main::{ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
-           ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError,
-           Event, PrivConnectionInfo, PubConnectionInfo};
-use main::config_handler::{self, Config};
+use main::{ActiveConnection, Bootstrap, ConfigFile, ConfigRefresher, Connect, ConnectionId,
+           ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustError, Event,
+           PrivConnectionInfo, PubConnectionInfo};
 use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
@@ -35,7 +34,6 @@ use tiny_keccak::sha3_256;
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
 const LISTENER_TOKEN: Token = Token(2);
-const CONFIG_REFRESHER_TOKEN: Token = Token(3);
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -44,7 +42,7 @@ const DISABLE_NAT: bool = true;
 /// A structure representing all the Crust services. This is the main object through which crust is
 /// used.
 pub struct Service<UID: Uid> {
-    config: CrustConfig,
+    config: ConfigFile,
     cm: ConnectionMap<UID>,
     event_tx: ::CrustEventSender<UID>,
     mc: Arc<MappingContext>,
@@ -52,13 +50,14 @@ pub struct Service<UID: Uid> {
     name_hash: NameHash,
     our_uid: UID,
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    config_refresher: Option<ConfigRefresher>,
 }
 
 impl<UID: Uid> Service<UID> {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
     pub fn new(event_tx: ::CrustEventSender<UID>, our_uid: UID) -> ::Res<Self> {
-        Service::with_config(event_tx, config_handler::read_config_file()?, our_uid)
+        Service::with_config(event_tx, ConfigFile::open_default()?, our_uid)
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
@@ -66,30 +65,37 @@ impl<UID: Uid> Service<UID> {
     /// library.
     pub fn with_config(
         event_tx: ::CrustEventSender<UID>,
-        config: Config,
+        config: ConfigFile,
         our_uid: UID,
     ) -> ::Res<Self> {
         rust_sodium::init();
 
-        let name_hash = name_hash(&config.network_name);
+        let name_hash;
+        let mut mc;
+        {
+            let config_settings = config.read();
 
-        // Form our initial contact info
+            name_hash = gen_name_hash(&config_settings.network_name);
+
+            // Form our initial contact info
+            mc = MappingContext::new()?;
+            mc.add_peer_stuns(config_settings.hard_coded_contacts.iter().cloned());
+        };
+
         let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
-        let mut mc = MappingContext::new()?;
-        mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
-
         let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)))?;
         trace!("Event loop started");
 
-        let service = Service {
+        let mut service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
-            config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
+            config: config,
             event_tx: event_tx,
             mc: Arc::new(mc),
             el: el,
             name_hash: name_hash,
             our_uid: our_uid,
             our_listeners: our_listeners,
+            config_refresher: None,
         };
 
         service.start_config_refresher()?;
@@ -97,22 +103,17 @@ impl<UID: Uid> Service<UID> {
         Ok(service)
     }
 
-    fn start_config_refresher(&self) -> ::Res<()> {
-        let (tx, rx) = mpsc::channel();
-        let config = self.config.clone();
-        let cm = self.cm.clone();
-        self.post(move |core, _| {
-            if core.get_state(CONFIG_REFRESHER_TOKEN).is_none() {
-                let _ = tx.send(ConfigRefresher::start(
-                    core,
-                    CONFIG_REFRESHER_TOKEN,
-                    cm,
-                    config,
-                ));
-            }
-            let _ = tx.send(Ok(()));
-        })?;
-        rx.recv()?
+    fn start_config_refresher(&mut self) -> ::Res<()> {
+        if self.config_refresher.is_none() {
+            let (tx, rx) = mpsc::channel();
+            let config = self.config.clone();
+            let cm = self.cm.clone();
+            self.post(move |core, _| {
+                let _ = tx.send(ConfigRefresher::start(core, cm, config));
+            })?;
+            self.config_refresher = Some(rx.recv()??);
+        }
+        Ok(())
     }
 
     /// Allow (or disallow) peers from bootstrapping off us.
@@ -145,10 +146,9 @@ impl<UID: Uid> Service<UID> {
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
         let our_listeners = self.our_listeners.clone();
-        let port = unwrap!(self.config.lock())
-            .cfg
-            .service_discovery_port
-            .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+        let port = self.config.read().service_discovery_port.unwrap_or(
+            SERVICE_DISCOVERY_DEFAULT_PORT,
+        );
 
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
@@ -233,10 +233,10 @@ impl<UID: Uid> Service<UID> {
     pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
         match self.get_peer_socket_addr(peer_uid) {
             Ok(s) => {
-                let config = unwrap!(self.config.lock());
-                config.cfg.hard_coded_contacts.iter().any(|addr| {
-                    addr.ip() == s.ip()
-                })
+                let config = self.config.read();
+                config.hard_coded_contacts.iter().any(
+                    |addr| addr.ip() == s.ip(),
+                )
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -333,13 +333,8 @@ impl<UID: Uid> Service<UID> {
         let cm = self.cm.clone();
         let mc = self.mc.clone();
         let config = self.config.clone();
-        let port = unwrap!(self.config.lock())
-            .cfg
-            .tcp_acceptor_port
-            .unwrap_or(0);
-        let force_include_port = unwrap!(self.config.lock())
-            .cfg
-            .force_acceptor_port_in_ext_ep;
+        let port = self.config.read().tcp_acceptor_port.unwrap_or(0);
+        let force_include_port = self.config.read().force_acceptor_port_in_ext_ep;
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let our_listeners = self.our_listeners.clone();
@@ -404,8 +399,7 @@ impl<UID: Uid> Service<UID> {
         }
 
         {
-            let guard = unwrap!(self.config.lock());
-            if let Some(ref whitelisted_node_ips) = guard.cfg.whitelisted_node_ips {
+            if let Some(ref whitelisted_node_ips) = self.config.read().whitelisted_node_ips {
                 let their_direct = their_ci
                     .for_direct
                     .drain(..)
@@ -552,7 +546,7 @@ impl<UID: Uid> Service<UID> {
 }
 
 /// Returns a hash of the network name.
-fn name_hash(network_name: &Option<String>) -> NameHash {
+fn gen_name_hash(network_name: &Option<String>) -> NameHash {
     trace!("Network name: {:?}", network_name);
     match *network_name {
         Some(ref name) => sha3_256(name.as_bytes()),
@@ -566,7 +560,7 @@ mod tests {
     use common::CrustUser;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
-    use main::{self, Event};
+    use main::{self, ConfigFile, Event};
     use rand;
     use std::collections::{HashMap, hash_map};
     use std::sync::{Arc, Barrier, mpsc};
@@ -738,7 +732,7 @@ mod tests {
         impl TestNode {
             fn new(index: usize) -> (TestNode, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
-                let config = unwrap!(::main::config_handler::read_config_file());
+                let config = unwrap!(ConfigFile::open_default());
                 let mut service = unwrap!(Service::with_config(event_sender,
                                                                config,
                                                                rand::random()));

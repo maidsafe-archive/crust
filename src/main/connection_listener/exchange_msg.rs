@@ -18,8 +18,7 @@
 use super::check_reachability::CheckReachability;
 use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
              NameHash, Priority, Socket, State, Uid};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, CrustConfig, Event,
-           read_config_file};
+use main::{ActiveConnection, ConfigFile, ConnectionCandidate, ConnectionId, ConnectionMap, Event};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio::timer::Timeout;
 use nat::ip_addr_is_global;
@@ -36,7 +35,7 @@ pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    config: CrustConfig,
+    config: ConfigFile,
     event_tx: ::CrustEventSender<UID>,
     name_hash: NameHash,
     next_state: NextState<UID>,
@@ -59,7 +58,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         our_uid: UID,
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
         event_tx: ::CrustEventSender<UID>,
     ) -> ::Res<()> {
         let token = core.get_new_token();
@@ -76,12 +75,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
-        let require_reachability = unwrap!(config.lock()).cfg.dev.as_ref().map_or(
-            true,
-            |dev_cfg| {
-                !dev_cfg.disable_external_reachability_requirement
-            },
-        );
+        let require_reachability = config.read().dev.as_ref().map_or(true, |dev_cfg| {
+            !dev_cfg.disable_external_reachability_requirement
+        });
 
         let state = Rc::new(RefCell::new(Self {
             token: token,
@@ -243,20 +239,15 @@ impl<UID: Uid> ExchangeMsg<UID> {
             }
         };
 
-        let res = match peer_kind {
-            CrustUser::Node => {
-                unwrap!(self.config.lock())
-                    .cfg
-                    .whitelisted_node_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
-            }
-            CrustUser::Client => {
-                unwrap!(self.config.lock())
-                    .cfg
-                    .whitelisted_client_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
+        let res = {
+            let config = self.config.read();
+            let whitelist_opt = match peer_kind {
+                CrustUser::Node => config.whitelisted_node_ips.as_ref(),
+                CrustUser::Client => config.whitelisted_client_ips.as_ref(),
+            };
+            match whitelist_opt {
+                None => true,
+                Some(whitelist) => whitelist.contains(&peer_ip),
             }
         };
 
@@ -369,10 +360,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 
     fn try_update_crust_config(&self) {
-        match read_config_file() {
-            Ok(cfg) => unwrap!(self.config.lock()).check_for_update_and_mark_modified(cfg),
+        match self.config.reload() {
+            Ok(()) => (),
             Err(e) => debug!("Could not read Crust config file: {:?}", e),
-        }
+        };
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
