@@ -16,12 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 use super::check_reachability::CheckReachability;
-use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
-             NameHash, Priority, Socket, State, Uid};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, CrustConfig, Event,
-           read_config_file};
-use mio::{Poll, PollOpt, Ready, Token};
-use mio::timer::Timeout;
+use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, FakePoll,
+             Message, NameHash, Priority, Socket, State, Timeout, Uid};
+use main::{ActiveConnection, ConfigFile, ConnectionCandidate, ConnectionId, ConnectionMap, Event};
+use mio::{Ready, Token};
 use nat::ip_addr_is_global;
 use std::any::Any;
 use std::cell::RefCell;
@@ -36,7 +34,7 @@ pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    config: CrustConfig,
+    config: ConfigFile,
     event_tx: ::CrustEventSender<UID>,
     name_hash: NameHash,
     next_state: NextState<UID>,
@@ -52,20 +50,20 @@ pub struct ExchangeMsg<UID: Uid> {
 impl<UID: Uid> ExchangeMsg<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         timeout_sec: Option<u64>,
         socket: Socket,
         accept_bootstrap: bool,
         our_uid: UID,
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
         event_tx: ::CrustEventSender<UID>,
     ) -> ::Res<()> {
         let token = core.get_new_token();
 
         let kind = Ready::error() | Ready::hup() | Ready::readable();
-        poll.register(&socket, token, kind, PollOpt::edge())?;
+        poll.register(&socket, token, kind)?;
 
         let timeout = core.set_timeout(
             Duration::from_secs(
@@ -76,12 +74,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
-        let require_reachability = unwrap!(config.lock()).cfg.dev.as_ref().map_or(
-            true,
-            |dev_cfg| {
-                !dev_cfg.disable_external_reachability_requirement
-            },
-        );
+        let require_reachability = config.read().dev.as_ref().map_or(true, |dev_cfg| {
+            !dev_cfg.disable_external_reachability_requirement
+        });
 
         let state = Rc::new(RefCell::new(Self {
             token: token,
@@ -106,7 +101,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         Ok(())
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut Core, poll: &FakePoll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::BootstrapRequest(their_uid, name_hash, ext_reachability))) => {
                 if !self.accept_bootstrap {
@@ -149,7 +144,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     fn handle_bootstrap_req(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         their_uid: UID,
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
@@ -188,7 +183,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 })
                 {
                     let self_weak = self.self_weak.clone();
-                    let finish = move |core: &mut Core, poll: &Poll, child, res| {
+                    let finish = move |core: &mut Core, poll: &FakePoll, child, res| {
                         if let Some(self_rc) = self_weak.upgrade() {
                             self_rc.borrow_mut().handle_check_reachability(
                                 core,
@@ -243,20 +238,15 @@ impl<UID: Uid> ExchangeMsg<UID> {
             }
         };
 
-        let res = match peer_kind {
-            CrustUser::Node => {
-                unwrap!(self.config.lock())
-                    .cfg
-                    .whitelisted_node_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
-            }
-            CrustUser::Client => {
-                unwrap!(self.config.lock())
-                    .cfg
-                    .whitelisted_client_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
+        let res = {
+            let config = self.config.read();
+            let whitelist_opt = match peer_kind {
+                CrustUser::Node => config.whitelisted_node_ips.as_ref(),
+                CrustUser::Client => config.whitelisted_client_ips.as_ref(),
+            };
+            match whitelist_opt {
+                None => true,
+                Some(whitelist) => whitelist.contains(&peer_ip),
             }
         };
 
@@ -270,7 +260,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     fn handle_check_reachability(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         child: Token,
         res: Result<UID, ()>,
     ) {
@@ -292,7 +282,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     fn send_bootstrap_grant(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         their_uid: UID,
         peer_kind: CrustUser,
     ) {
@@ -306,7 +296,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     fn handle_connect(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         their_uid: UID,
         name_hash: NameHash,
     ) {
@@ -330,7 +320,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         self.write(core, poll, Some((Message::Connect(our_uid, name_hash), 0)));
     }
 
-    fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &FakePoll) {
         self.next_state = NextState::None;
         if let Ok(peer_addr) = self.socket.peer_addr() {
             self.write(core, poll, Some((Message::EchoAddrResp(peer_addr), 0)));
@@ -369,13 +359,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 
     fn try_update_crust_config(&self) {
-        match read_config_file() {
-            Ok(cfg) => unwrap!(self.config.lock()).check_for_update_and_mark_modified(cfg),
+        match self.config.reload() {
+            Ok(()) => (),
             Err(e) => debug!("Could not read Crust config file: {:?}", e),
-        }
+        };
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, msg: Option<(Message<UID>, Priority)>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_uid, _) = self.next_state {
             let terminate = match unwrap!(self.cm.lock()).get(&their_uid).cloned() {
@@ -397,7 +387,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn done(&mut self, core: &mut Core, poll: &Poll) {
+    fn done(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.remove_state(self.token);
         let _ = core.cancel_timeout(&self.timeout);
 
@@ -423,7 +413,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             NextState::ConnectionCandidate(their_uid) => {
                 let cm = self.cm.clone();
                 let handler =
-                    move |core: &mut Core, poll: &Poll, token, res| if let Some(socket) = res {
+                    move |core: &mut Core, poll: &FakePoll, token, res| if let Some(socket) = res {
                         ActiveConnection::start(
                             core,
                             poll,
@@ -456,7 +446,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn terminate_childern(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate_childern(&mut self, core: &mut Core, poll: &FakePoll) {
         for child in self.reachability_children.drain() {
             core.get_state(child).map_or((), |c| {
                 c.borrow_mut().terminate(core, poll)
@@ -466,7 +456,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 }
 
 impl<UID: Uid> State for ExchangeMsg<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.terminate(core, poll);
         } else {
@@ -479,7 +469,7 @@ impl<UID: Uid> State for ExchangeMsg<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate_childern(core, poll);
         let _ = core.remove_state(self.token);
 
@@ -503,10 +493,10 @@ impl<UID: Uid> State for ExchangeMsg<UID> {
         }
 
         let _ = core.cancel_timeout(&self.timeout);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &FakePoll, _timer_id: u8) {
         debug!("Exchange message timed out. Terminating direct connection request.");
         self.terminate(core, poll)
     }

@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::Core;
-use mio::{Poll, Ready};
+use common::{Core, FakePoll};
+use mio::Ready;
 use std::any::Any;
 
 pub type Priority = u8;
@@ -24,11 +24,11 @@ pub type Priority = u8;
 pub trait State {
     fn as_any(&mut self) -> &mut Any;
 
-    fn ready(&mut self, _core: &mut Core, _poll: &Poll, _kind: Ready) {}
+    fn ready(&mut self, _core: &mut Core, _poll: &FakePoll, _kind: Ready) {}
 
-    fn terminate(&mut self, _core: &mut Core, _poll: &Poll) {}
+    fn terminate(&mut self, _core: &mut Core, _poll: &FakePoll) {}
 
-    fn timeout(&mut self, _core: &mut Core, _poll: &Poll, _timer_id: u8) {}
+    fn timeout(&mut self, _core: &mut Core, _poll: &FakePoll, _timer_id: u8) {}
 
-    fn write(&mut self, _core: &mut Core, _poll: &Poll, _data: Vec<u8>, _priority: Priority) {}
+    fn write(&mut self, _core: &mut Core, _poll: &FakePoll, _data: Vec<u8>, _priority: Priority) {}
 }

@@ -20,11 +20,10 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
-             Socket, State, Uid};
-use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
-use mio::{Poll, Token};
-use mio::timer::Timeout;
+use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, FakePoll,
+             NameHash, Socket, State, Timeout, Uid};
+use main::{ActiveConnection, ConfigFile, ConnectionMap, CrustError, Event};
+use mio::Token;
 use rand::{self, Rng};
 use service_discovery::ServiceDiscovery;
 use std::any::Any;
@@ -62,12 +61,12 @@ pub struct Bootstrap<UID: Uid> {
 impl<UID: Uid> Bootstrap<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
         our_uid: UID,
         cm: ConnectionMap<UID>,
-        config: CrustConfig,
+        config: ConfigFile,
         blacklist: HashSet<SocketAddr>,
         token: Token,
         service_discovery_token: Token,
@@ -75,9 +74,9 @@ impl<UID: Uid> Bootstrap<UID> {
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let mut cache = Cache::new(&unwrap!(config.lock()).cfg.bootstrap_cache_name)?;
+        let mut cache = Cache::new(&config.read().bootstrap_cache_name)?;
         peers.extend(cache.read_file());
-        peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
+        peers.extend(config.read().hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
         let bs_timeout = core.set_timeout(
@@ -126,7 +125,7 @@ impl<UID: Uid> Bootstrap<UID> {
         Ok(())
     }
 
-    fn begin_bootstrap(&mut self, core: &mut Core, poll: &Poll) {
+    fn begin_bootstrap(&mut self, core: &mut Core, poll: &FakePoll) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
         peers.retain(|addr| !self.blacklist.contains(addr));
         if peers.is_empty() {
@@ -137,10 +136,10 @@ impl<UID: Uid> Bootstrap<UID> {
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
-            let finish = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-                self_weak.upgrade()
-            {
-                self_rc.borrow_mut().handle_result(core, poll, child, res)
+            let finish = move |core: &mut Core, poll: &FakePoll, child, res| {
+                if let Some(self_rc) = self_weak.upgrade() {
+                    self_rc.borrow_mut().handle_result(core, poll, child, res)
+                }
             };
 
             if let Ok(child) = TryPeer::start(
@@ -163,7 +162,7 @@ impl<UID: Uid> Bootstrap<UID> {
     fn handle_result(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         child: Token,
         res: Result<(Socket, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
     ) {
@@ -223,7 +222,7 @@ impl<UID: Uid> Bootstrap<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn maybe_terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         if self.children.is_empty() {
             error!("Bootstrapper has no active children left - bootstrap has failed");
             self.terminate(core, poll);
@@ -231,7 +230,7 @@ impl<UID: Uid> Bootstrap<UID> {
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut Core, poll: &FakePoll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -244,7 +243,7 @@ impl<UID: Uid> Bootstrap<UID> {
 }
 
 impl<UID: Uid> State for Bootstrap<UID> {
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &FakePoll, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -259,7 +258,7 @@ impl<UID: Uid> State for Bootstrap<UID> {
         self.begin_bootstrap(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate_children(core, poll);
         if let Some(sd_meta) = self.sd_meta.take() {
             let _ = core.cancel_timeout(&sd_meta.timeout);

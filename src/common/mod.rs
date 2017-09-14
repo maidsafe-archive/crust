@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::core::{Core, CoreMessage, CoreTimer, EventLoop, spawn_event_loop};
+pub use self::core::{Core, CoreMessage, CoreTimer, EventLoop, FakePoll, Timeout, spawn_event_loop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::socket::Socket;

@@ -18,12 +18,11 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, CrustUser, NameHash, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, FakePoll, NameHash, Socket, State, Timeout, Uid};
 use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event,
            PrivConnectionInfo, PubConnectionInfo};
-use mio::{Poll, PollOpt, Ready, Token};
+use mio::{Ready, Token};
 use mio::tcp::{TcpListener, TcpStream};
-use mio::timer::Timeout;
 use nat;
 use std::any::Any;
 use std::cell::RefCell;
@@ -49,7 +48,7 @@ pub struct Connect<UID: Uid> {
 impl<UID: Uid> Connect<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         our_ci: PrivConnectionInfo<UID>,
         their_ci: PubConnectionInfo<UID>,
         cm: ConnectionMap<UID>,
@@ -98,7 +97,6 @@ impl<UID: Uid> Connect<UID> {
                     &listener,
                     token,
                     Ready::readable() | Ready::error() | Ready::hup(),
-                    PollOpt::edge(),
                 )?;
                 state.borrow_mut().listener = Some(listener);
                 sockets.extend(
@@ -121,9 +119,9 @@ impl<UID: Uid> Connect<UID> {
         Ok(())
     }
 
-    fn exchange_msg(&mut self, core: &mut Core, poll: &Poll, socket: Socket) {
+    fn exchange_msg(&mut self, core: &mut Core, poll: &FakePoll, socket: Socket) {
         let self_weak = self.self_weak.clone();
-        let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
+        let handler = move |core: &mut Core, poll: &FakePoll, child, res| if let Some(self_rc) =
             self_weak.upgrade()
         {
             self_rc.borrow_mut().handle_exchange_msg(
@@ -153,22 +151,22 @@ impl<UID: Uid> Connect<UID> {
     fn handle_exchange_msg(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         child: Token,
         res: Option<Socket>,
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
             let self_weak = self.self_weak.clone();
-            let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-                self_weak.upgrade()
-            {
-                self_rc.borrow_mut().handle_connection_candidate(
-                    core,
-                    poll,
-                    child,
-                    res,
-                );
+            let handler = move |core: &mut Core, poll: &FakePoll, child, res| {
+                if let Some(self_rc) = self_weak.upgrade() {
+                    self_rc.borrow_mut().handle_connection_candidate(
+                        core,
+                        poll,
+                        child,
+                        res,
+                    );
+                }
             };
 
             if let Ok(child) = ConnectionCandidate::start(
@@ -191,7 +189,7 @@ impl<UID: Uid> Connect<UID> {
     fn handle_connection_candidate(
         &mut self,
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         child: Token,
         res: Option<Socket>,
     ) {
@@ -215,13 +213,13 @@ impl<UID: Uid> Connect<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn maybe_terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         if self.children.is_empty() {
             self.terminate(core, poll);
         }
     }
 
-    fn accept(&mut self, core: &mut Core, poll: &Poll) {
+    fn accept(&mut self, core: &mut Core, poll: &FakePoll) {
         loop {
             match unwrap!(self.listener.as_ref()).accept() {
                 Ok((socket, _)) => self.exchange_msg(core, poll, Socket::wrap(socket)),
@@ -230,7 +228,7 @@ impl<UID: Uid> Connect<UID> {
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut Core, poll: &FakePoll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -243,23 +241,21 @@ impl<UID: Uid> Connect<UID> {
 }
 
 impl<UID: Uid> State for Connect<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if !kind.is_error() && !kind.is_hup() && kind.is_readable() {
             self.accept(core, poll);
         }
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &FakePoll, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate_children(core, poll);
 
-        if let Some(listener) = self.listener.take() {
-            let _ = poll.deregister(&listener);
-        }
+        let _ = poll.deregister(self.token);
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
 

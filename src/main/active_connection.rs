@@ -15,10 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, CoreTimer, CrustUser, Message, Priority, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, FakePoll, Message, Priority, Socket, State, Timeout, Uid};
 use main::{ConnectionId, ConnectionMap, Event};
-use mio::{Poll, Ready, Token};
-use mio::timer::Timeout;
+use mio::{Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -50,7 +49,7 @@ pub struct ActiveConnection<UID: Uid> {
 impl<UID: Uid> ActiveConnection<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         token: Token,
         socket: Socket,
         cm: ConnectionMap<UID>,
@@ -76,7 +75,7 @@ impl<UID: Uid> ActiveConnection<UID> {
                     e,
                     their_id
                 );
-                let _ = poll.deregister(&socket);
+                let _ = poll.deregister(token);
                 let _ = event_tx.send(Event::LostPeer(their_id));
                 // TODO See if this plays well with ConnectionMap<UID> manipulation below
                 return;
@@ -117,7 +116,7 @@ impl<UID: Uid> ActiveConnection<UID> {
         state_mut.read(core, poll);
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut Core, poll: &FakePoll) {
         loop {
             match self.socket.read::<Message<UID>>() {
                 Ok(Some(Message::Data(data))) => {
@@ -162,21 +161,21 @@ impl<UID: Uid> ActiveConnection<UID> {
         self.their_role
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, msg: Option<(Message<UID>, Priority)>) {
         if let Err(e) = self.socket.write(poll, self.token, msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
+    fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &FakePoll) {
         if let Err(e) = self.heartbeat.reset_receive(core) {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
+    fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &FakePoll) {
         if let Err(e) = self.heartbeat.reset_send(core) {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
@@ -185,7 +184,7 @@ impl<UID: Uid> ActiveConnection<UID> {
 }
 
 impl<UID: Uid> State for ActiveConnection<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             trace!(
                 "{:?} Terminating connection to peer: {:?}. \
@@ -206,14 +205,14 @@ impl<UID: Uid> State for ActiveConnection<UID> {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, data: Vec<u8>, priority: Priority) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, data: Vec<u8>, priority: Priority) {
         self.write(core, poll, Some((Message::Data(data), priority)));
         self.reset_send_heartbeat(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         self.heartbeat.terminate(core);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
         let _ = core.remove_state(self.token);
 
         {
@@ -234,7 +233,7 @@ impl<UID: Uid> State for ActiveConnection<UID> {
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
+    fn timeout(&mut self, core: &mut Core, poll: &FakePoll, timer_id: u8) {
         match self.heartbeat.timeout(core, timer_id) {
             HeartbeatAction::Send => self.write(core, poll, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {

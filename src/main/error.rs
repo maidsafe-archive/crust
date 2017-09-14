@@ -17,9 +17,10 @@
 
 use common::{self, CoreMessage};
 use config_file_handler;
+use futures;
 use maidsafe_utilities::serialisation::SerialisationError;
-use mio;
 use nat;
+use notify;
 use service_discovery;
 use std::io;
 use std::sync::mpsc;
@@ -73,7 +74,7 @@ quick_error! {
             from()
         }
         /// CoreMsg send error
-        CoreMsgTx(e: mio::channel::SendError<CoreMessage>) {
+        CoreMsgTx(e: futures::sync::mpsc::SendError<CoreMessage>) {
             description(e.description())
             display("CoreMessage send error: {}", e)
             cause(e)
@@ -99,6 +100,13 @@ quick_error! {
         ListenerNotIntialised {
             description("Listener is not initialised yet")
             display("Listener is not initialised yet")
+        }
+        /// File system notifications error
+        Notify(e: notify::Error) {
+            description("File system notification error")
+            display("File system notification error: {}", e)
+            cause(e)
+            from()
         }
     }
 }

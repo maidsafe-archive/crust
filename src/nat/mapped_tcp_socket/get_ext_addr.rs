@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, Message, Priority, Socket, State, Uid};
-use mio::{Poll, PollOpt, Ready, Token};
+use common::{Core, FakePoll, Message, Priority, Socket, State, Uid};
+use mio::{Ready, Token};
 use mio::tcp::TcpStream;
 use nat::{NatError, util};
 use std::any::Any;
@@ -24,7 +24,7 @@ use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Result<SocketAddr, ()>)>;
+pub type Finish = Box<FnMut(&mut Core, &FakePoll, Token, Result<SocketAddr, ()>)>;
 
 pub struct GetExtAddr<UID: Uid> {
     token: Token,
@@ -36,7 +36,7 @@ pub struct GetExtAddr<UID: Uid> {
 impl<UID: Uid> GetExtAddr<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         local_addr: SocketAddr,
         peer_stun: &SocketAddr,
         finish: Finish,
@@ -59,7 +59,6 @@ impl<UID: Uid> GetExtAddr<UID> {
             &state.socket,
             token,
             Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
         )?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -67,13 +66,13 @@ impl<UID: Uid> GetExtAddr<UID> {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
+    fn receive_response(&mut self, core: &mut Core, poll: &FakePoll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);
@@ -85,7 +84,7 @@ impl<UID: Uid> GetExtAddr<UID> {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, Err(()));
@@ -93,7 +92,7 @@ impl<UID: Uid> GetExtAddr<UID> {
 }
 
 impl<UID: Uid> State for GetExtAddr<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.handle_error(core, poll);
         } else {
@@ -107,9 +106,9 @@ impl<UID: Uid> State for GetExtAddr<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.remove_state(self.token);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
     }
 
     fn as_any(&mut self) -> &mut Any {

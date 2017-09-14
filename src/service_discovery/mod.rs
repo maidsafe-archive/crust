@@ -19,9 +19,9 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, State};
+use common::{Core, FakePoll, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use mio::{Poll, PollOpt, Ready, Token};
+use mio::{Ready, Token};
 use mio::udp::UdpSocket;
 use rand;
 use std::any::Any;
@@ -57,7 +57,7 @@ pub struct ServiceDiscovery {
 impl ServiceDiscovery {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
         token: Token,
         port: u16,
@@ -85,7 +85,6 @@ impl ServiceDiscovery {
             &service_discovery.socket,
             token,
             Ready::error() | Ready::hup() | Ready::readable(),
-            PollOpt::edge(),
         )?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(service_discovery)));
@@ -110,7 +109,7 @@ impl ServiceDiscovery {
         self.observers.push(obs);
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut Core, poll: &FakePoll) {
         let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
             Ok(Some((bytes_rxd, peer_addr))) => (bytes_rxd, peer_addr),
             Ok(None) => return,
@@ -145,14 +144,14 @@ impl ServiceDiscovery {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll) {
         if let Err(e) = self.write_impl(poll) {
             debug!("Error in ServiceDiscovery write: {:?}", e);
             self.terminate(core, poll);
         }
     }
 
-    fn write_impl(&mut self, poll: &Poll) -> Result<(), ServiceDiscoveryError> {
+    fn write_impl(&mut self, poll: &FakePoll) -> Result<(), ServiceDiscoveryError> {
         let our_current_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
         let resp = DiscoveryMsg::Response(our_current_listeners);
 
@@ -177,17 +176,12 @@ impl ServiceDiscovery {
             Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
         };
 
-        Ok(poll.reregister(
-            &self.socket,
-            self.token,
-            kind,
-            PollOpt::edge(),
-        )?)
+        Ok(poll.reregister(&self.socket, self.token, kind)?)
     }
 }
 
 impl State for ServiceDiscovery {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.terminate(core, poll);
         } else {
@@ -200,8 +194,8 @@ impl State for ServiceDiscovery {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
-        let _ = poll.deregister(&self.socket);
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
+        let _ = poll.deregister(self.token);
         let _ = core.remove_state(self.token);
     }
 

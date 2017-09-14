@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use common::{Core, Message, NameHash, Priority, Socket, State, Uid};
+use common::{Core, FakePoll, Message, NameHash, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap};
-use mio::{Poll, PollOpt, Ready, Token};
+use mio::{Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
+pub type Finish = Box<FnMut(&mut Core, &FakePoll, Token, Option<Socket>)>;
 
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
@@ -39,7 +39,7 @@ pub struct ExchangeMsg<UID: Uid> {
 impl<UID: Uid> ExchangeMsg<UID> {
     pub fn start(
         core: &mut Core,
-        poll: &Poll,
+        poll: &FakePoll,
         socket: Socket,
         our_id: UID,
         expected_id: UID,
@@ -53,7 +53,6 @@ impl<UID: Uid> ExchangeMsg<UID> {
             &socket,
             token,
             Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
         )?;
 
         {
@@ -87,13 +86,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core, poll: &FakePoll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(poll, self.token, msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
+    fn receive_response(&mut self, core: &mut Core, poll: &FakePoll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::Connect(their_uid, name_hash))) => {
                 if their_uid != self.expected_id || name_hash != self.expected_nh {
@@ -110,7 +109,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut Core, poll: &FakePoll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
@@ -118,7 +117,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 }
 
 impl<UID: Uid> State for ExchangeMsg<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut Core, poll: &FakePoll, kind: Ready) {
         if kind.is_error() || kind.is_hup() {
             self.handle_error(core, poll);
         } else {
@@ -132,9 +131,9 @@ impl<UID: Uid> State for ExchangeMsg<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core, poll: &FakePoll) {
         let _ = core.remove_state(self.token);
-        let _ = poll.deregister(&self.socket);
+        let _ = poll.deregister(self.token);
 
         let mut guard = unwrap!(self.cm.lock());
         if let Entry::Occupied(mut oe) = guard.entry(self.expected_id) {
