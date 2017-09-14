@@ -18,6 +18,7 @@
 use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
@@ -32,7 +33,7 @@ impl Cache {
         Ok(())
     }
 
-    pub fn new(name: &Option<String>) -> ::Res<Self> {
+    pub fn new(name: &Option<PathBuf>) -> ::Res<Self> {
         let name = if let Some(name) = name.clone() {
             OsString::from(name)
         } else {

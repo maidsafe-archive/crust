@@ -45,7 +45,7 @@ extern crate serde_json;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
-use crust::{Config, ConnectionInfoResult, Uid};
+use crust::{ConfigFile, ConnectionInfoResult, Uid};
 use rand::{Rand, Rng};
 use std::cmp;
 use std::collections::{BTreeMap, HashMap};
@@ -237,12 +237,10 @@ fn main() {
         crust_event_category,
         category_tx,
     );
-    // TODO {{{
-    // let mut config = unwrap!(::crust::read_config_file());
-    let mut config = Config::default();
-    // }}}
 
-    config.service_discovery_port = if matches.is_present("discovery-port") {
+    let config = unwrap!(ConfigFile::open_default());
+
+    unwrap!(config.write()).service_discovery_port = if matches.is_present("discovery-port") {
         Some(unwrap!(
             unwrap!(
                 matches.value_of("discovery-port"),
