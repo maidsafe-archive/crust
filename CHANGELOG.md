@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.28.1]
+- Call shutdown() on sockets before dropping them because this fixes a bug under windows.
+
 ## [0.28.0]
 - Use rust 1.19 stable / 2017-07-20 nightly
 - rustfmt 0.9.0 and clippy-0.0.144
