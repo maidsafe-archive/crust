@@ -10,9 +10,6 @@ rust:
   - 1.19.0
   - nightly-2017-07-20
 sudo: false
-branches:
-  only:
-    - master
 cache:
   cargo: true
 before_script:
