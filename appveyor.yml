@@ -4,10 +4,6 @@ environment:
   matrix:
     - RUST_TOOLCHAIN: 1.19.0
 
-branches:
-  only:
-    - master
-
 cache:
   - '%USERPROFILE%\.cargo'
   - '%APPVEYOR_BUILD_FOLDER%\target'
