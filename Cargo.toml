@@ -35,3 +35,7 @@ net-literals = "0.1"
 future-utils = "*"
 igd = "*"
 
+[[example]]
+name = "connect"
+path = "examples/connect.rs"
+

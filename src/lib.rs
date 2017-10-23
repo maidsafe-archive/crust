@@ -52,6 +52,7 @@ mod tests;
 pub use config::ConfigFile;
 pub use service::Service;
 pub use error::CrustError;
-pub use net::{Uid, PrivConnectionInfo, PubConnectionInfo};
 pub use common::CrustUser;
+pub use net::{PrivConnectionInfo, PubConnectionInfo};
+pub use net::Uid;
 
