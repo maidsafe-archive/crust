@@ -41,12 +41,13 @@ impl ConfigFile {
 
         let (tx, rx) = std::sync::mpsc::channel();
         let mut watcher = notify::watcher(tx, Duration::from_secs(1))?;
+
+        let (config_wrapper, real_path) = ConfigWrapper::open(file_name)?;
         watcher.watch(
-            &file_name,
+            &real_path,
             notify::RecursiveMode::NonRecursive,
         )?;
 
-        let config_wrapper = ConfigWrapper::open(file_name)?;
         let inner = Arc::new(RwLock::new(config_wrapper));
         let weak = Arc::downgrade(&inner);
         let joiner = thread::named(thread_name, move || {
@@ -230,13 +231,15 @@ struct ConfigWrapper {
 }
 
 impl ConfigWrapper {
-    pub fn open(file_name: PathBuf) -> Result<ConfigWrapper, CrustError> {
-        let config = ConfigSettings::open(&file_name)?;
-        Ok(ConfigWrapper {
+    /// Open the file and turn it into a `ConfigWrapper`. The returned `PathBuf` is full path to
+    /// the file.
+    pub fn open(file_name: PathBuf) -> Result<(ConfigWrapper, PathBuf), CrustError> {
+        let (config, path) = ConfigSettings::open(&file_name)?;
+        Ok((ConfigWrapper {
             cfg: config,
             file_name: file_name,
             observers: Vec::new(),
-        })
+        }, path))
     }
 
     pub fn reload(&mut self) -> Result<(), CrustError> {
@@ -312,11 +315,12 @@ impl Default for ConfigSettings {
 }
 
 impl ConfigSettings {
-    /// Open the given file name and read settings.
-    pub fn open(file_name: &Path) -> Result<ConfigSettings, CrustError> {
+    /// Open and deserialize the file. The returned `PathBuf` is full path to the file.
+    pub fn open(file_name: &Path) -> Result<(ConfigSettings, PathBuf), CrustError> {
         let file_handler = FileHandler::new(file_name, false)?;
         let cfg = file_handler.read_file()?;
-        Ok(cfg)
+        let path = file_handler.path().to_owned();
+        Ok((cfg, path))
     }
 }
 
@@ -330,9 +334,18 @@ mod tests {
         let sample_name = "sample.config";
 
         let mut source = PathBuf::from("installer");
-        source.push(sample_name);
+        let mut dest = PathBuf::from("target/debug/deps");
 
-        let path = PathBuf::from(source);
-        let _ = unwrap!(ConfigFile::open_path(path));
+        let mut target_dir = dest.clone();
+        target_dir.push(&source);
+        unwrap!(fs::create_dir_all(&target_dir));
+
+        source.push(sample_name);
+        dest.push(sample_name);
+
+        info!("copying {:?} => {:?}", source, dest);
+        unwrap!(fs::copy(&source, &dest));
+
+        let _ = unwrap!(ConfigFile::open_path(source));
     }
 }
