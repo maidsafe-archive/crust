@@ -323,8 +323,6 @@ impl ConfigSettings {
 #[cfg(test)]
 mod tests {
     use super::ConfigFile;
-    use config_file_handler;
-    use std::fs;
     use std::path::PathBuf;
 
     #[test]

@@ -288,7 +288,6 @@ impl Future for SocketTask {
 #[cfg(test)]
 mod test {
     use super::*;
-    use priv_prelude::*;
 
     use env_logger;
     use tokio_core::reactor::Core;

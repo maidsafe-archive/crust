@@ -17,8 +17,6 @@
 
 use maidsafe_utilities::serialisation::SerialisationError;
 use net::peer::PeerMessage;
-use net::peer::connect::BootstrapDenyReason;
-use util;
 use priv_prelude::*;
 
 #[cfg(not(test))]

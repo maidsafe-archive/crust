@@ -17,11 +17,8 @@
 
 use priv_prelude::*;
 
-use std::net::{SocketAddrV4, Ipv4Addr};
-use std::time::Duration;
 use std::thread;
 use igd::{self, PortMappingProtocol, SearchError, AddAnyPortError};
-use futures::{Async, Future};
 use futures::sync::oneshot;
 
 #[derive(Debug)]

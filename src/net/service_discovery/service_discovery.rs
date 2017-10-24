@@ -26,7 +26,7 @@ pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 /// Advertises our current set of connectable listening addresses on the local network.
 pub struct ServiceDiscovery {
     port: u16,
-    drop_tx: DropNotify,
+    _drop_tx: DropNotify,
 }
 
 impl ServiceDiscovery {
@@ -57,7 +57,7 @@ impl ServiceDiscovery {
 
         Ok(ServiceDiscovery {
             port: actual_port,
-            drop_tx,
+            _drop_tx: drop_tx,
         })
     }
 
@@ -69,7 +69,6 @@ impl ServiceDiscovery {
 #[cfg(test)]
 mod test {
     use super::*;
-    use priv_prelude::*;
     use tokio_core::reactor::Core;
     use futures::sync::mpsc;
     use env_logger;

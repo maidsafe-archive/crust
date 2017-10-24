@@ -118,7 +118,6 @@ pub fn mapped_tcp_socket<UID: Uid>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use priv_prelude::*;
     use net::nat::mapping_context;
     use util::UniqueId;
 

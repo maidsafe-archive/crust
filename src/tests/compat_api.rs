@@ -264,7 +264,7 @@ fn bootstrap_using_service_discovery() {
     let (service0, event_rx0) = service();
 
     unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+    let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
 
     unwrap!(service0.set_accept_bootstrap(true));
     service0.start_service_discovery();

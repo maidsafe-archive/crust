@@ -54,7 +54,8 @@ impl<UID: Uid> Service<UID> {
         };
         MappingContext::new(options)
         .map_err(|e| CrustError::NatError(e))
-        .map(move |mc| {
+        .map(move |mut mc| {
+            mc.add_peer_stuns(config.read().hard_coded_contacts.iter().cloned());
             let acceptor = Acceptor::new(&handle, our_uid, config.clone());
             Service {
                 handle,
