@@ -16,11 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 use net::service_discovery;
-use log::LogLevel;
 use config_file_handler;
 
 use priv_prelude::*;
-use net::peer::connect::bootstrap::{TryPeerError, ConnectHandshakeError};
+use net::peer::connect::bootstrap::TryPeerError;
 use net::peer::connect::bootstrap::try_peer::try_peer;
 use net::peer::connect::bootstrap::cache::Cache;
 use service;
@@ -87,7 +86,7 @@ pub fn bootstrap<UID: Uid>(
         };
 
         let timeout = {
-            Timeout::new(Duration::from_secs(10), &handle)
+            Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle)
             .map_err(BootstrapError::TimerIo)
         }?;
         Ok(stream::iter_ok(peers)

@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::fs;
 use tokio_core::reactor::Core;
 use priv_prelude::*;
 use service::Service;

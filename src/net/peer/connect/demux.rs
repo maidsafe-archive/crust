@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::sync::{Arc, Mutex};
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
+use futures::sync::mpsc::{self, UnboundedSender};
 use log::LogLevel;
 
 use net::listener::SocketIncoming;
@@ -116,11 +116,6 @@ quick_error! {
         }
         Disconnected {
             description("the remote peer disconnected")
-        }
-        TimerIo(e: io::Error) {
-            description("io error creating tokio timer")
-            display("io error creating tokio timer: {}", e)
-            cause(e)
         }
     }
 }

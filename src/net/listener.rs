@@ -163,7 +163,6 @@ impl Listener {
 #[cfg(test)]
 mod test {
     use super::*;
-    use priv_prelude::*;
     use tokio_core::reactor::Core;
     use env_logger;
     use net::nat::mapping_context::Options;

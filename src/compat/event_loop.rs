@@ -18,13 +18,13 @@
 use std;
 use tokio_core::reactor::Core;
 use maidsafe_utilities::thread::{self, Joiner};
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
+use futures::sync::mpsc::{self, UnboundedSender};
 
 use priv_prelude::*;
 
 use error::CrustError;
 use compat::CrustEventSender;
-use compat::service::{ServiceCommand, ServiceState, FnBox};
+use compat::service::{ServiceCommand, ServiceState};
 
 pub struct EventLoop<UID: Uid> {
     tx: UnboundedSender<ServiceCommand<UID>>,

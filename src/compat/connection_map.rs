@@ -19,8 +19,7 @@ use std::sync::{Arc, Mutex};
 use future_utils::{self, DropNotify};
 use futures::stream::{SplitSink};
 use log::LogLevel;
-use compat::{event_loop, EventLoop, CrustEventSender};
-use compat::{Event, ConnectionInfoResult};
+use compat::{Event, CrustEventSender};
 use priv_prelude::*;
 
 #[derive(Clone)]
@@ -34,7 +33,7 @@ struct Inner<UID: Uid> {
 }
 
 struct PeerWrapper<UID: Uid> {
-    drop_tx: DropNotify,
+    _drop_tx: DropNotify,
     addr: SocketAddr,
     kind: CrustUser,
     peer_sink: SplitSink<Peer<UID>>,
@@ -87,7 +86,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         });
 
         let pw = PeerWrapper {
-            drop_tx,
+            _drop_tx: drop_tx,
             addr,
             kind,
             peer_sink,

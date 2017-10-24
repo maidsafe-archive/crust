@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tokio_core::reactor::Handle;
 use futures::Future;
 
@@ -29,12 +29,14 @@ pub trait FutureExt: Future {
         WithTimeout::new(handle, self, duration, error)
     }
 
+    /*
     fn with_timeout_at(self, handle: &Handle, at: Instant, error: Self::Error) -> WithTimeout<Self>
     where
         Self: Sized
     {
         WithTimeout::new_at(handle, self, at, error)
     }
+    */
 }
 
 impl<F> FutureExt for F

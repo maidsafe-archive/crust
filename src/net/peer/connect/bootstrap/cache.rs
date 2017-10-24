@@ -16,7 +16,6 @@
 // relating to use of the SAFE Network Software.
 
 use config_file_handler::{self, FileHandler};
-use std::ffi::OsString;
 use priv_prelude::*;
 
 pub struct Cache {
@@ -42,7 +41,5 @@ impl Cache {
     pub fn read_file(&mut self) -> Vec<SocketAddr> {
         self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
-
-    pub fn remove_peer_acceptor(&mut self, _peer: SocketAddr) {}
 }
 

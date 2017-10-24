@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use futures::{Async, Future};
 use tokio_core::reactor::{Handle, Timeout};
 
@@ -40,6 +40,7 @@ where
         }
     }
 
+    /*
     pub fn new_at(handle: &Handle, future: F, at: Instant, error: F::Error) -> WithTimeout<F> {
         WithTimeout {
             future: future,
@@ -47,6 +48,7 @@ where
             error: Some(error),
         }
     }
+    */
 }
 
 impl<F> Future for WithTimeout<F>

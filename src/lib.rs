@@ -15,10 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-// Temporarily allow these while doing heavy refactoring
-#![allow(dead_code)]
-#![allow(unused_imports)]
-
 extern crate maidsafe_utilities;
 extern crate serde;
 #[macro_use]
@@ -42,6 +38,7 @@ extern crate log;
 extern crate void;
 extern crate bytes;
 extern crate rand;
+#[cfg(test)]
 #[macro_use]
 extern crate rand_derive;
 extern crate env_logger;

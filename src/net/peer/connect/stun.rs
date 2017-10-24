@@ -38,11 +38,6 @@ quick_error! {
             display("error on the socket: {}", e)
             cause(e)
         }
-        TimerIo(e: io::Error) {
-            description("io error creating tokio timer")
-            display("io error creating tokio timer: {}", e)
-            cause(e)
-        }
         TimedOut {
             description("operation timed out")
         }

@@ -16,21 +16,15 @@
 // relating to use of the SAFE Network Software.
 
 use std;
-use std::sync::{Arc, Mutex};
 use future_utils::{self, DropNotify};
-use futures::sync::mpsc::{self, UnboundedSender};
-use futures::stream::{SplitSink};
 use log::LogLevel;
-use void;
-use serde;
 
 use priv_prelude::*;
 
-use net::{BootstrapAcceptor, service_discovery, ServiceDiscovery};
+use net::{service_discovery, ServiceDiscovery};
 use error::CrustError;
 use compat::{event_loop, EventLoop, CrustEventSender};
 use compat::{Event, ConnectionInfoResult, ConnectionMap};
-use service;
 
 pub trait FnBox<UID: Uid> {
     fn call_box(self: Box<Self>, state: &mut ServiceState<UID>);
