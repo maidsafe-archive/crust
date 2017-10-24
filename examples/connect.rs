@@ -51,7 +51,7 @@ extern crate serde_json;
 extern crate rand_derive;
 extern crate rand;
 
-extern crate crust_futures;
+extern crate crust;
 
 use std::{io, fmt};
 use std::path::PathBuf;
@@ -60,7 +60,7 @@ use futures::future::empty;
 use tokio_core::reactor::Core;
 use rand::Rng;
 
-use crust_futures::{Service, ConfigFile, PubConnectionInfo, Uid};
+use crust::{Service, ConfigFile, PubConnectionInfo, Uid};
 
 // Some peer ID boilerplate.
 
@@ -101,7 +101,7 @@ fn main() {
         event_loop.run(service.prepare_connection_info()),
         "Failed to prepare connection info",
     );
-    let pub_conn_info = our_conn_info.pub_connection_info();
+    let pub_conn_info = our_conn_info.to_pub_connection_info();
     println!(
         "Public connection information:\n{}\n",
         unwrap!(serde_json::to_string(&pub_conn_info))
