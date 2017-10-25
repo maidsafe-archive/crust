@@ -39,3 +39,6 @@ igd = "*"
 name = "connect"
 path = "examples/connect.rs"
 
+[[example]]
+name = "exchange_data"
+path = "examples/exchange_data.rs"
