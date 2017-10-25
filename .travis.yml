@@ -33,5 +33,6 @@ script:
         cargo clippy && cargo clippy --profile=test
       );
     fi
+  - cargo check --examples
 before_cache:
   - cargo prune
