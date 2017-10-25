@@ -67,6 +67,6 @@ pub use config::ConfigFile;
 pub use service::Service;
 pub use error::CrustError;
 pub use common::CrustUser;
-pub use net::{PrivConnectionInfo, PubConnectionInfo};
+pub use net::{PrivConnectionInfo, PubConnectionInfo, Peer};
 pub use net::Uid;
 
