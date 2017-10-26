@@ -15,13 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use log::LogLevel;
 use igd::{self, PortMappingProtocol};
-use void;
+use log::LogLevel;
+use net;
 
 use priv_prelude::*;
-use net;
 use util;
+use void;
 
 quick_error! {
     #[derive(Debug)]
@@ -68,15 +68,11 @@ pub fn mapped_tcp_socket<UID: Uid>(
             };
             let local_endpoint = SocketAddrV4::new(ifv4.ip(), addr.port());
             let future = {
-                gateway.get_any_address(
-                    PortMappingProtocol::TCP,
-                    local_endpoint,
-                    0,
-                    "MaidSafeNat",
-                )
-                .map(SocketAddr::V4)
-                .map_err(MappedTcpSocketError::IgdAddAnyPort)
-                .into_boxed()
+                gateway
+                    .get_any_address(PortMappingProtocol::TCP, local_endpoint, 0, "MaidSafeNat")
+                    .map(SocketAddr::V4)
+                    .map_err(MappedTcpSocketError::IgdAddAnyPort)
+                    .into_boxed()
             };
             mapping_futures.push(future);
         }
@@ -84,8 +80,8 @@ pub fn mapped_tcp_socket<UID: Uid>(
         for peer_stun in mc.peer_stuns().into_iter().cloned() {
             let future = {
                 net::peer::stun::<UID>(handle, &addr, &peer_stun)
-                .map_err(move |e| MappedTcpSocketError::Stun(e, peer_stun))
-                .into_boxed()
+                    .map_err(move |e| MappedTcpSocketError::Stun(e, peer_stun))
+                    .into_boxed()
             };
             mapping_futures.push(future);
         }
@@ -94,22 +90,22 @@ pub fn mapped_tcp_socket<UID: Uid>(
         let mapping_futures = stream::futures_unordered(mapping_futures);
         Ok({
             mapping_futures
-            .log_errors(LogLevel::Info, "mapping tcp socket")
-            .until(timeout)
-            .map_err(|v| void::unreachable(v))
-            .collect()
-            .and_then(move |addrs| {
-                if let Some(port) = forced_port {
-                    mapped_addrs.extend({
-                        addrs
-                        .iter()
-                        .filter(|addr| util::ip_addr_is_global(&addr.ip()))
-                        .map(|addr| SocketAddr::new(addr.ip(), port))
-                    })
-                }
-                mapped_addrs.extend(addrs);
-                Ok((socket, mapped_addrs))
-            })
+                .log_errors(LogLevel::Info, "mapping tcp socket")
+                .until(timeout)
+                .map_err(|v| void::unreachable(v))
+                .collect()
+                .and_then(move |addrs| {
+                    if let Some(port) = forced_port {
+                        mapped_addrs.extend({
+                            addrs
+                                .iter()
+                                .filter(|addr| util::ip_addr_is_global(&addr.ip()))
+                                .map(|addr| SocketAddr::new(addr.ip(), port))
+                        })
+                    }
+                    mapped_addrs.extend(addrs);
+                    Ok((socket, mapped_addrs))
+                })
         })
     };
     future::result(try()).flatten().into_boxed()
@@ -119,27 +115,23 @@ pub fn mapped_tcp_socket<UID: Uid>(
 mod test {
     use super::*;
     use net::nat::mapping_context;
-    use util::UniqueId;
 
     use tokio_core::reactor::Core;
+    use util::UniqueId;
 
     #[test]
     fn test_mapped_tcp_socket() {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
         let res = core.run({
-            MappingContext::new(mapping_context::Options::default())
-            .and_then(move |mc| {
+            MappingContext::new(mapping_context::Options::default()).and_then(move |mc| {
                 let n = mc.ifv4s().len();
 
                 mapped_tcp_socket::<UniqueId>(&handle, &mc, &addr!("0.0.0.0:0"))
-                .map_err(|e| panic!(e))
-                .map(move |(_socket, addrs)| {
-                    assert!(addrs.len() >= n)
-                })
+                    .map_err(|e| panic!(e))
+                    .map(move |(_socket, addrs)| assert!(addrs.len() >= n))
             })
         });
         unwrap!(res);
     }
 }
-

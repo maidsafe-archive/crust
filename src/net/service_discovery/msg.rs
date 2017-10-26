@@ -20,4 +20,3 @@ pub enum DiscoveryMsg<T> {
     Request,
     Response(T),
 }
-

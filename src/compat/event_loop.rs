@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std;
-use tokio_core::reactor::Core;
-use maidsafe_utilities::thread::{self, Joiner};
-use futures::sync::mpsc::{self, UnboundedSender};
-
-use priv_prelude::*;
-
-use error::CrustError;
 use compat::CrustEventSender;
 use compat::service::{ServiceCommand, ServiceState};
+
+use error::CrustError;
+use futures::sync::mpsc::{self, UnboundedSender};
+use maidsafe_utilities::thread::{self, Joiner};
+
+use priv_prelude::*;
+use std;
+use tokio_core::reactor::Core;
 
 pub struct EventLoop<UID: Uid> {
     tx: UnboundedSender<ServiceCommand<UID>>,
@@ -68,15 +68,12 @@ pub fn spawn_event_loop<UID: Uid>(
                 let (tx, rx) = mpsc::unbounded::<ServiceCommand<UID>>();
                 unwrap!(result_tx.send(Ok(tx)));
                 unwrap!(core.run({
-                    rx
-                    .for_each(move |cb| {
-                        Ok(cb.call_box(&mut service_state))
-                    })
+                    rx.for_each(move |cb| Ok(cb.call_box(&mut service_state)))
                 }));
-            },
+            }
             Err(e) => {
                 unwrap!(result_tx.send(Err(e)));
-            },
+            }
         }
     });
 
@@ -87,4 +84,3 @@ pub fn spawn_event_loop<UID: Uid>(
         _joiner: joiner,
     })
 }
-

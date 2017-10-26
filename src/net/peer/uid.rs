@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::hash::Hash;
 use priv_prelude::*;
+use std::hash::Hash;
 
 /// Trait for specifying a unique identifier for a Crust peer
 pub trait Uid
@@ -34,4 +34,3 @@ pub trait Uid
     + Serialize
     + DeserializeOwned {
 }
-

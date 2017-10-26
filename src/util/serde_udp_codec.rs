@@ -15,13 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use maidsafe_utilities::serialisation::{SerialisationError, deserialise, serialise_into};
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 use std::io;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use tokio_core::net::UdpCodec;
-use maidsafe_utilities::serialisation::{SerialisationError, serialise_into, deserialise};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
 
 #[derive(Debug)]
 pub struct SerdeUdpCodec<T> {
@@ -30,20 +30,22 @@ pub struct SerdeUdpCodec<T> {
 
 impl<T> SerdeUdpCodec<T> {
     pub fn new() -> SerdeUdpCodec<T> {
-        SerdeUdpCodec {
-            _ph: PhantomData,
-        }
+        SerdeUdpCodec { _ph: PhantomData }
     }
 }
 
 impl<T> UdpCodec for SerdeUdpCodec<T>
 where
-    T: Serialize + DeserializeOwned
+    T: Serialize + DeserializeOwned,
 {
     type In = (SocketAddr, Result<T, SerialisationError>);
     type Out = (SocketAddr, T);
 
-    fn decode(&mut self, src: &SocketAddr, buf: &[u8]) -> io::Result<(SocketAddr, Result<T, SerialisationError>)> {
+    fn decode(
+        &mut self,
+        src: &SocketAddr,
+        buf: &[u8],
+    ) -> io::Result<(SocketAddr, Result<T, SerialisationError>)> {
         let res = deserialise(buf);
         Ok((*src, res))
     }
@@ -53,5 +55,3 @@ where
         addr
     }
 }
-
-

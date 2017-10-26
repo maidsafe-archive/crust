@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use futures::sync::mpsc::UnboundedReceiver;
-use net::listener::{Listeners, Listener};
+use net::listener::{Listener, Listeners};
 use net::peer::BootstrapAcceptor;
 use net::peer::connect::Demux;
 
@@ -37,11 +37,7 @@ pub struct Acceptor<UID: Uid> {
 
 impl<UID: Uid> Acceptor<UID> {
     /// Create a new acceptor.
-    pub fn new(
-        handle: &Handle,
-        our_uid: UID,
-        config: ConfigFile,
-    ) -> Acceptor<UID> {
+    pub fn new(handle: &Handle, our_uid: UID, config: ConfigFile) -> Acceptor<UID> {
         let (listeners, socket_incoming) = Listeners::new(handle);
         let demux = Demux::new(handle, socket_incoming);
         let handle = handle.clone();
@@ -62,11 +58,7 @@ impl<UID: Uid> Acceptor<UID> {
     }
 
     /// Add a listener to the set of listeners and return a handle to it.
-    pub fn listener(
-        &self,
-        listen_addr: &SocketAddr,
-        mc: &MappingContext,
-    ) -> IoFuture<Listener> {
+    pub fn listener(&self, listen_addr: &SocketAddr, mc: &MappingContext) -> IoFuture<Listener> {
         self.listeners.listener::<UID>(listen_addr, mc)
     }
 
@@ -95,4 +87,3 @@ impl<UID: Uid> Acceptor<UID> {
         )
     }
 }
-

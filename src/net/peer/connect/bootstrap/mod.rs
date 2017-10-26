@@ -19,6 +19,5 @@ mod cache;
 mod bootstrap;
 mod try_peer;
 
-pub use self::bootstrap::{bootstrap, BootstrapError};
-pub use self::try_peer::{TryPeerError, ConnectHandshakeError};
-
+pub use self::bootstrap::{BootstrapError, bootstrap};
+pub use self::try_peer::{ConnectHandshakeError, TryPeerError};

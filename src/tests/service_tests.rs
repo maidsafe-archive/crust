@@ -15,9 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use tokio_core::reactor::Core;
 use priv_prelude::*;
 use service::Service;
+use tokio_core::reactor::Core;
 use util;
 
 #[test]
@@ -28,8 +28,7 @@ fn start_service() {
     let config = unwrap!(ConfigFile::new_temporary());
 
     let res = core.run({
-        Service::with_config(&handle, config, util::random_id())
-        .and_then(|_service| Ok(()))
+        Service::with_config(&handle, config, util::random_id()).and_then(|_service| Ok(()))
     });
 
     unwrap!(res);
@@ -48,4 +47,3 @@ fn start_service() {
     even with no listeners? - not really testable over loopback
 
 */
-

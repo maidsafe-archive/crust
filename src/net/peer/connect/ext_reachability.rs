@@ -22,4 +22,3 @@ pub enum ExternalReachability {
     NotRequired,
     Required { direct_listeners: Vec<SocketAddr> },
 }
-

@@ -15,13 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use bytes::BytesMut;
+use futures::stream::{SplitSink, SplitStream};
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use maidsafe_utilities::serialisation::{SerialisationError, deserialise, serialise_into};
+use priv_prelude::*;
 use std::net::Shutdown;
 use tokio_io::codec::length_delimited::{self, Framed};
-use futures::stream::{SplitStream, SplitSink};
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
-use bytes::BytesMut;
-use maidsafe_utilities::serialisation::{serialise_into, deserialise, SerialisationError};
-use priv_prelude::*;
 
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 pub type Priority = u8;
@@ -97,8 +97,8 @@ impl<M: 'static> Socket<M> {
         const MAX_HEADER_SIZE: usize = 8;
         let framed = {
             length_delimited::Builder::new()
-            .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
-            .new_framed(stream)
+                .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
+                .new_framed(stream)
         };
         let (stream_tx, stream_rx) = framed.split();
         let (write_tx, write_rx) = mpsc::unbounded();
@@ -110,8 +110,7 @@ impl<M: 'static> Socket<M> {
             write_rx: write_rx,
         };
         handle.spawn({
-            task
-            .map_err(|e| {
+            task.map_err(|e| {
                 error!("Socket task failed!: {}", e);
             })
         });
@@ -153,7 +152,7 @@ impl Drop for Inner {
 
 impl<M> Stream for Socket<M>
 where
-    M: Serialize + DeserializeOwned
+    M: Serialize + DeserializeOwned,
 {
     type Item = M;
     type Error = SocketError;
@@ -180,7 +179,7 @@ where
 
 impl<M> Sink for Socket<M>
 where
-    M: Serialize + DeserializeOwned
+    M: Serialize + DeserializeOwned,
 {
     type SinkItem = (Priority, M);
     type SinkError = SocketError;
@@ -215,17 +214,19 @@ impl Future for SocketTask {
         loop {
             match unwrap!(self.write_rx.poll()) {
                 Async::Ready(Some(TaskMsg::Send(priority, data))) => {
-                    let queue = self.write_queue.entry(priority).or_insert_with(|| VecDeque::new());
+                    let queue = self.write_queue.entry(priority).or_insert_with(
+                        || VecDeque::new(),
+                    );
                     queue.push_back((now, data));
-                },
+                }
                 Async::Ready(Some(TaskMsg::Shutdown(stream_rx))) => {
                     self.stream_rx = Some(stream_rx);
                     break;
-                },
+                }
                 Async::Ready(None) => break,
                 Async::NotReady => break,
             }
-        };
+        }
 
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
@@ -259,7 +260,7 @@ impl Future for SocketTask {
                         queue.push_front((time, msg));
                         all_messages_sent = false;
                         break 'outer;
-                    },
+                    }
                 }
             }
         }
@@ -290,8 +291,8 @@ mod test {
     use super::*;
 
     use env_logger;
-    use tokio_core::reactor::Core;
     use rand::{self, Rng};
+    use tokio_core::reactor::Core;
 
     use util;
 
@@ -322,26 +323,25 @@ mod test {
                 .and_then(move |stream| {
                     let socket = Socket::<Vec<u8>>::wrap_tcp(&handle0, stream, addr);
                     socket
-                    .send_all(stream::iter_ok::<_, SocketError>(msgs_send))
-                    .map(|(_, _)| ())
+                        .send_all(stream::iter_ok::<_, SocketError>(msgs_send))
+                        .map(|(_, _)| ())
                 });
 
             let handle1 = handle.clone();
             let f1 = {
                 listener
-                .incoming()
-                .into_future()
-                .map_err(|(err, _)| SocketError::from(err))
-                .and_then(move |(stream_opt, _)| {
-                    let (stream, addr) = unwrap!(stream_opt);
-                    let socket = Socket::<Vec<u8>>::wrap_tcp(&handle1, stream, addr);
-                    socket 
-                    .take(num_msgs as u64)
-                    .collect()
-                    .map(move |msgs_recv| {
-                        assert!(msgs_recv == msgs);
+                    .incoming()
+                    .into_future()
+                    .map_err(|(err, _)| SocketError::from(err))
+                    .and_then(move |(stream_opt, _)| {
+                        let (stream, addr) = unwrap!(stream_opt);
+                        let socket = Socket::<Vec<u8>>::wrap_tcp(&handle1, stream, addr);
+                        socket.take(num_msgs as u64).collect().map(
+                            move |msgs_recv| {
+                                assert!(msgs_recv == msgs);
+                            },
+                        )
                     })
-                })
             };
 
             f0
@@ -352,4 +352,3 @@ mod test {
         unwrap!(res);
     }
 }
-

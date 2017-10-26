@@ -25,10 +25,7 @@ pub struct Cache {
 impl Cache {
     pub fn new(name: Option<&Path>) -> Result<Self, config_file_handler::Error> {
         Ok(Cache {
-            file_handler: FileHandler::new(
-                name.unwrap_or(&Self::default_file_name()?),
-                true,
-            )?, // last_updated: Instant::now(),
+            file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
         })
     }
 
@@ -42,4 +39,3 @@ impl Cache {
         self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 }
-

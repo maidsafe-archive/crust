@@ -23,7 +23,6 @@ mod service_discovery;
 #[cfg(test)]
 mod test;
 
+pub use self::discover::{Discover, discover};
 pub use self::server::Server;
-pub use self::discover::{discover, Discover};
 pub use self::service_discovery::ServiceDiscovery;
-

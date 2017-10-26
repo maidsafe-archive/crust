@@ -15,15 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::uid::Uid;
-pub use self::connect::{bootstrap, ConnectHandshakeError, BootstrapAcceptError, BootstrapError, ExternalReachability, BootstrapAcceptor, PrivConnectionInfo, PubConnectionInfo, ConnectError, stun, StunError};
 pub use self::acceptor::Acceptor;
-pub use self::peer::{PeerError, Peer, from_handshaken_socket};
+pub use self::connect::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError, ConnectError,
+                        ConnectHandshakeError, ExternalReachability, PrivConnectionInfo,
+                        PubConnectionInfo, StunError, bootstrap, stun};
+pub use self::peer::{Peer, PeerError, from_handshaken_socket};
 pub use self::peer_message::PeerMessage;
+pub use self::uid::Uid;
 
 mod acceptor;
 mod connect;
 mod peer;
 mod peer_message;
 mod uid;
-

@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync::{Arc, Mutex};
+use compat::{CrustEventSender, Event};
 use future_utils::{self, DropNotify};
-use futures::stream::{SplitSink};
+use futures::stream::SplitSink;
 use log::LogLevel;
-use compat::{Event, CrustEventSender};
 use priv_prelude::*;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct ConnectionMap<UID: Uid> {
-    inner: Arc<Mutex<Inner<UID>>>
+    inner: Arc<Mutex<Inner<UID>>>,
 }
 
 struct Inner<UID: Uid> {
@@ -46,23 +46,16 @@ impl<UID: Uid> ConnectionMap<UID> {
             event_tx: event_tx,
         };
         let inner = Arc::new(Mutex::new(inner));
-        ConnectionMap {
-            inner,
-        }
+        ConnectionMap { inner }
     }
 
-    pub fn insert_peer(
-        &self,
-        handle: &Handle,
-        peer: Peer<UID>,
-        addr: SocketAddr,
-    ) -> bool {
+    pub fn insert_peer(&self, handle: &Handle, peer: Peer<UID>, addr: SocketAddr) -> bool {
         let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let uid = peer.uid();
         let kind = peer.kind();
         let (peer_sink, peer_stream) = peer.split();
- 
+
         let mut inner = unwrap!(self.inner.lock());
         if inner.map.contains_key(&uid) {
             return false;
@@ -111,36 +104,26 @@ impl<UID: Uid> ConnectionMap<UID> {
 
     pub fn peer_addr(&self, uid: &UID) -> Result<SocketAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
-        inner.map
-        .get(uid)
-        .map(|pw| Ok(pw.addr))
-        .unwrap_or(Err(CrustError::PeerNotFound))
+        inner.map.get(uid).map(|pw| Ok(pw.addr)).unwrap_or(Err(
+            CrustError::PeerNotFound,
+        ))
     }
 
     pub fn remove(&self, uid: &UID) -> bool {
         let mut inner = unwrap!(self.inner.lock());
-        inner.map
-        .remove(uid)
-        .is_some()
+        inner.map.remove(uid).is_some()
     }
 
     pub fn contains_peer(&self, uid: &UID) -> bool {
         let inner = unwrap!(self.inner.lock());
-        inner.map
-        .contains_key(uid)
+        inner.map.contains_key(uid)
     }
 
-    pub fn whitelist_filter(
-        &self,
-        client_ips: HashSet<IpAddr>,
-        node_ips: HashSet<IpAddr>,
-    ) {
+    pub fn whitelist_filter(&self, client_ips: HashSet<IpAddr>, node_ips: HashSet<IpAddr>) {
         let mut inner = unwrap!(self.inner.lock());
-        inner.map.retain(|_, pw| {
-            match pw.kind {
-                CrustUser::Node => node_ips.contains(&pw.addr.ip()),
-                CrustUser::Client => client_ips.contains(&pw.addr.ip()),
-            }
+        inner.map.retain(|_, pw| match pw.kind {
+            CrustUser::Node => node_ips.contains(&pw.addr.ip()),
+            CrustUser::Client => client_ips.contains(&pw.addr.ip()),
         })
     }
 
@@ -149,4 +132,3 @@ impl<UID: Uid> ConnectionMap<UID> {
         inner.map.clear();
     }
 }
-

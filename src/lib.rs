@@ -63,10 +63,9 @@ mod priv_prelude;
 #[cfg(test)]
 mod tests;
 
-pub use config::ConfigFile;
-pub use service::Service;
-pub use error::CrustError;
 pub use common::CrustUser;
-pub use net::{PrivConnectionInfo, PubConnectionInfo, Peer};
+pub use config::ConfigFile;
+pub use error::CrustError;
+pub use net::{Peer, PrivConnectionInfo, PubConnectionInfo};
 pub use net::Uid;
-
+pub use service::Service;

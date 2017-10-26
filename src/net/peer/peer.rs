@@ -96,8 +96,14 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
         their_uid: their_uid,
         kind: kind,
         last_send_time: now,
-        send_heartbeat_timeout: Timeout::new_at(now + Duration::from_millis(HEARTBEAT_PERIOD_MS), handle)?,
-        recv_heartbeat_timeout: Timeout::new_at(now + Duration::from_millis(INACTIVITY_TIMEOUT_MS), handle)?,
+        send_heartbeat_timeout: Timeout::new_at(
+            now + Duration::from_millis(HEARTBEAT_PERIOD_MS),
+            handle,
+        )?,
+        recv_heartbeat_timeout: Timeout::new_at(
+            now + Duration::from_millis(INACTIVITY_TIMEOUT_MS),
+            handle,
+        )?,
     })
 }
 
@@ -127,7 +133,10 @@ impl<UID: Uid> Stream for Peer<UID> {
         let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
         let now = Instant::now();
         while let Async::Ready(..) = self.send_heartbeat_timeout.poll().void_unwrap() {
-            self.send_heartbeat_timeout.reset(self.last_send_time + heartbeat_period);
+            self.send_heartbeat_timeout.reset(
+                self.last_send_time +
+                    heartbeat_period,
+            );
             if now - self.last_send_time >= heartbeat_period {
                 self.last_send_time = now;
                 let _ = self.socket.start_send((0, PeerMessage::Heartbeat));
@@ -145,7 +154,7 @@ impl<UID: Uid> Stream for Peer<UID> {
                     if let PeerMessage::Data(data) = msg {
                         return Ok(Async::Ready(Some(data)));
                     }
-                },
+                }
             }
         }
 
@@ -169,8 +178,10 @@ impl<UID: Uid> Sink for Peer<UID> {
             AsyncSink::Ready => {
                 self.last_send_time = Instant::now();
                 Ok(AsyncSink::Ready)
-            },
-            AsyncSink::NotReady((priority, PeerMessage::Data(v))) => Ok(AsyncSink::NotReady((priority, v))),
+            }
+            AsyncSink::NotReady((priority, PeerMessage::Data(v))) => Ok(AsyncSink::NotReady(
+                (priority, v),
+            )),
             AsyncSink::NotReady(..) => unreachable!(),
         }
     }
@@ -179,4 +190,3 @@ impl<UID: Uid> Sink for Peer<UID> {
         self.socket.poll_complete().map_err(PeerError::from)
     }
 }
-

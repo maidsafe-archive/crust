@@ -15,12 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
 use futures::stream::FuturesUnordered;
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use net::peer;
-use net::peer::connect::handshake_message::{HandshakeMessage, BootstrapRequest, BootstrapDenyReason};
-use util;
+use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
+                                            HandshakeMessage};
 use priv_prelude::*;
+use util;
 
 quick_error! {
     #[derive(Debug)]
@@ -46,7 +47,9 @@ quick_error! {
         }
         FailedExternalReachability(errors: Vec<io::Error>) {
             description("All external reachability checks failed")
-            display("All external reachability checks failed. Tried {} addresses, errors: {:?}", errors.len(), errors)
+            display("All external reachability checks failed. \
+                    Tried {} addresses, errors: {:?}",
+                    errors.len(), errors)
         }
         ClientNotWhiteListed(ip: IpAddr) {
             description("Client is not whitelisted")
@@ -69,10 +72,12 @@ impl<UID: Uid> BootstrapAcceptor<UID> {
         handle: &Handle,
         config: ConfigFile,
         our_uid: UID,
-    ) -> (BootstrapAcceptor<UID>, UnboundedSender<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>) {
+    ) -> (BootstrapAcceptor<UID>,
+              UnboundedSender<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>) {
         let handle = handle.clone();
         let (peer_tx, peer_rx) = mpsc::unbounded();
-        let handshaking = stream::futures_unordered(Vec::<BoxFuture<Peer<UID>, BootstrapAcceptError>>::new());
+        let handshaking =
+            stream::futures_unordered(Vec::<BoxFuture<Peer<UID>, BootstrapAcceptError>>::new());
         let acceptor = BootstrapAcceptor {
             handle,
             peer_rx,
@@ -101,15 +106,15 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
                         bootstrap_request,
                     );
                     self.handshaking.push(handshaker);
-                },
+                }
                 Ok(Async::Ready(None)) => {
                     stream_ended = true;
                     break;
-                },
+                }
                 Ok(Async::NotReady) => {
                     stream_ended = false;
                     break;
-                },
+                }
                 Err(()) => unreachable!(),
             }
         }
@@ -133,8 +138,7 @@ fn bootstrap_accept<UID: Uid>(
     config: ConfigFile,
     our_uid: UID,
     bootstrap_request: BootstrapRequest<UID>,
-) -> BoxFuture<Peer<UID>, BootstrapAcceptError>
-{
+) -> BoxFuture<Peer<UID>, BootstrapAcceptError> {
     let handle = handle.clone();
     let their_uid = bootstrap_request.uid;
     let their_name_hash = bootstrap_request.name_hash;
@@ -145,12 +149,18 @@ fn bootstrap_accept<UID: Uid>(
         }
         if config.network_name_hash() != their_name_hash {
             return Ok(
-                socket.send((0, HandshakeMessage::BootstrapDenied(BootstrapDenyReason::InvalidNameHash)))
-                .map_err(BootstrapAcceptError::Socket)
-                .and_then(move |_socket| {
-                    Err(BootstrapAcceptError::InvalidNameHash(their_name_hash))
-                })
-                .into_boxed()
+                socket
+                    .send((
+                        0,
+                        HandshakeMessage::BootstrapDenied(
+                            BootstrapDenyReason::InvalidNameHash,
+                        ),
+                    ))
+                    .map_err(BootstrapAcceptError::Socket)
+                    .and_then(move |_socket| {
+                        Err(BootstrapAcceptError::InvalidNameHash(their_name_hash))
+                    })
+                    .into_boxed(),
             );
         }
         // Cache the reachability requirement config option, to make sure that it won't be
@@ -169,85 +179,93 @@ fn bootstrap_accept<UID: Uid>(
                 if !config.is_peer_whitelisted(their_ip, CrustUser::Node) {
                     let reason = BootstrapDenyReason::NodeNotWhitelisted;
                     return Ok(
-                        socket.send((0, HandshakeMessage::BootstrapDenied(reason)))
-                        .map_err(BootstrapAcceptError::Socket)
-                        .and_then(move |_socket| {
-                            Err(BootstrapAcceptError::NodeNotWhiteListed(their_ip))
-                        })
-                        .into_boxed()
+                        socket
+                            .send((0, HandshakeMessage::BootstrapDenied(reason)))
+                            .map_err(BootstrapAcceptError::Socket)
+                            .and_then(move |_socket| {
+                                Err(BootstrapAcceptError::NodeNotWhiteListed(their_ip))
+                            })
+                            .into_boxed(),
                     );
                 }
 
                 if !require_reachability {
                     return Ok(
                         grant_bootstrap(&handle, socket, our_uid, their_uid, CrustUser::Node)
-                        .map_err(BootstrapAcceptError::Socket)
-                        .into_boxed()
+                            .map_err(BootstrapAcceptError::Socket)
+                            .into_boxed(),
                     );
                 }
 
                 let connectors = {
                     direct_listeners
-                    .into_iter()
-                    .filter(|addr| util::ip_addr_is_global(&addr.ip()))
-                    .map(|addr| {
-                        TcpStream::connect(&addr, &handle)
-                        .with_timeout(&handle, Duration::from_secs(3), io::ErrorKind::TimedOut.into())
-                        .into_boxed()
-                    })
-                    .collect::<Vec<_>>()
+                        .into_iter()
+                        .filter(|addr| util::ip_addr_is_global(&addr.ip()))
+                        .map(|addr| {
+                            TcpStream::connect(&addr, &handle)
+                                .with_timeout(
+                                    &handle,
+                                    Duration::from_secs(3),
+                                    io::ErrorKind::TimedOut.into(),
+                                )
+                                .into_boxed()
+                        })
+                        .collect::<Vec<_>>()
                 };
                 let connectors = stream::futures_unordered(connectors);
 
                 return Ok(
                     connectors
-                    .first_ok()
-                    .then(move |res| {
-                        match res {
+                        .first_ok()
+                        .then(move |res| match res {
                             Ok(_connection) => {
-                                grant_bootstrap(&handle, socket, our_uid, their_uid, CrustUser::Node)
-                                .map_err(BootstrapAcceptError::Socket)
-                                .into_boxed()
-                            },
+                                grant_bootstrap(
+                                    &handle,
+                                    socket,
+                                    our_uid,
+                                    their_uid,
+                                    CrustUser::Node,
+                                ).map_err(BootstrapAcceptError::Socket)
+                                    .into_boxed()
+                            }
                             Err(v) => {
                                 let reason = BootstrapDenyReason::FailedExternalReachability;
-                                socket.send((0, HandshakeMessage::BootstrapDenied(reason)))
-                                .map_err(BootstrapAcceptError::Socket)
-                                .and_then(move |_socket| {
-                                    Err(BootstrapAcceptError::FailedExternalReachability(v))
-                                })
-                                .into_boxed()
-                            },
-                        }
-                    })
-                    .into_boxed()
+                                socket
+                                    .send((0, HandshakeMessage::BootstrapDenied(reason)))
+                                    .map_err(BootstrapAcceptError::Socket)
+                                    .and_then(move |_socket| {
+                                        Err(BootstrapAcceptError::FailedExternalReachability(v))
+                                    })
+                                    .into_boxed()
+                            }
+                        })
+                        .into_boxed(),
                 );
-            },
+            }
             ExternalReachability::NotRequired => {
                 let their_ip = socket.peer_addr()?.ip();
                 if !config.is_peer_whitelisted(their_ip, CrustUser::Client) {
                     let reason = BootstrapDenyReason::ClientNotWhitelisted;
                     return Ok(
-                        socket.send((0, HandshakeMessage::BootstrapDenied(reason)))
-                        .map_err(BootstrapAcceptError::Socket)
-                        .and_then(move |_socket| {
-                            Err(BootstrapAcceptError::ClientNotWhiteListed(their_ip))
-                        })
-                        .into_boxed()
+                        socket
+                            .send((0, HandshakeMessage::BootstrapDenied(reason)))
+                            .map_err(BootstrapAcceptError::Socket)
+                            .and_then(move |_socket| {
+                                Err(BootstrapAcceptError::ClientNotWhiteListed(their_ip))
+                            })
+                            .into_boxed(),
                     );
                 }
 
                 Ok(
                     grant_bootstrap(&handle, socket, our_uid, their_uid, CrustUser::Client)
-                    .map_err(BootstrapAcceptError::Socket)
-                    .into_boxed()
+                        .map_err(BootstrapAcceptError::Socket)
+                        .into_boxed(),
                 )
-            },
+            }
         }
     };
-    future::result(try())
-    .flatten()
-    .into_boxed()
+    future::result(try()).flatten().into_boxed()
 }
 
 fn grant_bootstrap<UID: Uid>(
@@ -258,11 +276,10 @@ fn grant_bootstrap<UID: Uid>(
     kind: CrustUser,
 ) -> BoxFuture<Peer<UID>, SocketError> {
     let handle = handle.clone();
-    socket.send((0, HandshakeMessage::BootstrapGranted(our_uid)))
-    .and_then(move |socket| {
-        peer::from_handshaken_socket(&handle, socket, their_uid, kind)
-        .map_err(SocketError::Io)
-    })
-    .into_boxed()
+    socket
+        .send((0, HandshakeMessage::BootstrapGranted(our_uid)))
+        .and_then(move |socket| {
+            peer::from_handshaken_socket(&handle, socket, their_uid, kind).map_err(SocketError::Io)
+        })
+        .into_boxed()
 }
-

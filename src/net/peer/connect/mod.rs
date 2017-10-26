@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::bootstrap::{bootstrap, BootstrapError, ConnectHandshakeError};
-pub use self::ext_reachability::ExternalReachability;
-pub use self::demux::Demux;
+pub use self::bootstrap::{BootstrapError, ConnectHandshakeError, bootstrap};
 pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
-pub use self::connection_info::{PubConnectionInfo, PrivConnectionInfo};
 pub use self::connect::ConnectError;
+pub use self::connection_info::{PrivConnectionInfo, PubConnectionInfo};
+pub use self::demux::Demux;
+pub use self::ext_reachability::ExternalReachability;
 pub use self::handshake_message::BootstrapDenyReason;
-pub use self::stun::{stun, StunError};
 
 use self::handshake_message::HandshakeMessage;
+pub use self::stun::{StunError, stun};
 
 mod bootstrap;
 mod connection_info;
@@ -34,4 +34,3 @@ mod handshake_message;
 mod bootstrap_acceptor;
 mod connect;
 mod stun;
-

@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync::{Arc, Mutex};
 use futures::sync::mpsc::{self, UnboundedSender};
 use log::LogLevel;
 
 use net::listener::SocketIncoming;
-use net::peer::connect::handshake_message::{HandshakeMessage, BootstrapRequest, ConnectRequest};
 use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect::connect;
+use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use net::peer::connect::stun;
 use priv_prelude::*;
+use std::sync::{Arc, Mutex};
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
@@ -33,16 +33,15 @@ pub struct Demux<UID: Uid> {
 }
 
 struct DemuxInner<UID: Uid> {
-    bootstrap_handler: Mutex<Option<UnboundedSender<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>>>,
-    connection_handler: Mutex<HashMap<UID, UnboundedSender<(Socket<HandshakeMessage<UID>>, ConnectRequest<UID>)>>>,
+    bootstrap_handler:
+        Mutex<Option<UnboundedSender<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>>>,
+    connection_handler:
+        Mutex<HashMap<UID, UnboundedSender<(Socket<HandshakeMessage<UID>>, ConnectRequest<UID>)>>>,
 }
 
 impl<UID: Uid> Demux<UID> {
     /// Create a demultiplexer from a stream of incoming peers.
-    pub fn new(
-        handle: &Handle,
-        incoming: SocketIncoming,
-    ) -> Demux<UID> {
+    pub fn new(handle: &Handle, incoming: SocketIncoming) -> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
@@ -63,9 +62,7 @@ impl<UID: Uid> Demux<UID> {
             .infallible()
         };
         handle.spawn(handler_task);
-        Demux {
-            inner: inner,
-        }
+        Demux { inner: inner }
     }
 
     pub fn bootstrap_acceptor(
@@ -126,37 +123,38 @@ fn handle_incoming<UID: Uid>(
     socket: Socket<HandshakeMessage<UID>>,
 ) -> BoxFuture<(), IncomingError> {
     socket
-    .into_future()
-    .map_err(|(e, _s)| IncomingError::Socket(e))
-    .with_timeout(&handle, Duration::from_secs(10), IncomingError::TimedOut)
-    .and_then(move |(msg_opt, socket)| {
-        let msg = match msg_opt {
-            Some(msg) => msg,
-            None => return future::err(IncomingError::Disconnected).into_boxed(),
-        };
-        match msg {
-            HandshakeMessage::BootstrapRequest(bootstrap_request) => {
-                let bootstrap_handler_opt = unwrap!(inner.bootstrap_handler.lock());
-                if let Some(ref bootstrap_handler) = bootstrap_handler_opt.as_ref() {
-                    let _ = bootstrap_handler.unbounded_send((socket, bootstrap_request));
+        .into_future()
+        .map_err(|(e, _s)| IncomingError::Socket(e))
+        .with_timeout(&handle, Duration::from_secs(10), IncomingError::TimedOut)
+        .and_then(move |(msg_opt, socket)| {
+            let msg = match msg_opt {
+                Some(msg) => msg,
+                None => return future::err(IncomingError::Disconnected).into_boxed(),
+            };
+            match msg {
+                HandshakeMessage::BootstrapRequest(bootstrap_request) => {
+                    let bootstrap_handler_opt = unwrap!(inner.bootstrap_handler.lock());
+                    if let Some(ref bootstrap_handler) = bootstrap_handler_opt.as_ref() {
+                        let _ = bootstrap_handler.unbounded_send((socket, bootstrap_request));
+                    }
+                    future::ok(()).into_boxed()
                 }
-                future::ok(()).into_boxed()
-            },
-            HandshakeMessage::Connect(connect_request) => {
-                let connection_handler_map = unwrap!(inner.connection_handler.lock());
-                if let Some(ref connection_handler) = connection_handler_map.get(&connect_request.uid) {
-                    let _ = connection_handler.unbounded_send((socket, connect_request));
+                HandshakeMessage::Connect(connect_request) => {
+                    let connection_handler_map = unwrap!(inner.connection_handler.lock());
+                    if let Some(ref connection_handler) =
+                        connection_handler_map.get(&connect_request.uid)
+                    {
+                        let _ = connection_handler.unbounded_send((socket, connect_request));
+                    }
+                    future::ok(()).into_boxed()
                 }
-                future::ok(()).into_boxed()
-            },
-            HandshakeMessage::EchoAddrReq => {
-                stun::stun_respond(socket)
-                .map_err(IncomingError::Socket)
-                .into_boxed()
-            },
-            _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
-        }
-    })
-    .into_boxed()
+                HandshakeMessage::EchoAddrReq => {
+                    stun::stun_respond(socket)
+                        .map_err(IncomingError::Socket)
+                        .into_boxed()
+                }
+                _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
+            }
+        })
+        .into_boxed()
 }
-
