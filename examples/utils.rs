@@ -17,10 +17,8 @@
 
 //! Some common utilities to stay DRY (Don't Repeat Yourself).
 
-
 use crust::{ConfigFile, Peer, PubConnectionInfo, Service, Uid};
 
-use rand::{self, Rng};
 use serde_json;
 use std::{fmt, io};
 use std::path::PathBuf;
@@ -37,12 +35,6 @@ pub fn readln() -> String {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
 pub struct PeerId(u64);
-
-impl PeerId {
-    pub fn random() -> PeerId {
-        rand::thread_rng().gen::<PeerId>()
-    }
-}
 
 impl Uid for PeerId {}
 
