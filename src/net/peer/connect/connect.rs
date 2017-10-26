@@ -16,9 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 use futures::sync::mpsc::UnboundedReceiver;
-use net::peer;
-use net::peer::connect::handshake_message::{HandshakeMessage, ConnectRequest};
 use net::nat;
+use net::peer;
+use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use priv_prelude::*;
 
 const TIMEOUT_SEC: u64 = 60;
@@ -67,7 +67,8 @@ quick_error! {
         }
         InvalidUid(formatted_received_uid: String, formatted_expected_uid: String) {
             description("Peer gave us an unexpected uid")
-            display("Peer gave us an unexpected uid: {} != {}", formatted_received_uid, formatted_expected_uid)
+            display("Peer gave us an unexpected uid: {} != {}",
+                    formatted_received_uid, formatted_expected_uid)
         }
         InvalidNameHash(name_hash: NameHash) {
             description("Peer is from a different network")
@@ -136,12 +137,11 @@ pub fn connect<UID: Uid>(
             let direct_connections = {
                 let connectors = {
                     their_direct
-                    .into_iter()
-                    .map(|addr| {
-                        TcpStream::connect(&addr, &handle)
-                        .map(move |stream| (stream, addr))
-                    })
-                    .collect::<Vec<_>>()
+                        .into_iter()
+                        .map(|addr| {
+                            TcpStream::connect(&addr, &handle).map(move |stream| (stream, addr))
+                        })
+                        .collect::<Vec<_>>()
                 };
                 stream::futures_unordered(connectors)
             };
@@ -149,96 +149,98 @@ pub fn connect<UID: Uid>(
             let connections = if let Some(listen_socket) = our_info.hole_punch_socket {
                 let hole_punch_connections = {
                     nat::tcp_hole_punch(&handle, listen_socket, &their_hole_punch)
-                    .map_err(ConnectError::Io)
+                        .map_err(ConnectError::Io)
                 }?;
                 direct_connections
-                .select(hole_punch_connections)
-                .into_boxed()
+                    .select(hole_punch_connections)
+                    .into_boxed()
             } else {
-                direct_connections
-                .into_boxed()
+                direct_connections.into_boxed()
             };
 
             let handle0 = handle.clone();
             connections
-            .map_err(SingleConnectionError::Io)
-            .map(move |(stream, addr)| {
-                Socket::wrap_tcp(&handle0, stream, addr)
-            })
-            .and_then(move |socket| {
-                socket
-                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
-                .map_err(SingleConnectionError::Socket)
-            })
-            .map(move |socket| {
-                socket
-                .into_future()
-                .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
-                .with_timeout(
-                    &handle,
-                    Duration::from_secs(TIMEOUT_SEC),
-                    SingleConnectionError::TimedOut,
-                )
-            })
-            .buffer_unordered(128)
-            .and_then(move |(msg_opt, socket)| {
-                match msg_opt {
+                .map_err(SingleConnectionError::Io)
+                .map(move |(stream, addr)| {
+                    Socket::wrap_tcp(&handle0, stream, addr)
+                })
+                .and_then(move |socket| {
+                    socket
+                        .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                        .map_err(SingleConnectionError::Socket)
+                })
+                .map(move |socket| {
+                    socket
+                        .into_future()
+                        .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
+                        .with_timeout(
+                            &handle,
+                            Duration::from_secs(TIMEOUT_SEC),
+                            SingleConnectionError::TimedOut,
+                        )
+                })
+                .buffer_unordered(128)
+                .and_then(move |(msg_opt, socket)| match msg_opt {
                     None => Err(SingleConnectionError::ConnectionDropped),
                     Some(HandshakeMessage::Connect(connect_request)) => {
                         validate_connect_request(their_uid, name_hash, connect_request)?;
                         Ok((socket, their_uid))
-                    },
+                    }
                     Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
-                }
-            })
+                })
         };
 
         let all_connections = direct_incoming.select(other_connections);
 
         let timeout = {
-            Timeout::new(Duration::from_secs(TIMEOUT_SEC), &handle)
-            .map_err(ConnectError::Io)
+            Timeout::new(Duration::from_secs(TIMEOUT_SEC), &handle).map_err(ConnectError::Io)
         }?;
         let chosen_peer = if our_uid > their_uid {
             let handle = handle.clone();
             all_connections
-            .until(timeout.infallible())
-            .first_ok()
-            .map_err(ConnectError::AllConnectionsFailed)
-            .and_then(move |(socket, their_uid)| {
-                socket
-                .send((0, HandshakeMessage::ChooseConnection))
-                .map_err(ConnectError::ChooseConnection)
-                .and_then(move |socket| {
-                    peer::from_handshaken_socket(&handle, socket, their_uid, CrustUser::Node)
-                    .map_err(ConnectError::Io)
+                .until(timeout.infallible())
+                .first_ok()
+                .map_err(ConnectError::AllConnectionsFailed)
+                .and_then(move |(socket, their_uid)| {
+                    socket
+                        .send((0, HandshakeMessage::ChooseConnection))
+                        .map_err(ConnectError::ChooseConnection)
+                        .and_then(move |socket| {
+                            peer::from_handshaken_socket(
+                                &handle,
+                                socket,
+                                their_uid,
+                                CrustUser::Node,
+                            ).map_err(ConnectError::Io)
+                        })
                 })
-            })
-            .into_boxed()
+                .into_boxed()
         } else {
             let handle = handle.clone();
             all_connections
-            .map(move |(socket, their_uid)| {
-                let handle = handle.clone();
-                socket
-                .into_future()
-                .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
-                .and_then(move |(msg_opt, socket)| {
-                    match msg_opt {
-                        None => Err(SingleConnectionError::ConnectionDropped),
-                        Some(HandshakeMessage::ChooseConnection) => {
-                            peer::from_handshaken_socket(&handle, socket, their_uid, CrustUser::Node)
-                            .map_err(SingleConnectionError::Io)
-                        },
-                        Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
-                    }
+                .map(move |(socket, their_uid)| {
+                    let handle = handle.clone();
+                    socket
+                        .into_future()
+                        .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
+                        .and_then(move |(msg_opt, socket)| match msg_opt {
+                            None => Err(SingleConnectionError::ConnectionDropped),
+                            Some(HandshakeMessage::ChooseConnection) => {
+                                peer::from_handshaken_socket(
+                                    &handle,
+                                    socket,
+                                    their_uid,
+                                    CrustUser::Node,
+                                ).map_err(SingleConnectionError::Io)
+                            }
+                            Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
+                        })
                 })
-            })
-            .buffer_unordered(128)
-            .until(timeout.infallible())
-            .first_ok()
-            .map_err(ConnectError::AllConnectionsFailed)
-            .into_boxed()
+                .buffer_unordered(128)
+                .until(timeout.infallible())
+                .first_ok()
+                .map_err(ConnectError::AllConnectionsFailed)
+                .into_boxed()
         };
 
         Ok(chosen_peer)
@@ -252,13 +254,18 @@ fn validate_connect_request<UID: Uid>(
     our_name_hash: NameHash,
     connect_request: ConnectRequest<UID>,
 ) -> Result<(), SingleConnectionError> {
-    let ConnectRequest { uid: their_uid, name_hash: their_name_hash } = connect_request;
+    let ConnectRequest {
+        uid: their_uid,
+        name_hash: their_name_hash,
+    } = connect_request;
     if their_uid != expected_uid {
-        return Err(SingleConnectionError::InvalidUid(format!("{}", their_uid), format!("{}", expected_uid)));
+        return Err(SingleConnectionError::InvalidUid(
+            format!("{}", their_uid),
+            format!("{}", expected_uid),
+        ));
     }
     if our_name_hash != their_name_hash {
         return Err(SingleConnectionError::InvalidNameHash(their_name_hash));
     }
     Ok(())
 }
-

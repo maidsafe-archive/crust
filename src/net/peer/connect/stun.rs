@@ -15,9 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use net::peer::connect::HandshakeMessage;
 use priv_prelude::*;
 use util;
-use net::peer::connect::HandshakeMessage;
 
 quick_error! {
     #[derive(Debug)]
@@ -61,45 +61,37 @@ pub fn stun<UID: Uid>(
     let peer_addr = *peer_addr;
     future::result({
         util::new_reusably_bound_tcp_socket(local_addr)
-        .and_then(|socket| socket.to_tcp_stream())
-        .map_err(StunError::CreateReusableSocket)
+            .and_then(|socket| socket.to_tcp_stream())
+            .map_err(StunError::CreateReusableSocket)
+    }).and_then(move |socket| {
+        TcpStream::connect_stream(socket, &peer_addr, &handle0).map_err(StunError::Connect)
     })
-    .and_then(move |socket| {
-        TcpStream::connect_stream(socket, &peer_addr, &handle0)
-        .map_err(StunError::Connect)
-    })
-    .map(move |stream| Socket::<HandshakeMessage<UID>>::wrap_tcp(&handle1, stream, peer_addr))
-    .and_then(|socket| {
-        socket
-        .send((0, HandshakeMessage::EchoAddrReq))
+        .map(move |stream| {
+            Socket::<HandshakeMessage<UID>>::wrap_tcp(&handle1, stream, peer_addr)
+        })
         .and_then(|socket| {
             socket
-            .into_future()
-            .map_err(|(e, _)| e)
+                .send((0, HandshakeMessage::EchoAddrReq))
+                .and_then(|socket| socket.into_future().map_err(|(e, _)| e))
+                .map_err(StunError::Socket)
+                .and_then(|(msg_opt, _socket)| match msg_opt {
+                    Some(HandshakeMessage::EchoAddrResp(addr)) => Ok(addr),
+                    Some(..) => Err(StunError::UnexpectedResponse),
+                    None => Err(StunError::Disconnected),
+                })
         })
-        .map_err(StunError::Socket)
-        .and_then(|(msg_opt, _socket)| {
-            match msg_opt {
-                Some(HandshakeMessage::EchoAddrResp(addr)) => Ok(addr),
-                Some(..) => Err(StunError::UnexpectedResponse),
-                None => Err(StunError::Disconnected),
-            }
-        })
-    })
-    .with_timeout(handle, Duration::from_secs(3), StunError::TimedOut)
-    .into_boxed()
+        .with_timeout(handle, Duration::from_secs(3), StunError::TimedOut)
+        .into_boxed()
 }
 
-pub fn stun_respond<UID: Uid>(
-    socket: Socket<HandshakeMessage<UID>>,
-) -> BoxFuture<(), SocketError> {
+pub fn stun_respond<UID: Uid>(socket: Socket<HandshakeMessage<UID>>) -> BoxFuture<(), SocketError> {
     let addr = match socket.peer_addr() {
         Ok(addr) => addr,
         Err(e) => return future::err(e).into_boxed(),
     };
 
-    socket.send((0, HandshakeMessage::EchoAddrResp(addr)))
-    .map(|_s| ())
-    .into_boxed()
+    socket
+        .send((0, HandshakeMessage::EchoAddrResp(addr)))
+        .map(|_s| ())
+        .into_boxed()
 }
-

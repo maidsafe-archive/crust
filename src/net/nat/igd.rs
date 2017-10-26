@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use futures::sync::oneshot;
+use igd::{self, AddAnyPortError, PortMappingProtocol, SearchError};
 use priv_prelude::*;
 
 use std::thread;
-use igd::{self, PortMappingProtocol, SearchError, AddAnyPortError};
-use futures::sync::oneshot;
 
 #[derive(Debug)]
 pub struct SearchGatewayFromTimeout {
@@ -38,19 +38,14 @@ impl Future for SearchGatewayFromTimeout {
     }
 }
 
-pub fn search_gateway_from_timeout(
-    ipv4: Ipv4Addr,
-    timeout: Duration,
-) -> SearchGatewayFromTimeout {
+pub fn search_gateway_from_timeout(ipv4: Ipv4Addr, timeout: Duration) -> SearchGatewayFromTimeout {
     let (tx, rx) = oneshot::channel();
     let _ = thread::spawn(move || {
         let res = igd::search_gateway_from_timeout(ipv4, timeout);
         let res = res.map(|gateway| Gateway { inner: gateway });
         tx.send(res)
     });
-    SearchGatewayFromTimeout {
-        rx: rx,
-    }
+    SearchGatewayFromTimeout { rx: rx }
 }
 
 #[derive(Debug)]
@@ -87,17 +82,9 @@ impl Gateway {
         let description = String::from(description);
         let (tx, rx) = oneshot::channel();
         let _ = thread::spawn(move || {
-            let res = gateway.get_any_address(
-                protocol,
-                local_addr,
-                lease_duration,
-                &description,
-            );
+            let res = gateway.get_any_address(protocol, local_addr, lease_duration, &description);
             tx.send(res)
         });
-        GetAnyAddress {
-            rx: rx,
-        }
+        GetAnyAddress { rx: rx }
     }
 }
-

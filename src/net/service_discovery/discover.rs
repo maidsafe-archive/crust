@@ -15,23 +15,23 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::{io, mem};
-use std::net::{SocketAddr, SocketAddrV4, IpAddr, Ipv4Addr};
-use tokio_core::reactor::Handle;
-use tokio_core::net::{UdpSocket, UdpFramed};
-use futures::stream::StreamFuture;
+use futures::{Async, Future, Sink, Stream};
 use futures::sink;
-use futures::{Async, Future, Stream, Sink};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
-use void::Void;
+use futures::stream::StreamFuture;
 
 use net::service_discovery::msg::DiscoveryMsg;
+use serde::Serialize;
+use serde::de::DeserializeOwned;
+use std::{io, mem};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use tokio_core::net::{UdpFramed, UdpSocket};
+use tokio_core::reactor::Handle;
 use util::SerdeUdpCodec;
+use void::Void;
 
 pub fn discover<T>(handle: &Handle, port: u16) -> io::Result<Discover<T>>
 where
-    T: Serialize + DeserializeOwned + Clone + 'static
+    T: Serialize + DeserializeOwned + Clone + 'static,
 {
 
     let bind_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
@@ -43,35 +43,29 @@ where
     let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(255, 255, 255, 255), port));
     let writing = framed.send((broadcast_addr, request));
 
-    Ok(Discover {
-        state: DiscoverState::Writing { writing },
-    })
+    Ok(Discover { state: DiscoverState::Writing { writing } })
 }
 
 pub struct Discover<T>
 where
-    T: Serialize + DeserializeOwned + Clone + 'static
+    T: Serialize + DeserializeOwned + Clone + 'static,
 {
     state: DiscoverState<T>,
 }
 
 enum DiscoverState<T>
 where
-    T: Serialize + DeserializeOwned + Clone + 'static
+    T: Serialize + DeserializeOwned + Clone + 'static,
 {
-    Reading {
-        reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>,
-    },
-    Writing {
-        writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>,
-    },
+    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>, },
+    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>, },
     Invalid,
 }
 
 
 impl<T> Stream for Discover<T>
 where
-    T: Serialize + DeserializeOwned + Clone + 'static
+    T: Serialize + DeserializeOwned + Clone + 'static,
 {
     type Item = (Ipv4Addr, T);
     type Error = Void;
@@ -81,7 +75,9 @@ where
         let ret = loop {
             match state {
                 DiscoverState::Reading { mut reading } => {
-                    if let Async::Ready((res, framed)) = unwrap!(reading.poll().map_err(|(e, _)| e)) {
+                    if let Async::Ready((res, framed)) =
+                        unwrap!(reading.poll().map_err(|(e, _)| e))
+                    {
                         state = DiscoverState::Reading { reading: framed.into_future() };
                         match res {
                             Some((addr, Ok(DiscoveryMsg::Response(response)))) => {
@@ -90,18 +86,18 @@ where
                                     _ => unreachable!(),
                                 };
                                 break Async::Ready(Some((ip, response)));
-                            },
+                            }
                             Some((_, Ok(..))) => (),
                             Some((addr, Err(e))) => {
                                 warn!("Error deserialising message from {}: {}", addr, e);
-                            },
+                            }
                             None => unreachable!(),
                         }
                     } else {
                         state = DiscoverState::Reading { reading };
                         break Async::NotReady;
                     }
-                },
+                }
                 DiscoverState::Writing { mut writing } => {
                     if let Async::Ready(framed) = unwrap!(writing.poll()) {
                         state = DiscoverState::Reading { reading: framed.into_future() };
@@ -110,7 +106,7 @@ where
                         state = DiscoverState::Writing { writing };
                         break Async::NotReady;
                     }
-                },
+                }
                 DiscoverState::Invalid => panic!(),
             }
         };
@@ -118,4 +114,3 @@ where
         Ok(ret)
     }
 }
-

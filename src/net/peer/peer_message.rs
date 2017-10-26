@@ -20,4 +20,3 @@ pub enum PeerMessage {
     Heartbeat,
     Data(Vec<u8>),
 }
-

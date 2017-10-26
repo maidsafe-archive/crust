@@ -15,13 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::time::Duration;
-use tokio_core::reactor::{Core, Timeout};
-use futures::{future, stream, Future, Stream};
 use future_utils::StreamExt;
+use futures::{Future, Stream, future, stream};
 
 use net::service_discovery::discover;
 use net::service_discovery::server::Server;
+use std::time::Duration;
+use tokio_core::reactor::{Core, Timeout};
 
 #[test]
 fn test() {
@@ -43,7 +43,10 @@ fn test() {
         for i in 0..num_servers {
             for _ in 0..num_discovers {
                 let discover = unwrap!(discover::discover::<u16>(&handle, starting_port + i))
-                    .until(unwrap!(Timeout::new(Duration::from_secs(1), &handle)).map_err(|e| panic!("{}", e)))
+                    .until(
+                        unwrap!(Timeout::new(Duration::from_secs(1), &handle))
+                            .map_err(|e| panic!("{}", e)),
+                    )
                     .collect()
                     .and_then(move |v| {
                         assert!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>() == &[i]);
@@ -59,4 +62,3 @@ fn test() {
     }));
     let _servers = unwrap!(res);
 }
-

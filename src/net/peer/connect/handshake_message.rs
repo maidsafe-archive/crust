@@ -48,5 +48,3 @@ pub enum BootstrapDenyReason {
     NodeNotWhitelisted,
     ClientNotWhitelisted,
 }
-
-

@@ -59,4 +59,3 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
         }
     }
 }
-

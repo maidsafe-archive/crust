@@ -40,4 +40,3 @@ pub fn enable_so_reuseport(sock: &TcpBuilder) -> io::Result<()> {
 pub fn enable_so_reuseport(_sock: &TcpBuilder) -> io::Result<()> {
     Ok(())
 }
-

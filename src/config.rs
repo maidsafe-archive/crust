@@ -15,18 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std;
-use std::env;
-use rand;
-use notify::{self, Watcher};
 use config_file_handler::{self, FileHandler};
-use std::ops::{Deref, DerefMut};
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
-use tiny_keccak::sha3_256;
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use maidsafe_utilities::thread;
+use notify::{self, Watcher};
 
 use priv_prelude::*;
+use rand;
+use std;
+use std::env;
+use std::ops::{Deref, DerefMut};
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tiny_keccak::sha3_256;
 
 /// A handle to a crust config file. This handle can be cloned and shared throughout the program.
 #[derive(Clone)]
@@ -60,9 +60,9 @@ impl ConfigFile {
                             Err(e) => {
                                 error!("config refresher raised an error: {}", e);
                                 return;
-                            },
+                            }
                         }
-                    },
+                    }
                     None => return,
                 };
             }
@@ -235,11 +235,14 @@ impl ConfigWrapper {
     /// the file.
     pub fn open(file_name: PathBuf) -> Result<(ConfigWrapper, PathBuf), CrustError> {
         let (config, path) = ConfigSettings::open(&file_name)?;
-        Ok((ConfigWrapper {
-            cfg: config,
-            file_name: file_name,
-            observers: Vec::new(),
-        }, path))
+        Ok((
+            ConfigWrapper {
+                cfg: config,
+                file_name: file_name,
+                observers: Vec::new(),
+            },
+            path,
+        ))
     }
 
     pub fn reload(&mut self) -> Result<(), CrustError> {
@@ -248,9 +251,9 @@ impl ConfigWrapper {
         let modified = self.cfg != new_config;
         if modified {
             self.cfg = new_config;
-            self.observers.retain(|observer| {
-                observer.unbounded_send(()).is_ok()
-            });
+            self.observers.retain(
+                |observer| observer.unbounded_send(()).is_ok(),
+            );
         }
         Ok(())
     }

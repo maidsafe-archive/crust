@@ -53,14 +53,14 @@ extern crate rand;
 
 extern crate crust;
 
-use std::{io, fmt};
-use std::path::PathBuf;
+
+use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
 
 use futures::future::empty;
-use tokio_core::reactor::Core;
 use rand::Rng;
-
-use crust::{Service, ConfigFile, PubConnectionInfo, Uid};
+use std::{fmt, io};
+use std::path::PathBuf;
+use tokio_core::reactor::Core;
 
 // Some peer ID boilerplate.
 
@@ -81,23 +81,27 @@ fn main() {
     let service_id = rand::thread_rng().gen::<PeerId>();
     println!("Service id: {}", service_id);
 
-    let config = unwrap!(
+    let config =
+        unwrap!(
         ConfigFile::open_path(PathBuf::from("sample.config")),
         "Failed to read crust config file: sample.config",
     );
     let make_service = Service::with_config(&event_loop.handle(), config, service_id);
-    let service = unwrap!(
+    let service =
+        unwrap!(
         event_loop.run(make_service),
         "Failed to create Service object",
     );
 
-    let listener = unwrap!(
+    let listener =
+        unwrap!(
         event_loop.run(service.start_listener()),
         "Failed to start listening to peers",
     );
     println!("Listening on {}", listener.addr());
 
-    let our_conn_info = unwrap!(
+    let our_conn_info =
+        unwrap!(
         event_loop.run(service.prepare_connection_info()),
         "Failed to prepare connection info",
     );
@@ -111,7 +115,8 @@ fn main() {
     let their_info = readln();
     let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&their_info));
 
-    let peer = unwrap!(
+    let peer =
+        unwrap!(
         event_loop.run(service.connect(our_conn_info, their_info)),
         "Failed to connect to given peer",
     );

@@ -15,17 +15,17 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use MAX_PAYLOAD_SIZE;
+use compat::{self, CrustEventSender, Event};
+use config::DevConfigSettings;
+use env_logger;
+use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
+use priv_prelude::*;
+use rand;
 use std;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
-use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use rand;
-use env_logger;
-use compat::{self, CrustEventSender, Event};
-use config::DevConfigSettings;
-use priv_prelude::*;
 use util::{self, UniqueId};
-use ::MAX_PAYLOAD_SIZE;
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
@@ -107,7 +107,7 @@ fn bootstrap_and_exchange<UID: Uid>(
                 break;
             }
         });
-    };
+    }
 
     expect_event!(event_rx1, Event::BootstrapConnect(id, _) => {
         assert_eq!(id, uid0);
@@ -137,10 +137,14 @@ fn start_two_services_exchange_data() {
     let uid0 = service0.id();
     let uid1 = service1.id();
 
-    let data0 = (0..NUM_MESSAGES).map(|_| util::random_vec(MAX_DATA_SIZE)).collect::<Vec<_>>();
+    let data0 = (0..NUM_MESSAGES)
+        .map(|_| util::random_vec(MAX_DATA_SIZE))
+        .collect::<Vec<_>>();
     let data0_compare = data0.clone();
 
-    let data1 = (0..NUM_MESSAGES).map(|_| util::random_vec(MAX_DATA_SIZE)).collect::<Vec<_>>();
+    let data1 = (0..NUM_MESSAGES)
+        .map(|_| util::random_vec(MAX_DATA_SIZE))
+        .collect::<Vec<_>>();
     let data1_compare = data1.clone();
 
     let (ci_tx0, ci_rx0) = mpsc::channel();
@@ -168,19 +172,19 @@ fn start_two_services_exchange_data() {
         let mut i = 0;
         let data1_recv = {
             event_rx0
-            .into_iter()
-            .take(NUM_MESSAGES)
-            .map(|msg| {
-                i += 1;
-                match msg {
-                    Event::NewMessage(uid, _user, data) => {
-                        assert_eq!(uid, uid1);
-                        data
-                    },
-                    e => panic!("unexpected event: {:?}", e),
-                }
-            })
-            .collect::<Vec<_>>()
+                .into_iter()
+                .take(NUM_MESSAGES)
+                .map(|msg| {
+                    i += 1;
+                    match msg {
+                        Event::NewMessage(uid, _user, data) => {
+                            assert_eq!(uid, uid1);
+                            data
+                        }
+                        e => panic!("unexpected event: {:?}", e),
+                    }
+                })
+                .collect::<Vec<_>>()
         };
 
         assert!(data1_recv == data1_compare);
@@ -208,19 +212,19 @@ fn start_two_services_exchange_data() {
         let mut i = 0;
         let data0_recv = {
             event_rx1
-            .into_iter()
-            .take(NUM_MESSAGES)
-            .map(|msg| {
-                i += 1;
-                match msg {
-                    Event::NewMessage(uid, _user, data) => {
-                        assert_eq!(uid, uid0);
-                        data
-                    },
-                    e => panic!("unexpected event: {:?}", e),
-                }
-            })
-            .collect::<Vec<_>>()
+                .into_iter()
+                .take(NUM_MESSAGES)
+                .map(|msg| {
+                    i += 1;
+                    match msg {
+                        Event::NewMessage(uid, _user, data) => {
+                            assert_eq!(uid, uid0);
+                            data
+                        }
+                        e => panic!("unexpected event: {:?}", e),
+                    }
+                })
+                .collect::<Vec<_>>()
         };
 
         assert!(data0_recv == data0_compare);
@@ -249,7 +253,13 @@ fn bootstrap_using_hard_coded_contacts() {
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
-    bootstrap_and_exchange(&service0, &service1, &event_rx0, &event_rx1, CrustUser::Client);
+    bootstrap_and_exchange(
+        &service0,
+        &service1,
+        &event_rx0,
+        &event_rx1,
+        CrustUser::Client,
+    );
 
     drop(service1);
     expect_event!(event_rx0, Event::LostPeer(id) => {
@@ -272,7 +282,13 @@ fn bootstrap_using_service_discovery() {
 
     let (service1, event_rx1) = service();
     service1.start_service_discovery();
-    bootstrap_and_exchange(&service0, &service1, &event_rx0, &event_rx1, CrustUser::Client);
+    bootstrap_and_exchange(
+        &service0,
+        &service1,
+        &event_rx0,
+        &event_rx1,
+        CrustUser::Client,
+    );
 }
 
 #[test]
@@ -305,7 +321,13 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
-    bootstrap_and_exchange(&service0, &service1, &event_rx0, &event_rx1, CrustUser::Client);
+    bootstrap_and_exchange(
+        &service0,
+        &service1,
+        &event_rx0,
+        &event_rx1,
+        CrustUser::Client,
+    );
 }
 
 #[test]
@@ -331,7 +353,13 @@ fn bootstrap_with_disable_external_reachability() {
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
-    bootstrap_and_exchange(&service0, &service1, &event_rx0, &event_rx1, CrustUser::Node);
+    bootstrap_and_exchange(
+        &service0,
+        &service1,
+        &event_rx0,
+        &event_rx1,
+        CrustUser::Node,
+    );
 }
 
 #[test]
@@ -370,7 +398,13 @@ fn bootstrap_with_blacklist() {
         assert_eq!(id, uid0);
     });
 
-    exchange_messages(&service0, &service1, &event_rx0, &event_rx1, CrustUser::Client);
+    exchange_messages(
+        &service0,
+        &service1,
+        &event_rx0,
+        &event_rx1,
+        CrustUser::Client,
+    );
 
     thread::sleep(Duration::from_secs(1));
     let res = blacklisted_listener.accept();
@@ -426,4 +460,3 @@ fn bootstrap_fails_if_there_are_only_invalid_contacts() {
     unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
     expect_event!(event_rx0, Event::BootstrapFailed);
 }
-

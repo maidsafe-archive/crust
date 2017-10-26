@@ -20,9 +20,9 @@
 
 use get_if_addrs::{self, IfAddr};
 use net::nat::igd::{self, Gateway};
+use priv_prelude::*;
 
 use util;
-use priv_prelude::*;
 
 /// Keeps track of information useful for creating mapped sockets. eg. What networking interfaces
 /// does the machine we're running on have? Is there a UPnP router we can talk to? What are some
@@ -49,9 +49,7 @@ pub struct Ifv4 {
 impl MappingContext {
     /// Create a new `MappingContext`
     pub fn new(options: Options) -> BoxFuture<MappingContext, NatError> {
-        let Options {
-            force_include_port,
-        } = options;
+        let Options { force_include_port } = options;
 
         let ifs = match get_if_addrs::get_if_addrs() {
             Ok(ifs) => ifs,
@@ -69,13 +67,11 @@ impl MappingContext {
         for ifv4 in ifv4s {
             if !ifv4.is_loopback() {
                 let future = igd::search_gateway_from_timeout(ifv4, Duration::from_secs(1))
-                    .then(move |res| {
-                        match res {
-                            Ok(gateway) => future::ok(Some(gateway)),
-                            Err(e) => {
-                                info!("Error searching for IGD gateway: {}", e);
-                                future::ok(None)
-                            },
+                    .then(move |res| match res {
+                        Ok(gateway) => future::ok(Some(gateway)),
+                        Err(e) => {
+                            info!("Error searching for IGD gateway: {}", e);
+                            future::ok(None)
                         }
                     })
                     .map(move |gateway_opt| {
@@ -89,7 +85,8 @@ impl MappingContext {
             }
         }
         let igd_futures = stream::futures_unordered(igd_futures);
-        igd_futures.collect()
+        igd_futures
+            .collect()
             .and_then(|ifv4s| {
                 future::ok(MappingContext {
                     our_ifv4s: ifv4s,
@@ -106,9 +103,11 @@ impl MappingContext {
         }
 
         self.our_ifv4s
-        .iter()
-        .map(|ifv4| SocketAddr::V4(SocketAddrV4::new(ifv4.ip(), addr.port())))
-        .collect::<HashSet<_>>()
+            .iter()
+            .map(|ifv4| {
+                SocketAddr::V4(SocketAddrV4::new(ifv4.ip(), addr.port()))
+            })
+            .collect::<HashSet<_>>()
     }
 
     /// Inform the context about external "STUN" servers. Note that crust does not actually use
@@ -147,37 +146,34 @@ impl Ifv4 {
 
 #[cfg(test)]
 mod tests {
-    use tokio_core::reactor::Core;
     use super::*;
+    use tokio_core::reactor::Core;
 
     // Run with `cargo test igd -- --ignored` to find if IGD is available for you
     #[test]
     #[ignore]
     fn igd_gateway_available() {
         let mut core = unwrap!(Core::new());
-        let res = core.run(MappingContext::new(Options::default())
-            .and_then(|mc| {
-                assert!(!mc.our_ifv4s.is_empty());
+        let res = core.run(MappingContext::new(Options::default()).and_then(|mc| {
+            assert!(!mc.our_ifv4s.is_empty());
 
-                let mut loopback_found = false;
-                let mut non_loopback_found = false;
+            let mut loopback_found = false;
+            let mut non_loopback_found = false;
 
-                for ifv4 in mc.our_ifv4s {
-                    if ifv4.ip.is_loopback() {
-                        loopback_found = true;
-                        assert!(ifv4.gateway.is_none());
-                    } else {
-                        non_loopback_found = true;
-                        assert!(ifv4.gateway.is_some());
-                    }
+            for ifv4 in mc.our_ifv4s {
+                if ifv4.ip.is_loopback() {
+                    loopback_found = true;
+                    assert!(ifv4.gateway.is_none());
+                } else {
+                    non_loopback_found = true;
+                    assert!(ifv4.gateway.is_some());
                 }
+            }
 
-                assert!(loopback_found);
-                assert!(non_loopback_found);
-                Ok(())
-            })
-        );
+            assert!(loopback_found);
+            assert!(non_loopback_found);
+            Ok(())
+        }));
         unwrap!(res);
     }
 }
-

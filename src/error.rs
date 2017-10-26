@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use notify;
 use config_file_handler;
+use notify;
 use priv_prelude::*;
 
 quick_error! {
@@ -77,4 +77,3 @@ quick_error! {
         }
     }
 }
-

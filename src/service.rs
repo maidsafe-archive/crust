@@ -16,10 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 use futures::sync::mpsc::UnboundedReceiver;
-use priv_prelude::*;
 
-use net::{self, Acceptor, Listener, BootstrapAcceptor, ServiceDiscovery};
+use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
 use net::nat::{self, mapping_context};
+use priv_prelude::*;
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -37,7 +37,11 @@ impl<UID: Uid> Service<UID> {
     /// Create a new `Service` with the default config.
     pub fn new(handle: &Handle, our_uid: UID) -> BoxFuture<Service<UID>, CrustError> {
         let try = || -> Result<_, CrustError> {
-            Ok(Service::with_config(handle, ConfigFile::open_default()?, our_uid))
+            Ok(Service::with_config(
+                handle,
+                ConfigFile::open_default()?,
+                our_uid,
+            ))
         };
         future::result(try()).flatten().into_boxed()
     }
@@ -53,21 +57,21 @@ impl<UID: Uid> Service<UID> {
             force_include_port: config.read().force_acceptor_port_in_ext_ep,
         };
         MappingContext::new(options)
-        .map_err(|e| CrustError::NatError(e))
-        .map(move |mut mc| {
-            mc.add_peer_stuns(config.read().hard_coded_contacts.iter().cloned());
-            let acceptor = Acceptor::new(&handle, our_uid, config.clone());
-            Service {
-                handle,
-                config,
-                our_uid,
-                mc,
-                acceptor,
-            }
-        })
-        .into_boxed()
+            .map_err(|e| CrustError::NatError(e))
+            .map(move |mut mc| {
+                mc.add_peer_stuns(config.read().hard_coded_contacts.iter().cloned());
+                let acceptor = Acceptor::new(&handle, our_uid, config.clone());
+                Service {
+                    handle,
+                    config,
+                    our_uid,
+                    mc,
+                    acceptor,
+                }
+            })
+            .into_boxed()
     }
-    
+
     /// Get a handle to the service's config file.
     pub fn config(&self) -> ConfigFile {
         self.config.clone()
@@ -96,7 +100,7 @@ impl<UID: Uid> Service<UID> {
             ext_reachability,
             blacklist,
             use_service_discovery,
-            self.config.clone()
+            self.config.clone(),
         )
     }
 
@@ -113,7 +117,8 @@ impl<UID: Uid> Service<UID> {
     pub fn start_listener(&self) -> BoxFuture<Listener, CrustError> {
         let port = self.config.read().tcp_acceptor_port.unwrap_or(0);
         let addr = SocketAddr::new(ip!("0.0.0.0"), port);
-        self.acceptor.listener(&addr, &self.mc)
+        self.acceptor
+            .listener(&addr, &self.mc)
             .map_err(CrustError::StartListener)
             .into_boxed()
     }
@@ -127,16 +132,16 @@ impl<UID: Uid> Service<UID> {
         let our_uid = self.our_uid;
         let (direct_addrs, _) = self.acceptor.addresses();
         nat::mapped_tcp_socket::<UID>(&self.handle, &self.mc, &addr!("0.0.0.0:0"))
-        .map(move |(socket, hole_punch_addrs)| {
-            PrivConnectionInfo {
-                id: our_uid,
-                for_direct: direct_addrs.into_iter().collect(),
-                for_hole_punch: hole_punch_addrs.into_iter().collect(),
-                hole_punch_socket: Some(socket),
-            }
-        })
-        .map_err(CrustError::PrepareConnectionInfo)
-        .into_boxed()
+            .map(move |(socket, hole_punch_addrs)| {
+                PrivConnectionInfo {
+                    id: our_uid,
+                    for_direct: direct_addrs.into_iter().collect(),
+                    for_hole_punch: hole_punch_addrs.into_iter().collect(),
+                    hole_punch_socket: Some(socket),
+                }
+            })
+            .map_err(CrustError::PrepareConnectionInfo)
+            .into_boxed()
     }
 
     /// Perform a p2p connection to a peer. You must generate connection info first using
@@ -157,12 +162,7 @@ impl<UID: Uid> Service<UID> {
     /// the local network (via udp broadcast).
     pub fn start_service_discovery(&self) -> io::Result<ServiceDiscovery> {
         let (current_addrs, addrs_rx) = self.acceptor.addresses();
-        ServiceDiscovery::new(
-            &self.handle,
-            self.config.clone(),
-            current_addrs,
-            addrs_rx,
-        )
+        ServiceDiscovery::new(&self.handle, self.config.clone(), current_addrs, addrs_rx)
     }
 
     /// Return the set of all addresses that we are currently listening for incoming connections
@@ -181,4 +181,3 @@ impl<UID: Uid> Service<UID> {
         &self.handle
     }
 }
-

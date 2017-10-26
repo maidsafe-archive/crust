@@ -19,9 +19,9 @@
 //! error on them. This is just a wrapper which removes the error and makes error handling easier
 //! when using timeouts.
 
+use futures::{Async, Future};
 use std::io;
 use std::time::{Duration, Instant};
-use futures::{Async, Future};
 use tokio_core;
 use tokio_core::reactor::Handle;
 use void::Void;
@@ -56,4 +56,3 @@ impl Future for Timeout {
         Ok(unwrap!(self.inner.poll()))
     }
 }
-

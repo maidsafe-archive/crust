@@ -15,13 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync::{Arc, Mutex};
-use tokio_core::net::Incoming;
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
-use future_utils::{self, DropNotify, DropNotice};
+use future_utils::{self, DropNotice, DropNotify};
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use net::nat;
 
 use priv_prelude::*;
+use std::sync::{Arc, Mutex};
+use tokio_core::net::Incoming;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -84,34 +84,38 @@ impl Listeners {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(&self, listen_addr: &SocketAddr, mc: &MappingContext) -> IoFuture<Listener> {
+    pub fn listener<UID: Uid>(
+        &self,
+        listen_addr: &SocketAddr,
+        mc: &MappingContext,
+    ) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = self.addresses.clone();
         nat::mapped_tcp_socket::<UID>(&handle, mc, listen_addr)
-        .and_then(move |(socket, addrs)| {
-            let listener = socket.listen(LISTENER_BACKLOG)?;
-            let local_addr = listener.local_addr()?;
-            let listener = TcpListener::from_listener(listener, &local_addr, &handle)?;
-            let incoming = listener.incoming();
-            let (drop_tx, drop_rx) = future_utils::drop_notify();
+            .and_then(move |(socket, addrs)| {
+                let listener = socket.listen(LISTENER_BACKLOG)?;
+                let local_addr = listener.local_addr()?;
+                let listener = TcpListener::from_listener(listener, &local_addr, &handle)?;
+                let incoming = listener.incoming();
+                let (drop_tx, drop_rx) = future_utils::drop_notify();
 
-            let mut addresses = unwrap!(addresses.lock());
-            let mut current = mem::replace(&mut addresses.current, HashSet::new());
-            current.extend(addrs.iter().cloned());
-            addresses.observers.retain(|observer| {
-                observer.unbounded_send(current.clone()).is_ok()
-            });
-            addresses.current = current;
+                let mut addresses = unwrap!(addresses.lock());
+                let mut current = mem::replace(&mut addresses.current, HashSet::new());
+                current.extend(addrs.iter().cloned());
+                addresses.observers.retain(|observer| {
+                    observer.unbounded_send(current.clone()).is_ok()
+                });
+                addresses.current = current;
 
-            let _ = tx.unbounded_send((drop_rx, incoming, addrs));
+                let _ = tx.unbounded_send((drop_rx, incoming, addrs));
 
-            Ok(Listener {
-                _drop_tx: drop_tx,
-                local_addr,
+                Ok(Listener {
+                    _drop_tx: drop_tx,
+                    local_addr,
+                })
             })
-        })
-        .into_boxed()
+            .into_boxed()
     }
 }
 
@@ -163,9 +167,9 @@ impl Listener {
 #[cfg(test)]
 mod test {
     use super::*;
-    use tokio_core::reactor::Core;
     use env_logger;
     use net::nat::mapping_context::Options;
+    use tokio_core::reactor::Core;
     use util::{self, UniqueId};
 
     #[test]
@@ -271,80 +275,79 @@ mod test {
 
         let future = {
             MappingContext::new(Options::default())
-            .map_err(|e| panic!(e))
-            .and_then(move |mc| {
-                listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
                 .map_err(|e| panic!(e))
-                .map(move |listener| {
-                    mem::forget(listener);
-                    (mc, listeners)
-                })
-            })
-            .and_then(move |(mc, listeners)| {
-                listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
-                .map_err(|e| panic!(e))
-                .map(move |listener| {
-                    mem::forget(listener);
+                .and_then(move |mc| {
                     listeners
+                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                        .map_err(|e| panic!(e))
+                        .map(move |listener| {
+                            mem::forget(listener);
+                            (mc, listeners)
+                        })
                 })
-            })
-            .map(move |listeners| {
-                let (mut addrs, _) = listeners.addresses();
-                assert!(addrs.len() >= 2);
+                .and_then(move |(mc, listeners)| {
+                    listeners
+                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                        .map_err(|e| panic!(e))
+                        .map(move |listener| {
+                            mem::forget(listener);
+                            listeners
+                        })
+                })
+                .map(move |listeners| {
+                    let (mut addrs, _) = listeners.addresses();
+                    assert!(addrs.len() >= 2);
 
-                addrs.retain(|addr| !util::ip_addr_is_global(&addr.ip()));
+                    addrs.retain(|addr| !util::ip_addr_is_global(&addr.ip()));
 
-                let mut connectors = Vec::new();
-                for addr in &addrs {
-                    let addr = *addr;
-                    let handle0 = handle.clone();
+                    let mut connectors = Vec::new();
+                    for addr in &addrs {
+                        let addr = *addr;
+                        let handle0 = handle.clone();
+                        let f = {
+                            TcpStream::connect(&addr, &handle)
+                                .map_err(|e| panic!(e))
+                                .map(move |stream| {
+                                    Socket::<SocketAddr>::wrap_tcp(&handle0, stream, addr)
+                                })
+                                .and_then(move |socket| socket.send((0, addr)))
+                                .map(|_socket| ())
+                                .map_err(|e| panic!(e))
+                        };
+                        connectors.push(f);
+                    }
+
                     let f = {
-                        TcpStream::connect(&addr, &handle)
-                        .map_err(|e| panic!(e))
-                        .map(move |stream| Socket::<SocketAddr>::wrap_tcp(&handle0, stream, addr))
-                        .and_then(move |socket| socket.send((0, addr)))
-                        .map(|_socket| ())
-                        .map_err(|e| panic!(e))
-                    };
-                    connectors.push(f);
-                }
-
-                let f = {
-                    let handle = handle.clone();
-                    future::join_all(connectors)
+                        let handle = handle.clone();
+                        future::join_all(connectors)
                     .and_then(move |_| unwrap!(Timeout::new(Duration::from_secs(1), &handle)))
                     .map_err(|e| panic!(e))
                     .map(|()| drop(listeners))
-                };
+                    };
 
-                handle.spawn(f);
+                    handle.spawn(f);
 
-                addrs
-            })
-            .join({
-                socket_incoming
-                .map(|socket| {
-                    socket
-                    .change_message_type::<SocketAddr>()
-                    .into_future()
-                    .map_err(|(e, _socket)| panic!(e))
-                    .map(|(msg_opt, _socket)| {
-                        unwrap!(msg_opt)
-                    })
+                    addrs
                 })
-                .buffer_unordered(64)
-                .collect()
-                .map(|v| v.into_iter().collect::<HashSet<_>>())
-                .into_boxed()
-            })
-            .map(|(addrs0, addrs1)| {
-                assert_eq!(addrs0, addrs1);
-            })
+                .join({
+                    socket_incoming
+                        .map(|socket| {
+                            socket
+                                .change_message_type::<SocketAddr>()
+                                .into_future()
+                                .map_err(|(e, _socket)| panic!(e))
+                                .map(|(msg_opt, _socket)| unwrap!(msg_opt))
+                        })
+                        .buffer_unordered(64)
+                        .collect()
+                        .map(|v| v.into_iter().collect::<HashSet<_>>())
+                        .into_boxed()
+                })
+                .map(|(addrs0, addrs1)| {
+                    assert_eq!(addrs0, addrs1);
+                })
         };
         let res = core.run(future);
         unwrap!(res)
     }
 }
-
