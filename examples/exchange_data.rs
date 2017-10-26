@@ -49,7 +49,7 @@ use utils::{PeerId, connect_to_peer};
 fn main() {
     let mut event_loop = unwrap!(Core::new());
     // generate random unique ID for this node
-    let service_id = PeerId::random();
+    let service_id: PeerId = rand::random();
     println!("Service id: {}", service_id);
 
     // does the p2p connection as demonstrated in `connect.rs` example
