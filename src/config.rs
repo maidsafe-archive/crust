@@ -330,9 +330,9 @@ impl ConfigSettings {
 #[cfg(test)]
 mod tests {
     use super::ConfigFile;
+    use config_file_handler;
     use std::fs;
     use std::path::PathBuf;
-    use config_file_handler;
 
     #[test]
     fn parse_sample_config_file() {
