@@ -34,6 +34,43 @@ fn start_service() {
     unwrap!(res);
 }
 
+#[test]
+fn bootstrap_using_hard_coded_contacts() {
+    let mut event_loop = unwrap!(Core::new());
+    let loop_handle = event_loop.handle();
+
+    let config1 = unwrap!(ConfigFile::new_temporary());
+    let mut service1 = unwrap!(event_loop.run(Service::with_config(
+        &loop_handle,
+        config1,
+        util::random_id(),
+    )));
+    let listener = unwrap!(event_loop.run(service1.start_listener()));
+    let service1_port = listener.addr().port();
+
+    loop_handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
+        |_| Ok(()),
+    ));
+
+    let config2 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config2.write()).hard_coded_contacts =
+        vec![SocketAddr::new(ip!("127.0.0.1"), service1_port)];
+    let mut service2 = unwrap!(event_loop.run(Service::with_config(
+        &loop_handle,
+        config2,
+        util::random_id(),
+    )));
+
+    let service_discovery = false;
+    let peer = unwrap!(event_loop.run(service2.bootstrap(
+        HashSet::new(),
+        service_discovery,
+        CrustUser::Client,
+    )));
+
+    assert_eq!(peer.uid(), service1.id());
+}
+
 /*
 
     Things to test:
