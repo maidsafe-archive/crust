@@ -56,7 +56,7 @@ quick_error! {
 
 /// Try to bootstrap to the network.
 ///
-/// On success, returns the peer that we've bootstrapped to.
+/// On success, returns the first peer that we've bootstrapped to.
 pub fn bootstrap<UID: Uid>(
     handle: &Handle,
     our_uid: UID,
