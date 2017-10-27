@@ -32,6 +32,10 @@ pub const INACTIVITY_TIMEOUT_MS: u64 = 900_000;
 const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 
 /// A connection to a remote peer.
+///
+/// Use `Peer` to send and receive data asynchronously.
+/// It implements [Stream and Sink](https://tokio.rs/docs/getting-started/streams-and-sinks/)
+/// traits from futures crate.
 // This wraps a `Socket` and uses it to send `PeerMessage`s to peers. It also adds a heartbeat to
 // keep the connection alive and detect when peers have disconnected.
 //
