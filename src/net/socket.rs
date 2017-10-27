@@ -338,7 +338,7 @@ mod test {
                         let socket = Socket::<Vec<u8>>::wrap_tcp(&handle1, stream, addr);
                         socket.take(num_msgs as u64).collect().map(
                             move |msgs_recv| {
-                                assert!(msgs_recv == msgs);
+                                assert_eq!(msgs_recv, msgs);
                             },
                         )
                     })

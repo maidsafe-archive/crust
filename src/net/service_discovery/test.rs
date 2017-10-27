@@ -49,7 +49,7 @@ fn test() {
                     )
                     .collect()
                     .and_then(move |v| {
-                        assert!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>() == &[i]);
+                        assert_eq!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>(), &[i]);
                         Ok(())
                     });
                 futures.push(discover);
