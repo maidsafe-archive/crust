@@ -71,7 +71,7 @@ impl<UID: Uid> ConnectionMap<UID> {
                 let _ = event_tx0.send(Event::NewMessage(uid, kind, msg));
                 Ok(())
             })
-            .map(move |()| {
+            .finally(move || {
                 let _ = cm.remove(&uid);
                 let _ = event_tx1.send(Event::LostPeer(uid));
             })
