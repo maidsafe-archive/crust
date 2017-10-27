@@ -65,17 +65,17 @@ impl<UID: Uid> ConnectionMap<UID> {
         let event_tx1 = inner.event_tx.clone();
         handle.spawn({
             peer_stream
-            .log_errors(LogLevel::Info, "receiving data from peer")
-            .until(drop_rx)
-            .for_each(move |msg| {
-                let _ = event_tx0.send(Event::NewMessage(uid, kind, msg));
-                Ok(())
-            })
-            .finally(move || {
-                let _ = cm.remove(&uid);
-                let _ = event_tx1.send(Event::LostPeer(uid));
-            })
-            .infallible()
+                .log_errors(LogLevel::Info, "receiving data from peer")
+                .until(drop_rx)
+                .for_each(move |msg| {
+                    let _ = event_tx0.send(Event::NewMessage(uid, kind, msg));
+                    Ok(())
+                })
+                .finally(move || {
+                    let _ = cm.remove(&uid);
+                    let _ = event_tx1.send(Event::LostPeer(uid));
+                })
+                .infallible()
         });
 
         let pw = PeerWrapper {
