@@ -332,13 +332,14 @@ mod tests {
     use super::ConfigFile;
     use std::fs;
     use std::path::PathBuf;
+    use config_file_handler;
 
     #[test]
     fn parse_sample_config_file() {
         let sample_name = "sample.config";
 
         let mut source = PathBuf::from("installer");
-        let mut dest = PathBuf::from("target/debug/deps");
+        let mut dest = unwrap!(config_file_handler::current_bin_dir());
 
         let mut target_dir = dest.clone();
         target_dir.push(&source);
