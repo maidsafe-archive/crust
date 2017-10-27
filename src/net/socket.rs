@@ -59,14 +59,14 @@ quick_error! {
 /// An important thing to understand about `Socket`s is that they are *infinitely buffered*. You
 /// can just keep pumping more and more data into them without blocking the writing task even if
 /// the underlying transport can't keep up. Eventually, once the latency builds up too much (ie.
-/// the messages it's writing are more than MAX_MSG_AGE_SECS old) then it will drop its entire
+/// the messages it's writing are more than `MAX_MSG_AGE_SECS` old) then it will drop its entire
 /// outgoing buffer. This may sound broken in several ways, but it's behaviour that MaidSafe's
 /// routing layer currently expects.
 ///
 /// Another thing is that messages can be sent with a `Priority`. Higher (lower-numbered)
 /// priorities will always be sent first. Highest-priority messages, those with priority below
-/// MSG_DROP_PRIORITY, will never be dropped no matter how much the latency on the socket builds up
-/// or how large the buffer grows 😬
+/// `MSG_DROP_PRIORITY`, will never be dropped no matter how much the latency on the socket builds
+/// up or how large the buffer grows 😬
 pub struct Socket<M> {
     inner: Option<Inner>,
     _ph: PhantomData<M>,

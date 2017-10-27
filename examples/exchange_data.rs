@@ -20,8 +20,8 @@
 //! In a nutshell all it does is:
 //!
 //! 1. connects to remote peer (for connection details see `connect.rs` sample)
-//! 2. sends "Hello from peer '$peer_id'" message
-//! 3. sends "Goodbye from peer '$peer_id" message
+//! 2. sends "Hello from peer '`$peer_id`'" message
+//! 3. sends "Goodbye from peer '`$peer_id`'" message
 //! 4. prints any messages received from remote peer
 
 #[macro_use]
