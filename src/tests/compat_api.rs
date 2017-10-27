@@ -265,6 +265,10 @@ fn bootstrap_using_hard_coded_contacts() {
     expect_event!(event_rx0, Event::LostPeer(id) => {
         assert_eq!(id, uid1);
     });
+
+    expect_event!(event_rx1, Event::LostPeer(id) => {
+        assert_eq!(id, service0.id());
+    });
 }
 
 #[test]
