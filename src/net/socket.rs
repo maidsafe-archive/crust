@@ -165,7 +165,7 @@ where
         let ret = if let Async::Ready(data_opt) = unwrap!(inner.stream_rx.as_mut()).poll()? {
             let data = match data_opt {
                 Some(data) => data,
-                None => return Err(SocketError::Destroyed),
+                None => return Ok(Async::Ready(None)),
             };
             let msg = deserialise(&data[..])?;
             Ok(Async::Ready(Some(msg)))
