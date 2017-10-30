@@ -53,7 +53,7 @@ fn main() {
     println!("Service id: {}", service_id);
 
     // does the p2p connection as demonstrated in `connect.rs` example
-    let peer = connect_to_peer(&mut event_loop, service_id.clone());
+    let peer = connect_to_peer(&mut event_loop, service_id);
     println!(
         "Connected to peer: {}, {}",
         peer.uid(),
