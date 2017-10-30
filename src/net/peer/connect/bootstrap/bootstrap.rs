@@ -64,7 +64,7 @@ pub fn bootstrap<UID: Uid>(
     ext_reachability: ExternalReachability,
     blacklist: HashSet<SocketAddr>,
     use_service_discovery: bool,
-    config: ConfigFile,
+    config: &ConfigFile,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let handle = handle.clone();
     let try = || -> Result<_, BootstrapError> {

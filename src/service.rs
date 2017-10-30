@@ -119,7 +119,7 @@ impl<UID: Uid> Service<UID> {
             ext_reachability,
             blacklist,
             use_service_discovery,
-            self.config.clone(),
+            &self.config,
         )
     }
 
