@@ -90,7 +90,7 @@ pub fn try_peer<UID: Uid>(
     let handle0 = handle.clone();
     let handle1 = handle.clone();
     let addr = *addr;
-    TcpStream::connect(&addr, &handle)
+    TcpStream::connect(&addr, handle)
         .map(move |stream| Socket::wrap_tcp(&handle0, stream, addr))
         .with_timeout(
             handle,
@@ -140,7 +140,7 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
                 })
         })
         .with_timeout(
-            &handle,
+            handle,
             Duration::from_secs(9),
             ConnectHandshakeError::TimedOut,
         )

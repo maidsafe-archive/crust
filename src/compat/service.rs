@@ -421,14 +421,14 @@ impl<UID: Uid> Service<UID> {
                     ::service::SERVICE_DISCOVERY_DEFAULT_PORT,
                 );
                 let f = {
-                    service_discovery::discover::<Vec<SocketAddr>>(&handle, sd_port)
+                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port)
                         .into_future()
                         .map(|s| s.infallible())
                         .flatten_stream()
                         .first_ok()
                         .map(|_| ())
                         .map_err(|_| ())
-                        .with_timeout(&handle, Duration::from_secs(1), ())
+                        .with_timeout(handle, Duration::from_secs(1), ())
                         .then(move |res| {
                             let _ = tx.send(res.is_ok());
                             Ok(())
