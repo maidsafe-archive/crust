@@ -215,7 +215,7 @@ impl Future for SocketTask {
             match unwrap!(self.write_rx.poll()) {
                 Async::Ready(Some(TaskMsg::Send(priority, data))) => {
                     let queue = self.write_queue.entry(priority).or_insert_with(
-                        || VecDeque::new(),
+                        VecDeque::new,
                     );
                     queue.push_back((now, data));
                 }
@@ -319,7 +319,7 @@ mod test {
 
             let handle0 = handle.clone();
             let f0 = TcpStream::connect(&addr, &handle)
-                .map_err(|err| SocketError::from(err))
+                .map_err(SocketError::from)
                 .and_then(move |stream| {
                     let socket = Socket::<Vec<u8>>::wrap_tcp(&handle0, stream, addr);
                     socket
