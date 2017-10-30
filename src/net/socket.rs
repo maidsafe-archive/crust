@@ -252,7 +252,7 @@ impl Future for SocketTask {
         }
 
         let mut all_messages_sent = true;
-        'outer: for (_, queue) in self.write_queue.iter_mut() {
+        'outer: for queue in self.write_queue.values_mut() {
             while let Some((time, msg)) = queue.pop_front() {
                 match unwrap!(self.stream_tx.as_mut()).start_send(msg)? {
                     AsyncSink::Ready => (),
