@@ -330,6 +330,7 @@ impl ConfigSettings {
 #[cfg(test)]
 mod tests {
     use super::ConfigFile;
+    use config_file_handler;
     use std::fs;
     use std::path::PathBuf;
 
@@ -338,7 +339,7 @@ mod tests {
         let sample_name = "sample.config";
 
         let mut source = PathBuf::from("installer");
-        let mut dest = PathBuf::from("target/debug/deps");
+        let mut dest = unwrap!(config_file_handler::current_bin_dir());
 
         let mut target_dir = dest.clone();
         target_dir.push(&source);
