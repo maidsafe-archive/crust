@@ -46,7 +46,7 @@ impl<UID: Uid> Demux<UID> {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
         });
-        let inner_cloned = inner.clone();
+        let inner_cloned = Arc::clone(&inner);
         let handle0 = handle.clone();
         let handler_task = {
             incoming
@@ -54,7 +54,7 @@ impl<UID: Uid> Demux<UID> {
             .map(move |socket| {
                 let socket = socket.change_message_type::<HandshakeMessage<UID>>();
 
-                handle_incoming(&handle0, inner_cloned.clone(), socket)
+                handle_incoming(&handle0, Arc::clone(&inner_cloned), socket)
                 .log_error(LogLevel::Debug, "handling incoming connection")
             })
             .buffer_unordered(128)
