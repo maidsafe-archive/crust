@@ -27,7 +27,7 @@ use tokio_core::reactor::{Core, Timeout};
 fn test() {
     let num_servers = 3;
     let num_discovers = 3;
-    let starting_port = 45666;
+    let starting_port = 45_666;
 
     let mut core = unwrap!(Core::new());
     let handle = core.handle();

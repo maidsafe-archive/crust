@@ -309,7 +309,7 @@ mod test {
             let num_msgs = 1000;
             let mut msgs = Vec::with_capacity(num_msgs);
             for _ in 0..num_msgs {
-                let size = rand::thread_rng().gen_range(0, 10000);
+                let size = rand::thread_rng().gen_range(0, 10_000);
                 let data = util::random_vec(size);
                 let msg = data;
                 msgs.push(msg);
