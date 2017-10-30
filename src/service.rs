@@ -25,6 +25,18 @@ pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
 
 /// The main entry point to Crust.
+///
+/// Use `Service` to accept incoming connections and to connect to remote peers.
+/// There are two methods to initialize connections: `connect()` and `bootstrap()`.
+/// Call `start_listener()` to accept connections.
+///
+/// By default no one can bootstrap off the listener, meaning no one can
+/// connect to you with `bootstrap()`. To enable bootstrapping call
+/// `bootstrap_acceptor()`.
+///
+/// `Service` provides futures based API compatible with [Tokio](https://tokio.rs/) event loop.
+///
+/// Once you are connected, use [Peer](struct.Peer.html) to exchange data.
 pub struct Service<UID: Uid> {
     handle: Handle,
     config: ConfigFile,
@@ -78,6 +90,13 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Bootstrap to the network.
+    ///
+    /// Bootstrap concept is interchangeable with "connect". Except in context
+    /// of Crust bootstrapping is more powerful then a simple `connect()`.
+    /// `bootstrap()` will try to connect to all peers that are specified
+    /// in config (`hard_coded_contacts`) or were cached.
+    ///
+    /// Returns a future that resolves to the first connected peer.
     pub fn bootstrap(
         &mut self,
         blacklist: HashSet<SocketAddr>,
