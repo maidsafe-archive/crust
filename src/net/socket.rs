@@ -223,7 +223,7 @@ impl Future for SocketTask {
                     self.stream_rx = Some(stream_rx);
                     break;
                 }
-                Async::Ready(None) => break,
+                Async::Ready(None) |
                 Async::NotReady => break,
             }
         }
