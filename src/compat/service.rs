@@ -77,8 +77,8 @@ impl<UID: Uid> Service<UID> {
                     if node_ips.is_none() && client_ips.is_none() {
                         return Ok(());
                     }
-                    let node_ips = node_ips.unwrap_or(HashSet::new());
-                    let client_ips = client_ips.unwrap_or(HashSet::new());
+                    let node_ips = node_ips.unwrap_or_default();
+                    let client_ips = client_ips.unwrap_or_default();
                     cm.whitelist_filter(client_ips, node_ips);
                     Ok(())
                 })
