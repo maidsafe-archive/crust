@@ -214,7 +214,7 @@ fn bootstrap_accept<UID: Uid>(
                 };
                 let connectors = stream::futures_unordered(connectors);
 
-                return Ok(
+                Ok(
                     connectors
                         .first_ok()
                         .then(move |res| match res {
@@ -240,7 +240,7 @@ fn bootstrap_accept<UID: Uid>(
                             }
                         })
                         .into_boxed(),
-                );
+                )
             }
             ExternalReachability::NotRequired => {
                 let their_ip = socket.peer_addr()?.ip();

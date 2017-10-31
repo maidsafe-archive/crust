@@ -69,7 +69,7 @@ impl<UID: Uid> Service<UID> {
             force_include_port: config.read().force_acceptor_port_in_ext_ep,
         };
         MappingContext::new(options)
-            .map_err(|e| CrustError::NatError(e))
+            .map_err(CrustError::NatError)
             .map(move |mut mc| {
                 mc.add_peer_stuns(config.read().hard_coded_contacts.iter().cloned());
                 let acceptor = Acceptor::new(&handle, our_uid, config.clone());
@@ -119,7 +119,7 @@ impl<UID: Uid> Service<UID> {
             ext_reachability,
             blacklist,
             use_service_discovery,
-            self.config.clone(),
+            &self.config,
         )
     }
 

@@ -46,7 +46,7 @@ impl<UID: Uid> Demux<UID> {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
         });
-        let inner_cloned = inner.clone();
+        let inner_cloned = Arc::clone(&inner);
         let handle0 = handle.clone();
         let handler_task = {
             incoming
@@ -54,7 +54,7 @@ impl<UID: Uid> Demux<UID> {
             .map(move |socket| {
                 let socket = socket.change_message_type::<HandshakeMessage<UID>>();
 
-                handle_incoming(&handle0, inner_cloned.clone(), socket)
+                handle_incoming(&handle0, Arc::clone(&inner_cloned), socket)
                 .log_error(LogLevel::Debug, "handling incoming connection")
             })
             .buffer_unordered(128)
@@ -125,7 +125,7 @@ fn handle_incoming<UID: Uid>(
     socket
         .into_future()
         .map_err(|(e, _s)| IncomingError::Socket(e))
-        .with_timeout(&handle, Duration::from_secs(10), IncomingError::TimedOut)
+        .with_timeout(handle, Duration::from_secs(10), IncomingError::TimedOut)
         .and_then(move |(msg_opt, socket)| {
             let msg = match msg_opt {
                 Some(msg) => msg,
@@ -134,14 +134,14 @@ fn handle_incoming<UID: Uid>(
             match msg {
                 HandshakeMessage::BootstrapRequest(bootstrap_request) => {
                     let bootstrap_handler_opt = unwrap!(inner.bootstrap_handler.lock());
-                    if let Some(ref bootstrap_handler) = bootstrap_handler_opt.as_ref() {
+                    if let Some(bootstrap_handler) = bootstrap_handler_opt.as_ref() {
                         let _ = bootstrap_handler.unbounded_send((socket, bootstrap_request));
                     }
                     future::ok(()).into_boxed()
                 }
                 HandshakeMessage::Connect(connect_request) => {
                     let connection_handler_map = unwrap!(inner.connection_handler.lock());
-                    if let Some(ref connection_handler) =
+                    if let Some(connection_handler) =
                         connection_handler_map.get(&connect_request.uid)
                     {
                         let _ = connection_handler.unbounded_send((socket, connect_request));

@@ -27,7 +27,7 @@ use tokio_core::reactor::{Core, Timeout};
 fn test() {
     let num_servers = 3;
     let num_discovers = 3;
-    let starting_port = 45666;
+    let starting_port = 45_666;
 
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
@@ -49,7 +49,7 @@ fn test() {
                     )
                     .collect()
                     .and_then(move |v| {
-                        assert!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>() == &[i]);
+                        assert_eq!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>(), &[i]);
                         Ok(())
                     });
                 futures.push(discover);

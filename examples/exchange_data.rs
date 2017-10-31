@@ -20,8 +20,8 @@
 //! In a nutshell all it does is:
 //!
 //! 1. connects to remote peer (for connection details see `connect.rs` sample)
-//! 2. sends "Hello from peer '$peer_id'" message
-//! 3. sends "Goodbye from peer '$peer_id" message
+//! 2. sends "Hello from peer '`$peer_id`'" message
+//! 3. sends "Goodbye from peer '`$peer_id`'" message
 //! 4. prints any messages received from remote peer
 
 #[macro_use]
@@ -53,7 +53,7 @@ fn main() {
     println!("Service id: {}", service_id);
 
     // does the p2p connection as demonstrated in `connect.rs` example
-    let peer = connect_to_peer(&mut event_loop, service_id.clone());
+    let peer = connect_to_peer(&mut event_loop, service_id);
     println!(
         "Connected to peer: {}, {}",
         peer.uid(),

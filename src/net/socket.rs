@@ -59,14 +59,14 @@ quick_error! {
 /// An important thing to understand about `Socket`s is that they are *infinitely buffered*. You
 /// can just keep pumping more and more data into them without blocking the writing task even if
 /// the underlying transport can't keep up. Eventually, once the latency builds up too much (ie.
-/// the messages it's writing are more than MAX_MSG_AGE_SECS old) then it will drop its entire
+/// the messages it's writing are more than `MAX_MSG_AGE_SECS` old) then it will drop its entire
 /// outgoing buffer. This may sound broken in several ways, but it's behaviour that MaidSafe's
 /// routing layer currently expects.
 ///
 /// Another thing is that messages can be sent with a `Priority`. Higher (lower-numbered)
 /// priorities will always be sent first. Highest-priority messages, those with priority below
-/// MSG_DROP_PRIORITY, will never be dropped no matter how much the latency on the socket builds up
-/// or how large the buffer grows 😬
+/// `MSG_DROP_PRIORITY`, will never be dropped no matter how much the latency on the socket builds
+/// up or how large the buffer grows 😬
 pub struct Socket<M> {
     inner: Option<Inner>,
     _ph: PhantomData<M>,
@@ -215,7 +215,7 @@ impl Future for SocketTask {
             match unwrap!(self.write_rx.poll()) {
                 Async::Ready(Some(TaskMsg::Send(priority, data))) => {
                     let queue = self.write_queue.entry(priority).or_insert_with(
-                        || VecDeque::new(),
+                        VecDeque::new,
                     );
                     queue.push_back((now, data));
                 }
@@ -223,7 +223,7 @@ impl Future for SocketTask {
                     self.stream_rx = Some(stream_rx);
                     break;
                 }
-                Async::Ready(None) => break,
+                Async::Ready(None) |
                 Async::NotReady => break,
             }
         }
@@ -252,7 +252,7 @@ impl Future for SocketTask {
         }
 
         let mut all_messages_sent = true;
-        'outer: for (_, queue) in self.write_queue.iter_mut() {
+        'outer: for queue in self.write_queue.values_mut() {
             while let Some((time, msg)) = queue.pop_front() {
                 match unwrap!(self.stream_tx.as_mut()).start_send(msg)? {
                     AsyncSink::Ready => (),
@@ -309,7 +309,7 @@ mod test {
             let num_msgs = 1000;
             let mut msgs = Vec::with_capacity(num_msgs);
             for _ in 0..num_msgs {
-                let size = rand::thread_rng().gen_range(0, 10000);
+                let size = rand::thread_rng().gen_range(0, 10_000);
                 let data = util::random_vec(size);
                 let msg = data;
                 msgs.push(msg);
@@ -319,7 +319,7 @@ mod test {
 
             let handle0 = handle.clone();
             let f0 = TcpStream::connect(&addr, &handle)
-                .map_err(|err| SocketError::from(err))
+                .map_err(SocketError::from)
                 .and_then(move |stream| {
                     let socket = Socket::<Vec<u8>>::wrap_tcp(&handle0, stream, addr);
                     socket
@@ -338,7 +338,7 @@ mod test {
                         let socket = Socket::<Vec<u8>>::wrap_tcp(&handle1, stream, addr);
                         socket.take(num_msgs as u64).collect().map(
                             move |msgs_recv| {
-                                assert!(msgs_recv == msgs);
+                                assert_eq!(msgs_recv, msgs);
                             },
                         )
                     })

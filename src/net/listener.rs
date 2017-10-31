@@ -62,7 +62,7 @@ impl Listeners {
         let listeners = Listeners {
             handle: handle.clone(),
             listeners_tx: tx,
-            addresses: addresses.clone(),
+            addresses: Arc::clone(&addresses),
         };
         let incoming = SocketIncoming {
             handle: handle.clone(),
@@ -91,7 +91,7 @@ impl Listeners {
     ) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
-        let addresses = self.addresses.clone();
+        let addresses = Arc::clone(&self.addresses);
         nat::mapped_tcp_socket::<UID>(&handle, mc, listen_addr)
             .and_then(move |(socket, addrs)| {
                 let listener = socket.listen(LISTENER_BACKLOG)?;

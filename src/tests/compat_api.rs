@@ -129,7 +129,7 @@ fn start_two_services_exchange_data() {
     unwrap!(service1.start_listening_tcp());
     let port1 = expect_event!(event_rx1, Event::ListenerStarted(port1) => port1);
 
-    assert!(port0 != port1);
+    assert_ne!(port0, port1);
 
     const NUM_MESSAGES: usize = 100;
     const MAX_DATA_SIZE: usize = MAX_PAYLOAD_SIZE - 8;
@@ -187,7 +187,7 @@ fn start_two_services_exchange_data() {
                 .collect::<Vec<_>>()
         };
 
-        assert!(data1_recv == data1_compare);
+        assert_eq!(data1_recv, data1_compare);
         service0
     });
     let j1 = thread::spawn(move || {
@@ -227,7 +227,7 @@ fn start_two_services_exchange_data() {
                 .collect::<Vec<_>>()
         };
 
-        assert!(data0_recv == data0_compare);
+        assert_eq!(data0_recv, data0_compare);
     });
 
     let service0 = j0.join();

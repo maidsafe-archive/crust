@@ -20,6 +20,7 @@ use util;
 
 /// Punch a hole to a remote peer. Both peers call this simultaneously try to perform a TCP
 /// rendezvous connect to each other.
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 pub fn tcp_hole_punch(
     handle: &Handle,
     socket: TcpBuilder,

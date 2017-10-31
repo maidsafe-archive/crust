@@ -114,7 +114,7 @@ pub fn connect<UID: Uid>(
             .map_err(|()| unreachable!())
             .infallible::<SingleConnectionError>()
             .and_then(move |(socket, connect_request)| {
-                validate_connect_request(their_uid, name_hash, connect_request)?;
+                validate_connect_request(their_uid, name_hash, &connect_request)?;
                 Ok({
                     socket
                     .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
@@ -183,7 +183,7 @@ pub fn connect<UID: Uid>(
                 .and_then(move |(msg_opt, socket)| match msg_opt {
                     None => Err(SingleConnectionError::ConnectionDropped),
                     Some(HandshakeMessage::Connect(connect_request)) => {
-                        validate_connect_request(their_uid, name_hash, connect_request)?;
+                        validate_connect_request(their_uid, name_hash, &connect_request)?;
                         Ok((socket, their_uid))
                     }
                     Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
@@ -252,9 +252,9 @@ pub fn connect<UID: Uid>(
 fn validate_connect_request<UID: Uid>(
     expected_uid: UID,
     our_name_hash: NameHash,
-    connect_request: ConnectRequest<UID>,
+    connect_request: &ConnectRequest<UID>,
 ) -> Result<(), SingleConnectionError> {
-    let ConnectRequest {
+    let &ConnectRequest {
         uid: their_uid,
         name_hash: their_name_hash,
     } = connect_request;
