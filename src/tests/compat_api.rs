@@ -131,6 +131,8 @@ fn start_two_services_exchange_data() {
     assert_ne!(port0, port1);
 
     const NUM_MESSAGES: usize = 100;
+    // TODO(povilas): have a test with bigger data buffer sizes (>2MB). Such tests might reveal
+    // other issues.
     const MAX_DATA_SIZE: usize = 512;
 
     let uid0 = service0.id();
