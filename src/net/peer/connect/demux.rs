@@ -32,11 +32,15 @@ pub struct Demux<UID: Uid> {
     inner: Arc<DemuxInner<UID>>,
 }
 
+/// `BootstrapRequest` paired with socket object.
+pub type BootstrapMessage<UID> = (Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>);
+
+/// `ConnectRequest` paired with socket object.
+pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UID>);
+
 struct DemuxInner<UID: Uid> {
-    bootstrap_handler:
-        Mutex<Option<UnboundedSender<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>>>,
-    connection_handler:
-        Mutex<HashMap<UID, UnboundedSender<(Socket<HandshakeMessage<UID>>, ConnectRequest<UID>)>>>,
+    bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
+    connection_handler: Mutex<HashMap<UID, UnboundedSender<ConnectMessage<UID>>>>,
 }
 
 impl<UID: Uid> Demux<UID> {

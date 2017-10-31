@@ -18,6 +18,7 @@
 use futures::sync::mpsc::UnboundedReceiver;
 use net::nat;
 use net::peer;
+use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use priv_prelude::*;
 
@@ -91,7 +92,7 @@ pub fn connect<UID: Uid>(
     our_info: PrivConnectionInfo<UID>,
     their_info: PubConnectionInfo<UID>,
     config: ConfigFile,
-    peer_rx: UnboundedReceiver<(Socket<HandshakeMessage<UID>>, ConnectRequest<UID>)>,
+    peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
 ) -> BoxFuture<Peer<UID>, ConnectError> {
     let try = move || {
         let handle = handle.clone();
