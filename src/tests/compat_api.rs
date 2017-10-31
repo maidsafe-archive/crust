@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use MAX_PAYLOAD_SIZE;
 use compat::{self, CrustEventSender, Event};
 use config::DevConfigSettings;
 use env_logger;
@@ -132,7 +131,7 @@ fn start_two_services_exchange_data() {
     assert_ne!(port0, port1);
 
     const NUM_MESSAGES: usize = 100;
-    const MAX_DATA_SIZE: usize = MAX_PAYLOAD_SIZE - 8;
+    const MAX_DATA_SIZE: usize = 512;
 
     let uid0 = service0.id();
     let uid1 = service1.id();
