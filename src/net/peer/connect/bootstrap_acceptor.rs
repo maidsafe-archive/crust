@@ -18,8 +18,10 @@
 use futures::stream::FuturesUnordered;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use net::peer;
+use net::peer::connect::demux::BootstrapMessage;
 use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
                                             HandshakeMessage};
+
 use priv_prelude::*;
 use util;
 
@@ -61,7 +63,7 @@ quick_error! {
 /// A stream of incoming bootstrap connections.
 pub struct BootstrapAcceptor<UID: Uid> {
     handle: Handle,
-    peer_rx: UnboundedReceiver<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>,
+    peer_rx: UnboundedReceiver<BootstrapMessage<UID>>,
     handshaking: FuturesUnordered<BoxFuture<Peer<UID>, BootstrapAcceptError>>,
     config: ConfigFile,
     our_uid: UID,
@@ -72,8 +74,7 @@ impl<UID: Uid> BootstrapAcceptor<UID> {
         handle: &Handle,
         config: ConfigFile,
         our_uid: UID,
-    ) -> (BootstrapAcceptor<UID>,
-              UnboundedSender<(Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>)>) {
+    ) -> (BootstrapAcceptor<UID>, UnboundedSender<BootstrapMessage<UID>>) {
         let handle = handle.clone();
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let handshaking =
