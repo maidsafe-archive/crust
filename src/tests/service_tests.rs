@@ -71,6 +71,44 @@ fn bootstrap_using_hard_coded_contacts() {
     assert_eq!(peer.uid(), service1.id());
 }
 
+#[test]
+fn connect_works_on_localhost() {
+    let mut event_loop = unwrap!(Core::new());
+    let loop_handle = event_loop.handle();
+
+    let config1 = unwrap!(ConfigFile::new_temporary());
+    let service1 = unwrap!(event_loop.run(Service::with_config(
+        &loop_handle,
+        config1,
+        util::random_id(),
+    )));
+    unwrap!(event_loop.run(service1.start_listener()));
+    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let config2 = unwrap!(ConfigFile::new_temporary());
+    let service2 = unwrap!(event_loop.run(Service::with_config(
+        &loop_handle,
+        config2,
+        util::random_id(),
+    )));
+    unwrap!(event_loop.run(service2.start_listener()));
+    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect = service1
+        .connect(service1_priv_conn_info, service2_pub_conn_info)
+        .join(service2.connect(
+            service2_priv_conn_info,
+            service1_pub_conn_info,
+        ))
+        .and_then(|peers| Ok(peers));
+
+    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
+    assert_eq!(service1_peer.uid(), service2.id());
+    assert_eq!(service2_peer.uid(), service1.id());
+}
+
 /*
 
     Things to test:
