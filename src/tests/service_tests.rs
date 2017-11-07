@@ -17,8 +17,19 @@
 
 use priv_prelude::*;
 use service::Service;
+use std::time::Duration;
 use tokio_core::reactor::Core;
 use util;
+
+fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
+    let config = unwrap!(ConfigFile::new_temporary());
+    let loop_handle = event_loop.handle();
+    unwrap!(event_loop.run(Service::with_config(
+        &loop_handle,
+        config,
+        util::random_id(),
+    )))
+}
 
 #[test]
 fn start_service() {
@@ -39,12 +50,7 @@ fn bootstrap_using_hard_coded_contacts() {
     let mut event_loop = unwrap!(Core::new());
     let loop_handle = event_loop.handle();
 
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    let mut service1 = unwrap!(event_loop.run(Service::with_config(
-        &loop_handle,
-        config1,
-        util::random_id(),
-    )));
+    let mut service1 = service_with_tmp_config(&mut event_loop);
     let listener = unwrap!(event_loop.run(service1.start_listener()));
     let service1_port = listener.addr().port();
 
@@ -69,6 +75,69 @@ fn bootstrap_using_hard_coded_contacts() {
     )));
 
     assert_eq!(peer.uid(), service1.id());
+}
+
+#[test]
+fn connect_works_on_localhost() {
+    let mut event_loop = unwrap!(Core::new());
+
+    let service1 = service_with_tmp_config(&mut event_loop);
+    unwrap!(event_loop.run(service1.start_listener()));
+    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let service2 = service_with_tmp_config(&mut event_loop);
+    unwrap!(event_loop.run(service2.start_listener()));
+    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect = service1
+        .connect(service1_priv_conn_info, service2_pub_conn_info)
+        .join(service2.connect(
+            service2_priv_conn_info,
+            service1_pub_conn_info,
+        ))
+        .and_then(|peers| Ok(peers));
+
+    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
+    assert_eq!(service1_peer.uid(), service2.id());
+    assert_eq!(service2_peer.uid(), service1.id());
+}
+
+#[test]
+fn peer_shutdown_closes_remote_peer_too() {
+    let mut event_loop = unwrap!(Core::new());
+    let loop_handle = event_loop.handle();
+
+    let service1 = service_with_tmp_config(&mut event_loop);
+    unwrap!(event_loop.run(service1.start_listener()));
+    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let service2 = service_with_tmp_config(&mut event_loop);
+    unwrap!(event_loop.run(service2.start_listener()));
+    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect = service1
+        .connect(service1_priv_conn_info, service2_pub_conn_info)
+        .join(service2.connect(
+            service2_priv_conn_info,
+            service1_pub_conn_info,
+        ))
+        .and_then(|peers| Ok(peers));
+    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
+
+    drop(service1_peer);
+
+    unwrap!(
+        event_loop.run(
+            service2_peer
+                .for_each(|_| Ok(()))
+                .map_err(|_| "Peer error")
+                .with_timeout(&loop_handle, Duration::from_secs(10), "Timeout"),
+        )
+    );
 }
 
 /*

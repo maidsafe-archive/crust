@@ -305,6 +305,7 @@ mod test {
         let res: Result<_, Void> = core.run(future::lazy(move || {
             let listener = unwrap!(TcpListener::bind(&addr!("0.0.0.0:0"), &handle));
             let addr = unwrap!(listener.local_addr());
+            let addr = SocketAddr::new(ip!("127.0.0.1"), addr.port());
 
             let num_msgs = 1000;
             let mut msgs = Vec::with_capacity(num_msgs);
