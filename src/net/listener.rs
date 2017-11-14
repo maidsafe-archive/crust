@@ -78,10 +78,7 @@ impl Listeners {
     /// Create an (empty) set of listeners and a handle to its incoming stream of connections.
     pub fn new(handle: &Handle) -> (Listeners, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
-        let addresses = Arc::new(Mutex::new(Addresses {
-            current: HashSet::new(),
-            observers: Vec::new(),
-        }));
+        let addresses = Arc::new(Mutex::new(Addresses::new()));
         let listeners = Listeners {
             handle: handle.clone(),
             listeners_tx: tx,
