@@ -50,6 +50,7 @@ extern crate igd;
 #[cfg(test)]
 #[macro_use]
 extern crate hamcrest;
+extern crate p2p;
 
 pub use net::MAX_PAYLOAD_SIZE;
 

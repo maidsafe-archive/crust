@@ -17,13 +17,11 @@
 
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use net::nat;
+use p2p::TcpListenerExt;
 
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 use tokio_core::net::Incoming;
-
-const LISTENER_BACKLOG: i32 = 100;
 
 /// A handle for a single listening address. Drop this object to stop listening on this address.
 pub struct Listener {
@@ -107,23 +105,25 @@ impl Listeners {
     pub fn listener<UID: Uid>(
         &self,
         listen_addr: &SocketAddr,
-        mc: &MappingContext,
+        _mc: &MappingContext,
     ) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
-        nat::mapped_tcp_socket::<UID>(&handle, mc, listen_addr)
-            .and_then(move |(socket, addrs)| {
-                let listener = socket.listen(LISTENER_BACKLOG)?;
-                let local_addr = listener.local_addr()?;
-                let listener = TcpListener::from_listener(listener, &local_addr, &handle)?;
-                let incoming = listener.incoming();
+
+        // TODO(povilas): return future with our own error type instead of io::Error?
+        TcpListener::bind_public(listen_addr, &handle)
+            .map_err(|_| io::ErrorKind::AddrNotAvailable.into())
+            .and_then(move |(listener, public_addr)| {
+                let mut addrs = HashSet::new();
+                addrs.insert(public_addr);
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
 
                 let mut addresses = unwrap!(addresses.lock());
                 addresses.add_and_notify(addrs.iter().cloned());
 
-                let _ = tx.unbounded_send((drop_rx, incoming, addrs));
+                let local_addr = unwrap!(listener.local_addr());
+                let _ = tx.unbounded_send((drop_rx, listener.incoming(), addrs));
 
                 Ok(Listener {
                     _drop_tx: drop_tx,
