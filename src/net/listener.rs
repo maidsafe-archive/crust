@@ -35,17 +35,17 @@ pub struct Listener {
 pub struct Listeners {
     handle: Handle,
     listeners_tx: UnboundedSender<(DropNotice, Incoming, HashSet<SocketAddr>)>,
-    addresses: Arc<Mutex<Addresses>>,
+    addresses: Arc<Mutex<ObservableAddresses>>,
 }
 
-struct Addresses {
+struct ObservableAddresses {
     current: HashSet<SocketAddr>,
     observers: Vec<UnboundedSender<HashSet<SocketAddr>>>,
 }
 
-impl Addresses {
-    fn new() -> Addresses {
-        Addresses {
+impl ObservableAddresses {
+    fn new() -> ObservableAddresses {
+        ObservableAddresses {
             current: HashSet::new(),
             observers: Vec::new(),
         }
@@ -71,14 +71,14 @@ pub struct SocketIncoming {
     handle: Handle,
     listeners_rx: UnboundedReceiver<(DropNotice, Incoming, HashSet<SocketAddr>)>,
     listeners: Vec<(DropNotice, Incoming, HashSet<SocketAddr>)>,
-    addresses: Arc<Mutex<Addresses>>,
+    addresses: Arc<Mutex<ObservableAddresses>>,
 }
 
 impl Listeners {
     /// Create an (empty) set of listeners and a handle to its incoming stream of connections.
     pub fn new(handle: &Handle) -> (Listeners, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
-        let addresses = Arc::new(Mutex::new(Addresses::new()));
+        let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
         let listeners = Listeners {
             handle: handle.clone(),
             listeners_tx: tx,
@@ -188,14 +188,14 @@ mod test {
     use tokio_core::reactor::Core;
     use util::{self, UniqueId};
 
-    mod addresses {
+    mod observable_addresses {
         use super::*;
         mod add_and_notify {
             use super::*;
 
             #[test]
             fn it_adds_specified_addresses_to_the_list() {
-                let mut addrs = Addresses::new();
+                let mut addrs = ObservableAddresses::new();
                 addrs.current.insert(addr!("1.2.3.4:1234"));
 
                 addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
@@ -214,7 +214,7 @@ mod test {
             #[test]
             fn it_notifies_observers_about_address_changes() {
                 let (tx, rx) = mpsc::unbounded();
-                let mut addrs = Addresses::new();
+                let mut addrs = ObservableAddresses::new();
                 addrs.observers.push(tx);
 
                 addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
