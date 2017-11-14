@@ -43,6 +43,29 @@ struct Addresses {
     observers: Vec<UnboundedSender<HashSet<SocketAddr>>>,
 }
 
+impl Addresses {
+    fn new() -> Addresses {
+        Addresses {
+            current: HashSet::new(),
+            observers: Vec::new(),
+        }
+    }
+
+    /// Adds given addresses to the addresses list.
+    /// Also notifies the observers about the changes.
+    fn add_and_notify<T>(&mut self, addrs: T)
+    where
+        T: IntoIterator<Item = SocketAddr>,
+    {
+        let mut current = mem::replace(&mut self.current, HashSet::new());
+        current.extend(addrs);
+        self.observers.retain(|observer| {
+            observer.unbounded_send(current.clone()).is_ok()
+        });
+        self.current = current;
+    }
+}
+
 /// Created in tandem with a `Listeners`, represents the incoming stream of connections.
 pub struct SocketIncoming {
     handle: Handle,
@@ -101,12 +124,7 @@ impl Listeners {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
 
                 let mut addresses = unwrap!(addresses.lock());
-                let mut current = mem::replace(&mut addresses.current, HashSet::new());
-                current.extend(addrs.iter().cloned());
-                addresses.observers.retain(|observer| {
-                    observer.unbounded_send(current.clone()).is_ok()
-                });
-                addresses.current = current;
+                addresses.add_and_notify(addrs.iter().cloned());
 
                 let _ = tx.unbounded_send((drop_rx, incoming, addrs));
 
@@ -168,9 +186,53 @@ impl Listener {
 mod test {
     use super::*;
     use env_logger;
+    use hamcrest::prelude::*;
     use net::nat::mapping_context::Options;
     use tokio_core::reactor::Core;
     use util::{self, UniqueId};
+
+    mod addresses {
+        use super::*;
+        mod add_and_notify {
+            use super::*;
+
+            #[test]
+            fn it_adds_specified_addresses_to_the_list() {
+                let mut addrs = Addresses::new();
+                addrs.current.insert(addr!("1.2.3.4:1234"));
+
+                addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
+
+                let curr_addrs: Vec<SocketAddr> = addrs.current.iter().cloned().collect();
+                assert_that!(
+                    &curr_addrs,
+                    contains(vec![
+                        addr!("1.2.3.4:1234"),
+                        addr!("2.3.4.5:1234"),
+                        addr!("2.3.4.6:1234"),
+                    ]).exactly()
+                );
+            }
+
+            #[test]
+            fn it_notifies_observers_about_address_changes() {
+                let (tx, rx) = mpsc::unbounded();
+                let mut addrs = Addresses::new();
+                addrs.observers.push(tx);
+
+                addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
+
+                let notified = unwrap!(rx.wait().map(|addrs| unwrap!(addrs)).nth(0))
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<SocketAddr>>();
+                assert_that!(
+                    &notified,
+                    contains(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]).exactly()
+                );
+            }
+        }
+    }
 
     #[test]
     fn addresses_update() {
