@@ -147,14 +147,17 @@ fn listener_addresses(
     listener: TcpListener,
     public_addr: Option<SocketAddr>,
 ) -> io::Result<(TcpListener, HashSet<SocketAddr>)> {
-    listener.expanded_local_addrs()
-        .map(|local_addrs| {
-            let mut addrs = local_addrs.iter().cloned().collect::<HashSet<SocketAddr>>();
-            if let Some(public_addr) = public_addr {
-                addrs.insert(public_addr);
-            }
-            (listener, addrs)
-        })
+    listener.expanded_local_addrs().map(|local_addrs| {
+        let mut addrs = local_addrs
+            .iter()
+            .filter(|addr| !addr.ip().is_loopback())
+            .cloned()
+            .collect::<HashSet<SocketAddr>>();
+        if let Some(public_addr) = public_addr {
+            addrs.insert(public_addr);
+        }
+        (listener, addrs)
+    })
 }
 
 impl Stream for SocketIncoming {
