@@ -47,6 +47,9 @@ extern crate notify;
 #[macro_use]
 extern crate maplit;
 extern crate igd;
+#[cfg(test)]
+#[macro_use]
+extern crate hamcrest;
 
 pub use net::MAX_PAYLOAD_SIZE;
 
