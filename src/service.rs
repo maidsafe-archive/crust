@@ -137,7 +137,7 @@ impl<UID: Uid> Service<UID> {
         let port = self.config.read().tcp_acceptor_port.unwrap_or(0);
         let addr = SocketAddr::new(ip!("0.0.0.0"), port);
         self.acceptor
-            .listener(&addr, &self.mc)
+            .listener(&addr)
             .map_err(CrustError::StartListener)
             .into_boxed()
     }

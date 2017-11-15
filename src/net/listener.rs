@@ -102,11 +102,7 @@ impl Listeners {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(
-        &self,
-        listen_addr: &SocketAddr,
-        _mc: &MappingContext,
-    ) -> IoFuture<Listener> {
+    pub fn listener<UID: Uid>(&self, listen_addr: &SocketAddr) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
@@ -271,7 +267,7 @@ mod test {
             .map_err(|e| panic!(e))
             .and_then(move |mc| {
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener0| {
                     let addr0 = listener0.addr();
@@ -284,7 +280,7 @@ mod test {
                 assert!(addrs0.is_subset(&addrs));
 
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
                     let addr1 = listener1.addr();
@@ -359,20 +355,16 @@ mod test {
         let (listeners, socket_incoming) = Listeners::new(&handle);
 
         let future = {
-            MappingContext::new(Options::default())
+            listeners
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
-                .and_then(move |mc| {
+                .map(move |listener| {
+                    mem::forget(listener);
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
-                        .map_err(|e| panic!(e))
-                        .map(move |listener| {
-                            mem::forget(listener);
-                            (mc, listeners)
-                        })
                 })
-                .and_then(move |(mc, listeners)| {
+                .and_then(move |listeners| {
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                        .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);
