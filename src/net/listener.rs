@@ -114,9 +114,10 @@ impl Listeners {
         // TODO(povilas): return future with our own error type instead of io::Error?
         TcpListener::bind_public(listen_addr, &handle)
             .map_err(|_| io::ErrorKind::AddrNotAvailable.into())
-            .and_then(move |(listener, public_addr)| {
-                let mut addrs = HashSet::new();
-                addrs.insert(public_addr);
+            .and_then(|(listener, public_addr)| {
+                future::result(listener_addresses(listener, public_addr))
+            })
+            .and_then(move |(listener, addrs)| {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
 
                 let mut addresses = unwrap!(addresses.lock());
@@ -132,6 +133,21 @@ impl Listeners {
             })
             .into_boxed()
     }
+}
+
+/// Combines listener local addresses with public one.
+///
+/// Resolving local addresses might fail, hence returns Result.
+fn listener_addresses(
+    listener: TcpListener,
+    public_addr: SocketAddr,
+) -> io::Result<(TcpListener, HashSet<SocketAddr>)> {
+    listener.expanded_local_addrs()
+        .map(|local_addrs| {
+            let mut addrs = local_addrs.iter().cloned().collect::<HashSet<SocketAddr>>();
+            addrs.insert(public_addr);
+            (listener, addrs)
+        })
 }
 
 impl Stream for SocketIncoming {
