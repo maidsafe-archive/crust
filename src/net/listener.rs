@@ -17,13 +17,11 @@
 
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use net::nat;
+use p2p::TcpListenerExt;
 
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 use tokio_core::net::Incoming;
-
-const LISTENER_BACKLOG: i32 = 100;
 
 /// A handle for a single listening address. Drop this object to stop listening on this address.
 pub struct Listener {
@@ -104,26 +102,30 @@ impl Listeners {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(
-        &self,
-        listen_addr: &SocketAddr,
-        mc: &MappingContext,
-    ) -> IoFuture<Listener> {
+    pub fn listener<UID: Uid>(&self, listen_addr: &SocketAddr) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
-        nat::mapped_tcp_socket::<UID>(&handle, mc, listen_addr)
-            .and_then(move |(socket, addrs)| {
-                let listener = socket.listen(LISTENER_BACKLOG)?;
-                let local_addr = listener.local_addr()?;
-                let listener = TcpListener::from_listener(listener, &local_addr, &handle)?;
-                let incoming = listener.incoming();
+        let listen_addr = *listen_addr;
+
+        // TODO(povilas): return future with our own error type instead of io::Error?
+        TcpListener::bind_public(&listen_addr, &handle)
+            .map(|(listener, public_addr)| (listener, Some(public_addr)))
+            .or_else(move |_| {
+                future::result(TcpListener::bind_reusable(&listen_addr, &handle))
+                    .map(|listener| (listener, None))
+            })
+            .and_then(|(listener, public_addr)| {
+                future::result(listener_addresses(listener, public_addr))
+            })
+            .and_then(move |(listener, addrs)| {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
 
                 let mut addresses = unwrap!(addresses.lock());
                 addresses.add_and_notify(addrs.iter().cloned());
 
-                let _ = tx.unbounded_send((drop_rx, incoming, addrs));
+                let local_addr = unwrap!(listener.local_addr());
+                let _ = tx.unbounded_send((drop_rx, listener.incoming(), addrs));
 
                 Ok(Listener {
                     _drop_tx: drop_tx,
@@ -132,6 +134,26 @@ impl Listeners {
             })
             .into_boxed()
     }
+}
+
+/// Transforms listener local addresses to `HashSet` and optionally appends public address.
+///
+/// Resolving local addresses might fail, hence returns Result.
+fn listener_addresses(
+    listener: TcpListener,
+    public_addr: Option<SocketAddr>,
+) -> io::Result<(TcpListener, HashSet<SocketAddr>)> {
+    listener.expanded_local_addrs().map(|local_addrs| {
+        let mut addrs = local_addrs
+            .iter()
+            .filter(|addr| !addr.ip().is_loopback())
+            .cloned()
+            .collect::<HashSet<SocketAddr>>();
+        if let Some(public_addr) = public_addr {
+            addrs.insert(public_addr);
+        }
+        (listener, addrs)
+    })
 }
 
 impl Stream for SocketIncoming {
@@ -245,7 +267,7 @@ mod test {
             .map_err(|e| panic!(e))
             .and_then(move |mc| {
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener0| {
                     let addr0 = listener0.addr();
@@ -258,7 +280,7 @@ mod test {
                 assert!(addrs0.is_subset(&addrs));
 
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
                     let addr1 = listener1.addr();
@@ -333,20 +355,16 @@ mod test {
         let (listeners, socket_incoming) = Listeners::new(&handle);
 
         let future = {
-            MappingContext::new(Options::default())
+            listeners
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
-                .and_then(move |mc| {
+                .map(move |listener| {
+                    mem::forget(listener);
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
-                        .map_err(|e| panic!(e))
-                        .map(move |listener| {
-                            mem::forget(listener);
-                            (mc, listeners)
-                        })
                 })
-                .and_then(move |(mc, listeners)| {
+                .and_then(move |listeners| {
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                        .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);
