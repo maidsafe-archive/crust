@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use bytes::Bytes;
 use futures::sync::mpsc::UnboundedReceiver;
 
 use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
@@ -165,15 +166,18 @@ impl<UID: Uid> Service<UID> {
 
     /// Perform a p2p connection to a peer. You must generate connection info first using
     /// `prepare_connection_info`.
-    pub fn connect(
-        &self,
-        our_info: PrivConnectionInfo<UID>,
-        their_info: PubConnectionInfo<UID>,
-    ) -> BoxFuture<Peer<UID>, ConnectError> {
+    pub fn connect<C>(&self, relay_channel: C) -> BoxFuture<Peer<UID>, ConnectError>
+    where
+        C: Stream<Item = Bytes>,
+        C: Sink<SinkItem = Bytes>,
+        <C as Stream>::Error: fmt::Debug,
+        <C as Sink>::SinkError: fmt::Debug,
+        C: 'static,
+    {
         self.acceptor.connect(
             self.config.network_name_hash(),
-            our_info,
-            their_info,
+            self.our_uid,
+            relay_channel,
         )
     }
 

@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use bytes::Bytes;
 use futures::sync::mpsc::{self, UnboundedSender};
 use log::LogLevel;
 
@@ -81,23 +82,23 @@ impl<UID: Uid> Demux<UID> {
         acceptor
     }
 
-    pub fn connect(
+    pub fn connect<C>(
         &self,
         handle: &Handle,
         name_hash: NameHash,
-        our_info: PrivConnectionInfo<UID>,
-        their_info: PubConnectionInfo<UID>,
+        our_id: UID,
+        relay_channel: C,
         config: ConfigFile,
-    ) -> BoxFuture<Peer<UID>, ConnectError> {
-        let their_uid = their_info.id;
-        let peer_rx = {
-            let (peer_tx, peer_rx) = mpsc::unbounded();
-            let mut connection_handler = unwrap!(self.inner.connection_handler.lock());
-            let _ = connection_handler.insert(their_uid, peer_tx);
-            peer_rx
-        };
-
-        connect(handle, name_hash, our_info, their_info, config, peer_rx)
+    ) -> BoxFuture<Peer<UID>, ConnectError>
+    where
+        C: Stream<Item = Bytes>,
+        C: Sink<SinkItem = Bytes>,
+        <C as Stream>::Error: fmt::Debug,
+        <C as Sink>::SinkError: fmt::Debug,
+        C: 'static,
+    {
+        // TODO(povilas): add direct connection handler
+        connect(handle, name_hash, our_id, relay_channel, config)
     }
 }
 

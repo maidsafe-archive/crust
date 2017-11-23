@@ -15,7 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use bytes::Bytes;
 use futures::sync::mpsc::UnboundedReceiver;
+
 use net::listener::{Listener, Listeners};
 use net::peer::BootstrapAcceptor;
 use net::peer::connect::Demux;
@@ -72,17 +74,24 @@ impl<UID: Uid> Acceptor<UID> {
     }
 
     /// Perform a rendezvous connect to another peer.
-    pub fn connect(
+    pub fn connect<C>(
         &self,
         name_hash: NameHash,
-        our_info: PrivConnectionInfo<UID>,
-        their_info: PubConnectionInfo<UID>,
-    ) -> BoxFuture<Peer<UID>, ConnectError> {
+        our_id: UID,
+        relay_channel: C,
+    ) -> BoxFuture<Peer<UID>, ConnectError>
+    where
+        C: Stream<Item = Bytes>,
+        C: Sink<SinkItem = Bytes>,
+        <C as Stream>::Error: fmt::Debug,
+        <C as Sink>::SinkError: fmt::Debug,
+        C: 'static,
+    {
         self.demux.connect(
             &self.handle,
             name_hash,
-            our_info,
-            their_info,
+            our_id,
+            relay_channel,
             self.config.clone(),
         )
     }
