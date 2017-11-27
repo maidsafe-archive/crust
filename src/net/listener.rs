@@ -17,13 +17,11 @@
 
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use net::nat;
+use p2p::TcpListenerExt;
 
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 use tokio_core::net::Incoming;
-
-const LISTENER_BACKLOG: i32 = 100;
 
 /// A handle for a single listening address. Drop this object to stop listening on this address.
 pub struct Listener {
@@ -35,12 +33,35 @@ pub struct Listener {
 pub struct Listeners {
     handle: Handle,
     listeners_tx: UnboundedSender<(DropNotice, Incoming, HashSet<SocketAddr>)>,
-    addresses: Arc<Mutex<Addresses>>,
+    addresses: Arc<Mutex<ObservableAddresses>>,
 }
 
-struct Addresses {
+struct ObservableAddresses {
     current: HashSet<SocketAddr>,
     observers: Vec<UnboundedSender<HashSet<SocketAddr>>>,
+}
+
+impl ObservableAddresses {
+    fn new() -> ObservableAddresses {
+        ObservableAddresses {
+            current: HashSet::new(),
+            observers: Vec::new(),
+        }
+    }
+
+    /// Adds given addresses to the addresses list.
+    /// Also notifies the observers about the changes.
+    fn add_and_notify<T>(&mut self, addrs: T)
+    where
+        T: IntoIterator<Item = SocketAddr>,
+    {
+        let mut current = mem::replace(&mut self.current, HashSet::new());
+        current.extend(addrs);
+        self.observers.retain(|observer| {
+            observer.unbounded_send(current.clone()).is_ok()
+        });
+        self.current = current;
+    }
 }
 
 /// Created in tandem with a `Listeners`, represents the incoming stream of connections.
@@ -48,17 +69,14 @@ pub struct SocketIncoming {
     handle: Handle,
     listeners_rx: UnboundedReceiver<(DropNotice, Incoming, HashSet<SocketAddr>)>,
     listeners: Vec<(DropNotice, Incoming, HashSet<SocketAddr>)>,
-    addresses: Arc<Mutex<Addresses>>,
+    addresses: Arc<Mutex<ObservableAddresses>>,
 }
 
 impl Listeners {
     /// Create an (empty) set of listeners and a handle to its incoming stream of connections.
     pub fn new(handle: &Handle) -> (Listeners, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
-        let addresses = Arc::new(Mutex::new(Addresses {
-            current: HashSet::new(),
-            observers: Vec::new(),
-        }));
+        let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
         let listeners = Listeners {
             handle: handle.clone(),
             listeners_tx: tx,
@@ -84,31 +102,30 @@ impl Listeners {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(
-        &self,
-        listen_addr: &SocketAddr,
-        mc: &MappingContext,
-    ) -> IoFuture<Listener> {
+    pub fn listener<UID: Uid>(&self, listen_addr: &SocketAddr) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
-        nat::mapped_tcp_socket::<UID>(&handle, mc, listen_addr)
-            .and_then(move |(socket, addrs)| {
-                let listener = socket.listen(LISTENER_BACKLOG)?;
-                let local_addr = listener.local_addr()?;
-                let listener = TcpListener::from_listener(listener, &local_addr, &handle)?;
-                let incoming = listener.incoming();
+        let listen_addr = *listen_addr;
+
+        // TODO(povilas): return future with our own error type instead of io::Error?
+        TcpListener::bind_public(&listen_addr, &handle)
+            .map(|(listener, public_addr)| (listener, Some(public_addr)))
+            .or_else(move |_| {
+                future::result(TcpListener::bind_reusable(&listen_addr, &handle))
+                    .map(|listener| (listener, None))
+            })
+            .and_then(|(listener, public_addr)| {
+                future::result(listener_addresses(listener, public_addr))
+            })
+            .and_then(move |(listener, addrs)| {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
 
                 let mut addresses = unwrap!(addresses.lock());
-                let mut current = mem::replace(&mut addresses.current, HashSet::new());
-                current.extend(addrs.iter().cloned());
-                addresses.observers.retain(|observer| {
-                    observer.unbounded_send(current.clone()).is_ok()
-                });
-                addresses.current = current;
+                addresses.add_and_notify(addrs.iter().cloned());
 
-                let _ = tx.unbounded_send((drop_rx, incoming, addrs));
+                let local_addr = unwrap!(listener.local_addr());
+                let _ = tx.unbounded_send((drop_rx, listener.incoming(), addrs));
 
                 Ok(Listener {
                     _drop_tx: drop_tx,
@@ -117,6 +134,26 @@ impl Listeners {
             })
             .into_boxed()
     }
+}
+
+/// Transforms listener local addresses to `HashSet` and optionally appends public address.
+///
+/// Resolving local addresses might fail, hence returns Result.
+fn listener_addresses(
+    listener: TcpListener,
+    public_addr: Option<SocketAddr>,
+) -> io::Result<(TcpListener, HashSet<SocketAddr>)> {
+    listener.expanded_local_addrs().map(|local_addrs| {
+        let mut addrs = local_addrs
+            .iter()
+            .filter(|addr| !addr.ip().is_loopback())
+            .cloned()
+            .collect::<HashSet<SocketAddr>>();
+        if let Some(public_addr) = public_addr {
+            addrs.insert(public_addr);
+        }
+        (listener, addrs)
+    })
 }
 
 impl Stream for SocketIncoming {
@@ -168,9 +205,53 @@ impl Listener {
 mod test {
     use super::*;
     use env_logger;
+    use hamcrest::prelude::*;
     use net::nat::mapping_context::Options;
     use tokio_core::reactor::Core;
     use util::{self, UniqueId};
+
+    mod observable_addresses {
+        use super::*;
+        mod add_and_notify {
+            use super::*;
+
+            #[test]
+            fn it_adds_specified_addresses_to_the_list() {
+                let mut addrs = ObservableAddresses::new();
+                addrs.current.insert(addr!("1.2.3.4:1234"));
+
+                addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
+
+                let curr_addrs: Vec<SocketAddr> = addrs.current.iter().cloned().collect();
+                assert_that!(
+                    &curr_addrs,
+                    contains(vec![
+                        addr!("1.2.3.4:1234"),
+                        addr!("2.3.4.5:1234"),
+                        addr!("2.3.4.6:1234"),
+                    ]).exactly()
+                );
+            }
+
+            #[test]
+            fn it_notifies_observers_about_address_changes() {
+                let (tx, rx) = mpsc::unbounded();
+                let mut addrs = ObservableAddresses::new();
+                addrs.observers.push(tx);
+
+                addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
+
+                let notified = unwrap!(rx.wait().map(|addrs| unwrap!(addrs)).nth(0))
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<SocketAddr>>();
+                assert_that!(
+                    &notified,
+                    contains(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]).exactly()
+                );
+            }
+        }
+    }
 
     #[test]
     fn addresses_update() {
@@ -186,7 +267,7 @@ mod test {
             .map_err(|e| panic!(e))
             .and_then(move |mc| {
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener0| {
                     let addr0 = listener0.addr();
@@ -199,7 +280,7 @@ mod test {
                 assert!(addrs0.is_subset(&addrs));
 
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
                     let addr1 = listener1.addr();
@@ -274,20 +355,16 @@ mod test {
         let (listeners, socket_incoming) = Listeners::new(&handle);
 
         let future = {
-            MappingContext::new(Options::default())
+            listeners
+                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
-                .and_then(move |mc| {
+                .map(move |listener| {
+                    mem::forget(listener);
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
-                        .map_err(|e| panic!(e))
-                        .map(move |listener| {
-                            mem::forget(listener);
-                            (mc, listeners)
-                        })
                 })
-                .and_then(move |(mc, listeners)| {
+                .and_then(move |listeners| {
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"), &mc)
+                        .listener::<UniqueId>(&addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);

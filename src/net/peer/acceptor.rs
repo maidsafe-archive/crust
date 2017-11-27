@@ -58,8 +58,8 @@ impl<UID: Uid> Acceptor<UID> {
     }
 
     /// Add a listener to the set of listeners and return a handle to it.
-    pub fn listener(&self, listen_addr: &SocketAddr, mc: &MappingContext) -> IoFuture<Listener> {
-        self.listeners.listener::<UID>(listen_addr, mc)
+    pub fn listener(&self, listen_addr: &SocketAddr) -> IoFuture<Listener> {
+        self.listeners.listener::<UID>(listen_addr)
     }
 
     /// Create a new `BootstrapAcceptor` for accepting bootstrapping peers.
