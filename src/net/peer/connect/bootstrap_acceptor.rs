@@ -204,11 +204,8 @@ fn bootstrap_accept<UID: Uid>(
                         .filter(|addr| util::ip_addr_is_global(&addr.ip()))
                         .map(|addr| {
                             TcpStream::connect(&addr, &handle)
-                                .with_timeout(
-                                    &handle,
-                                    Duration::from_secs(3),
-                                    io::ErrorKind::TimedOut.into(),
-                                )
+                                .with_timeout(Duration::from_secs(3), &handle)
+                                .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
                                 .into_boxed()
                         })
                         .collect::<Vec<_>>()

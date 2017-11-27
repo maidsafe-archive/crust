@@ -174,11 +174,8 @@ pub fn connect<UID: Uid>(
                     socket
                         .into_future()
                         .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
-                        .with_timeout(
-                            &handle,
-                            Duration::from_secs(TIMEOUT_SEC),
-                            SingleConnectionError::TimedOut,
-                        )
+                        .with_timeout(Duration::from_secs(TIMEOUT_SEC), &handle)
+                        .and_then(|res| res.ok_or(SingleConnectionError::TimedOut))
                 })
                 .buffer_unordered(128)
                 .and_then(move |(msg_opt, socket)| match msg_opt {

@@ -428,7 +428,8 @@ impl<UID: Uid> Service<UID> {
                         .first_ok()
                         .map(|_| ())
                         .map_err(|_| ())
-                        .with_timeout(handle, Duration::from_secs(1), ())
+                        .with_timeout(Duration::from_secs(1), &handle)
+                        .and_then(|res| res.ok_or(()))
                         .then(move |res| {
                             let _ = tx.send(res.is_ok());
                             Ok(())

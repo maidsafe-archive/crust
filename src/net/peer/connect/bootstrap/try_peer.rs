@@ -92,11 +92,8 @@ pub fn try_peer<UID: Uid>(
     let addr = *addr;
     TcpStream::connect(&addr, handle)
         .map(move |stream| Socket::wrap_tcp(&handle0, stream, addr))
-        .with_timeout(
-            handle,
-            Duration::from_secs(10),
-            io::ErrorKind::TimedOut.into(),
-        )
+        .with_timeout(Duration::from_secs(10), &handle)
+        .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
         .and_then(move |socket| {
             bootstrap_connect_handshake(&handle1, socket, our_uid, name_hash, ext_reachability)
@@ -139,10 +136,7 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
                     None => Err(ConnectHandshakeError::Disconnected),
                 })
         })
-        .with_timeout(
-            handle,
-            Duration::from_secs(9),
-            ConnectHandshakeError::TimedOut,
-        )
+        .with_timeout(Duration::from_secs(9), &handle)
+        .and_then(|res| res.ok_or(ConnectHandshakeError::TimedOut))
         .into_boxed()
 }
