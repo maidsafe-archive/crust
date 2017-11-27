@@ -19,7 +19,6 @@ mod reusable;
 mod ip_addr;
 mod serde_udp_codec;
 mod timeout;
-mod with_timeout;
 
 pub use self::ip_addr::*;
 pub use self::reusable::*;
