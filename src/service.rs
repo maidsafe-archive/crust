@@ -15,10 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use futures::sync::mpsc::UnboundedReceiver;
 
+use future_utils::bi_channel;
+use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
-use net::nat::{self, mapping_context};
+use net::nat::mapping_context;
 use priv_prelude::*;
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
@@ -150,16 +151,24 @@ impl<UID: Uid> Service<UID> {
     pub fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
         let our_uid = self.our_uid;
         let (direct_addrs, _) = self.acceptor.addresses();
-        nat::mapped_tcp_socket::<UID>(&self.handle, &self.mc, &addr!("0.0.0.0:0"))
-            .map(move |(socket, hole_punch_addrs)| {
-                PrivConnectionInfo {
+
+        let (ch1, ch2) = bi_channel::unbounded();
+        let conn_rx = net::peer::start_rendezvous_connect(&self.handle, ch2);
+
+        ch1.into_future()
+            .and_then(move |(msg_opt, chann)| {
+                Ok(PrivConnectionInfo {
                     id: our_uid,
                     for_direct: direct_addrs.into_iter().collect(),
-                    for_hole_punch: hole_punch_addrs.into_iter().collect(),
-                    hole_punch_socket: Some(socket),
-                }
+                    for_hole_punch: vec![],
+                    hole_punch_socket: None,
+                    p2p_conn_info: unwrap!(msg_opt),
+                    rendezvous_channel: chann,
+                    connection_rx: conn_rx,
+                })
             })
-            .map_err(CrustError::PrepareConnectionInfo)
+            .map_err(|(e, _stream)| e)
+            .infallible()
             .into_boxed()
     }
 

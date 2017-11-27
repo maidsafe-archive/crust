@@ -17,7 +17,7 @@
 
 pub use self::bootstrap::{BootstrapError, ConnectHandshakeError, bootstrap};
 pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
-pub use self::connect::ConnectError;
+pub use self::connect::{ConnectError, SingleConnectionError, start_rendezvous_connect};
 pub use self::connection_info::{PrivConnectionInfo, PubConnectionInfo};
 pub use self::demux::Demux;
 pub use self::ext_reachability::ExternalReachability;

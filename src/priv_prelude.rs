@@ -18,6 +18,8 @@
 //! This module re-exports a bunch of common imports so they can be glob-imported into other
 //! modules using `use priv_prelude::*`
 
+
+pub use bytes::Bytes;
 pub use common::{CrustUser, HASH_SIZE, NameHash};
 pub use config::ConfigFile;
 pub use error::CrustError;
@@ -25,8 +27,8 @@ pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, Stre
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
 pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandshakeError,
               ExternalReachability, MappingContext, NatError, Peer, PeerError, Priority,
-              PrivConnectionInfo, PubConnectionInfo, Socket, SocketError, StunError};
-
+              PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, Socket, SocketError,
+              StunError};
 pub use net::Uid;
 pub use net2::TcpBuilder;
 pub use serde::Serialize;
