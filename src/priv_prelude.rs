@@ -40,5 +40,5 @@ pub use std::path::{Path, PathBuf};
 pub use std::time::{Duration, Instant};
 pub use tokio_core::net::{TcpListener, TcpStream};
 pub use tokio_core::reactor::Handle;
-pub use util::{FutureExt as UtilFutureExt, Timeout};
+pub use util::Timeout;
 pub use void::{ResultVoidExt, Void};
