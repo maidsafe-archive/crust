@@ -103,17 +103,13 @@ pub fn connect<UID: Uid>(
     our_info: PrivConnectionInfo<UID>,
     their_info: PubConnectionInfo<UID>,
     _config: ConfigFile,
-    _peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
+    peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
 ) -> BoxFuture<Peer<UID>, ConnectError> {
     if our_info.id == their_info.id {
         return future::result(Err(ConnectError::RequestedConnectToSelf)).into_boxed();
     }
 
     // TODO(povilas): respect `whitelisted_node_ips` config
-    // TODO(povilas): handle incoming direct connections
-
-    let conn_info = Bytes::from(their_info.p2p_conn_info);
-    let conn_rx = our_info.connection_rx;
 
     let their_id = their_info.id;
     let our_connect_request = ConnectRequest {
@@ -121,9 +117,34 @@ pub fn connect<UID: Uid>(
         name_hash: name_hash,
     };
 
-    let handle1 = handle.clone();
-    let handle2 = handle.clone();
-    our_info
+    let direct_incoming = {
+        let our_connect_request = our_connect_request.clone();
+        peer_rx
+        .map_err(|()| unreachable!())
+        .infallible::<SingleConnectionError>()
+        .and_then(move |(socket, connect_request)| {
+            validate_connect_request(their_id, name_hash, &connect_request)?;
+            Ok({
+                socket
+                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                .map_err(SingleConnectionError::Socket)
+                .map(move |socket| (socket, their_id))
+            })
+        })
+        .and_then(|f| f)
+    };
+
+    let their_direct = their_info.for_direct;
+    let direct_connections = stream::futures_unordered(
+        their_direct
+            .into_iter()
+            .map(|addr| TcpStream::connect(&addr, handle))
+            .collect::<Vec<_>>(),
+    ).map_err(SingleConnectionError::Io);
+
+    let conn_info = Bytes::from(their_info.p2p_conn_info);
+    let conn_rx = our_info.connection_rx;
+    let p2p_connection = our_info
         .rendezvous_channel
         .send(conn_info)
         .map_err(|_| SingleConnectionError::DeadChannel)
@@ -131,10 +152,15 @@ pub fn connect<UID: Uid>(
             conn_rx
                 .map_err(|_| SingleConnectionError::DeadChannel)
                 .and_then(|res| res)
-                .map(move |stream| {
-                    let peer_addr = unwrap!(stream.peer_addr());
-                    Socket::wrap_tcp(&handle1, stream, peer_addr)
-                })
+        });
+
+    let handle1 = handle.clone();
+    let handle2 = handle.clone();
+    let all_connections = direct_connections
+        .select(p2p_connection.into_stream())
+        .map(move |stream| {
+            let peer_addr = unwrap!(stream.peer_addr());
+            Socket::wrap_tcp(&handle1, stream, peer_addr)
         })
         .and_then(move |socket| {
             socket
@@ -153,8 +179,12 @@ pub fn connect<UID: Uid>(
                 Ok((socket, connect_request.uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
-        })
-        .map_err(|e| ConnectError::AllConnectionsFailed(vec![e]))
+        });
+
+    all_connections
+        .select(direct_incoming)
+        .first_ok()
+        .map_err(ConnectError::AllConnectionsFailed)
         .and_then(move |(socket, their_uid)| {
             peer::from_handshaken_socket(&handle2, socket, their_uid, CrustUser::Node)
                 .map_err(ConnectError::Io)
