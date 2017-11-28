@@ -135,7 +135,8 @@ fn peer_shutdown_closes_remote_peer_too() {
             service2_peer
                 .for_each(|_| Ok(()))
                 .map_err(|_| "Peer error")
-                .with_timeout(&loop_handle, Duration::from_secs(10), "Timeout"),
+                .with_timeout(Duration::from_secs(10), &loop_handle)
+                .and_then(|res| res.ok_or("Timeout")),
         )
     );
 }

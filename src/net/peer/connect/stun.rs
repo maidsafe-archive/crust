@@ -80,7 +80,8 @@ pub fn stun<UID: Uid>(
                     None => Err(StunError::Disconnected),
                 })
         })
-        .with_timeout(handle, Duration::from_secs(3), StunError::TimedOut)
+        .with_timeout(Duration::from_secs(3), &handle)
+        .and_then(|res| res.ok_or(StunError::TimedOut))
         .into_boxed()
 }
 
