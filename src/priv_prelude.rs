@@ -26,9 +26,9 @@ pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt};
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
 pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandshakeError,
-              ExternalReachability, MappingContext, NatError, Peer, PeerError, Priority,
-              PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, Socket, SocketError,
-              StunError};
+              ExternalReachability, MappingContext, NatError, P2pConnectionInfo, Peer, PeerError,
+              Priority, PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, Socket,
+              SocketError, StunError};
 pub use net::Uid;
 pub use net2::TcpBuilder;
 pub use serde::Serialize;

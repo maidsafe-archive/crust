@@ -21,7 +21,7 @@ use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
-use p2p::{TcpStreamExt, TcpRendezvousConnectError};
+use p2p::{TcpRendezvousConnectError, TcpStreamExt};
 use priv_prelude::*;
 
 const TIMEOUT_SEC: u64 = 60;
@@ -118,11 +118,7 @@ pub fn connect<UID: Uid>(
     };
 
     let direct_connections = connect_directly(handle, their_info.for_direct);
-    let p2p_connection = connect_p2p(
-        our_info.rendezvous_channel,
-        our_info.connection_rx,
-        their_info.p2p_conn_info,
-    );
+    let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
     let all_connections = handshake_outgoing_connections(
         handle,
         direct_connections.select(p2p_connection.into_stream()),
@@ -216,21 +212,29 @@ where
 }
 
 /// Sends connection info to "rendezvous connect" task and waits for connection.
+///
+/// If given p2p connection info is `None`, returns empty future.
 fn connect_p2p(
-    rendezvous_channel: UnboundedBiChannel<Bytes>,
-    conn_rx: oneshot::Receiver<Result<TcpStream, SingleConnectionError>>,
-    p2p_conn_info: Vec<u8>,
+    our_conn_info: Option<P2pConnectionInfo>,
+    their_conn_info: Option<Vec<u8>>,
 ) -> BoxFuture<TcpStream, SingleConnectionError> {
-    let conn_info = Bytes::from(p2p_conn_info);
-    rendezvous_channel
-        .send(conn_info)
-        .map_err(|_| SingleConnectionError::DeadChannel)
-        .and_then(move |_chann| {
-            conn_rx
+    match (our_conn_info, their_conn_info) {
+        (Some(our_conn_info), Some(their_conn_info)) => {
+            let conn_rx = our_conn_info.connection_rx;
+            let raw_info = Bytes::from(their_conn_info);
+            our_conn_info
+                .rendezvous_channel
+                .send(raw_info)
                 .map_err(|_| SingleConnectionError::DeadChannel)
-                .and_then(|res| res)
-        })
-        .into_boxed()
+                .and_then(move |_chann| {
+                    conn_rx
+                        .map_err(|_| SingleConnectionError::DeadChannel)
+                        .and_then(|res| res)
+                })
+                .into_boxed()
+        }
+        _ => future::empty().into_boxed(),
+    }
 }
 
 fn validate_connect_request<UID: Uid>(
@@ -253,7 +257,6 @@ fn validate_connect_request<UID: Uid>(
     }
     Ok(())
 }
-
 
 /// Spawns p2p rendezvous connect task on the specified event loop.
 ///

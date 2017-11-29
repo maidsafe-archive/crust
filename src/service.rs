@@ -156,15 +156,20 @@ impl<UID: Uid> Service<UID> {
         let conn_rx = net::peer::start_rendezvous_connect(&self.handle, ch2);
 
         ch1.into_future()
-            .and_then(move |(msg_opt, chann)| {
+            .and_then(move |(conn_info_opt, chann)| {
+                let p2p_conn_info = conn_info_opt.and_then(|raw_info| {
+                    Some(P2pConnectionInfo {
+                        our_info: raw_info,
+                        rendezvous_channel: chann,
+                        connection_rx: conn_rx,
+                    })
+                });
                 Ok(PrivConnectionInfo {
                     id: our_uid,
                     for_direct: direct_addrs.into_iter().collect(),
                     for_hole_punch: vec![],
                     hole_punch_socket: None,
-                    p2p_conn_info: unwrap!(msg_opt),
-                    rendezvous_channel: chann,
-                    connection_rx: conn_rx,
+                    p2p_conn_info: p2p_conn_info,
                 })
             })
             .map_err(|(e, _stream)| e)
