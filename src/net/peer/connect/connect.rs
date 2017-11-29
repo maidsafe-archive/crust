@@ -117,13 +117,55 @@ pub fn connect<UID: Uid>(
         name_hash: name_hash,
     };
 
-    let direct_incoming = {
-        let our_connect_request = our_connect_request.clone();
-        peer_rx
+    let direct_connections = connect_directly(handle, their_info.for_direct);
+    let p2p_connection = connect_p2p(
+        our_info.rendezvous_channel,
+        our_info.connection_rx,
+        their_info.p2p_conn_info,
+    );
+    let all_connections = handshake_outgoing_connections(
+        handle,
+        direct_connections.select(p2p_connection.into_stream()),
+        our_connect_request.clone(),
+        their_id,
+    );
+
+    let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
+    let handle_copy = handle.clone();
+    all_connections
+        .select(direct_incoming)
+        .first_ok()
+        .map_err(ConnectError::AllConnectionsFailed)
+        .and_then(move |(socket, their_uid)| {
+            peer::from_handshaken_socket(&handle_copy, socket, their_uid, CrustUser::Node)
+                .map_err(ConnectError::Io)
+        })
+        .into_boxed()
+}
+
+fn connect_directly(
+    evloop_handle: &Handle,
+    addrs: Vec<SocketAddr>,
+) -> BoxStream<TcpStream, SingleConnectionError> {
+    stream::futures_unordered(
+        addrs
+            .into_iter()
+            .map(|addr| TcpStream::connect(&addr, evloop_handle))
+            .collect::<Vec<_>>(),
+    ).map_err(SingleConnectionError::Io)
+        .into_boxed()
+}
+
+fn handshake_incoming_connections<UID: Uid>(
+    our_connect_request: ConnectRequest<UID>,
+    conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
+    their_id: UID,
+) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
+    conn_rx
         .map_err(|()| unreachable!())
         .infallible::<SingleConnectionError>()
         .and_then(move |(socket, connect_request)| {
-            validate_connect_request(their_id, name_hash, &connect_request)?;
+            validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
             Ok({
                 socket
                 .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
@@ -132,35 +174,25 @@ pub fn connect<UID: Uid>(
             })
         })
         .and_then(|f| f)
-    };
+        .into_boxed()
+}
 
-    let their_direct = their_info.for_direct;
-    let direct_connections = stream::futures_unordered(
-        their_direct
-            .into_iter()
-            .map(|addr| TcpStream::connect(&addr, handle))
-            .collect::<Vec<_>>(),
-    ).map_err(SingleConnectionError::Io);
-
-    let conn_info = Bytes::from(their_info.p2p_conn_info);
-    let conn_rx = our_info.connection_rx;
-    let p2p_connection = our_info
-        .rendezvous_channel
-        .send(conn_info)
-        .map_err(|_| SingleConnectionError::DeadChannel)
-        .and_then(move |_chann| {
-            conn_rx
-                .map_err(|_| SingleConnectionError::DeadChannel)
-                .and_then(|res| res)
-        });
-
-    let handle1 = handle.clone();
-    let handle2 = handle.clone();
-    let all_connections = direct_connections
-        .select(p2p_connection.into_stream())
+/// Executes handshake process for the given connections.
+fn handshake_outgoing_connections<UID: Uid, S>(
+    evloop_handle: &Handle,
+    connections: S,
+    our_connect_request: ConnectRequest<UID>,
+    their_id: UID,
+) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
+where
+    S: Stream<Item = TcpStream, Error = SingleConnectionError> + 'static,
+{
+    let our_name_hash = our_connect_request.name_hash;
+    let handle_copy = evloop_handle.clone();
+    connections
         .map(move |stream| {
             let peer_addr = unwrap!(stream.peer_addr());
-            Socket::wrap_tcp(&handle1, stream, peer_addr)
+            Socket::wrap_tcp(&handle_copy, stream, peer_addr)
         })
         .and_then(move |socket| {
             socket
@@ -175,23 +207,31 @@ pub fn connect<UID: Uid>(
         .and_then(move |(msg_opt, socket)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
             Some(HandshakeMessage::Connect(connect_request)) => {
-                validate_connect_request(their_id, name_hash, &connect_request)?;
+                validate_connect_request(their_id, our_name_hash, &connect_request)?;
                 Ok((socket, connect_request.uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
-        });
-
-    all_connections
-        .select(direct_incoming)
-        .first_ok()
-        .map_err(ConnectError::AllConnectionsFailed)
-        .and_then(move |(socket, their_uid)| {
-            peer::from_handshaken_socket(&handle2, socket, their_uid, CrustUser::Node)
-                .map_err(ConnectError::Io)
         })
         .into_boxed()
 }
 
+/// Sends connection info to "rendezvous connect" task and waits for connection.
+fn connect_p2p(
+    rendezvous_channel: UnboundedBiChannel<Bytes>,
+    conn_rx: oneshot::Receiver<Result<TcpStream, SingleConnectionError>>,
+    p2p_conn_info: Vec<u8>,
+) -> BoxFuture<TcpStream, SingleConnectionError> {
+    let conn_info = Bytes::from(p2p_conn_info);
+    rendezvous_channel
+        .send(conn_info)
+        .map_err(|_| SingleConnectionError::DeadChannel)
+        .and_then(move |_chann| {
+            conn_rx
+                .map_err(|_| SingleConnectionError::DeadChannel)
+                .and_then(|res| res)
+        })
+        .into_boxed()
+}
 
 fn validate_connect_request<UID: Uid>(
     expected_uid: UID,
