@@ -167,8 +167,6 @@ impl<UID: Uid> Service<UID> {
                 Ok(PrivConnectionInfo {
                     id: our_uid,
                     for_direct: direct_addrs.into_iter().collect(),
-                    for_hole_punch: vec![],
-                    hole_punch_socket: None,
                     p2p_conn_info: p2p_conn_info,
                 })
             })

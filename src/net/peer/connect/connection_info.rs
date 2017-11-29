@@ -39,10 +39,6 @@ pub struct PrivConnectionInfo<UID> {
     pub id: UID,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
-    #[doc(hidden)]
-    pub for_hole_punch: Vec<SocketAddr>,
-    #[doc(hidden)]
-    pub hole_punch_socket: Option<TcpBuilder>,
     // P2P connection info is optional in case when p2p `rendezvous_connect` fails.
     // In such cases we can still proceed with direct connections, but we must keep track
     // that P2P connections should not be attempted.
@@ -54,8 +50,6 @@ pub struct PrivConnectionInfo<UID> {
 pub struct PubConnectionInfo<UID> {
     #[doc(hidden)]
     pub id: UID,
-    #[doc(hidden)]
-    pub for_hole_punch: Vec<SocketAddr>,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
     pub p2p_conn_info: Option<Vec<u8>>,
@@ -76,7 +70,6 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
             Some(conn_info.our_info.to_vec())
         });
         PubConnectionInfo {
-            for_hole_punch: self.for_hole_punch.clone(),
             for_direct: self.for_direct.clone(),
             id: self.id,
             p2p_conn_info,
