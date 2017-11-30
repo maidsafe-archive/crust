@@ -278,3 +278,100 @@ pub fn start_rendezvous_connect(
     handle.spawn(start_conn);
     conn_rx
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    pub use tokio_core::reactor::Core;
+
+    mod connect_p2p {
+        use super::*;
+        use future_utils::bi_channel::unbounded;
+
+        #[test]
+        fn it_returns_empty_future_when_our_connection_info_is_none() {
+            let their_conn_info = Some(vec![1, 2, 3]);
+
+            let mut fut = connect_p2p(None, their_conn_info);
+            let res = fut.poll();
+
+            let future_is_ready = match unwrap!(res) {
+                Async::Ready(_) => true,
+                Async::NotReady => false,
+            };
+            assert!(!future_is_ready);
+        }
+
+        #[test]
+        fn it_returns_empty_future_when_their_connection_info_is_none() {
+            let (rendezvous_channel, _) = unbounded();
+            let (_, connection_rx) = oneshot::channel();
+            let our_conn_info = Some(P2pConnectionInfo {
+                our_info: Bytes::from(vec![]),
+                rendezvous_channel,
+                connection_rx,
+            });
+
+            let mut fut = connect_p2p(our_conn_info, None);
+            let res = fut.poll();
+
+            let future_is_ready = match unwrap!(res) {
+                Async::Ready(_) => true,
+                Async::NotReady => false,
+            };
+            assert!(!future_is_ready);
+        }
+
+        #[test]
+        fn it_sends_serialized_p2p_connection_info_to_the_given_channel() {
+            let mut core = unwrap!(Core::new());
+
+            let (rendezvous_channel, info_rx) = unbounded();
+            let (_, connection_rx) = oneshot::channel();
+            let our_conn_info = Some(P2pConnectionInfo {
+                our_info: Bytes::from(vec![]),
+                rendezvous_channel,
+                connection_rx,
+            });
+            let their_conn_info = Some(vec![1, 2, 3, 4]);
+
+            let fut = connect_p2p(our_conn_info, their_conn_info);
+            core.handle().spawn(fut.then(|_| Ok(())));
+
+            let received_conn_info = unwrap!(core.run(info_rx.into_future().and_then(
+                |(info, _stream)| Ok(info),
+            )));
+
+            assert_eq!(received_conn_info, Some(Bytes::from(vec![1, 2, 3, 4])));
+        }
+
+        #[test]
+        fn it_returns_dead_channel_error_if_connection_transmitter_is_dropped() {
+            let mut core = unwrap!(Core::new());
+
+            let (rendezvous_channel, _) = unbounded();
+            let (conn_tx, connection_rx) = oneshot::channel();
+            let our_conn_info = Some(P2pConnectionInfo {
+                our_info: Bytes::from(vec![]),
+                rendezvous_channel,
+                connection_rx,
+            });
+            let their_conn_info = Some(vec![1, 2, 3, 4]);
+
+            let fut = connect_p2p(our_conn_info, their_conn_info);
+            drop(conn_tx);
+
+            let result = core.run(fut);
+            let channel_is_dead = match result {
+                Err(e) => {
+                    match e {
+                        SingleConnectionError::DeadChannel => true,
+                        _ => false,
+                    }
+                }
+                _ => false,
+            };
+            assert!(channel_is_dead);
+        }
+    }
+}
