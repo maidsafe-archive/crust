@@ -76,3 +76,51 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod priv_connection_info {
+        use super::*;
+
+        mod to_pub_connection_info {
+            use super::*;
+            use future_utils::bi_channel::unbounded;
+            use util;
+
+            #[test]
+            fn when_p2p_conn_info_is_none_it_sets_none_in_public_conn_info_too() {
+                let priv_conn_info = PrivConnectionInfo {
+                    id: util::random_id(),
+                    for_direct: vec![],
+                    p2p_conn_info: None,
+                };
+
+                let pub_conn_info = priv_conn_info.to_pub_connection_info();
+
+                assert!(pub_conn_info.p2p_conn_info.is_none());
+            }
+
+            #[test]
+            fn when_p2p_conn_info_is_not_none_it_is_stored_as_vector_in_public_conn_info() {
+                let (rendezvous_channel, _) = unbounded();
+                let (_, connection_rx) = oneshot::channel();
+                let p2p_conn_info = Some(P2pConnectionInfo {
+                    our_info: Bytes::from(vec![1, 2, 3]),
+                    rendezvous_channel,
+                    connection_rx,
+                });
+                let priv_conn_info = PrivConnectionInfo {
+                    id: util::random_id(),
+                    for_direct: vec![],
+                    p2p_conn_info,
+                };
+
+                let pub_conn_info = priv_conn_info.to_pub_connection_info();
+
+                assert_eq!(pub_conn_info.p2p_conn_info, Some(vec![1, 2, 3]));
+            }
+        }
+    }
+}
