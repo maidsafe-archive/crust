@@ -17,8 +17,9 @@
 
 pub use self::acceptor::Acceptor;
 pub use self::connect::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError, ConnectError,
-                        ConnectHandshakeError, ExternalReachability, PrivConnectionInfo,
-                        PubConnectionInfo, StunError, bootstrap, stun};
+                        ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
+                        PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, StunError,
+                        bootstrap, start_rendezvous_connect, stun};
 pub use self::peer::{Peer, PeerError, from_handshaken_socket};
 pub use self::peer_message::PeerMessage;
 pub use self::uid::Uid;

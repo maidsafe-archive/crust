@@ -116,7 +116,7 @@ impl Listeners {
                     .map(|listener| (listener, None))
             })
             .and_then(|(listener, public_addr)| {
-                future::result(listener_addresses(listener, public_addr))
+                listener_addresses(listener, public_addr)
             })
             .and_then(move |(listener, addrs)| {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();

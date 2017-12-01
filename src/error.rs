@@ -65,11 +65,6 @@ quick_error! {
             cause(e)
             from()
         }
-        /// Error preparing connection info.
-        PrepareConnectionInfo(e: io::Error) {
-            description("error preparing connection info")
-            display("error preparing connection info. {}", e)
-        }
         /// Error starting a listener.
         StartListener(e: io::Error) {
             description("error starting listener")
