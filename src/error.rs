@@ -41,12 +41,6 @@ quick_error! {
         BootstrapFailed {
             description("Bootstrap failed")
         }
-        /// Error from the NAT module.
-        NatError(e: NatError) {
-            description("Error from NAT library")
-            display("Error from NAT library: {}", e)
-            from()
-        }
         /// The requested peer was not found.
         PeerNotFound {
             description("The requested peer was not found")

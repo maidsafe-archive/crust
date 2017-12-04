@@ -35,8 +35,6 @@ pub enum HandshakeMessage<UID> {
     BootstrapRequest(BootstrapRequest<UID>),
     BootstrapGranted(UID),
     BootstrapDenied(BootstrapDenyReason),
-    EchoAddrReq,
-    EchoAddrResp(SocketAddr),
     ChooseConnection,
     Connect(ConnectRequest<UID>),
 }

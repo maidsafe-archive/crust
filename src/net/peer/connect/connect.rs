@@ -24,8 +24,6 @@ use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use p2p::{TcpRendezvousConnectError, TcpStreamExt};
 use priv_prelude::*;
 
-const TIMEOUT_SEC: u64 = 60;
-
 quick_error! {
     #[derive(Debug)]
     pub enum ConnectError {

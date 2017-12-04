@@ -16,16 +16,14 @@
 // relating to use of the SAFE Network Software.
 
 pub use self::listener::Listener;
-pub use self::nat::{MappingContext, NatError, mapping_context};
 pub use self::peer::{Acceptor, BootstrapAcceptError, BootstrapAcceptor, BootstrapError,
                      ConnectError, ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
                      Peer, PeerError, PrivConnectionInfo, PubConnectionInfo,
-                     SingleConnectionError, StunError, Uid, bootstrap};
+                     SingleConnectionError, Uid, bootstrap};
 pub use self::service_discovery::ServiceDiscovery;
 pub use self::socket::{MAX_PAYLOAD_SIZE, Priority, Socket, SocketError};
 
 mod listener;
 pub mod peer;
 mod socket;
-pub mod nat;
 pub mod service_discovery;

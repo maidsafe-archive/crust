@@ -26,11 +26,11 @@ pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt};
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
 pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandshakeError,
-              ExternalReachability, MappingContext, NatError, P2pConnectionInfo, Peer, PeerError,
-              Priority, PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, Socket,
-              SocketError, StunError};
+              ExternalReachability, P2pConnectionInfo, Peer, PeerError, Priority,
+              PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, Socket, SocketError};
 pub use net::Uid;
 pub use net2::TcpBuilder;
+pub use p2p::SocketAddrExt;
 pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
 pub use std::{fmt, io, mem};

@@ -202,7 +202,6 @@ mod test {
     use super::*;
     use env_logger;
     use hamcrest::prelude::*;
-    use net::nat::mapping_context::Options;
     use tokio_core::reactor::Core;
     use util::{self, UniqueId};
 
@@ -259,19 +258,16 @@ mod test {
         let (listeners, socket_incoming) = Listeners::new(&handle);
 
         let future = {
-            MappingContext::new(Options::default())
+            listeners
+            .listener::<UniqueId>(&addr!("0.0.0.0:0"))
             .map_err(|e| panic!(e))
-            .and_then(move |mc| {
-                listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
-                .map_err(|e| panic!(e))
-                .map(move |listener0| {
-                    let addr0 = listener0.addr();
-                    let addrs0 = mc.expand_unspecified_addr(&addr0);
-                    (mc, listeners, listener0, addrs0)
-                })
-            })
-            .and_then(|(mc, listeners, listener0, addrs0)| {
+            .and_then(move |listener0| {
+                let addr0 = listener0.addr();
+                let addrs0 = {
+                    unwrap!(addr0.expand_local_unspecified())
+                    .into_iter()
+                    .collect::<HashSet<_>>()
+                };
                 let (addrs, addrs_rx) = listeners.addresses();
                 assert!(addrs0.is_subset(&addrs));
 
@@ -280,7 +276,11 @@ mod test {
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
                     let addr1 = listener1.addr();
-                    let addrs1 = mc.expand_unspecified_addr(&addr1);
+                    let addrs1 = {
+                        unwrap!(addr1.expand_local_unspecified())
+                        .into_iter()
+                        .collect::<HashSet<_>>()
+                    };
                     drop(listener0);
                     (addrs_rx, listeners, listener1, addrs0, addrs1)
                 })
