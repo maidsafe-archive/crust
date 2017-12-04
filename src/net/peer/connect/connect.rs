@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use future_utils::bi_channel::UnboundedBiChannel;
-use futures::sync::mpsc::{UnboundedReceiver, SendError};
+use futures::sync::mpsc::{SendError, UnboundedReceiver};
 use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
