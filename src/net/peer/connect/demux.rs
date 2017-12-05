@@ -22,7 +22,6 @@ use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
-use net::peer::connect::stun;
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -152,11 +151,6 @@ fn handle_incoming<UID: Uid>(
                         let _ = connection_handler.unbounded_send((socket, connect_request));
                     }
                     future::ok(()).into_boxed()
-                }
-                HandshakeMessage::EchoAddrReq => {
-                    stun::stun_respond(socket)
-                        .map_err(IncomingError::Socket)
-                        .into_boxed()
                 }
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
             }

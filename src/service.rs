@@ -19,7 +19,6 @@
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
-use net::nat::mapping_context;
 use priv_prelude::*;
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
@@ -42,7 +41,6 @@ pub struct Service<UID: Uid> {
     handle: Handle,
     config: ConfigFile,
     our_uid: UID,
-    mc: MappingContext,
     acceptor: Acceptor<UID>,
 }
 
@@ -66,23 +64,14 @@ impl<UID: Uid> Service<UID> {
         our_uid: UID,
     ) -> BoxFuture<Service<UID>, CrustError> {
         let handle = handle.clone();
-        let options = mapping_context::Options {
-            force_include_port: config.read().force_acceptor_port_in_ext_ep,
-        };
-        MappingContext::new(options)
-            .map_err(CrustError::NatError)
-            .map(move |mut mc| {
-                mc.add_peer_stuns(config.read().hard_coded_contacts.iter().cloned());
-                let acceptor = Acceptor::new(&handle, our_uid, config.clone());
-                Service {
-                    handle,
-                    config,
-                    our_uid,
-                    mc,
-                    acceptor,
-                }
-            })
-            .into_boxed()
+        // TODO(canndrew): use force_include_port here once that's merged in p2p
+        let acceptor = Acceptor::new(&handle, our_uid, config.clone());
+        future::ok(Service {
+            handle,
+            config,
+            our_uid,
+            acceptor,
+        }).into_boxed()
     }
 
     /// Get a handle to the service's config file.

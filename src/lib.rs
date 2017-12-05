@@ -44,13 +44,14 @@ extern crate rand_derive;
 extern crate env_logger;
 extern crate tiny_keccak;
 extern crate notify;
-#[macro_use]
-extern crate maplit;
 extern crate igd;
 #[cfg(test)]
 #[macro_use]
 extern crate hamcrest;
 extern crate p2p;
+#[cfg(test)]
+#[macro_use]
+extern crate maplit;
 
 pub use net::MAX_PAYLOAD_SIZE;
 

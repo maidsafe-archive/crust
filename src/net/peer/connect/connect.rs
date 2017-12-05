@@ -16,15 +16,13 @@
 // relating to use of the SAFE Network Software.
 
 use future_utils::bi_channel::UnboundedBiChannel;
-use futures::sync::mpsc::{UnboundedReceiver, SendError};
+use futures::sync::mpsc::{SendError, UnboundedReceiver};
 use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use p2p::{TcpRendezvousConnectError, TcpStreamExt};
 use priv_prelude::*;
-
-const TIMEOUT_SEC: u64 = 60;
 
 quick_error! {
     #[derive(Debug)]

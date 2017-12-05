@@ -23,9 +23,6 @@ pub use self::demux::Demux;
 pub use self::ext_reachability::ExternalReachability;
 pub use self::handshake_message::BootstrapDenyReason;
 
-use self::handshake_message::HandshakeMessage;
-pub use self::stun::{StunError, stun};
-
 mod bootstrap;
 mod connection_info;
 mod ext_reachability;
@@ -33,4 +30,3 @@ mod demux;
 mod handshake_message;
 mod bootstrap_acceptor;
 mod connect;
-mod stun;
