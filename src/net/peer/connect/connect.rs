@@ -126,7 +126,7 @@ pub fn connect<UID: Uid>(
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
     let all_connections = all_outgoing_connections.select(direct_incoming);
-    choose_peer(&handle, all_connections, our_info.id, their_id)
+    choose_peer(handle, all_connections, our_info.id, their_id)
 }
 
 /// Takes all pending handshaken connections and chooses the first one successful.

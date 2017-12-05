@@ -128,7 +128,7 @@ fn handle_incoming<UID: Uid>(
     socket
         .into_future()
         .map_err(|(e, _s)| IncomingError::Socket(e))
-        .with_timeout(Duration::from_secs(10), &handle)
+        .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or(IncomingError::TimedOut))
         .and_then(move |(msg_opt, socket)| {
             let msg = match msg_opt {
