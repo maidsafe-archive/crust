@@ -117,7 +117,7 @@ pub fn connect<UID: Uid>(
 
     let direct_connections = connect_directly(handle, their_info.for_direct);
     let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
-    let all_connections = handshake_outgoing_connections(
+    let all_outgoing_connections = handshake_outgoing_connections(
         handle,
         direct_connections.select(p2p_connection.into_stream()),
         our_connect_request.clone(),
@@ -125,16 +125,67 @@ pub fn connect<UID: Uid>(
     );
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
+    let all_connections = all_outgoing_connections.select(direct_incoming);
+    choose_peer(&handle, all_connections, our_info.id, their_id)
+}
+
+/// Takes all pending handshaken connections and chooses the first one successful.
+///
+/// Then this connection is wrapped in a `Peer` structure.
+/// Depending on service id either initiates connection choice message or waits for one.
+fn choose_peer<UID: Uid, S>(
+    handle: &Handle,
+    all_connections: S,
+    our_id: UID,
+    their_id: UID,
+) -> BoxFuture<Peer<UID>, ConnectError>
+where
+    S: Stream<Item = (Socket<HandshakeMessage<UID>>, UID), Error = SingleConnectionError> + 'static,
+{
     let handle_copy = handle.clone();
-    all_connections
-        .select(direct_incoming)
-        .first_ok()
-        .map_err(ConnectError::AllConnectionsFailed)
-        .and_then(move |(socket, their_uid)| {
-            peer::from_handshaken_socket(&handle_copy, socket, their_uid, CrustUser::Node)
-                .map_err(ConnectError::Io)
-        })
-        .into_boxed()
+    if our_id > their_id {
+        all_connections
+            .first_ok()
+            .map_err(ConnectError::AllConnectionsFailed)
+            .and_then(move |(socket, their_uid)| {
+                socket
+                    .send((0, HandshakeMessage::ChooseConnection))
+                    .map_err(ConnectError::ChooseConnection)
+                    .and_then(move |socket| {
+                        peer::from_handshaken_socket(
+                            &handle_copy,
+                            socket,
+                            their_uid,
+                            CrustUser::Node,
+                        ).map_err(ConnectError::Io)
+                    })
+            })
+            .into_boxed()
+    } else {
+        all_connections
+            .map(move |(socket, their_uid)| {
+                let handle_copy = handle_copy.clone();
+                socket
+                    .into_future()
+                    .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
+                    .and_then(move |(msg_opt, socket)| match msg_opt {
+                        None => Err(SingleConnectionError::ConnectionDropped),
+                        Some(HandshakeMessage::ChooseConnection) => {
+                            peer::from_handshaken_socket(
+                                &handle_copy,
+                                socket,
+                                their_uid,
+                                CrustUser::Node,
+                            ).map_err(SingleConnectionError::Io)
+                        }
+                        Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
+                    })
+            })
+            .buffer_unordered(128)
+            .first_ok()
+            .map_err(ConnectError::AllConnectionsFailed)
+            .into_boxed()
+    }
 }
 
 fn connect_directly(

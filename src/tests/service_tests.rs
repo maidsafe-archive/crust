@@ -141,6 +141,63 @@ fn peer_shutdown_closes_remote_peer_too() {
     );
 }
 
+use futures::stream;
+
+#[test]
+fn exchange_data_between_two_peers() {
+    let mut event_loop = unwrap!(Core::new());
+    let loop_handle = event_loop.handle();
+
+    let service1 = service_with_tmp_config(&mut event_loop);
+    unwrap!(event_loop.run(service1.start_listener()));
+    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let service2 = service_with_tmp_config(&mut event_loop);
+    unwrap!(event_loop.run(service2.start_listener()));
+    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect = service1
+        .connect(service1_priv_conn_info, service2_pub_conn_info)
+        .join(service2.connect(
+            service2_priv_conn_info,
+            service1_pub_conn_info,
+        ))
+        .and_then(|peers| Ok(peers));
+    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
+
+    const NUM_MESSAGES: u64 = 100;
+    let random_data = || {
+        const MAX_DATA_SIZE: usize = 512;
+        (0..NUM_MESSAGES)
+            .map(|_| util::random_vec(MAX_DATA_SIZE))
+            .collect::<Vec<_>>()
+    };
+
+    let data1 = random_data();
+    let data2 = random_data();
+
+    let spawn_sending = |data, peer: Peer<util::UniqueId>| {
+        let (peer_sink, peer_stream) = peer.split();
+        let data_stream = stream::iter_ok::<_, ()>(data)
+            .map_err(|_| PeerError::Destroyed) // makes compiler happy regarding error type
+            .map(|item| (1, item));
+        let send_all = peer_sink.send_all(data_stream).then(|_| Ok(()));
+        loop_handle.spawn(send_all);
+        peer_stream
+    };
+
+    let peer1_stream = spawn_sending(data1.clone(), service1_peer);
+    let peer2_stream = spawn_sending(data2.clone(), service2_peer);
+
+    let received_data = unwrap!(event_loop.run(peer1_stream.take(NUM_MESSAGES).collect()));
+    assert_eq!(received_data, data2);
+
+    let received_data = unwrap!(event_loop.run(peer2_stream.take(NUM_MESSAGES).collect()));
+    assert_eq!(received_data, data1);
+}
+
 /*
 
     Things to test:
