@@ -31,7 +31,7 @@ pub struct ConnectRequest<UID> {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum HandshakeMessage<UID> {
+pub enum HandshakeMessageType<UID> {
     BootstrapRequest(BootstrapRequest<UID>),
     BootstrapGranted(UID),
     BootstrapDenied(BootstrapDenyReason),

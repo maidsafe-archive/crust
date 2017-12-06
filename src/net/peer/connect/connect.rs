@@ -20,7 +20,7 @@ use futures::sync::mpsc::{SendError, UnboundedReceiver};
 use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
-use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
+use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessageType};
 use p2p::{TcpRendezvousConnectError, TcpStreamExt};
 use priv_prelude::*;
 
@@ -140,7 +140,7 @@ fn choose_peer<UID: Uid, S>(
     their_id: UID,
 ) -> BoxFuture<Peer<UID>, ConnectError>
 where
-    S: Stream<Item = (Socket<HandshakeMessage<UID>>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (Socket<HandshakeMessageType<UID>>, UID), Error = SingleConnectionError> + 'static,
 {
     let handle_copy = handle.clone();
     if our_id > their_id {
@@ -149,7 +149,7 @@ where
             .map_err(ConnectError::AllConnectionsFailed)
             .and_then(move |(socket, their_uid)| {
                 socket
-                    .send((0, HandshakeMessage::ChooseConnection))
+                    .send((0, HandshakeMessageType::ChooseConnection))
                     .map_err(ConnectError::ChooseConnection)
                     .and_then(move |socket| {
                         peer::from_handshaken_socket(
@@ -170,7 +170,7 @@ where
                     .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
                     .and_then(move |(msg_opt, socket)| match msg_opt {
                         None => Err(SingleConnectionError::ConnectionDropped),
-                        Some(HandshakeMessage::ChooseConnection) => {
+                        Some(HandshakeMessageType::ChooseConnection) => {
                             peer::from_handshaken_socket(
                                 &handle_copy,
                                 socket,
@@ -205,7 +205,7 @@ fn handshake_incoming_connections<UID: Uid>(
     our_connect_request: ConnectRequest<UID>,
     conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
     their_id: UID,
-) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
+) -> BoxStream<(Socket<HandshakeMessageType<UID>>, UID), SingleConnectionError> {
     conn_rx
         .map_err(|()| unreachable!())
         .infallible::<SingleConnectionError>()
@@ -213,7 +213,7 @@ fn handshake_incoming_connections<UID: Uid>(
             validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
             Ok({
                 socket
-                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                .send((0, HandshakeMessageType::Connect(our_connect_request.clone())))
                 .map_err(SingleConnectionError::Socket)
                 .map(move |socket| (socket, their_id))
             })
@@ -228,7 +228,7 @@ fn handshake_outgoing_connections<UID: Uid, S>(
     connections: S,
     our_connect_request: ConnectRequest<UID>,
     their_id: UID,
-) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
+) -> BoxStream<(Socket<HandshakeMessageType<UID>>, UID), SingleConnectionError>
 where
     S: Stream<Item = TcpStream, Error = SingleConnectionError> + 'static,
 {
@@ -241,7 +241,10 @@ where
         })
         .and_then(move |socket| {
             socket
-                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                .send((
+                    0,
+                    HandshakeMessageType::Connect(our_connect_request.clone()),
+                ))
                 .map_err(SingleConnectionError::Socket)
         })
         .and_then(move |socket| {
@@ -251,7 +254,7 @@ where
         })
         .and_then(move |(msg_opt, socket)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
-            Some(HandshakeMessage::Connect(connect_request)) => {
+            Some(HandshakeMessageType::Connect(connect_request)) => {
                 validate_connect_request(their_id, our_name_hash, &connect_request)?;
                 Ok((socket, connect_request.uid))
             }

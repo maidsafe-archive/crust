@@ -18,7 +18,7 @@
 use maidsafe_utilities::serialisation::SerialisationError;
 use net::peer;
 use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
-                                            HandshakeMessage};
+                                            HandshakeMessageType};
 use priv_prelude::*;
 
 quick_error! {
@@ -105,7 +105,7 @@ pub fn try_peer<UID: Uid>(
 /// Construct a `Peer` by performing a bootstrap connection handshake on a socket.
 pub fn bootstrap_connect_handshake<UID: Uid>(
     handle: &Handle,
-    socket: Socket<HandshakeMessage<UID>>,
+    socket: Socket<HandshakeMessageType<UID>>,
     our_uid: UID,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
@@ -116,7 +116,7 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
         name_hash: name_hash,
         ext_reachability: ext_reachability,
     };
-    let msg = HandshakeMessage::BootstrapRequest(request);
+    let msg = HandshakeMessageType::BootstrapRequest(request);
     socket
         .send((0, msg))
         .map_err(ConnectHandshakeError::from)
@@ -125,11 +125,11 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
                 .into_future()
                 .map_err(|(e, _)| ConnectHandshakeError::from(e))
                 .and_then(move |(msg_opt, socket)| match msg_opt {
-                    Some(HandshakeMessage::BootstrapGranted(peer_uid)) => {
+                    Some(HandshakeMessageType::BootstrapGranted(peer_uid)) => {
                         peer::from_handshaken_socket(&handle0, socket, peer_uid, CrustUser::Node)
                             .map_err(ConnectHandshakeError::from)
                     }
-                    Some(HandshakeMessage::BootstrapDenied(reason)) => {
+                    Some(HandshakeMessageType::BootstrapDenied(reason)) => {
                         Err(ConnectHandshakeError::BootstrapDenied(reason))
                     }
                     Some(..) => Err(ConnectHandshakeError::InvalidResponse),
