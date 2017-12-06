@@ -52,11 +52,9 @@ extern crate serde_derive;
 extern crate unwrap;
 
 extern crate byteorder;
-extern crate c_linked_list;
 extern crate config_file_handler;
 extern crate crossbeam;
 extern crate igd;
-extern crate libc;
 extern crate maidsafe_utilities;
 extern crate mio;
 extern crate net2;
@@ -64,9 +62,7 @@ extern crate rand;
 extern crate rust_sodium;
 extern crate serde;
 extern crate tiny_keccak;
-
-#[cfg(windows)]
-extern crate winapi;
+extern crate get_if_addrs;
 
 #[cfg(test)]
 extern crate serde_json;

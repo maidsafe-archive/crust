@@ -19,8 +19,8 @@
 
 
 use super::NatError;
-use common::get_if_addrs::{self, IfAddr};
 use crossbeam;
+use get_if_addrs::{self, IfAddr};
 use igd::{self, Gateway};
 use nat;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};

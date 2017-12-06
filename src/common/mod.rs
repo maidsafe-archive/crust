@@ -74,7 +74,6 @@ pub trait Uid
     + DeserializeOwned {
 }
 
-pub mod get_if_addrs;
 mod core;
 mod error;
 mod message;
