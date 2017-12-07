@@ -21,7 +21,8 @@ use log::LogLevel;
 use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect::connect;
-use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessageType};
+use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage,
+                                            HandshakeMessageType};
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -32,10 +33,10 @@ pub struct Demux<UID: Uid> {
 }
 
 /// `BootstrapRequest` paired with socket object.
-pub type BootstrapMessage<UID> = (Socket<HandshakeMessageType<UID>>, BootstrapRequest<UID>);
+pub type BootstrapMessage<UID> = (Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>);
 
 /// `ConnectRequest` paired with socket object.
-pub type ConnectMessage<UID> = (Socket<HandshakeMessageType<UID>>, ConnectRequest<UID>);
+pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UID>);
 
 struct DemuxInner<UID: Uid> {
     bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
@@ -55,7 +56,7 @@ impl<UID: Uid> Demux<UID> {
             incoming
             .log_errors(LogLevel::Error, "listener errored!")
             .map(move |socket| {
-                let socket = socket.change_message_type::<HandshakeMessageType<UID>>();
+                let socket = socket.change_message_type::<HandshakeMessage<UID>>();
 
                 handle_incoming(&handle0, Arc::clone(&inner_cloned), socket)
                 .log_error(LogLevel::Debug, "handling incoming connection")
@@ -123,7 +124,7 @@ quick_error! {
 fn handle_incoming<UID: Uid>(
     handle: &Handle,
     inner: Arc<DemuxInner<UID>>,
-    socket: Socket<HandshakeMessageType<UID>>,
+    socket: Socket<HandshakeMessage<UID>>,
 ) -> BoxFuture<(), IncomingError> {
     socket
         .into_future()
@@ -135,7 +136,7 @@ fn handle_incoming<UID: Uid>(
                 Some(msg) => msg,
                 None => return future::err(IncomingError::Disconnected).into_boxed(),
             };
-            match msg {
+            match msg.msg_type() {
                 HandshakeMessageType::BootstrapRequest(bootstrap_request) => {
                     let bootstrap_handler_opt = unwrap!(inner.bootstrap_handler.lock());
                     if let Some(bootstrap_handler) = bootstrap_handler_opt.as_ref() {

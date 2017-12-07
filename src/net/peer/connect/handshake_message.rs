@@ -82,7 +82,7 @@ impl<UID: Uid> HandshakeMessage<UID> {
         HandshakeMessage::new(HandshakeMessageType::ChooseConnection)
     }
 
-    pub fn connec_request(req: ConnectRequest<UID>) -> HandshakeMessage<UID> {
+    pub fn connect(req: ConnectRequest<UID>) -> HandshakeMessage<UID> {
         HandshakeMessage::new(HandshakeMessageType::Connect(req))
     }
 
