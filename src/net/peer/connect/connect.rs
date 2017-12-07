@@ -20,7 +20,7 @@ use futures::sync::mpsc::{SendError, UnboundedReceiver};
 use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
-use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
+use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage, HandshakeMessageType};
 use p2p::{TcpRendezvousConnectError, TcpStreamExt};
 use priv_prelude::*;
 
@@ -126,7 +126,7 @@ pub fn connect<UID: Uid>(
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
     let all_connections = all_outgoing_connections.select(direct_incoming);
-    choose_peer(&handle, all_connections, our_info.id, their_id)
+    choose_peer(handle, all_connections, our_info.id, their_id)
 }
 
 /// Takes all pending handshaken connections and chooses the first one successful.
@@ -149,7 +149,7 @@ where
             .map_err(ConnectError::AllConnectionsFailed)
             .and_then(move |(socket, their_uid)| {
                 socket
-                    .send((0, HandshakeMessage::ChooseConnection))
+                    .send((0, HandshakeMessage::choose_connection()))
                     .map_err(ConnectError::ChooseConnection)
                     .and_then(move |socket| {
                         peer::from_handshaken_socket(
@@ -168,17 +168,20 @@ where
                 socket
                     .into_future()
                     .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
+                    // TODO(povilas): have test for this
                     .and_then(move |(msg_opt, socket)| match msg_opt {
                         None => Err(SingleConnectionError::ConnectionDropped),
-                        Some(HandshakeMessage::ChooseConnection) => {
-                            peer::from_handshaken_socket(
-                                &handle_copy,
-                                socket,
-                                their_uid,
-                                CrustUser::Node,
-                            ).map_err(SingleConnectionError::Io)
-                        }
-                        Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
+                        Some(msg) => match msg.msg_type() {
+                            HandshakeMessageType::ChooseConnection => {
+                                peer::from_handshaken_socket(
+                                    &handle_copy,
+                                    socket,
+                                    their_uid,
+                                    CrustUser::Node,
+                                ).map_err(SingleConnectionError::Io)
+                            }
+                            _ => Err(SingleConnectionError::UnexpectedMessage),
+                        },
                     })
             })
             .buffer_unordered(128)
@@ -213,7 +216,7 @@ fn handshake_incoming_connections<UID: Uid>(
             validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
             Ok({
                 socket
-                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                .send((0, HandshakeMessage::connect(our_connect_request.clone())))
                 .map_err(SingleConnectionError::Socket)
                 .map(move |socket| (socket, their_id))
             })
@@ -241,7 +244,10 @@ where
         })
         .and_then(move |socket| {
             socket
-                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                .send((
+                    0,
+                    HandshakeMessage::connect(our_connect_request.clone()),
+                ))
                 .map_err(SingleConnectionError::Socket)
         })
         .and_then(move |socket| {
@@ -249,13 +255,16 @@ where
                 SingleConnectionError::Socket(err)
             })
         })
+        // TODO(povilas): have a test for this
         .and_then(move |(msg_opt, socket)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
-            Some(HandshakeMessage::Connect(connect_request)) => {
-                validate_connect_request(their_id, our_name_hash, &connect_request)?;
-                Ok((socket, connect_request.uid))
-            }
-            Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
+            Some(msg) => match msg.msg_type() {
+                HandshakeMessageType::Connect(connect_request) => {
+                    validate_connect_request(their_id, our_name_hash, &connect_request)?;
+                    Ok((socket, connect_request.uid))
+                }
+                _ => Err(SingleConnectionError::UnexpectedMessage),
+            },
         })
         .into_boxed()
 }

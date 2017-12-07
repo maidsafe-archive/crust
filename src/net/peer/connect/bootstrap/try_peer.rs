@@ -18,7 +18,7 @@
 use maidsafe_utilities::serialisation::SerialisationError;
 use net::peer;
 use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
-                                            HandshakeMessage};
+                                            HandshakeMessage, HandshakeMessageType};
 use priv_prelude::*;
 
 quick_error! {
@@ -92,7 +92,7 @@ pub fn try_peer<UID: Uid>(
     let addr = *addr;
     TcpStream::connect(&addr, handle)
         .map(move |stream| Socket::wrap_tcp(&handle0, stream, addr))
-        .with_timeout(Duration::from_secs(10), &handle)
+        .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
         .and_then(move |socket| {
@@ -116,7 +116,7 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
         name_hash: name_hash,
         ext_reachability: ext_reachability,
     };
-    let msg = HandshakeMessage::BootstrapRequest(request);
+    let msg = HandshakeMessage::bootstrap_request(request);
     socket
         .send((0, msg))
         .map_err(ConnectHandshakeError::from)
@@ -124,19 +124,22 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
             socket
                 .into_future()
                 .map_err(|(e, _)| ConnectHandshakeError::from(e))
+                // TODO(povilas): have a test for this
                 .and_then(move |(msg_opt, socket)| match msg_opt {
-                    Some(HandshakeMessage::BootstrapGranted(peer_uid)) => {
-                        peer::from_handshaken_socket(&handle0, socket, peer_uid, CrustUser::Node)
-                            .map_err(ConnectHandshakeError::from)
-                    }
-                    Some(HandshakeMessage::BootstrapDenied(reason)) => {
-                        Err(ConnectHandshakeError::BootstrapDenied(reason))
-                    }
-                    Some(..) => Err(ConnectHandshakeError::InvalidResponse),
                     None => Err(ConnectHandshakeError::Disconnected),
+                    Some(msg) => match msg.msg_type() {
+                        HandshakeMessageType::BootstrapGranted(peer_uid) => {
+                            peer::from_handshaken_socket(&handle0, socket, peer_uid, CrustUser::Node)
+                                .map_err(ConnectHandshakeError::from)
+                        }
+                        HandshakeMessageType::BootstrapDenied(reason) => {
+                            Err(ConnectHandshakeError::BootstrapDenied(reason))
+                        }
+                        _ => Err(ConnectHandshakeError::InvalidResponse),
+                    },
                 })
         })
-        .with_timeout(Duration::from_secs(9), &handle)
+        .with_timeout(Duration::from_secs(9), handle)
         .and_then(|res| res.ok_or(ConnectHandshakeError::TimedOut))
         .into_boxed()
 }

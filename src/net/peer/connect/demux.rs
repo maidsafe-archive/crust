@@ -21,7 +21,8 @@ use log::LogLevel;
 use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect::connect;
-use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
+use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage,
+                                            HandshakeMessageType};
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -128,22 +129,22 @@ fn handle_incoming<UID: Uid>(
     socket
         .into_future()
         .map_err(|(e, _s)| IncomingError::Socket(e))
-        .with_timeout(Duration::from_secs(10), &handle)
+        .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or(IncomingError::TimedOut))
         .and_then(move |(msg_opt, socket)| {
             let msg = match msg_opt {
                 Some(msg) => msg,
                 None => return future::err(IncomingError::Disconnected).into_boxed(),
             };
-            match msg {
-                HandshakeMessage::BootstrapRequest(bootstrap_request) => {
+            match msg.msg_type() {
+                HandshakeMessageType::BootstrapRequest(bootstrap_request) => {
                     let bootstrap_handler_opt = unwrap!(inner.bootstrap_handler.lock());
                     if let Some(bootstrap_handler) = bootstrap_handler_opt.as_ref() {
                         let _ = bootstrap_handler.unbounded_send((socket, bootstrap_request));
                     }
                     future::ok(()).into_boxed()
                 }
-                HandshakeMessage::Connect(connect_request) => {
+                HandshakeMessageType::Connect(connect_request) => {
                     let connection_handler_map = unwrap!(inner.connection_handler.lock());
                     if let Some(connection_handler) =
                         connection_handler_map.get(&connect_request.uid)

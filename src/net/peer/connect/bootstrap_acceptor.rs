@@ -153,7 +153,7 @@ fn bootstrap_accept<UID: Uid>(
                 socket
                     .send((
                         0,
-                        HandshakeMessage::BootstrapDenied(
+                        HandshakeMessage::bootstrap_denied(
                             BootstrapDenyReason::InvalidNameHash,
                         ),
                     ))
@@ -181,7 +181,7 @@ fn bootstrap_accept<UID: Uid>(
                     let reason = BootstrapDenyReason::NodeNotWhitelisted;
                     return Ok(
                         socket
-                            .send((0, HandshakeMessage::BootstrapDenied(reason)))
+                            .send((0, HandshakeMessage::bootstrap_denied(reason)))
                             .map_err(BootstrapAcceptError::Socket)
                             .and_then(move |_socket| {
                                 Err(BootstrapAcceptError::NodeNotWhiteListed(their_ip))
@@ -229,7 +229,7 @@ fn bootstrap_accept<UID: Uid>(
                             Err(v) => {
                                 let reason = BootstrapDenyReason::FailedExternalReachability;
                                 socket
-                                    .send((0, HandshakeMessage::BootstrapDenied(reason)))
+                                    .send((0, HandshakeMessage::bootstrap_denied(reason)))
                                     .map_err(BootstrapAcceptError::Socket)
                                     .and_then(move |_socket| {
                                         Err(BootstrapAcceptError::FailedExternalReachability(v))
@@ -246,7 +246,7 @@ fn bootstrap_accept<UID: Uid>(
                     let reason = BootstrapDenyReason::ClientNotWhitelisted;
                     return Ok(
                         socket
-                            .send((0, HandshakeMessage::BootstrapDenied(reason)))
+                            .send((0, HandshakeMessage::bootstrap_denied(reason)))
                             .map_err(BootstrapAcceptError::Socket)
                             .and_then(move |_socket| {
                                 Err(BootstrapAcceptError::ClientNotWhiteListed(their_ip))
@@ -275,7 +275,7 @@ fn grant_bootstrap<UID: Uid>(
 ) -> BoxFuture<Peer<UID>, SocketError> {
     let handle = handle.clone();
     socket
-        .send((0, HandshakeMessage::BootstrapGranted(our_uid)))
+        .send((0, HandshakeMessage::bootstrap_granted(our_uid)))
         .and_then(move |socket| {
             peer::from_handshaken_socket(&handle, socket, their_uid, kind).map_err(SocketError::Io)
         })

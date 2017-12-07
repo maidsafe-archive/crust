@@ -31,12 +31,64 @@ pub struct ConnectRequest<UID> {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum HandshakeMessage<UID> {
+pub enum HandshakeMessageType<UID> {
     BootstrapRequest(BootstrapRequest<UID>),
     BootstrapGranted(UID),
     BootstrapDenied(BootstrapDenyReason),
     ChooseConnection,
     Connect(ConnectRequest<UID>),
+}
+
+/// Same as `HandshakeMessageType`, except it also appends special 8 byte header to every
+/// type of handshake message when serialized.
+/// `HandshakeMessage` should be used to send and deserialized received messages.
+/// `HandshakeMessageType` is supposed to used for received message type matching.
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct HandshakeMessage<UID> {
+    header: [u8; 8],
+    type_: HandshakeMessageType<UID>,
+}
+
+impl<UID: Uid> HandshakeMessage<UID> {
+    fn new(type_: HandshakeMessageType<UID>) -> HandshakeMessage<UID> {
+        HandshakeMessage {
+            header: [
+                'C' as u8,
+                'R' as u8,
+                'U' as u8,
+                'S' as u8,
+                'T' as u8,
+                0,
+                0,
+                0,
+            ],
+            type_,
+        }
+    }
+
+    pub fn bootstrap_request(req: BootstrapRequest<UID>) -> HandshakeMessage<UID> {
+        HandshakeMessage::new(HandshakeMessageType::BootstrapRequest(req))
+    }
+
+    pub fn bootstrap_granted(peer_id: UID) -> HandshakeMessage<UID> {
+        HandshakeMessage::new(HandshakeMessageType::BootstrapGranted(peer_id))
+    }
+
+    pub fn bootstrap_denied(reason: BootstrapDenyReason) -> HandshakeMessage<UID> {
+        HandshakeMessage::new(HandshakeMessageType::BootstrapDenied(reason))
+    }
+
+    pub fn choose_connection() -> HandshakeMessage<UID> {
+        HandshakeMessage::new(HandshakeMessageType::ChooseConnection)
+    }
+
+    pub fn connect(req: ConnectRequest<UID>) -> HandshakeMessage<UID> {
+        HandshakeMessage::new(HandshakeMessageType::Connect(req))
+    }
+
+    pub fn msg_type(&self) -> HandshakeMessageType<UID> {
+        self.type_.clone()
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
