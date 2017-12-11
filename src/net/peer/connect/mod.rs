@@ -36,6 +36,10 @@ use net::peer;
 use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use priv_prelude::*;
+use tokio_io;
+
+/// Every `Crust` request should start with sending this header.
+const CRUST_REQ_HEADER: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', 0, 0, 0];
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
@@ -213,7 +217,8 @@ fn connect_directly(
             .into_iter()
             .map(|addr| PaStream::direct_connect(&addr, evloop_handle))
             .collect::<Vec<_>>(),
-    ).map_err(SingleConnectionError::Io)
+    ).and_then(send_request_header)
+        .map_err(SingleConnectionError::Io)
         .into_boxed()
 }
 
@@ -273,6 +278,13 @@ where
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
         })
+        .into_boxed()
+}
+
+/// Sends magic 8 byte string that every connection should be started with.
+fn send_request_header(stream: PaStream) -> IoFuture<PaStream> {
+    tokio_io::io::write_all(stream, CRUST_REQ_HEADER)
+        .map(|(stream, _buf)| stream)
         .into_boxed()
 }
 
