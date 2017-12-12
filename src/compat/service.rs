@@ -31,6 +31,7 @@ pub trait FnBox<UID: Uid> {
 }
 
 impl<UID: Uid, F: FnOnce(&mut ServiceState<UID>)> FnBox<UID> for F {
+    #[cfg_attr(feature = "cargo-clippy", allow(boxed_local))]
     fn call_box(self: Box<Self>, state: &mut ServiceState<UID>) {
         (*self)(state)
     }
@@ -163,9 +164,9 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
-    pub fn get_peer_socket_addr(&self, peer_uid: &UID) -> Result<SocketAddr, CrustError> {
+    pub fn get_peer_socket_addr(&self, peer_uid: &UID) -> Result<PaAddr, CrustError> {
         let peer_uid = *peer_uid;
-        let (tx, rx) = std::sync::mpsc::channel::<Result<SocketAddr, CrustError>>();
+        let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.cm.peer_addr(&peer_uid)));
@@ -203,7 +204,7 @@ impl<UID: Uid> Service<UID> {
 
     pub fn start_bootstrap(
         &self,
-        blacklist: HashSet<SocketAddr>,
+        blacklist: HashSet<PaAddr>,
         crust_user: CrustUser,
     ) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
@@ -258,27 +259,29 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
-    pub fn start_listening_tcp(&self) -> Result<(), CrustError> {
+    pub fn start_listening(&self) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
-                if state.tcp_listener.is_some() {
+                if state.listeners.is_some() {
                     return;
                 }
 
                 let event_tx = state.event_tx.clone();
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
-                state.tcp_listener = Some(drop_tx);
+                state.listeners = Some(drop_tx);
                 let f = {
                     state
                         .service
-                        .start_listener()
+                        .start_listening()
                         .map_err(|e| error!("failed to start listener: {}", e))
-                        .and_then(move |listener| {
-                            let port = listener.addr().port();
-                            let _ = event_tx.send(Event::ListenerStarted(port));
+                        .map(move |listener| {
+                            let addr = listener.addr();
+                            let _ = event_tx.send(Event::ListenerStarted(addr));
                             future::empty::<(), ()>()
-                    .map(move |()| drop(listener))
+                                .map(move |()| drop(listener))
                         })
+                        .buffer_unordered(256)
+                        .for_each(|()| Ok(()))
                         .until(drop_rx.infallible())
                         .map(|_unit_opt| ())
                 };
@@ -288,10 +291,10 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
-    pub fn stop_tcp_listener(&self) -> Result<(), CrustError> {
+    pub fn stop_listening(&self) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
-                let _ = state.tcp_listener.take();
+                let _ = state.listeners.take();
             },
         ));
         Ok(())
@@ -428,7 +431,7 @@ impl<UID: Uid> Service<UID> {
                         .first_ok()
                         .map(|_| ())
                         .map_err(|_| ())
-                        .with_timeout(Duration::from_secs(1), &handle)
+                        .with_timeout(Duration::from_secs(1), handle)
                         .and_then(|res| res.ok_or(()))
                         .then(move |res| {
                             let _ = tx.send(res.is_ok());
@@ -449,7 +452,7 @@ pub struct ServiceState<UID: Uid> {
 
     bootstrap_acceptor: Option<DropNotify>,
     bootstrap_connect: Option<DropNotify>,
-    tcp_listener: Option<DropNotify>,
+    listeners: Option<DropNotify>,
     service_discovery: Option<ServiceDiscovery>,
     service_discovery_enabled: bool,
 }
@@ -463,7 +466,7 @@ impl<UID: Uid> ServiceState<UID> {
             cm: cm,
             bootstrap_acceptor: None,
             bootstrap_connect: None,
-            tcp_listener: None,
+            listeners: None,
             service_discovery: None,
             service_discovery_enabled: false,
         }

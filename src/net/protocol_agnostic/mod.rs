@@ -1,4 +1,4 @@
-// Copyright 2016 MaidSafe.net limited.
+// Copyright 2017 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -15,27 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use config_file_handler::{self, FileHandler};
-use priv_prelude::*;
+pub use self::addr::PaAddr;
+pub use self::listener::{PaIncoming, PaListener};
+pub use self::stream::{PaRendezvousConnectError, PaRendezvousMsg, PaStream,
+                       UtpRendezvousConnectError};
 
-pub struct Cache {
-    file_handler: FileHandler<Vec<PaAddr>>,
-}
-
-impl Cache {
-    pub fn new(name: Option<&Path>) -> Result<Self, config_file_handler::Error> {
-        Ok(Cache {
-            file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
-        })
-    }
-
-    pub fn default_file_name() -> Result<PathBuf, config_file_handler::Error> {
-        let mut name = config_file_handler::exe_file_stem()?;
-        name.push(".bootstrap.cache");
-        Ok(PathBuf::from(name))
-    }
-
-    pub fn read_file(&mut self) -> Vec<PaAddr> {
-        self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
-    }
-}
+mod stream;
+mod listener;
+mod addr;

@@ -52,6 +52,9 @@ extern crate p2p;
 #[cfg(test)]
 #[macro_use]
 extern crate maplit;
+extern crate url;
+extern crate tokio_utp;
+extern crate bincode;
 
 pub use net::MAX_PAYLOAD_SIZE;
 

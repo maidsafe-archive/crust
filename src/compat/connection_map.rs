@@ -34,7 +34,7 @@ struct Inner<UID: Uid> {
 
 struct PeerWrapper<UID: Uid> {
     _drop_tx: DropNotify,
-    addr: SocketAddr,
+    addr: PaAddr,
     kind: CrustUser,
     peer_sink: SplitSink<Peer<UID>>,
 }
@@ -49,7 +49,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         ConnectionMap { inner }
     }
 
-    pub fn insert_peer(&self, handle: &Handle, peer: Peer<UID>, addr: SocketAddr) -> bool {
+    pub fn insert_peer(&self, handle: &Handle, peer: Peer<UID>, addr: PaAddr) -> bool {
         let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let uid = peer.uid();
@@ -102,7 +102,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         Ok(())
     }
 
-    pub fn peer_addr(&self, uid: &UID) -> Result<SocketAddr, CrustError> {
+    pub fn peer_addr(&self, uid: &UID) -> Result<PaAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
         inner.map.get(uid).map(|pw| Ok(pw.addr)).unwrap_or(Err(
             CrustError::PeerNotFound,

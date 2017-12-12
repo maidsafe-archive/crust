@@ -23,6 +23,10 @@ use util;
 
 fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
     let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![
+        PaAddr::Tcp(addr!("0.0.0.0:0")),
+        PaAddr::Utp(addr!("0.0.0.0:0")),
+    ];
     let loop_handle = event_loop.handle();
     unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
@@ -51,16 +55,16 @@ fn bootstrap_using_hard_coded_contacts() {
     let loop_handle = event_loop.handle();
 
     let mut service1 = service_with_tmp_config(&mut event_loop);
-    let listener = unwrap!(event_loop.run(service1.start_listener()));
-    let service1_port = listener.addr().port();
+    let listeners = unwrap!(event_loop.run(service1.start_listening().collect()));
+    let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
+    let service1_addr1 = listeners[1].addr().unspecified_to_localhost();
 
     loop_handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
         |_| Ok(()),
     ));
 
     let config2 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config2.write()).hard_coded_contacts =
-        vec![SocketAddr::new(ip!("127.0.0.1"), service1_port)];
+    unwrap!(config2.write()).hard_coded_contacts = vec![service1_addr0];
     let mut service2 = unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
         config2,
@@ -75,6 +79,23 @@ fn bootstrap_using_hard_coded_contacts() {
     )));
 
     assert_eq!(peer.uid(), service1.id());
+
+    let config3 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config3.write()).hard_coded_contacts = vec![service1_addr1];
+    let mut service3 = unwrap!(event_loop.run(Service::with_config(
+        &loop_handle,
+        config3,
+        util::random_id(),
+    )));
+
+    let service_discovery = false;
+    let peer = unwrap!(event_loop.run(service3.bootstrap(
+        HashSet::new(),
+        service_discovery,
+        CrustUser::Client,
+    )));
+
+    assert_eq!(peer.uid(), service1.id());
 }
 
 #[test]
@@ -82,12 +103,12 @@ fn connect_works_on_localhost() {
     let mut event_loop = unwrap!(Core::new());
 
     let service1 = service_with_tmp_config(&mut event_loop);
-    unwrap!(event_loop.run(service1.start_listener()));
+    let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
     let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
     let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let service2 = service_with_tmp_config(&mut event_loop);
-    unwrap!(event_loop.run(service2.start_listener()));
+    let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
     let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
     let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
@@ -96,8 +117,7 @@ fn connect_works_on_localhost() {
         .join(service2.connect(
             service2_priv_conn_info,
             service1_pub_conn_info,
-        ))
-        .and_then(|peers| Ok(peers));
+        ));
 
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
     assert_eq!(service1_peer.uid(), service2.id());
@@ -110,12 +130,12 @@ fn peer_shutdown_closes_remote_peer_too() {
     let loop_handle = event_loop.handle();
 
     let service1 = service_with_tmp_config(&mut event_loop);
-    unwrap!(event_loop.run(service1.start_listener()));
+    let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
     let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
     let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let service2 = service_with_tmp_config(&mut event_loop);
-    unwrap!(event_loop.run(service2.start_listener()));
+    let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
     let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
     let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
@@ -124,8 +144,7 @@ fn peer_shutdown_closes_remote_peer_too() {
         .join(service2.connect(
             service2_priv_conn_info,
             service1_pub_conn_info,
-        ))
-        .and_then(|peers| Ok(peers));
+        ));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     drop(service1_peer);
@@ -134,9 +153,9 @@ fn peer_shutdown_closes_remote_peer_too() {
         event_loop.run(
             service2_peer
                 .for_each(|_| Ok(()))
-                .map_err(|_| "Peer error")
+                .map_err(|e| panic!("peer error: {}", e))
                 .with_timeout(Duration::from_secs(10), &loop_handle)
-                .and_then(|res| res.ok_or("Timeout")),
+                .and_then(|res| res.ok_or_else(|| panic!("timed out"))),
         )
     );
 }
@@ -149,12 +168,12 @@ fn exchange_data_between_two_peers() {
     let loop_handle = event_loop.handle();
 
     let service1 = service_with_tmp_config(&mut event_loop);
-    unwrap!(event_loop.run(service1.start_listener()));
+    let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
     let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
     let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let service2 = service_with_tmp_config(&mut event_loop);
-    unwrap!(event_loop.run(service2.start_listener()));
+    let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
     let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
     let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
@@ -163,8 +182,7 @@ fn exchange_data_between_two_peers() {
         .join(service2.connect(
             service2_priv_conn_info,
             service1_pub_conn_info,
-        ))
-        .and_then(|peers| Ok(peers));
+        ));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     const NUM_MESSAGES: u64 = 100;

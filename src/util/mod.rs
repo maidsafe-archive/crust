@@ -17,11 +17,9 @@
 
 mod ip_addr;
 mod serde_udp_codec;
-mod timeout;
 
 pub use self::ip_addr::*;
 pub use self::serde_udp_codec::SerdeUdpCodec;
-pub use self::timeout::Timeout;
 
 #[cfg(test)]
 mod test;

@@ -53,12 +53,12 @@ impl<UID: Uid> Acceptor<UID> {
     /// Get the set of addresses that we're currently contactable on. This includes all known
     /// addressess including mapped addresses on the other side of a NAT. The returned receiver can
     /// be used to be notified when the set of known addresses changes.
-    pub fn addresses(&self) -> (HashSet<SocketAddr>, UnboundedReceiver<HashSet<SocketAddr>>) {
+    pub fn addresses(&self) -> (HashSet<PaAddr>, UnboundedReceiver<HashSet<PaAddr>>) {
         self.listeners.addresses()
     }
 
     /// Add a listener to the set of listeners and return a handle to it.
-    pub fn listener(&self, listen_addr: &SocketAddr) -> IoFuture<Listener> {
+    pub fn listener(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
         self.listeners.listener::<UID>(listen_addr)
     }
 
@@ -83,7 +83,7 @@ impl<UID: Uid> Acceptor<UID> {
             name_hash,
             our_info,
             their_info,
-            self.config.clone(),
+            //self.config.clone(),
         )
     }
 }

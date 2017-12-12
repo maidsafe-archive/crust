@@ -57,6 +57,10 @@ fn event_sender() -> (CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
 fn service() -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
     let (event_tx, event_rx) = event_sender();
     let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![
+        PaAddr::Tcp(addr!("0.0.0.0:0")),
+        PaAddr::Utp(addr!("0.0.0.0:0")),
+    ];
     let uid: UniqueId = rand::random();
     let service = unwrap!(compat::Service::with_config(event_tx, config, uid));
     (service, event_rx)
@@ -122,13 +126,15 @@ fn start_two_services_exchange_data() {
     let (service0, event_rx0) = service();
     let (service1, event_rx1) = service();
 
-    unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+    unwrap!(service0.start_listening());
+    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
 
-    unwrap!(service1.start_listening_tcp());
-    let port1 = expect_event!(event_rx1, Event::ListenerStarted(port1) => port1);
+    unwrap!(service1.start_listening());
+    let _addr = expect_event!(event_rx1, Event::ListenerStarted(addr1) => addr1);
+    let addr1 = expect_event!(event_rx1, Event::ListenerStarted(addr1) => addr1);
 
-    assert_ne!(port0, port1);
+    assert_ne!(addr0, addr1);
 
     const NUM_MESSAGES: usize = 100;
     // TODO(povilas): have a test with bigger data buffer sizes (>2MB). Such tests might reveal
@@ -229,6 +235,7 @@ fn start_two_services_exchange_data() {
         };
 
         assert_eq!(data0_recv, data0_compare);
+        service1
     });
 
     let service0 = unwrap!(j0.join());
@@ -243,14 +250,16 @@ fn bootstrap_using_hard_coded_contacts() {
 
     let (service0, event_rx0) = service();
 
-    unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+    unwrap!(service0.start_listening());
+    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let addr0 = addr0.unspecified_to_localhost();
 
     unwrap!(service0.set_accept_bootstrap(true));
 
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).hard_coded_contacts = vec![SocketAddr::new(ip!("127.0.0.1"), port0)];
+    unwrap!(config1.write()).hard_coded_contacts = vec![addr0];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
@@ -278,7 +287,8 @@ fn bootstrap_using_service_discovery() {
 
     let (service0, event_rx0) = service();
 
-    unwrap!(service0.start_listening_tcp());
+    unwrap!(service0.start_listening());
+    let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
     let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
 
     unwrap!(service0.set_accept_bootstrap(true));
@@ -302,18 +312,20 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let (service0, event_rx0) = service();
 
-    unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+    unwrap!(service0.start_listening());
+    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
 
     unwrap!(service0.set_accept_bootstrap(true));
 
-    let valid_address = SocketAddr::new(ip!("127.0.0.1"), port0);
+    let valid_address = addr0.unspecified_to_localhost();
 
     let mut addresses = Vec::new();
     let mut listeners = Vec::new();
     for _ in 0..10 {
-        let listener = unwrap!(std::net::TcpListener::bind(addr!("127.0.0.1:0")));
+        let listener = unwrap!(::std::net::TcpListener::bind(&addr!("127.0.0.1:0")));
         let addr = unwrap!(listener.local_addr());
+        let addr = PaAddr::Tcp(addr).unspecified_to_localhost();
         addresses.push(addr);
         listeners.push(listener);
     }
@@ -344,17 +356,18 @@ fn bootstrap_with_disable_external_reachability() {
     unwrap!(config0.write()).dev = Some(DevConfigSettings {
         disable_external_reachability_requirement: true,
     });
+    unwrap!(config0.write()).listen_addresses = vec![PaAddr::Tcp(addr!("0.0.0.0:0"))];
     let uid0: UniqueId = rand::random();
     let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, uid0));
 
-    unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+    unwrap!(service0.start_listening());
+    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
 
     unwrap!(service0.set_accept_bootstrap(true));
 
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).hard_coded_contacts = vec![SocketAddr::new(ip!("127.0.0.1"), port0)];
+    unwrap!(config1.write()).hard_coded_contacts = vec![addr0.unspecified_to_localhost()];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
@@ -373,15 +386,17 @@ fn bootstrap_with_blacklist() {
 
     let (service0, event_rx0) = service();
 
-    unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+    unwrap!(service0.start_listening());
+    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
 
     unwrap!(service0.set_accept_bootstrap(true));
 
-    let valid_addr = SocketAddr::new(ip!("127.0.0.1"), port0);
+    let valid_addr = addr0.unspecified_to_localhost();
 
     let blacklisted_listener = unwrap!(std::net::TcpListener::bind(addr!("0.0.0.0:0")));
     let blacklisted_addr = unwrap!(blacklisted_listener.local_addr());
+    let blacklisted_addr = PaAddr::Tcp(blacklisted_addr).unspecified_to_localhost();
     unwrap!(blacklisted_listener.set_nonblocking(true));
 
     let (event_tx1, event_rx1) = event_sender();
@@ -425,9 +440,10 @@ fn bootstrap_fails_only_blacklisted_contacts() {
 
     let (service0, event_rx0) = service();
 
-    unwrap!(service0.start_listening_tcp());
-    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
-    let blacklisted_addr = SocketAddr::new(ip!("127.0.0.1"), port0);
+    unwrap!(service0.start_listening());
+    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+    let blacklisted_addr = addr0.unspecified_to_localhost();
 
     unwrap!(service0.set_accept_bootstrap(true));
 
@@ -455,6 +471,7 @@ fn bootstrap_fails_if_there_are_no_contacts() {
 fn bootstrap_fails_if_there_are_only_invalid_contacts() {
     let dead_listener = unwrap!(std::net::TcpListener::bind(addr!("0.0.0.0:0")));
     let dead_addr = unwrap!(dead_listener.local_addr());
+    let dead_addr = PaAddr::Tcp(dead_addr).unspecified_to_localhost();
 
     let (event_tx0, event_rx0) = event_sender();
     let config0 = unwrap!(ConfigFile::new_temporary());
