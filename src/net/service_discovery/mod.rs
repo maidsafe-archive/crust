@@ -18,11 +18,64 @@
 mod msg;
 mod server;
 mod discover;
-mod service_discovery_ty;
 
 #[cfg(test)]
 mod test;
 
 pub use self::discover::{Discover, discover};
 pub use self::server::Server;
-pub use self::service_discovery_ty::ServiceDiscovery;
+
+use future_utils::{self, DropNotify};
+use futures::sync::mpsc::UnboundedReceiver;
+
+use net::service_discovery;
+use priv_prelude::*;
+
+pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
+
+/// Advertises our current set of connectable listening addresses on the local network.
+pub struct ServiceDiscovery {
+    port: u16,
+    _drop_tx: DropNotify,
+}
+
+impl ServiceDiscovery {
+    pub fn new(
+        handle: &Handle,
+        config: ConfigFile,
+        current_addrs: HashSet<PaAddr>,
+        addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
+    ) -> io::Result<ServiceDiscovery> {
+        let port = config.read().service_discovery_port.unwrap_or(
+            SERVICE_DISCOVERY_DEFAULT_PORT,
+        );
+
+        let (drop_tx, drop_rx) = future_utils::drop_notify();
+        let mut server = service_discovery::Server::new(
+            handle,
+            port,
+            current_addrs.into_iter().collect::<Vec<_>>(),
+        )?;
+        let actual_port = server.port();
+
+        handle.spawn({
+            addrs_rx
+                .chain(future::empty().into_stream())
+                .for_each(move |addrs| {
+                    server.set_data(addrs.into_iter().collect());
+                    Ok(())
+                })
+                .until(drop_rx.infallible())
+                .map(|_unit_opt| ())
+        });
+
+        Ok(ServiceDiscovery {
+            port: actual_port,
+            _drop_tx: drop_tx,
+        })
+    }
+
+    pub fn port(&self) -> u16 {
+        self.port
+    }
+}

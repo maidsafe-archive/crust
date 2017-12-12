@@ -20,7 +20,7 @@ use log::LogLevel;
 
 use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
-use net::peer::connect::connect_fn::connect;
+use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
