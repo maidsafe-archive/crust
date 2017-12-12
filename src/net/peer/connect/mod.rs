@@ -112,6 +112,12 @@ quick_error! {
     }
 }
 
+/// Sends magic 8 byte string that every connection should be started with.
+pub fn send_request_header(stream: PaStream) -> IoFuture<PaStream> {
+    tokio_io::io::write_all(stream, CRUST_REQ_HEADER)
+        .map(|(stream, _buf)| stream)
+        .into_boxed()
+}
 
 /// Perform a rendezvous connect to a peer. Both peers call this simultaneously using
 /// `PubConnectionInfo` they received from the other peer out-of-band.
@@ -278,13 +284,6 @@ where
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
         })
-        .into_boxed()
-}
-
-/// Sends magic 8 byte string that every connection should be started with.
-fn send_request_header(stream: PaStream) -> IoFuture<PaStream> {
-    tokio_io::io::write_all(stream, CRUST_REQ_HEADER)
-        .map(|(stream, _buf)| stream)
         .into_boxed()
 }
 
