@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 mod cache;
-mod bootstrap;
+mod bootstrap_fn;
 mod try_peer;
 
-pub use self::bootstrap::{BootstrapError, bootstrap};
+pub use self::bootstrap_fn::{BootstrapError, bootstrap};
 pub use self::try_peer::{ConnectHandshakeError, TryPeerError};

@@ -31,7 +31,7 @@ pub enum PaAddr {
 impl PaAddr {
     pub fn ip(&self) -> IpAddr {
         match *self {
-            PaAddr::Tcp(ref addr) => addr.ip(),
+            PaAddr::Tcp(ref addr) |
             PaAddr::Utp(ref addr) => addr.ip(),
         }
     }

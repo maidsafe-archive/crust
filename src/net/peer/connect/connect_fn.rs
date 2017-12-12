@@ -53,6 +53,7 @@ quick_error! {
 
 quick_error! {
     #[derive(Debug)]
+    #[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
     pub enum SingleConnectionError {
         Io(e: io::Error) {
             description("io error initiating/accepting connection")
@@ -101,7 +102,7 @@ pub fn connect<UID: Uid>(
     name_hash: NameHash,
     our_info: PrivConnectionInfo<UID>,
     their_info: PubConnectionInfo<UID>,
-    _config: ConfigFile,
+    //_config: ConfigFile,
     peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
 ) -> BoxFuture<Peer<UID>, ConnectError> {
     if our_info.id == their_info.id {
@@ -127,7 +128,7 @@ pub fn connect<UID: Uid>(
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
     let all_connections = all_outgoing_connections.select(direct_incoming);
-    choose_peer(&handle, all_connections, our_info.id, their_id)
+    choose_peer(handle, all_connections, our_info.id, their_id)
 }
 
 /// Takes all pending handshaken connections and chooses the first one successful.

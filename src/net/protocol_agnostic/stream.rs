@@ -147,7 +147,7 @@ impl PaStream {
             tcp_connect
                 .select2(utp_connect)
                 .map(|either| match either {
-                    Either::A((stream, _)) => stream,
+                    Either::A((stream, _)) |
                     Either::B((stream, _)) => stream,
                 })
                 .or_else(|either| match either {
@@ -155,8 +155,8 @@ impl PaStream {
                         udp_connect
                             .map_err(move |utp_error| {
                                 PaRendezvousConnectError::AllProtocolsFailed {
-                                    tcp: tcp_error,
-                                    utp: utp_error,
+                                    tcp: Box::new(tcp_error),
+                                    utp: Box::new(utp_error),
                                 }
                             })
                             .into_boxed()
@@ -165,8 +165,8 @@ impl PaStream {
                         tcp_connect
                             .map_err(move |tcp_error| {
                                 PaRendezvousConnectError::AllProtocolsFailed {
-                                    tcp: tcp_error,
-                                    utp: utp_error,
+                                    tcp: Box::new(tcp_error),
+                                    utp: Box::new(utp_error),
                                 }
                             })
                             .into_boxed()
@@ -178,7 +178,7 @@ impl PaStream {
             pump_channels
                 .select2(connect)
                 .map_err(|either| match either {
-                    Either::A((err, _)) => err,
+                    Either::A((err, _)) |
                     Either::B((err, _)) => err,
                 })
                 .and_then(|either| match either {
@@ -281,13 +281,14 @@ where
 }
 
 #[derive(Debug)]
+
 pub enum PaRendezvousConnectError<Ei, Eo> {
     ChannelWrite(Eo),
     ChannelRead(Ei),
     DeserializeMsg(bincode::Error),
     AllProtocolsFailed {
-        tcp: TcpRendezvousConnectError<Void, SendError<Bytes>>,
-        utp: UtpRendezvousConnectError<Void, SendError<Bytes>>,
+        tcp: Box<TcpRendezvousConnectError<Void, SendError<Bytes>>>,
+        utp: Box<UtpRendezvousConnectError<Void, SendError<Bytes>>>,
     },
 }
 

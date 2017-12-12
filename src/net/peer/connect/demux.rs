@@ -20,7 +20,7 @@ use log::LogLevel;
 
 use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
-use net::peer::connect::connect::connect;
+use net::peer::connect::connect_fn::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
@@ -86,7 +86,7 @@ impl<UID: Uid> Demux<UID> {
         name_hash: NameHash,
         our_info: PrivConnectionInfo<UID>,
         their_info: PubConnectionInfo<UID>,
-        config: ConfigFile,
+        //config: ConfigFile,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
         let their_uid = their_info.id;
         let peer_rx = {
@@ -96,7 +96,7 @@ impl<UID: Uid> Demux<UID> {
             peer_rx
         };
 
-        connect(handle, name_hash, our_info, their_info, config, peer_rx)
+        connect(handle, name_hash, our_info, their_info, peer_rx)
     }
 }
 
@@ -128,7 +128,7 @@ fn handle_incoming<UID: Uid>(
     socket
         .into_future()
         .map_err(|(e, _s)| IncomingError::Socket(e))
-        .with_timeout(Duration::from_secs(10), &handle)
+        .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or(IncomingError::TimedOut))
         .and_then(move |(msg_opt, socket)| {
             let msg = match msg_opt {

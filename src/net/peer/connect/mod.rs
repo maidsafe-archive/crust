@@ -17,8 +17,8 @@
 
 pub use self::bootstrap::{BootstrapError, ConnectHandshakeError, bootstrap};
 pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
-pub use self::connect::{ConnectError, RendezvousConnectError, SingleConnectionError,
-                        start_rendezvous_connect};
+pub use self::connect_fn::{ConnectError, RendezvousConnectError, SingleConnectionError,
+                           start_rendezvous_connect};
 pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo};
 pub use self::demux::Demux;
 pub use self::ext_reachability::ExternalReachability;
@@ -30,4 +30,4 @@ mod ext_reachability;
 mod demux;
 mod handshake_message;
 mod bootstrap_acceptor;
-mod connect;
+mod connect_fn;

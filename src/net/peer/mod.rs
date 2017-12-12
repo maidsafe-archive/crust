@@ -20,12 +20,12 @@ pub use self::connect::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError,
                         ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
                         PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
                         SingleConnectionError, bootstrap, start_rendezvous_connect};
-pub use self::peer::{Peer, PeerError, from_handshaken_socket};
 pub use self::peer_message::PeerMessage;
+pub use self::peer_ty::{Peer, PeerError, from_handshaken_socket};
 pub use self::uid::Uid;
 
 mod acceptor;
 mod connect;
-mod peer;
+mod peer_ty;
 mod peer_message;
 mod uid;

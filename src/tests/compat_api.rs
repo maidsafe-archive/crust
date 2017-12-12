@@ -235,6 +235,7 @@ fn start_two_services_exchange_data() {
         };
 
         assert_eq!(data0_recv, data0_compare);
+        service1
     });
 
     let service0 = unwrap!(j0.join());

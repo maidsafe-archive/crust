@@ -129,7 +129,7 @@ impl<UID: Uid> Service<UID> {
         let mut futures = Vec::new();
         for addr in addrs {
             futures.push({
-                self.acceptor.listener(&addr).map_err(
+                self.acceptor.listener(addr).map_err(
                     CrustError::StartListener,
                 )
             });

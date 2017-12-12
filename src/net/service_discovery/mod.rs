@@ -18,11 +18,11 @@
 mod msg;
 mod server;
 mod discover;
-mod service_discovery;
+mod service_discovery_ty;
 
 #[cfg(test)]
 mod test;
 
 pub use self::discover::{Discover, discover};
 pub use self::server::Server;
-pub use self::service_discovery::ServiceDiscovery;
+pub use self::service_discovery_ty::ServiceDiscovery;

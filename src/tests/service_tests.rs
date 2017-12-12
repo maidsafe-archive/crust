@@ -117,8 +117,7 @@ fn connect_works_on_localhost() {
         .join(service2.connect(
             service2_priv_conn_info,
             service1_pub_conn_info,
-        ))
-        .and_then(|peers| Ok(peers));
+        ));
 
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
     assert_eq!(service1_peer.uid(), service2.id());
@@ -145,8 +144,7 @@ fn peer_shutdown_closes_remote_peer_too() {
         .join(service2.connect(
             service2_priv_conn_info,
             service1_pub_conn_info,
-        ))
-        .and_then(|peers| Ok(peers));
+        ));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     drop(service1_peer);
@@ -184,8 +182,7 @@ fn exchange_data_between_two_peers() {
         .join(service2.connect(
             service2_priv_conn_info,
             service1_pub_conn_info,
-        ))
-        .and_then(|peers| Ok(peers));
+        ));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     const NUM_MESSAGES: u64 = 100;

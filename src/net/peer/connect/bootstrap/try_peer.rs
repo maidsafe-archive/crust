@@ -92,7 +92,7 @@ pub fn try_peer<UID: Uid>(
     let addr = *addr;
     PaStream::direct_connect(&addr, handle)
         .map(move |stream| Socket::wrap_pa(&handle0, stream, addr))
-        .with_timeout(Duration::from_secs(10), &handle)
+        .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
         .and_then(move |socket| {
@@ -140,7 +140,7 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
                     None => Err(ConnectHandshakeError::Disconnected),
                 })
         })
-        .with_timeout(Duration::from_secs(9), &handle)
+        .with_timeout(Duration::from_secs(9), handle)
         .and_then(|res| res.ok_or(ConnectHandshakeError::TimedOut))
         .into_boxed()
 }
