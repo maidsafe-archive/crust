@@ -24,6 +24,7 @@ use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
+use tokio_io;
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
@@ -53,16 +54,22 @@ impl<UID: Uid> Demux<UID> {
         let handle0 = handle.clone();
         let handler_task = {
             incoming
-            .log_errors(LogLevel::Error, "listener errored!")
-            .map(move |socket| {
-                let socket = socket.change_message_type::<HandshakeMessage<UID>>();
+                .map_err(IncomingError::Io)
+                .for_each(move |(stream, addr)| {
+                    let handle_cloned = handle0.clone();
+                    let inner_cloned = Arc::clone(&inner_cloned);
 
-                handle_incoming(&handle0, Arc::clone(&inner_cloned), socket)
-                .log_error(LogLevel::Debug, "handling incoming connection")
-            })
-            .buffer_unordered(128)
-            .for_each(|()| Ok(()))
-            .infallible()
+                    let header = [0u8; 8];
+                    tokio_io::io::read_exact(stream, header)
+                        .map_err(IncomingError::Io)
+                        .and_then(move |(stream, _header)| {
+                            let socket: Socket<HandshakeMessage<UID>> =
+                                Socket::wrap_pa(&handle_cloned, stream, addr);
+                            handle_incoming(&handle_cloned, Arc::clone(&inner_cloned), socket)
+                        })
+                })
+                .log_error(LogLevel::Error, "Failed to accept incoming connections!")
+                .infallible()
         };
         handle.spawn(handler_task);
         Demux { inner: inner }
@@ -103,6 +110,11 @@ impl<UID: Uid> Demux<UID> {
 quick_error! {
     #[derive(Debug)]
     pub enum IncomingError {
+        Io(e: io::Error) {
+            description("io error accepting incoming connection")
+            display("io error accepting incoming connection: {}", e)
+            cause(e)
+        }
         TimedOut {
             description("timed out waiting for the peer to send their request")
         }

@@ -64,7 +64,6 @@ impl ObservableAddresses {
 
 /// Created in tandem with a `Listeners`, represents the incoming stream of connections.
 pub struct SocketIncoming {
-    handle: Handle,
     listeners_rx: UnboundedReceiver<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     listeners: Vec<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: Arc<Mutex<ObservableAddresses>>,
@@ -81,7 +80,6 @@ impl Listeners {
             addresses: Arc::clone(&addresses),
         };
         let incoming = SocketIncoming {
-            handle: handle.clone(),
             listeners_rx: rx,
             listeners: Vec::new(),
             addresses: addresses,
@@ -135,10 +133,10 @@ impl Listeners {
 }
 
 impl Stream for SocketIncoming {
-    type Item = Socket<Void>;
+    type Item = (PaStream, PaAddr);
     type Error = io::Error;
 
-    fn poll(&mut self) -> io::Result<Async<Option<Socket<Void>>>> {
+    fn poll(&mut self) -> io::Result<Async<Option<Self::Item>>> {
         while let Async::Ready(incoming_opt) = unwrap!(self.listeners_rx.poll()) {
             let (drop_rx, incoming, addrs) = match incoming_opt {
                 Some(x) => x,
@@ -152,9 +150,8 @@ impl Stream for SocketIncoming {
             {
                 let &mut (ref mut drop_notice, ref mut listener, _) = &mut self.listeners[i];
                 if let Ok(Async::NotReady) = drop_notice.poll() {
-                    if let Async::Ready(Some((stream, addr))) = listener.poll()? {
-                        let socket = Socket::wrap_pa(&self.handle, stream, addr);
-                        return Ok(Async::Ready(Some(socket)));
+                    if let Async::Ready(Some(stream_with_addr)) = listener.poll()? {
+                        return Ok(Async::Ready(Some(stream_with_addr)));
                     }
                     i += 1;
                     continue;
@@ -338,6 +335,7 @@ mod test {
 
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
+        let handle0 = handle.clone();
 
         let (listeners, socket_incoming) = Listeners::new(&handle);
 
@@ -395,12 +393,13 @@ mod test {
                 })
                 .join({
                     socket_incoming
-                        .map(|socket| {
+                        .map(move |(stream, addr)| {
+                            let socket = Socket::<PaAddr>::wrap_pa(&handle0, stream, addr);
                             socket
                                 .change_message_type::<PaAddr>()
                                 .into_future()
-                                .map_err(|(e, _socket)| panic!(e))
-                                .map(|(msg_opt, _socket)| unwrap!(msg_opt))
+                                .map_err(|(e, _stream_with_addr)| panic!(e))
+                                .map(|(msg_opt, _stream_with_addr)| unwrap!(msg_opt))
                         })
                         .buffer_unordered(64)
                         .collect()
