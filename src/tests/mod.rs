@@ -204,7 +204,7 @@ fn bootstrap_with_blacklist() {
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     let mut blacklist = HashSet::new();
-    blacklist.insert(blacklisted_address);
+    let _ = blacklist.insert(blacklisted_address);
     unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
@@ -239,7 +239,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
     let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     let mut blacklist = HashSet::new();
-    blacklist.insert(blacklisted_address);
+    let _ = blacklist.insert(blacklisted_address);
     unwrap!(service.start_bootstrap(blacklist, CrustUser::Client));
 
     expect_event!(event_rx, Event::BootstrapFailed);
@@ -367,10 +367,11 @@ mod broken_peer {
                 match self.0.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(..))) => {
                         let public_id: UniqueId = rand::random();
-                        unwrap!(self.0.write(poll,
-                                             self.1,
-                                             Some((Message::BootstrapGranted(public_id),
-                                                   0))));
+                        let _ = unwrap!(self.0.write(
+                            poll,
+                            self.1,
+                            Some((Message::BootstrapGranted(public_id), 0)),
+                        ));
                     }
                     Ok(Some(_)) | Ok(None) => (),
                     Err(_) => self.terminate(core, poll),
@@ -378,7 +379,7 @@ mod broken_peer {
             }
 
             if kind.is_writable() {
-                unwrap!(self.0.write::<Message<UniqueId>>(poll, self.1, None));
+                let _ = unwrap!(self.0.write::<Message<UniqueId>>(poll, self.1, None));
             }
         }
 
@@ -400,7 +401,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use self::broken_peer;
     use rust_sodium;
 
-    rust_sodium::init();
+    let _ = rust_sodium::init();
 
     // Spin up the non-responsive peer.
     let el = unwrap!(spawn_event_loop(0, None));

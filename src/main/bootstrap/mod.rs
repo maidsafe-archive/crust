@@ -285,7 +285,7 @@ fn seek_peers(
 ) -> ::Res<(Receiver<Vec<SocketAddr>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let mut state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());
+        let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);

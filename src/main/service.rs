@@ -69,7 +69,7 @@ impl<UID: Uid> Service<UID> {
         config: Config,
         our_uid: UID,
     ) -> ::Res<Self> {
-        rust_sodium::init();
+        let _ = rust_sodium::init();
 
         let name_hash = name_hash(&config.network_name);
 
@@ -484,7 +484,7 @@ impl<UID: Uid> Service<UID> {
             let event_tx = self.event_tx.clone();
             let our_uid = self.our_uid;
             let mc = self.mc.clone();
-            if let Err(e) = self.post(move |mut core, poll| {
+            if let Err(e) = self.post(move |core, poll| {
                 let event_tx_clone = event_tx.clone();
                 match MappedTcpSocket::<_, UID>::start(
                     core,
