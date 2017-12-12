@@ -55,6 +55,7 @@ extern crate crust;
 
 
 use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
+use futures::Stream;
 
 use futures::future::empty;
 use rand::Rng;
@@ -93,12 +94,14 @@ fn main() {
         "Failed to create Service object",
     );
 
-    let listener =
+    let listeners =
         unwrap!(
-        event_loop.run(service.start_listener()),
+        event_loop.run(service.start_listening().collect()),
         "Failed to start listening to peers",
     );
-    println!("Listening on {}", listener.addr());
+    for listener in &listeners {
+        println!("Listening on {}", listener.addr());
+    }
 
     let our_conn_info =
         unwrap!(

@@ -82,7 +82,7 @@ impl From<SocketError> for ConnectHandshakeError {
 /// Try to bootstrap to the given peer.
 pub fn try_peer<UID: Uid>(
     handle: &Handle,
-    addr: &SocketAddr,
+    addr: &PaAddr,
     our_uid: UID,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
@@ -90,8 +90,8 @@ pub fn try_peer<UID: Uid>(
     let handle0 = handle.clone();
     let handle1 = handle.clone();
     let addr = *addr;
-    TcpStream::connect(&addr, handle)
-        .map(move |stream| Socket::wrap_tcp(&handle0, stream, addr))
+    PaStream::direct_connect(&addr, handle)
+        .map(move |stream| Socket::wrap_pa(&handle0, stream, addr))
         .with_timeout(Duration::from_secs(10), &handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
@@ -126,8 +126,12 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
                 .map_err(|(e, _)| ConnectHandshakeError::from(e))
                 .and_then(move |(msg_opt, socket)| match msg_opt {
                     Some(HandshakeMessage::BootstrapGranted(peer_uid)) => {
-                        peer::from_handshaken_socket(&handle0, socket, peer_uid, CrustUser::Node)
-                            .map_err(ConnectHandshakeError::from)
+                        Ok(peer::from_handshaken_socket(
+                            &handle0,
+                            socket,
+                            peer_uid,
+                            CrustUser::Node,
+                        ))
                     }
                     Some(HandshakeMessage::BootstrapDenied(reason)) => {
                         Err(ConnectHandshakeError::BootstrapDenied(reason))

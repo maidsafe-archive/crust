@@ -19,6 +19,7 @@
 
 use crust::{ConfigFile, Peer, PubConnectionInfo, Service, Uid};
 
+use futures::Stream;
 use serde_json;
 use std::{fmt, io};
 use std::path::PathBuf;
@@ -60,12 +61,14 @@ pub fn connect_to_peer(event_loop: &mut Core, service_id: PeerId) -> Peer<PeerId
         "Failed to create Service object",
     );
 
-    let listener =
+    let listeners =
         unwrap!(
-        event_loop.run(service.start_listener()),
+        event_loop.run(service.start_listening().collect()),
         "Failed to start listening to peers",
     );
-    println!("Listening on {}", listener.addr());
+    for listener in &listeners {
+        println!("Listening on {}", listener.addr());
+    }
 
     let our_conn_info =
         unwrap!(

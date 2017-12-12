@@ -89,7 +89,7 @@ impl<UID: Uid> Service<UID> {
     /// Returns a future that resolves to the first connected peer.
     pub fn bootstrap(
         &mut self,
-        blacklist: HashSet<SocketAddr>,
+        blacklist: HashSet<PaAddr>,
         use_service_discovery: bool,
         crust_user: CrustUser,
     ) -> BoxFuture<Peer<UID>, BootstrapError> {
@@ -120,16 +120,21 @@ impl<UID: Uid> Service<UID> {
         self.acceptor.bootstrap_acceptor()
     }
 
-    /// Start listening on a socket. The address/port to listen on is configured through the
-    /// configuration file, The returned `Listener` can also be queried for the address. Drop the
-    /// `Listener` to stop listening on the address.
-    pub fn start_listener(&self) -> BoxFuture<Listener, CrustError> {
-        let port = self.config.read().tcp_acceptor_port.unwrap_or(0);
-        let addr = SocketAddr::new(ip!("0.0.0.0"), port);
-        self.acceptor
-            .listener(&addr)
-            .map_err(CrustError::StartListener)
-            .into_boxed()
+    /// Start listening for incoming connections. The address/port to listen on is configured
+    /// through the configuration file. The returned `Listener`s can be queried for their
+    /// address, drop a `Listener` to stop listening on its address. The stream will end once all
+    /// configured listeners have been returned.
+    pub fn start_listening(&self) -> BoxStream<Listener, CrustError> {
+        let addrs = &self.config.read().listen_addresses;
+        let mut futures = Vec::new();
+        for addr in addrs {
+            futures.push({
+                self.acceptor.listener(&addr).map_err(
+                    CrustError::StartListener,
+                )
+            });
+        }
+        stream::futures_unordered(futures).into_boxed()
     }
 
     /// Prepare a connection info. This is the first step to doing a p2p connection to a peer. Both
@@ -187,7 +192,7 @@ impl<UID: Uid> Service<UID> {
 
     /// Return the set of all addresses that we are currently listening for incoming connections
     /// on. Also returns a channel that can be used to monitor when this set changes.
-    pub fn addresses(&self) -> (HashSet<SocketAddr>, UnboundedReceiver<HashSet<SocketAddr>>) {
+    pub fn addresses(&self) -> (HashSet<PaAddr>, UnboundedReceiver<HashSet<PaAddr>>) {
         self.acceptor.addresses()
     }
 

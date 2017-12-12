@@ -263,9 +263,9 @@ impl ConfigWrapper {
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct ConfigSettings {
     /// Direct contacts one should connect to
-    pub hard_coded_contacts: Vec<SocketAddr>,
-    /// Port for TCP acceptor
-    pub tcp_acceptor_port: Option<u16>,
+    pub hard_coded_contacts: Vec<PaAddr>,
+    /// Addresses that we listen on by default.
+    pub listen_addresses: Vec<PaAddr>,
     /// Force usage of `tcp_acceptor_port` as our router mapped port. Normally if there is a port
     /// forwarding, crust will find out what the external world sees our local tcp acceptor
     /// endpoint as and include this information in our connection info that we share with others.
@@ -305,7 +305,7 @@ impl Default for ConfigSettings {
     fn default() -> ConfigSettings {
         ConfigSettings {
             hard_coded_contacts: vec![],
-            tcp_acceptor_port: None,
+            listen_addresses: vec![],
             force_acceptor_port_in_ext_ep: false,
             service_discovery_port: None,
             bootstrap_cache_name: None,
@@ -346,9 +346,8 @@ mod tests {
         unwrap!(fs::create_dir_all(&target_dir));
 
         source.push(sample_name);
-        dest.push(sample_name);
+        dest.push(&source);
 
-        info!("copying {:?} => {:?}", source, dest);
         unwrap!(fs::copy(&source, &dest));
 
         let _ = unwrap!(ConfigFile::open_path(source));

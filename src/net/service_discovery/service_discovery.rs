@@ -33,8 +33,8 @@ impl ServiceDiscovery {
     pub fn new(
         handle: &Handle,
         config: ConfigFile,
-        current_addrs: HashSet<SocketAddr>,
-        addrs_rx: UnboundedReceiver<HashSet<SocketAddr>>,
+        current_addrs: HashSet<PaAddr>,
+        addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
     ) -> io::Result<ServiceDiscovery> {
         let port = config.read().service_discovery_port.unwrap_or(
             SERVICE_DISCOVERY_DEFAULT_PORT,
@@ -96,25 +96,29 @@ mod test {
                 &handle,
                 port,
             )).until({
-                unwrap!(Timeout::new(Duration::from_millis(200), &handle)).map_err(|e| panic!(e))
+                Timeout::new(Duration::from_millis(200), &handle)
             })
                 .collect()
                 .and_then(move |v| {
                     assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
 
-                    let some_addrs = hashset!{addr!("1.2.3.4:555"), addr!("5.4.3.2:111")};
+                    let some_addrs =
+                        hashset!{
+                        PaAddr::Tcp(addr!("1.2.3.4:555")),
+                        PaAddr::Tcp(addr!("5.4.3.2:111")),
+                    };
                     unwrap!(tx.unbounded_send(some_addrs.clone()));
 
                     let handle0 = handle.clone();
 
-                    unwrap!(Timeout::new(Duration::from_millis(100), &handle))
+                    Timeout::new(Duration::from_millis(100), &handle)
                 .map_err(|e| panic!(e))
                 .map(move |()| {
-                    unwrap!(service_discovery::discover::<HashSet<SocketAddr>>(&handle0, port))
+                    unwrap!(service_discovery::discover::<HashSet<PaAddr>>(&handle0, port))
                 })
                 .flatten_stream()
                 .until({
-                    unwrap!(Timeout::new(Duration::from_millis(200), &handle))
+                    Timeout::new(Duration::from_millis(200), &handle)
                     .map_err(|e| panic!(e))
                 })
                 .collect()

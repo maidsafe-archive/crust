@@ -18,9 +18,10 @@
 use bytes::BytesMut;
 use futures::stream::{SplitSink, SplitStream};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use log::LogLevel;
 use maidsafe_utilities::serialisation::{SerialisationError, deserialise, serialise_into};
 use priv_prelude::*;
-use std::net::Shutdown;
+use tokio_io;
 use tokio_io::codec::length_delimited::{self, Framed};
 
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
@@ -73,27 +74,27 @@ pub struct Socket<M> {
 }
 
 pub struct Inner {
-    stream_rx: Option<SplitStream<Framed<TcpStream>>>,
+    stream_rx: Option<SplitStream<Framed<PaStream>>>,
     write_tx: UnboundedSender<TaskMsg>,
-    peer_addr: SocketAddr,
+    peer_addr: PaAddr,
 }
 
 enum TaskMsg {
     Send(Priority, BytesMut),
-    Shutdown(SplitStream<Framed<TcpStream>>),
+    Shutdown(SplitStream<Framed<PaStream>>),
 }
 
 struct SocketTask {
     handle: Handle,
-    stream_rx: Option<SplitStream<Framed<TcpStream>>>,
-    stream_tx: Option<SplitSink<Framed<TcpStream>>>,
+    stream_rx: Option<SplitStream<Framed<PaStream>>>,
+    stream_tx: Option<SplitSink<Framed<PaStream>>>,
     write_queue: BTreeMap<Priority, VecDeque<(Instant, BytesMut)>>,
     write_rx: UnboundedReceiver<TaskMsg>,
 }
 
 impl<M: 'static> Socket<M> {
-    /// Wraps a `TcpStream` and turns it into a `Socket`.
-    pub fn wrap_tcp(handle: &Handle, stream: TcpStream, peer_addr: SocketAddr) -> Socket<M> {
+    /// Wraps a `PaStream` and turns it into a `Socket`.
+    pub fn wrap_pa(handle: &Handle, stream: PaStream, peer_addr: PaAddr) -> Socket<M> {
         const MAX_HEADER_SIZE: usize = 8;
         let framed = {
             length_delimited::Builder::new()
@@ -126,7 +127,7 @@ impl<M: 'static> Socket<M> {
     }
 
     /// Get the address of the remote peer (if the socket is still active).
-    pub fn peer_addr(&self) -> Result<SocketAddr, SocketError> {
+    pub fn peer_addr(&self) -> Result<PaAddr, SocketError> {
         match self.inner {
             Some(ref inner) => Ok(inner.peer_addr),
             None => Err(SocketError::Destroyed),
@@ -270,11 +271,16 @@ impl Future for SocketTask {
                 if let Some(stream_rx) = self.stream_rx.take() {
                     let stream_tx = unwrap!(self.stream_tx.take());
                     let tcp_stream = unwrap!(stream_rx.reunite(stream_tx)).into_inner();
-                    tcp_stream.shutdown(Shutdown::Write)?;
-                    let timeout = Timeout::new(Duration::from_secs(1), &self.handle)?;
+                    let soft_timeout = Timeout::new(Duration::from_secs(1), &self.handle);
+                    let hard_timeout = Timeout::new(Duration::from_secs(10), &self.handle);
                     self.handle.spawn({
-                        timeout
-                        .map(move |()| drop(tcp_stream))
+                        tokio_io::io::shutdown(tcp_stream)
+                        .map(|_stream| ())
+                        .log_error(LogLevel::Warn, "shutdown socket")
+                        .join(soft_timeout)
+                        .map(|((), ())| ())
+                        .until(hard_timeout)
+                        .map(|opt| opt.unwrap_or_else(|| warn!("timed out shutting down socket")))
                         .infallible()
                     });
                     return Ok(Async::Ready(()));
@@ -302,54 +308,60 @@ mod test {
 
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
-        let res: Result<_, Void> = core.run(future::lazy(move || {
-            let listener = unwrap!(TcpListener::bind(&addr!("0.0.0.0:0"), &handle));
-            let addr = unwrap!(listener.local_addr());
-            let addr = SocketAddr::new(ip!("127.0.0.1"), addr.port());
+        let res: Result<_, Void> = core.run({
+            let listen_addrs = vec![
+                PaAddr::Tcp(addr!("0.0.0.0:0")),
+                PaAddr::Utp(addr!("0.0.0.0:0")),
+            ];
+            stream::iter_ok(listen_addrs).for_each(move |listen_addr| {
+                let listener = unwrap!(PaListener::bind(&listen_addr, &handle));
+                let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
-            let num_msgs = 1000;
-            let mut msgs = Vec::with_capacity(num_msgs);
-            for _ in 0..num_msgs {
-                let size = rand::thread_rng().gen_range(0, 10_000);
-                let data = util::random_vec(size);
-                let msg = data;
-                msgs.push(msg);
-            }
+                let num_msgs = 1000;
+                let mut msgs = Vec::with_capacity(num_msgs);
+                for _ in 0..num_msgs {
+                    let size = rand::thread_rng().gen_range(0, 10_000);
+                    let data = util::random_vec(size);
+                    let msg = data;
+                    msgs.push(msg);
+                }
 
-            let msgs_send: Vec<(Priority, Vec<_>)> = msgs.iter().cloned().map(|m| (1, m)).collect();
+                let msgs_send: Vec<(Priority, Vec<_>)> =
+                    msgs.iter().cloned().map(|m| (1, m)).collect();
 
-            let handle0 = handle.clone();
-            let f0 = TcpStream::connect(&addr, &handle)
-                .map_err(SocketError::from)
-                .and_then(move |stream| {
-                    let socket = Socket::<Vec<u8>>::wrap_tcp(&handle0, stream, addr);
-                    socket
-                        .send_all(stream::iter_ok::<_, SocketError>(msgs_send))
-                        .map(|(_, _)| ())
-                });
+                let handle0 = handle.clone();
+                let f0 = PaStream::direct_connect(&addr, &handle)
+                    .map_err(SocketError::from)
+                    .and_then(move |stream| {
+                        let socket = Socket::<Vec<u8>>::wrap_pa(&handle0, stream, addr);
+                        socket
+                            .send_all(stream::iter_ok::<_, SocketError>(msgs_send))
+                            .map(|(_, _)| ())
+                    });
 
-            let handle1 = handle.clone();
-            let f1 = {
-                listener
-                    .incoming()
-                    .into_future()
-                    .map_err(|(err, _)| SocketError::from(err))
-                    .and_then(move |(stream_opt, _)| {
-                        let (stream, addr) = unwrap!(stream_opt);
-                        let socket = Socket::<Vec<u8>>::wrap_tcp(&handle1, stream, addr);
-                        socket.take(num_msgs as u64).collect().map(
-                            move |msgs_recv| {
-                                assert_eq!(msgs_recv, msgs);
-                            },
-                        )
-                    })
-            };
+                let handle1 = handle.clone();
+                let f1 = {
+                    listener
+                        .incoming()
+                        .into_future()
+                        .map_err(|(err, _)| SocketError::from(err))
+                        .and_then(move |(stream_opt, _)| {
+                            let (stream, addr) = unwrap!(stream_opt);
+                            let socket = Socket::<Vec<u8>>::wrap_pa(&handle1, stream, addr);
+                            socket.take(num_msgs as u64).collect().map(
+                                move |msgs_recv| {
+                                    assert_eq!(msgs_recv, msgs);
+                                },
+                            )
+                        })
+                };
 
-            f0
-            .join(f1)
-            .and_then(|((), ())| Ok(()))
-            .map_err(|e| panic!(e))
-        }));
+                f0
+                .join(f1)
+                .and_then(|((), ())| Ok(()))
+                .map_err(|e| panic!(e))
+            })
+        });
         unwrap!(res);
     }
 }

@@ -41,15 +41,10 @@ quick_error! {
             display("IO error using service discovery: {}", e)
             cause(e)
         }
-        AllPeersFailed(e: HashMap<SocketAddr, TryPeerError>) {
+        AllPeersFailed(e: HashMap<PaAddr, TryPeerError>) {
             description("Failed to connect to any bootstrap peer")
             display("Failed to connect to any bootstrap peer. \
                     All {} attempts failed. Errors: {:?}", e.len(), e)
-        }
-        TimerIo(e: io::Error) {
-            description("io error creating tokio timer")
-            display("io error creating tokio timer: {}", e)
-            cause(e)
         }
     }
 }
@@ -62,7 +57,7 @@ pub fn bootstrap<UID: Uid>(
     our_uid: UID,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
-    blacklist: HashSet<SocketAddr>,
+    blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
@@ -79,9 +74,9 @@ pub fn bootstrap<UID: Uid>(
             let sd_port = config.read().service_discovery_port.unwrap_or(
                 service::SERVICE_DISCOVERY_DEFAULT_PORT,
             );
-            service_discovery::discover::<Vec<SocketAddr>>(&handle, sd_port)
+            service_discovery::discover::<Vec<PaAddr>>(&handle, sd_port)
                 .map_err(BootstrapError::ServiceDiscovery)?
-                .infallible::<(SocketAddr, TryPeerError)>()
+                .infallible::<(PaAddr, TryPeerError)>()
                 .map(|(_, v)| stream::iter_ok(v))
                 .flatten()
                 .into_boxed()
@@ -89,10 +84,7 @@ pub fn bootstrap<UID: Uid>(
             future::empty().into_stream().into_boxed()
         };
 
-        let timeout = {
-            Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle)
-                .map_err(BootstrapError::TimerIo)
-        }?;
+        let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         Ok(
             stream::iter_ok(peers)
                 .chain(sd_peers)

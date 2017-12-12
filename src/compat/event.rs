@@ -33,12 +33,12 @@ pub enum Event<UID: Uid> {
     /// Invoked when a bootstrap peer connects to us
     BootstrapAccept(UID, CrustUser),
     /// Invoked when we bootstrap to a new peer.
-    BootstrapConnect(UID, SocketAddr),
+    BootstrapConnect(UID, PaAddr),
     /// Invoked when we failed to connect to all bootstrap contacts.
     BootstrapFailed,
     /// Invoked when we are ready to listen for incomming connection. Contains
-    /// the listening port.
-    ListenerStarted(u16),
+    /// the listening address.
+    ListenerStarted(PaAddr),
     /// Invoked when listener failed to start.
     ListenerFailed,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.

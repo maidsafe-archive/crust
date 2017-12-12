@@ -203,7 +203,7 @@ fn bootstrap_accept<UID: Uid>(
                         .into_iter()
                         .filter(|addr| util::ip_addr_is_global(&addr.ip()))
                         .map(|addr| {
-                            TcpStream::connect(&addr, &handle)
+                            PaStream::direct_connect(&addr, &handle)
                                 .with_timeout(Duration::from_secs(3), &handle)
                                 .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
                                 .into_boxed()
@@ -276,8 +276,8 @@ fn grant_bootstrap<UID: Uid>(
     let handle = handle.clone();
     socket
         .send((0, HandshakeMessage::BootstrapGranted(our_uid)))
-        .and_then(move |socket| {
-            peer::from_handshaken_socket(&handle, socket, their_uid, kind).map_err(SocketError::Io)
+        .map(move |socket| {
+            peer::from_handshaken_socket(&handle, socket, their_uid, kind)
         })
         .into_boxed()
 }

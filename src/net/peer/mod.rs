@@ -18,8 +18,8 @@
 pub use self::acceptor::Acceptor;
 pub use self::connect::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError, ConnectError,
                         ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
-                        PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, bootstrap,
-                        start_rendezvous_connect};
+                        PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
+                        SingleConnectionError, bootstrap, start_rendezvous_connect};
 pub use self::peer::{Peer, PeerError, from_handshaken_socket};
 pub use self::peer_message::PeerMessage;
 pub use self::uid::Uid;

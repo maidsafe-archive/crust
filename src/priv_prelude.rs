@@ -23,14 +23,17 @@ pub use bytes::Bytes;
 pub use common::{CrustUser, HASH_SIZE, NameHash};
 pub use config::ConfigFile;
 pub use error::CrustError;
-pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt};
+pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
 pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandshakeError,
-              ExternalReachability, P2pConnectionInfo, Peer, PeerError, Priority,
-              PrivConnectionInfo, PubConnectionInfo, SingleConnectionError, Socket, SocketError};
+              ExternalReachability, P2pConnectionInfo, PaRendezvousConnectError, Peer, PeerError,
+              Priority, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
+              SingleConnectionError, Socket, SocketError, UtpRendezvousConnectError};
+pub use net::{PaAddr, PaIncoming, PaListener, PaStream};
 pub use net::Uid;
 pub use net2::TcpBuilder;
-pub use p2p::SocketAddrExt;
+pub use p2p::{SocketAddrExt, TcpListenerExt, TcpStreamExt, UdpSocketExt};
+pub use p2p::{TcpRendezvousConnectError, UdpRendezvousConnectError};
 pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
 pub use std::{fmt, io, mem};
@@ -40,7 +43,7 @@ pub use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 pub use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
 pub use std::path::{Path, PathBuf};
 pub use std::time::{Duration, Instant};
-pub use tokio_core::net::{TcpListener, TcpStream};
+pub use tokio_core::net::{TcpListener, TcpStream, UdpSocket};
 pub use tokio_core::reactor::Handle;
-pub use util::Timeout;
+pub use tokio_utp::{UtpListener, UtpSocket, UtpStream};
 pub use void::{ResultVoidExt, Void};

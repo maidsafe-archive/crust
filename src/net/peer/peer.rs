@@ -93,9 +93,9 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
     socket: Socket<M>,
     their_uid: UID,
     kind: CrustUser,
-) -> io::Result<Peer<UID>> {
+) -> Peer<UID> {
     let now = Instant::now();
-    Ok(Peer {
+    Peer {
         socket: socket.change_message_type(),
         their_uid: their_uid,
         kind: kind,
@@ -103,16 +103,16 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
         send_heartbeat_timeout: Timeout::new_at(
             now + Duration::from_millis(HEARTBEAT_PERIOD_MS),
             handle,
-        )?,
+        ),
         recv_heartbeat_timeout: Timeout::new_at(
             now + Duration::from_millis(INACTIVITY_TIMEOUT_MS),
             handle,
-        )?,
-    })
+        ),
+    }
 }
 
 impl<UID: Uid> Peer<UID> {
-    pub fn addr(&self) -> Result<SocketAddr, PeerError> {
+    pub fn addr(&self) -> Result<PaAddr, PeerError> {
         Ok(self.socket.peer_addr()?)
     }
 

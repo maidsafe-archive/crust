@@ -17,28 +17,26 @@
 
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use p2p::TcpListenerExt;
 
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
-use tokio_core::net::Incoming;
 
 /// A handle for a single listening address. Drop this object to stop listening on this address.
 pub struct Listener {
     _drop_tx: DropNotify,
-    local_addr: SocketAddr,
+    local_addr: PaAddr,
 }
 
 /// A set of listeners.
 pub struct Listeners {
     handle: Handle,
-    listeners_tx: UnboundedSender<(DropNotice, Incoming, HashSet<SocketAddr>)>,
+    listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: Arc<Mutex<ObservableAddresses>>,
 }
 
 struct ObservableAddresses {
-    current: HashSet<SocketAddr>,
-    observers: Vec<UnboundedSender<HashSet<SocketAddr>>>,
+    current: HashSet<PaAddr>,
+    observers: Vec<UnboundedSender<HashSet<PaAddr>>>,
 }
 
 impl ObservableAddresses {
@@ -53,7 +51,7 @@ impl ObservableAddresses {
     /// Also notifies the observers about the changes.
     fn add_and_notify<T>(&mut self, addrs: T)
     where
-        T: IntoIterator<Item = SocketAddr>,
+        T: IntoIterator<Item = PaAddr>,
     {
         let mut current = mem::replace(&mut self.current, HashSet::new());
         current.extend(addrs);
@@ -67,8 +65,8 @@ impl ObservableAddresses {
 /// Created in tandem with a `Listeners`, represents the incoming stream of connections.
 pub struct SocketIncoming {
     handle: Handle,
-    listeners_rx: UnboundedReceiver<(DropNotice, Incoming, HashSet<SocketAddr>)>,
-    listeners: Vec<(DropNotice, Incoming, HashSet<SocketAddr>)>,
+    listeners_rx: UnboundedReceiver<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
+    listeners: Vec<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: Arc<Mutex<ObservableAddresses>>,
 }
 
@@ -93,7 +91,7 @@ impl Listeners {
 
     /// All known addresses we may be contactable on. Includes global, NAT-mapped addresses.
     /// The channel can be used to be notified when the set of addresses changes.
-    pub fn addresses(&self) -> (HashSet<SocketAddr>, UnboundedReceiver<HashSet<SocketAddr>>) {
+    pub fn addresses(&self) -> (HashSet<PaAddr>, UnboundedReceiver<HashSet<PaAddr>>) {
         let (tx, rx) = mpsc::unbounded();
         let mut addresses = unwrap!(self.addresses.lock());
         addresses.observers.push(tx);
@@ -102,23 +100,23 @@ impl Listeners {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(&self, listen_addr: &SocketAddr) -> IoFuture<Listener> {
+    pub fn listener<UID: Uid>(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
         let listen_addr = *listen_addr;
 
         // TODO(povilas): return future with our own error type instead of io::Error?
-        TcpListener::bind_public(&listen_addr, &handle)
+        PaListener::bind_public(&listen_addr, &handle)
             .map(|(listener, public_addr)| (listener, Some(public_addr)))
             .or_else(move |_| {
-                future::result(TcpListener::bind_reusable(&listen_addr, &handle))
-                    .map(|listener| (listener, None))
+                PaListener::bind_reusable(&listen_addr, &handle).map(|listener| (listener, None))
             })
-            .and_then(|(listener, public_addr)| {
-                listener_addresses(listener, public_addr)
-            })
-            .and_then(move |(listener, addrs)| {
+            .and_then(move |(listener, public_addr)| {
+                let mut addrs = HashSet::new();
+                addrs.extend(listener.expanded_local_addrs()?);
+                addrs.extend(public_addr);
+
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
 
                 let mut addresses = unwrap!(addresses.lock());
@@ -134,22 +132,6 @@ impl Listeners {
             })
             .into_boxed()
     }
-}
-
-/// Transforms listener local addresses to `HashSet` and optionally appends public address.
-///
-/// Resolving local addresses might fail, hence returns Result.
-fn listener_addresses(
-    listener: TcpListener,
-    public_addr: Option<SocketAddr>,
-) -> io::Result<(TcpListener, HashSet<SocketAddr>)> {
-    listener.expanded_local_addrs().map(|local_addrs| {
-        let mut addrs = local_addrs.iter().cloned().collect::<HashSet<SocketAddr>>();
-        if let Some(public_addr) = public_addr {
-            addrs.insert(public_addr);
-        }
-        (listener, addrs)
-    })
 }
 
 impl Stream for SocketIncoming {
@@ -171,7 +153,7 @@ impl Stream for SocketIncoming {
                 let &mut (ref mut drop_notice, ref mut listener, _) = &mut self.listeners[i];
                 if let Ok(Async::NotReady) = drop_notice.poll() {
                     if let Async::Ready(Some((stream, addr))) = listener.poll()? {
-                        let socket = Socket::wrap_tcp(&self.handle, stream, addr);
+                        let socket = Socket::wrap_pa(&self.handle, stream, addr);
                         return Ok(Async::Ready(Some(socket)));
                     }
                     i += 1;
@@ -192,7 +174,7 @@ impl Stream for SocketIncoming {
 }
 
 impl Listener {
-    pub fn addr(&self) -> SocketAddr {
+    pub fn addr(&self) -> PaAddr {
         self.local_addr
     }
 }
@@ -213,17 +195,20 @@ mod test {
             #[test]
             fn it_adds_specified_addresses_to_the_list() {
                 let mut addrs = ObservableAddresses::new();
-                addrs.current.insert(addr!("1.2.3.4:1234"));
+                addrs.current.insert(PaAddr::Tcp(addr!("1.2.3.4:1234")));
 
-                addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
+                addrs.add_and_notify(vec![
+                    PaAddr::Tcp(addr!("2.3.4.5:1234")),
+                    PaAddr::Tcp(addr!("2.3.4.6:1234")),
+                ]);
 
-                let curr_addrs: Vec<SocketAddr> = addrs.current.iter().cloned().collect();
+                let curr_addrs: Vec<PaAddr> = addrs.current.iter().cloned().collect();
                 assert_that!(
                     &curr_addrs,
                     contains(vec![
-                        addr!("1.2.3.4:1234"),
-                        addr!("2.3.4.5:1234"),
-                        addr!("2.3.4.6:1234"),
+                        PaAddr::Tcp(addr!("1.2.3.4:1234")),
+                        PaAddr::Tcp(addr!("2.3.4.5:1234")),
+                        PaAddr::Tcp(addr!("2.3.4.6:1234")),
                     ]).exactly()
                 );
             }
@@ -234,15 +219,21 @@ mod test {
                 let mut addrs = ObservableAddresses::new();
                 addrs.observers.push(tx);
 
-                addrs.add_and_notify(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]);
+                addrs.add_and_notify(vec![
+                    PaAddr::Tcp(addr!("2.3.4.5:1234")),
+                    PaAddr::Tcp(addr!("2.3.4.6:1234")),
+                ]);
 
                 let notified = unwrap!(rx.wait().map(|addrs| unwrap!(addrs)).nth(0))
                     .iter()
                     .cloned()
-                    .collect::<Vec<SocketAddr>>();
+                    .collect::<Vec<PaAddr>>();
                 assert_that!(
                     &notified,
-                    contains(vec![addr!("2.3.4.5:1234"), addr!("2.3.4.6:1234")]).exactly()
+                    contains(vec![
+                        PaAddr::Tcp(addr!("2.3.4.5:1234")),
+                        PaAddr::Tcp(addr!("2.3.4.6:1234")),
+                    ]).exactly()
                 );
             }
         }
@@ -259,7 +250,7 @@ mod test {
 
         let future = {
             listeners
-            .listener::<UniqueId>(&addr!("0.0.0.0:0"))
+            .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
             .map_err(|e| panic!(e))
             .and_then(move |listener0| {
                 let addr0 = listener0.addr();
@@ -272,7 +263,7 @@ mod test {
                 assert!(addrs0.is_subset(&addrs));
 
                 listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
+                .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
                     let addr1 = listener1.addr();
@@ -352,7 +343,7 @@ mod test {
 
         let future = {
             listeners
-                .listener::<UniqueId>(&addr!("0.0.0.0:0"))
+                .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
                 .map_err(|e| panic!(e))
                 .map(move |listener| {
                     mem::forget(listener);
@@ -360,7 +351,7 @@ mod test {
                 })
                 .and_then(move |listeners| {
                     listeners
-                        .listener::<UniqueId>(&addr!("0.0.0.0:0"))
+                        .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);
@@ -378,10 +369,10 @@ mod test {
                         let addr = *addr;
                         let handle0 = handle.clone();
                         let f = {
-                            TcpStream::connect(&addr, &handle)
+                            PaStream::direct_connect(&addr, &handle)
                                 .map_err(|e| panic!(e))
                                 .map(move |stream| {
-                                    Socket::<SocketAddr>::wrap_tcp(&handle0, stream, addr)
+                                    Socket::<PaAddr>::wrap_pa(&handle0, stream, addr)
                                 })
                                 .and_then(move |socket| socket.send((0, addr)))
                                 .map(|_socket| ())
@@ -393,7 +384,7 @@ mod test {
                     let f = {
                         let handle = handle.clone();
                         future::join_all(connectors)
-                    .and_then(move |_| unwrap!(Timeout::new(Duration::from_secs(1), &handle)))
+                    .and_then(move |_| Timeout::new(Duration::from_secs(1), &handle))
                     .map_err(|e| panic!(e))
                     .map(|()| drop(listeners))
                     };
@@ -406,7 +397,7 @@ mod test {
                     socket_incoming
                         .map(|socket| {
                             socket
-                                .change_message_type::<SocketAddr>()
+                                .change_message_type::<PaAddr>()
                                 .into_future()
                                 .map_err(|(e, _socket)| panic!(e))
                                 .map(|(msg_opt, _socket)| unwrap!(msg_opt))

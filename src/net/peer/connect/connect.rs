@@ -21,8 +21,9 @@ use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
-use p2p::{TcpRendezvousConnectError, TcpStreamExt};
 use priv_prelude::*;
+
+pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
 quick_error! {
     #[derive(Debug)]
@@ -84,9 +85,9 @@ quick_error! {
         DeadChannel {
             description("Communication channel was cancelled")
         }
-        RendezvousConnect(e: TcpRendezvousConnectError<Void, SendError<Bytes>>) {
-            description("p2p::rendezvous_connect failed")
-            display("p2p::rendezvous_connect failed: {}", e)
+        RendezvousConnect(e: RendezvousConnectError) {
+            description("rendezvous connect failed")
+            display("rendezvous connect failed: {}", e)
             cause(e)
         }
     }
@@ -151,13 +152,13 @@ where
                 socket
                     .send((0, HandshakeMessage::ChooseConnection))
                     .map_err(ConnectError::ChooseConnection)
-                    .and_then(move |socket| {
+                    .map(move |socket| {
                         peer::from_handshaken_socket(
                             &handle_copy,
                             socket,
                             their_uid,
                             CrustUser::Node,
-                        ).map_err(ConnectError::Io)
+                        )
                     })
             })
             .into_boxed()
@@ -171,12 +172,12 @@ where
                     .and_then(move |(msg_opt, socket)| match msg_opt {
                         None => Err(SingleConnectionError::ConnectionDropped),
                         Some(HandshakeMessage::ChooseConnection) => {
-                            peer::from_handshaken_socket(
+                            Ok(peer::from_handshaken_socket(
                                 &handle_copy,
                                 socket,
                                 their_uid,
                                 CrustUser::Node,
-                            ).map_err(SingleConnectionError::Io)
+                            ))
                         }
                         Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
                     })
@@ -190,12 +191,12 @@ where
 
 fn connect_directly(
     evloop_handle: &Handle,
-    addrs: Vec<SocketAddr>,
-) -> BoxStream<TcpStream, SingleConnectionError> {
+    addrs: Vec<PaAddr>,
+) -> BoxStream<PaStream, SingleConnectionError> {
     stream::futures_unordered(
         addrs
             .into_iter()
-            .map(|addr| TcpStream::connect(&addr, evloop_handle))
+            .map(|addr| PaStream::direct_connect(&addr, evloop_handle))
             .collect::<Vec<_>>(),
     ).map_err(SingleConnectionError::Io)
         .into_boxed()
@@ -230,14 +231,14 @@ fn handshake_outgoing_connections<UID: Uid, S>(
     their_id: UID,
 ) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
 where
-    S: Stream<Item = TcpStream, Error = SingleConnectionError> + 'static,
+    S: Stream<Item = PaStream, Error = SingleConnectionError> + 'static,
 {
     let our_name_hash = our_connect_request.name_hash;
     let handle_copy = evloop_handle.clone();
     connections
         .map(move |stream| {
             let peer_addr = unwrap!(stream.peer_addr());
-            Socket::wrap_tcp(&handle_copy, stream, peer_addr)
+            Socket::wrap_pa(&handle_copy, stream, peer_addr)
         })
         .and_then(move |socket| {
             socket
@@ -266,7 +267,7 @@ where
 fn connect_p2p(
     our_conn_info: Option<P2pConnectionInfo>,
     their_conn_info: Option<Vec<u8>>,
-) -> BoxFuture<TcpStream, SingleConnectionError> {
+) -> BoxFuture<PaStream, SingleConnectionError> {
     match (our_conn_info, their_conn_info) {
         (Some(our_conn_info), Some(their_conn_info)) => {
             let conn_rx = our_conn_info.connection_rx;
@@ -278,7 +279,7 @@ fn connect_p2p(
                 .and_then(move |_chann| {
                     conn_rx
                         .map_err(|_| SingleConnectionError::DeadChannel)
-                        .and_then(|res| res)
+                        .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect))
                 })
                 .into_boxed()
         }
@@ -318,15 +319,19 @@ fn validate_connect_request<UID: Uid>(
 pub fn start_rendezvous_connect(
     handle: &Handle,
     rendezvous_relay: UnboundedBiChannel<Bytes>,
-) -> oneshot::Receiver<Result<TcpStream, SingleConnectionError>> {
+) -> oneshot::Receiver<Result<PaStream, RendezvousConnectError>> {
     let (conn_tx, conn_rx) = oneshot::channel();
-    let start_conn = TcpStream::rendezvous_connect(rendezvous_relay, handle)
-        .map_err(SingleConnectionError::RendezvousConnect)
-        .then(move |result| conn_tx.send(result))
-        .or_else(|_send_error| Ok(()));
-    handle.spawn(start_conn);
+
+    let connect = {
+        PaStream::rendezvous_connect(rendezvous_relay, handle)
+            .then(move |result| conn_tx.send(result))
+            .or_else(|_send_error| Ok(()))
+    };
+
+    handle.spawn(connect);
     conn_rx
 }
+
 
 #[cfg(test)]
 mod tests {
