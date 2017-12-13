@@ -130,7 +130,7 @@ fn handle_incoming_connections<UID: Uid>(
                 .and_then(move |(stream, _header)| {
                     let socket: Socket<HandshakeMessage<UID>> =
                         Socket::wrap_pa(&handle_cloned, stream, addr);
-                    handle_incoming(&handle_cloned, Arc::clone(&inner_cloned), socket)
+                    handle_incoming_socket(&handle_cloned, Arc::clone(&inner_cloned), socket)
                 })
         })
         .log_error(LogLevel::Error, "Failed to accept incoming connections!")
@@ -138,7 +138,8 @@ fn handle_incoming_connections<UID: Uid>(
         .into_boxed()
 }
 
-fn handle_incoming<UID: Uid>(
+/// This methods is called when connection sends valid 8 byte header.
+fn handle_incoming_socket<UID: Uid>(
     handle: &Handle,
     inner: Arc<DemuxInner<UID>>,
     socket: Socket<HandshakeMessage<UID>>,
