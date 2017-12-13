@@ -39,7 +39,7 @@ use priv_prelude::*;
 use tokio_io;
 
 /// Every `Crust` request should start with sending this header.
-const CRUST_REQ_HEADER: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', 0, 0, 0];
+pub const CRUST_REQ_HEADER: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', 0, 0, 0];
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 

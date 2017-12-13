@@ -19,9 +19,10 @@ use futures::sync::mpsc::{self, UnboundedSender};
 use log::LogLevel;
 
 use net::listener::SocketIncoming;
+use net::peer::connect::{CRUST_REQ_HEADER, connect};
 use net::peer::connect::BootstrapAcceptor;
-use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
+use p2p::{ECHO_REQ, tcp_respond_with_addr};
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 use tokio_io;
@@ -142,10 +143,29 @@ fn handle_message_by_header<UID: Uid>(
     inner: Arc<DemuxInner<UID>>,
     stream: PaStream,
     addr: PaAddr,
-    _header: [u8; 8],
+    header: [u8; 8],
 ) -> BoxFuture<(), IncomingError> {
-    let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(handle, stream, addr);
-    handle_incoming_socket(handle, Arc::clone(&inner), socket)
+    match header {
+        ECHO_REQ => respond_with_addr(stream, addr),
+        CRUST_REQ_HEADER => {
+            let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(handle, stream, addr);
+            handle_incoming_socket(handle, Arc::clone(&inner), socket)
+        }
+        _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
+    }
+}
+
+fn respond_with_addr(stream: PaStream, addr: PaAddr) -> BoxFuture<(), IncomingError> {
+    match (stream, addr) {
+        (PaStream::Tcp(stream), PaAddr::Tcp(addr)) => {
+            tcp_respond_with_addr(stream, addr)
+                .map_err(IncomingError::Io)
+                .map(|_stream| ())
+                .into_boxed()
+        }
+        // TODO(povilas): handle UDP requests
+        _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
+    }
 }
 
 /// This methods is called when connection sends valid 8 byte header.
