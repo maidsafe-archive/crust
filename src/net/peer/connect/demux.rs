@@ -149,7 +149,7 @@ fn handle_message_by_header<UID: Uid>(
         ECHO_REQ => respond_with_addr(stream, addr),
         CRUST_REQ_HEADER => {
             let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(handle, stream, addr);
-            handle_incoming_socket(handle, Arc::clone(&inner), socket)
+            handle_incoming_socket(handle, inner, socket)
         }
         _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
     }
