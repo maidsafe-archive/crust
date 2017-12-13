@@ -50,28 +50,7 @@ impl<UID: Uid> Demux<UID> {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
         });
-        let inner_cloned = Arc::clone(&inner);
-        let handle0 = handle.clone();
-        let handler_task = {
-            incoming
-                .map_err(IncomingError::Io)
-                .for_each(move |(stream, addr)| {
-                    let handle_cloned = handle0.clone();
-                    let inner_cloned = Arc::clone(&inner_cloned);
-
-                    let header = [0u8; 8];
-                    tokio_io::io::read_exact(stream, header)
-                        .map_err(IncomingError::Io)
-                        .and_then(move |(stream, _header)| {
-                            let socket: Socket<HandshakeMessage<UID>> =
-                                Socket::wrap_pa(&handle_cloned, stream, addr);
-                            handle_incoming(&handle_cloned, Arc::clone(&inner_cloned), socket)
-                        })
-                })
-                .log_error(LogLevel::Error, "Failed to accept incoming connections!")
-                .infallible()
-        };
-        handle.spawn(handler_task);
+        handle.spawn(handle_incoming_connections(handle, incoming, &inner));
         Demux { inner: inner }
     }
 
@@ -130,6 +109,33 @@ quick_error! {
             description("the remote peer disconnected")
         }
     }
+}
+
+fn handle_incoming_connections<UID: Uid>(
+    handle: &Handle,
+    incoming: SocketIncoming,
+    inner: &Arc<DemuxInner<UID>>,
+) -> BoxFuture<(), ()> {
+    let inner_cloned = Arc::clone(inner);
+    let handle0 = handle.clone();
+    incoming
+        .map_err(IncomingError::Io)
+        .for_each(move |(stream, addr)| {
+            let handle_cloned = handle0.clone();
+            let inner_cloned = Arc::clone(&inner_cloned);
+
+            let header = [0u8; 8];
+            tokio_io::io::read_exact(stream, header)
+                .map_err(IncomingError::Io)
+                .and_then(move |(stream, _header)| {
+                    let socket: Socket<HandshakeMessage<UID>> =
+                        Socket::wrap_pa(&handle_cloned, stream, addr);
+                    handle_incoming(&handle_cloned, Arc::clone(&inner_cloned), socket)
+                })
+        })
+        .log_error(LogLevel::Error, "Failed to accept incoming connections!")
+        .infallible()
+        .into_boxed()
 }
 
 fn handle_incoming<UID: Uid>(
