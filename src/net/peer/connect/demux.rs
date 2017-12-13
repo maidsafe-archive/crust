@@ -127,15 +127,25 @@ fn handle_incoming_connections<UID: Uid>(
             let header = [0u8; 8];
             tokio_io::io::read_exact(stream, header)
                 .map_err(IncomingError::Io)
-                .and_then(move |(stream, _header)| {
-                    let socket: Socket<HandshakeMessage<UID>> =
-                        Socket::wrap_pa(&handle_cloned, stream, addr);
-                    handle_incoming_socket(&handle_cloned, Arc::clone(&inner_cloned), socket)
+                .and_then(move |(stream, header)| {
+                    handle_message_by_header(&handle_cloned, inner_cloned, stream, addr, header)
                 })
         })
         .log_error(LogLevel::Error, "Failed to accept incoming connections!")
         .infallible()
         .into_boxed()
+}
+
+/// Dispatch different message handler based on header.
+fn handle_message_by_header<UID: Uid>(
+    handle: &Handle,
+    inner: Arc<DemuxInner<UID>>,
+    stream: PaStream,
+    addr: PaAddr,
+    _header: [u8; 8],
+) -> BoxFuture<(), IncomingError> {
+    let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(handle, stream, addr);
+    handle_incoming_socket(handle, Arc::clone(&inner), socket)
 }
 
 /// This methods is called when connection sends valid 8 byte header.
