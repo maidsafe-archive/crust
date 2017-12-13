@@ -116,13 +116,13 @@ fn handle_incoming_connections<UID: Uid>(
     incoming: SocketIncoming,
     inner: &Arc<DemuxInner<UID>>,
 ) -> BoxFuture<(), ()> {
-    let inner_cloned = Arc::clone(inner);
-    let handle0 = handle.clone();
+    let inner = Arc::clone(inner);
+    let handle = handle.clone();
     incoming
         .map_err(IncomingError::Io)
         .for_each(move |(stream, addr)| {
-            let handle_cloned = handle0.clone();
-            let inner_cloned = Arc::clone(&inner_cloned);
+            let handle_cloned = handle.clone();
+            let inner_cloned = Arc::clone(&inner);
 
             let header = [0u8; 8];
             tokio_io::io::read_exact(stream, header)
