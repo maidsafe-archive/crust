@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use futures::stream;
 use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
@@ -159,8 +160,6 @@ fn peer_shutdown_closes_remote_peer_too() {
         )
     );
 }
-
-use futures::stream;
 
 #[test]
 fn exchange_data_between_two_peers() {
