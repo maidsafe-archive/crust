@@ -83,7 +83,7 @@ impl<UID: Uid> Acceptor<UID> {
             name_hash,
             our_info,
             their_info,
-            //self.config.clone(),
+            self.config.clone(),
         )
     }
 }
