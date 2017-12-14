@@ -19,6 +19,7 @@
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
+use p2p;
 use priv_prelude::*;
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
@@ -64,7 +65,10 @@ impl<UID: Uid> Service<UID> {
         our_uid: UID,
     ) -> BoxFuture<Service<UID>, CrustError> {
         let handle = handle.clone();
-        // TODO(canndrew): use force_include_port here once that's merged in p2p
+
+        let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
+        p2p::set_force_use_local_port(force_use_local_port);
+
         let acceptor = Acceptor::new(&handle, our_uid, config.clone());
         future::ok(Service {
             handle,
