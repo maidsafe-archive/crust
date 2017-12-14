@@ -86,7 +86,7 @@ impl<UID: Uid> Demux<UID> {
         name_hash: NameHash,
         our_info: PrivConnectionInfo<UID>,
         their_info: PubConnectionInfo<UID>,
-        //config: ConfigFile,
+        config: ConfigFile,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
         let their_uid = their_info.id;
         let peer_rx = {
@@ -96,7 +96,7 @@ impl<UID: Uid> Demux<UID> {
             peer_rx
         };
 
-        connect(handle, name_hash, our_info, their_info, peer_rx)
+        connect(handle, name_hash, our_info, their_info, config, peer_rx)
     }
 }
 

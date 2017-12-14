@@ -62,6 +62,14 @@ quick_error! {
         TimedOut {
             description("connection attempt timed out")
         }
+        Peer(e: PeerError) {
+            description("error on Peer object")
+            display("error on Peer object: {}", e)
+        }
+        NotWhitelisted(ip: IpAddr) {
+            description("peer is not whitelisted")
+            display("peer {} is not whitelisted", ip)
+        }
     }
 }
 
@@ -116,14 +124,18 @@ pub fn connect<UID: Uid>(
     name_hash: NameHash,
     our_info: PrivConnectionInfo<UID>,
     their_info: PubConnectionInfo<UID>,
-    //_config: ConfigFile,
+    config: ConfigFile,
     peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
 ) -> BoxFuture<Peer<UID>, ConnectError> {
     if our_info.id == their_info.id {
         return future::result(Err(ConnectError::RequestedConnectToSelf)).into_boxed();
     }
 
-    // TODO(povilas): respect `whitelisted_node_ips` config
+    for addr in &their_info.for_direct {
+        if !config.is_peer_whitelisted(addr.ip(), CrustUser::Node) {
+            return future::result(Err(ConnectError::NotWhitelisted(addr.ip()))).into_boxed();
+        }
+    }
 
     let their_id = their_info.id;
     let our_connect_request = ConnectRequest {
@@ -143,6 +155,15 @@ pub fn connect<UID: Uid>(
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
     let all_connections = all_outgoing_connections.select(direct_incoming);
     choose_peer(handle, all_connections, our_info.id, their_id)
+        .and_then(move |peer| {
+            let ip = peer.ip().map_err(ConnectError::Peer)?;
+            if config.is_peer_whitelisted(ip, CrustUser::Node) {
+                Ok(peer)
+            } else {
+                Err(ConnectError::NotWhitelisted(ip))
+            }
+        })
+        .into_boxed()
 }
 
 /// Takes all pending handshaken connections and chooses the first one successful.
