@@ -343,6 +343,7 @@ mod test {
 
         let (listeners, socket_incoming) = Listeners::new(&handle, P2p::default());
 
+        let config = unwrap!(ConfigFile::new_temporary());
         let future = {
             listeners
                 .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
@@ -371,7 +372,7 @@ mod test {
                         let addr = *addr;
                         let handle0 = handle.clone();
                         let f = {
-                            PaStream::direct_connect(&addr, &handle)
+                            PaStream::direct_connect(&addr, &handle, &config)
                                 .map_err(|e| panic!(e))
                                 .map(move |stream| {
                                     Socket::<PaAddr>::wrap_pa(&handle0, stream, addr)

@@ -306,6 +306,7 @@ mod test {
     fn test_socket() {
         let _logger = env_logger::init();
 
+        let config = unwrap!(ConfigFile::new_temporary());
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
         let res: Result<_, Void> = core.run({
@@ -330,7 +331,7 @@ mod test {
                     msgs.iter().cloned().map(|m| (1, m)).collect();
 
                 let handle0 = handle.clone();
-                let f0 = PaStream::direct_connect(&addr, &handle)
+                let f0 = PaStream::direct_connect(&addr, &handle, &config)
                     .map_err(SocketError::from)
                     .and_then(move |stream| {
                         let socket = Socket::<Vec<u8>>::wrap_pa(&handle0, stream, addr);

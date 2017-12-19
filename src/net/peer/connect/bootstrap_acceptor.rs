@@ -72,9 +72,10 @@ pub struct BootstrapAcceptor<UID: Uid> {
 impl<UID: Uid> BootstrapAcceptor<UID> {
     pub fn new(
         handle: &Handle,
-        config: ConfigFile,
+        config: &ConfigFile,
         our_uid: UID,
     ) -> (BootstrapAcceptor<UID>, UnboundedSender<BootstrapMessage<UID>>) {
+        let config = config.clone();
         let handle = handle.clone();
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let handshaking =
@@ -102,7 +103,7 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
                     let handshaker = bootstrap_accept(
                         &self.handle,
                         socket,
-                        self.config.clone(),
+                        &self.config,
                         self.our_uid,
                         bootstrap_request,
                     );
@@ -136,7 +137,7 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
 fn bootstrap_accept<UID: Uid>(
     handle: &Handle,
     socket: Socket<HandshakeMessage<UID>>,
-    config: ConfigFile,
+    config: &ConfigFile,
     our_uid: UID,
     bootstrap_request: BootstrapRequest<UID>,
 ) -> BoxFuture<Peer<UID>, BootstrapAcceptError> {
@@ -203,7 +204,7 @@ fn bootstrap_accept<UID: Uid>(
                         .into_iter()
                         .filter(|addr| util::ip_addr_is_global(&addr.ip()))
                         .map(|addr| {
-                            PaStream::direct_connect(&addr, &handle)
+                            PaStream::direct_connect(&addr, &handle, config)
                                 .with_timeout(Duration::from_secs(3), &handle)
                                 .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
                                 .into_boxed()

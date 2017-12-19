@@ -124,9 +124,10 @@ pub fn connect<UID: Uid>(
     name_hash: NameHash,
     our_info: PrivConnectionInfo<UID>,
     their_info: PubConnectionInfo<UID>,
-    config: ConfigFile,
+    config: &ConfigFile,
     peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
 ) -> BoxFuture<Peer<UID>, ConnectError> {
+    let config = config.clone();
     if our_info.id == their_info.id {
         return future::result(Err(ConnectError::RequestedConnectToSelf)).into_boxed();
     }
@@ -143,7 +144,7 @@ pub fn connect<UID: Uid>(
         name_hash: name_hash,
     };
 
-    let direct_connections = connect_directly(handle, their_info.for_direct);
+    let direct_connections = connect_directly(handle, their_info.for_direct, &config);
     let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
     let all_outgoing_connections = handshake_outgoing_connections(
         handle,
@@ -228,11 +229,12 @@ where
 fn connect_directly(
     evloop_handle: &Handle,
     addrs: Vec<PaAddr>,
+    config: &ConfigFile,
 ) -> BoxStream<PaStream, SingleConnectionError> {
     stream::futures_unordered(
         addrs
             .into_iter()
-            .map(|addr| PaStream::direct_connect(&addr, evloop_handle))
+            .map(|addr| PaStream::direct_connect(&addr, evloop_handle, config))
             .collect::<Vec<_>>(),
     ).map_err(SingleConnectionError::Io)
         .into_boxed()
@@ -354,13 +356,13 @@ fn validate_connect_request<UID: Uid>(
 /// connection receiver
 pub fn start_rendezvous_connect(
     handle: &Handle,
+    config: &ConfigFile,
     rendezvous_relay: UnboundedBiChannel<Bytes>,
     p2p: &P2p,
 ) -> oneshot::Receiver<Result<PaStream, RendezvousConnectError>> {
     let (conn_tx, conn_rx) = oneshot::channel();
-
     let connect = {
-        PaStream::rendezvous_connect(rendezvous_relay, handle, p2p)
+        PaStream::rendezvous_connect(rendezvous_relay, handle, config, p2p)
             .then(move |result| conn_tx.send(result))
             .or_else(|_send_error| Ok(()))
     };

@@ -48,13 +48,24 @@ impl PaStream {
         PaStream::Utp(stream)
     }
 
-    pub fn direct_connect(addr: &PaAddr, handle: &Handle) -> IoFuture<PaStream> {
+    pub fn direct_connect(
+        addr: &PaAddr,
+        handle: &Handle,
+        config: &ConfigFile,
+    ) -> IoFuture<PaStream> {
+        let disable_tcp = config.tcp_disabled();
+
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
-                TcpStream::connect(tcp_addr, handle)
-                    .and_then(|stream| tokio_io::io::write_all(stream, CRUST_TCP_INIT))
-                    .map(|(stream, _buf)| PaStream::Tcp(stream))
-                    .into_boxed()
+                if disable_tcp {
+                    future::err(io::Error::new(io::ErrorKind::Other, "tcp disabled"))
+                        .into_boxed()
+                } else {
+                    TcpStream::connect(tcp_addr, handle)
+                        .and_then(|stream| tokio_io::io::write_all(stream, CRUST_TCP_INIT))
+                        .map(|(stream, _buf)| PaStream::Tcp(stream))
+                        .into_boxed()
+                }
             }
             PaAddr::Utp(utp_addr) => {
                 UtpSocket::bind(&addr!("0.0.0.0:0"), handle)
@@ -70,6 +81,7 @@ impl PaStream {
     pub fn rendezvous_connect<C>(
         channel: C,
         handle: &Handle,
+        config: &ConfigFile,
         p2p: &P2p,
     ) -> BoxFuture<PaStream, PaRendezvousConnectError<C::Error, C::SinkError>>
     where
@@ -79,6 +91,8 @@ impl PaStream {
         <C as Sink>::SinkError: fmt::Debug,
         C: 'static,
     {
+        let disable_tcp = config.tcp_disabled();
+
         let (tcp_ch_0, tcp_ch_1) = bi_channel::unbounded();
         let (utp_ch_0, utp_ch_1) = bi_channel::unbounded();
 
@@ -86,13 +100,13 @@ impl PaStream {
             tcp_ch_0
                 .into_future()
                 .map_err(|(v, _)| void::unreachable(v))
-                .and_then(|(tcp_msg_opt, tcp_ch_0)| {
+                .and_then(move |(tcp_msg_opt, tcp_ch_0)| {
                     utp_ch_0
                         .into_future()
                         .map_err(|(v, _)| void::unreachable(v))
                         .and_then(move |(utp_msg_opt, utp_ch_0)| {
                             let msg = PaRendezvousMsg {
-                                tcp: tcp_msg_opt,
+                                tcp: if disable_tcp { None } else { tcp_msg_opt },
                                 utp: utp_msg_opt,
                             };
                             let msg = unwrap!(bincode::serialize(&msg, Infinite));
@@ -112,7 +126,9 @@ impl PaStream {
                                 .map_err(PaRendezvousConnectError::DeserializeMsg)?
                             };
                                         if let Some(tcp) = msg.tcp {
-                                            let _ = tcp_ch_0.unbounded_send(tcp);
+                                            if !disable_tcp {
+                                                let _ = tcp_ch_0.unbounded_send(tcp);
+                                            }
                                         }
                                         if let Some(utp) = msg.utp {
                                             let _ = utp_ch_0.unbounded_send(utp);
