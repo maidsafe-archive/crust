@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.29.0]
+- Replace `get_if_addrs` module with crate of the same name and fix build issues on mobile platforms.
+
 ## [0.28.1]
 - Call shutdown() on sockets before dropping them because this fixes a bug under windows.
 
