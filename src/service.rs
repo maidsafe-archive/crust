@@ -65,13 +65,8 @@ impl<UID: Uid> Service<UID> {
         config: ConfigFile,
         our_uid: UID,
     ) -> BoxFuture<Service<UID>, CrustError> {
+        let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
-
-        let p2p = P2p::default();
-        let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
-        p2p.set_force_use_local_port(force_use_local_port);
-        set_rendezvous_servers(&p2p, &config);
-
         let acceptor = Acceptor::new(&handle, our_uid, config.clone(), p2p.clone());
         future::ok(Service {
             handle,
@@ -213,6 +208,14 @@ impl<UID: Uid> Service<UID> {
     pub fn handle(&self) -> &Handle {
         &self.handle
     }
+}
+
+fn configure_nat_traversal(config: &ConfigFile) -> P2p {
+    let p2p = P2p::default();
+    let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
+    p2p.set_force_use_local_port(force_use_local_port);
+    set_rendezvous_servers(&p2p, config);
+    p2p
 }
 
 fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
