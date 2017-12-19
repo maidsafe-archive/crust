@@ -76,6 +76,13 @@ impl PaAddr {
             }
         }
     }
+
+    pub fn is_tcp(&self) -> bool {
+        match *self {
+            PaAddr::Tcp(..) => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for PaAddr {

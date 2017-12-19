@@ -132,9 +132,16 @@ impl<UID: Uid> Service<UID> {
     /// address, drop a `Listener` to stop listening on its address. The stream will end once all
     /// configured listeners have been returned.
     pub fn start_listening(&self) -> BoxStream<Listener, CrustError> {
+        let disable_tcp = match self.config.read().dev {
+            Some(ref dev) => dev.disable_tcp,
+            None => false,
+        };
         let addrs = &self.config.read().listen_addresses;
         let mut futures = Vec::new();
         for addr in addrs {
+            if disable_tcp && addr.is_tcp() {
+                continue;
+            }
             futures.push({
                 self.acceptor.listener(addr).map_err(
                     CrustError::StartListener,
@@ -154,7 +161,7 @@ impl<UID: Uid> Service<UID> {
         let (direct_addrs, _) = self.acceptor.addresses();
 
         let (ch1, ch2) = bi_channel::unbounded();
-        let conn_rx = net::peer::start_rendezvous_connect(&self.handle, ch2, &self.p2p);
+        let conn_rx = net::peer::start_rendezvous_connect(&self.handle, &self.config, ch2, &self.p2p);
 
         ch1.into_future()
             .and_then(move |(conn_info_opt, chann)| {

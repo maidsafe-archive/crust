@@ -59,7 +59,7 @@ extern crate bincode;
 pub use net::MAX_PAYLOAD_SIZE;
 
 mod error;
-mod config;
+pub mod config;
 mod common;
 pub mod compat;
 mod service;

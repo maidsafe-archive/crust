@@ -65,6 +65,7 @@ pub fn bootstrap<UID: Uid>(
     use_service_discovery: bool,
     config: &ConfigFile,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
+    let config = config.clone();
     let handle = handle.clone();
     let try = || -> Result<_, BootstrapError> {
         let mut peers = Vec::new();
@@ -94,7 +95,14 @@ pub fn bootstrap<UID: Uid>(
                 .chain(sd_peers)
                 .filter(move |addr| !blacklist.contains(addr))
                 .map(move |addr| {
-                    try_peer(&handle, &addr, our_uid, name_hash, ext_reachability.clone())
+                    try_peer(
+                        &handle,
+                        &addr,
+                        our_uid,
+                        name_hash,
+                        ext_reachability.clone(),
+                        &config,
+                    )
                         .map_err(move |e| (addr, e))
                 })
                 .buffer_unordered(64)

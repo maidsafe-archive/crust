@@ -58,7 +58,7 @@ impl<UID: Uid> Demux<UID> {
     pub fn bootstrap_acceptor(
         &self,
         handle: &Handle,
-        config: ConfigFile,
+        config: &ConfigFile,
         our_uid: UID,
     ) -> BootstrapAcceptor<UID> {
         let (acceptor, peer_tx) = BootstrapAcceptor::new(handle, config, our_uid);
@@ -73,7 +73,7 @@ impl<UID: Uid> Demux<UID> {
         name_hash: NameHash,
         our_info: PrivConnectionInfo<UID>,
         their_info: PubConnectionInfo<UID>,
-        config: ConfigFile,
+        config: &ConfigFile,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
         let their_uid = their_info.id;
         let peer_rx = {
