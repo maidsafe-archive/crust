@@ -96,6 +96,7 @@ impl<UID: Uid> Service<UID> {
         use_service_discovery: bool,
         crust_user: CrustUser,
     ) -> BoxFuture<Peer<UID>, BootstrapError> {
+        remove_rendezvous_servers(&self.p2p, &blacklist);
         let (current_addrs, _) = self.acceptor.addresses();
         let ext_reachability = match crust_user {
             CrustUser::Node => {
@@ -228,6 +229,15 @@ fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
     }
 }
 
+fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
+    for addr in addrs {
+        match *addr {
+            PaAddr::Tcp(ref addr) => p2p.remove_tcp_traversal_server(addr),
+            PaAddr::Utp(ref addr) => p2p.remove_udp_traversal_server(addr),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -265,6 +275,30 @@ mod tests {
             let servers = p2p.udp_traversal_servers().snapshot();
             assert!(servers.contains(&addr!("1.2.3.4:4000")));
             assert!(servers.contains(&addr!("1.2.3.5:5000")));
+        }
+    }
+
+    mod remove_rendezvous_servers {
+        use super::*;
+
+        #[test]
+        fn it_removes_specified_rendezvous_servers_from_global_list() {
+            let p2p = P2p::default();
+            p2p.add_tcp_traversal_server(&addr!("1.2.3.4:4000"));
+            p2p.add_udp_traversal_server(&addr!("1.2.3.5:5000"));
+
+            let rm_servers: HashSet<PaAddr> = vec![
+                PaAddr::Tcp(addr!("1.2.3.4:4000")),
+                PaAddr::Utp(addr!("1.2.3.5:5000")),
+            ].iter()
+                .cloned()
+                .collect();
+            remove_rendezvous_servers(&p2p, &rm_servers);
+
+            let servers = p2p.tcp_traversal_servers().snapshot();
+            assert!(servers.is_empty());
+            let servers = p2p.udp_traversal_servers().snapshot();
+            assert!(servers.is_empty());
         }
     }
 }
