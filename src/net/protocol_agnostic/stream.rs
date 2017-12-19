@@ -125,10 +125,10 @@ impl PaStream {
         let connect = {
             let handle = handle.clone();
             let tcp_connect = {
-                TcpStream::rendezvous_connect(tcp_ch_1, &handle, &p2p).map(PaStream::Tcp)
+                TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p).map(PaStream::Tcp)
             };
             let utp_connect = {
-                UdpSocket::rendezvous_connect(utp_ch_1, &handle, &p2p)
+                UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
                     .map_err(UtpRendezvousConnectError::Rendezvous)
                     .and_then(move |(udp_socket, addr)| {
                         let (utp_socket, _utp_listener) = {
