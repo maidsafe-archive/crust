@@ -35,6 +35,7 @@ use futures::sync::oneshot;
 use net::peer;
 use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
+use p2p::P2p;
 use priv_prelude::*;
 use tokio_io;
 
@@ -366,11 +367,12 @@ fn validate_connect_request<UID: Uid>(
 pub fn start_rendezvous_connect(
     handle: &Handle,
     rendezvous_relay: UnboundedBiChannel<Bytes>,
+    p2p: &P2p,
 ) -> oneshot::Receiver<Result<PaStream, RendezvousConnectError>> {
     let (conn_tx, conn_rx) = oneshot::channel();
 
     let connect = {
-        PaStream::rendezvous_connect(rendezvous_relay, handle)
+        PaStream::rendezvous_connect(rendezvous_relay, handle, &p2p)
             .then(move |result| conn_tx.send(result))
             .or_else(|_send_error| Ok(()))
     };

@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use p2p;
+use p2p::{self, P2p};
 use priv_prelude::*;
 use tokio_core;
 use tokio_utp;
@@ -73,10 +73,11 @@ impl PaListener {
     pub fn bind_public(
         addr: &PaAddr,
         handle: &Handle,
+        p2p: &P2p,
     ) -> BoxFuture<(PaListener, PaAddr), BindPublicError> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
-                TcpListener::bind_public(tcp_addr, handle)
+                TcpListener::bind_public(tcp_addr, handle, &p2p)
                     .map_err(BindPublicError::BindTcp)
                     .map(|(listener, public_addr)| {
                         let listener = PaListener::Tcp(listener);
@@ -87,7 +88,7 @@ impl PaListener {
             }
             PaAddr::Utp(utp_addr) => {
                 let handle = handle.clone();
-                UdpSocket::bind_public(&utp_addr, &handle)
+                UdpSocket::bind_public(&utp_addr, &handle, &p2p)
                     .map_err(BindPublicError::BindUdp)
                     .and_then(move |(socket, public_addr)| {
                         let (_, listener) = {

@@ -19,6 +19,7 @@ use bincode::{self, Infinite};
 use future_utils::bi_channel;
 use futures::future::Either;
 use futures::sync::mpsc::SendError;
+use p2p::P2p;
 use priv_prelude::*;
 use std::error::Error;
 use std::io::{Read, Write};
@@ -67,6 +68,7 @@ impl PaStream {
     pub fn rendezvous_connect<C>(
         channel: C,
         handle: &Handle,
+        p2p: &P2p,
     ) -> BoxFuture<PaStream, PaRendezvousConnectError<C::Error, C::SinkError>>
     where
         C: Stream<Item = Bytes>,
@@ -123,10 +125,10 @@ impl PaStream {
         let connect = {
             let handle = handle.clone();
             let tcp_connect = {
-                TcpStream::rendezvous_connect(tcp_ch_1, &handle).map(PaStream::Tcp)
+                TcpStream::rendezvous_connect(tcp_ch_1, &handle, &p2p).map(PaStream::Tcp)
             };
             let utp_connect = {
-                UdpSocket::rendezvous_connect(utp_ch_1, &handle)
+                UdpSocket::rendezvous_connect(utp_ch_1, &handle, &p2p)
                     .map_err(UtpRendezvousConnectError::Rendezvous)
                     .and_then(move |(udp_socket, addr)| {
                         let (utp_socket, _utp_listener) = {
