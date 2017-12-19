@@ -70,6 +70,7 @@ impl<UID: Uid> Service<UID> {
         let p2p = P2p::default();
         let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
         p2p.set_force_use_local_port(force_use_local_port);
+        set_rendezvous_servers(&p2p, &config);
 
         let acceptor = Acceptor::new(&handle, our_uid, config.clone(), p2p.clone());
         future::ok(Service {
@@ -211,5 +212,56 @@ impl<UID: Uid> Service<UID> {
     /// Get the tokio `Handle` that this service is using.
     pub fn handle(&self) -> &Handle {
         &self.handle
+    }
+}
+
+fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
+    let stun_servers = &config.read().hard_coded_contacts;
+    for addr in stun_servers {
+        match *addr {
+            PaAddr::Tcp(ref addr) => p2p.add_tcp_traversal_server(addr),
+            PaAddr::Utp(ref addr) => p2p.add_udp_traversal_server(addr),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod set_rendezvous_servers {
+        use super::*;
+
+        #[test]
+        fn it_sets_hard_coded_tcp_contacts_as_rendezvous_servers() {
+            let config = unwrap!(ConfigFile::new_temporary());
+            unwrap!(config.write()).hard_coded_contacts = vec![
+                PaAddr::Tcp(addr!("1.2.3.4:4000")),
+                PaAddr::Tcp(addr!("1.2.3.5:5000")),
+            ];
+            let p2p = P2p::default();
+
+            set_rendezvous_servers(&p2p, &config);
+
+            let servers = p2p.tcp_traversal_servers().snapshot();
+            assert!(servers.contains(&addr!("1.2.3.4:4000")));
+            assert!(servers.contains(&addr!("1.2.3.5:5000")));
+        }
+
+        #[test]
+        fn it_sets_hard_coded_utp_contacts_as_rendezvous_servers() {
+            let config = unwrap!(ConfigFile::new_temporary());
+            unwrap!(config.write()).hard_coded_contacts = vec![
+                PaAddr::Utp(addr!("1.2.3.4:4000")),
+                PaAddr::Utp(addr!("1.2.3.5:5000")),
+            ];
+            let p2p = P2p::default();
+
+            set_rendezvous_servers(&p2p, &config);
+
+            let servers = p2p.udp_traversal_servers().snapshot();
+            assert!(servers.contains(&addr!("1.2.3.4:4000")));
+            assert!(servers.contains(&addr!("1.2.3.5:5000")));
+        }
     }
 }
