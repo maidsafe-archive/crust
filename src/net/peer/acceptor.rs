@@ -19,6 +19,7 @@ use futures::sync::mpsc::UnboundedReceiver;
 use net::listener::{Listener, Listeners};
 use net::peer::BootstrapAcceptor;
 use net::peer::connect::Demux;
+use p2p::P2p;
 
 use priv_prelude::*;
 
@@ -37,8 +38,8 @@ pub struct Acceptor<UID: Uid> {
 
 impl<UID: Uid> Acceptor<UID> {
     /// Create a new acceptor.
-    pub fn new(handle: &Handle, our_uid: UID, config: ConfigFile) -> Acceptor<UID> {
-        let (listeners, socket_incoming) = Listeners::new(handle);
+    pub fn new(handle: &Handle, our_uid: UID, config: ConfigFile, p2p: P2p) -> Acceptor<UID> {
+        let (listeners, socket_incoming) = Listeners::new(handle, p2p);
         let demux = Demux::new(handle, socket_incoming);
         let handle = handle.clone();
         Acceptor {

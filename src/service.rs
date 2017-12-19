@@ -19,7 +19,7 @@
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
-use p2p;
+use p2p::P2p;
 use priv_prelude::*;
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
@@ -43,6 +43,7 @@ pub struct Service<UID: Uid> {
     config: ConfigFile,
     our_uid: UID,
     acceptor: Acceptor<UID>,
+    p2p: P2p,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -66,15 +67,17 @@ impl<UID: Uid> Service<UID> {
     ) -> BoxFuture<Service<UID>, CrustError> {
         let handle = handle.clone();
 
+        let p2p = P2p::default();
         let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
-        p2p::set_force_use_local_port(force_use_local_port);
+        p2p.set_force_use_local_port(force_use_local_port);
 
-        let acceptor = Acceptor::new(&handle, our_uid, config.clone());
+        let acceptor = Acceptor::new(&handle, our_uid, config.clone(), p2p.clone());
         future::ok(Service {
             handle,
             config,
             our_uid,
             acceptor,
+            p2p,
         }).into_boxed()
     }
 
@@ -151,7 +154,7 @@ impl<UID: Uid> Service<UID> {
         let (direct_addrs, _) = self.acceptor.addresses();
 
         let (ch1, ch2) = bi_channel::unbounded();
-        let conn_rx = net::peer::start_rendezvous_connect(&self.handle, ch2);
+        let conn_rx = net::peer::start_rendezvous_connect(&self.handle, ch2, &self.p2p);
 
         ch1.into_future()
             .and_then(move |(conn_info_opt, chann)| {

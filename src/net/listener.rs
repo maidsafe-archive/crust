@@ -17,6 +17,7 @@
 
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use p2p::P2p;
 
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
@@ -32,6 +33,7 @@ pub struct Listeners {
     handle: Handle,
     listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: Arc<Mutex<ObservableAddresses>>,
+    p2p: P2p,
 }
 
 struct ObservableAddresses {
@@ -71,13 +73,14 @@ pub struct SocketIncoming {
 
 impl Listeners {
     /// Create an (empty) set of listeners and a handle to its incoming stream of connections.
-    pub fn new(handle: &Handle) -> (Listeners, SocketIncoming) {
+    pub fn new(handle: &Handle, p2p: P2p) -> (Listeners, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
         let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
         let listeners = Listeners {
             handle: handle.clone(),
             listeners_tx: tx,
             addresses: Arc::clone(&addresses),
+            p2p,
         };
         let incoming = SocketIncoming {
             listeners_rx: rx,
@@ -104,7 +107,7 @@ impl Listeners {
         let addresses = Arc::clone(&self.addresses);
         let listen_addr = *listen_addr;
 
-        PaListener::bind_public(&listen_addr, &handle)
+        PaListener::bind_public(&listen_addr, &handle, &self.p2p)
             .map(|(listener, public_addr)| (listener, Some(public_addr)))
             .or_else(move |_| {
                 PaListener::bind_reusable(&listen_addr, &handle).map(|listener| (listener, None))
@@ -242,7 +245,7 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
 
-        let (listeners, socket_incoming) = Listeners::new(&handle);
+        let (listeners, socket_incoming) = Listeners::new(&handle, P2p::default());
 
         let future = {
             listeners
@@ -336,7 +339,7 @@ mod test {
         let handle = core.handle();
         let handle0 = handle.clone();
 
-        let (listeners, socket_incoming) = Listeners::new(&handle);
+        let (listeners, socket_incoming) = Listeners::new(&handle, P2p::default());
 
         let future = {
             listeners
