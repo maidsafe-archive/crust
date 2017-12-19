@@ -355,6 +355,7 @@ fn bootstrap_with_disable_external_reachability() {
     let config0 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config0.write()).dev = Some(DevConfigSettings {
         disable_external_reachability_requirement: true,
+        disable_tcp: false,
     });
     unwrap!(config0.write()).listen_addresses = vec![PaAddr::Tcp(addr!("0.0.0.0:0"))];
     let uid0: UniqueId = rand::random();

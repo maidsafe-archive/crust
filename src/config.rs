@@ -233,7 +233,7 @@ struct ConfigWrapper {
 impl ConfigWrapper {
     /// Open the file and turn it into a `ConfigWrapper`. The returned `PathBuf` is full path to
     /// the file.
-    pub fn open(file_name: PathBuf) -> Result<(ConfigWrapper, PathBuf), CrustError> {
+    fn open(file_name: PathBuf) -> Result<(ConfigWrapper, PathBuf), CrustError> {
         let (config, path) = ConfigSettings::open(&file_name)?;
         Ok((
             ConfigWrapper {
@@ -245,7 +245,7 @@ impl ConfigWrapper {
         ))
     }
 
-    pub fn reload(&mut self) -> Result<(), CrustError> {
+    fn reload(&mut self) -> Result<(), CrustError> {
         let file_handler = FileHandler::new(&self.file_name, false)?;
         let new_config = file_handler.read_file()?;
         let modified = self.cfg != new_config;
@@ -299,6 +299,8 @@ pub struct ConfigSettings {
 pub struct DevConfigSettings {
     /// If `true`, then the mandatory external reachability test is disabled.
     pub disable_external_reachability_requirement: bool,
+    /// If `true` then TCP is disabled
+    pub disable_tcp: bool,
 }
 
 impl Default for ConfigSettings {
@@ -319,7 +321,7 @@ impl Default for ConfigSettings {
 
 impl ConfigSettings {
     /// Open and deserialize the file. The returned `PathBuf` is full path to the file.
-    pub fn open(file_name: &Path) -> Result<(ConfigSettings, PathBuf), CrustError> {
+    fn open(file_name: &Path) -> Result<(ConfigSettings, PathBuf), CrustError> {
         let file_handler = FileHandler::new(file_name, false)?;
         let cfg = file_handler.read_file()?;
         let path = file_handler.path().to_owned();

@@ -55,11 +55,12 @@ extern crate crust;
 
 
 use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
+use crust::config::DevConfigSettings;
 use futures::Stream;
 
 use futures::future::empty;
 use rand::Rng;
-use std::{fmt, io};
+use std::{fmt, io, env};
 use std::path::PathBuf;
 use tokio_core::reactor::Core;
 
@@ -78,6 +79,14 @@ impl fmt::Display for PeerId {
 }
 
 fn main() {
+    let disable_tcp = match env::args().nth(1) {
+        Some(ref s) => match &**s {
+            "--disable-tcp" => true,
+            _ => panic!("unrecognized command line option"),
+        },
+        None => false,
+    };
+
     let mut event_loop = unwrap!(Core::new());
     let service_id = rand::thread_rng().gen::<PeerId>();
     println!("Service id: {}", service_id);
@@ -87,6 +96,11 @@ fn main() {
         ConfigFile::open_path(PathBuf::from("sample.config")),
         "Failed to read crust config file: sample.config",
     );
+    unwrap!(config.write()).dev = Some(DevConfigSettings {
+        disable_tcp,
+        .. Default::default()
+    });
+
     let make_service = Service::with_config(&event_loop.handle(), config, service_id);
     let service =
         unwrap!(
