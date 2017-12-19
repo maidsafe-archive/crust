@@ -104,7 +104,6 @@ impl Listeners {
         let addresses = Arc::clone(&self.addresses);
         let listen_addr = *listen_addr;
 
-        // TODO(povilas): return future with our own error type instead of io::Error?
         PaListener::bind_public(&listen_addr, &handle)
             .map(|(listener, public_addr)| (listener, Some(public_addr)))
             .or_else(move |_| {
