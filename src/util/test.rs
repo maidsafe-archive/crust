@@ -17,9 +17,11 @@
 
 //! Utilities for use in tests. This module is only available when running with cfg(test)
 
+use config_file_handler::current_bin_dir;
 use priv_prelude::*;
-
 use rand::{self, Rng};
+use std::fs::File;
+use std::io::Write;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
 pub struct UniqueId(pub [u8; 20]);
@@ -44,4 +46,21 @@ pub fn random_vec(size: usize) -> Vec<u8> {
     unsafe { ret.set_len(size) };
     rand::thread_rng().fill_bytes(&mut ret[..]);
     ret
+}
+
+/// # Arguments
+///
+/// * `content` - json formatted bootstrap cache to be written to file.
+///
+/// # Returns
+///
+/// file name where content was written to.
+pub fn write_bootstrap_cache_to_tmp_file(content: &[u8]) -> String {
+    let mut path = unwrap!(current_bin_dir());
+    let fname = format!("{:08x}.bootstrap.cache", rand::random::<u64>());
+    path.push(fname.clone());
+
+    let mut f = unwrap!(File::create(path));
+    unwrap!(f.write_all(content));
+    fname
 }
