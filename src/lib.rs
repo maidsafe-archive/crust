@@ -51,6 +51,7 @@ extern crate rand;
 #[cfg(test)]
 #[macro_use]
 extern crate rand_derive;
+#[cfg(test)]
 extern crate env_logger;
 extern crate tiny_keccak;
 extern crate notify;
