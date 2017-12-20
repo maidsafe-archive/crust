@@ -370,3 +370,50 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use priv_prelude::*;
+    use config::DevConfigSettings;
+    use future_utils::bi_channel;
+    use tokio_core::reactor::Core;
+
+    #[test]
+    fn direct_connect_tcp_disabled() {
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).dev = Some(DevConfigSettings {
+            disable_tcp: true,
+            .. Default::default()
+        });
+
+        let (ch0, ch1) = bi_channel::unbounded();
+
+        let p2p = P2p::default();
+        let mut core = unwrap!(Core::new());
+        let handle = core.handle();
+        let r = core.run({
+            let connect0 = PaStream::rendezvous_connect(
+                ch0,
+                &handle,
+                &config,
+                &p2p,
+            );
+            let connect1 = PaStream::rendezvous_connect(
+                ch1,
+                &handle,
+                &config,
+                &p2p,
+            );
+            connect0.join(connect1)
+            .map_err(|e| panic!("connect failed: {}", e))
+            .map(|(stream0, stream1)| {
+                let addr0 = unwrap!(stream0.peer_addr());
+                let addr1 = unwrap!(stream1.peer_addr());
+                assert!(!addr0.is_tcp());
+                assert!(!addr1.is_tcp());
+            })
+        });
+        unwrap!(r)
+    }
+}
+

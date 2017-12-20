@@ -32,7 +32,7 @@ pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandsha
 pub use net::{PaAddr, PaIncoming, PaListener, PaStream};
 pub use net::Uid;
 pub use net2::TcpBuilder;
-pub use p2p::{SocketAddrExt, TcpListenerExt, TcpStreamExt, UdpSocketExt};
+pub use p2p::{P2p, SocketAddrExt, TcpListenerExt, TcpStreamExt, UdpSocketExt};
 pub use p2p::{TcpRendezvousConnectError, UdpRendezvousConnectError};
 pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
