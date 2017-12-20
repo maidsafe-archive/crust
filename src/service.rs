@@ -65,12 +65,8 @@ impl<UID: Uid> Service<UID> {
         config: ConfigFile,
         our_uid: UID,
     ) -> BoxFuture<Service<UID>, CrustError> {
+        let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
-
-        let p2p = P2p::default();
-        let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
-        p2p.set_force_use_local_port(force_use_local_port);
-
         let acceptor = Acceptor::new(&handle, our_uid, config.clone(), p2p.clone());
         future::ok(Service {
             handle,
@@ -100,6 +96,7 @@ impl<UID: Uid> Service<UID> {
         use_service_discovery: bool,
         crust_user: CrustUser,
     ) -> BoxFuture<Peer<UID>, BootstrapError> {
+        remove_rendezvous_servers(&self.p2p, &blacklist);
         let (current_addrs, _) = self.acceptor.addresses();
         let ext_reachability = match crust_user {
             CrustUser::Node => {
@@ -211,5 +208,97 @@ impl<UID: Uid> Service<UID> {
     /// Get the tokio `Handle` that this service is using.
     pub fn handle(&self) -> &Handle {
         &self.handle
+    }
+}
+
+fn configure_nat_traversal(config: &ConfigFile) -> P2p {
+    let p2p = P2p::default();
+    let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
+    p2p.set_force_use_local_port(force_use_local_port);
+    set_rendezvous_servers(&p2p, config);
+    p2p
+}
+
+fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
+    let stun_servers = &config.read().hard_coded_contacts;
+    for addr in stun_servers {
+        match *addr {
+            PaAddr::Tcp(ref addr) => p2p.add_tcp_traversal_server(addr),
+            PaAddr::Utp(ref addr) => p2p.add_udp_traversal_server(addr),
+        }
+    }
+}
+
+fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
+    for addr in addrs {
+        match *addr {
+            PaAddr::Tcp(ref addr) => p2p.remove_tcp_traversal_server(addr),
+            PaAddr::Utp(ref addr) => p2p.remove_udp_traversal_server(addr),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod set_rendezvous_servers {
+        use super::*;
+
+        #[test]
+        fn it_sets_hard_coded_tcp_contacts_as_rendezvous_servers() {
+            let config = unwrap!(ConfigFile::new_temporary());
+            unwrap!(config.write()).hard_coded_contacts = vec![
+                PaAddr::Tcp(addr!("1.2.3.4:4000")),
+                PaAddr::Tcp(addr!("1.2.3.5:5000")),
+            ];
+            let p2p = P2p::default();
+
+            set_rendezvous_servers(&p2p, &config);
+
+            let servers = p2p.tcp_traversal_servers().snapshot();
+            assert!(servers.contains(&addr!("1.2.3.4:4000")));
+            assert!(servers.contains(&addr!("1.2.3.5:5000")));
+        }
+
+        #[test]
+        fn it_sets_hard_coded_utp_contacts_as_rendezvous_servers() {
+            let config = unwrap!(ConfigFile::new_temporary());
+            unwrap!(config.write()).hard_coded_contacts = vec![
+                PaAddr::Utp(addr!("1.2.3.4:4000")),
+                PaAddr::Utp(addr!("1.2.3.5:5000")),
+            ];
+            let p2p = P2p::default();
+
+            set_rendezvous_servers(&p2p, &config);
+
+            let servers = p2p.udp_traversal_servers().snapshot();
+            assert!(servers.contains(&addr!("1.2.3.4:4000")));
+            assert!(servers.contains(&addr!("1.2.3.5:5000")));
+        }
+    }
+
+    mod remove_rendezvous_servers {
+        use super::*;
+
+        #[test]
+        fn it_removes_specified_rendezvous_servers_from_global_list() {
+            let p2p = P2p::default();
+            p2p.add_tcp_traversal_server(&addr!("1.2.3.4:4000"));
+            p2p.add_udp_traversal_server(&addr!("1.2.3.5:5000"));
+
+            let rm_servers: HashSet<PaAddr> = vec![
+                PaAddr::Tcp(addr!("1.2.3.4:4000")),
+                PaAddr::Utp(addr!("1.2.3.5:5000")),
+            ].iter()
+                .cloned()
+                .collect();
+            remove_rendezvous_servers(&p2p, &rm_servers);
+
+            let servers = p2p.tcp_traversal_servers().snapshot();
+            assert!(servers.is_empty());
+            let servers = p2p.udp_traversal_servers().snapshot();
+            assert!(servers.is_empty());
+        }
     }
 }

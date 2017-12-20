@@ -372,7 +372,7 @@ pub fn start_rendezvous_connect(
     let (conn_tx, conn_rx) = oneshot::channel();
 
     let connect = {
-        PaStream::rendezvous_connect(rendezvous_relay, handle, &p2p)
+        PaStream::rendezvous_connect(rendezvous_relay, handle, p2p)
             .then(move |result| conn_tx.send(result))
             .or_else(|_send_error| Ok(()))
     };
