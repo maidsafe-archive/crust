@@ -31,7 +31,6 @@ extern crate maidsafe_utilities;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate config_file_handler;
 #[macro_use]
 extern crate quick_error;
@@ -44,7 +43,6 @@ extern crate future_utils;
 extern crate net2;
 #[macro_use]
 extern crate net_literals;
-extern crate get_if_addrs;
 #[macro_use]
 extern crate log;
 extern crate void;
@@ -56,7 +54,6 @@ extern crate rand_derive;
 extern crate env_logger;
 extern crate tiny_keccak;
 extern crate notify;
-extern crate igd;
 #[cfg(test)]
 #[macro_use]
 extern crate hamcrest;
