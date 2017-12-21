@@ -87,7 +87,7 @@ impl fmt::Display for PaAddr {
     }
 }
 
-impl serde::Serialize for PaAddr {
+impl Serialize for PaAddr {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
