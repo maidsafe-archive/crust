@@ -19,11 +19,12 @@ use bincode::{self, Infinite};
 use future_utils::bi_channel;
 use futures::future::Either;
 use futures::sync::mpsc::SendError;
+use net::protocol_agnostic::CRUST_TCP_INIT;
 use p2p::P2p;
 use priv_prelude::*;
 use std::error::Error;
 use std::io::{Read, Write};
-use tokio_io::{AsyncRead, AsyncWrite};
+use tokio_io::{self, AsyncRead, AsyncWrite};
 use void;
 
 #[derive(Debug)]
@@ -51,7 +52,8 @@ impl PaStream {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 TcpStream::connect(tcp_addr, handle)
-                    .map(PaStream::Tcp)
+                    .and_then(|stream| tokio_io::io::write_all(stream, CRUST_TCP_INIT))
+                    .map(|(stream, _buf)| PaStream::Tcp(stream))
                     .into_boxed()
             }
             PaAddr::Utp(utp_addr) => {

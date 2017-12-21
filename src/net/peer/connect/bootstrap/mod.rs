@@ -89,13 +89,24 @@ pub fn bootstrap<UID: Uid>(
         };
 
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
+        let mut i = 0;
         Ok(
             stream::iter_ok(peers)
                 .chain(sd_peers)
                 .filter(move |addr| !blacklist.contains(addr))
                 .map(move |addr| {
-                    try_peer(&handle, &addr, our_uid, name_hash, ext_reachability.clone())
-                        .map_err(move |e| (addr, e))
+                    // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to
+                    // the same peer multiple times. This can cause the different peers using the
+                    // compat API to choose different connections. We also shouldn't bootstrap to
+                    // all addresses simultaneously.
+                    let delay = Timeout::new(Duration::from_millis(200) * i, &handle);
+                    i += 1;
+                    let handle = handle.clone();
+                    let ext_reachability = ext_reachability.clone();
+                    delay.infallible().and_then(move |()| {
+                        try_peer(&handle, &addr, our_uid, name_hash, ext_reachability.clone())
+                            .map_err(move |e| (addr, e))
+                    })
                 })
                 .buffer_unordered(64)
                 .until(timeout.infallible())

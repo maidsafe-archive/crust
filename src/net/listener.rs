@@ -17,6 +17,7 @@
 
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use net::protocol_agnostic::AcceptError;
 use p2p::P2p;
 
 use priv_prelude::*;
@@ -136,9 +137,9 @@ impl Listeners {
 
 impl Stream for SocketIncoming {
     type Item = (PaStream, PaAddr);
-    type Error = io::Error;
+    type Error = AcceptError;
 
-    fn poll(&mut self) -> io::Result<Async<Option<Self::Item>>> {
+    fn poll(&mut self) -> Result<Async<Option<Self::Item>>, AcceptError> {
         while let Async::Ready(incoming_opt) = unwrap!(self.listeners_rx.poll()) {
             let (drop_rx, incoming, addrs) = match incoming_opt {
                 Some(x) => x,
@@ -321,6 +322,7 @@ mod test {
             })
             .join({
                 socket_incoming
+                .map_err(|e| panic!("incoming error: {}", e))
                 .for_each(|_socket| -> io::Result<()> {
                     panic!("unexpected connection");
                 })

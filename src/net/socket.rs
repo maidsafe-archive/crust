@@ -344,7 +344,7 @@ mod test {
                     listener
                         .incoming()
                         .into_future()
-                        .map_err(|(err, _)| SocketError::from(err))
+                        .map_err(|(err, _)| panic!("incoming error: {}", err))
                         .and_then(move |(stream_opt, _)| {
                             let (stream, addr) = unwrap!(stream_opt);
                             let socket = Socket::<Vec<u8>>::wrap_pa(&handle1, stream, addr);
