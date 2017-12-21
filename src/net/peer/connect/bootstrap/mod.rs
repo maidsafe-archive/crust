@@ -115,12 +115,11 @@ pub fn bootstrap<UID: Uid>(
 
 /// Collects bootstrap peers from cache and config.
 fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PaAddr>, BootstrapError> {
+    let config = config.read();
+    let mut cache = Cache::new(config.bootstrap_cache_name.as_ref().map(|p| p.as_ref()))?;
     let mut peers = Vec::new();
-    let mut cache = Cache::new(config.read().bootstrap_cache_name.as_ref().map(
-        |p| p.as_ref(),
-    ))?;
     peers.extend(cache.read_file());
-    peers.extend(config.read().hard_coded_contacts.iter().cloned());
+    peers.extend(config.hard_coded_contacts.iter().cloned());
     Ok(peers)
 }
 
