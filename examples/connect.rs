@@ -50,20 +50,42 @@ extern crate serde_json;
 #[macro_use]
 extern crate rand_derive;
 extern crate rand;
+extern crate docopt;
+extern crate void;
+extern crate future_utils;
+extern crate env_logger;
 
 extern crate crust;
 
-
-use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
-use futures::Stream;
-
-use futures::future::empty;
-use rand::Rng;
 use std::{fmt, io};
-use std::path::PathBuf;
+use docopt::Docopt;
 use tokio_core::reactor::Core;
+use futures::future::{Loop, Either};
+use futures::{Future, Stream, Sink, future};
+use future_utils::{BoxFuture, thread_future, FutureExt};
+use void::Void;
 
-// Some peer ID boilerplate.
+use crust::{ConfigFile, Uid, Service, PaAddr, PubConnectionInfo};
+use crust::config::DevConfigSettings;
+
+const USAGE: &str = "
+Usage:
+    connect [--rendezvous-peer=<addr>] [--disable-tcp] [--disable-igd]
+    connect (-h | --help)
+
+Options:
+    -h --help                   Show this screen.
+    --rendezvous-peer=<addr>    Address of peer to use as a rendezvous server.
+    --disable-tcp               Connect using uTP only.
+    --disable-igd               Disable IGD/UPnP.
+";
+
+#[derive(Debug, Deserialize)]
+struct Args {
+    flag_rendezvous_peer: Option<PaAddr>,
+    flag_disable_tcp: bool,
+    flag_disable_igd: bool,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
 struct PeerId(u64);
@@ -78,60 +100,117 @@ impl fmt::Display for PeerId {
 }
 
 fn main() {
-    let mut event_loop = unwrap!(Core::new());
-    let service_id = rand::thread_rng().gen::<PeerId>();
-    println!("Service id: {}", service_id);
+    unwrap!(env_logger::init());
 
-    let config =
-        unwrap!(
-        ConfigFile::open_path(PathBuf::from("sample.config")),
-        "Failed to read crust config file: sample.config",
-    );
-    let make_service = Service::with_config(&event_loop.handle(), config, service_id);
-    let service =
-        unwrap!(
-        event_loop.run(make_service),
-        "Failed to create Service object",
-    );
+    let args: Args = {
+        Docopt::new(USAGE)
+        .and_then(|d| d.deserialize())
+        .unwrap_or_else(|e| e.exit())
+    };
 
-    let listeners =
-        unwrap!(
-        event_loop.run(service.start_listening().collect()),
-        "Failed to start listening to peers",
-    );
-    for listener in &listeners {
-        println!("Listening on {}", listener.addr());
+    let config = unwrap!(ConfigFile::new_temporary());
+    if let Some(rendezvous_addr) = args.flag_rendezvous_peer {
+        unwrap!(config.write()).hard_coded_contacts = vec![rendezvous_addr];
+    }
+    if args.flag_disable_tcp {
+        unwrap!(config.write()).dev = Some(DevConfigSettings {
+            disable_tcp: true,
+            .. Default::default()
+        });
     }
 
-    let our_conn_info =
-        unwrap!(
-        event_loop.run(service.prepare_connection_info()),
-        "Failed to prepare connection info",
-    );
-    let pub_conn_info = our_conn_info.to_pub_connection_info();
-    println!(
-        "Public connection information:\n{}\n",
-        unwrap!(serde_json::to_string(&pub_conn_info))
-    );
+    let mut core = unwrap!(Core::new());
+    let handle = core.handle();
 
-    println!("Enter remote peer public connection info:");
-    let their_info = readln();
-    let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&their_info));
+    let our_uid = rand::random();
 
-    let peer =
-        unwrap!(
-        event_loop.run(service.connect(our_conn_info, their_info)),
-        "Failed to connect to given peer",
-    );
-    println!("Connected to peer: {}", peer.uid());
+    let future = {
+        Service::with_config(&handle, config, our_uid)
+        .map_err(|e| panic!("error starting service: {}", e))
+        .and_then(|service| {
+            if args.flag_disable_igd {
+                service.p2p_config().disable_igd();
+            }
 
-    // Run event loop forever.
-    let res = event_loop.run(empty::<(), ()>());
-    unwrap!(res);
+            service
+            .prepare_connection_info()
+            .map_err(|e| panic!("error preparing connection info: {}", e))
+            .and_then(move |our_priv_info| {
+                let our_pub_info = our_priv_info.to_pub_connection_info();
+                let as_str = unwrap!(serde_json::to_string(&our_pub_info));
+                println!("Our connection info:");
+                println!("{}", as_str);
+                println!("");
+                println!("Copy this info and share it with your connecting partner. Then paste \
+                          their info below.");
+                read_line()
+                .and_then(move |line| {
+                    let their_pub_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&line));
+
+                    service
+                    .connect(our_priv_info, their_pub_info)
+                    .map_err(|e| panic!("error connecting to peer: {}", e))
+                    .and_then(move |peer| {
+                        let (peer_sink, peer_stream) = peer.split();
+
+                        println!("You are now connected! say hello :)");
+                        let writer = {
+                            future::loop_fn(peer_sink, |peer_sink| {
+                                read_line()
+                                .and_then(|line| {
+                                    let line = line.into_bytes();
+                                    peer_sink
+                                    .send((0, line))
+                                    .map(|peer_sink| Loop::Continue(peer_sink))
+                                    .map_err(|e| panic!("error sending message to peer: {}", e))
+                                })
+                            })
+                        };
+                        let reader = {
+                            peer_stream
+                            .map_err(|e| panic!("error receiving message from peer: {}", e))
+                            .for_each(|line| {
+                                let line = match String::from_utf8(line) {
+                                    Ok(line) => line,
+                                    Err(..) => String::from("<peer sent invalid utf8>"),
+                                };
+                                println!("{}", line);
+                                Ok(())
+                            })
+                            .map(|()| {
+                                println!("peer disconnected");
+                            })
+                        };
+
+                        writer
+                        .select2(reader)
+                        .map(|either| match either {
+                            Either::A((v, _next)) => void::unreachable(v),
+                            Either::B(((), _next)) => drop(service),
+                        })
+                        .map_err(|either| match either {
+                            Either::A((v, _next)) => v,
+                            Either::B((v, _next)) => v,
+                        })
+                    })
+                })
+            })
+        })
+    };
+
+    match core.run(future) {
+        Ok(()) => (),
+        Err(v) => void::unreachable(v),
+    }
 }
 
-fn readln() -> String {
-    let mut ln = String::new();
-    unwrap!(io::stdin().read_line(&mut ln));
-    String::from(ln.trim())
+fn read_line() -> BoxFuture<String, Void> {
+    thread_future(|| {
+        let stdin = io::stdin();
+        let mut line = String::new();
+        unwrap!(stdin.read_line(&mut line));
+        line
+    })
+    .into_boxed()
 }
+

@@ -213,6 +213,11 @@ impl<UID: Uid> Service<UID> {
     pub fn handle(&self) -> &Handle {
         &self.handle
     }
+
+    /// Get the handle to the `p2p` library config used by this service.
+    pub fn p2p_config(&self) -> &P2p {
+        &self.p2p
+    }
 }
 
 fn configure_nat_traversal(config: &ConfigFile) -> P2p {
