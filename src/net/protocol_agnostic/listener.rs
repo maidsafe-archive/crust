@@ -15,20 +15,34 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use p2p::{self, P2p};
+use futures::stream::FuturesUnordered;
+use net::protocol_agnostic::CRUST_TCP_INIT;
+use p2p::{self, ECHO_REQ, P2p, tcp_respond_with_addr, udp_respond_with_addr};
 use priv_prelude::*;
 use tokio_core;
+use tokio_io;
 use tokio_utp;
 
 #[derive(Debug)]
 pub enum PaListener {
     Tcp(TcpListener),
-    Utp(UtpListener),
+    Utp(UtpSocket, UtpListener),
 }
 
-pub enum PaIncoming {
-    Tcp(tokio_core::net::Incoming),
-    Utp(tokio_utp::Incoming),
+pub struct PaIncoming {
+    inner: PaIncomingInner,
+}
+
+enum PaIncomingInner {
+    Tcp {
+        incoming: tokio_core::net::Incoming,
+        processing: FuturesUnordered<BoxFuture<Option<(TcpStream, SocketAddr)>, AcceptError>>,
+    },
+    Utp {
+        incoming: tokio_utp::Incoming,
+        raw_rx: tokio_utp::RawReceiver,
+        processing: FuturesUnordered<BoxFuture<(), AcceptError>>,
+    },
 }
 
 quick_error! {
@@ -52,6 +66,43 @@ quick_error! {
     }
 }
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum AcceptError {
+        TcpAccept(e: io::Error) {
+            description("error accepting tcp connection")
+            display("error accepting tcp connection: {}", e)
+            cause(e)
+        }
+        UtpAccept(e: io::Error) {
+            description("error accepting utp connection")
+            display("error accepting utp connection: {}", e)
+            cause(e)
+        }
+        InvalidTcpHeader {
+            description("invalid header on incoming tcp connection")
+        }
+        InvalidUdpHeader {
+            description("invalid header on incoming udp connection")
+        }
+        TcpReadHeader(e: io::Error) {
+            description("error reading header on incoming tcp connection")
+            display("error reading header on incoming tcp connection: {}", e)
+            cause(e)
+        }
+        TcpRespond(e: io::Error) {
+            description("error responding to incoming tcp request")
+            display("error responding to incoming tcp request: {}", e)
+            cause(e)
+        }
+        UdpRespond(e: io::Error) {
+            description("error responding to incoming udp request")
+            display("error responding to incoming udp request: {}", e)
+            cause(e)
+        }
+    }
+}
+
 impl PaListener {
     #[cfg(test)]
     pub fn bind(addr: &PaAddr, handle: &Handle) -> io::Result<PaListener> {
@@ -63,8 +114,8 @@ impl PaListener {
             }
             PaAddr::Utp(ref utp_addr) => {
                 let socket = UdpSocket::bind(utp_addr, handle)?;
-                let (_, listener) = UtpSocket::from_socket(socket, handle)?;
-                let listener = PaListener::Utp(listener);
+                let (socket, listener) = UtpSocket::from_socket(socket, handle)?;
+                let listener = PaListener::Utp(socket, listener);
                 Ok(listener)
             }
         }
@@ -91,12 +142,12 @@ impl PaListener {
                 UdpSocket::bind_public(&utp_addr, &handle, p2p)
                     .map_err(BindPublicError::BindUdp)
                     .and_then(move |(socket, public_addr)| {
-                        let (_, listener) = {
+                        let (socket, listener) = {
                             UtpSocket::from_socket(socket, &handle).map_err(
                                 BindPublicError::MakeUtpSocket,
                             )?
                         };
-                        let listener = PaListener::Utp(listener);
+                        let listener = PaListener::Utp(socket, listener);
                         let public_addr = PaAddr::Utp(public_addr);
                         Ok((listener, public_addr))
                     })
@@ -114,8 +165,8 @@ impl PaListener {
             }
             PaAddr::Utp(ref utp_addr) => {
                 let socket = UdpSocket::bind_reusable(utp_addr, handle)?;
-                let (_, listener) = UtpSocket::from_socket(socket, handle)?;
-                let listener = PaListener::Utp(listener);
+                let (socket, listener) = UtpSocket::from_socket(socket, handle)?;
+                let listener = PaListener::Utp(socket, listener);
                 Ok(listener)
             }
         }
@@ -128,7 +179,7 @@ impl PaListener {
                 let addrs = addrs.into_iter().map(PaAddr::Tcp).collect();
                 Ok(addrs)
             }
-            PaListener::Utp(ref utp_listener) => {
+            PaListener::Utp(_, ref utp_listener) => {
                 let addr = utp_listener.local_addr()?;
                 let addrs = addr.expand_local_unspecified()?;
                 let addrs = addrs.into_iter().map(PaAddr::Utp).collect();
@@ -140,46 +191,151 @@ impl PaListener {
     pub fn local_addr(&self) -> io::Result<PaAddr> {
         match *self {
             PaListener::Tcp(ref tcp_listener) => Ok(PaAddr::Tcp(tcp_listener.local_addr()?)),
-            PaListener::Utp(ref utp_listener) => Ok(PaAddr::Utp(utp_listener.local_addr()?)),
+            PaListener::Utp(_, ref utp_listener) => Ok(PaAddr::Utp(utp_listener.local_addr()?)),
         }
     }
 
     pub fn incoming(self) -> PaIncoming {
         match self {
-            PaListener::Tcp(tcp_listener) => PaIncoming::Tcp(tcp_listener.incoming()),
-            PaListener::Utp(utp_listener) => PaIncoming::Utp(utp_listener.incoming()),
+            PaListener::Tcp(tcp_listener) => {
+                let incoming = tcp_listener.incoming();
+                let processing = FuturesUnordered::new();
+                PaIncoming {
+                    inner: PaIncomingInner::Tcp {
+                        incoming,
+                        processing,
+                    },
+                }
+            }
+            PaListener::Utp(socket, utp_listener) => {
+                let incoming = utp_listener.incoming();
+                let raw_rx = socket.raw_receiver();
+                let processing = FuturesUnordered::new();
+                PaIncoming {
+                    inner: PaIncomingInner::Utp {
+                        incoming,
+                        raw_rx,
+                        processing,
+                    },
+                }
+            }
         }
     }
 }
 
 impl Stream for PaIncoming {
     type Item = (PaStream, PaAddr);
-    type Error = io::Error;
+    type Error = AcceptError;
 
-    fn poll(&mut self) -> io::Result<Async<Option<(PaStream, PaAddr)>>> {
-        match *self {
-            PaIncoming::Tcp(ref mut incoming) => {
-                match incoming.poll()? {
-                    Async::Ready(Some((stream, addr))) => {
-                        let stream = PaStream::Tcp(stream);
-                        let addr = PaAddr::Tcp(addr);
-                        Ok(Async::Ready(Some((stream, addr))))
-                    }
-                    Async::Ready(None) => Ok(Async::Ready(None)),
-                    Async::NotReady => Ok(Async::NotReady),
-                }
-            }
-            PaIncoming::Utp(ref mut incoming) => {
-                match incoming.poll()? {
-                    Async::Ready(Some(stream)) => {
-                        let addr = PaAddr::Utp(stream.peer_addr());
-                        let stream = PaStream::Utp(stream);
-                        Ok(Async::Ready(Some((stream, addr))))
-                    }
-                    Async::Ready(None) => Ok(Async::Ready(None)),
-                    Async::NotReady => Ok(Async::NotReady),
-                }
-            }
+    fn poll(&mut self) -> Result<Async<Option<(PaStream, PaAddr)>>, AcceptError> {
+        match self.inner {
+            PaIncomingInner::Tcp {
+                ref mut incoming,
+                ref mut processing,
+            } => incoming_tcp(incoming, processing),
+            PaIncomingInner::Utp {
+                ref mut incoming,
+                ref mut raw_rx,
+                ref mut processing,
+            } => incoming_utp(incoming, raw_rx, processing),
         }
+    }
+}
+
+fn incoming_tcp(
+    incoming: &mut tokio_core::net::Incoming,
+    processing: &mut FuturesUnordered<BoxFuture<Option<(TcpStream, SocketAddr)>, AcceptError>>,
+) -> Result<Async<Option<(PaStream, PaAddr)>>, AcceptError> {
+    loop {
+        match incoming.poll().map_err(AcceptError::TcpAccept)? {
+            Async::Ready(Some((stream, addr))) => {
+                processing.push({
+                    let header = [0u8; 8];
+
+                    tokio_io::io::read_exact(stream, header)
+                        .map_err(AcceptError::TcpReadHeader)
+                        .and_then(move |(stream, header)| match header {
+                            ECHO_REQ => {
+                                tcp_respond_with_addr(stream, addr)
+                                    .map(|_stream| None)
+                                    .map_err(AcceptError::TcpRespond)
+                                    .into_boxed()
+                            }
+                            CRUST_TCP_INIT => future::ok(Some((stream, addr))).into_boxed(),
+                            _ => future::err(AcceptError::InvalidTcpHeader).into_boxed(),
+                        })
+                        .into_boxed()
+                });
+            }
+            Async::Ready(None) |
+            Async::NotReady => break,
+        }
+    }
+    loop {
+        match processing.poll()? {
+            Async::Ready(Some(Some((stream, addr)))) => {
+                let stream = PaStream::Tcp(stream);
+                let addr = PaAddr::Tcp(addr);
+                return Ok(Async::Ready(Some((stream, addr))));
+            }
+            Async::Ready(Some(None)) => (),
+            Async::Ready(None) |
+            Async::NotReady => break,
+        }
+    }
+    Ok(Async::NotReady)
+}
+
+fn incoming_utp(
+    incoming: &mut tokio_utp::Incoming,
+    raw_rx: &mut tokio_utp::RawReceiver,
+    processing: &mut FuturesUnordered<BoxFuture<(), AcceptError>>,
+) -> Result<Async<Option<(PaStream, PaAddr)>>, AcceptError> {
+    loop {
+        match raw_rx.poll().void_unwrap() {
+            Async::Ready(Some(raw_channel)) => {
+                processing.push({
+                    raw_channel
+                        .into_future()
+                        .map_err(|(v, _raw_channel)| v)
+                        .infallible()
+                        .and_then(|(bytes, raw_channel)| {
+                            let bytes =
+                                unwrap!(
+                            bytes,
+                            "an incoming raw_channel will always have an initial packet to read",
+                        );
+                            if ECHO_REQ[..] == bytes[..] {
+                                let addr = raw_channel.peer_addr();
+                                udp_respond_with_addr(raw_channel, addr)
+                                    .map_err(AcceptError::UdpRespond)
+                                    .map(|_raw_channel| ())
+                                    .into_boxed()
+                            } else {
+                                future::err(AcceptError::InvalidUdpHeader).into_boxed()
+                            }
+                        })
+                        .into_boxed()
+                });
+            }
+            Async::Ready(None) |
+            Async::NotReady => break,
+        }
+    }
+    loop {
+        match processing.poll()? {
+            Async::Ready(Some(())) => (),
+            Async::Ready(None) |
+            Async::NotReady => break,
+        }
+    }
+    match incoming.poll().map_err(AcceptError::UtpAccept)? {
+        Async::Ready(Some(stream)) => {
+            let addr = PaAddr::Utp(stream.peer_addr());
+            let stream = PaStream::Utp(stream);
+            Ok(Async::Ready(Some((stream, addr))))
+        }
+        Async::Ready(None) => Ok(Async::Ready(None)),
+        Async::NotReady => Ok(Async::NotReady),
     }
 }

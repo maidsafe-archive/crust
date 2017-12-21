@@ -16,10 +16,12 @@
 // relating to use of the SAFE Network Software.
 
 pub use self::addr::PaAddr;
-pub use self::listener::{PaIncoming, PaListener};
+pub use self::listener::{AcceptError, PaIncoming, PaListener};
 pub use self::stream::{PaRendezvousConnectError, PaRendezvousMsg, PaStream,
                        UtpRendezvousConnectError};
 
 mod stream;
 mod listener;
 mod addr;
+
+const CRUST_TCP_INIT: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', b'T', b'C', b'P'];

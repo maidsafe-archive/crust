@@ -19,7 +19,6 @@ use maidsafe_utilities::serialisation::SerialisationError;
 use net::peer;
 use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
                                             HandshakeMessage};
-use net::peer::connect::send_request_header;
 use priv_prelude::*;
 
 quick_error! {
@@ -92,7 +91,6 @@ pub fn try_peer<UID: Uid>(
     let handle1 = handle.clone();
     let addr = *addr;
     PaStream::direct_connect(&addr, handle)
-        .and_then(send_request_header)
         .map(move |stream| Socket::wrap_pa(&handle0, stream, addr))
         .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))

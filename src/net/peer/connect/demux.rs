@@ -19,13 +19,12 @@ use futures::sync::mpsc::{self, UnboundedSender};
 use log::LogLevel;
 
 use net::listener::SocketIncoming;
-use net::peer::connect::{CRUST_REQ_HEADER, connect};
 use net::peer::connect::BootstrapAcceptor;
+use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
-use p2p::{ECHO_REQ, tcp_respond_with_addr};
+use net::protocol_agnostic::AcceptError;
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
-use tokio_io;
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
@@ -90,9 +89,9 @@ impl<UID: Uid> Demux<UID> {
 quick_error! {
     #[derive(Debug)]
     pub enum IncomingError {
-        Io(e: io::Error) {
-            description("io error accepting incoming connection")
-            display("io error accepting incoming connection: {}", e)
+        Io(e: AcceptError) {
+            description("error accepting incoming connection")
+            display("error accepting incoming connection: {}", e)
             cause(e)
         }
         TimedOut {
@@ -122,50 +121,13 @@ fn handle_incoming_connections<UID: Uid>(
     incoming
         .map_err(IncomingError::Io)
         .for_each(move |(stream, addr)| {
-            let handle_cloned = handle.clone();
-            let inner_cloned = Arc::clone(&inner);
-
-            let header = [0u8; 8];
-            tokio_io::io::read_exact(stream, header)
-                .map_err(IncomingError::Io)
-                .and_then(move |(stream, header)| {
-                    handle_message_by_header(&handle_cloned, inner_cloned, stream, addr, header)
-                })
+            let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(&handle, stream, addr);
+            let inner = inner.clone();
+            handle_incoming_socket(&handle, inner, socket)
         })
         .log_error(LogLevel::Error, "Failed to accept incoming connections!")
         .infallible()
         .into_boxed()
-}
-
-/// Dispatch different message handler based on header.
-fn handle_message_by_header<UID: Uid>(
-    handle: &Handle,
-    inner: Arc<DemuxInner<UID>>,
-    stream: PaStream,
-    addr: PaAddr,
-    header: [u8; 8],
-) -> BoxFuture<(), IncomingError> {
-    match header {
-        ECHO_REQ => respond_with_addr(stream, addr),
-        CRUST_REQ_HEADER => {
-            let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(handle, stream, addr);
-            handle_incoming_socket(handle, inner, socket)
-        }
-        _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
-    }
-}
-
-fn respond_with_addr(stream: PaStream, addr: PaAddr) -> BoxFuture<(), IncomingError> {
-    match (stream, addr) {
-        (PaStream::Tcp(stream), PaAddr::Tcp(addr)) => {
-            tcp_respond_with_addr(stream, addr)
-                .map_err(IncomingError::Io)
-                .map(|_stream| ())
-                .into_boxed()
-        }
-        // TODO(povilas): handle UDP requests
-        _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
-    }
 }
 
 /// This methods is called when connection sends valid 8 byte header.
