@@ -43,31 +43,19 @@ impl Cache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use config_file_handler::current_bin_dir;
-    use rand;
-    use std::fs::File;
-    use std::io::Write;
-
-    fn write_json_to_tmp_file(content: &[u8]) -> String {
-        let mut path = unwrap!(current_bin_dir());
-        let fname = format!("{:08x}.bootstrap.cache", rand::random::<u64>());
-        path.push(fname.clone());
-
-        let mut f = unwrap!(File::create(path));
-        unwrap!(f.write_all(content));
-        fname
-    }
 
     mod cache {
         use super::*;
 
         mod read_file {
             use super::*;
+            use util::write_bootstrap_cache_to_tmp_file;
 
             #[test]
             fn it_returns_addresses_read_from_json_formatted_file() {
-                let fname =
-                    write_json_to_tmp_file(b"[\"tcp://1.2.3.4:4000\", \"utp://1.2.3.5:5000\"]");
+                let fname = write_bootstrap_cache_to_tmp_file(
+                    b"[\"tcp://1.2.3.4:4000\", \"utp://1.2.3.5:5000\"]",
+                );
                 let mut cache = unwrap!(Cache::new(Some(Path::new(&fname))));
 
                 let addrs = cache.read_file();
