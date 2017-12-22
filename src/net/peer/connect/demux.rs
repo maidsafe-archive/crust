@@ -122,7 +122,7 @@ fn handle_incoming_connections<UID: Uid>(
         .map_err(IncomingError::Io)
         .for_each(move |(stream, addr)| {
             let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(&handle, stream, addr);
-            let inner = inner.clone();
+            let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, socket)
         })
         .log_error(LogLevel::Error, "Failed to accept incoming connections!")
