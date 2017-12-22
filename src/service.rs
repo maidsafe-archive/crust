@@ -85,7 +85,7 @@ impl<UID: Uid> Service<UID> {
     /// Bootstrap to the network.
     ///
     /// Bootstrap concept is interchangeable with "connect". Except in context
-    /// of Crust bootstrapping is more powerful then a simple `connect()`.
+    /// of Crust bootstrapping is more powerful than a simple `connect()`.
     /// `bootstrap()` will try to connect to all peers that are specified
     /// in config (`hard_coded_contacts`) or were cached.
     ///

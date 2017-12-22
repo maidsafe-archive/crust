@@ -39,3 +39,30 @@ impl Cache {
         self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod cache {
+        use super::*;
+
+        mod read_file {
+            use super::*;
+            use util::write_bootstrap_cache_to_tmp_file;
+
+            #[test]
+            fn it_returns_addresses_read_from_json_formatted_file() {
+                let fname = write_bootstrap_cache_to_tmp_file(
+                    b"[\"tcp://1.2.3.4:4000\", \"utp://1.2.3.5:5000\"]",
+                );
+                let mut cache = unwrap!(Cache::new(Some(Path::new(&fname))));
+
+                let addrs = cache.read_file();
+
+                assert!(addrs.contains(&PaAddr::Tcp(addr!("1.2.3.4:4000"))));
+                assert!(addrs.contains(&PaAddr::Utp(addr!("1.2.3.5:5000"))));
+            }
+        }
+    }
+}

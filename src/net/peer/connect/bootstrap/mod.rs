@@ -67,13 +67,6 @@ pub fn bootstrap<UID: Uid>(
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let handle = handle.clone();
     let try = || -> Result<_, BootstrapError> {
-        let mut peers = Vec::new();
-        let mut cache = Cache::new(config.read().bootstrap_cache_name.as_ref().map(
-            |p| p.as_ref(),
-        ))?;
-        peers.extend(cache.read_file());
-        peers.extend(config.read().hard_coded_contacts.iter().cloned());
-
         let sd_peers = if use_service_discovery {
             let sd_port = config.read().service_discovery_port.unwrap_or(
                 service::SERVICE_DISCOVERY_DEFAULT_PORT,
@@ -88,6 +81,7 @@ pub fn bootstrap<UID: Uid>(
             future::empty().into_stream().into_boxed()
         };
 
+        let peers = bootstrap_peers(config)?;
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         let mut i = 0;
         Ok(
@@ -117,4 +111,41 @@ pub fn bootstrap<UID: Uid>(
         )
     };
     future::result(try()).flatten().into_boxed()
+}
+
+/// Collects bootstrap peers from cache and config.
+fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PaAddr>, BootstrapError> {
+    let config = config.read();
+    let mut cache = Cache::new(config.bootstrap_cache_name.as_ref().map(|p| p.as_ref()))?;
+    let mut peers = Vec::new();
+    peers.extend(cache.read_file());
+    peers.extend(config.hard_coded_contacts.iter().cloned());
+    Ok(peers)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod bootstrap_peers {
+        use super::*;
+        use util::write_bootstrap_cache_to_tmp_file;
+
+        #[test]
+        fn it_returns_hard_coded_contacts_and_addresses_from_cache() {
+            let bootstrap_cache = write_bootstrap_cache_to_tmp_file(b"[\"tcp://1.2.3.5:5000\"]");
+            let config = unwrap!(ConfigFile::new_temporary());
+
+            {
+                let mut conf_write = unwrap!(config.write());
+                conf_write.hard_coded_contacts = vec![PaAddr::Tcp(addr!("1.2.3.4:4000"))];
+                conf_write.bootstrap_cache_name = Some(Path::new(&bootstrap_cache).to_path_buf());
+            }
+
+            let peers = unwrap!(bootstrap_peers(&config));
+
+            assert!(peers.contains(&PaAddr::Tcp(addr!("1.2.3.4:4000"))));
+            assert!(peers.contains(&PaAddr::Tcp(addr!("1.2.3.5:5000"))));
+        }
+    }
 }
