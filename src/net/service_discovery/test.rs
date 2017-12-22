@@ -78,10 +78,8 @@ fn service_discovery() {
     let port = sd.port();
 
     let f = {
-        unwrap!(discover::<HashSet<SocketAddr>>(
-            &handle,
-            port,
-        )).with_timeout(Duration::from_millis(200), &handle)
+        unwrap!(discover::<HashSet<SocketAddr>>(&handle, port))
+            .with_timeout(Duration::from_millis(200), &handle)
             .collect()
             .and_then(move |v| {
                 assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
