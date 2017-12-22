@@ -230,7 +230,7 @@ impl<UID: Uid> Service<UID> {
                                 })
                             }?;
                             let uid = peer.uid();
-                            cm.insert_peer(&handle, peer, addr);
+                            let _ = cm.insert_peer(&handle, peer, addr);
                             Ok((addr, uid))
                         })
                         .then(move |res| {
@@ -348,7 +348,7 @@ impl<UID: Uid> Service<UID> {
                                     error!("failed to get address of peer we connected to: {}", e)
                                 })
                             }?;
-                            cm.insert_peer(&handle, peer, addr);
+                            let _ = cm.insert_peer(&handle, peer, addr);
                             Ok(())
                         })
                         .then(move |res| {

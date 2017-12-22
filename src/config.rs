@@ -348,7 +348,7 @@ mod tests {
         source.push(sample_name);
         dest.push(&source);
 
-        unwrap!(fs::copy(&source, &dest));
+        let _ = unwrap!(fs::copy(&source, &dest));
 
         let _ = unwrap!(ConfigFile::open_path(source));
     }
