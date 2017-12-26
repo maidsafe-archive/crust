@@ -138,9 +138,7 @@ mod tests {
 
         let mut file = match ::std::fs::File::open(path) {
             Ok(file) => file,
-            Err(what) => {
-                panic!(format!("CrustError opening sample.config: {:?}", what));
-            }
+            Err(what) => panic!(format!("CrustError opening sample.config: {:?}", what)),
         };
 
         let mut encoded_contents = String::new();
