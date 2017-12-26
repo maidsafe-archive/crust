@@ -28,8 +28,11 @@
         unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results)]
-#![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
+#![allow(box_pointers, missing_copy_implementations,
          missing_debug_implementations, variant_size_differences)]
+// FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
+// on code in the master branch
+#![cfg_attr(feature="cargo-clippy", allow(clone_on_ref_ptr, needless_pass_by_value))]
 
 #[macro_use]
 extern crate log;
@@ -133,7 +136,7 @@ impl Network {
             println!("[{}] {} {:?}", id, status, node);
         }
 
-        println!("");
+        println!();
     }
 
     pub fn get_peer_id(&self, n: usize) -> Option<&UniqueId> {
@@ -404,7 +407,7 @@ fn main() {
         let _ = tx.send(true); // stop timer with no error messages
 
         thread::sleep(Duration::from_millis(100));
-        println!("");
+        println!();
 
         let speed: u64 = unwrap!(
             unwrap!(

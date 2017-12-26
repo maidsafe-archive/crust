@@ -2,7 +2,7 @@ environment:
   global:
     RUST_BACKTRACE: 1
   matrix:
-    - RUST_TOOLCHAIN: 1.19.0
+    - RUST_TOOLCHAIN: 1.22.1
 
 branches:
   only:

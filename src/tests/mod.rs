@@ -43,7 +43,7 @@ fn localhost_contact_info(port: u16) -> SocketAddr {
 }
 
 fn gen_service_discovery_port() -> u16 {
-    const BASE: u16 = 40000;
+    const BASE: u16 = 40_000;
     static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
 
     BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
