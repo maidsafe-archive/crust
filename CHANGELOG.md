@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.30.0]
+- Use rust 1.22.1 stable / 2017-11-23 nightly
+- rustfmt 0.9.0 and clippy-0.0.174
+
 ## [0.29.0]
 - Replace `get_if_addrs` module with crate of the same name and fix build issues on mobile platforms.
 

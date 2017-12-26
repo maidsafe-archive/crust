@@ -1,14 +1,15 @@
 env:
   global:
     - RUST_BACKTRACE=1
+    - RUST_STABLE=1.22.1
     - PATH=$PATH:$HOME/.cargo/bin
 os:
   - linux
   - osx
 language: rust
 rust:
-  - 1.19.0
-  - nightly-2017-07-20
+  - 1.22.1
+  - nightly-2017-11-23
 sudo: false
 branches:
   only:
@@ -18,13 +19,13 @@ cache:
 before_script:
   - curl -sSL https://github.com/maidsafe/QA/raw/master/travis/cargo_install.sh > cargo_install.sh
   - bash cargo_install.sh cargo-prune;
-  - if [ "${TRAVIS_RUST_VERSION}" = 1.19.0 ]; then
+  - if [ "${TRAVIS_RUST_VERSION}" = "$RUST_STABLE" ]; then
       bash cargo_install.sh rustfmt 0.9.0;
     elif [ "${TRAVIS_OS_NAME}" = linux ]; then
-      bash cargo_install.sh clippy 0.0.144;
+      bash cargo_install.sh clippy 0.0.174;
     fi
 script:
-  - if [ "${TRAVIS_RUST_VERSION}" = 1.19.0 ]; then
+  - if [ "${TRAVIS_RUST_VERSION}" = "$RUST_STABLE" ]; then
       (
         set -x;
         cargo fmt -- --write-mode=diff &&
