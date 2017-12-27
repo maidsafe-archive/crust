@@ -15,13 +15,30 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![forbid(warnings)]
+//! #crust
+//! Reliable peer-to-peer network connections in Rust with NAT traversal.
+
+#![doc(html_logo_url =
+           "https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png",
+       html_favicon_url = "https://maidsafe.net/img/favicon.ico",
+       html_root_url = "https://docs.rs/crust")]
+
+#![forbid(exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
+          unknown_crate_types, warnings)]
+#![deny(deprecated, improper_ctypes,
+        non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
+        private_no_mangle_fns, private_no_mangle_statics, stable_features,
+        unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
+        unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
+        unused_qualifications)]
+#![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
+         missing_debug_implementations, variant_size_differences)]
 
 extern crate maidsafe_utilities;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate config_file_handler;
 #[macro_use]
 extern crate quick_error;
@@ -34,7 +51,6 @@ extern crate future_utils;
 extern crate net2;
 #[macro_use]
 extern crate net_literals;
-extern crate get_if_addrs;
 #[macro_use]
 extern crate log;
 extern crate void;
@@ -43,10 +59,10 @@ extern crate rand;
 #[cfg(test)]
 #[macro_use]
 extern crate rand_derive;
+#[cfg(test)]
 extern crate env_logger;
 extern crate tiny_keccak;
 extern crate notify;
-extern crate igd;
 #[cfg(test)]
 #[macro_use]
 extern crate hamcrest;

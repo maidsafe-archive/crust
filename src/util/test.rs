@@ -41,6 +41,7 @@ pub fn random_id() -> UniqueId {
     rand::thread_rng().gen()
 }
 
+#[allow(unsafe_code)]
 pub fn random_vec(size: usize) -> Vec<u8> {
     let mut ret = Vec::with_capacity(size);
     unsafe { ret.set_len(size) };

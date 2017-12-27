@@ -195,7 +195,7 @@ mod test {
             #[test]
             fn it_adds_specified_addresses_to_the_list() {
                 let mut addrs = ObservableAddresses::new();
-                addrs.current.insert(PaAddr::Tcp(addr!("1.2.3.4:1234")));
+                let _ = addrs.current.insert(PaAddr::Tcp(addr!("1.2.3.4:1234")));
 
                 addrs.add_and_notify(vec![
                     PaAddr::Tcp(addr!("2.3.4.5:1234")),

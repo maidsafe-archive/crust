@@ -20,7 +20,6 @@ use env_logger;
 use future_utils::StreamExt;
 use futures::{Future, Stream, future, stream};
 use futures::sync::mpsc;
-use net::service_discovery::discover;
 use net::service_discovery::server::Server;
 use priv_prelude::*;
 use std::time::Duration;
@@ -45,7 +44,7 @@ fn test() {
         let mut futures = Vec::new();
         for i in 0..num_servers {
             for _ in 0..num_discovers {
-                let discover = unwrap!(discover::discover::<u16>(&handle, starting_port + i))
+                let discover = unwrap!(discover::<u16>(&handle, starting_port + i))
                     .with_timeout(Duration::from_secs(1), &handle)
                     .collect()
                     .and_then(move |v| {
@@ -79,10 +78,8 @@ fn service_discovery() {
     let port = sd.port();
 
     let f = {
-        unwrap!(service_discovery::discover::<HashSet<SocketAddr>>(
-            &handle,
-            port,
-        )).with_timeout(Duration::from_millis(200), &handle)
+        unwrap!(discover::<HashSet<SocketAddr>>(&handle, port))
+            .with_timeout(Duration::from_millis(200), &handle)
             .collect()
             .and_then(move |v| {
                 assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
@@ -99,7 +96,7 @@ fn service_discovery() {
                 Timeout::new(Duration::from_millis(100), &handle)
             .map_err(|e| panic!(e))
             .map(move |()| {
-                unwrap!(service_discovery::discover::<HashSet<PaAddr>>(&handle0, port))
+                unwrap!(discover::<HashSet<PaAddr>>(&handle0, port))
             })
             .flatten_stream()
             .until({
