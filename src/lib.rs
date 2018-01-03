@@ -73,6 +73,7 @@ extern crate maplit;
 extern crate url;
 extern crate tokio_utp;
 extern crate bincode;
+extern crate rust_sodium;
 
 pub use net::MAX_PAYLOAD_SIZE;
 

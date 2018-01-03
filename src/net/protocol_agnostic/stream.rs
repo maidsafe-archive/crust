@@ -17,13 +17,13 @@
 
 use bincode::{self, Infinite};
 use future_utils::bi_channel;
-use futures::future::Either;
 use futures::sync::mpsc::SendError;
 use net::protocol_agnostic::CRUST_TCP_INIT;
 use p2p::P2p;
 use priv_prelude::*;
 use std::error::Error;
 use std::io::{Read, Write};
+use rust_sodium::crypto;
 use tokio_io::{self, AsyncRead, AsyncWrite};
 use void;
 
@@ -35,6 +35,7 @@ pub enum PaStream {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaRendezvousMsg {
+    pub enc_pk: crypto::box_::PublicKey,
     pub tcp: Option<Bytes>,
     pub utp: Option<Bytes>,
 }
@@ -96,6 +97,7 @@ impl PaStream {
         let (tcp_ch_0, tcp_ch_1) = bi_channel::unbounded();
         let (utp_ch_0, utp_ch_1) = bi_channel::unbounded();
 
+        let (our_pk, _sk) = crypto::box_::gen_keypair();
         let pump_channels = {
             tcp_ch_0
                 .into_future()
@@ -106,6 +108,7 @@ impl PaStream {
                         .map_err(|(v, _)| void::unreachable(v))
                         .and_then(move |(utp_msg_opt, utp_ch_0)| {
                             let msg = PaRendezvousMsg {
+                                enc_pk: our_pk,
                                 tcp: if disable_tcp { None } else { tcp_msg_opt },
                                 utp: utp_msg_opt,
                             };
@@ -122,9 +125,9 @@ impl PaStream {
                                 .and_then(move |(msg_opt, _channel)| {
                                     if let Some(msg) = msg_opt {
                                         let msg: PaRendezvousMsg = {
-                                bincode::deserialize(&msg)
-                                .map_err(PaRendezvousConnectError::DeserializeMsg)?
-                            };
+                                            bincode::deserialize(&msg)
+                                            .map_err(PaRendezvousConnectError::DeserializeMsg)?
+                                        };
                                         if let Some(tcp) = msg.tcp {
                                             if !disable_tcp {
                                                 let _ = tcp_ch_0.unbounded_send(tcp);
@@ -133,78 +136,101 @@ impl PaStream {
                                         if let Some(utp) = msg.utp {
                                             let _ = utp_ch_0.unbounded_send(utp);
                                         }
+                                        let their_pk = msg.enc_pk;
+                                        Ok(their_pk)
+                                    } else {
+                                        Err(PaRendezvousConnectError::ChannelClosed)
                                     }
-                                    Ok(())
                                 })
                         })
                 })
         };
 
-        let connect = {
-            let handle = handle.clone();
-            let tcp_connect = {
-                TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p).map(PaStream::Tcp)
-            };
-            let utp_connect = {
-                UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
-                    .map_err(UtpRendezvousConnectError::Rendezvous)
-                    .and_then(move |(udp_socket, addr)| {
-                        let (utp_socket, _utp_listener) = {
-                            UtpSocket::from_socket(udp_socket, &handle).map_err(
-                                UtpRendezvousConnectError::IntoUtpSocket,
-                            )?
-                        };
-                        Ok((utp_socket, addr))
-                    })
-                    .and_then(|(utp_socket, addr)| {
-                        utp_socket
-                            .connect(&addr)
-                            .map_err(UtpRendezvousConnectError::UtpConnect)
-                            .map(PaStream::Utp)
-                    })
-            };
-
-            tcp_connect
-                .select2(utp_connect)
-                .map(|either| match either {
-                    Either::A((stream, _)) |
-                    Either::B((stream, _)) => stream,
-                })
-                .or_else(|either| match either {
-                    Either::A((tcp_error, udp_connect)) => {
-                        udp_connect
-                            .map_err(move |utp_error| {
-                                PaRendezvousConnectError::AllProtocolsFailed {
-                                    tcp: Box::new(tcp_error),
-                                    utp: Box::new(utp_error),
-                                }
-                            })
-                            .into_boxed()
-                    }
-                    Either::B((utp_error, tcp_connect)) => {
-                        tcp_connect
-                            .map_err(move |tcp_error| {
-                                PaRendezvousConnectError::AllProtocolsFailed {
-                                    tcp: Box::new(tcp_error),
-                                    utp: Box::new(utp_error),
-                                }
-                            })
-                            .into_boxed()
-                    }
+        let handle = handle.clone();
+        let tcp_connect = {
+            TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p).map(PaStream::Tcp)
+        };
+        let udp_connect = {
+            UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
+                .map_err(UtpRendezvousConnectError::Rendezvous)
+                .and_then(move |(udp_socket, addr)| {
+                    trace!("udp rendezvous connect succeeded.");
+                    let (utp_socket, utp_listener) = {
+                        UtpSocket::from_socket(udp_socket, &handle).map_err(
+                            UtpRendezvousConnectError::IntoUtpSocket,
+                        )?
+                    };
+                    trace!("returning utp socket.");
+                    Ok((utp_socket, utp_listener, addr))
                 })
         };
 
+
         let ret = {
             pump_channels
-                .select2(connect)
-                .map_err(|either| match either {
-                    Either::A((err, _)) |
-                    Either::B((err, _)) => err,
-                })
-                .and_then(|either| match either {
-                    Either::A(((), connect)) => connect.into_boxed(),
-                    Either::B((stream, _)) => future::ok(stream).into_boxed(),
-                })
+            .while_driving(tcp_connect)
+            .while_driving(udp_connect)
+            .map_err(|((e, _tcp_connect), _udp_connect)| e)
+            .and_then(move |((their_pk, tcp_connect), udp_connect)| {
+                if our_pk > their_pk {
+                    let utp_connect = {
+                        udp_connect
+                        .and_then(|(utp_socket, _utp_listener, addr)| {
+                            utp_socket
+                                .connect(&addr)
+                                //.map_err(UtpRendezvousConnectError::UtpConnect)
+                                //.map(PaStream::Utp)
+                                .map_err(UtpRendezvousConnectError::UtpConnect)
+                                .map(PaStream::Utp)
+                        })
+                    };
+                    let connect = {
+                        tcp_connect
+                        .first_ok2(utp_connect)
+                        .map_err(|(tcp_err, utp_err)| {
+                            PaRendezvousConnectError::AllProtocolsFailed {
+                                tcp: Box::new(tcp_err),
+                                utp: Box::new(utp_err),
+                            }
+                        })
+                    };
+                    connect
+                    .and_then(|stream| {
+                        tokio_io::io::write_all(stream, b"CHOOSE")
+                        .map_err(PaRendezvousConnectError::SendChoose)
+                    })
+                    .map(|(stream, _buf)| stream)
+                    .into_boxed()
+                } else {
+                    let tcp_connect = tcp_connect.map(take_chosen);
+                    let utp_connect = {
+                        udp_connect
+                        .and_then(|(_utp_socket, utp_listener, addr)| {
+                            utp_listener
+                            .incoming()
+                            .filter(move |stream| stream.peer_addr() == addr)
+                            .first_ok()
+                            .map(PaStream::Utp)
+                            .map_err(UtpRendezvousConnectError::UtpAccept)
+                        })
+                        .map(take_chosen)
+                    };
+                    let connect = {
+                        tcp_connect
+                        .first_ok2(utp_connect)
+                        .map_err(|(tcp_err, utp_err)| {
+                            PaRendezvousConnectError::AllProtocolsFailed {
+                                tcp: Box::new(tcp_err),
+                                utp: Box::new(utp_err),
+                            }
+                        })
+                        .and_then(|res| res)
+                    };
+
+                    connect
+                    .into_boxed()
+                }
+            })
         };
 
         ret.into_boxed()
@@ -216,6 +242,19 @@ impl PaStream {
             PaStream::Utp(ref stream) => Ok(PaAddr::Utp(stream.peer_addr())),
         }
     }
+}
+
+fn take_chosen<Ei: 'static, Eo: 'static>(stream: PaStream) -> BoxFuture<PaStream, PaRendezvousConnectError<Ei, Eo>> {
+    tokio_io::io::read_exact(stream, [0u8; 6])
+    .map_err(PaRendezvousConnectError::ReadStream)
+    .and_then(|(stream, buff)| {
+        if &buff == b"CHOOSE" {
+            Ok(stream)
+        } else {
+            Err(PaRendezvousConnectError::ExpectedChoose)
+        }
+    })
+    .into_boxed()
 }
 
 impl Read for PaStream {
@@ -259,6 +298,7 @@ pub enum UtpRendezvousConnectError<Ei, Eo> {
     Rendezvous(UdpRendezvousConnectError<Ei, Eo>),
     IntoUtpSocket(io::Error),
     UtpConnect(io::Error),
+    UtpAccept(Vec<io::Error>),
 }
 
 impl<Ei, Eo> fmt::Display for UtpRendezvousConnectError<Ei, Eo>
@@ -272,6 +312,13 @@ where
             Rendezvous(ref e) => write!(formatter, "udp rendezvous failed: {}", e),
             IntoUtpSocket(ref e) => write!(formatter, "failed to init utp socket: {}", e),
             UtpConnect(ref e) => write!(formatter, "utp connect failed: {}", e),
+            UtpAccept(ref es) => {
+                write!(formatter, "utp accept failed with {} errors:", es.len())?;
+                for (i, e) in es.iter().enumerate() {
+                    write!(formatter, " [{} of {}] {};", i, es.len(), e)?;
+                }
+                Ok(())
+            },
         }
     }
 }
@@ -287,6 +334,7 @@ where
             Rendezvous(..) => "udp rendezvous failed",
             IntoUtpSocket(..) => "failed to init utp socket",
             UtpConnect(..) => "utp connect failed",
+            UtpAccept(..) => "utp accept failed",
         }
     }
 
@@ -296,6 +344,10 @@ where
             Rendezvous(ref e) => Some(e),
             IntoUtpSocket(ref e) => Some(e),
             UtpConnect(ref e) => Some(e),
+            UtpAccept(ref es) => match es.first() {
+                Some(e) => Some(e),
+                None => None,
+            },
         }
     }
 }
@@ -305,11 +357,15 @@ where
 pub enum PaRendezvousConnectError<Ei, Eo> {
     ChannelWrite(Eo),
     ChannelRead(Ei),
+    ChannelClosed,
     DeserializeMsg(bincode::Error),
     AllProtocolsFailed {
         tcp: Box<TcpRendezvousConnectError<Void, SendError<Bytes>>>,
         utp: Box<UtpRendezvousConnectError<Void, SendError<Bytes>>>,
     },
+    ReadStream(io::Error),
+    ExpectedChoose,
+    SendChoose(io::Error),
 }
 
 impl<Ei, Eo> fmt::Display for PaRendezvousConnectError<Ei, Eo>
@@ -325,6 +381,9 @@ where
             PaRendezvousConnectError::ChannelRead(ref e) => {
                 write!(formatter, "error reading from rendezvous channel: {}", e)
             }
+            PaRendezvousConnectError::ChannelClosed => {
+                write!(formatter, "rendezvous channel closed unexpectedly")
+            }
             PaRendezvousConnectError::DeserializeMsg(ref e) => {
                 write!(
                     formatter,
@@ -339,6 +398,26 @@ where
                     tcp, utp,
                 )
             }
+            PaRendezvousConnectError::ReadStream(ref e) => {
+                write!(
+                    formatter,
+                    "error reading from connected stream: {}",
+                    e,
+                )
+            },
+            PaRendezvousConnectError::ExpectedChoose => {
+                write!(
+                    formatter,
+                    "protocol error - peer did not send choose message.",
+                )
+            },
+            PaRendezvousConnectError::SendChoose(ref e) => {
+                write!(
+                    formatter,
+                    "failed to write choose message to stream: {}",
+                    e,
+                )
+            },
         }
     }
 }
@@ -352,12 +431,22 @@ where
         match *self {
             PaRendezvousConnectError::ChannelWrite(..) => "error writing to rendezvous channel",
             PaRendezvousConnectError::ChannelRead(..) => "error reading from rendezvous channel",
+            PaRendezvousConnectError::ChannelClosed => "rendezvous channel closed unexpectedly",
             PaRendezvousConnectError::DeserializeMsg(..) => {
                 "error deserializing message from rendezvous channel"
             }
             PaRendezvousConnectError::AllProtocolsFailed { .. } => {
                 "all rendezvous connect protocols failed"
             }
+            PaRendezvousConnectError::ReadStream(..) => {
+                "error reading from connected stream"
+            },
+            PaRendezvousConnectError::ExpectedChoose => {
+                "protocol error - peer did not send choose message."
+            },
+            PaRendezvousConnectError::SendChoose(..) => {
+                "failed to write choose message to stream"
+            },
         }
     }
 
@@ -365,8 +454,12 @@ where
         match *self {
             PaRendezvousConnectError::ChannelWrite(ref e) => Some(e),
             PaRendezvousConnectError::ChannelRead(ref e) => Some(e),
+            PaRendezvousConnectError::ChannelClosed => None,
             PaRendezvousConnectError::DeserializeMsg(ref e) => Some(e),
             PaRendezvousConnectError::AllProtocolsFailed { .. } => None,
+            PaRendezvousConnectError::ReadStream(ref e) => Some(e),
+            PaRendezvousConnectError::ExpectedChoose => None,
+            PaRendezvousConnectError::SendChoose(ref e) => Some(e),
         }
     }
 }
