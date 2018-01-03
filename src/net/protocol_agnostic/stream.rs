@@ -454,12 +454,12 @@ where
         match *self {
             PaRendezvousConnectError::ChannelWrite(ref e) => Some(e),
             PaRendezvousConnectError::ChannelRead(ref e) => Some(e),
-            PaRendezvousConnectError::ChannelClosed => None,
             PaRendezvousConnectError::DeserializeMsg(ref e) => Some(e),
-            PaRendezvousConnectError::AllProtocolsFailed { .. } => None,
             PaRendezvousConnectError::ReadStream(ref e) => Some(e),
-            PaRendezvousConnectError::ExpectedChoose => None,
             PaRendezvousConnectError::SendChoose(ref e) => Some(e),
+            PaRendezvousConnectError::AllProtocolsFailed { .. } |
+            PaRendezvousConnectError::ExpectedChoose |
+            PaRendezvousConnectError::ChannelClosed => None,
         }
     }
 }

@@ -161,7 +161,7 @@ fn main() {
                                     let line = line.into_bytes();
                                     peer_sink
                                     .send((0, line))
-                                    .map(|peer_sink| Loop::Continue(peer_sink))
+                                    .map(Loop::Continue)
                                     .map_err(|e| panic!("error sending message to peer: {}", e))
                                 })
                             })
