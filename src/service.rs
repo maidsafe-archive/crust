@@ -155,7 +155,8 @@ impl<UID: Uid> Service<UID> {
         let (direct_addrs, _) = self.acceptor.addresses();
 
         let (ch1, ch2) = bi_channel::unbounded();
-        let conn_rx = net::peer::start_rendezvous_connect(&self.handle, &self.config, ch2, &self.p2p);
+        let conn_rx =
+            net::peer::start_rendezvous_connect(&self.handle, &self.config, ch2, &self.p2p);
 
         ch1.into_future()
             .and_then(move |(conn_info_opt, chann)| {

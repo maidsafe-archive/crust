@@ -234,7 +234,9 @@ fn connect_directly(
     stream::futures_unordered(
         addrs
             .into_iter()
-            .map(|addr| PaStream::direct_connect(&addr, evloop_handle, config))
+            .map(|addr| {
+                PaStream::direct_connect(&addr, evloop_handle, config)
+            })
             .collect::<Vec<_>>(),
     ).map_err(SingleConnectionError::Io)
         .into_boxed()

@@ -57,16 +57,16 @@ extern crate env_logger;
 
 extern crate crust;
 
-use std::{fmt, io};
-use docopt::Docopt;
-use tokio_core::reactor::Core;
-use futures::future::{Loop, Either};
-use futures::{Future, Stream, Sink, future};
-use future_utils::{BoxFuture, thread_future, FutureExt};
-use void::Void;
 
-use crust::{ConfigFile, Uid, Service, PaAddr, PubConnectionInfo};
+use crust::{ConfigFile, PaAddr, PubConnectionInfo, Service, Uid};
 use crust::config::DevConfigSettings;
+use docopt::Docopt;
+use future_utils::{BoxFuture, FutureExt, thread_future};
+use futures::{Future, Sink, Stream, future};
+use futures::future::{Either, Loop};
+use std::{fmt, io};
+use tokio_core::reactor::Core;
+use void::Void;
 
 const USAGE: &str = "
 Usage:
@@ -104,8 +104,8 @@ fn main() {
 
     let args: Args = {
         Docopt::new(USAGE)
-        .and_then(|d| d.deserialize())
-        .unwrap_or_else(|e| e.exit())
+            .and_then(|d| d.deserialize())
+            .unwrap_or_else(|e| e.exit())
     };
 
     let config = unwrap!(ConfigFile::new_temporary());
@@ -115,7 +115,7 @@ fn main() {
     if args.flag_disable_tcp {
         unwrap!(config.write()).dev = Some(DevConfigSettings {
             disable_tcp: true,
-            .. Default::default()
+            ..Default::default()
         });
     }
 
@@ -124,15 +124,16 @@ fn main() {
 
     let our_uid = rand::random();
 
-    let future = {
-        Service::with_config(&handle, config, our_uid)
-        .map_err(|e| panic!("error starting service: {}", e))
-        .and_then(|service| {
-            if args.flag_disable_igd {
-                service.p2p_config().disable_igd();
-            }
+    let future =
+        {
+            Service::with_config(&handle, config, our_uid)
+                .map_err(|e| panic!("error starting service: {}", e))
+                .and_then(|service| {
+                    if args.flag_disable_igd {
+                        service.p2p_config().disable_igd();
+                    }
 
-            service
+                    service
             .prepare_connection_info()
             .map_err(|e| panic!("error preparing connection info: {}", e))
             .and_then(move |our_priv_info| {
@@ -145,7 +146,9 @@ fn main() {
                           their info below.");
                 read_line()
                 .and_then(move |line| {
-                    let their_pub_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&line));
+                    let their_pub_info: PubConnectionInfo<PeerId> = unwrap!(
+                        serde_json::from_str(&line)
+                    );
 
                     service
                     .connect(our_priv_info, their_pub_info)
@@ -195,8 +198,8 @@ fn main() {
                     })
                 })
             })
-        })
-    };
+                })
+        };
 
     match core.run(future) {
         Ok(()) => (),
@@ -210,7 +213,5 @@ fn read_line() -> BoxFuture<String, Void> {
         let mut line = String::new();
         unwrap!(stdin.read_line(&mut line));
         line
-    })
-    .into_boxed()
+    }).into_boxed()
 }
-

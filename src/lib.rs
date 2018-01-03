@@ -93,6 +93,6 @@ mod tests;
 pub use common::CrustUser;
 pub use config::ConfigFile;
 pub use error::CrustError;
-pub use net::{Peer, PrivConnectionInfo, PubConnectionInfo, PaAddr};
+pub use net::{PaAddr, Peer, PrivConnectionInfo, PubConnectionInfo};
 pub use net::Uid;
 pub use service::Service;
