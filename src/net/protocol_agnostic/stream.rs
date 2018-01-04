@@ -163,7 +163,6 @@ impl PaStream {
                 })
         };
 
-
         let ret = {
             pump_channels
                 .while_driving(tcp_connect)
@@ -465,7 +464,7 @@ mod test {
     use tokio_core::reactor::Core;
 
     #[test]
-    fn direct_connect_tcp_disabled() {
+    fn direct_connect_with_tcp_disabled_connects_but_doesnt_use_tcp() {
         let config = unwrap!(ConfigFile::new_temporary());
         unwrap!(config.write()).dev = Some(DevConfigSettings {
             disable_tcp: true,
