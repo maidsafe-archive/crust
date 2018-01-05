@@ -88,6 +88,7 @@ impl<UID: Uid> Service<UID> {
         Ok(Service { event_loop })
     }
 
+    /// Enables service discovery during bootstrapping.
     pub fn start_service_discovery(&self) {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
@@ -96,6 +97,8 @@ impl<UID: Uid> Service<UID> {
         ));
     }
 
+    /// Depending on given argument either starts *Crust* peer discovery on LAN (via UDP broadcast)
+    /// or stops it.
     pub fn set_service_discovery_listen(&self, listen: bool) {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
@@ -116,6 +119,7 @@ impl<UID: Uid> Service<UID> {
         ));
     }
 
+    /// Depending on given argument either starts *Crust* bootstrap acceptor or stops it.
     pub fn set_accept_bootstrap(&self, accept: bool) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
@@ -164,6 +168,8 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
+    /// Fetches given peer socket address.
+    /// Blocks until address is retrieved.
     pub fn get_peer_socket_addr(&self, peer_uid: &UID) -> Result<PaAddr, CrustError> {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
@@ -175,10 +181,13 @@ impl<UID: Uid> Service<UID> {
         unwrap!(rx.recv())
     }
 
+    /// Same as `get_peer_socket_addr()`, but it returns IP address instead.
     pub fn get_peer_ip_addr(&self, peer_uid: &UID) -> Result<IpAddr, CrustError> {
         self.get_peer_socket_addr(peer_uid).map(|a| a.ip())
     }
 
+    /// Checks if given peer is the one from hard coded contacts list.
+    /// Blocks until response is received.
     pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
@@ -202,6 +211,8 @@ impl<UID: Uid> Service<UID> {
         unwrap!(rx.recv())
     }
 
+    /// Asynchronously starts bootstrapping to the network.
+    /// Returns immediately.
     pub fn start_bootstrap(
         &self,
         blacklist: HashSet<PaAddr>,
@@ -250,6 +261,7 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
+    /// Cancels the bootstrap process.
     pub fn stop_bootstrap(&self) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
@@ -259,6 +271,8 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
+    /// Asynchronously starts listening for incoming connections.
+    /// Returns immediately.
     pub fn start_listening(&self) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
@@ -291,6 +305,7 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
+    /// Stops direct connection listener.
     pub fn stop_listening(&self) -> Result<(), CrustError> {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
@@ -300,6 +315,8 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
+    /// Fires event to start connection info preparation.
+    /// Another event will be fired to `event_tx` to notify that info is ready.
     pub fn prepare_connection_info(&self, result_token: u32) {
         self.event_loop.send(Box::new(
             move |state: &mut ServiceState<UID>| {
