@@ -67,7 +67,7 @@ impl<UID: Uid> Acceptor<UID> {
     pub fn bootstrap_acceptor(&self) -> BootstrapAcceptor<UID> {
         self.demux.bootstrap_acceptor(
             &self.handle,
-            self.config.clone(),
+            &self.config,
             self.our_uid,
         )
     }
@@ -84,7 +84,7 @@ impl<UID: Uid> Acceptor<UID> {
             name_hash,
             our_info,
             their_info,
-            self.config.clone(),
+            &self.config,
         )
     }
 }

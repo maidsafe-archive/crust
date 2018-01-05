@@ -65,6 +65,7 @@ pub fn bootstrap<UID: Uid>(
     use_service_discovery: bool,
     config: &ConfigFile,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
+    let config = config.clone();
     let handle = handle.clone();
     let try = || -> Result<_, BootstrapError> {
         let sd_peers = if use_service_discovery {
@@ -81,7 +82,7 @@ pub fn bootstrap<UID: Uid>(
             future::empty().into_stream().into_boxed()
         };
 
-        let peers = bootstrap_peers(config)?;
+        let peers = bootstrap_peers(&config)?;
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         let mut i = 0;
         Ok(
@@ -95,10 +96,18 @@ pub fn bootstrap<UID: Uid>(
                     // all addresses simultaneously.
                     let delay = Timeout::new(Duration::from_millis(200) * i, &handle);
                     i += 1;
+                    let config = config.clone();
                     let handle = handle.clone();
                     let ext_reachability = ext_reachability.clone();
                     delay.infallible().and_then(move |()| {
-                        try_peer(&handle, &addr, our_uid, name_hash, ext_reachability.clone())
+                        try_peer(
+                            &handle,
+                            &addr,
+                            our_uid,
+                            name_hash,
+                            ext_reachability.clone(),
+                            &config,
+                        )
                             .map_err(move |e| (addr, e))
                     })
                 })

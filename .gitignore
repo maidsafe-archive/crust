@@ -15,3 +15,4 @@ src/tmp*
 *.bootstrap.cache
 /bin/
 .cargo/
+*.rs.bk

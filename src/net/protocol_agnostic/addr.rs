@@ -76,6 +76,20 @@ impl PaAddr {
             }
         }
     }
+
+    pub fn is_tcp(&self) -> bool {
+        match *self {
+            PaAddr::Tcp(..) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_utp(&self) -> bool {
+        match *self {
+            PaAddr::Utp(..) => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for PaAddr {

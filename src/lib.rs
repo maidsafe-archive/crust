@@ -73,11 +73,12 @@ extern crate maplit;
 extern crate url;
 extern crate tokio_utp;
 extern crate bincode;
+extern crate rust_sodium;
 
 pub use net::MAX_PAYLOAD_SIZE;
 
 mod error;
-mod config;
+pub mod config;
 mod common;
 pub mod compat;
 mod service;
@@ -92,6 +93,6 @@ mod tests;
 pub use common::CrustUser;
 pub use config::ConfigFile;
 pub use error::CrustError;
-pub use net::{Peer, PrivConnectionInfo, PubConnectionInfo};
+pub use net::{PaAddr, Peer, PrivConnectionInfo, PubConnectionInfo};
 pub use net::Uid;
 pub use service::Service;

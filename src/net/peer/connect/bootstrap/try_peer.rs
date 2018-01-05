@@ -86,11 +86,12 @@ pub fn try_peer<UID: Uid>(
     our_uid: UID,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
+    config: &ConfigFile,
 ) -> BoxFuture<Peer<UID>, TryPeerError> {
     let handle0 = handle.clone();
     let handle1 = handle.clone();
     let addr = *addr;
-    PaStream::direct_connect(&addr, handle)
+    PaStream::direct_connect(&addr, handle, config)
         .map(move |stream| Socket::wrap_pa(&handle0, stream, addr))
         .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
