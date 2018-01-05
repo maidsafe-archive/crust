@@ -46,6 +46,7 @@ void = "1.0.2"
 tokio-utp = "~0.3.0"
 bincode = "~0.9.2"
 rust_sodium = "~0.5"
+crossbeam = "=0.2.10"
 
 [dependencies.p2p]
 git = "https://github.com/ustulation/p2p"
