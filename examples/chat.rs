@@ -16,15 +16,14 @@
 // relating to use of the SAFE Network Software.
 
 //! This example demonstrates how to make a P2P connection using `crust`.
-//! We are using `crust::Service` to listen for incoming connections
-//! and to establish connection to remote peer.
 //!
-//! In a nutshell connetion looks like this:
+//! In order to make a connection we need to:
 //!
-//! 1. start listening for incoming connections
-//! 2. prepare connection information: public and private
-//! 3. exchange public information
-//! 4. connect
+//! 1. create a `Service` object.
+//! 2. call `prepare_connection_info` to obtain a `PrivConnectionInfo`
+//! 3. create a `PubConnectionInfo` from our `PrivConnectionInfo`
+//! 4. exchange `PubConnectionInfo` objects with the peer we are connecting to.
+//! 5. call `connect` using the peer's `PubConnectionInfo` and our `PrivConnectionInfo`
 //!
 //! Run two instances of this sample: preferably on separate computers but
 //! localhost is fine too.
@@ -35,9 +34,10 @@
 //! to first peer and hit ENTER.
 //! On both peers you should see something like:
 //! ```
-//! Connected to peer: 4a755684f72fe63fba86725b80d42d69ed649392
+//! You are now connected! say hello :)
 //! ```
-//! That's it, it means we successfully did a peer-to-peer connection.
+//! That's it, it means we successfully did a peer-to-peer connection. You can now use this
+//! connection to chat to the remote peer.
 
 #[macro_use]
 extern crate unwrap;
