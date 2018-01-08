@@ -26,17 +26,21 @@ use priv_prelude::*;
 use std;
 use tokio_core::reactor::Core;
 
+/// Event loop that allows you to communicate with *Crust* `Service`.
 pub struct EventLoop<UID: Uid> {
     tx: UnboundedSender<ServiceCommand<UID>>,
     _joiner: Joiner,
 }
 
 impl<UID: Uid> EventLoop<UID> {
+    /// Tell event loop to execute function with `Service` context meaning called function receives
+    /// `ServiceState` as an argument.
     pub fn send(&self, msg: ServiceCommand<UID>) {
         unwrap!(self.tx.unbounded_send(msg));
     }
 }
 
+/// Runs Tokio futures based *Crust* `Service` and event loop to communicate with it.
 pub fn spawn_event_loop<UID: Uid>(
     event_loop_id: Option<&str>,
     event_tx: CrustEventSender<UID>,
