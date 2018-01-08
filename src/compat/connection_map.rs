@@ -22,6 +22,7 @@ use log::LogLevel;
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
+/// Reference counted connection hashmap.
 #[derive(Clone)]
 pub struct ConnectionMap<UID: Uid> {
     inner: Arc<Mutex<Inner<UID>>>,
@@ -40,6 +41,9 @@ struct PeerWrapper<UID: Uid> {
 }
 
 impl<UID: Uid> ConnectionMap<UID> {
+    /// Creates new peer connection hashmap that is able to fire events when:
+    /// * new messages arrive to peers;
+    /// * peer connection is lost.
     pub fn new(event_tx: CrustEventSender<UID>) -> ConnectionMap<UID> {
         let inner = Inner {
             map: HashMap::new(),
@@ -49,6 +53,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         ConnectionMap { inner }
     }
 
+    /// Insert new peer into the map and registers peer event handlers.
     pub fn insert_peer(&self, handle: &Handle, peer: Peer<UID>, addr: PaAddr) -> bool {
         let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
@@ -89,6 +94,8 @@ impl<UID: Uid> ConnectionMap<UID> {
         true
     }
 
+    /// Sends a message to a given peer.
+    /// If peer is not found in the hashmap, error is returned.
     pub fn send(&self, uid: &UID, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
         let mut inner = unwrap!(self.inner.lock());
         let peer = match inner.map.get_mut(uid) {
@@ -102,6 +109,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         Ok(())
     }
 
+    /// Returns peer socket address or error, if peer is not found.
     pub fn peer_addr(&self, uid: &UID) -> Result<PaAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
         inner.map.get(uid).map(|pw| Ok(pw.addr)).unwrap_or(Err(
@@ -109,16 +117,19 @@ impl<UID: Uid> ConnectionMap<UID> {
         ))
     }
 
+    /// Remove peer from the hashmap by id.
     pub fn remove(&self, uid: &UID) -> bool {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.remove(uid).is_some()
     }
 
+    /// Checks if peer with given id exists in the hashmap.
     pub fn contains_peer(&self, uid: &UID) -> bool {
         let inner = unwrap!(self.inner.lock());
         inner.map.contains_key(uid)
     }
 
+    /// Filters out peers with given IP addresses.
     pub fn whitelist_filter(&self, client_ips: HashSet<IpAddr>, node_ips: HashSet<IpAddr>) {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.retain(|_, pw| match pw.kind {
@@ -127,6 +138,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         })
     }
 
+    /// Clears the connection hashmap.
     pub fn clear(&self) {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.clear();
