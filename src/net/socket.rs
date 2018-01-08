@@ -24,6 +24,7 @@ use priv_prelude::*;
 use tokio_io;
 use tokio_io::codec::length_delimited::{self, Framed};
 
+/// The maximum size of packets sent by `Socket` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 pub type Priority = u8;
 

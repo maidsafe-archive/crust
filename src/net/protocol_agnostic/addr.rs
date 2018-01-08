@@ -22,13 +22,18 @@ use std::net;
 use std::str::FromStr;
 use url::{self, Url};
 
+/// Protocol agnostic address.
+/// Let's you match the address by it's protocol.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum PaAddr {
+    /// TCP socket address.
     Tcp(SocketAddr),
+    /// uTP socket address.
     Utp(SocketAddr),
 }
 
 impl PaAddr {
+    /// Returns socket IP address.
     pub fn ip(&self) -> IpAddr {
         match *self {
             PaAddr::Tcp(ref addr) |
@@ -36,6 +41,8 @@ impl PaAddr {
         }
     }
 
+    /// Returns all local addresses, if socket address is unspecified - '0.0.0.0'.
+    /// Otherwise a list with only current address is returned.
     pub fn expand_local_unspecified(&self) -> io::Result<Vec<PaAddr>> {
         match *self {
             PaAddr::Tcp(ref addr) => {
@@ -77,6 +84,7 @@ impl PaAddr {
         }
     }
 
+    /// Checks if this is TCP address.
     pub fn is_tcp(&self) -> bool {
         match *self {
             PaAddr::Tcp(..) => true,
@@ -84,6 +92,7 @@ impl PaAddr {
         }
     }
 
+    /// Checks if this is UDP address.
     pub fn is_utp(&self) -> bool {
         match *self {
             PaAddr::Utp(..) => true,
