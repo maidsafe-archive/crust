@@ -124,18 +124,22 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
 }
 
 impl<UID: Uid> Peer<UID> {
+    /// Return peer socket address.
     pub fn addr(&self) -> Result<PaAddr, PeerError> {
         Ok(self.socket.peer_addr()?)
     }
 
+    /// Return peer id.
     pub fn uid(&self) -> UID {
         self.their_uid
     }
 
+    /// Returns peer type.
     pub fn kind(&self) -> CrustUser {
         self.kind
     }
 
+    /// Return peer IP address.
     pub fn ip(&self) -> Result<IpAddr, PeerError> {
         Ok(self.socket.peer_addr().map(|a| a.ip())?)
     }
