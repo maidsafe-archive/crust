@@ -42,6 +42,7 @@ pub struct PrivConnectionInfo<UID> {
     // P2P connection info is optional in case when p2p `rendezvous_connect` fails.
     // In such cases we can still proceed with direct connections, but we must keep track
     // that P2P connections should not be attempted.
+    #[doc(hidden)]
     pub p2p_conn_info: Option<P2pConnectionInfo>,
 }
 
@@ -52,6 +53,7 @@ pub struct PubConnectionInfo<UID> {
     pub id: UID,
     #[doc(hidden)]
     pub for_direct: Vec<PaAddr>,
+    #[doc(hidden)]
     pub p2p_conn_info: Option<Vec<u8>>,
 }
 
