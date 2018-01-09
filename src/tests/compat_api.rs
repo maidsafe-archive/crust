@@ -409,7 +409,11 @@ fn bootstrap_with_blacklist() {
     let uid0 = service0.id();
     let uid1 = service1.id();
 
-    unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+    // TODO(povilas): remove when map-lit gets fixed.
+    #[allow(unused_results)]
+    {
+        unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+    }
 
     expect_event!(event_rx0, Event::BootstrapAccept(id, CrustUser::Client) => {
         assert_eq!(id, uid1);
@@ -454,7 +458,11 @@ fn bootstrap_fails_only_blacklisted_contacts() {
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
-    unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+    // TODO(povilas): remove when map-lit gets fixed.
+    #[allow(unused_results)]
+    {
+        unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+    }
 
     expect_event!(event_rx1, Event::BootstrapFailed);
 }

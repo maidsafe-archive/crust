@@ -62,7 +62,8 @@ fn test() {
     let _servers = unwrap!(res);
 }
 
-
+// TODO(povilas): remove when map-lit gets fixed.
+#[allow(unused_results)]
 #[test]
 fn service_discovery() {
     let _logger = env_logger::init();
