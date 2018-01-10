@@ -75,7 +75,7 @@ fn service_discovery() {
     unwrap!(config.write()).service_discovery_port = Some(0);
     let (tx, rx) = mpsc::unbounded();
 
-    let sd = unwrap!(ServiceDiscovery::new(&handle, config, hashset!{}, rx));
+    let sd = unwrap!(ServiceDiscovery::new(&handle, &config, hashset!{}, rx));
     let port = sd.port();
 
     let f = {

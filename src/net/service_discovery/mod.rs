@@ -42,7 +42,7 @@ pub struct ServiceDiscovery {
 impl ServiceDiscovery {
     pub fn new(
         handle: &Handle,
-        config: ConfigFile,
+        config: &ConfigFile,
         current_addrs: HashSet<PaAddr>,
         addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
     ) -> io::Result<ServiceDiscovery> {
