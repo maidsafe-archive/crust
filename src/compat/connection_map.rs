@@ -130,7 +130,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Filters out peers with given IP addresses.
-    pub fn whitelist_filter(&self, client_ips: HashSet<IpAddr>, node_ips: HashSet<IpAddr>) {
+    pub fn whitelist_filter(&self, client_ips: &HashSet<IpAddr>, node_ips: &HashSet<IpAddr>) {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.retain(|_, pw| match pw.kind {
             CrustUser::Node => node_ips.contains(&pw.addr.ip()),

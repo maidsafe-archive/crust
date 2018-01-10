@@ -62,7 +62,8 @@ fn test() {
     let _servers = unwrap!(res);
 }
 
-
+// TODO(povilas): remove when map-lit gets fixed.
+#[allow(unused_results)]
 #[test]
 fn service_discovery() {
     let _logger = env_logger::init();
@@ -74,7 +75,7 @@ fn service_discovery() {
     unwrap!(config.write()).service_discovery_port = Some(0);
     let (tx, rx) = mpsc::unbounded();
 
-    let sd = unwrap!(ServiceDiscovery::new(&handle, config, hashset!{}, rx));
+    let sd = unwrap!(ServiceDiscovery::new(&handle, &config, hashset!{}, rx));
     let port = sd.port();
 
     let f = {

@@ -80,7 +80,7 @@ impl<UID: Uid> Service<UID> {
                     }
                     let node_ips = node_ips.unwrap_or_default();
                     let client_ips = client_ips.unwrap_or_default();
-                    cm.whitelist_filter(client_ips, node_ips);
+                    cm.whitelist_filter(&client_ips, &node_ips);
                     Ok(())
                 })
             })

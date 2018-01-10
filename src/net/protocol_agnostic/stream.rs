@@ -336,7 +336,7 @@ where
         use self::UtpRendezvousConnectError::*;
         match *self {
             Rendezvous(ref e) => Some(e),
-            IntoUtpSocket(ref e) => Some(e),
+            IntoUtpSocket(ref e) |
             UtpConnect(ref e) => Some(e),
             UtpAccept(ref es) => {
                 match es.first() {
@@ -447,7 +447,7 @@ where
             PaRendezvousConnectError::ChannelWrite(ref e) => Some(e),
             PaRendezvousConnectError::ChannelRead(ref e) => Some(e),
             PaRendezvousConnectError::DeserializeMsg(ref e) => Some(e),
-            PaRendezvousConnectError::ReadStream(ref e) => Some(e),
+            PaRendezvousConnectError::ReadStream(ref e) |
             PaRendezvousConnectError::SendChoose(ref e) => Some(e),
             PaRendezvousConnectError::AllProtocolsFailed { .. } |
             PaRendezvousConnectError::ExpectedChoose |
