@@ -22,7 +22,7 @@ use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
 use p2p::P2p;
 use priv_prelude::*;
 
-pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
+pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 
 
 /// The main entry point to Crust.

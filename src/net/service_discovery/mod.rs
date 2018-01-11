@@ -29,9 +29,8 @@ use future_utils::{self, DropNotify};
 use futures::sync::mpsc::UnboundedReceiver;
 
 use net::service_discovery;
+use service;
 use priv_prelude::*;
-
-pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
 /// Advertises our current set of connectable listening addresses on the local network.
 pub struct ServiceDiscovery {
@@ -47,7 +46,7 @@ impl ServiceDiscovery {
         addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
     ) -> io::Result<ServiceDiscovery> {
         let port = config.read().service_discovery_port.unwrap_or(
-            SERVICE_DISCOVERY_DEFAULT_PORT,
+            service::SERVICE_DISCOVERY_DEFAULT_PORT,
         );
 
         let (drop_tx, drop_rx) = future_utils::drop_notify();
