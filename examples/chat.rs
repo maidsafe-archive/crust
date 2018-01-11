@@ -140,7 +140,7 @@ fn main() {
                         let as_str = unwrap!(serde_json::to_string(&our_pub_info));
                         println!("Our connection info:");
                         println!("{}", as_str);
-                        println!("");
+                        println!();
                         println!(
                             "Copy this info and share it with your connecting partner. Then paste \
                           their info below."
