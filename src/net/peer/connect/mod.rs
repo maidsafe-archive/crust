@@ -157,7 +157,8 @@ pub fn connect<UID: Uid>(
     );
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
-    let all_connections = all_outgoing_connections.select(direct_incoming)
+    let all_connections = all_outgoing_connections
+        .select(direct_incoming)
         .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
     choose_peer(handle, all_connections, our_info.id, their_id)
         .and_then(move |peer| {
