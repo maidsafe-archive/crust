@@ -85,6 +85,7 @@ quick_error! {
             description("io error initiating/accepting connection")
             display("io error initiating/accepting connection: {}", e)
             cause(e)
+            from()
         }
         Socket(e: SocketError) {
             description("io error socket error")
@@ -281,9 +282,9 @@ where
     let our_name_hash = our_connect_request.name_hash;
     let handle_copy = evloop_handle.clone();
     connections
-        .map(move |stream| {
-            let peer_addr = unwrap!(stream.peer_addr());
-            Socket::wrap_pa(&handle_copy, stream, peer_addr)
+        .and_then(move |stream| {
+            let peer_addr = stream.peer_addr()?;
+            Ok(Socket::wrap_pa(&handle_copy, stream, peer_addr))
         })
         .and_then(move |socket| {
             socket
