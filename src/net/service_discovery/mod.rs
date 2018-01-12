@@ -29,8 +29,8 @@ use future_utils::{self, DropNotify};
 use futures::sync::mpsc::UnboundedReceiver;
 
 use net::service_discovery;
-use service;
 use priv_prelude::*;
+use service;
 
 /// Advertises our current set of connectable listening addresses on the local network.
 pub struct ServiceDiscovery {
