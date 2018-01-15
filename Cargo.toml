@@ -17,6 +17,10 @@ path = "examples/connect.rs"
 name = "exchange_data"
 path = "examples/exchange_data.rs"
 
+[[example]]
+name = "chat"
+path = "examples/chat.rs"
+
 [dependencies]
 bytes = { version = "~0.4", features = ["serde"] }
 config_file_handler = "~0.8.0"

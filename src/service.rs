@@ -226,6 +226,7 @@ fn configure_nat_traversal(config: &ConfigFile) -> P2p {
     let force_use_local_port = config.read().force_acceptor_port_in_ext_ep;
     p2p.set_force_use_local_port(force_use_local_port);
     set_rendezvous_servers(&p2p, config);
+    p2p.disable_igd_for_rendezvous();
     p2p
 }
 
@@ -309,6 +310,18 @@ mod tests {
             assert!(servers.is_empty());
             let servers = p2p.udp_traversal_servers().snapshot();
             assert!(servers.is_empty());
+        }
+    }
+
+    mod configure_nat_traversal {
+        use super::*;
+
+        #[test]
+        fn it_returns_p2p_instance_with_igd_for_rendezvous_disabled() {
+            let config = unwrap!(ConfigFile::new_temporary());
+            let p2p = configure_nat_traversal(&config);
+
+            assert!(!p2p.is_igd_enabled_for_rendezvous());
         }
     }
 }

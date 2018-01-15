@@ -40,6 +40,9 @@ use priv_prelude::*;
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
+// Seconds after which all connections will timeout.
+const CONNECTIONS_TIMEOUT: u64 = 60;
+
 quick_error! {
     #[derive(Debug)]
     pub enum ConnectError {
@@ -82,6 +85,7 @@ quick_error! {
             description("io error initiating/accepting connection")
             display("io error initiating/accepting connection: {}", e)
             cause(e)
+            from()
         }
         Socket(e: SocketError) {
             description("io error socket error")
@@ -154,7 +158,9 @@ pub fn connect<UID: Uid>(
     );
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
-    let all_connections = all_outgoing_connections.select(direct_incoming);
+    let all_connections = all_outgoing_connections
+        .select(direct_incoming)
+        .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
     choose_peer(handle, all_connections, our_info.id, their_id)
         .and_then(move |peer| {
             let ip = peer.ip().map_err(ConnectError::Peer)?;
@@ -276,9 +282,9 @@ where
     let our_name_hash = our_connect_request.name_hash;
     let handle_copy = evloop_handle.clone();
     connections
-        .map(move |stream| {
-            let peer_addr = unwrap!(stream.peer_addr());
-            Socket::wrap_pa(&handle_copy, stream, peer_addr)
+        .and_then(move |stream| {
+            let peer_addr = stream.peer_addr()?;
+            Ok(Socket::wrap_pa(&handle_copy, stream, peer_addr))
         })
         .and_then(move |socket| {
             socket
