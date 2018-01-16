@@ -253,7 +253,24 @@ mod test {
 
     mod make_listener {
         use super::*;
-        use std::str::FromStr;
+
+        /// Helper to reduce boilerplate for addresses construction.
+        fn observable_addresses<T>(addrs: T) -> Arc<Mutex<ObservableAddresses>>
+        where
+            T: IntoIterator<Item = SocketAddr>,
+        {
+            let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+            {
+                let mut addreses = unwrap!(addresses.lock());
+                addreses.add_and_notify(addrs.into_iter().map(PaAddr::Utp));
+            }
+            addresses
+        }
+
+        fn palistener(handle: &Handle) -> PaListener {
+            let bind_addr = PaAddr::Utp(addr!("0.0.0.0:0"));
+            unwrap!(PaListener::bind(&bind_addr, handle))
+        }
 
         #[test]
         fn it_adds_listener_addresses_to_the_given_address_list() {
@@ -261,18 +278,11 @@ mod test {
             let handle = core.handle();
 
             let (tx, _rx) = mpsc::unbounded();
-            let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+            let addresses = observable_addresses(vec![addr!("1.2.3.4:4000")]);
 
-            let addr1 = unwrap!(PaAddr::from_str("utp://1.2.3.4:4000"));
-            {
-                let mut addrs = unwrap!(addresses.lock());
-                addrs.add_and_notify(vec![addr1]);
-            }
-
-            let bind_addr = unwrap!(PaAddr::from_str("utp://0.0.0.0:0"));
-            let listener = unwrap!(PaListener::bind(&bind_addr, &handle));
+            let listener = palistener(&handle);
             let mut expected_addrs = unwrap!(listener.expanded_local_addrs());
-            expected_addrs.push(addr1);
+            expected_addrs.push(PaAddr::Utp(addr!("1.2.3.4:4000")));
 
             let _ = make_listener(listener, None, Arc::clone(&addresses), tx);
 
@@ -290,8 +300,7 @@ mod test {
             let (tx, rx) = mpsc::unbounded();
             let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
 
-            let bind_addr = unwrap!(PaAddr::from_str("utp://0.0.0.0:0"));
-            let listener = unwrap!(PaListener::bind(&bind_addr, &handle));
+            let listener = palistener(&handle);
             let local_addrs = unwrap!(listener.expanded_local_addrs());
 
             let _ = make_listener(listener, None, Arc::clone(&addresses), tx);
