@@ -129,19 +129,12 @@ impl<UID: Uid> Service<UID> {
     /// address, drop a `Listener` to stop listening on its address. The stream will end once all
     /// configured listeners have been returned.
     pub fn start_listening(&self) -> BoxStream<Listener, CrustError> {
-        let disable_tcp = self.config.tcp_disabled();
-        let addrs = &self.config.read().listen_addresses;
-        let mut futures = Vec::new();
-        for addr in addrs {
-            if disable_tcp && addr.is_tcp() {
-                continue;
-            }
-            futures.push({
-                self.acceptor.listener(addr).map_err(
-                    CrustError::StartListener,
-                )
-            });
-        }
+        let addrs = self.config.listen_addresses();
+        let futures = addrs.iter().map(|addr| {
+            self.acceptor.listener(addr).map_err(
+                CrustError::StartListener,
+            )
+        });
         stream::futures_unordered(futures).into_boxed()
     }
 

@@ -173,6 +173,18 @@ impl ConfigFile {
         inner.observers.push(tx);
         rx
     }
+
+    /// Returns all addresses that `Crust` should listen on.
+    /// If TCP is disabled, filters out TCP addresses.
+    pub fn listen_addresses(&self) -> Vec<PaAddr> {
+        let disable_tcp = self.tcp_disabled();
+        let addrs = &self.read().listen_addresses;
+        addrs
+            .iter()
+            .filter(|addr| if disable_tcp { !addr.is_tcp() } else { true })
+            .cloned()
+            .collect()
+    }
 }
 
 impl fmt::Debug for ConfigFile {
@@ -341,10 +353,53 @@ impl ConfigSettings {
 
 #[cfg(test)]
 mod tests {
-    use super::ConfigFile;
+    use super::*;
     use config_file_handler;
+    use hamcrest::prelude::*;
     use std::fs;
     use std::path::PathBuf;
+
+    mod config_file {
+        use super::*;
+
+        mod listen_addresses {
+            use super::*;
+
+            #[test]
+            fn it_returns_all_listen_addresses_when_tcp_is_enabled() {
+                let config = unwrap!(ConfigFile::new_temporary());
+                {
+                    let mut config_w = unwrap!(config.write());
+                    config_w.listen_addresses.push(tcp_addr!("1.2.3.4:4000"));
+                    config_w.listen_addresses.push(utp_addr!("1.2.3.4:5000"));
+                }
+
+                let addrs = config.listen_addresses();
+
+                let expected_addrs = vec![tcp_addr!("1.2.3.4:4000"), utp_addr!("1.2.3.4:5000")];
+                assert_that!(&addrs, contains(expected_addrs).exactly());
+            }
+
+            #[test]
+            fn it_excludes_tcp_addresses_when_it_is_disabled() {
+                let config = unwrap!(ConfigFile::new_temporary());
+                {
+                    let mut config_w = unwrap!(config.write());
+                    config_w.listen_addresses.push(tcp_addr!("1.2.3.4:4000"));
+                    config_w.listen_addresses.push(utp_addr!("1.2.3.4:5000"));
+
+                    let mut dev_cfg = DevConfigSettings::default();
+                    dev_cfg.disable_tcp = true;
+                    config_w.dev = Some(dev_cfg);
+                }
+
+                let addrs = config.listen_addresses();
+
+                let expected_addrs = vec![utp_addr!("1.2.3.4:5000")];
+                assert_that!(&addrs, contains(expected_addrs).exactly());
+            }
+        }
+    }
 
     #[test]
     fn parse_sample_config_file() {
