@@ -25,9 +25,9 @@ pub use self::protocol_agnostic::{PaAddr, PaIncoming, PaListener, PaRendezvousCo
 pub use self::service_discovery::ServiceDiscovery;
 pub use self::socket::{MAX_PAYLOAD_SIZE, Priority, Socket, SocketError};
 
+#[macro_use]
+mod protocol_agnostic;
 mod listener;
 pub mod peer;
 mod socket;
-#[macro_use]
-mod protocol_agnostic;
 pub mod service_discovery;

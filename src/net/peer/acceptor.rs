@@ -58,6 +58,11 @@ impl<UID: Uid> Acceptor<UID> {
         self.listeners.addresses()
     }
 
+    /// Checks if any of the listening sockets are accessible from the Internet.
+    pub fn has_public_addrs(&self) -> bool {
+        self.listeners.has_public_addrs()
+    }
+
     /// Add a listener to the set of listeners and return a handle to it.
     pub fn listener(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
         self.listeners.listener::<UID>(listen_addr)
