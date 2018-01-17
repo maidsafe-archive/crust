@@ -114,25 +114,37 @@ impl Listeners {
                 PaListener::bind_reusable(&listen_addr, &handle).map(|listener| (listener, None))
             })
             .and_then(move |(listener, public_addr)| {
-                let mut addrs = HashSet::new();
-                addrs.extend(listener.expanded_local_addrs()?);
-                addrs.extend(public_addr);
-
-                let (drop_tx, drop_rx) = future_utils::drop_notify();
-
-                let mut addresses = unwrap!(addresses.lock());
-                addresses.add_and_notify(addrs.iter().cloned());
-
-                let local_addr = unwrap!(listener.local_addr());
-                let _ = tx.unbounded_send((drop_rx, listener.incoming(), addrs));
-
-                Ok(Listener {
-                    _drop_tx: drop_tx,
-                    local_addr,
-                })
+                make_listener(listener, public_addr, addresses, tx)
             })
             .into_boxed()
     }
+}
+
+/// Constructs `Listener` from `PaListener`.
+/// Uses `addresses` to notify `Listeners` about new addresses `Crust` is listening on.
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+fn make_listener(
+    listener: PaListener,
+    public_addr: Option<PaAddr>,
+    addresses: Arc<Mutex<ObservableAddresses>>,
+    listener_notifier: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
+) -> io::Result<Listener> {
+    let mut addrs = HashSet::new();
+    addrs.extend(listener.expanded_local_addrs()?);
+    addrs.extend(public_addr);
+
+    let (drop_tx, drop_rx) = future_utils::drop_notify();
+
+    let mut addresses = unwrap!(addresses.lock());
+    addresses.add_and_notify(addrs.iter().cloned());
+
+    let local_addr = unwrap!(listener.local_addr());
+    let _ = listener_notifier.unbounded_send((drop_rx, listener.incoming(), addrs));
+
+    Ok(Listener {
+        _drop_tx: drop_tx,
+        local_addr,
+    })
 }
 
 impl Stream for SocketIncoming {
@@ -236,6 +248,73 @@ mod test {
                     ]).exactly()
                 );
             }
+        }
+    }
+
+    mod make_listener {
+        use super::*;
+
+        /// Helper to reduce boilerplate for addresses construction.
+        fn observable_addresses<T>(addrs: T) -> Arc<Mutex<ObservableAddresses>>
+        where
+            T: IntoIterator<Item = SocketAddr>,
+        {
+            let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+            {
+                let mut addreses = unwrap!(addresses.lock());
+                addreses.add_and_notify(addrs.into_iter().map(PaAddr::Utp));
+            }
+            addresses
+        }
+
+        fn palistener(handle: &Handle) -> PaListener {
+            let bind_addr = PaAddr::Utp(addr!("0.0.0.0:0"));
+            unwrap!(PaListener::bind(&bind_addr, handle))
+        }
+
+        #[test]
+        fn it_adds_listener_addresses_to_the_given_address_list() {
+            let core = unwrap!(Core::new());
+            let handle = core.handle();
+
+            let (tx, _rx) = mpsc::unbounded();
+            let addresses = observable_addresses(vec![addr!("1.2.3.4:4000")]);
+
+            let listener = palistener(&handle);
+            let mut expected_addrs = unwrap!(listener.expanded_local_addrs());
+            expected_addrs.push(PaAddr::Utp(addr!("1.2.3.4:4000")));
+
+            let _ = make_listener(listener, None, Arc::clone(&addresses), tx);
+
+            let addrs = unwrap!(addresses.lock());
+            let addrs: Vec<PaAddr> = addrs.current.iter().cloned().collect();
+
+            assert_that!(&addrs, contains(expected_addrs).exactly());
+        }
+
+        #[test]
+        fn it_notifies_about_new_listener() {
+            let mut core = unwrap!(Core::new());
+            let handle = core.handle();
+
+            let (tx, rx) = mpsc::unbounded();
+            let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+
+            let listener = palistener(&handle);
+            let local_addrs = unwrap!(listener.expanded_local_addrs());
+
+            let _ = make_listener(listener, None, Arc::clone(&addresses), tx);
+
+            let (_, _, actual_addrs) = unwrap!(
+                core.run(
+                    rx.into_future()
+                        .and_then(|(listener_info, _rx)| Ok(unwrap!(listener_info)))
+                        .map_err(|_| panic!("Failed to receive listener info.")),
+                )
+            );
+
+            let actual_addrs: Vec<PaAddr> = actual_addrs.iter().cloned().collect();
+            assert_that!(&actual_addrs, contains(local_addrs).exactly());
         }
     }
 
