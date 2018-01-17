@@ -28,5 +28,6 @@ pub use self::socket::{MAX_PAYLOAD_SIZE, Priority, Socket, SocketError};
 mod listener;
 pub mod peer;
 mod socket;
+#[macro_use]
 mod protocol_agnostic;
 pub mod service_discovery;
