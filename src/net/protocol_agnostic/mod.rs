@@ -22,6 +22,7 @@ pub use self::stream::{PaRendezvousConnectError, PaRendezvousMsg, PaStream,
 
 mod stream;
 mod listener;
+#[macro_use]
 mod addr;
 
 const CRUST_TCP_INIT: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', b'T', b'C', b'P'];

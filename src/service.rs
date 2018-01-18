@@ -129,19 +129,12 @@ impl<UID: Uid> Service<UID> {
     /// address, drop a `Listener` to stop listening on its address. The stream will end once all
     /// configured listeners have been returned.
     pub fn start_listening(&self) -> BoxStream<Listener, CrustError> {
-        let disable_tcp = self.config.tcp_disabled();
-        let addrs = &self.config.read().listen_addresses;
-        let mut futures = Vec::new();
-        for addr in addrs {
-            if disable_tcp && addr.is_tcp() {
-                continue;
-            }
-            futures.push({
-                self.acceptor.listener(addr).map_err(
-                    CrustError::StartListener,
-                )
-            });
-        }
+        let addrs = self.config.listen_addresses();
+        let futures = addrs.iter().map(|addr| {
+            self.acceptor.listener(addr).map_err(
+                CrustError::StartListener,
+            )
+        });
         stream::futures_unordered(futures).into_boxed()
     }
 
@@ -151,31 +144,18 @@ impl<UID: Uid> Service<UID> {
     /// call connect simultaneously using each other's `PubConnectionInfo` and their own
     /// `PrivConnectionInfo`.
     pub fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
-        let our_uid = self.our_uid;
         let (direct_addrs, _) = self.acceptor.addresses();
+        let priv_conn_info = PrivConnectionInfo {
+            id: self.our_uid,
+            for_direct: direct_addrs.into_iter().collect(),
+            p2p_conn_info: None,
+        };
 
-        let (ch1, ch2) = bi_channel::unbounded();
-        let conn_rx =
-            net::peer::start_rendezvous_connect(&self.handle, &self.config, ch2, &self.p2p);
-
-        ch1.into_future()
-            .and_then(move |(conn_info_opt, chann)| {
-                let p2p_conn_info = conn_info_opt.and_then(|raw_info| {
-                    Some(P2pConnectionInfo {
-                        our_info: raw_info,
-                        rendezvous_channel: chann,
-                        connection_rx: conn_rx,
-                    })
-                });
-                Ok(PrivConnectionInfo {
-                    id: our_uid,
-                    for_direct: direct_addrs.into_iter().collect(),
-                    p2p_conn_info: p2p_conn_info,
-                })
-            })
-            .map_err(|(e, _stream)| e)
-            .infallible()
-            .into_boxed()
+        if self.acceptor.has_public_addrs() {
+            future::ok(priv_conn_info).into_boxed()
+        } else {
+            self.with_p2p_connection_info(priv_conn_info)
+        }
     }
 
     /// Perform a p2p connection to a peer. You must generate connection info first using
@@ -218,6 +198,32 @@ impl<UID: Uid> Service<UID> {
     /// Get the handle to the `p2p` library config used by this service.
     pub fn p2p_config(&self) -> &P2p {
         &self.p2p
+    }
+
+    /// Constructs private connection info with p2p info returned from `p2p` crate.
+    /// p2p info is used for rendezvous connections - hole punching.
+    fn with_p2p_connection_info(
+        &self,
+        mut priv_conn_info: PrivConnectionInfo<UID>,
+    ) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
+        let (ch1, ch2) = bi_channel::unbounded();
+        let conn_rx =
+            net::peer::start_rendezvous_connect(&self.handle, &self.config, ch2, &self.p2p);
+
+        ch1.into_future()
+            .and_then(move |(conn_info_opt, chann)| {
+                priv_conn_info.p2p_conn_info = conn_info_opt.and_then(|raw_info| {
+                    Some(P2pConnectionInfo {
+                        our_info: raw_info,
+                        rendezvous_channel: chann,
+                        connection_rx: conn_rx,
+                    })
+                });
+                Ok(priv_conn_info)
+            })
+            .map_err(|(e, _stream)| e)
+            .infallible()
+            .into_boxed()
     }
 }
 

@@ -37,8 +37,11 @@ pub struct Listeners {
     p2p: P2p,
 }
 
+/// Holds a collection of addresses and notifies about changes.
+/// Additionaly holds public addresses returned by `PaListener::bind_public()`.
 struct ObservableAddresses {
     current: HashSet<PaAddr>,
+    public: HashSet<PaAddr>,
     observers: Vec<UnboundedSender<HashSet<PaAddr>>>,
 }
 
@@ -46,6 +49,7 @@ impl ObservableAddresses {
     fn new() -> ObservableAddresses {
         ObservableAddresses {
             current: HashSet::new(),
+            public: HashSet::new(),
             observers: Vec::new(),
         }
     }
@@ -62,6 +66,12 @@ impl ObservableAddresses {
             observer.unbounded_send(current.clone()).is_ok()
         });
         self.current = current;
+    }
+
+    /// Adds public address to separate "public address" list.
+    /// This list is used to determine whether listener is accessible publicly.
+    fn add_public(&mut self, addr: PaAddr) {
+        let _ = self.public.insert(addr);
     }
 }
 
@@ -98,6 +108,12 @@ impl Listeners {
         let mut addresses = unwrap!(self.addresses.lock());
         addresses.observers.push(tx);
         (addresses.current.clone(), rx)
+    }
+
+    /// Checks if any of the listeners has public address.
+    pub fn has_public_addrs(&self) -> bool {
+        let addrs = unwrap!(self.addresses.lock());
+        !addrs.public.is_empty()
     }
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
@@ -137,8 +153,12 @@ fn make_listener(
 
     let mut addresses = unwrap!(addresses.lock());
     addresses.add_and_notify(addrs.iter().cloned());
+    if let Some(addr) = public_addr {
+        addresses.add_public(addr);
+    }
 
     let local_addr = unwrap!(listener.local_addr());
+    // TODO(povilas): remove public address when listener gets dropped
     let _ = listener_notifier.unbounded_send((drop_rx, listener.incoming(), addrs));
 
     Ok(Listener {
@@ -249,6 +269,45 @@ mod test {
                 );
             }
         }
+
+        mod add_public {
+            use super::*;
+
+            #[test]
+            fn it_adds_public_address_to_designated_list() {
+                let mut addrs = ObservableAddresses::new();
+
+                addrs.add_public(utp_addr!("1.2.3.4:4000"));
+
+                assert!(addrs.public.contains(&utp_addr!("1.2.3.4:4000")));
+                assert_eq!(addrs.public.len(), 1);
+            }
+        }
+    }
+
+    mod listeners {
+        use super::*;
+
+        mod has_public_addrs {
+            use super::*;
+
+            #[test]
+            fn it_returns_true_when_theres_at_least_one_public_address() {
+                let core = unwrap!(Core::new());
+                let (listeners, _) = Listeners::new(&core.handle(), P2p::default());
+                unwrap!(listeners.addresses.lock()).add_public(utp_addr!("1.2.3.4:4000"));
+
+                assert!(listeners.has_public_addrs());
+            }
+
+            #[test]
+            fn it_returns_false_when_none_of_listeners_have_public_address() {
+                let core = unwrap!(Core::new());
+                let (listeners, _) = Listeners::new(&core.handle(), P2p::default());
+
+                assert!(!listeners.has_public_addrs());
+            }
+        }
     }
 
     mod make_listener {
@@ -274,6 +333,25 @@ mod test {
 
         #[test]
         fn it_adds_listener_addresses_to_the_given_address_list() {
+            let core = unwrap!(Core::new());
+            let handle = core.handle();
+
+            let (tx, _rx) = mpsc::unbounded();
+            let addresses = observable_addresses(Vec::new());
+            let listener = palistener(&handle);
+
+            let public_addr = Some(utp_addr!("1.2.3.4:4000"));
+            let _ = make_listener(listener, public_addr, Arc::clone(&addresses), tx);
+
+            let addrs = unwrap!(addresses.lock());
+            let public_addrs: Vec<PaAddr> = addrs.public.iter().cloned().collect();
+
+            let expected_addrs = vec![utp_addr!("1.2.3.4:4000")];
+            assert_that!(&public_addrs, contains(expected_addrs).exactly());
+        }
+
+        #[test]
+        fn it_adds_public_listener_addresses_to_the_given_address_list_if_one_is_given() {
             let core = unwrap!(Core::new());
             let handle = core.handle();
 

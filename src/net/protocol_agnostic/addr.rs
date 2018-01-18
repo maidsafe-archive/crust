@@ -22,6 +22,26 @@ use std::net;
 use std::str::FromStr;
 use url::{self, Url};
 
+// Macros to reduce boilerplate when constructing `PaAddr`.
+
+#[cfg(test)]
+macro_rules! utp_addr {
+    ($addr:pat) => {
+        {
+            PaAddr::Utp(addr!($addr))
+        }
+    };
+}
+
+#[cfg(test)]
+macro_rules! tcp_addr {
+    ($addr:pat) => {
+        {
+            PaAddr::Tcp(addr!($addr))
+        }
+    };
+}
+
 /// Protocol agnostic address.
 /// Let's you match the address by it's protocol.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
