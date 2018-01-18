@@ -71,9 +71,10 @@ impl ObservableAddresses {
         self.modify_and_notify(|current_addrs| current_addrs.extend(addrs));
     }
 
-    /// Removes all addresses that match with provided ones.
+    /// Removes all addresses (including public) that match with provided ones.
     fn remove_and_notify(&mut self, addrs: &HashSet<PaAddr>) {
         self.modify_and_notify(|current| current.retain(|addr| !addrs.contains(addr)));
+        self.public.retain(|addr| !addrs.contains(addr));
     }
 
     /// Modifies current addresses and notifies observers about changes.
@@ -179,7 +180,6 @@ fn make_listener(
     }
 
     let local_addr = unwrap!(listener.local_addr());
-    // TODO(povilas): remove public address when listener gets dropped
     let _ = listener_notifier.unbounded_send((drop_rx, listener.incoming(), addrs));
 
     Ok(Listener {
@@ -300,6 +300,16 @@ mod test {
             }
 
             #[test]
+            fn it_does_nothing_when_given_addresses_are_not_in_public_addr_list() {
+                let mut addrs = ObservableAddresses::new();
+                addrs.add_public(tcp_addr!("1.2.3.4:4000"));
+
+                addrs.remove_and_notify(&hashset!{tcp_addr!("1.2.3.5:5000")});
+
+                assert!(addrs.public.contains(&tcp_addr!("1.2.3.4:4000")));
+            }
+
+            #[test]
             fn it_removes_given_addresses() {
                 let mut addrs = ObservableAddresses::new();
                 addrs.add_and_notify(vec![tcp_addr!("1.2.3.4:4000"), tcp_addr!("1.2.3.5:5000")]);
@@ -310,6 +320,20 @@ mod test {
 
                 assert!(addrs.current.contains(&tcp_addr!("1.2.3.4:4000")));
                 assert!(!addrs.current.contains(&tcp_addr!("1.2.3.5:5000")));
+            }
+
+            #[test]
+            fn it_removes_given_addresses_from_public_addrs_list_too() {
+                let mut addrs = ObservableAddresses::new();
+                addrs.add_public(tcp_addr!("1.2.3.4:4000"));
+                addrs.add_public(tcp_addr!("1.2.3.5:5000"));
+
+                addrs.remove_and_notify(
+                    &hashset!{tcp_addr!("1.2.3.5:5000"), tcp_addr!("1.2.3.6:6000")},
+                );
+
+                assert!(addrs.public.contains(&tcp_addr!("1.2.3.4:4000")));
+                assert!(!addrs.public.contains(&tcp_addr!("1.2.3.5:5000")));
             }
         }
 
