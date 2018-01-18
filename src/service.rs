@@ -126,11 +126,7 @@ impl<UID: Uid> Service<UID> {
     /// who are bootstrapping to us. It can be dropped again to re-disable accepting bootstrapping
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor<UID> {
-        self.demux.bootstrap_acceptor(
-            &self.handle,
-            &self.config,
-            self.our_uid,
-        )
+        self.demux.bootstrap_acceptor(&self.config, self.our_uid)
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -175,7 +171,6 @@ impl<UID: Uid> Service<UID> {
         their_info: PubConnectionInfo<UID>,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
         self.demux.connect(
-            &self.handle,
             self.config.network_name_hash(),
             our_info,
             their_info,

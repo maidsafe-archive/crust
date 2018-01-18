@@ -41,6 +41,7 @@ pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UI
 struct DemuxInner<UID: Uid> {
     bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
     connection_handler: Mutex<HashMap<UID, UnboundedSender<ConnectMessage<UID>>>>,
+    handle: Handle,
 }
 
 impl<UID: Uid> Demux<UID> {
@@ -49,18 +50,14 @@ impl<UID: Uid> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
+            handle: handle.clone(),
         });
         handle.spawn(handle_incoming_connections(handle, incoming, &inner));
         Demux { inner: inner }
     }
 
-    pub fn bootstrap_acceptor(
-        &self,
-        handle: &Handle,
-        config: &ConfigFile,
-        our_uid: UID,
-    ) -> BootstrapAcceptor<UID> {
-        let (acceptor, peer_tx) = BootstrapAcceptor::new(handle, config, our_uid);
+    pub fn bootstrap_acceptor(&self, config: &ConfigFile, our_uid: UID) -> BootstrapAcceptor<UID> {
+        let (acceptor, peer_tx) = BootstrapAcceptor::new(&self.inner.handle, config, our_uid);
         let mut bootstrap_handler = unwrap!(self.inner.bootstrap_handler.lock());
         *bootstrap_handler = Some(peer_tx);
         acceptor
@@ -68,7 +65,6 @@ impl<UID: Uid> Demux<UID> {
 
     pub fn connect(
         &self,
-        handle: &Handle,
         name_hash: NameHash,
         our_info: PrivConnectionInfo<UID>,
         their_info: PubConnectionInfo<UID>,
@@ -82,7 +78,14 @@ impl<UID: Uid> Demux<UID> {
             peer_rx
         };
 
-        connect(handle, name_hash, our_info, their_info, config, peer_rx)
+        connect(
+            &self.inner.handle,
+            name_hash,
+            our_info,
+            their_info,
+            config,
+            peer_rx,
+        )
     }
 }
 
