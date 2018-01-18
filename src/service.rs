@@ -18,7 +18,7 @@
 
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
-use net::{self, Acceptor, BootstrapAcceptor, Listener, ServiceDiscovery};
+use net::{self, BootstrapAcceptor, Demux, Listener, Listeners, ServiceDiscovery};
 use p2p::P2p;
 use priv_prelude::*;
 
@@ -42,7 +42,8 @@ pub struct Service<UID: Uid> {
     handle: Handle,
     config: ConfigFile,
     our_uid: UID,
-    acceptor: Acceptor<UID>,
+    listeners: Listeners,
+    demux: Demux<UID>,
     p2p: P2p,
 }
 
@@ -67,12 +68,16 @@ impl<UID: Uid> Service<UID> {
     ) -> BoxFuture<Service<UID>, CrustError> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
-        let acceptor = Acceptor::new(&handle, our_uid, config.clone(), p2p.clone());
+
+        let (listeners, socket_incoming) = Listeners::new(&handle, p2p.clone());
+        let demux = Demux::new(&handle, socket_incoming);
+
         future::ok(Service {
             handle,
             config,
             our_uid,
-            acceptor,
+            listeners,
+            demux,
             p2p,
         }).into_boxed()
     }
@@ -97,7 +102,7 @@ impl<UID: Uid> Service<UID> {
         crust_user: CrustUser,
     ) -> BoxFuture<Peer<UID>, BootstrapError> {
         remove_rendezvous_servers(&self.p2p, &blacklist);
-        let (current_addrs, _) = self.acceptor.addresses();
+        let (current_addrs, _) = self.listeners.addresses();
         let ext_reachability = match crust_user {
             CrustUser::Node => {
                 ExternalReachability::Required {
@@ -121,7 +126,11 @@ impl<UID: Uid> Service<UID> {
     /// who are bootstrapping to us. It can be dropped again to re-disable accepting bootstrapping
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor<UID> {
-        self.acceptor.bootstrap_acceptor()
+        self.demux.bootstrap_acceptor(
+            &self.handle,
+            &self.config,
+            self.our_uid,
+        )
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -131,7 +140,7 @@ impl<UID: Uid> Service<UID> {
     pub fn start_listening(&self) -> BoxStream<Listener, CrustError> {
         let addrs = self.config.listen_addresses();
         let futures = addrs.iter().map(|addr| {
-            self.acceptor.listener(addr).map_err(
+            self.listeners.listener::<UID>(addr).map_err(
                 CrustError::StartListener,
             )
         });
@@ -144,14 +153,14 @@ impl<UID: Uid> Service<UID> {
     /// call connect simultaneously using each other's `PubConnectionInfo` and their own
     /// `PrivConnectionInfo`.
     pub fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
-        let (direct_addrs, _) = self.acceptor.addresses();
+        let (direct_addrs, _) = self.listeners.addresses();
         let priv_conn_info = PrivConnectionInfo {
             id: self.our_uid,
             for_direct: direct_addrs.into_iter().collect(),
             p2p_conn_info: None,
         };
 
-        if self.acceptor.has_public_addrs() {
+        if self.listeners.has_public_addrs() {
             future::ok(priv_conn_info).into_boxed()
         } else {
             self.with_p2p_connection_info(priv_conn_info)
@@ -165,24 +174,26 @@ impl<UID: Uid> Service<UID> {
         our_info: PrivConnectionInfo<UID>,
         their_info: PubConnectionInfo<UID>,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
-        self.acceptor.connect(
+        self.demux.connect(
+            &self.handle,
             self.config.network_name_hash(),
             our_info,
             their_info,
+            &self.config,
         )
     }
 
     /// The returned `ServiceDiscovery` advertises the existence of this peer to any other peers on
     /// the local network (via udp broadcast).
     pub fn start_service_discovery(&self) -> io::Result<ServiceDiscovery> {
-        let (current_addrs, addrs_rx) = self.acceptor.addresses();
+        let (current_addrs, addrs_rx) = self.listeners.addresses();
         ServiceDiscovery::new(&self.handle, &self.config, current_addrs, addrs_rx)
     }
 
     /// Return the set of all addresses that we are currently listening for incoming connections
     /// on. Also returns a channel that can be used to monitor when this set changes.
     pub fn addresses(&self) -> (HashSet<PaAddr>, UnboundedReceiver<HashSet<PaAddr>>) {
-        self.acceptor.addresses()
+        self.listeners.addresses()
     }
 
     /// Get our ID.
