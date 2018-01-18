@@ -68,8 +68,16 @@ impl ObservableAddresses {
     where
         T: IntoIterator<Item = PaAddr>,
     {
+        self.modify_and_notify(|current_addrs| current_addrs.extend(addrs));
+    }
+
+    /// Modifies current addresses and notifies observers about changes.
+    fn modify_and_notify<F>(&mut self, modifier: F)
+    where
+        F: FnOnce(&mut HashSet<PaAddr>),
+    {
         let mut current = mem::replace(&mut self.current, HashSet::new());
-        current.extend(addrs);
+        modifier(&mut current);
         self.observers.retain(|observer| {
             observer.unbounded_send(current.clone()).is_ok()
         });
@@ -202,12 +210,7 @@ impl Stream for SocketIncoming {
             }
             let (_, _, addrs) = self.listeners.swap_remove(i);
             let mut addresses = unwrap!(self.addresses.lock());
-            let mut current = mem::replace(&mut addresses.current, HashSet::new());
-            current.retain(|addr| !addrs.contains(addr));
-            addresses.observers.retain(|observer| {
-                observer.unbounded_send(current.clone()).is_ok()
-            });
-            addresses.current = current;
+            addresses.modify_and_notify(|current| current.retain(|addr| !addrs.contains(addr)));
         }
         Ok(Async::NotReady)
     }
