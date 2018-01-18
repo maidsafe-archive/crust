@@ -33,7 +33,7 @@ pub struct Listener {
 pub struct Listeners {
     handle: Handle,
     listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
-    addresses: Arc<Mutex<ObservableAddresses>>,
+    addresses: SharedObservableAddresses,
     p2p: P2p,
 }
 
@@ -45,6 +45,9 @@ struct ObservableAddresses {
     observers: Vec<UnboundedSender<HashSet<PaAddr>>>,
 }
 
+/// Addresses that can easily be shared across different futures.
+type SharedObservableAddresses = Arc<Mutex<ObservableAddresses>>;
+
 impl ObservableAddresses {
     fn new() -> ObservableAddresses {
         ObservableAddresses {
@@ -52,6 +55,11 @@ impl ObservableAddresses {
             public: HashSet::new(),
             observers: Vec::new(),
         }
+    }
+
+    /// Constructs `ObservableAddresses` that can be shared among futures.
+    fn shared() -> SharedObservableAddresses {
+        Arc::new(Mutex::new(Self::new()))
     }
 
     /// Adds given addresses to the addresses list.
@@ -79,14 +87,14 @@ impl ObservableAddresses {
 pub struct SocketIncoming {
     listeners_rx: UnboundedReceiver<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     listeners: Vec<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
-    addresses: Arc<Mutex<ObservableAddresses>>,
+    addresses: SharedObservableAddresses,
 }
 
 impl Listeners {
     /// Create an (empty) set of listeners and a handle to its incoming stream of connections.
     pub fn new(handle: &Handle, p2p: P2p) -> (Listeners, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
-        let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+        let addresses = ObservableAddresses::shared();
         let listeners = Listeners {
             handle: handle.clone(),
             listeners_tx: tx,
@@ -142,7 +150,7 @@ impl Listeners {
 fn make_listener(
     listener: PaListener,
     public_addr: Option<PaAddr>,
-    addresses: Arc<Mutex<ObservableAddresses>>,
+    addresses: SharedObservableAddresses,
     listener_notifier: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
 ) -> io::Result<Listener> {
     let mut addrs = HashSet::new();
@@ -314,11 +322,11 @@ mod test {
         use super::*;
 
         /// Helper to reduce boilerplate for addresses construction.
-        fn observable_addresses<T>(addrs: T) -> Arc<Mutex<ObservableAddresses>>
+        fn observable_addresses<T>(addrs: T) -> SharedObservableAddresses
         where
             T: IntoIterator<Item = SocketAddr>,
         {
-            let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+            let addresses = ObservableAddresses::shared();
             {
                 let mut addreses = unwrap!(addresses.lock());
                 addreses.add_and_notify(addrs.into_iter().map(PaAddr::Utp));
@@ -376,7 +384,7 @@ mod test {
             let handle = core.handle();
 
             let (tx, rx) = mpsc::unbounded();
-            let addresses = Arc::new(Mutex::new(ObservableAddresses::new()));
+            let addresses = ObservableAddresses::shared();
 
             let listener = palistener(&handle);
             let local_addrs = unwrap!(listener.expanded_local_addrs());
