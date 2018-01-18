@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::listener::{Listener, Listeners};
+pub use self::listener::{Acceptor, Listener};
 pub use self::peer::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError, ConnectError,
                      ConnectHandshakeError, Demux, ExternalReachability, P2pConnectionInfo, Peer,
                      PeerError, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,

@@ -18,7 +18,7 @@
 
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
-use net::{self, BootstrapAcceptor, Demux, Listener, Listeners, ServiceDiscovery};
+use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use p2p::P2p;
 use priv_prelude::*;
 
@@ -42,7 +42,7 @@ pub struct Service<UID: Uid> {
     handle: Handle,
     config: ConfigFile,
     our_uid: UID,
-    listeners: Listeners,
+    listeners: Acceptor,
     demux: Demux<UID>,
     p2p: P2p,
 }
@@ -69,7 +69,7 @@ impl<UID: Uid> Service<UID> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
 
-        let (listeners, socket_incoming) = Listeners::new(&handle, p2p.clone());
+        let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone());
         let demux = Demux::new(&handle, socket_incoming);
 
         future::ok(Service {

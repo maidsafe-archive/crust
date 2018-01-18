@@ -29,8 +29,8 @@ pub struct Listener {
     local_addr: PaAddr,
 }
 
-/// A set of listeners.
-pub struct Listeners {
+/// Manages listeners that accept connections.
+pub struct Acceptor {
     handle: Handle,
     listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: SharedObservableAddresses,
@@ -97,19 +97,19 @@ impl ObservableAddresses {
     }
 }
 
-/// Created in tandem with a `Listeners`, represents the incoming stream of connections.
+/// Created in tandem with a `Acceptor`, represents the incoming stream of connections.
 pub struct SocketIncoming {
     listeners_rx: UnboundedReceiver<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     listeners: Vec<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: SharedObservableAddresses,
 }
 
-impl Listeners {
-    /// Create an (empty) set of listeners and a handle to its incoming stream of connections.
-    pub fn new(handle: &Handle, p2p: P2p) -> (Listeners, SocketIncoming) {
+impl Acceptor {
+    /// Create connection acceptor and a handle to its incoming stream of connections.
+    pub fn new(handle: &Handle, p2p: P2p) -> (Acceptor, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
         let addresses = ObservableAddresses::shared();
-        let listeners = Listeners {
+        let acceptor = Acceptor {
             handle: handle.clone(),
             listeners_tx: tx,
             addresses: Arc::clone(&addresses),
@@ -120,7 +120,7 @@ impl Listeners {
             listeners: Vec::new(),
             addresses: addresses,
         };
-        (listeners, incoming)
+        (acceptor, incoming)
     }
 
     /// All known addresses we may be contactable on. Includes global, NAT-mapped addresses.
@@ -159,7 +159,7 @@ impl Listeners {
 }
 
 /// Constructs `Listener` from `PaListener`.
-/// Uses `addresses` to notify `Listeners` about new addresses `Crust` is listening on.
+/// Uses `addresses` to notify `Acceptor` about new addresses `Crust` is listening on.
 #[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn make_listener(
     listener: PaListener,
@@ -352,7 +352,7 @@ mod test {
         }
     }
 
-    mod listeners {
+    mod acceptor {
         use super::*;
 
         mod has_public_addrs {
@@ -361,18 +361,18 @@ mod test {
             #[test]
             fn it_returns_true_when_theres_at_least_one_public_address() {
                 let core = unwrap!(Core::new());
-                let (listeners, _) = Listeners::new(&core.handle(), P2p::default());
-                unwrap!(listeners.addresses.lock()).add_public(utp_addr!("1.2.3.4:4000"));
+                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default());
+                unwrap!(acceptor.addresses.lock()).add_public(utp_addr!("1.2.3.4:4000"));
 
-                assert!(listeners.has_public_addrs());
+                assert!(acceptor.has_public_addrs());
             }
 
             #[test]
             fn it_returns_false_when_none_of_listeners_have_public_address() {
                 let core = unwrap!(Core::new());
-                let (listeners, _) = Listeners::new(&core.handle(), P2p::default());
+                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default());
 
-                assert!(!listeners.has_public_addrs());
+                assert!(!acceptor.has_public_addrs());
             }
         }
     }
@@ -470,10 +470,10 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
 
-        let (listeners, socket_incoming) = Listeners::new(&handle, P2p::default());
+        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default());
 
         let future = {
-            listeners
+            acceptor
             .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
             .map_err(|e| panic!(e))
             .and_then(move |listener0| {
@@ -483,10 +483,10 @@ mod test {
                     .into_iter()
                     .collect::<HashSet<_>>()
                 };
-                let (addrs, addrs_rx) = listeners.addresses();
+                let (addrs, addrs_rx) = acceptor.addresses();
                 assert!(addrs0.is_subset(&addrs));
 
-                listeners
+                acceptor
                 .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
@@ -497,10 +497,10 @@ mod test {
                         .collect::<HashSet<_>>()
                     };
                     drop(listener0);
-                    (addrs_rx, listeners, listener1, addrs0, addrs1)
+                    (addrs_rx, acceptor, listener1, addrs0, addrs1)
                 })
             })
-            .and_then(|(addrs_rx, listeners, listener1, addrs0, addrs1)| {
+            .and_then(|(addrs_rx, acceptor, listener1, addrs0, addrs1)| {
                 drop(listener1);
 
                 let addrs0_c0 = addrs0.clone();
@@ -532,7 +532,7 @@ mod test {
                     let addrs = unwrap!(addrs_opt);
                     assert!(!addrs0_c2.is_subset(&addrs));
                     assert!(!addrs1_c2.is_subset(&addrs));
-                    drop(listeners);
+                    drop(acceptor);
 
                     addrs_rx
                     .into_future()
@@ -565,28 +565,28 @@ mod test {
         let handle = core.handle();
         let handle0 = handle.clone();
 
-        let (listeners, socket_incoming) = Listeners::new(&handle, P2p::default());
+        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default());
 
         let config = unwrap!(ConfigFile::new_temporary());
         let future = {
-            listeners
+            acceptor
                 .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
                 .map_err(|e| panic!(e))
                 .map(move |listener| {
                     mem::forget(listener);
-                    listeners
+                    acceptor
                 })
-                .and_then(move |listeners| {
-                    listeners
+                .and_then(move |acceptor| {
+                    acceptor
                         .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);
-                            listeners
+                            acceptor
                         })
                 })
-                .map(move |listeners| {
-                    let (mut addrs, _) = listeners.addresses();
+                .map(move |acceptor| {
+                    let (mut addrs, _) = acceptor.addresses();
                     assert!(addrs.len() >= 2);
 
                     addrs.retain(|addr| !util::ip_addr_is_global(&addr.ip()));
@@ -613,7 +613,7 @@ mod test {
                         future::join_all(connectors)
                     .and_then(move |_| Timeout::new(Duration::from_secs(1), &handle))
                     .map_err(|e| panic!(e))
-                    .map(|()| drop(listeners))
+                    .map(|()| drop(acceptor))
                     };
 
                     handle.spawn(f);
