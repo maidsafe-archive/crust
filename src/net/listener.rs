@@ -71,6 +71,11 @@ impl ObservableAddresses {
         self.modify_and_notify(|current_addrs| current_addrs.extend(addrs));
     }
 
+    /// Removes all addresses that match with provided ones.
+    fn remove_and_notify(&mut self, addrs: &HashSet<PaAddr>) {
+        self.modify_and_notify(|current| current.retain(|addr| !addrs.contains(addr)));
+    }
+
     /// Modifies current addresses and notifies observers about changes.
     fn modify_and_notify<F>(&mut self, modifier: F)
     where
@@ -210,7 +215,7 @@ impl Stream for SocketIncoming {
             }
             let (_, _, addrs) = self.listeners.swap_remove(i);
             let mut addresses = unwrap!(self.addresses.lock());
-            addresses.modify_and_notify(|current| current.retain(|addr| !addrs.contains(addr)));
+            addresses.remove_and_notify(&addrs);
         }
         Ok(Async::NotReady)
     }
@@ -278,6 +283,33 @@ mod test {
                         PaAddr::Tcp(addr!("2.3.4.6:1234")),
                     ]).exactly()
                 );
+            }
+        }
+
+        mod remove_and_notify {
+            use super::*;
+
+            #[test]
+            fn it_does_nothing_when_given_addresses_are_not_in_our_list() {
+                let mut addrs = ObservableAddresses::new();
+                addrs.add_and_notify(vec![tcp_addr!("1.2.3.4:4000")]);
+
+                addrs.remove_and_notify(&hashset!{tcp_addr!("1.2.3.5:5000")});
+
+                assert!(addrs.current.contains(&tcp_addr!("1.2.3.4:4000")));
+            }
+
+            #[test]
+            fn it_removes_given_addresses() {
+                let mut addrs = ObservableAddresses::new();
+                addrs.add_and_notify(vec![tcp_addr!("1.2.3.4:4000"), tcp_addr!("1.2.3.5:5000")]);
+
+                addrs.remove_and_notify(
+                    &hashset!{tcp_addr!("1.2.3.5:5000"), tcp_addr!("1.2.3.6:6000")},
+                );
+
+                assert!(addrs.current.contains(&tcp_addr!("1.2.3.4:4000")));
+                assert!(!addrs.current.contains(&tcp_addr!("1.2.3.5:5000")));
             }
         }
 
