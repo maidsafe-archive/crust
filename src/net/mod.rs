@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::listener::Listener;
-pub use self::peer::{Acceptor, BootstrapAcceptError, BootstrapAcceptor, BootstrapError,
-                     ConnectError, ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
-                     Peer, PeerError, PrivConnectionInfo, PubConnectionInfo,
-                     RendezvousConnectError, SingleConnectionError, Uid, bootstrap};
+pub use self::listener::{Acceptor, Listener};
+pub use self::peer::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError, ConnectError,
+                     ConnectHandshakeError, Demux, ExternalReachability, P2pConnectionInfo, Peer,
+                     PeerError, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
+                     SingleConnectionError, Uid, bootstrap};
 pub use self::protocol_agnostic::{PaAddr, PaIncoming, PaListener, PaRendezvousConnectError,
                                   PaStream, UtpRendezvousConnectError};
 pub use self::service_discovery::ServiceDiscovery;
