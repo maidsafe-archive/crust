@@ -86,8 +86,8 @@ pub fn bootstrap<UID: Uid>(
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         let mut i = 0;
         Ok(
-            stream::iter_ok(peers)
-                .chain(sd_peers)
+            sd_peers
+                .chain(stream::iter_ok(peers))
                 .filter(move |addr| !blacklist.contains(addr))
                 .map(move |addr| {
                     // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to
