@@ -19,7 +19,6 @@ use bytes::BytesMut;
 use futures::stream::{SplitSink, SplitStream};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
-use maidsafe_utilities::serialisation::{SerialisationError, deserialise, serialise_into};
 use priv_prelude::*;
 use tokio_io;
 use tokio_io::codec::length_delimited::{self, Framed};
@@ -46,11 +45,15 @@ quick_error! {
             cause(e)
             from()
         }
-        Deserialisation(e: SerialisationError) {
-            description("Error deserialising message from socket")
-            display("Error deserialising message from socket")
+        Encrypt(e: CryptoError) {
+            description("Error encrypting message")
+            display("Error encrypting message: {}", e)
             cause(e)
-            from()
+        }
+        Decrypt(e: CryptoError) {
+            description("Error decrypting message")
+            display("Error decrypting message: {}", e)
+            cause(e)
         }
     }
 }
@@ -78,6 +81,7 @@ pub struct Inner {
     stream_rx: Option<SplitStream<Framed<PaStream>>>,
     write_tx: UnboundedSender<TaskMsg>,
     peer_addr: PaAddr,
+    crypto_ctx: CryptoContext,
 }
 
 enum TaskMsg {
@@ -95,7 +99,12 @@ struct SocketTask {
 
 impl<M: 'static> Socket<M> {
     /// Wraps a `PaStream` and turns it into a `Socket`.
-    pub fn wrap_pa(handle: &Handle, stream: PaStream, peer_addr: PaAddr) -> Socket<M> {
+    pub fn wrap_pa(
+        handle: &Handle,
+        stream: PaStream,
+        peer_addr: PaAddr,
+        crypto_ctx: CryptoContext,
+    ) -> Socket<M> {
         const MAX_HEADER_SIZE: usize = 8;
         let framed = {
             length_delimited::Builder::new()
@@ -120,6 +129,7 @@ impl<M: 'static> Socket<M> {
             stream_rx: Some(stream_rx),
             write_tx: write_tx,
             peer_addr: peer_addr,
+            crypto_ctx,
         };
         Socket {
             inner: Some(inner),
@@ -169,7 +179,9 @@ where
                 Some(data) => data,
                 None => return Ok(Async::Ready(None)),
             };
-            let msg = deserialise(&data[..])?;
+            let msg = inner.crypto_ctx.decrypt(&data).map_err(
+                SocketError::Decrypt,
+            )?;
             Ok(Async::Ready(Some(msg)))
         } else {
             Ok(Async::NotReady)
@@ -194,10 +206,8 @@ where
             Some(ref mut inner) => inner,
             None => return Err(SocketError::Destroyed),
         };
-        let mut data = Vec::with_capacity(MAX_PAYLOAD_SIZE);
-        unwrap!(serialise_into(&msg, &mut data));
-        data.shrink_to_fit();
-        let data = BytesMut::from(data);
+
+        let data = inner.crypto_ctx.encrypt(&msg).map_err(SocketError::Encrypt)?;
         let _ = inner.write_tx.unbounded_send(TaskMsg::Send(priority, data));
         Ok(AsyncSink::Ready)
     }
@@ -335,7 +345,12 @@ mod test {
                 let f0 = PaStream::direct_connect(&addr, &handle, &config)
                     .map_err(SocketError::from)
                     .and_then(move |stream| {
-                        let socket = Socket::<Vec<u8>>::wrap_pa(&handle0, stream, addr);
+                        let socket = Socket::<Vec<u8>>::wrap_pa(
+                            &handle0,
+                            stream,
+                            addr,
+                            CryptoContext::null(),
+                        );
                         socket
                             .send_all(stream::iter_ok::<_, SocketError>(msgs_send))
                             .map(|(_, _)| ())
@@ -349,7 +364,12 @@ mod test {
                         .map_err(|(err, _)| panic!("incoming error: {}", err))
                         .and_then(move |(stream_opt, _)| {
                             let (stream, addr) = unwrap!(stream_opt);
-                            let socket = Socket::<Vec<u8>>::wrap_pa(&handle1, stream, addr);
+                            let socket = Socket::<Vec<u8>>::wrap_pa(
+                                &handle1,
+                                stream,
+                                addr,
+                                CryptoContext::null(),
+                            );
                             socket.take(num_msgs as u64).collect().map(
                                 move |msgs_recv| {
                                     assert_eq!(msgs_recv, msgs);

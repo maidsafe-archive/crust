@@ -150,11 +150,13 @@ pub fn connect<UID: Uid>(
 
     let direct_connections = connect_directly(handle, their_info.for_direct, &config);
     let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
+    let crypto_ctx = CryptoContext::null();
     let all_outgoing_connections = handshake_outgoing_connections(
         handle,
         direct_connections.select(p2p_connection.into_stream()),
         our_connect_request.clone(),
         their_id,
+        crypto_ctx,
     );
 
     let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
@@ -275,6 +277,7 @@ fn handshake_outgoing_connections<UID: Uid, S>(
     connections: S,
     our_connect_request: ConnectRequest<UID>,
     their_id: UID,
+    crypto_ctx: CryptoContext,
 ) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
 where
     S: Stream<Item = PaStream, Error = SingleConnectionError> + 'static,
@@ -284,7 +287,12 @@ where
     connections
         .and_then(move |stream| {
             let peer_addr = stream.peer_addr()?;
-            Ok(Socket::wrap_pa(&handle_copy, stream, peer_addr))
+            Ok(Socket::wrap_pa(
+                &handle_copy,
+                stream,
+                peer_addr,
+                crypto_ctx.clone(),
+            ))
         })
         .and_then(move |socket| {
             socket

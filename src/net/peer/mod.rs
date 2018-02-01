@@ -26,7 +26,6 @@ mod connect;
 mod peer_message;
 mod uid;
 
-use maidsafe_utilities::serialisation::SerialisationError;
 use priv_prelude::*;
 
 #[cfg(not(test))]
@@ -74,15 +73,19 @@ quick_error! {
             cause(e)
             from()
         }
-        Deserialisation(e: SerialisationError) {
-            description("Error deserialising message from peer")
-            display("Error deserialising message from peer: {}", e)
-            cause(e)
-            from()
-        }
         InactivityTimeout {
             description("connection to peer timed out")
             display("connection to peer timed out after {}s", INACTIVITY_TIMEOUT_MS / 1000)
+        }
+        Encrypt(e: CryptoError) {
+            description("Error encrypting message to peer")
+            display("Error encrypting message to peer: {}", e)
+            cause(e)
+        }
+        Decrypt(e: CryptoError) {
+            description("Error decrypting message from peer")
+            display("Error decrypting message from peer: {}", e)
+            cause(e)
         }
     }
 }
@@ -92,7 +95,8 @@ impl From<SocketError> for PeerError {
         match e {
             SocketError::Io(e) => PeerError::Io(e),
             SocketError::Destroyed => PeerError::Destroyed,
-            SocketError::Deserialisation(e) => PeerError::Deserialisation(e),
+            SocketError::Encrypt(e) => PeerError::Encrypt(e),
+            SocketError::Decrypt(e) => PeerError::Decrypt(e),
         }
     }
 }

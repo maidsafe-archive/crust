@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_utilities::serialisation::SerialisationError;
 use net::peer;
 use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
                                             HandshakeMessage};
@@ -52,11 +51,6 @@ quick_error! {
             cause(e)
             from()
         }
-        Deserialisation(e: SerialisationError) {
-            description("error deserializing response from peer")
-            display("error deserializing response from peer: {}", e)
-            cause(e)
-        }
         InvalidResponse {
             description("Invalid response from peer")
         }
@@ -66,6 +60,16 @@ quick_error! {
         TimedOut {
             description("timed out performing handshake")
         }
+        Encrypt(e: CryptoError) {
+            description("Error encrypting request to peer")
+            display("Error encrypting request to peer: {}", e)
+            cause(e)
+        }
+        Decrypt(e: CryptoError) {
+            description("Error decrypting message from peer")
+            display("Error decrypting message from peer: {}", e)
+            cause(e)
+        }
     }
 }
 
@@ -74,7 +78,8 @@ impl From<SocketError> for ConnectHandshakeError {
         match e {
             SocketError::Io(e) => ConnectHandshakeError::Io(e),
             SocketError::Destroyed => ConnectHandshakeError::Disconnected,
-            SocketError::Deserialisation(e) => ConnectHandshakeError::Deserialisation(e),
+            SocketError::Encrypt(e) => ConnectHandshakeError::Encrypt(e),
+            SocketError::Decrypt(e) => ConnectHandshakeError::Decrypt(e),
         }
     }
 }
@@ -92,7 +97,9 @@ pub fn try_peer<UID: Uid>(
     let handle1 = handle.clone();
     let addr = *addr;
     PaStream::direct_connect(&addr, handle, config)
-        .map(move |stream| Socket::wrap_pa(&handle0, stream, addr))
+        .map(move |stream| {
+            Socket::wrap_pa(&handle0, stream, addr, CryptoContext::null())
+        })
         .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
