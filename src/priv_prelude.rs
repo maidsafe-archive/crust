@@ -19,9 +19,10 @@
 //! modules using `use priv_prelude::*`
 
 
-pub use bytes::Bytes;
+pub use bytes::{Bytes, BytesMut};
 pub use common::{CrustUser, HASH_SIZE, NameHash};
 pub use config::ConfigFile;
+pub use crypto::{CryptoContext, CryptoError};
 pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
