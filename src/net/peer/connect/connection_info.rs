@@ -20,6 +20,7 @@ use future_utils::bi_channel::UnboundedBiChannel;
 use futures::sync::oneshot;
 
 use priv_prelude::*;
+use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 
 #[derive(Debug)]
 /// Connection information specifically used for rendezvous connections carried by `p2p` crate.
@@ -44,6 +45,10 @@ pub struct PrivConnectionInfo<UID> {
     // that P2P connections should not be attempted.
     #[doc(hidden)]
     pub p2p_conn_info: Option<P2pConnectionInfo>,
+    #[doc(hidden)]
+    pub our_pk: PublicKey,
+    #[doc(hidden)]
+    pub our_sk: SecretKey,
 }
 
 /// Contact info used to connect to another peer.
@@ -55,6 +60,8 @@ pub struct PubConnectionInfo<UID> {
     pub for_direct: Vec<PaAddr>,
     #[doc(hidden)]
     pub p2p_conn_info: Option<Vec<u8>>,
+    #[doc(hidden)]
+    pub pub_key: PublicKey,
 }
 
 impl<UID: Uid> PubConnectionInfo<UID> {
@@ -75,6 +82,7 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
             for_direct: self.for_direct.clone(),
             id: self.id,
             p2p_conn_info,
+            pub_key: self.our_pk,
         }
     }
 }
@@ -85,6 +93,7 @@ mod tests {
 
     mod priv_connection_info {
         use super::*;
+        use rust_sodium::crypto::box_::gen_keypair;
 
         mod to_pub_connection_info {
             use super::*;
@@ -93,10 +102,13 @@ mod tests {
 
             #[test]
             fn when_p2p_conn_info_is_none_it_sets_none_in_public_conn_info_too() {
+                let (our_pk, our_sk) = gen_keypair();
                 let priv_conn_info = PrivConnectionInfo {
                     id: util::random_id(),
                     for_direct: vec![],
                     p2p_conn_info: None,
+                    our_pk,
+                    our_sk,
                 };
 
                 let pub_conn_info = priv_conn_info.to_pub_connection_info();
@@ -113,10 +125,13 @@ mod tests {
                     rendezvous_channel,
                     connection_rx,
                 });
+                let (our_pk, our_sk) = gen_keypair();
                 let priv_conn_info = PrivConnectionInfo {
                     id: util::random_id(),
                     for_direct: vec![],
                     p2p_conn_info,
+                    our_pk,
+                    our_sk,
                 };
 
                 let pub_conn_info = priv_conn_info.to_pub_connection_info();
