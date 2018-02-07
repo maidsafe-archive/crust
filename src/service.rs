@@ -21,6 +21,7 @@ use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use p2p::P2p;
 use priv_prelude::*;
+use rust_sodium::crypto::box_::{PublicKey, SecretKey, gen_keypair};
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 
@@ -45,6 +46,8 @@ pub struct Service<UID: Uid> {
     listeners: Acceptor,
     demux: Demux<UID>,
     p2p: P2p,
+    our_pk: PublicKey,
+    our_sk: SecretKey,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -72,6 +75,7 @@ impl<UID: Uid> Service<UID> {
         let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone());
         let demux = Demux::new(&handle, socket_incoming);
 
+        let (our_pk, our_sk) = gen_keypair();
         future::ok(Service {
             handle,
             config,
@@ -79,6 +83,8 @@ impl<UID: Uid> Service<UID> {
             listeners,
             demux,
             p2p,
+            our_pk,
+            our_sk,
         }).into_boxed()
     }
 
@@ -154,6 +160,8 @@ impl<UID: Uid> Service<UID> {
             id: self.our_uid,
             for_direct: direct_addrs.into_iter().collect(),
             p2p_conn_info: None,
+            our_pk: self.our_pk,
+            our_sk: self.our_sk.clone(),
         };
 
         if self.listeners.has_public_addrs() {

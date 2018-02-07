@@ -124,7 +124,8 @@ fn handle_incoming_connections<UID: Uid>(
     incoming
         .map_err(IncomingError::Io)
         .for_each(move |(stream, addr)| {
-            let socket: Socket<HandshakeMessage<UID>> = Socket::wrap_pa(&handle, stream, addr);
+            let socket: Socket<HandshakeMessage<UID>> =
+                Socket::wrap_pa(&handle, stream, addr, CryptoContext::null());
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, socket)
         })

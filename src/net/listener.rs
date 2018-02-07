@@ -599,7 +599,12 @@ mod test {
                             PaStream::direct_connect(&addr, &handle, &config)
                                 .map_err(|e| panic!(e))
                                 .map(move |stream| {
-                                    Socket::<PaAddr>::wrap_pa(&handle0, stream, addr)
+                                    Socket::<PaAddr>::wrap_pa(
+                                        &handle0,
+                                        stream,
+                                        addr,
+                                        CryptoContext::null(),
+                                    )
                                 })
                                 .and_then(move |socket| socket.send((0, addr)))
                                 .map(|_socket| ())
@@ -623,7 +628,12 @@ mod test {
                 .join({
                     socket_incoming
                         .map(move |(stream, addr)| {
-                            let socket = Socket::<PaAddr>::wrap_pa(&handle0, stream, addr);
+                            let socket = Socket::<PaAddr>::wrap_pa(
+                                &handle0,
+                                stream,
+                                addr,
+                                CryptoContext::null(),
+                            );
                             socket
                                 .change_message_type::<PaAddr>()
                                 .into_future()
