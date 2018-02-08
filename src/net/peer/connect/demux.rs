@@ -24,6 +24,7 @@ use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use net::protocol_agnostic::AcceptError;
 use priv_prelude::*;
+use rust_sodium::crypto::box_::SecretKey;
 use std::sync::{Arc, Mutex};
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
@@ -61,8 +62,14 @@ impl<UID: Uid> Demux<UID> {
         Demux { inner: inner }
     }
 
-    pub fn bootstrap_acceptor(&self, config: &ConfigFile, our_uid: UID) -> BootstrapAcceptor<UID> {
-        let (acceptor, peer_tx) = BootstrapAcceptor::new(&self.inner.handle, config, our_uid);
+    pub fn bootstrap_acceptor(
+        &self,
+        config: &ConfigFile,
+        our_uid: UID,
+        our_sk: SecretKey,
+    ) -> BootstrapAcceptor<UID> {
+        let (acceptor, peer_tx) =
+            BootstrapAcceptor::new(&self.inner.handle, config, our_uid, our_sk);
         let mut bootstrap_handler = unwrap!(self.inner.bootstrap_handler.lock());
         *bootstrap_handler = Some(peer_tx);
         acceptor

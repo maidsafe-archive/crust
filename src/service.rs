@@ -129,6 +129,8 @@ impl<UID: Uid> Service<UID> {
             blacklist,
             use_service_discovery,
             &self.config,
+            self.our_pk,
+            self.our_sk.clone(),
         )
     }
 
@@ -136,7 +138,11 @@ impl<UID: Uid> Service<UID> {
     /// who are bootstrapping to us. It can be dropped again to re-disable accepting bootstrapping
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor<UID> {
-        self.demux.bootstrap_acceptor(&self.config, self.our_uid)
+        self.demux.bootstrap_acceptor(
+            &self.config,
+            self.our_uid,
+            self.our_sk.clone(),
+        )
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured

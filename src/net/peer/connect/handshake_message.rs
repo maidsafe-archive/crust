@@ -23,6 +23,7 @@ pub struct BootstrapRequest<UID> {
     pub uid: UID,
     pub name_hash: NameHash,
     pub ext_reachability: ExternalReachability,
+    pub their_pk: PublicKey,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
