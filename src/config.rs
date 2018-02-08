@@ -309,7 +309,7 @@ impl PeerInfo {
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct ConfigSettings {
     /// Direct contacts one should connect to
-    pub hard_coded_contacts: Vec<PaAddr>,
+    pub hard_coded_contacts: Vec<PeerInfo>,
     /// Addresses that we listen on by default.
     pub listen_addresses: Vec<PaAddr>,
     /// Force usage of `tcp_acceptor_port` as our router mapped port. Normally if there is a port

@@ -251,9 +251,10 @@ fn configure_nat_traversal(config: &ConfigFile) -> P2p {
 }
 
 fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
-    let stun_servers = &config.read().hard_coded_contacts;
+    let hard_coded_contacts = &config.read().hard_coded_contacts;
+    let stun_servers = hard_coded_contacts.iter().map(|info| info.addr);
     for addr in stun_servers {
-        match *addr {
+        match addr {
             PaAddr::Tcp(ref addr) => p2p.add_tcp_traversal_server(addr),
             PaAddr::Utp(ref addr) => p2p.add_udp_traversal_server(addr),
         }
@@ -275,14 +276,16 @@ mod tests {
 
     mod set_rendezvous_servers {
         use super::*;
+        use config::PeerInfo;
 
         #[test]
         fn it_sets_hard_coded_tcp_contacts_as_rendezvous_servers() {
             let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts = vec![
-                PaAddr::Tcp(addr!("1.2.3.4:4000")),
-                PaAddr::Tcp(addr!("1.2.3.5:5000")),
-            ];
+            unwrap!(config.write()).hard_coded_contacts =
+                vec![
+                    PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")),
+                    PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")),
+                ];
             let p2p = P2p::default();
 
             set_rendezvous_servers(&p2p, &config);
@@ -295,10 +298,11 @@ mod tests {
         #[test]
         fn it_sets_hard_coded_utp_contacts_as_rendezvous_servers() {
             let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts = vec![
-                PaAddr::Utp(addr!("1.2.3.4:4000")),
-                PaAddr::Utp(addr!("1.2.3.5:5000")),
-            ];
+            unwrap!(config.write()).hard_coded_contacts =
+                vec![
+                    PeerInfo::with_rand_key(utp_addr!("1.2.3.4:4000")),
+                    PeerInfo::with_rand_key(utp_addr!("1.2.3.5:5000")),
+                ];
             let p2p = P2p::default();
 
             set_rendezvous_servers(&p2p, &config);
