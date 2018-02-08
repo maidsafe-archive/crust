@@ -249,6 +249,12 @@ impl<UID: Uid> Service<UID> {
             .infallible()
             .into_boxed()
     }
+
+    /// Returns service public key.
+    #[cfg(test)]
+    pub fn public_key(&self) -> PublicKey {
+        self.our_pk
+    }
 }
 
 fn configure_nat_traversal(config: &ConfigFile) -> P2p {

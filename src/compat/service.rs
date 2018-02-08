@@ -24,6 +24,8 @@ use log::LogLevel;
 use net::{ServiceDiscovery, service_discovery};
 
 use priv_prelude::*;
+#[cfg(test)]
+use rust_sodium::crypto::box_::PublicKey;
 use std;
 
 pub trait FnBox<UID: Uid> {
@@ -456,6 +458,18 @@ impl<UID: Uid> Service<UID> {
                         })
                 };
                 handle.spawn(f);
+            },
+        ));
+        unwrap!(rx.recv())
+    }
+
+    /// Returns public key.
+    #[cfg(test)]
+    pub fn public_key(&self) -> PublicKey {
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.event_loop.send(Box::new(
+            move |state: &mut ServiceState<UID>| {
+                unwrap!(tx.send(state.service.public_key()));
             },
         ));
         unwrap!(rx.recv())
