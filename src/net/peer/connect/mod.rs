@@ -150,7 +150,7 @@ pub fn connect<UID: Uid>(
 
     let direct_connections = connect_directly(handle, their_info.for_direct, &config);
     let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
-    let crypto_ctx = CryptoContext::new(their_info.pub_key, our_info.our_sk);
+    let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk);
     let all_outgoing_connections = handshake_outgoing_connections(
         handle,
         direct_connections.select(p2p_connection.into_stream()),

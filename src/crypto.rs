@@ -18,7 +18,8 @@
 use maidsafe_utilities::serialisation::{SerialisationError, deserialise, serialise};
 use priv_prelude::*;
 use rust_sodium::crypto::box_::{PublicKey, SecretKey};
-use secure_serialisation::{Error as SecureSerialiseError, deserialise as secure_deserialise,
+use secure_serialisation::{Error as SecureSerialiseError, anonymous_deserialise,
+                           anonymous_serialise, deserialise as secure_deserialise,
                            serialise as secure_serialise};
 
 quick_error! {
@@ -43,46 +44,74 @@ quick_error! {
             description("Error decrypting message")
             display("Error decrypting message: {:?}", e)
         }
+        InvalidOperation(msg: String) {
+            description("Invalid crypto operation")
+            display("Invalid crypto operation: {}", msg)
+        }
     }
 }
 
 /// Simplifies encryption/decryption by holding the necessary context - encryption keys.
 /// Allows "null" encryption where data is only serialized. See: null object pattern.
 #[derive(Clone, Debug)]
-pub struct CryptoContext {
-    inner: Option<Inner>,
-}
-
-#[derive(Clone, Debug)]
-struct Inner {
-    their_pk: PublicKey,
-    our_sk: SecretKey,
+pub enum CryptoContext {
+    Null,
+    Authenticated {
+        their_pk: PublicKey,
+        our_sk: SecretKey,
+    },
+    AnonymousDecrypt {
+        our_pk: PublicKey,
+        our_sk: SecretKey,
+    },
+    AnonymousEncrypt { their_pk: PublicKey },
 }
 
 impl CryptoContext {
-    pub fn new(their_pk: PublicKey, our_sk: SecretKey) -> Self {
-        let inner = Some(Inner { their_pk, our_sk });
-        CryptoContext { inner }
+    pub fn authenticated(their_pk: PublicKey, our_sk: SecretKey) -> Self {
+        CryptoContext::Authenticated { their_pk, our_sk }
     }
 
     /// Contructs "null" encryption context which actually does no encryption.
     /// In this case data is simply serialized but not encrypted.
     pub fn null() -> Self {
-        CryptoContext { inner: None }
+        CryptoContext::Null
+    }
+
+    /// Constructs crypto context that is only meant for unauthenticated deryption.
+    pub fn anonymous_decrypt(our_pk: PublicKey, our_sk: SecretKey) -> Self {
+        CryptoContext::AnonymousDecrypt { our_pk, our_sk }
+    }
+
+    /// Constructs crypto context that is only meant for unauthenticated encryption.
+    pub fn anonymous_encrypt(their_pk: PublicKey) -> Self {
+        CryptoContext::AnonymousEncrypt { their_pk }
     }
 
     pub fn encrypt<T: Serialize>(&self, msg: &T) -> Result<BytesMut, CryptoError> {
-        match self.inner {
-            Some(ref ctx) => {
-                secure_serialise(msg, &ctx.their_pk, &ctx.our_sk)
-                    .map_err(CryptoError::Encrypt)
-                    .map(BytesMut::from)
-            }
-            None => {
+        match *self {
+            CryptoContext::Null => {
                 serialise(msg).map_err(CryptoError::Serialize).map(
                     BytesMut::from,
                 )
             }
+            CryptoContext::Authenticated {
+                ref their_pk,
+                ref our_sk,
+            } => {
+                secure_serialise(msg, their_pk, our_sk)
+                    .map_err(CryptoError::Encrypt)
+                    .map(BytesMut::from)
+            }
+            CryptoContext::AnonymousEncrypt { ref their_pk } => {
+                anonymous_serialise(msg, their_pk)
+                    .map_err(CryptoError::Encrypt)
+                    .map(BytesMut::from)
+            }
+            CryptoContext::AnonymousDecrypt { .. } => Err(CryptoError::InvalidOperation(
+                "Encryption is not allowed for AnonymousDecrypt context."
+                    .to_string(),
+            )),
         }
     }
 
@@ -90,11 +119,20 @@ impl CryptoContext {
     where
         T: Serialize + DeserializeOwned,
     {
-        match self.inner {
-            Some(ref ctx) => {
-                secure_deserialise(msg, &ctx.their_pk, &ctx.our_sk).map_err(CryptoError::Decrypt)
-            }
-            None => deserialise(msg).map_err(CryptoError::Deserialize),
+        match *self {
+            CryptoContext::Null => deserialise(msg).map_err(CryptoError::Deserialize),
+            CryptoContext::Authenticated {
+                ref their_pk,
+                ref our_sk,
+            } => secure_deserialise(msg, their_pk, our_sk).map_err(CryptoError::Decrypt),
+            CryptoContext::AnonymousDecrypt {
+                ref our_pk,
+                ref our_sk,
+            } => anonymous_deserialise(msg, our_pk, our_sk).map_err(CryptoError::Decrypt),
+            CryptoContext::AnonymousEncrypt { .. } => Err(CryptoError::InvalidOperation(
+                "Decryption is not allowed for AnonymousEncrypt context."
+                    .to_string(),
+            )),
         }
     }
 }
@@ -121,8 +159,20 @@ mod tests {
         fn when_encryption_keys_are_given_it_encrypts_and_decrypts_data_with_them() {
             let (pk1, sk1) = gen_keypair();
             let (pk2, sk2) = gen_keypair();
-            let crypto1 = CryptoContext::new(pk2, sk1);
-            let crypto2 = CryptoContext::new(pk1, sk2);
+            let crypto1 = CryptoContext::authenticated(pk2, sk1);
+            let crypto2 = CryptoContext::authenticated(pk1, sk2);
+
+            let encrypted = unwrap!(crypto1.encrypt(b"test123"));
+            let decrypted: [u8; 7] = unwrap!(crypto2.decrypt(&encrypted[..]));
+
+            assert_eq!(&decrypted, b"test123");
+        }
+
+        #[test]
+        fn anonymous_encryption() {
+            let (pk2, sk2) = gen_keypair();
+            let crypto1 = CryptoContext::anonymous_encrypt(pk2);
+            let crypto2 = CryptoContext::anonymous_decrypt(pk2, sk2);
 
             let encrypted = unwrap!(crypto1.encrypt(b"test123"));
             let decrypted: [u8; 7] = unwrap!(crypto2.decrypt(&encrypted[..]));
