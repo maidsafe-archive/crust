@@ -24,6 +24,7 @@ use notify::{self, Watcher};
 
 use priv_prelude::*;
 use rand;
+use rust_sodium::crypto::box_::{PublicKey, gen_keypair};
 use std;
 use std::env;
 use std::ops::{Deref, DerefMut};
@@ -281,11 +282,34 @@ impl ConfigWrapper {
     }
 }
 
+/// Information necessary to connect to peer.
+#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
+pub struct PeerInfo {
+    /// Peer public address.
+    pub addr: PaAddr,
+    /// Peer public key.
+    pub pub_key: PublicKey,
+}
+
+impl PeerInfo {
+    /// Constructs peer info.
+    pub fn new(addr: PaAddr, pub_key: PublicKey) -> Self {
+        Self { addr, pub_key }
+    }
+
+    /// Constructs peer info with random generated public key.
+    /// This is temporary method until peer public keys are implemented in all necessary places.
+    pub fn with_rand_key(addr: PaAddr) -> Self {
+        let (pub_key, _) = gen_keypair();
+        Self::new(addr, pub_key)
+    }
+}
+
 /// Crust configuration settings
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct ConfigSettings {
     /// Direct contacts one should connect to
-    pub hard_coded_contacts: Vec<PaAddr>,
+    pub hard_coded_contacts: Vec<PeerInfo>,
     /// Addresses that we listen on by default.
     pub listen_addresses: Vec<PaAddr>,
     /// Force usage of `tcp_acceptor_port` as our router mapped port. Normally if there is a port

@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use config::PeerInfo;
 use config_file_handler::{self, FileHandler};
 use priv_prelude::*;
 
 pub struct Cache {
-    file_handler: FileHandler<Vec<PaAddr>>,
+    file_handler: FileHandler<Vec<PeerInfo>>,
 }
 
 impl Cache {
@@ -35,7 +36,7 @@ impl Cache {
         Ok(PathBuf::from(name))
     }
 
-    pub fn read_file(&mut self) -> Vec<PaAddr> {
+    pub fn read_file(&mut self) -> Vec<PeerInfo> {
         self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 }
@@ -54,11 +55,22 @@ mod tests {
             #[test]
             fn it_returns_addresses_read_from_json_formatted_file() {
                 let fname = write_bootstrap_cache_to_tmp_file(
-                    b"[\"tcp://1.2.3.4:4000\", \"utp://1.2.3.5:5000\"]",
+                    br#"
+                    [
+                        {
+                          "addr": "tcp://1.2.3.4:4000",
+                          "pub_key": [1, 2, 3]
+                        },
+                        {
+                          "addr": "utp://1.2.3.5:5000",
+                          "pub_key": [3, 2, 1]
+                        }
+                    ]
+                "#,
                 );
                 let mut cache = unwrap!(Cache::new(Some(Path::new(&fname))));
 
-                let addrs = cache.read_file();
+                let addrs: Vec<PaAddr> = cache.read_file().iter().map(|peer| peer.addr).collect();
 
                 assert!(addrs.contains(&PaAddr::Tcp(addr!("1.2.3.4:4000"))));
                 assert!(addrs.contains(&PaAddr::Utp(addr!("1.2.3.5:5000"))));

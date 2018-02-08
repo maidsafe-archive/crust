@@ -59,7 +59,7 @@ extern crate crust;
 
 
 use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service, Uid};
-use crust::config::DevConfigSettings;
+use crust::config::{DevConfigSettings, PeerInfo};
 use docopt::Docopt;
 use future_utils::{BoxFuture, FutureExt, thread_future};
 use futures::{Future, Sink, Stream, future};
@@ -110,7 +110,8 @@ fn main() {
 
     let config = unwrap!(ConfigFile::new_temporary());
     if let Some(rendezvous_addr) = args.flag_rendezvous_peer {
-        unwrap!(config.write()).hard_coded_contacts = vec![rendezvous_addr];
+        unwrap!(config.write()).hard_coded_contacts =
+            vec![PeerInfo::with_rand_key(rendezvous_addr)];
     }
     if args.flag_disable_tcp {
         unwrap!(config.write()).dev = Some(DevConfigSettings {

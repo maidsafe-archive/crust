@@ -199,8 +199,8 @@ impl<UID: Uid> Service<UID> {
                         .cm
                         .peer_addr(&peer_uid)
                         .map(|peer_addr| {
-                            config.read().hard_coded_contacts.iter().any(|addr| {
-                                addr.ip() == peer_addr.ip()
+                            config.read().hard_coded_contacts.iter().any(|peer| {
+                                peer.addr.ip() == peer_addr.ip()
                             })
                         })
                         .unwrap_or(false)
