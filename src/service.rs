@@ -19,6 +19,7 @@
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
+use net::peer::BootstrapRequest;
 use p2p::P2p;
 use priv_prelude::*;
 use rust_sodium::crypto::box_::{PublicKey, SecretKey, gen_keypair};
@@ -121,15 +122,18 @@ impl<UID: Uid> Service<UID> {
             }
             CrustUser::Client => ExternalReachability::NotRequired,
         };
+        let request = BootstrapRequest {
+            uid: self.our_uid,
+            name_hash: self.config.network_name_hash(),
+            ext_reachability,
+            their_pk: self.our_pk,
+        };
         net::bootstrap(
             &self.handle,
-            self.our_uid,
-            self.config.network_name_hash(),
-            ext_reachability,
+            request,
             blacklist,
             use_service_discovery,
             &self.config,
-            self.our_pk,
             self.our_sk.clone(),
         )
     }

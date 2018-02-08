@@ -20,7 +20,7 @@ pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
 pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo};
 pub use self::demux::Demux;
 pub use self::ext_reachability::ExternalReachability;
-pub use self::handshake_message::BootstrapDenyReason;
+pub use self::handshake_message::{BootstrapDenyReason, BootstrapRequest};
 
 mod bootstrap;
 mod connection_info;

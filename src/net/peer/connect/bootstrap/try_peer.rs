@@ -89,11 +89,8 @@ impl From<SocketError> for ConnectHandshakeError {
 pub fn try_peer<UID: Uid>(
     handle: &Handle,
     addr: &PaAddr,
-    our_uid: UID,
-    name_hash: NameHash,
-    ext_reachability: ExternalReachability,
     config: &ConfigFile,
-    our_pk: PublicKey,
+    request: BootstrapRequest<UID>,
     our_sk: SecretKey,
     their_pk: PublicKey,
 ) -> BoxFuture<Peer<UID>, TryPeerError> {
@@ -113,16 +110,8 @@ pub fn try_peer<UID: Uid>(
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
         .and_then(move |socket| {
-            bootstrap_connect_handshake(
-                &handle1,
-                socket,
-                our_uid,
-                name_hash,
-                ext_reachability,
-                our_pk,
-                our_sk,
-                their_pk,
-            ).map_err(TryPeerError::Handshake)
+            bootstrap_connect_handshake(&handle1, socket, request, our_sk, their_pk)
+                .map_err(TryPeerError::Handshake)
         })
         .into_boxed()
 }
@@ -131,20 +120,11 @@ pub fn try_peer<UID: Uid>(
 pub fn bootstrap_connect_handshake<UID: Uid>(
     handle: &Handle,
     socket: Socket<HandshakeMessage<UID>>,
-    our_uid: UID,
-    name_hash: NameHash,
-    ext_reachability: ExternalReachability,
-    our_pk: PublicKey,
+    request: BootstrapRequest<UID>,
     our_sk: SecretKey,
     their_pk: PublicKey,
 ) -> BoxFuture<Peer<UID>, ConnectHandshakeError> {
     let handle0 = handle.clone();
-    let request = BootstrapRequest {
-        uid: our_uid,
-        name_hash: name_hash,
-        ext_reachability: ext_reachability,
-        their_pk: our_pk,
-    };
     let msg = HandshakeMessage::BootstrapRequest(request);
     socket
         .send((0, msg))

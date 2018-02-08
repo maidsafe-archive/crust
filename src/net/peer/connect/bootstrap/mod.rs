@@ -24,10 +24,11 @@ use config::PeerInfo;
 use config_file_handler;
 use net::peer::connect::bootstrap::cache::Cache;
 use net::peer::connect::bootstrap::try_peer::try_peer;
+use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
 
 use priv_prelude::*;
-use rust_sodium::crypto::box_::{PublicKey, SecretKey};
+use rust_sodium::crypto::box_::SecretKey;
 use service;
 
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 200;
@@ -61,13 +62,10 @@ quick_error! {
 /// On success, returns the first peer that we've bootstrapped to.
 pub fn bootstrap<UID: Uid>(
     handle: &Handle,
-    our_uid: UID,
-    name_hash: NameHash,
-    ext_reachability: ExternalReachability,
+    request: BootstrapRequest<UID>,
     blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
-    our_pk: PublicKey,
     our_sk: SecretKey,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let config = config.clone();
@@ -109,17 +107,15 @@ pub fn bootstrap<UID: Uid>(
                     i += 1;
                     let config = config.clone();
                     let handle = handle.clone();
-                    let ext_reachability = ext_reachability.clone();
                     let our_sk = our_sk.clone();
+                    let request = request.clone();
+
                     delay.infallible().and_then(move |()| {
                         try_peer(
                             &handle,
                             &peer.addr,
-                            our_uid,
-                            name_hash,
-                            ext_reachability.clone(),
                             &config,
-                            our_pk,
+                            request,
                             our_sk,
                             peer.pub_key,
                         )
