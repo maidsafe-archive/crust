@@ -137,6 +137,15 @@ impl<M: 'static> Socket<M> {
         }
     }
 
+    /// Replace crypto context used to encrypt/decrypt data.
+    /// This is useful, for example, when we want to switch from anonymous encryption to
+    /// authenticated one.
+    pub fn use_crypto_ctx(&mut self, crypto_ctx: CryptoContext) {
+        if let Some(ref mut inner) = self.inner {
+            inner.crypto_ctx = crypto_ctx;
+        }
+    }
+
     /// Get the address of the remote peer (if the socket is still active).
     pub fn peer_addr(&self) -> Result<PaAddr, SocketError> {
         match self.inner {

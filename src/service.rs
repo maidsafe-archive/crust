@@ -73,9 +73,13 @@ impl<UID: Uid> Service<UID> {
         let handle = handle.clone();
 
         let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone());
-        let demux = Demux::new(&handle, socket_incoming);
-
         let (our_pk, our_sk) = gen_keypair();
+        let demux = Demux::new(
+            &handle,
+            socket_incoming,
+            CryptoContext::anonymous_decrypt(our_pk, our_sk.clone()),
+        );
+
         future::ok(Service {
             handle,
             config,

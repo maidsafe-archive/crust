@@ -37,6 +37,7 @@ use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use p2p::P2p;
 use priv_prelude::*;
+use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
@@ -146,20 +147,24 @@ pub fn connect<UID: Uid>(
     let our_connect_request = ConnectRequest {
         uid: our_info.id,
         name_hash: name_hash,
+        their_pk: our_info.our_pk,
     };
 
     let direct_connections = connect_directly(handle, their_info.for_direct, &config);
     let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
-    let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk);
+    let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
     let all_outgoing_connections = handshake_outgoing_connections(
         handle,
         direct_connections.select(p2p_connection.into_stream()),
         our_connect_request.clone(),
         their_id,
         crypto_ctx,
+        their_info.pub_key,
+        our_info.our_sk.clone(),
     );
 
-    let direct_incoming = handshake_incoming_connections(our_connect_request, peer_rx, their_id);
+    let direct_incoming =
+        handshake_incoming_connections(our_connect_request, peer_rx, their_id, our_info.our_sk);
     let all_connections = all_outgoing_connections
         .select(direct_incoming)
         .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
@@ -254,12 +259,16 @@ fn handshake_incoming_connections<UID: Uid>(
     our_connect_request: ConnectRequest<UID>,
     conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
     their_id: UID,
+    our_sk: SecretKey,
 ) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
     conn_rx
         .map_err(|()| unreachable!())
         .infallible::<SingleConnectionError>()
-        .and_then(move |(socket, connect_request)| {
+        .and_then(move |(mut socket, connect_request)| {
             validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
+            socket.use_crypto_ctx(
+                CryptoContext::authenticated(connect_request.their_pk, our_sk.clone())
+            );
             Ok({
                 socket
                 .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
@@ -278,6 +287,8 @@ fn handshake_outgoing_connections<UID: Uid, S>(
     our_connect_request: ConnectRequest<UID>,
     their_id: UID,
     crypto_ctx: CryptoContext,
+    their_pk: PublicKey,
+    our_sk: SecretKey,
 ) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
 where
     S: Stream<Item = PaStream, Error = SingleConnectionError> + 'static,
@@ -299,7 +310,8 @@ where
                 .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
                 .map_err(SingleConnectionError::Socket)
         })
-        .and_then(move |socket| {
+        .and_then(move |mut socket| {
+            socket.use_crypto_ctx(CryptoContext::authenticated(their_pk, our_sk.clone()));
             socket.into_future().map_err(|(err, _socket)| {
                 SingleConnectionError::Socket(err)
             })
@@ -349,6 +361,7 @@ fn validate_connect_request<UID: Uid>(
     let &ConnectRequest {
         uid: their_uid,
         name_hash: their_name_hash,
+        ..
     } = connect_request;
     if their_uid != expected_uid {
         return Err(SingleConnectionError::InvalidUid(

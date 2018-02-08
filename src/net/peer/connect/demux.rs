@@ -46,13 +46,18 @@ struct DemuxInner<UID: Uid> {
 
 impl<UID: Uid> Demux<UID> {
     /// Create a demultiplexer from a stream of incoming peers.
-    pub fn new(handle: &Handle, incoming: SocketIncoming) -> Demux<UID> {
+    pub fn new(handle: &Handle, incoming: SocketIncoming, crypto_ctx: CryptoContext) -> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
             handle: handle.clone(),
         });
-        handle.spawn(handle_incoming_connections(handle, incoming, &inner));
+        handle.spawn(handle_incoming_connections(
+            handle,
+            incoming,
+            &inner,
+            crypto_ctx,
+        ));
         Demux { inner: inner }
     }
 
@@ -118,6 +123,7 @@ fn handle_incoming_connections<UID: Uid>(
     handle: &Handle,
     incoming: SocketIncoming,
     inner: &Arc<DemuxInner<UID>>,
+    crypto_ctx: CryptoContext,
 ) -> BoxFuture<(), ()> {
     let inner = Arc::clone(inner);
     let handle = handle.clone();
@@ -125,7 +131,7 @@ fn handle_incoming_connections<UID: Uid>(
         .map_err(IncomingError::Io)
         .for_each(move |(stream, addr)| {
             let socket: Socket<HandshakeMessage<UID>> =
-                Socket::wrap_pa(&handle, stream, addr, CryptoContext::null());
+                Socket::wrap_pa(&handle, stream, addr, crypto_ctx.clone());
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, socket)
         })
