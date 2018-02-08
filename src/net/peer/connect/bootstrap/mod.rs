@@ -132,7 +132,7 @@ fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PaAddr>, BootstrapError> {
     let config = config.read();
     let mut cache = Cache::new(config.bootstrap_cache_name.as_ref().map(|p| p.as_ref()))?;
     let mut peers = Vec::new();
-    peers.extend(cache.read_file());
+    peers.extend(cache.read_file().iter().map(|peer| peer.addr));
     peers.extend(config.hard_coded_contacts.iter().cloned());
     Ok(peers)
 }
@@ -147,7 +147,16 @@ mod tests {
 
         #[test]
         fn it_returns_hard_coded_contacts_and_addresses_from_cache() {
-            let bootstrap_cache = write_bootstrap_cache_to_tmp_file(b"[\"tcp://1.2.3.5:5000\"]");
+            let bootstrap_cache = write_bootstrap_cache_to_tmp_file(
+                br#"
+                [
+                    {
+                      "addr": "tcp://1.2.3.5:5000",
+                      "pub_key": [1, 2, 3]
+                    }
+                ]
+            "#,
+            );
             let config = unwrap!(ConfigFile::new_temporary());
 
             {
