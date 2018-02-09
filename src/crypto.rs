@@ -44,9 +44,11 @@ quick_error! {
             description("Error decrypting message")
             display("Error decrypting message: {:?}", e)
         }
-        InvalidOperation(msg: String) {
-            description("Invalid crypto operation")
-            display("Invalid crypto operation: {}", msg)
+        EncryptForbidden {
+            description("Encrypt operation is not allowed within this crypto context")
+        }
+        DecryptForbidden {
+            description("Decrypt operation is not allowed within this crypto context")
         }
     }
 }
@@ -108,10 +110,7 @@ impl CryptoContext {
                     .map_err(CryptoError::Encrypt)
                     .map(BytesMut::from)
             }
-            CryptoContext::AnonymousDecrypt { .. } => Err(CryptoError::InvalidOperation(
-                "Encryption is not allowed for AnonymousDecrypt context."
-                    .to_string(),
-            )),
+            CryptoContext::AnonymousDecrypt { .. } => Err(CryptoError::DecryptForbidden),
         }
     }
 
@@ -129,10 +128,7 @@ impl CryptoContext {
                 ref our_pk,
                 ref our_sk,
             } => anonymous_deserialise(msg, our_pk, our_sk).map_err(CryptoError::Decrypt),
-            CryptoContext::AnonymousEncrypt { .. } => Err(CryptoError::InvalidOperation(
-                "Decryption is not allowed for AnonymousEncrypt context."
-                    .to_string(),
-            )),
+            CryptoContext::AnonymousEncrypt { .. } => Err(CryptoError::EncryptForbidden),
         }
     }
 }
