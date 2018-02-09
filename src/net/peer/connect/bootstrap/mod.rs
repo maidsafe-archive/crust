@@ -178,8 +178,8 @@ mod tests {
                 .map(|peer| peer.addr)
                 .collect();
 
-            assert!(peers.contains(&PaAddr::Tcp(addr!("1.2.3.4:4000"))));
-            assert!(peers.contains(&PaAddr::Tcp(addr!("1.2.3.5:5000"))));
+            assert!(peers.contains(&tcp_addr!("1.2.3.4:4000")));
+            assert!(peers.contains(&tcp_addr!("1.2.3.5:5000")));
         }
     }
 }

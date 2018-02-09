@@ -243,20 +243,17 @@ mod test {
             #[test]
             fn it_adds_specified_addresses_to_the_list() {
                 let mut addrs = ObservableAddresses::new();
-                let _ = addrs.current.insert(PaAddr::Tcp(addr!("1.2.3.4:1234")));
+                let _ = addrs.current.insert(tcp_addr!("1.2.3.4:1234"));
 
-                addrs.add_and_notify(vec![
-                    PaAddr::Tcp(addr!("2.3.4.5:1234")),
-                    PaAddr::Tcp(addr!("2.3.4.6:1234")),
-                ]);
+                addrs.add_and_notify(vec![tcp_addr!("2.3.4.5:1234"), tcp_addr!("2.3.4.6:1234")]);
 
                 let curr_addrs: Vec<PaAddr> = addrs.current.iter().cloned().collect();
                 assert_that!(
                     &curr_addrs,
                     contains(vec![
-                        PaAddr::Tcp(addr!("1.2.3.4:1234")),
-                        PaAddr::Tcp(addr!("2.3.4.5:1234")),
-                        PaAddr::Tcp(addr!("2.3.4.6:1234")),
+                        tcp_addr!("1.2.3.4:1234"),
+                        tcp_addr!("2.3.4.5:1234"),
+                        tcp_addr!("2.3.4.6:1234"),
                     ]).exactly()
                 );
             }
@@ -267,10 +264,7 @@ mod test {
                 let mut addrs = ObservableAddresses::new();
                 addrs.observers.push(tx);
 
-                addrs.add_and_notify(vec![
-                    PaAddr::Tcp(addr!("2.3.4.5:1234")),
-                    PaAddr::Tcp(addr!("2.3.4.6:1234")),
-                ]);
+                addrs.add_and_notify(vec![tcp_addr!("2.3.4.5:1234"), tcp_addr!("2.3.4.6:1234")]);
 
                 let notified = unwrap!(rx.wait().map(|addrs| unwrap!(addrs)).nth(0))
                     .iter()
@@ -278,10 +272,7 @@ mod test {
                     .collect::<Vec<PaAddr>>();
                 assert_that!(
                     &notified,
-                    contains(vec![
-                        PaAddr::Tcp(addr!("2.3.4.5:1234")),
-                        PaAddr::Tcp(addr!("2.3.4.6:1234")),
-                    ]).exactly()
+                    contains(vec![tcp_addr!("2.3.4.5:1234"), tcp_addr!("2.3.4.6:1234")]).exactly()
                 );
             }
         }
@@ -394,7 +385,7 @@ mod test {
         }
 
         fn palistener(handle: &Handle) -> PaListener {
-            let bind_addr = PaAddr::Utp(addr!("0.0.0.0:0"));
+            let bind_addr = utp_addr!("0.0.0.0:0");
             unwrap!(PaListener::bind(&bind_addr, handle))
         }
 
@@ -427,7 +418,7 @@ mod test {
 
             let listener = palistener(&handle);
             let mut expected_addrs = unwrap!(listener.expanded_local_addrs());
-            expected_addrs.push(PaAddr::Utp(addr!("1.2.3.4:4000")));
+            expected_addrs.push(utp_addr!("1.2.3.4:4000"));
 
             let _ = make_listener(listener, None, Arc::clone(&addresses), tx);
 
@@ -474,7 +465,7 @@ mod test {
 
         let future = {
             acceptor
-            .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
+            .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
             .map_err(|e| panic!(e))
             .and_then(move |listener0| {
                 let addr0 = listener0.addr();
@@ -487,7 +478,7 @@ mod test {
                 assert!(addrs0.is_subset(&addrs));
 
                 acceptor
-                .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
+                .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener1| {
                     let addr1 = listener1.addr();
@@ -570,7 +561,7 @@ mod test {
         let config = unwrap!(ConfigFile::new_temporary());
         let future = {
             acceptor
-                .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
+                .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener| {
                     mem::forget(listener);
@@ -578,7 +569,7 @@ mod test {
                 })
                 .and_then(move |acceptor| {
                     acceptor
-                        .listener::<UniqueId>(&PaAddr::Tcp(addr!("0.0.0.0:0")))
+                        .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);

@@ -72,8 +72,8 @@ mod tests {
 
                 let addrs: Vec<PaAddr> = cache.read_file().iter().map(|peer| peer.addr).collect();
 
-                assert!(addrs.contains(&PaAddr::Tcp(addr!("1.2.3.4:4000"))));
-                assert!(addrs.contains(&PaAddr::Utp(addr!("1.2.3.5:5000"))));
+                assert!(addrs.contains(&tcp_addr!("1.2.3.4:4000")));
+                assert!(addrs.contains(&utp_addr!("1.2.3.5:5000")));
             }
         }
     }

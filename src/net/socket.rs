@@ -330,10 +330,7 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
         let res: Result<_, Void> = core.run({
-            let listen_addrs = vec![
-                PaAddr::Tcp(addr!("0.0.0.0:0")),
-                PaAddr::Utp(addr!("0.0.0.0:0")),
-            ];
+            let listen_addrs = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
             stream::iter_ok(listen_addrs).for_each(move |listen_addr| {
                 let listener = unwrap!(PaListener::bind(&listen_addr, &handle));
                 let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
