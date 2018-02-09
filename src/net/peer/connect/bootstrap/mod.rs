@@ -20,12 +20,15 @@ mod try_peer;
 
 pub use self::try_peer::{ConnectHandshakeError, TryPeerError};
 
+use config::PeerInfo;
 use config_file_handler;
 use net::peer::connect::bootstrap::cache::Cache;
 use net::peer::connect::bootstrap::try_peer::try_peer;
+use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
 
 use priv_prelude::*;
+use rust_sodium::crypto::box_::SecretKey;
 use service;
 
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 200;
@@ -59,12 +62,11 @@ quick_error! {
 /// On success, returns the first peer that we've bootstrapped to.
 pub fn bootstrap<UID: Uid>(
     handle: &Handle,
-    our_uid: UID,
-    name_hash: NameHash,
-    ext_reachability: ExternalReachability,
+    request: BootstrapRequest<UID>,
     blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
+    our_sk: SecretKey,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let config = config.clone();
     let handle = handle.clone();
@@ -78,6 +80,8 @@ pub fn bootstrap<UID: Uid>(
                 .infallible::<(PaAddr, TryPeerError)>()
                 .map(|(_, v)| stream::iter_ok(v))
                 .flatten()
+                // TODO(povilas): remove this when service discovery returns peer public key
+                .map(PeerInfo::with_rand_key)
                 .into_boxed()
         } else {
             future::empty().into_stream().into_boxed()
@@ -93,8 +97,8 @@ pub fn bootstrap<UID: Uid>(
         Ok(
             sd_peers
                 .chain(stream::iter_ok(peers))
-                .filter(move |addr| !blacklist.contains(addr))
-                .map(move |addr| {
+                .filter(move |peer| !blacklist.contains(&peer.addr))
+                .map(move |peer| {
                     // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to
                     // the same peer multiple times. This can cause the different peers using the
                     // compat API to choose different connections. We also shouldn't bootstrap to
@@ -103,17 +107,19 @@ pub fn bootstrap<UID: Uid>(
                     i += 1;
                     let config = config.clone();
                     let handle = handle.clone();
-                    let ext_reachability = ext_reachability.clone();
+                    let our_sk = our_sk.clone();
+                    let request = request.clone();
+
                     delay.infallible().and_then(move |()| {
                         try_peer(
                             &handle,
-                            &addr,
-                            our_uid,
-                            name_hash,
-                            ext_reachability.clone(),
+                            &peer.addr,
                             &config,
+                            request,
+                            our_sk,
+                            peer.pub_key,
                         )
-                            .map_err(move |e| (addr, e))
+                            .map_err(move |e| (peer.addr, e))
                     })
                 })
                 .buffer_unordered(64)
@@ -128,13 +134,13 @@ pub fn bootstrap<UID: Uid>(
 }
 
 /// Collects bootstrap peers from cache and config.
-fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PaAddr>, BootstrapError> {
+fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PeerInfo>, BootstrapError> {
     let config = config.read();
     let mut cache = Cache::new(config.bootstrap_cache_name.as_ref().map(|p| p.as_ref()))?;
     let mut peers = Vec::new();
     peers.extend(cache.read_file());
     peers.extend(config.hard_coded_contacts.clone());
-    Ok(peers.iter().map(|peer| peer.addr).collect())
+    Ok(peers)
 }
 
 #[cfg(test)]
@@ -167,7 +173,10 @@ mod tests {
                 conf_write.bootstrap_cache_name = Some(Path::new(&bootstrap_cache).to_path_buf());
             }
 
-            let peers = unwrap!(bootstrap_peers(&config));
+            let peers: Vec<PaAddr> = unwrap!(bootstrap_peers(&config))
+                .iter()
+                .map(|peer| peer.addr)
+                .collect();
 
             assert!(peers.contains(&PaAddr::Tcp(addr!("1.2.3.4:4000"))));
             assert!(peers.contains(&PaAddr::Tcp(addr!("1.2.3.5:5000"))));

@@ -24,6 +24,7 @@ use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use net::protocol_agnostic::AcceptError;
 use priv_prelude::*;
+use rust_sodium::crypto::box_::SecretKey;
 use std::sync::{Arc, Mutex};
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
@@ -46,18 +47,29 @@ struct DemuxInner<UID: Uid> {
 
 impl<UID: Uid> Demux<UID> {
     /// Create a demultiplexer from a stream of incoming peers.
-    pub fn new(handle: &Handle, incoming: SocketIncoming) -> Demux<UID> {
+    pub fn new(handle: &Handle, incoming: SocketIncoming, crypto_ctx: CryptoContext) -> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
             handle: handle.clone(),
         });
-        handle.spawn(handle_incoming_connections(handle, incoming, &inner));
+        handle.spawn(handle_incoming_connections(
+            handle,
+            incoming,
+            &inner,
+            crypto_ctx,
+        ));
         Demux { inner: inner }
     }
 
-    pub fn bootstrap_acceptor(&self, config: &ConfigFile, our_uid: UID) -> BootstrapAcceptor<UID> {
-        let (acceptor, peer_tx) = BootstrapAcceptor::new(&self.inner.handle, config, our_uid);
+    pub fn bootstrap_acceptor(
+        &self,
+        config: &ConfigFile,
+        our_uid: UID,
+        our_sk: SecretKey,
+    ) -> BootstrapAcceptor<UID> {
+        let (acceptor, peer_tx) =
+            BootstrapAcceptor::new(&self.inner.handle, config, our_uid, our_sk);
         let mut bootstrap_handler = unwrap!(self.inner.bootstrap_handler.lock());
         *bootstrap_handler = Some(peer_tx);
         acceptor
@@ -118,6 +130,7 @@ fn handle_incoming_connections<UID: Uid>(
     handle: &Handle,
     incoming: SocketIncoming,
     inner: &Arc<DemuxInner<UID>>,
+    crypto_ctx: CryptoContext,
 ) -> BoxFuture<(), ()> {
     let inner = Arc::clone(inner);
     let handle = handle.clone();
@@ -125,7 +138,7 @@ fn handle_incoming_connections<UID: Uid>(
         .map_err(IncomingError::Io)
         .for_each(move |(stream, addr)| {
             let socket: Socket<HandshakeMessage<UID>> =
-                Socket::wrap_pa(&handle, stream, addr, CryptoContext::null());
+                Socket::wrap_pa(&handle, stream, addr, crypto_ctx.clone());
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, socket)
         })

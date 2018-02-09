@@ -66,7 +66,8 @@ fn bootstrap_using_hard_coded_contacts() {
     ));
 
     let config2 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config2.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(service1_addr0)];
+    unwrap!(config2.write()).hard_coded_contacts =
+        vec![PeerInfo::new(service1_addr0, service1.public_key())];
     let mut service2 = unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
         config2,
@@ -83,7 +84,8 @@ fn bootstrap_using_hard_coded_contacts() {
     assert_eq!(peer.uid(), service1.id());
 
     let config3 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config3.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(service1_addr1)];
+    unwrap!(config3.write()).hard_coded_contacts =
+        vec![PeerInfo::new(service1_addr1, service1.public_key())];
     let mut service3 = unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
         config3,

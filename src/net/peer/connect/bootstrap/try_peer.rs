@@ -19,6 +19,7 @@ use net::peer;
 use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
                                             HandshakeMessage};
 use priv_prelude::*;
+use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 
 quick_error! {
     /// Error returned when we fail to connect to some specific peer.
@@ -88,23 +89,28 @@ impl From<SocketError> for ConnectHandshakeError {
 pub fn try_peer<UID: Uid>(
     handle: &Handle,
     addr: &PaAddr,
-    our_uid: UID,
-    name_hash: NameHash,
-    ext_reachability: ExternalReachability,
     config: &ConfigFile,
+    request: BootstrapRequest<UID>,
+    our_sk: SecretKey,
+    their_pk: PublicKey,
 ) -> BoxFuture<Peer<UID>, TryPeerError> {
     let handle0 = handle.clone();
     let handle1 = handle.clone();
     let addr = *addr;
     PaStream::direct_connect(&addr, handle, config)
         .map(move |stream| {
-            Socket::wrap_pa(&handle0, stream, addr, CryptoContext::null())
+            Socket::wrap_pa(
+                &handle0,
+                stream,
+                addr,
+                CryptoContext::anonymous_encrypt(their_pk),
+            )
         })
         .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
         .map_err(TryPeerError::Connect)
         .and_then(move |socket| {
-            bootstrap_connect_handshake(&handle1, socket, our_uid, name_hash, ext_reachability)
+            bootstrap_connect_handshake(&handle1, socket, request, our_sk, their_pk)
                 .map_err(TryPeerError::Handshake)
         })
         .into_boxed()
@@ -114,21 +120,17 @@ pub fn try_peer<UID: Uid>(
 pub fn bootstrap_connect_handshake<UID: Uid>(
     handle: &Handle,
     socket: Socket<HandshakeMessage<UID>>,
-    our_uid: UID,
-    name_hash: NameHash,
-    ext_reachability: ExternalReachability,
+    request: BootstrapRequest<UID>,
+    our_sk: SecretKey,
+    their_pk: PublicKey,
 ) -> BoxFuture<Peer<UID>, ConnectHandshakeError> {
     let handle0 = handle.clone();
-    let request = BootstrapRequest {
-        uid: our_uid,
-        name_hash: name_hash,
-        ext_reachability: ext_reachability,
-    };
     let msg = HandshakeMessage::BootstrapRequest(request);
     socket
         .send((0, msg))
         .map_err(ConnectHandshakeError::from)
-        .and_then(move |socket| {
+        .and_then(move |mut socket| {
+            socket.use_crypto_ctx(CryptoContext::authenticated(their_pk, our_sk));
             socket
                 .into_future()
                 .map_err(|(e, _)| ConnectHandshakeError::from(e))

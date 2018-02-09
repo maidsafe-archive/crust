@@ -16,18 +16,21 @@
 // relating to use of the SAFE Network Software.
 
 use priv_prelude::*;
+use rust_sodium::crypto::box_::PublicKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct BootstrapRequest<UID> {
     pub uid: UID,
     pub name_hash: NameHash,
     pub ext_reachability: ExternalReachability,
+    pub their_pk: PublicKey,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct ConnectRequest<UID> {
     pub uid: UID,
     pub name_hash: NameHash,
+    pub their_pk: PublicKey,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

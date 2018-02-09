@@ -16,8 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use compat::{self, CrustEventSender, Event};
-use config::DevConfigSettings;
-use config::PeerInfo;
+use config::{DevConfigSettings, PeerInfo};
 use env_logger;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use priv_prelude::*;
@@ -260,7 +259,8 @@ fn bootstrap_using_hard_coded_contacts() {
 
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(addr0)];
+    unwrap!(config1.write()).hard_coded_contacts = vec![
+        PeerInfo::new(addr0, service0.public_key())];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
@@ -283,6 +283,7 @@ fn bootstrap_using_hard_coded_contacts() {
 }
 
 #[test]
+#[ignore] // TODO(povilas): change this when service discovery is restored
 fn bootstrap_using_service_discovery() {
     let _ = env_logger::init();
 
@@ -331,7 +332,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
         listeners.push(listener);
     }
 
-    addresses.push(PeerInfo::with_rand_key(valid_address));
+    addresses.push(PeerInfo::new(valid_address, service0.public_key()));
 
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
@@ -370,7 +371,7 @@ fn bootstrap_with_disable_external_reachability() {
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::with_rand_key(addr0.unspecified_to_localhost())];
+        PeerInfo::new(addr0.unspecified_to_localhost(), service0.public_key())];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
@@ -405,7 +406,9 @@ fn bootstrap_with_blacklist() {
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::with_rand_key(valid_addr), PeerInfo::with_rand_key(blacklisted_addr)];
+        PeerInfo::new(valid_addr, service0.public_key()),
+        PeerInfo::with_rand_key(blacklisted_addr),
+    ];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 

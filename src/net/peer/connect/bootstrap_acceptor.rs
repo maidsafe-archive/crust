@@ -23,6 +23,7 @@ use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapReques
                                             HandshakeMessage};
 
 use priv_prelude::*;
+use rust_sodium::crypto::box_::SecretKey;
 use util;
 
 quick_error! {
@@ -67,6 +68,7 @@ pub struct BootstrapAcceptor<UID: Uid> {
     handshaking: FuturesUnordered<BoxFuture<Peer<UID>, BootstrapAcceptError>>,
     config: ConfigFile,
     our_uid: UID,
+    our_sk: SecretKey,
 }
 
 impl<UID: Uid> BootstrapAcceptor<UID> {
@@ -74,6 +76,7 @@ impl<UID: Uid> BootstrapAcceptor<UID> {
         handle: &Handle,
         config: &ConfigFile,
         our_uid: UID,
+        our_sk: SecretKey,
     ) -> (BootstrapAcceptor<UID>, UnboundedSender<BootstrapMessage<UID>>) {
         let config = config.clone();
         let handle = handle.clone();
@@ -86,6 +89,7 @@ impl<UID: Uid> BootstrapAcceptor<UID> {
             handshaking,
             config,
             our_uid,
+            our_sk,
         };
         (acceptor, peer_tx)
     }
@@ -106,6 +110,7 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
                         &self.config,
                         self.our_uid,
                         bootstrap_request,
+                        self.our_sk.clone(),
                     );
                     self.handshaking.push(handshaker);
                 }
@@ -136,15 +141,21 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
 /// socket.
 fn bootstrap_accept<UID: Uid>(
     handle: &Handle,
-    socket: Socket<HandshakeMessage<UID>>,
+    mut socket: Socket<HandshakeMessage<UID>>,
     config: &ConfigFile,
     our_uid: UID,
     bootstrap_request: BootstrapRequest<UID>,
+    our_sk: SecretKey,
 ) -> BoxFuture<Peer<UID>, BootstrapAcceptError> {
     let handle = handle.clone();
     let their_uid = bootstrap_request.uid;
     let their_name_hash = bootstrap_request.name_hash;
     let their_ext_reachability = bootstrap_request.ext_reachability;
+    socket.use_crypto_ctx(CryptoContext::authenticated(
+        bootstrap_request.their_pk,
+        our_sk,
+    ));
+
     let try = move || {
         if our_uid == their_uid {
             return Err(BootstrapAcceptError::ConnectionFromOurself);

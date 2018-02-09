@@ -19,6 +19,7 @@
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
+use net::peer::BootstrapRequest;
 use p2p::P2p;
 use priv_prelude::*;
 use rust_sodium::crypto::box_::{PublicKey, SecretKey, gen_keypair};
@@ -73,9 +74,13 @@ impl<UID: Uid> Service<UID> {
         let handle = handle.clone();
 
         let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone());
-        let demux = Demux::new(&handle, socket_incoming);
-
         let (our_pk, our_sk) = gen_keypair();
+        let demux = Demux::new(
+            &handle,
+            socket_incoming,
+            CryptoContext::anonymous_decrypt(our_pk, our_sk.clone()),
+        );
+
         future::ok(Service {
             handle,
             config,
@@ -117,14 +122,19 @@ impl<UID: Uid> Service<UID> {
             }
             CrustUser::Client => ExternalReachability::NotRequired,
         };
+        let request = BootstrapRequest {
+            uid: self.our_uid,
+            name_hash: self.config.network_name_hash(),
+            ext_reachability,
+            their_pk: self.our_pk,
+        };
         net::bootstrap(
             &self.handle,
-            self.our_uid,
-            self.config.network_name_hash(),
-            ext_reachability,
+            request,
             blacklist,
             use_service_discovery,
             &self.config,
+            self.our_sk.clone(),
         )
     }
 
@@ -132,7 +142,11 @@ impl<UID: Uid> Service<UID> {
     /// who are bootstrapping to us. It can be dropped again to re-disable accepting bootstrapping
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor<UID> {
-        self.demux.bootstrap_acceptor(&self.config, self.our_uid)
+        self.demux.bootstrap_acceptor(
+            &self.config,
+            self.our_uid,
+            self.our_sk.clone(),
+        )
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -238,6 +252,12 @@ impl<UID: Uid> Service<UID> {
             .map_err(|(e, _stream)| e)
             .infallible()
             .into_boxed()
+    }
+
+    /// Returns service public key.
+    #[cfg(test)]
+    pub fn public_key(&self) -> PublicKey {
+        self.our_pk
     }
 }
 
