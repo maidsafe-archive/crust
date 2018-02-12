@@ -85,8 +85,8 @@ fn service_discovery() {
 
                 let some_addrs =
                     hashset!{
-                    PaAddr::Tcp(addr!("1.2.3.4:555")),
-                    PaAddr::Tcp(addr!("5.4.3.2:111")),
+                    tcp_addr!("1.2.3.4:555"),
+                    tcp_addr!("5.4.3.2:111"),
                 };
                 unwrap!(tx.unbounded_send(some_addrs.clone()));
 

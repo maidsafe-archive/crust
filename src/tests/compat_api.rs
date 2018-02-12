@@ -57,10 +57,7 @@ fn event_sender() -> (CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
 fn service() -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
     let (event_tx, event_rx) = event_sender();
     let config = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config.write()).listen_addresses = vec![
-        PaAddr::Tcp(addr!("0.0.0.0:0")),
-        PaAddr::Utp(addr!("0.0.0.0:0")),
-    ];
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     let uid: UniqueId = rand::random();
     let service = unwrap!(compat::Service::with_config(event_tx, config, uid));
     (service, event_rx)
@@ -359,7 +356,7 @@ fn bootstrap_with_disable_external_reachability() {
         disable_external_reachability_requirement: true,
         disable_tcp: false,
     });
-    unwrap!(config0.write()).listen_addresses = vec![PaAddr::Tcp(addr!("0.0.0.0:0"))];
+    unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
     let uid0: UniqueId = rand::random();
     let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, uid0));
 

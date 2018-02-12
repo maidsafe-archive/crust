@@ -25,10 +25,7 @@ use util;
 
 fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
     let config = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config.write()).listen_addresses = vec![
-        PaAddr::Tcp(addr!("0.0.0.0:0")),
-        PaAddr::Utp(addr!("0.0.0.0:0")),
-    ];
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     let loop_handle = event_loop.handle();
     unwrap!(event_loop.run(Service::with_config(
         &loop_handle,

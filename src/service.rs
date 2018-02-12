@@ -342,12 +342,11 @@ mod tests {
             p2p.add_tcp_traversal_server(&addr!("1.2.3.4:4000"));
             p2p.add_udp_traversal_server(&addr!("1.2.3.5:5000"));
 
-            let rm_servers: HashSet<PaAddr> = vec![
-                PaAddr::Tcp(addr!("1.2.3.4:4000")),
-                PaAddr::Utp(addr!("1.2.3.5:5000")),
-            ].iter()
-                .cloned()
-                .collect();
+            let rm_servers: HashSet<PaAddr> =
+                vec![tcp_addr!("1.2.3.4:4000"), utp_addr!("1.2.3.5:5000")]
+                    .iter()
+                    .cloned()
+                    .collect();
             remove_rendezvous_servers(&p2p, &rm_servers);
 
             let servers = p2p.tcp_traversal_servers().snapshot();
