@@ -17,6 +17,7 @@
 
 use config::PeerInfo;
 use futures::stream;
+use p2p::tcp_query_public_addr;
 use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
@@ -246,6 +247,27 @@ fn exchange_data_between_two_peers() {
 
     let received_data = unwrap!(event_loop.run(peer2_stream.take(NUM_MESSAGES).collect()));
     assert_eq!(received_data, data1);
+}
+
+#[test]
+fn service_responds_to_tcp_echo_address_requests() {
+    let mut event_loop = unwrap!(Core::new());
+    let handle = event_loop.handle();
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+    let service = service_with_config(&mut event_loop, config);
+    let listener = unwrap!(event_loop.run(service.start_listening().first_ok()));
+    let listener_addr = listener.addr().unspecified_to_localhost().inner();
+
+    let resp = event_loop.run(tcp_query_public_addr(
+        &addr!("0.0.0.0:0"),
+        &listener_addr,
+        &handle,
+    ));
+    let our_addr = unwrap!(resp);
+
+    assert_eq!(our_addr.ip(), ipv4!("127.0.0.1"));
 }
 
 /*

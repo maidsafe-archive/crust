@@ -61,6 +61,15 @@ impl PaAddr {
         }
     }
 
+    /// Returns socket address without protocol information.
+    #[cfg(test)]
+    pub fn inner(&self) -> SocketAddr {
+        match *self {
+            PaAddr::Tcp(ref addr) |
+            PaAddr::Utp(ref addr) => *addr,
+        }
+    }
+
     /// Returns all local addresses, if socket address is unspecified - '0.0.0.0'.
     /// Otherwise a list with only current address is returned.
     pub fn expand_local_unspecified(&self) -> io::Result<Vec<PaAddr>> {
