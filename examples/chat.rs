@@ -176,9 +176,12 @@ fn read_line() -> BoxFuture<String, Void> {
 }
 
 fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
-    let (peer_sink, peer_stream) = peer.split();
+    println!(
+        "You are now connected to '{}'! say hello :)",
+        unwrap!(peer.addr())
+    );
 
-    println!("You are now connected! say hello :)");
+    let (peer_sink, peer_stream) = peer.split();
     let writer = {
         future::loop_fn(peer_sink, |peer_sink| {
             read_line().and_then(|line| {
