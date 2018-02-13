@@ -35,6 +35,8 @@ extern crate serde_derive;
 extern crate rand;
 #[macro_use]
 extern crate rand_derive;
+extern crate void;
+extern crate future_utils;
 
 extern crate crust;
 

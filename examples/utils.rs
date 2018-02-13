@@ -18,18 +18,23 @@
 //! Some common utilities to stay DRY (Don't Repeat Yourself).
 
 use crust::{ConfigFile, Peer, PubConnectionInfo, Service, Uid};
+use future_utils::{BoxFuture, FutureExt, thread_future};
 
-use futures::Stream;
+use futures::{Future, Stream};
 use serde_json;
 use std::{fmt, io};
 use std::path::PathBuf;
 use tokio_core::reactor::Core;
+use void::Void;
 
 /// Reads single line from stdin.
-pub fn readln() -> String {
-    let mut ln = String::new();
-    unwrap!(io::stdin().read_line(&mut ln));
-    String::from(ln.trim())
+fn read_line() -> BoxFuture<String, Void> {
+    thread_future(|| {
+        let stdin = io::stdin();
+        let mut line = String::new();
+        unwrap!(stdin.read_line(&mut line));
+        line
+    }).into_boxed()
 }
 
 // Some peer ID boilerplate.
@@ -82,11 +87,9 @@ pub fn connect_to_peer(event_loop: &mut Core, service_id: PeerId) -> Peer<PeerId
     );
 
     println!("Enter remote peer public connection info:");
-    let their_info = readln();
-    let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&their_info));
-
-    unwrap!(
-        event_loop.run(service.connect(our_conn_info, their_info)),
-        "Failed to connect to given peer",
-    )
+    let connect = read_line().infallible().and_then(move |ln| {
+        let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
+        service.connect(our_conn_info, their_info)
+    });
+    unwrap!(event_loop.run(connect))
 }
