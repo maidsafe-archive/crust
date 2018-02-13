@@ -249,23 +249,7 @@ fn incoming_tcp(
     loop {
         match incoming.poll().map_err(AcceptError::TcpAccept)? {
             Async::Ready(Some((stream, addr))) => {
-                processing.push({
-                    let header = [0u8; 8];
-
-                    tokio_io::io::read_exact(stream, header)
-                        .map_err(AcceptError::TcpReadHeader)
-                        .and_then(move |(stream, header)| match header {
-                            ECHO_REQ => {
-                                tcp_respond_with_addr(stream, addr)
-                                    .map(|_stream| None)
-                                    .map_err(AcceptError::TcpRespond)
-                                    .into_boxed()
-                            }
-                            CRUST_TCP_INIT => future::ok(Some((stream, addr))).into_boxed(),
-                            _ => future::err(AcceptError::InvalidTcpHeader).into_boxed(),
-                        })
-                        .into_boxed()
-                });
+                processing.push(handle_tcp_connection(stream, addr));
             }
             Async::Ready(None) |
             Async::NotReady => break,
@@ -284,6 +268,28 @@ fn incoming_tcp(
         }
     }
     Ok(Async::NotReady)
+}
+
+/// Receives first message from connection and dispatches corresponding action.
+fn handle_tcp_connection(
+    stream: TcpStream,
+    addr: SocketAddr,
+) -> BoxFuture<Option<(TcpStream, SocketAddr)>, AcceptError> {
+    let header = [0u8; 8];
+
+    tokio_io::io::read_exact(stream, header)
+        .map_err(AcceptError::TcpReadHeader)
+        .and_then(move |(stream, header)| match header {
+            ECHO_REQ => {
+                tcp_respond_with_addr(stream, addr)
+                    .map(|_stream| None)
+                    .map_err(AcceptError::TcpRespond)
+                    .into_boxed()
+            }
+            CRUST_TCP_INIT => future::ok(Some((stream, addr))).into_boxed(),
+            _ => future::err(AcceptError::InvalidTcpHeader).into_boxed(),
+        })
+        .into_boxed()
 }
 
 fn incoming_utp(
