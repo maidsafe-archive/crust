@@ -150,18 +150,29 @@ pub fn connect<UID: Uid>(
         their_pk: our_info.our_pk,
     };
 
-    let direct_connections = connect_directly(handle, their_info.for_direct, &config);
-    let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
     let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
-    let all_outgoing_connections = handshake_outgoing_connections(
+    let direct_connections = connect_directly(handle, their_info.for_direct, &config);
+    let direct_connections = handshake_outgoing_connections(
         handle,
-        direct_connections.select(p2p_connection.into_stream()),
+        direct_connections,
         our_connect_request.clone(),
         their_id,
         crypto_ctx,
         their_info.pub_key,
         our_info.our_sk.clone(),
     );
+    let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk.clone());
+    let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
+    let p2p_connections = handshake_outgoing_connections(
+        handle,
+        p2p_connection.into_stream(),
+        our_connect_request.clone(),
+        their_id,
+        crypto_ctx,
+        their_info.pub_key,
+        our_info.our_sk.clone(),
+    );
+    let all_outgoing_connections = direct_connections.select(p2p_connections);
 
     let direct_incoming =
         handshake_incoming_connections(our_connect_request, peer_rx, their_id, our_info.our_sk);
