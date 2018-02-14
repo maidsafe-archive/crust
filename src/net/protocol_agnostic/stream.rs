@@ -25,7 +25,24 @@ use rust_sodium::crypto;
 use std::error::Error;
 use std::io::{Read, Write};
 use tokio_io::{self, AsyncRead, AsyncWrite};
+use tokio_io::codec::length_delimited::{self, Framed};
 use void;
+
+/// The maximum size of packets sent by `PaStream` in bytes.
+const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+const MAX_HEADER_SIZE: usize = 8;
+
+/// Converts given stream into length delimited framed stream.
+/// This stream takes care of deconstructing messages and spits `BytesMut` with exactly the
+/// same amount of bytes as were sent.
+pub fn framed_stream<T>(stream: T) -> Framed<T>
+where
+    T: AsyncRead + AsyncWrite,
+{
+    length_delimited::Builder::new()
+        .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
+        .new_framed(stream)
+}
 
 #[derive(Debug)]
 pub enum PaStream {
@@ -62,8 +79,10 @@ impl PaStream {
                     future::err(io::Error::new(io::ErrorKind::Other, "tcp disabled")).into_boxed()
                 } else {
                     TcpStream::connect(tcp_addr, handle)
-                        .and_then(|stream| tokio_io::io::write_all(stream, CRUST_TCP_INIT))
-                        .map(|(stream, _buf)| PaStream::Tcp(stream))
+                        .and_then(|stream| {
+                            framed_stream(stream).send(BytesMut::from(&CRUST_TCP_INIT[..]))
+                        })
+                        .map(|stream| PaStream::Tcp(stream.into_inner()))
                         .into_boxed()
                 }
             }

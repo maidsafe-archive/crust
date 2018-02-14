@@ -18,7 +18,7 @@
 pub use self::addr::PaAddr;
 pub use self::listener::{AcceptError, PaIncoming, PaListener};
 pub use self::stream::{PaRendezvousConnectError, PaRendezvousMsg, PaStream,
-                       UtpRendezvousConnectError};
+                       UtpRendezvousConnectError, framed_stream};
 
 mod stream;
 mod listener;

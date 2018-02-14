@@ -20,7 +20,6 @@ use net::protocol_agnostic::CRUST_TCP_INIT;
 use p2p::{self, ECHO_REQ, P2p, tcp_respond_with_addr, udp_respond_with_addr};
 use priv_prelude::*;
 use tokio_core;
-use tokio_io;
 use tokio_utp;
 
 #[derive(Debug)]
@@ -275,19 +274,23 @@ fn handle_tcp_connection(
     stream: TcpStream,
     addr: SocketAddr,
 ) -> BoxFuture<Option<(TcpStream, SocketAddr)>, AcceptError> {
-    let header = [0u8; 8];
-
-    tokio_io::io::read_exact(stream, header)
-        .map_err(AcceptError::TcpReadHeader)
-        .and_then(move |(stream, header)| match header {
-            ECHO_REQ => {
-                tcp_respond_with_addr(stream, addr)
-                    .map(|_stream| None)
-                    .map_err(AcceptError::TcpRespond)
-                    .into_boxed()
-            }
-            CRUST_TCP_INIT => future::ok(Some((stream, addr))).into_boxed(),
-            _ => future::err(AcceptError::InvalidTcpHeader).into_boxed(),
+    framed_stream(stream)
+        .into_future()
+        .map_err(|(err, _stream)| AcceptError::TcpAccept(err))
+        .and_then(|(req_opt, stream)| {
+            req_opt.map(|req| (req, stream)).ok_or_else(|| {
+                AcceptError::TcpReadHeader(io::ErrorKind::ConnectionReset.into())
+            })
+        })
+        .and_then(move |(req, stream)| if req[..] == ECHO_REQ[..] {
+            tcp_respond_with_addr(stream, addr)
+                .map(|_stream| None)
+                .map_err(AcceptError::TcpRespond)
+                .into_boxed()
+        } else if req[..] == CRUST_TCP_INIT[..] {
+            future::ok(Some((stream.into_inner(), addr))).into_boxed()
+        } else {
+            future::err(AcceptError::InvalidTcpHeader).into_boxed()
         })
         .into_boxed()
 }
@@ -311,6 +314,7 @@ fn incoming_utp(
                             bytes,
                             "an incoming raw_channel will always have an initial packet to read",
                         );
+                            // TODO(povilas): decrypt bytes
                             if ECHO_REQ[..] == bytes[..] {
                                 let addr = raw_channel.peer_addr();
                                 udp_respond_with_addr(raw_channel, addr)
