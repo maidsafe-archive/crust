@@ -21,7 +21,6 @@ use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use priv_prelude::*;
 use tokio_io;
-use tokio_io::codec::length_delimited::Framed;
 
 /// The maximum size of packets sent by `Socket` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
@@ -78,7 +77,7 @@ pub struct Socket<M> {
 }
 
 pub struct Inner {
-    stream_rx: Option<SplitStream<Framed<PaStream>>>,
+    stream_rx: Option<SplitStream<FramedPaStream>>,
     write_tx: UnboundedSender<TaskMsg>,
     peer_addr: PaAddr,
     crypto_ctx: CryptoContext,
@@ -86,13 +85,13 @@ pub struct Inner {
 
 enum TaskMsg {
     Send(Priority, BytesMut),
-    Shutdown(SplitStream<Framed<PaStream>>),
+    Shutdown(SplitStream<FramedPaStream>),
 }
 
 struct SocketTask {
     handle: Handle,
-    stream_rx: Option<SplitStream<Framed<PaStream>>>,
-    stream_tx: Option<SplitSink<Framed<PaStream>>>,
+    stream_rx: Option<SplitStream<FramedPaStream>>,
+    stream_tx: Option<SplitSink<FramedPaStream>>,
     write_queue: BTreeMap<Priority, VecDeque<(Instant, BytesMut)>>,
     write_rx: UnboundedReceiver<TaskMsg>,
 }
@@ -101,7 +100,7 @@ impl<M: 'static> Socket<M> {
     /// Wraps a `PaStream` and turns it into a `Socket`.
     pub fn wrap_pa(
         handle: &Handle,
-        stream: Framed<PaStream>,
+        stream: FramedPaStream,
         peer_addr: PaAddr,
         crypto_ctx: CryptoContext,
     ) -> Socket<M> {

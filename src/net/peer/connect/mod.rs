@@ -21,7 +21,6 @@ pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnec
 pub use self::demux::Demux;
 pub use self::ext_reachability::ExternalReachability;
 pub use self::handshake_message::{BootstrapDenyReason, BootstrapRequest};
-use tokio_io::codec::length_delimited::Framed;
 
 mod bootstrap;
 mod connection_info;
@@ -278,7 +277,7 @@ fn connect_directly(
     evloop_handle: &Handle,
     addrs: Vec<PaAddr>,
     config: &ConfigFile,
-) -> BoxStream<(Framed<PaStream>, PaAddr), SingleConnectionError> {
+) -> BoxStream<(FramedPaStream, PaAddr), SingleConnectionError> {
     stream::futures_unordered(
         addrs
             .into_iter()

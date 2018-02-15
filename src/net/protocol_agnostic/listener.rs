@@ -20,7 +20,6 @@ use net::protocol_agnostic::CRUST_TCP_INIT;
 use p2p::{self, ECHO_REQ, P2p, tcp_respond_with_addr, udp_respond_with_addr};
 use priv_prelude::*;
 use tokio_core;
-use tokio_io::codec::length_delimited::Framed;
 use tokio_utp;
 
 #[derive(Debug)]
@@ -36,8 +35,7 @@ pub struct PaIncoming {
 enum PaIncomingInner {
     Tcp {
         incoming: tokio_core::net::Incoming,
-        processing:
-            FuturesUnordered<BoxFuture<Option<(Framed<PaStream>, SocketAddr)>, AcceptError>>,
+        processing: FuturesUnordered<BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError>>,
     },
     Utp {
         incoming: tokio_utp::Incoming,
@@ -225,7 +223,7 @@ impl PaListener {
 }
 
 impl Stream for PaIncoming {
-    type Item = (Framed<PaStream>, PaAddr);
+    type Item = (FramedPaStream, PaAddr);
     type Error = AcceptError;
 
     fn poll(&mut self) -> Result<Async<Option<Self::Item>>, AcceptError> {
@@ -245,13 +243,8 @@ impl Stream for PaIncoming {
 
 fn incoming_tcp(
     incoming: &mut tokio_core::net::Incoming,
-    processing: &mut FuturesUnordered<
-        BoxFuture<
-            Option<(Framed<PaStream>, SocketAddr)>,
-            AcceptError,
-        >,
-    >,
-) -> Result<Async<Option<(Framed<PaStream>, PaAddr)>>, AcceptError> {
+    processing: &mut FuturesUnordered<BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError>>,
+) -> Result<Async<Option<(FramedPaStream, PaAddr)>>, AcceptError> {
     loop {
         match incoming.poll().map_err(AcceptError::TcpAccept)? {
             Async::Ready(Some((stream, addr))) => {
@@ -279,7 +272,7 @@ fn incoming_tcp(
 fn handle_tcp_connection(
     stream: TcpStream,
     addr: SocketAddr,
-) -> BoxFuture<Option<(Framed<PaStream>, SocketAddr)>, AcceptError> {
+) -> BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError> {
     framed_stream(PaStream::Tcp(stream))
         .into_future()
         .map_err(|(err, _stream)| AcceptError::TcpAccept(err))
@@ -305,7 +298,7 @@ fn incoming_utp(
     incoming: &mut tokio_utp::Incoming,
     raw_rx: &mut tokio_utp::RawReceiver,
     processing: &mut FuturesUnordered<BoxFuture<(), AcceptError>>,
-) -> Result<Async<Option<(Framed<PaStream>, PaAddr)>>, AcceptError> {
+) -> Result<Async<Option<(FramedPaStream, PaAddr)>>, AcceptError> {
     loop {
         match raw_rx.poll().void_unwrap() {
             Async::Ready(Some(raw_channel)) => {

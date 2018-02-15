@@ -44,6 +44,9 @@ where
         .new_framed(stream)
 }
 
+/// Protocol agnostic stream that yields length delimited frames of `BytesMut`.
+pub type FramedPaStream = Framed<PaStream, BytesMut>;
+
 #[derive(Debug)]
 pub enum PaStream {
     Tcp(TcpStream),
