@@ -21,6 +21,7 @@ pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnec
 pub use self::demux::Demux;
 pub use self::ext_reachability::ExternalReachability;
 pub use self::handshake_message::{BootstrapDenyReason, BootstrapRequest};
+use tokio_io::codec::length_delimited::Framed;
 
 mod bootstrap;
 mod connection_info;
@@ -182,22 +183,27 @@ fn attempt_to_connect<UID: Uid>(
     let direct_connections = {
         let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
         let handle = handle.clone();
-        connect_directly(&handle, their_info.for_direct, config).and_then(move |stream| {
-            let peer_addr = stream.peer_addr()?;
-            Ok(Socket::wrap_pa(
-                &handle,
-                stream,
-                peer_addr,
-                crypto_ctx.clone(),
-            ))
-        })
+        connect_directly(&handle, their_info.for_direct, config)
+            .and_then(move |(stream, peer_addr)| {
+                Ok(Socket::wrap_pa(
+                    &handle,
+                    stream,
+                    peer_addr,
+                    crypto_ctx.clone(),
+                ))
+            })
     };
     let p2p_connection = {
         let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk.clone());
         let handle = handle.clone();
         connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info).and_then(move |stream| {
             let peer_addr = stream.peer_addr()?;
-            Ok(Socket::wrap_pa(&handle, stream, peer_addr, crypto_ctx))
+            Ok(Socket::wrap_pa(
+                &handle,
+                framed_stream(stream),
+                peer_addr,
+                crypto_ctx,
+            ))
         })
     };
     handshake_outgoing_connections(
@@ -272,7 +278,7 @@ fn connect_directly(
     evloop_handle: &Handle,
     addrs: Vec<PaAddr>,
     config: &ConfigFile,
-) -> BoxStream<PaStream, SingleConnectionError> {
+) -> BoxStream<(Framed<PaStream>, PaAddr), SingleConnectionError> {
     stream::futures_unordered(
         addrs
             .into_iter()

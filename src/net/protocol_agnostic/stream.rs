@@ -70,7 +70,7 @@ impl PaStream {
         addr: &PaAddr,
         handle: &Handle,
         config: &ConfigFile,
-    ) -> IoFuture<PaStream> {
+    ) -> IoFuture<(Framed<PaStream>, PaAddr)> {
         let disable_tcp = config.tcp_disabled();
 
         match *addr {
@@ -80,9 +80,14 @@ impl PaStream {
                 } else {
                     TcpStream::connect(tcp_addr, handle)
                         .and_then(|stream| {
-                            framed_stream(stream).send(BytesMut::from(&CRUST_TCP_INIT[..]))
+                            let peer_addr = stream.peer_addr()?;
+                            Ok((PaStream::Tcp(stream), PaAddr::Tcp(peer_addr)))
                         })
-                        .map(|stream| PaStream::Tcp(stream.into_inner()))
+                        .and_then(|(stream, peer_addr)| {
+                            framed_stream(stream)
+                                .send(BytesMut::from(&CRUST_TCP_INIT[..]))
+                                .map(move |stream| (stream, peer_addr))
+                        })
                         .into_boxed()
                 }
             }
@@ -91,6 +96,10 @@ impl PaStream {
                     .into_future()
                     .and_then(move |(socket, _listener)| {
                         socket.connect(&utp_addr).map(PaStream::Utp)
+                    })
+                    .and_then(|stream| {
+                        let peer_addr = stream.peer_addr()?;
+                        Ok((framed_stream(stream), peer_addr))
                     })
                     .into_boxed()
             }

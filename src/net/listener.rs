@@ -22,6 +22,7 @@ use p2p::P2p;
 
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
+use tokio_io::codec::length_delimited::Framed;
 
 /// A handle for a single listening address. Drop this object to stop listening on this address.
 pub struct Listener {
@@ -189,7 +190,7 @@ fn make_listener(
 }
 
 impl Stream for SocketIncoming {
-    type Item = (PaStream, PaAddr);
+    type Item = (Framed<PaStream>, PaAddr);
     type Error = AcceptError;
 
     fn poll(&mut self) -> Result<Async<Option<Self::Item>>, AcceptError> {
@@ -589,7 +590,7 @@ mod test {
                         let f = {
                             PaStream::direct_connect(&addr, &handle, &config)
                                 .map_err(|e| panic!(e))
-                                .map(move |stream| {
+                                .map(move |(stream, _peer_addr)| {
                                     Socket::<PaAddr>::wrap_pa(
                                         &handle0,
                                         stream,

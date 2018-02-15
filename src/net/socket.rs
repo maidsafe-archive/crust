@@ -21,7 +21,7 @@ use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use priv_prelude::*;
 use tokio_io;
-use tokio_io::codec::length_delimited::{self, Framed};
+use tokio_io::codec::length_delimited::Framed;
 
 /// The maximum size of packets sent by `Socket` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
@@ -101,17 +101,11 @@ impl<M: 'static> Socket<M> {
     /// Wraps a `PaStream` and turns it into a `Socket`.
     pub fn wrap_pa(
         handle: &Handle,
-        stream: PaStream,
+        stream: Framed<PaStream>,
         peer_addr: PaAddr,
         crypto_ctx: CryptoContext,
     ) -> Socket<M> {
-        const MAX_HEADER_SIZE: usize = 8;
-        let framed = {
-            length_delimited::Builder::new()
-                .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
-                .new_framed(stream)
-        };
-        let (stream_tx, stream_rx) = framed.split();
+        let (stream_tx, stream_rx) = stream.split();
         let (write_tx, write_rx) = mpsc::unbounded();
         let task = SocketTask {
             handle: handle.clone(),
@@ -350,7 +344,7 @@ mod test {
                 let handle0 = handle.clone();
                 let f0 = PaStream::direct_connect(&addr, &handle, &config)
                     .map_err(SocketError::from)
-                    .and_then(move |stream| {
+                    .and_then(move |(stream, _peer_addr)| {
                         let socket = Socket::<Vec<u8>>::wrap_pa(
                             &handle0,
                             stream,
