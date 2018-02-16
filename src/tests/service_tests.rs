@@ -23,15 +23,19 @@ use std::time::Duration;
 use tokio_core::reactor::Core;
 use util;
 
-fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
-    let config = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
+fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service<util::UniqueId> {
     let loop_handle = event_loop.handle();
     unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
         config,
         util::random_id(),
     )))
+}
+
+fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
+    service_with_config(event_loop, config)
 }
 
 #[test]
@@ -119,6 +123,35 @@ fn connect_works_on_localhost() {
             service2_priv_conn_info,
             service1_pub_conn_info,
         ));
+
+    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
+    assert_eq!(service1_peer.uid(), service2.id());
+    assert_eq!(service2_peer.uid(), service1.id());
+}
+
+// None of the services in this test has listeners, therefore peer-to-peer connections are made.
+#[test]
+fn p2p_connections_on_localhost() {
+    let mut event_loop = unwrap!(Core::new());
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    let service1 = service_with_config(&mut event_loop, config);
+    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    let service2 = service_with_config(&mut event_loop, config);
+    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect = service1
+        .connect(service1_priv_conn_info, service2_pub_conn_info)
+        .join(service2.connect(
+            service2_priv_conn_info,
+            service1_pub_conn_info,
+        ))
+        .with_timeout(Duration::from_secs(3), &event_loop.handle())
+        .map(|res_opt| unwrap!(res_opt, "p2p connection timed out"));
 
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
     assert_eq!(service1_peer.uid(), service2.id());

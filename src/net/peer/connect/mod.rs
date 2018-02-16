@@ -149,26 +149,17 @@ pub fn connect<UID: Uid>(
         name_hash: name_hash,
         their_pk: our_info.our_pk,
     };
+    let our_id = our_info.id;
+    let our_sk = our_info.our_sk.clone();
 
-    let direct_connections = connect_directly(handle, their_info.for_direct, &config);
-    let p2p_connection = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info);
-    let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
-    let all_outgoing_connections = handshake_outgoing_connections(
-        handle,
-        direct_connections.select(p2p_connection.into_stream()),
-        our_connect_request.clone(),
-        their_id,
-        crypto_ctx,
-        their_info.pub_key,
-        our_info.our_sk.clone(),
-    );
-
+    let all_outgoing_connections =
+        attempt_to_connect(handle, &config, &our_connect_request, their_info, our_info);
     let direct_incoming =
-        handshake_incoming_connections(our_connect_request, peer_rx, their_id, our_info.our_sk);
+        handshake_incoming_connections(our_connect_request, peer_rx, their_id, our_sk);
     let all_connections = all_outgoing_connections
         .select(direct_incoming)
         .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
-    choose_peer(handle, all_connections, our_info.id, their_id)
+    choose_peer(handle, all_connections, our_id, their_id)
         .and_then(move |peer| {
             let ip = peer.ip().map_err(ConnectError::Peer)?;
             if config.is_peer_whitelisted(ip, CrustUser::Node) {
@@ -178,6 +169,44 @@ pub fn connect<UID: Uid>(
             }
         })
         .into_boxed()
+}
+
+/// Initiates both direct and p2p connections.
+fn attempt_to_connect<UID: Uid>(
+    handle: &Handle,
+    config: &ConfigFile,
+    our_connect_request: &ConnectRequest<UID>,
+    their_info: PubConnectionInfo<UID>,
+    our_info: PrivConnectionInfo<UID>,
+) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
+    let direct_connections = {
+        let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
+        let handle = handle.clone();
+        connect_directly(&handle, their_info.for_direct, config).and_then(move |stream| {
+            let peer_addr = stream.peer_addr()?;
+            Ok(Socket::wrap_pa(
+                &handle,
+                stream,
+                peer_addr,
+                crypto_ctx.clone(),
+            ))
+        })
+    };
+    let p2p_connection = {
+        let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk.clone());
+        let handle = handle.clone();
+        connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info).and_then(move |stream| {
+            let peer_addr = stream.peer_addr()?;
+            Ok(Socket::wrap_pa(&handle, stream, peer_addr, crypto_ctx))
+        })
+    };
+    handshake_outgoing_connections(
+        direct_connections.select(p2p_connection.into_stream()),
+        our_connect_request.clone(),
+        their_info.id,
+        their_info.pub_key,
+        our_info.our_sk,
+    )
 }
 
 /// Takes all pending handshaken connections and chooses the first one successful.
@@ -282,29 +311,17 @@ fn handshake_incoming_connections<UID: Uid>(
 
 /// Executes handshake process for the given connections.
 fn handshake_outgoing_connections<UID: Uid, S>(
-    evloop_handle: &Handle,
     connections: S,
     our_connect_request: ConnectRequest<UID>,
     their_id: UID,
-    crypto_ctx: CryptoContext,
     their_pk: PublicKey,
     our_sk: SecretKey,
 ) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
 where
-    S: Stream<Item = PaStream, Error = SingleConnectionError> + 'static,
+    S: Stream<Item = Socket<HandshakeMessage<UID>>, Error = SingleConnectionError> + 'static,
 {
     let our_name_hash = our_connect_request.name_hash;
-    let handle_copy = evloop_handle.clone();
     connections
-        .and_then(move |stream| {
-            let peer_addr = stream.peer_addr()?;
-            Ok(Socket::wrap_pa(
-                &handle_copy,
-                stream,
-                peer_addr,
-                crypto_ctx.clone(),
-            ))
-        })
         .and_then(move |socket| {
             socket
                 .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
