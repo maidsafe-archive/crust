@@ -25,7 +25,27 @@ use rust_sodium::crypto;
 use std::error::Error;
 use std::io::{Read, Write};
 use tokio_io::{self, AsyncRead, AsyncWrite};
+use tokio_io::codec::length_delimited::{self, Framed};
 use void;
+
+/// The maximum size of packets sent by `PaStream` in bytes.
+const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+const MAX_HEADER_SIZE: usize = 8;
+
+/// Converts given stream into length delimited framed stream.
+/// This stream takes care of deconstructing messages and spits `BytesMut` with exactly the
+/// same amount of bytes as were sent.
+pub fn framed_stream<T>(stream: T) -> Framed<T>
+where
+    T: AsyncRead + AsyncWrite,
+{
+    length_delimited::Builder::new()
+        .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
+        .new_framed(stream)
+}
+
+/// Protocol agnostic stream that yields length delimited frames of `BytesMut`.
+pub type FramedPaStream = Framed<PaStream, BytesMut>;
 
 #[derive(Debug)]
 pub enum PaStream {
@@ -53,7 +73,7 @@ impl PaStream {
         addr: &PaAddr,
         handle: &Handle,
         config: &ConfigFile,
-    ) -> IoFuture<PaStream> {
+    ) -> IoFuture<(Framed<PaStream>, PaAddr)> {
         let disable_tcp = config.tcp_disabled();
 
         match *addr {
@@ -62,8 +82,15 @@ impl PaStream {
                     future::err(io::Error::new(io::ErrorKind::Other, "tcp disabled")).into_boxed()
                 } else {
                     TcpStream::connect(tcp_addr, handle)
-                        .and_then(|stream| tokio_io::io::write_all(stream, CRUST_TCP_INIT))
-                        .map(|(stream, _buf)| PaStream::Tcp(stream))
+                        .and_then(|stream| {
+                            let peer_addr = stream.peer_addr()?;
+                            Ok((PaStream::Tcp(stream), PaAddr::Tcp(peer_addr)))
+                        })
+                        .and_then(|(stream, peer_addr)| {
+                            framed_stream(stream)
+                                .send(BytesMut::from(&CRUST_TCP_INIT[..]))
+                                .map(move |stream| (stream, peer_addr))
+                        })
                         .into_boxed()
                 }
             }
@@ -72,6 +99,10 @@ impl PaStream {
                     .into_future()
                     .and_then(move |(socket, _listener)| {
                         socket.connect(&utp_addr).map(PaStream::Utp)
+                    })
+                    .and_then(|stream| {
+                        let peer_addr = stream.peer_addr()?;
+                        Ok((framed_stream(stream), peer_addr))
                     })
                     .into_boxed()
             }

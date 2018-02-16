@@ -21,7 +21,6 @@ use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use priv_prelude::*;
 use tokio_io;
-use tokio_io::codec::length_delimited::{self, Framed};
 
 /// The maximum size of packets sent by `Socket` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
@@ -78,7 +77,7 @@ pub struct Socket<M> {
 }
 
 pub struct Inner {
-    stream_rx: Option<SplitStream<Framed<PaStream>>>,
+    stream_rx: Option<SplitStream<FramedPaStream>>,
     write_tx: UnboundedSender<TaskMsg>,
     peer_addr: PaAddr,
     crypto_ctx: CryptoContext,
@@ -86,13 +85,13 @@ pub struct Inner {
 
 enum TaskMsg {
     Send(Priority, BytesMut),
-    Shutdown(SplitStream<Framed<PaStream>>),
+    Shutdown(SplitStream<FramedPaStream>),
 }
 
 struct SocketTask {
     handle: Handle,
-    stream_rx: Option<SplitStream<Framed<PaStream>>>,
-    stream_tx: Option<SplitSink<Framed<PaStream>>>,
+    stream_rx: Option<SplitStream<FramedPaStream>>,
+    stream_tx: Option<SplitSink<FramedPaStream>>,
     write_queue: BTreeMap<Priority, VecDeque<(Instant, BytesMut)>>,
     write_rx: UnboundedReceiver<TaskMsg>,
 }
@@ -101,17 +100,11 @@ impl<M: 'static> Socket<M> {
     /// Wraps a `PaStream` and turns it into a `Socket`.
     pub fn wrap_pa(
         handle: &Handle,
-        stream: PaStream,
+        stream: FramedPaStream,
         peer_addr: PaAddr,
         crypto_ctx: CryptoContext,
     ) -> Socket<M> {
-        const MAX_HEADER_SIZE: usize = 8;
-        let framed = {
-            length_delimited::Builder::new()
-                .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
-                .new_framed(stream)
-        };
-        let (stream_tx, stream_rx) = framed.split();
+        let (stream_tx, stream_rx) = stream.split();
         let (write_tx, write_rx) = mpsc::unbounded();
         let task = SocketTask {
             handle: handle.clone(),
@@ -350,7 +343,7 @@ mod test {
                 let handle0 = handle.clone();
                 let f0 = PaStream::direct_connect(&addr, &handle, &config)
                     .map_err(SocketError::from)
-                    .and_then(move |stream| {
+                    .and_then(move |(stream, _peer_addr)| {
                         let socket = Socket::<Vec<u8>>::wrap_pa(
                             &handle0,
                             stream,

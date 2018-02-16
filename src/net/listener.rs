@@ -189,7 +189,7 @@ fn make_listener(
 }
 
 impl Stream for SocketIncoming {
-    type Item = (PaStream, PaAddr);
+    type Item = (FramedPaStream, PaAddr);
     type Error = AcceptError;
 
     fn poll(&mut self) -> Result<Async<Option<Self::Item>>, AcceptError> {
@@ -589,7 +589,7 @@ mod test {
                         let f = {
                             PaStream::direct_connect(&addr, &handle, &config)
                                 .map_err(|e| panic!(e))
-                                .map(move |stream| {
+                                .map(move |(stream, _peer_addr)| {
                                     Socket::<PaAddr>::wrap_pa(
                                         &handle0,
                                         stream,

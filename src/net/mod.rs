@@ -20,8 +20,9 @@ pub use self::peer::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError, Co
                      ConnectHandshakeError, Demux, ExternalReachability, P2pConnectionInfo, Peer,
                      PeerError, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
                      SingleConnectionError, Uid, bootstrap};
-pub use self::protocol_agnostic::{PaAddr, PaIncoming, PaListener, PaRendezvousConnectError,
-                                  PaStream, UtpRendezvousConnectError};
+pub use self::protocol_agnostic::{FramedPaStream, PaAddr, PaIncoming, PaListener,
+                                  PaRendezvousConnectError, PaStream, UtpRendezvousConnectError,
+                                  framed_stream};
 pub use self::service_discovery::ServiceDiscovery;
 pub use self::socket::{MAX_PAYLOAD_SIZE, Priority, Socket, SocketError};
 

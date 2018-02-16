@@ -20,7 +20,6 @@ use net::protocol_agnostic::CRUST_TCP_INIT;
 use p2p::{self, ECHO_REQ, P2p, tcp_respond_with_addr, udp_respond_with_addr};
 use priv_prelude::*;
 use tokio_core;
-use tokio_io;
 use tokio_utp;
 
 #[derive(Debug)]
@@ -36,7 +35,7 @@ pub struct PaIncoming {
 enum PaIncomingInner {
     Tcp {
         incoming: tokio_core::net::Incoming,
-        processing: FuturesUnordered<BoxFuture<Option<(TcpStream, SocketAddr)>, AcceptError>>,
+        processing: FuturesUnordered<BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError>>,
     },
     Utp {
         incoming: tokio_utp::Incoming,
@@ -224,10 +223,10 @@ impl PaListener {
 }
 
 impl Stream for PaIncoming {
-    type Item = (PaStream, PaAddr);
+    type Item = (FramedPaStream, PaAddr);
     type Error = AcceptError;
 
-    fn poll(&mut self) -> Result<Async<Option<(PaStream, PaAddr)>>, AcceptError> {
+    fn poll(&mut self) -> Result<Async<Option<Self::Item>>, AcceptError> {
         match self.inner {
             PaIncomingInner::Tcp {
                 ref mut incoming,
@@ -244,28 +243,12 @@ impl Stream for PaIncoming {
 
 fn incoming_tcp(
     incoming: &mut tokio_core::net::Incoming,
-    processing: &mut FuturesUnordered<BoxFuture<Option<(TcpStream, SocketAddr)>, AcceptError>>,
-) -> Result<Async<Option<(PaStream, PaAddr)>>, AcceptError> {
+    processing: &mut FuturesUnordered<BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError>>,
+) -> Result<Async<Option<(FramedPaStream, PaAddr)>>, AcceptError> {
     loop {
         match incoming.poll().map_err(AcceptError::TcpAccept)? {
             Async::Ready(Some((stream, addr))) => {
-                processing.push({
-                    let header = [0u8; 8];
-
-                    tokio_io::io::read_exact(stream, header)
-                        .map_err(AcceptError::TcpReadHeader)
-                        .and_then(move |(stream, header)| match header {
-                            ECHO_REQ => {
-                                tcp_respond_with_addr(stream, addr)
-                                    .map(|_stream| None)
-                                    .map_err(AcceptError::TcpRespond)
-                                    .into_boxed()
-                            }
-                            CRUST_TCP_INIT => future::ok(Some((stream, addr))).into_boxed(),
-                            _ => future::err(AcceptError::InvalidTcpHeader).into_boxed(),
-                        })
-                        .into_boxed()
-                });
+                processing.push(handle_tcp_connection(stream, addr));
             }
             Async::Ready(None) |
             Async::NotReady => break,
@@ -274,7 +257,6 @@ fn incoming_tcp(
     loop {
         match processing.poll()? {
             Async::Ready(Some(Some((stream, addr)))) => {
-                let stream = PaStream::Tcp(stream);
                 let addr = PaAddr::Tcp(addr);
                 return Ok(Async::Ready(Some((stream, addr))));
             }
@@ -286,11 +268,37 @@ fn incoming_tcp(
     Ok(Async::NotReady)
 }
 
+/// Receives first message from connection and dispatches corresponding action.
+fn handle_tcp_connection(
+    stream: TcpStream,
+    addr: SocketAddr,
+) -> BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError> {
+    framed_stream(PaStream::Tcp(stream))
+        .into_future()
+        .map_err(|(err, _stream)| AcceptError::TcpAccept(err))
+        .and_then(|(req_opt, stream)| {
+            req_opt.map(|req| (req, stream)).ok_or_else(|| {
+                AcceptError::TcpReadHeader(io::ErrorKind::ConnectionReset.into())
+            })
+        })
+        .and_then(move |(req, stream)| if req[..] == ECHO_REQ[..] {
+            tcp_respond_with_addr(stream, addr)
+                .map(|_stream| None)
+                .map_err(AcceptError::TcpRespond)
+                .into_boxed()
+        } else if req[..] == CRUST_TCP_INIT[..] {
+            future::ok(Some((stream, addr))).into_boxed()
+        } else {
+            future::err(AcceptError::InvalidTcpHeader).into_boxed()
+        })
+        .into_boxed()
+}
+
 fn incoming_utp(
     incoming: &mut tokio_utp::Incoming,
     raw_rx: &mut tokio_utp::RawReceiver,
     processing: &mut FuturesUnordered<BoxFuture<(), AcceptError>>,
-) -> Result<Async<Option<(PaStream, PaAddr)>>, AcceptError> {
+) -> Result<Async<Option<(FramedPaStream, PaAddr)>>, AcceptError> {
     loop {
         match raw_rx.poll().void_unwrap() {
             Async::Ready(Some(raw_channel)) => {
@@ -305,6 +313,7 @@ fn incoming_utp(
                             bytes,
                             "an incoming raw_channel will always have an initial packet to read",
                         );
+                            // TODO(povilas): decrypt bytes
                             if ECHO_REQ[..] == bytes[..] {
                                 let addr = raw_channel.peer_addr();
                                 udp_respond_with_addr(raw_channel, addr)
@@ -333,7 +342,7 @@ fn incoming_utp(
         Async::Ready(Some(stream)) => {
             let addr = PaAddr::Utp(stream.peer_addr());
             let stream = PaStream::Utp(stream);
-            Ok(Async::Ready(Some((stream, addr))))
+            Ok(Async::Ready(Some((framed_stream(stream), addr))))
         }
         Async::Ready(None) => Ok(Async::Ready(None)),
         Async::NotReady => Ok(Async::NotReady),
