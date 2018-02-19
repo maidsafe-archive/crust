@@ -22,7 +22,6 @@
 pub use bytes::{Bytes, BytesMut};
 pub use common::{CrustUser, HASH_SIZE, NameHash};
 pub use config::ConfigFile;
-pub use crypto::{CryptoContext, CryptoError};
 pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
@@ -33,8 +32,8 @@ pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandsha
 pub use net::{FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream, framed_stream};
 pub use net::Uid;
 pub use net2::TcpBuilder;
-pub use p2p::{P2p, SocketAddrExt, TcpListenerExt, TcpStreamExt, UdpSocketExt};
-pub use p2p::{TcpRendezvousConnectError, UdpRendezvousConnectError};
+pub use p2p::{CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt,
+              TcpRendezvousConnectError, TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt};
 pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
 pub use std::{fmt, io, mem};

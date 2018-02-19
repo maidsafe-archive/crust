@@ -74,7 +74,6 @@ extern crate url;
 extern crate tokio_utp;
 extern crate bincode;
 extern crate rust_sodium;
-extern crate secure_serialisation;
 
 pub use net::MAX_PAYLOAD_SIZE;
 
@@ -86,7 +85,6 @@ mod common;
 pub mod compat;
 mod service;
 mod util;
-mod crypto;
 
 mod priv_prelude;
 
