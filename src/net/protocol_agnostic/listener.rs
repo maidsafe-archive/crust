@@ -17,7 +17,7 @@
 
 use futures::stream::FuturesUnordered;
 use net::protocol_agnostic::CRUST_TCP_INIT;
-use p2p::{self, ECHO_REQ, P2p, tcp_respond_with_addr, udp_respond_with_addr};
+use p2p::{self, ECHO_REQ, P2p, RendezvousServerError, tcp_respond_with_addr, udp_respond_with_addr};
 use priv_prelude::*;
 use tokio_core;
 use tokio_utp;
@@ -89,14 +89,9 @@ quick_error! {
             display("error reading header on incoming tcp connection: {}", e)
             cause(e)
         }
-        TcpRespond(e: io::Error) {
-            description("error responding to incoming tcp request")
-            display("error responding to incoming tcp request: {}", e)
-            cause(e)
-        }
-        UdpRespond(e: io::Error) {
-            description("error responding to incoming udp request")
-            display("error responding to incoming udp request: {}", e)
+        EchoAddress(e: RendezvousServerError) {
+            description("error sending echo address response")
+            display("error sending echo address response: {}", e)
             cause(e)
         }
     }
@@ -282,9 +277,11 @@ fn handle_tcp_connection(
             })
         })
         .and_then(move |(req, stream)| if req[..] == ECHO_REQ[..] {
-            tcp_respond_with_addr(stream, addr)
+            // TODO(povilas): use authenticated crypto context
+            let crypto_ctx = p2p::CryptoContext::null();
+            tcp_respond_with_addr(stream, addr, &crypto_ctx)
                 .map(|_stream| None)
-                .map_err(AcceptError::TcpRespond)
+                .map_err(AcceptError::EchoAddress)
                 .into_boxed()
         } else if req[..] == CRUST_TCP_INIT[..] {
             future::ok(Some((stream, addr))).into_boxed()
@@ -316,8 +313,10 @@ fn incoming_utp(
                             // TODO(povilas): decrypt bytes
                             if ECHO_REQ[..] == bytes[..] {
                                 let addr = raw_channel.peer_addr();
-                                udp_respond_with_addr(raw_channel, addr)
-                                    .map_err(AcceptError::UdpRespond)
+                                // TODO(povilas): use authenticated crypto context
+                                let crypto_ctx = p2p::CryptoContext::null();
+                                udp_respond_with_addr(raw_channel, addr, &crypto_ctx)
+                                    .map_err(AcceptError::EchoAddress)
                                     .map(|_raw_channel| ())
                                     .into_boxed()
                             } else {
