@@ -76,8 +76,12 @@ impl<UID: Uid> Service<UID> {
         let (our_pk, our_sk) = gen_keypair();
         let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
 
-        let (listeners, socket_incoming) =
-            Acceptor::new(&handle, p2p.clone(), anon_decrypt_ctx.clone());
+        let (listeners, socket_incoming) = Acceptor::new(
+            &handle,
+            p2p.clone(),
+            anon_decrypt_ctx.clone(),
+            our_sk.clone(),
+        );
         let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx);
 
         future::ok(Service {

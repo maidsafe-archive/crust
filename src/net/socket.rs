@@ -324,7 +324,7 @@ mod test {
 
         let config = unwrap!(ConfigFile::new_temporary());
         let (listener_pk, our_sk) = gen_keypair();
-        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, our_sk);
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, our_sk.clone());
 
         let res: Result<_, Void> = core.run({
             let listen_addrs = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
@@ -333,6 +333,7 @@ mod test {
                     &listen_addr,
                     &handle,
                     anon_decrypt_ctx.clone(),
+                    our_sk.clone(),
                 ));
                 let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
