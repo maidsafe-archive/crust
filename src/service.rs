@@ -72,13 +72,12 @@ impl<UID: Uid> Service<UID> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
 
-        let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone());
         let (our_pk, our_sk) = gen_keypair();
-        let demux = Demux::new(
-            &handle,
-            socket_incoming,
-            CryptoContext::anonymous_decrypt(our_pk, our_sk.clone()),
-        );
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
+
+        let (listeners, socket_incoming) =
+            Acceptor::new(&handle, p2p.clone(), anon_decrypt_ctx.clone());
+        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx);
 
         future::ok(Service {
             handle,

@@ -22,14 +22,23 @@ use priv_prelude::*;
 use tokio_core;
 use tokio_utp;
 
+/// A convenient wrapper around uTP and TCP connection listeners.
 #[derive(Debug)]
-pub enum PaListener {
+pub struct PaListener {
+    inner: PaListenerInner,
+    /// Crypto context to decrypt initial incoming anonymous messages.
+    anon_decrypt_ctx: CryptoContext,
+}
+
+#[derive(Debug)]
+pub enum PaListenerInner {
     Tcp(TcpListener),
     Utp(UtpSocket, UtpListener),
 }
 
 pub struct PaIncoming {
     inner: PaIncomingInner,
+    anon_decrypt_ctx: CryptoContext,
 }
 
 enum PaIncomingInner {
@@ -99,18 +108,28 @@ quick_error! {
 
 impl PaListener {
     #[cfg(test)]
-    pub fn bind(addr: &PaAddr, handle: &Handle) -> io::Result<PaListener> {
+    pub fn bind(
+        addr: &PaAddr,
+        handle: &Handle,
+        anon_decrypt_ctx: CryptoContext,
+    ) -> io::Result<PaListener> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 let listener = TcpListener::bind(tcp_addr, handle)?;
-                let listener = PaListener::Tcp(listener);
-                Ok(listener)
+                let listener = PaListenerInner::Tcp(listener);
+                Ok(Self {
+                    inner: listener,
+                    anon_decrypt_ctx,
+                })
             }
             PaAddr::Utp(ref utp_addr) => {
                 let socket = UdpSocket::bind(utp_addr, handle)?;
                 let (socket, listener) = UtpSocket::from_socket(socket, handle)?;
-                let listener = PaListener::Utp(socket, listener);
-                Ok(listener)
+                let listener = PaListenerInner::Utp(socket, listener);
+                Ok(Self {
+                    inner: listener,
+                    anon_decrypt_ctx,
+                })
             }
         }
     }
@@ -119,13 +138,17 @@ impl PaListener {
         addr: &PaAddr,
         handle: &Handle,
         p2p: &P2p,
+        anon_decrypt_ctx: CryptoContext,
     ) -> BoxFuture<(PaListener, PaAddr), BindPublicError> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 TcpListener::bind_public(tcp_addr, handle, p2p)
                     .map_err(BindPublicError::BindTcp)
                     .map(|(listener, public_addr)| {
-                        let listener = PaListener::Tcp(listener);
+                        let listener = Self {
+                            inner: PaListenerInner::Tcp(listener),
+                            anon_decrypt_ctx,
+                        };
                         let public_addr = PaAddr::Tcp(public_addr);
                         (listener, public_addr)
                     })
@@ -141,7 +164,10 @@ impl PaListener {
                                 BindPublicError::MakeUtpSocket,
                             )?
                         };
-                        let listener = PaListener::Utp(socket, listener);
+                        let listener = Self {
+                            inner: PaListenerInner::Utp(socket, listener),
+                            anon_decrypt_ctx,
+                        };
                         let public_addr = PaAddr::Utp(public_addr);
                         Ok((listener, public_addr))
                     })
@@ -150,30 +176,40 @@ impl PaListener {
         }
     }
 
-    pub fn bind_reusable(addr: &PaAddr, handle: &Handle) -> io::Result<PaListener> {
+    pub fn bind_reusable(
+        addr: &PaAddr,
+        handle: &Handle,
+        anon_decrypt_ctx: CryptoContext,
+    ) -> io::Result<PaListener> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 let listener = TcpListener::bind_reusable(tcp_addr, handle)?;
-                let listener = PaListener::Tcp(listener);
+                let listener = Self {
+                    inner: PaListenerInner::Tcp(listener),
+                    anon_decrypt_ctx,
+                };
                 Ok(listener)
             }
             PaAddr::Utp(ref utp_addr) => {
                 let socket = UdpSocket::bind_reusable(utp_addr, handle)?;
                 let (socket, listener) = UtpSocket::from_socket(socket, handle)?;
-                let listener = PaListener::Utp(socket, listener);
+                let listener = Self {
+                    inner: PaListenerInner::Utp(socket, listener),
+                    anon_decrypt_ctx,
+                };
                 Ok(listener)
             }
         }
     }
 
     pub fn expanded_local_addrs(&self) -> io::Result<Vec<PaAddr>> {
-        match *self {
-            PaListener::Tcp(ref tcp_listener) => {
+        match self.inner {
+            PaListenerInner::Tcp(ref tcp_listener) => {
                 let addrs = tcp_listener.expanded_local_addrs()?;
                 let addrs = addrs.into_iter().map(PaAddr::Tcp).collect();
                 Ok(addrs)
             }
-            PaListener::Utp(_, ref utp_listener) => {
+            PaListenerInner::Utp(_, ref utp_listener) => {
                 let addr = utp_listener.local_addr()?;
                 let addrs = addr.expand_local_unspecified()?;
                 let addrs = addrs.into_iter().map(PaAddr::Utp).collect();
@@ -183,15 +219,17 @@ impl PaListener {
     }
 
     pub fn local_addr(&self) -> io::Result<PaAddr> {
-        match *self {
-            PaListener::Tcp(ref tcp_listener) => Ok(PaAddr::Tcp(tcp_listener.local_addr()?)),
-            PaListener::Utp(_, ref utp_listener) => Ok(PaAddr::Utp(utp_listener.local_addr()?)),
+        match self.inner {
+            PaListenerInner::Tcp(ref tcp_listener) => Ok(PaAddr::Tcp(tcp_listener.local_addr()?)),
+            PaListenerInner::Utp(_, ref utp_listener) => Ok(
+                PaAddr::Utp(utp_listener.local_addr()?),
+            ),
         }
     }
 
     pub fn incoming(self) -> PaIncoming {
-        match self {
-            PaListener::Tcp(tcp_listener) => {
+        match self.inner {
+            PaListenerInner::Tcp(tcp_listener) => {
                 let incoming = tcp_listener.incoming();
                 let processing = FuturesUnordered::new();
                 PaIncoming {
@@ -199,9 +237,10 @@ impl PaListener {
                         incoming,
                         processing,
                     },
+                    anon_decrypt_ctx: self.anon_decrypt_ctx,
                 }
             }
-            PaListener::Utp(socket, utp_listener) => {
+            PaListenerInner::Utp(socket, utp_listener) => {
                 let incoming = utp_listener.incoming();
                 let raw_rx = socket.raw_receiver();
                 let processing = FuturesUnordered::new();
@@ -211,6 +250,7 @@ impl PaListener {
                         raw_rx,
                         processing,
                     },
+                    anon_decrypt_ctx: self.anon_decrypt_ctx,
                 }
             }
         }
@@ -226,7 +266,7 @@ impl Stream for PaIncoming {
             PaIncomingInner::Tcp {
                 ref mut incoming,
                 ref mut processing,
-            } => incoming_tcp(incoming, processing),
+            } => incoming_tcp(incoming, processing, &self.anon_decrypt_ctx),
             PaIncomingInner::Utp {
                 ref mut incoming,
                 ref mut raw_rx,
@@ -239,11 +279,16 @@ impl Stream for PaIncoming {
 fn incoming_tcp(
     incoming: &mut tokio_core::net::Incoming,
     processing: &mut FuturesUnordered<BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError>>,
+    anon_decrypt_ctx: &CryptoContext,
 ) -> Result<Async<Option<(FramedPaStream, PaAddr)>>, AcceptError> {
     loop {
         match incoming.poll().map_err(AcceptError::TcpAccept)? {
             Async::Ready(Some((stream, addr))) => {
-                processing.push(handle_tcp_connection(stream, addr));
+                processing.push(handle_tcp_connection(
+                    stream,
+                    addr,
+                    anon_decrypt_ctx.clone(),
+                ));
             }
             Async::Ready(None) |
             Async::NotReady => break,
@@ -267,6 +312,7 @@ fn incoming_tcp(
 fn handle_tcp_connection(
     stream: TcpStream,
     addr: SocketAddr,
+    _anon_decrypt_ctx: CryptoContext,
 ) -> BoxFuture<Option<(FramedPaStream, SocketAddr)>, AcceptError> {
     framed_stream(PaStream::Tcp(stream))
         .into_future()

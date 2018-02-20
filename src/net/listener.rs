@@ -35,6 +35,7 @@ pub struct Acceptor {
     listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: SharedObservableAddresses,
     p2p: P2p,
+    anon_decrypt_ctx: CryptoContext,
 }
 
 /// Holds a collection of addresses and notifies about changes.
@@ -106,7 +107,11 @@ pub struct SocketIncoming {
 
 impl Acceptor {
     /// Create connection acceptor and a handle to its incoming stream of connections.
-    pub fn new(handle: &Handle, p2p: P2p) -> (Acceptor, SocketIncoming) {
+    pub fn new(
+        handle: &Handle,
+        p2p: P2p,
+        anon_decrypt_ctx: CryptoContext,
+    ) -> (Acceptor, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
         let addresses = ObservableAddresses::shared();
         let acceptor = Acceptor {
@@ -114,6 +119,7 @@ impl Acceptor {
             listeners_tx: tx,
             addresses: Arc::clone(&addresses),
             p2p,
+            anon_decrypt_ctx,
         };
         let incoming = SocketIncoming {
             listeners_rx: rx,
@@ -145,11 +151,13 @@ impl Acceptor {
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
         let listen_addr = *listen_addr;
+        let anon_decrypt_ctx = self.anon_decrypt_ctx.clone();
 
-        PaListener::bind_public(&listen_addr, &handle, &self.p2p)
+        PaListener::bind_public(&listen_addr, &handle, &self.p2p, anon_decrypt_ctx.clone())
             .map(|(listener, public_addr)| (listener, Some(public_addr)))
             .or_else(move |_| {
-                PaListener::bind_reusable(&listen_addr, &handle).map(|listener| (listener, None))
+                PaListener::bind_reusable(&listen_addr, &handle, anon_decrypt_ctx.clone())
+                    .map(|listener| (listener, None))
             })
             .and_then(move |(listener, public_addr)| {
                 make_listener(listener, public_addr, addresses, tx)
@@ -232,8 +240,14 @@ mod test {
     use super::*;
     use env_logger;
     use hamcrest::prelude::*;
+    use rust_sodium::crypto::box_::gen_keypair;
     use tokio_core::reactor::Core;
     use util::{self, UniqueId};
+
+    fn decrypt_ctx_with_rand_keys() -> CryptoContext {
+        let (our_pk, our_sk) = gen_keypair();
+        CryptoContext::anonymous_decrypt(our_pk, our_sk)
+    }
 
     mod observable_addresses {
         use super::*;
@@ -352,7 +366,8 @@ mod test {
             #[test]
             fn it_returns_true_when_theres_at_least_one_public_address() {
                 let core = unwrap!(Core::new());
-                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default());
+                let anon_decrypt_ctx = decrypt_ctx_with_rand_keys();
+                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default(), anon_decrypt_ctx);
                 unwrap!(acceptor.addresses.lock()).add_public(utp_addr!("1.2.3.4:4000"));
 
                 assert!(acceptor.has_public_addrs());
@@ -361,7 +376,8 @@ mod test {
             #[test]
             fn it_returns_false_when_none_of_listeners_have_public_address() {
                 let core = unwrap!(Core::new());
-                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default());
+                let anon_decrypt_ctx = decrypt_ctx_with_rand_keys();
+                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default(), anon_decrypt_ctx);
 
                 assert!(!acceptor.has_public_addrs());
             }
@@ -385,8 +401,9 @@ mod test {
         }
 
         fn palistener(handle: &Handle) -> PaListener {
+            let anon_decrypt_ctx = decrypt_ctx_with_rand_keys();
             let bind_addr = utp_addr!("0.0.0.0:0");
-            unwrap!(PaListener::bind(&bind_addr, handle))
+            unwrap!(PaListener::bind(&bind_addr, handle, anon_decrypt_ctx))
         }
 
         #[test]
@@ -461,7 +478,8 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
 
-        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default());
+        let anon_decrypt_ctx = decrypt_ctx_with_rand_keys();
+        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), anon_decrypt_ctx);
 
         let future = {
             acceptor
@@ -556,7 +574,8 @@ mod test {
         let handle = core.handle();
         let handle0 = handle.clone();
 
-        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default());
+        let anon_decrypt_ctx = decrypt_ctx_with_rand_keys();
+        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), anon_decrypt_ctx);
 
         let config = unwrap!(ConfigFile::new_temporary());
         let future = {

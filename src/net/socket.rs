@@ -311,6 +311,7 @@ mod test {
 
     use env_logger;
     use rand::{self, Rng};
+    use rust_sodium::crypto::box_::gen_keypair;
     use tokio_core::reactor::Core;
 
     use util;
@@ -318,14 +319,21 @@ mod test {
     #[test]
     fn test_socket() {
         let _logger = env_logger::init();
-
-        let config = unwrap!(ConfigFile::new_temporary());
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        let (our_pk, our_sk) = gen_keypair();
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk);
+
         let res: Result<_, Void> = core.run({
             let listen_addrs = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
             stream::iter_ok(listen_addrs).for_each(move |listen_addr| {
-                let listener = unwrap!(PaListener::bind(&listen_addr, &handle));
+                let listener = unwrap!(PaListener::bind(
+                    &listen_addr,
+                    &handle,
+                    anon_decrypt_ctx.clone(),
+                ));
                 let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
                 let num_msgs = 1000;
