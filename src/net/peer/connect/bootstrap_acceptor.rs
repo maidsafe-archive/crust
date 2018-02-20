@@ -213,9 +213,9 @@ fn bootstrap_accept<UID: Uid>(
                 let connectors = {
                     direct_listeners
                         .into_iter()
-                        .filter(|addr| util::ip_addr_is_global(&addr.ip()))
-                        .map(|addr| {
-                            PaStream::direct_connect(&addr, &handle, config)
+                        .filter(|peer| util::ip_addr_is_global(&peer.addr.ip()))
+                        .map(|peer| {
+                            PaStream::direct_connect(&handle, &peer.addr, peer.pub_key, config)
                                 .with_timeout(Duration::from_secs(3), &handle)
                                 .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
                                 .into_boxed()

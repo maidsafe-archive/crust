@@ -34,6 +34,7 @@ pub use net::Uid;
 pub use net2::TcpBuilder;
 pub use p2p::{CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt,
               TcpRendezvousConnectError, TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt};
+pub use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
 pub use std::{fmt, io, mem};

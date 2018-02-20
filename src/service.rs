@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use config::PeerInfo;
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
@@ -115,7 +116,10 @@ impl<UID: Uid> Service<UID> {
         let ext_reachability = match crust_user {
             CrustUser::Node => {
                 ExternalReachability::Required {
-                    direct_listeners: current_addrs.into_iter().collect(),
+                    direct_listeners: current_addrs
+                        .into_iter()
+                        .map(|addr| PeerInfo::new(addr, self.our_pk))
+                        .collect(),
                 }
             }
             CrustUser::Client => ExternalReachability::NotRequired,

@@ -574,7 +574,8 @@ mod test {
         let handle = core.handle();
         let handle0 = handle.clone();
 
-        let anon_decrypt_ctx = decrypt_ctx_with_rand_keys();
+        let (listener_pk, our_sk) = gen_keypair();
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, our_sk);
         let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), anon_decrypt_ctx);
 
         let config = unwrap!(ConfigFile::new_temporary());
@@ -606,7 +607,7 @@ mod test {
                         let addr = *addr;
                         let handle0 = handle.clone();
                         let f = {
-                            PaStream::direct_connect(&addr, &handle, &config)
+                            PaStream::direct_connect(&handle, &addr, listener_pk, &config)
                                 .map_err(|e| panic!(e))
                                 .map(move |(stream, _peer_addr)| {
                                     Socket::<PaAddr>::wrap_pa(

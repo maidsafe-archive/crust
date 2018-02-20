@@ -79,12 +79,13 @@ pub use net::MAX_PAYLOAD_SIZE;
 
 mod error;
 #[macro_use]
+mod util;
+#[macro_use]
 mod net;
 pub mod config;
 mod common;
 pub mod compat;
 mod service;
-mod util;
 
 mod priv_prelude;
 

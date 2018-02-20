@@ -323,8 +323,8 @@ mod test {
         let handle = core.handle();
 
         let config = unwrap!(ConfigFile::new_temporary());
-        let (our_pk, our_sk) = gen_keypair();
-        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk);
+        let (listener_pk, our_sk) = gen_keypair();
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, our_sk);
 
         let res: Result<_, Void> = core.run({
             let listen_addrs = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
@@ -349,7 +349,7 @@ mod test {
                     msgs.iter().cloned().map(|m| (1, m)).collect();
 
                 let handle0 = handle.clone();
-                let f0 = PaStream::direct_connect(&addr, &handle, &config)
+                let f0 = PaStream::direct_connect(&handle, &addr, listener_pk, &config)
                     .map_err(SocketError::from)
                     .and_then(move |(stream, _peer_addr)| {
                         let socket = Socket::<Vec<u8>>::wrap_pa(
