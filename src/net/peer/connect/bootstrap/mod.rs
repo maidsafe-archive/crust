@@ -75,13 +75,11 @@ pub fn bootstrap<UID: Uid>(
             let sd_port = config.read().service_discovery_port.unwrap_or(
                 service::SERVICE_DISCOVERY_DEFAULT_PORT,
             );
-            service_discovery::discover::<Vec<PaAddr>>(&handle, sd_port)
+            service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port)
                 .map_err(BootstrapError::ServiceDiscovery)?
                 .infallible::<(PaAddr, TryPeerError)>()
                 .map(|(_, v)| stream::iter_ok(v))
                 .flatten()
-                // TODO(povilas): remove this when service discovery returns peer public key
-                .map(PeerInfo::with_rand_key)
                 .into_boxed()
         } else {
             future::empty().into_stream().into_boxed()

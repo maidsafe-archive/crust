@@ -16,12 +16,14 @@
 // relating to use of the SAFE Network Software.
 
 use super::*;
+use config::PeerInfo;
 use env_logger;
 use future_utils::StreamExt;
 use futures::{Future, Stream, future, stream};
 use futures::sync::mpsc;
 use net::service_discovery::server::Server;
 use priv_prelude::*;
+use rust_sodium::crypto::box_::gen_keypair;
 use std::time::Duration;
 use tokio_core::reactor::Core;
 
@@ -62,6 +64,10 @@ fn test() {
     let _servers = unwrap!(res);
 }
 
+fn peer_addrs(peers: &HashSet<PeerInfo>) -> HashSet<PaAddr> {
+    peers.iter().map(|peer| peer.addr).collect()
+}
+
 #[test]
 fn service_discovery() {
     let _logger = env_logger::init();
@@ -73,11 +79,18 @@ fn service_discovery() {
     unwrap!(config.write()).service_discovery_port = Some(0);
     let (tx, rx) = mpsc::unbounded();
 
-    let sd = unwrap!(ServiceDiscovery::new(&handle, &config, hashset!{}, rx));
+    let (our_pk, _our_sk) = gen_keypair();
+    let sd = unwrap!(ServiceDiscovery::new(
+        &handle,
+        &config,
+        &hashset!{},
+        rx,
+        our_pk,
+    ));
     let port = sd.port();
 
     let f = {
-        unwrap!(discover::<HashSet<SocketAddr>>(&handle, port))
+        unwrap!(discover::<HashSet<PeerInfo>>(&handle, port))
             .with_timeout(Duration::from_millis(200), &handle)
             .collect()
             .and_then(move |v| {
@@ -93,20 +106,20 @@ fn service_discovery() {
                 let handle0 = handle.clone();
 
                 Timeout::new(Duration::from_millis(100), &handle)
-            .map_err(|e| panic!(e))
-            .map(move |()| {
-                unwrap!(discover::<HashSet<PaAddr>>(&handle0, port))
-            })
-            .flatten_stream()
-            .until({
-                Timeout::new(Duration::from_millis(200), &handle)
-                .map_err(|e| panic!(e))
-            })
-            .collect()
-            .map(move |v| {
-                assert!(v.into_iter().any(|(_, addrs)| addrs == some_addrs));
-                drop(sd);
-            })
+                    .map_err(|e| panic!(e))
+                    .map(move |()| {
+                        unwrap!(discover::<HashSet<PeerInfo>>(&handle0, port))
+                    })
+                    .flatten_stream()
+                    .until({
+                        Timeout::new(Duration::from_millis(200), &handle)
+                        .map_err(|e| panic!(e))
+                    })
+                    .collect()
+                    .map(move |v| {
+                        assert!(v.into_iter().any(|(_, peers)| peer_addrs(&peers) == some_addrs));
+                        drop(sd);
+                    })
             })
     };
     let res = core.run(f);

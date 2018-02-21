@@ -25,6 +25,7 @@ mod test;
 pub use self::discover::{Discover, discover};
 pub use self::server::Server;
 
+use config::PeerInfo;
 use future_utils::{self, DropNotify};
 use futures::sync::mpsc::UnboundedReceiver;
 
@@ -42,26 +43,31 @@ impl ServiceDiscovery {
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
-        current_addrs: HashSet<PaAddr>,
+        current_addrs: &HashSet<PaAddr>,
         addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
+        our_pk: PublicKey,
     ) -> io::Result<ServiceDiscovery> {
         let port = config.read().service_discovery_port.unwrap_or(
             service::SERVICE_DISCOVERY_DEFAULT_PORT,
         );
 
         let (drop_tx, drop_rx) = future_utils::drop_notify();
-        let mut server = service_discovery::Server::new(
-            handle,
-            port,
-            current_addrs.into_iter().collect::<Vec<_>>(),
-        )?;
+        let current_addrs = current_addrs
+            .iter()
+            .map(|addr| PeerInfo::new(*addr, our_pk))
+            .collect::<Vec<_>>();
+        let mut server = service_discovery::Server::new(handle, port, current_addrs)?;
         let actual_port = server.port();
 
         handle.spawn({
             addrs_rx
                 .chain(future::empty().into_stream())
                 .for_each(move |addrs| {
-                    server.set_data(addrs.into_iter().collect());
+                    let addrs = addrs
+                        .iter()
+                        .map(|addr| PeerInfo::new(*addr, our_pk))
+                        .collect();
+                    server.set_data(addrs);
                     Ok(())
                 })
                 .until(drop_rx.infallible())
