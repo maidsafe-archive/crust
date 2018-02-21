@@ -20,6 +20,7 @@ use futures::{Async, Future, Sink, Stream};
 use futures::sink;
 use futures::stream::StreamFuture;
 
+use maidsafe_utilities::serialisation::SerialisationError;
 use net::service_discovery::msg::DiscoveryMsg;
 use priv_prelude::*;
 use serde::Serialize;
@@ -31,7 +32,12 @@ use tokio_core::reactor::Handle;
 use util::SerdeUdpCodec;
 use void::Void;
 
-pub fn discover<T>(handle: &Handle, port: u16, our_pk: PublicKey) -> io::Result<Discover<T>>
+pub fn discover<T>(
+    handle: &Handle,
+    port: u16,
+    our_pk: PublicKey,
+    our_sk: SecretKey,
+) -> io::Result<Discover<T>>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
@@ -45,25 +51,60 @@ where
     let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(255, 255, 255, 255), port));
     let writing = framed.send((broadcast_addr, request));
 
-    Ok(Discover { state: DiscoverState::Writing { writing } })
+    let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk);
+
+    Ok(Discover {
+        state: DiscoverState::Writing { writing },
+        anon_decrypt_ctx,
+        _ph: PhantomData,
+    })
 }
 
-pub struct Discover<T>
-where
-    T: Serialize + DeserializeOwned + Clone + 'static,
-{
-    state: DiscoverState<T>,
+pub struct Discover<T> {
+    state: DiscoverState,
+    anon_decrypt_ctx: CryptoContext,
+    _ph: PhantomData<T>,
 }
 
-enum DiscoverState<T>
-where
-    T: Serialize + DeserializeOwned + Clone + 'static,
-{
-    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>, },
-    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>, },
+enum DiscoverState {
+    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
+    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
     Invalid,
 }
 
+impl<T> Discover<T>
+where
+    T: Serialize + DeserializeOwned + Clone + 'static,
+{
+    /// Handles service discovery response: deserializes and decrypts it.
+    /// None is returned on failure.
+    fn handle_response(
+        &self,
+        response: Option<(SocketAddr, Result<DiscoveryMsg, SerialisationError>)>,
+    ) -> Option<(Ipv4Addr, T)> {
+        match response {
+            Some((addr, Ok(DiscoveryMsg::Response(response)))) => {
+                let ip = match addr.ip() {
+                    IpAddr::V4(ip) => ip,
+                    _ => unreachable!(),
+                };
+                match self.anon_decrypt_ctx.decrypt(&response) {
+                    Ok(response) => Some((ip, response)),
+                    Err(e) => {
+                        warn!("Failed to decrypt service discovery response: {}", e);
+                        None
+                    }
+                }
+            }
+            Some((_, Ok(..))) => None,
+            Some((addr, Err(e))) => {
+                warn!("Error deserialising message from {}: {}", addr, e);
+                None
+            }
+            None => unreachable!(),
+        }
+    }
+}
 
 impl<T> Stream for Discover<T>
 where
@@ -77,23 +118,13 @@ where
         let ret = loop {
             match state {
                 DiscoverState::Reading { mut reading } => {
-                    if let Async::Ready((res, framed)) =
+                    if let Async::Ready((response, framed)) =
                         unwrap!(reading.poll().map_err(|(e, _)| e))
                     {
                         state = DiscoverState::Reading { reading: framed.into_future() };
-                        match res {
-                            Some((addr, Ok(DiscoveryMsg::Response(response)))) => {
-                                let ip = match addr.ip() {
-                                    IpAddr::V4(ip) => ip,
-                                    _ => unreachable!(),
-                                };
-                                break Async::Ready(Some((ip, response)));
-                            }
-                            Some((_, Ok(..))) => (),
-                            Some((addr, Err(e))) => {
-                                warn!("Error deserialising message from {}: {}", addr, e);
-                            }
-                            None => unreachable!(),
+                        let resp_item = self.handle_response(response);
+                        if let Some(item) = resp_item {
+                            break Async::Ready(Some(item));
                         }
                     } else {
                         state = DiscoverState::Reading { reading };

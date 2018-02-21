@@ -241,6 +241,16 @@ impl<UID: Uid> Service<UID> {
         &self.p2p
     }
 
+    /// Returns service public key.
+    pub fn public_key(&self) -> PublicKey {
+        self.our_pk
+    }
+
+    /// Returns service private key.
+    pub fn private_key(&self) -> SecretKey {
+        self.our_sk.clone()
+    }
+
     /// Constructs private connection info with p2p info returned from `p2p` crate.
     /// p2p info is used for rendezvous connections - hole punching.
     fn with_p2p_connection_info(
@@ -265,11 +275,6 @@ impl<UID: Uid> Service<UID> {
             .map_err(|(e, _stream)| e)
             .infallible()
             .into_boxed()
-    }
-
-    /// Returns service public key.
-    pub fn public_key(&self) -> PublicKey {
-        self.our_pk
     }
 }
 

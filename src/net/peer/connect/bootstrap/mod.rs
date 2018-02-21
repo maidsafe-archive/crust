@@ -76,7 +76,7 @@ pub fn bootstrap<UID: Uid>(
             let sd_port = config.read().service_discovery_port.unwrap_or(
                 service::SERVICE_DISCOVERY_DEFAULT_PORT,
             );
-            service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk)
+            service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk.clone())
                 .map_err(BootstrapError::ServiceDiscovery)?
                 .infallible::<(PaAddr, TryPeerError)>()
                 .map(|(_, v)| stream::iter_ok(v))

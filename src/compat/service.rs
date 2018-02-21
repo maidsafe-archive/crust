@@ -443,8 +443,9 @@ impl<UID: Uid> Service<UID> {
                     ::service::SERVICE_DISCOVERY_DEFAULT_PORT,
                 );
                 let our_pk = state.service.public_key();
+                let our_sk = state.service.private_key();
                 let f = {
-                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port, our_pk)
+                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port, our_pk, our_sk)
                         .into_future()
                         .map(|s| s.infallible())
                         .flatten_stream()
