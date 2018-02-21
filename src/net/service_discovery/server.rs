@@ -117,7 +117,7 @@ where
                         unwrap!(reading.poll().map_err(|(e, _)| e))
                     {
                         match res {
-                            Some((addr, Ok(DiscoveryMsg::Request))) => {
+                            Some((addr, Ok(DiscoveryMsg::Request(_)))) => {
                                 let response = DiscoveryMsg::Response(self.data.clone());
                                 let writing = framed.send((addr, response));
                                 state = ServerTaskState::Writing { writing };

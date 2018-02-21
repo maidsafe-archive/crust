@@ -141,6 +141,7 @@ impl<UID: Uid> Service<UID> {
             use_service_discovery,
             &self.config,
             self.our_sk.clone(),
+            self.our_pk,
         )
     }
 
@@ -267,7 +268,6 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Returns service public key.
-    #[cfg(test)]
     pub fn public_key(&self) -> PublicKey {
         self.our_pk
     }

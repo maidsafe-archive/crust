@@ -15,11 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+
 use futures::{Async, Future, Sink, Stream};
 use futures::sink;
 use futures::stream::StreamFuture;
 
 use net::service_discovery::msg::DiscoveryMsg;
+use priv_prelude::*;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::{io, mem};
@@ -29,7 +31,7 @@ use tokio_core::reactor::Handle;
 use util::SerdeUdpCodec;
 use void::Void;
 
-pub fn discover<T>(handle: &Handle, port: u16) -> io::Result<Discover<T>>
+pub fn discover<T>(handle: &Handle, port: u16, our_pk: PublicKey) -> io::Result<Discover<T>>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
@@ -39,7 +41,7 @@ where
     socket.set_broadcast(true)?;
     let framed = socket.framed(SerdeUdpCodec::new());
 
-    let request = DiscoveryMsg::Request;
+    let request = DiscoveryMsg::Request(our_pk);
     let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(255, 255, 255, 255), port));
     let writing = framed.send((broadcast_addr, request));
 

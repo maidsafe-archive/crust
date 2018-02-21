@@ -15,8 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use priv_prelude::*;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DiscoveryMsg<T> {
-    Request,
+    /// Request has sender's public key which should be used to encrypt response.
+    Request(PublicKey),
     Response(T),
 }

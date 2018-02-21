@@ -46,7 +46,8 @@ fn test() {
         let mut futures = Vec::new();
         for i in 0..num_servers {
             for _ in 0..num_discovers {
-                let discover = unwrap!(discover::<u16>(&handle, starting_port + i))
+                let (our_pk, _our_sk) = gen_keypair();
+                let discover = unwrap!(discover::<u16>(&handle, starting_port + i, our_pk))
                     .with_timeout(Duration::from_secs(1), &handle)
                     .collect()
                     .and_then(move |v| {
@@ -90,7 +91,8 @@ fn service_discovery() {
     let port = sd.port();
 
     let f = {
-        unwrap!(discover::<HashSet<PeerInfo>>(&handle, port))
+        let (our_pk, _our_sk) = gen_keypair();
+        unwrap!(discover::<HashSet<PeerInfo>>(&handle, port, our_pk))
             .with_timeout(Duration::from_millis(200), &handle)
             .collect()
             .and_then(move |v| {
@@ -108,7 +110,7 @@ fn service_discovery() {
                 Timeout::new(Duration::from_millis(100), &handle)
                     .map_err(|e| panic!(e))
                     .map(move |()| {
-                        unwrap!(discover::<HashSet<PeerInfo>>(&handle0, port))
+                        unwrap!(discover::<HashSet<PeerInfo>>(&handle0, port, our_pk))
                     })
                     .flatten_stream()
                     .until({
