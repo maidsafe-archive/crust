@@ -280,7 +280,6 @@ fn bootstrap_using_hard_coded_contacts() {
 }
 
 #[test]
-#[ignore] // TODO(povilas): change this when service discovery is restored
 fn bootstrap_using_service_discovery() {
     let _ = env_logger::init();
 
