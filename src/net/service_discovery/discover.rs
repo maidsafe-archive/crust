@@ -66,6 +66,11 @@ pub struct Discover<T> {
     _ph: PhantomData<T>,
 }
 
+// The only large size difference between variance is because of `Invalid` variant.
+// This variant is not really used, hence it makes sense to disable this lint.
+//#[cfg_attr(feature = "clippy", allow(large_enum_variant))]
+#[allow(unknown_lints)]
+#[allow(large_enum_variant)]
 enum DiscoverState {
     Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
     Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
