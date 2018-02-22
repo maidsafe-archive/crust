@@ -97,7 +97,7 @@ pub fn try_peer<UID: Uid>(
     let handle0 = handle.clone();
     let handle1 = handle.clone();
     let addr = *addr;
-    PaStream::direct_connect(&addr, handle, config)
+    PaStream::direct_connect(handle, &addr, their_pk, config)
         .map(move |(stream, _peer_addr)| {
             Socket::wrap_pa(
                 &handle0,

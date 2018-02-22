@@ -182,7 +182,7 @@ fn attempt_to_connect<UID: Uid>(
     let direct_connections = {
         let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
         let handle = handle.clone();
-        connect_directly(&handle, their_info.for_direct, config)
+        connect_directly(&handle, their_info.for_direct, their_info.pub_key, config)
             .and_then(move |(stream, peer_addr)| {
                 Ok(Socket::wrap_pa(
                     &handle,
@@ -276,13 +276,14 @@ where
 fn connect_directly(
     evloop_handle: &Handle,
     addrs: Vec<PaAddr>,
+    their_pk: PublicKey,
     config: &ConfigFile,
 ) -> BoxStream<(FramedPaStream, PaAddr), SingleConnectionError> {
     stream::futures_unordered(
         addrs
             .into_iter()
             .map(|addr| {
-                PaStream::direct_connect(&addr, evloop_handle, config)
+                PaStream::direct_connect(evloop_handle, &addr, their_pk, config)
             })
             .collect::<Vec<_>>(),
     ).map_err(SingleConnectionError::Io)

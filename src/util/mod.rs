@@ -26,3 +26,12 @@ mod test;
 
 #[cfg(test)]
 pub use self::test::*;
+
+/// Tries given expression. Returns boxed future error on failure.
+// NOTE: it is duplicate with the one in p2p crate. Consider reusing.
+macro_rules! try_bfut {
+    ($e:expr) => (match $e {
+        Ok(t) => t,
+        Err(e) => return future::err(e).into_boxed(),
+    })
+}

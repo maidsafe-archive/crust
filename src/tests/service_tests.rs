@@ -17,7 +17,7 @@
 
 use config::PeerInfo;
 use futures::stream;
-use p2p::tcp_query_public_addr;
+use p2p::{self, Protocol, query_public_addr};
 use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
@@ -260,9 +260,10 @@ fn service_responds_to_tcp_echo_address_requests() {
     let listener = unwrap!(event_loop.run(service.start_listening().first_ok()));
     let listener_addr = listener.addr().unspecified_to_localhost().inner();
 
-    let resp = event_loop.run(tcp_query_public_addr(
+    let resp = event_loop.run(query_public_addr(
+        Protocol::Tcp,
         &addr!("0.0.0.0:0"),
-        &listener_addr,
+        &p2p::PeerInfo::new(listener_addr, service.public_key()),
         &handle,
     ));
     let our_addr = unwrap!(resp);

@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use priv_prelude::*;
+use config::PeerInfo;
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ExternalReachability {
     NotRequired,
-    Required { direct_listeners: Vec<PaAddr> },
+    Required { direct_listeners: Vec<PeerInfo> },
 }

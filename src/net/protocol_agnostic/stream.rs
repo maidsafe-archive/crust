@@ -19,7 +19,7 @@ use bincode::{self, Infinite};
 use future_utils::bi_channel;
 use futures::sync::mpsc::SendError;
 use net::protocol_agnostic::CRUST_TCP_INIT;
-use p2p::P2p;
+use p2p::{EncryptedRequest, P2p};
 use priv_prelude::*;
 use rust_sodium::crypto;
 use std::error::Error;
@@ -55,7 +55,7 @@ pub enum PaStream {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaRendezvousMsg {
-    pub enc_pk: crypto::box_::PublicKey,
+    pub enc_pk: PublicKey,
     pub tcp: Option<Bytes>,
     pub utp: Option<Bytes>,
 }
@@ -70,8 +70,9 @@ impl PaStream {
     }
 
     pub fn direct_connect(
-        addr: &PaAddr,
         handle: &Handle,
+        addr: &PaAddr,
+        their_pk: PublicKey,
         config: &ConfigFile,
     ) -> IoFuture<(Framed<PaStream>, PaAddr)> {
         let disable_tcp = config.tcp_disabled();
@@ -86,10 +87,19 @@ impl PaStream {
                             let peer_addr = stream.peer_addr()?;
                             Ok((PaStream::Tcp(stream), PaAddr::Tcp(peer_addr)))
                         })
-                        .and_then(|(stream, peer_addr)| {
+                        .and_then(move |(stream, peer_addr)| {
+                            let crypto_ctx = CryptoContext::anonymous_encrypt(their_pk);
+                            let (unused_pk, _sk) = crypto::box_::gen_keypair();
+                            let conn_init_req =
+                                EncryptedRequest::new(unused_pk, CRUST_TCP_INIT.to_vec());
+                            let conn_init_req =
+                                try_bfut!(crypto_ctx.encrypt(&conn_init_req).map_err(|_e| {
+                                    io::Error::new(io::ErrorKind::Other, "encryption failure")
+                                }));
                             framed_stream(stream)
-                                .send(BytesMut::from(&CRUST_TCP_INIT[..]))
+                                .send(conn_init_req)
                                 .map(move |stream| (stream, peer_addr))
+                                .into_boxed()
                         })
                         .into_boxed()
                 }

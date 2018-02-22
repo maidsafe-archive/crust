@@ -1,1 +1,1 @@
-doc-valid-idents = ["UPnP"]
+doc-valid-idents = ["UPnP", "uTP"]

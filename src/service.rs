@@ -15,12 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
+use config::PeerInfo;
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use net::peer::BootstrapRequest;
-use p2p::P2p;
+use p2p::{self, P2p};
 use priv_prelude::*;
 use rust_sodium::crypto::box_::{PublicKey, SecretKey, gen_keypair};
 
@@ -73,13 +73,16 @@ impl<UID: Uid> Service<UID> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
 
-        let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone());
         let (our_pk, our_sk) = gen_keypair();
-        let demux = Demux::new(
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
+
+        let (listeners, socket_incoming) = Acceptor::new(
             &handle,
-            socket_incoming,
-            CryptoContext::anonymous_decrypt(our_pk, our_sk.clone()),
+            p2p.clone(),
+            anon_decrypt_ctx.clone(),
+            our_sk.clone(),
         );
+        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx);
 
         future::ok(Service {
             handle,
@@ -117,7 +120,10 @@ impl<UID: Uid> Service<UID> {
         let ext_reachability = match crust_user {
             CrustUser::Node => {
                 ExternalReachability::Required {
-                    direct_listeners: current_addrs.into_iter().collect(),
+                    direct_listeners: current_addrs
+                        .into_iter()
+                        .map(|addr| PeerInfo::new(addr, self.our_pk))
+                        .collect(),
                 }
             }
             CrustUser::Client => ExternalReachability::NotRequired,
@@ -272,11 +278,14 @@ fn configure_nat_traversal(config: &ConfigFile) -> P2p {
 
 fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
     let hard_coded_contacts = &config.read().hard_coded_contacts;
-    let stun_servers = hard_coded_contacts.iter().map(|info| info.addr);
-    for addr in stun_servers {
-        match addr {
-            PaAddr::Tcp(ref addr) => p2p.add_tcp_traversal_server(addr),
-            PaAddr::Utp(ref addr) => p2p.add_udp_traversal_server(addr),
+    for peer in hard_coded_contacts {
+        match peer.addr {
+            PaAddr::Tcp(addr) => {
+                p2p.add_tcp_traversal_server(&p2p::PeerInfo::new(addr, peer.pub_key));
+            }
+            PaAddr::Utp(addr) => {
+                p2p.add_udp_traversal_server(&p2p::PeerInfo::new(addr, peer.pub_key));
+            }
         }
     }
 }
@@ -284,8 +293,8 @@ fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
 fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
     for addr in addrs {
         match *addr {
-            PaAddr::Tcp(ref addr) => p2p.remove_tcp_traversal_server(addr),
-            PaAddr::Utp(ref addr) => p2p.remove_udp_traversal_server(addr),
+            PaAddr::Tcp(addr) => p2p.remove_tcp_traversal_server(addr),
+            PaAddr::Utp(addr) => p2p.remove_udp_traversal_server(addr),
         }
     }
 }
@@ -293,6 +302,16 @@ fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Constructs peer info with given address and random public key.
+    /// Usable in cases when public key is not used and we just want to get `PeerInfo`.
+    macro_rules! peer_addr {
+        ($addr:pat) => {
+            {
+                p2p::PeerInfo::with_rand_key(addr!($addr))
+            }
+        };
+    }
 
     mod set_rendezvous_servers {
         use super::*;
@@ -310,7 +329,7 @@ mod tests {
 
             set_rendezvous_servers(&p2p, &config);
 
-            let servers = p2p.tcp_traversal_servers().snapshot();
+            let servers = p2p.tcp_traversal_servers().addrs_snapshot();
             assert!(servers.contains(&addr!("1.2.3.4:4000")));
             assert!(servers.contains(&addr!("1.2.3.5:5000")));
         }
@@ -327,7 +346,7 @@ mod tests {
 
             set_rendezvous_servers(&p2p, &config);
 
-            let servers = p2p.udp_traversal_servers().snapshot();
+            let servers = p2p.udp_traversal_servers().addrs_snapshot();
             assert!(servers.contains(&addr!("1.2.3.4:4000")));
             assert!(servers.contains(&addr!("1.2.3.5:5000")));
         }
@@ -339,8 +358,8 @@ mod tests {
         #[test]
         fn it_removes_specified_rendezvous_servers_from_global_list() {
             let p2p = P2p::default();
-            p2p.add_tcp_traversal_server(&addr!("1.2.3.4:4000"));
-            p2p.add_udp_traversal_server(&addr!("1.2.3.5:5000"));
+            p2p.add_tcp_traversal_server(&peer_addr!("1.2.3.4:4000"));
+            p2p.add_udp_traversal_server(&peer_addr!("1.2.3.5:5000"));
 
             let rm_servers: HashSet<PaAddr> =
                 vec![tcp_addr!("1.2.3.4:4000"), utp_addr!("1.2.3.5:5000")]
