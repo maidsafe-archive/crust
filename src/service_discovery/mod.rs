@@ -177,12 +177,14 @@ impl ServiceDiscovery {
             Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
         };
 
-        Ok(poll.reregister(
+        poll.reregister(
             &self.socket,
             self.token,
             kind,
             PollOpt::edge(),
-        )?)
+        )?;
+
+        Ok(())
     }
 }
 
@@ -255,7 +257,7 @@ mod tests {
             unwrap!(
                 el0.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65_530),
+                        ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 0xFFFA),
                         "Could not spawn ServiceDiscovery_0"
                     );
                 })),
@@ -287,7 +289,7 @@ mod tests {
             unwrap!(
                 el1.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(core, poll, listeners_1, token_1, 65_530),
+                        ServiceDiscovery::start(core, poll, listeners_1, token_1, 0xFFFA),
                         "Could not spawn ServiceDiscovery_1"
                     );
                 })),

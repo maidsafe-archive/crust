@@ -41,7 +41,8 @@ pub struct EventLoop {
 
 impl EventLoop {
     pub fn send(&self, msg: CoreMessage) -> Result<()> {
-        Ok(self.tx.send(msg)?)
+        self.tx.send(msg)?;
+        Ok(())
     }
 }
 
