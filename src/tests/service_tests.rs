@@ -41,20 +41,6 @@ fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
 }
 
 #[test]
-fn start_service() {
-    let mut core = unwrap!(Core::new());
-    let handle = core.handle();
-
-    let config = unwrap!(ConfigFile::new_temporary());
-
-    let res = core.run({
-        Service::with_config(&handle, config, util::random_id()).and_then(|_service| Ok(()))
-    });
-
-    unwrap!(res);
-}
-
-#[test]
 fn bootstrap_using_hard_coded_contacts() {
     let mut event_loop = unwrap!(Core::new());
     let loop_handle = event_loop.handle();
