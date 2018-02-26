@@ -40,6 +40,7 @@ pub struct ServiceDiscovery {
 }
 
 impl ServiceDiscovery {
+    /// Runs service discovery server in the backround.
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
