@@ -105,6 +105,38 @@ fn bootstrap_using_hard_coded_contacts() {
 }
 
 #[test]
+fn bootstrap_using_service_discovery() {
+    let mut evloop = unwrap!(Core::new());
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    {
+        let mut conf_rw = unwrap!(config.write());
+        conf_rw.listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        conf_rw.service_discovery_port = Some(0);
+    }
+    let mut service1 = service_with_config(&mut evloop, config);
+    let _listeners1 = unwrap!(evloop.run(service1.start_listening().collect()));
+    let service_discovery = unwrap!(service1.start_service_discovery());
+    evloop.handle().spawn(
+        service1
+            .bootstrap_acceptor()
+            .for_each(|_| Ok(()))
+            .then(|_| Ok(())),
+    );
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).service_discovery_port = Some(service_discovery.port());
+    let mut service2 = service_with_config(&mut evloop, config);
+    let peer = unwrap!(evloop.run(service2.bootstrap(
+        HashSet::new(),
+        true,
+        CrustUser::Client,
+    )));
+
+    assert_eq!(peer.uid(), service1.id());
+}
+
+#[test]
 fn connect_works_on_localhost() {
     let mut event_loop = unwrap!(Core::new());
 

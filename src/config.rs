@@ -283,7 +283,7 @@ impl ConfigWrapper {
 }
 
 /// Information necessary to connect to peer.
-#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize, Deserialize)]
 pub struct PeerInfo {
     /// Peer public address.
     pub addr: PaAddr,

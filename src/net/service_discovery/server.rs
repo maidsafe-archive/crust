@@ -15,13 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+
 use future_utils::FutureExt;
 use futures::{Async, Future, Sink, Stream};
 use futures::sink;
 use futures::stream::StreamFuture;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
+use maidsafe_utilities::serialisation::SerialisationError;
 use net::service_discovery::msg::DiscoveryMsg;
+use priv_prelude::*;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::{io, mem};
@@ -45,15 +48,16 @@ where
 {
     data_rx: UnboundedReceiver<T>,
     data: T,
-    state: ServerTaskState<T>,
+    state: ServerTaskState,
 }
 
-enum ServerTaskState<T>
-where
-    T: Serialize + DeserializeOwned + Clone + 'static,
-{
-    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>, },
-    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg<T>>>>, },
+// The only large size difference between variance is because of `Invalid` variant.
+// This variant is not really used, hence it makes sense to disable this lint.
+#[allow(unknown_lints)]
+#[allow(large_enum_variant)]
+enum ServerTaskState {
+    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
+    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
     Invalid,
 }
 
@@ -93,6 +97,40 @@ where
     }
 }
 
+impl<T> ServerTask<T>
+where
+    T: Serialize + DeserializeOwned + Clone + 'static,
+{
+    /// Handles service discovery request.
+    /// Returns new server state: either reading or writing.  In case of any errors server remains
+    /// in reading state.
+    fn handle_request(
+        &self,
+        request: Option<(SocketAddr, Result<DiscoveryMsg, SerialisationError>)>,
+        framed: UdpFramed<SerdeUdpCodec<DiscoveryMsg>>,
+    ) -> ServerTaskState {
+        match request {
+            Some((addr, Ok(DiscoveryMsg::Request(their_pk)))) => {
+                let crypto_ctx = CryptoContext::anonymous_encrypt(their_pk);
+                match crypto_ctx.encrypt(&self.data) {
+                    Ok(response) => {
+                        let response = DiscoveryMsg::Response(response);
+                        let writing = framed.send((addr, response));
+                        return ServerTaskState::Writing { writing };
+                    }
+                    Err(e) => warn!("Failed to encrypt service discovery response: {}", e),
+                }
+            }
+            Some((_, Ok(..))) => (),
+            Some((addr, Err(e))) => {
+                warn!("Error deserialising message from {}: {}", addr, e);
+            }
+            None => unreachable!(),
+        }
+        ServerTaskState::Reading { reading: framed.into_future() }
+    }
+}
+
 impl<T> Future for ServerTask<T>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
@@ -113,23 +151,10 @@ where
         loop {
             match state {
                 ServerTaskState::Reading { mut reading } => {
-                    if let Async::Ready((res, framed)) =
+                    if let Async::Ready((request, framed)) =
                         unwrap!(reading.poll().map_err(|(e, _)| e))
                     {
-                        match res {
-                            Some((addr, Ok(DiscoveryMsg::Request))) => {
-                                let response = DiscoveryMsg::Response(self.data.clone());
-                                let writing = framed.send((addr, response));
-                                state = ServerTaskState::Writing { writing };
-                                continue;
-                            }
-                            Some((_, Ok(..))) => (),
-                            Some((addr, Err(e))) => {
-                                warn!("Error deserialising message from {}: {}", addr, e);
-                            }
-                            None => unreachable!(),
-                        }
-                        state = ServerTaskState::Reading { reading: framed.into_future() };
+                        state = self.handle_request(request, framed);
                         continue;
                     } else {
                         state = ServerTaskState::Reading { reading };

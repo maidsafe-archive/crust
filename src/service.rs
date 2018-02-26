@@ -141,6 +141,7 @@ impl<UID: Uid> Service<UID> {
             use_service_discovery,
             &self.config,
             self.our_sk.clone(),
+            self.our_pk,
         )
     }
 
@@ -210,7 +211,13 @@ impl<UID: Uid> Service<UID> {
     /// the local network (via udp broadcast).
     pub fn start_service_discovery(&self) -> io::Result<ServiceDiscovery> {
         let (current_addrs, addrs_rx) = self.listeners.addresses();
-        ServiceDiscovery::new(&self.handle, &self.config, current_addrs, addrs_rx)
+        ServiceDiscovery::new(
+            &self.handle,
+            &self.config,
+            &current_addrs,
+            addrs_rx,
+            self.our_pk,
+        )
     }
 
     /// Return the set of all addresses that we are currently listening for incoming connections
@@ -232,6 +239,16 @@ impl<UID: Uid> Service<UID> {
     /// Get the handle to the `p2p` library config used by this service.
     pub fn p2p_config(&self) -> &P2p {
         &self.p2p
+    }
+
+    /// Returns service public key.
+    pub fn public_key(&self) -> PublicKey {
+        self.our_pk
+    }
+
+    /// Returns service private key.
+    pub fn private_key(&self) -> SecretKey {
+        self.our_sk.clone()
     }
 
     /// Constructs private connection info with p2p info returned from `p2p` crate.
@@ -258,12 +275,6 @@ impl<UID: Uid> Service<UID> {
             .map_err(|(e, _stream)| e)
             .infallible()
             .into_boxed()
-    }
-
-    /// Returns service public key.
-    #[cfg(test)]
-    pub fn public_key(&self) -> PublicKey {
-        self.our_pk
     }
 }
 
