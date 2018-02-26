@@ -22,6 +22,7 @@ use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
 use tokio_core::reactor::Core;
+use tokio_io;
 use util;
 
 fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service<util::UniqueId> {
@@ -301,6 +302,55 @@ fn service_responds_to_tcp_echo_address_requests() {
     let our_addr = unwrap!(resp);
 
     assert_eq!(our_addr.ip(), ipv4!("127.0.0.1"));
+}
+
+mod encryption {
+    use super::*;
+
+    #[test]
+    fn service_closes_tcp_connection_when_random_plaintext_is_sent() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        let service = service_with_config(&mut evloop, config);
+        let listener = unwrap!(evloop.run(service.start_listening().first_ok()));
+        let listener_addr = listener.addr().unspecified_to_localhost().inner();
+
+        let send_text = TcpStream::connect(&listener_addr, &handle)
+            .and_then(|stream| tokio_io::io::write_all(stream, b"random data"))
+            .and_then(|(stream, _buf)| {
+                tokio_io::io::read_to_end(stream, Vec::new())
+            })
+            .map(|(_stream, buf)| buf);
+        let resp = unwrap!(evloop.run(send_text));
+
+        assert_eq!(resp.len(), 0);
+    }
+
+    #[test]
+    fn service_sends_nothing_back_to_udp_endpoint_when_random_plaintext_is_sent() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![utp_addr!("0.0.0.0:0")];
+        let service = service_with_config(&mut evloop, config);
+        let listener = unwrap!(evloop.run(service.start_listening().first_ok()));
+        let listener_addr = listener.addr().unspecified_to_localhost().inner();
+
+        let socket = unwrap!(UdpSocket::bind(&addr!("0.0.0.0:0"), &handle));
+        let send_text = socket
+            .send_dgram(b"random data", listener_addr)
+            .and_then(|(socket, _buf)| socket.recv_dgram(Vec::new()))
+            .map(|(_socket, buf, _bytes_received, _from)| buf)
+            .with_timeout(Duration::from_secs(2), &handle);
+        let resp = unwrap!(evloop.run(send_text));
+
+        let timed_out = resp.is_none();
+        assert!(timed_out);
+    }
 }
 
 /*
