@@ -178,3 +178,38 @@ where
         Ok(Async::NotReady)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio_core::reactor::Core;
+
+    mod server {
+        use super::*;
+
+        #[test]
+        fn when_client_sends_random_plain_text_it_sends_nothing_back() {
+            let mut evloop = unwrap!(Core::new());
+            let handle = evloop.handle();
+
+            let current_addrs =
+                hashset!{
+                tcp_addr!("1.2.3.4:4000"),
+                tcp_addr!("1.2.3.5:5000"),
+            };
+            let server = unwrap!(Server::new(&handle, 0, current_addrs));
+            let server_addr = SocketAddr::new(ip!("127.0.0.1"), server.port);
+
+            let socket = unwrap!(UdpSocket::bind(&addr!("0.0.0.0:0"), &handle));
+            let send_text = socket
+                .send_dgram(b"random data", server_addr)
+                .and_then(|(socket, _buf)| socket.recv_dgram(Vec::new()))
+                .map(|(_socket, buf, _bytes_received, _from)| buf)
+                .with_timeout(Duration::from_secs(2), &handle);
+            let resp = unwrap!(evloop.run(send_text));
+
+            let timed_out = resp.is_none();
+            assert!(timed_out);
+        }
+    }
+}
