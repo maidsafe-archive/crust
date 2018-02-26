@@ -17,6 +17,7 @@
 
 use config::PeerInfo;
 use futures::stream;
+use net::peer;
 use p2p::{self, Protocol, query_public_addr};
 use priv_prelude::*;
 use service::Service;
@@ -336,6 +337,63 @@ mod encryption {
 
         let timed_out = resp.is_none();
         assert!(timed_out);
+    }
+
+    #[test]
+    fn when_peer_sends_unencrypted_traffic_other_peer_closes_connection_with_error() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let service1 = service_with_tmp_config(&mut evloop);
+        let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
+        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+        let service2 = service_with_tmp_config(&mut evloop);
+        let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
+        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
+        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+        let connect = service1
+            .connect(service1_priv_conn_info, service2_pub_conn_info)
+            .join(service2.connect(
+                service2_priv_conn_info,
+                service1_pub_conn_info,
+            ));
+
+        let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
+        let service2_peer = {
+            let id = service2_peer.uid();
+            let kind = service2_peer.kind();
+            let mut peer1_socket = service2_peer.socket();
+            peer1_socket.use_crypto_ctx(CryptoContext::null());
+            peer::from_handshaken_socket(&handle, peer1_socket, id, kind)
+        };
+
+        let send_text = service2_peer.send((1, vec![1, 2, 3])) // let's send unencrypted data
+            .and_then(|peer| {
+                peer.into_future()
+                    .map_err(|(e, _peer)| panic!("service2 failed to receive {}", e))
+                    .map(|(data_opt, _peer)| unwrap!(data_opt))
+            })
+            .join(service1_peer.into_future()
+                .map_err(|(e, _peer)| e) // we'll return error for assertion
+                .and_then(|(data_opt, peer)| {
+                    peer.send((1, vec![3, 2, 1])).map(move |_peer| unwrap!(data_opt))
+                })
+            );
+        let res = evloop.run(send_text);
+
+        let failed_to_decrypt_plaintext = match res {
+            Err(e) => {
+                match e {
+                    PeerError::Decrypt(_) => true,
+                    _ => false,
+                }
+            }
+            _ => false,
+        };
+        assert!(failed_to_decrypt_plaintext);
     }
 }
 

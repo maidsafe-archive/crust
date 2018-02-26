@@ -144,6 +144,12 @@ impl<UID: Uid> Peer<UID> {
     pub fn ip(&self) -> Result<IpAddr, PeerError> {
         Ok(self.socket.peer_addr().map(|a| a.ip())?)
     }
+
+    /// Transforms peer into underlying socket object.
+    #[cfg(test)]
+    pub fn socket(self) -> Socket<PeerMessage> {
+        self.socket
+    }
 }
 
 impl<UID: Uid> Stream for Peer<UID> {
