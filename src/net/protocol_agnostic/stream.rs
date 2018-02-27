@@ -28,8 +28,6 @@ use tokio_io::{self, AsyncRead, AsyncWrite};
 use tokio_io::codec::length_delimited::{self, Framed};
 use void;
 
-const MAX_HEADER_SIZE: usize = 8;
-
 /// Converts given stream into length delimited framed stream.
 /// This stream takes care of deconstructing messages and spits `BytesMut` with exactly the
 /// same amount of bytes as were sent.
@@ -38,7 +36,7 @@ where
     T: AsyncRead + AsyncWrite,
 {
     length_delimited::Builder::new()
-        .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
+        .max_frame_length(MAX_PAYLOAD_SIZE)
         .new_framed(stream)
 }
 
