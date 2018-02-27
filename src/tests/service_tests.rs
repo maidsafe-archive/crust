@@ -401,12 +401,10 @@ mod encryption {
 
     Things to test:
 
-    can we bootstrap?
     are bootstrap blacklists respected?
     are external reachability requirements respected?
     are whitelists respected?
 
-    can we connect?
-    even with no listeners? - not really testable over loopback
+    can we connect with no listeners? - not really testable over loopback
 
 */
