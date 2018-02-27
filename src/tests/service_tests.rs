@@ -17,11 +17,13 @@
 
 use config::PeerInfo;
 use futures::stream;
+use net::peer;
 use p2p::{self, Protocol, query_public_addr};
 use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
 use tokio_core::reactor::Core;
+use tokio_io;
 use util;
 
 fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service<util::UniqueId> {
@@ -37,20 +39,6 @@ fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
     let config = unwrap!(ConfigFile::new_temporary());
     unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     service_with_config(event_loop, config)
-}
-
-#[test]
-fn start_service() {
-    let mut core = unwrap!(Core::new());
-    let handle = core.handle();
-
-    let config = unwrap!(ConfigFile::new_temporary());
-
-    let res = core.run({
-        Service::with_config(&handle, config, util::random_id()).and_then(|_service| Ok(()))
-    });
-
-    unwrap!(res);
 }
 
 #[test]
@@ -301,6 +289,112 @@ fn service_responds_to_tcp_echo_address_requests() {
     let our_addr = unwrap!(resp);
 
     assert_eq!(our_addr.ip(), ipv4!("127.0.0.1"));
+}
+
+mod encryption {
+    use super::*;
+
+    #[test]
+    fn service_closes_tcp_connection_when_random_plaintext_is_sent() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        let service = service_with_config(&mut evloop, config);
+        let listener = unwrap!(evloop.run(service.start_listening().first_ok()));
+        let listener_addr = listener.addr().unspecified_to_localhost().inner();
+
+        let send_text = TcpStream::connect(&listener_addr, &handle)
+            .and_then(|stream| tokio_io::io::write_all(stream, b"random data"))
+            .and_then(|(stream, _buf)| {
+                tokio_io::io::read_to_end(stream, Vec::new())
+            })
+            .map(|(_stream, buf)| buf);
+        let resp = unwrap!(evloop.run(send_text));
+
+        assert_eq!(resp.len(), 0);
+    }
+
+    #[test]
+    fn service_sends_nothing_back_to_udp_endpoint_when_random_plaintext_is_sent() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![utp_addr!("0.0.0.0:0")];
+        let service = service_with_config(&mut evloop, config);
+        let listener = unwrap!(evloop.run(service.start_listening().first_ok()));
+        let listener_addr = listener.addr().unspecified_to_localhost().inner();
+
+        let socket = unwrap!(UdpSocket::bind(&addr!("0.0.0.0:0"), &handle));
+        let send_text = socket
+            .send_dgram(b"random data", listener_addr)
+            .and_then(|(socket, _buf)| socket.recv_dgram(Vec::new()))
+            .map(|(_socket, buf, _bytes_received, _from)| buf)
+            .with_timeout(Duration::from_secs(2), &handle);
+        let resp = unwrap!(evloop.run(send_text));
+
+        let timed_out = resp.is_none();
+        assert!(timed_out);
+    }
+
+    #[test]
+    fn when_peer_sends_unencrypted_traffic_other_peer_closes_connection_with_error() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let service1 = service_with_tmp_config(&mut evloop);
+        let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
+        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+        let service2 = service_with_tmp_config(&mut evloop);
+        let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
+        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
+        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+        let connect = service1
+            .connect(service1_priv_conn_info, service2_pub_conn_info)
+            .join(service2.connect(
+                service2_priv_conn_info,
+                service1_pub_conn_info,
+            ));
+
+        let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
+        let service2_peer = {
+            let id = service2_peer.uid();
+            let kind = service2_peer.kind();
+            let mut peer1_socket = service2_peer.socket();
+            peer1_socket.use_crypto_ctx(CryptoContext::null());
+            peer::from_handshaken_socket(&handle, peer1_socket, id, kind)
+        };
+
+        let send_text = service2_peer.send((1, vec![1, 2, 3])) // let's send unencrypted data
+            .and_then(|peer| {
+                peer.into_future()
+                    .map_err(|(e, _peer)| panic!("service2 failed to receive {}", e))
+                    .map(|(data_opt, _peer)| unwrap!(data_opt))
+            })
+            .join(service1_peer.into_future()
+                .map_err(|(e, _peer)| e) // we'll return error for assertion
+                .and_then(|(data_opt, peer)| {
+                    peer.send((1, vec![3, 2, 1])).map(move |_peer| unwrap!(data_opt))
+                })
+            );
+        let res = evloop.run(send_text);
+
+        let failed_to_decrypt_plaintext = match res {
+            Err(e) => {
+                match e {
+                    PeerError::Decrypt(_) => true,
+                    _ => false,
+                }
+            }
+            _ => false,
+        };
+        assert!(failed_to_decrypt_plaintext);
+    }
 }
 
 /*

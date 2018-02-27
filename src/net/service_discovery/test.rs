@@ -28,7 +28,7 @@ use std::time::Duration;
 use tokio_core::reactor::Core;
 
 #[test]
-fn test() {
+fn multiple_server_instances_in_parallel() {
     let num_servers = 3;
     let num_discovers = 3;
     let starting_port = 45_666;

@@ -35,10 +35,8 @@ pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
 
 #[cfg(test)]
-//pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
 pub const INACTIVITY_TIMEOUT_MS: u64 = 900_000;
 #[cfg(test)]
-//const HEARTBEAT_PERIOD_MS: u64 = 300
 const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 
 /// A connection to a remote peer.
@@ -145,6 +143,12 @@ impl<UID: Uid> Peer<UID> {
     /// Return peer IP address.
     pub fn ip(&self) -> Result<IpAddr, PeerError> {
         Ok(self.socket.peer_addr().map(|a| a.ip())?)
+    }
+
+    /// Transforms peer into underlying socket object.
+    #[cfg(test)]
+    pub fn socket(self) -> Socket<PeerMessage> {
+        self.socket
     }
 }
 
