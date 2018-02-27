@@ -28,8 +28,6 @@ use tokio_io::{self, AsyncRead, AsyncWrite};
 use tokio_io::codec::length_delimited::{self, Framed};
 use void;
 
-/// The maximum size of packets sent by `PaStream` in bytes.
-const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 const MAX_HEADER_SIZE: usize = 8;
 
 /// Converts given stream into length delimited framed stream.
