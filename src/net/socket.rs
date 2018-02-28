@@ -309,89 +309,83 @@ impl Future for SocketTask {
 mod test {
     use super::*;
 
-    use env_logger;
     use rand::{self, Rng};
     use rust_sodium::crypto::box_::gen_keypair;
     use tokio_core::reactor::Core;
 
     use util;
 
-    #[test]
-    fn test_socket() {
-        let _logger = env_logger::init();
+    fn random_msgs(num_msgs: usize) -> Vec<Vec<u8>> {
+        let mut msgs = Vec::with_capacity(num_msgs);
+        for _ in 0..num_msgs {
+            let size = rand::thread_rng().gen_range(0, 10_000);
+            let data = util::random_vec(size);
+            let msg = data;
+            msgs.push(msg);
+        }
+        msgs
+    }
+
+    fn exchange_messages(bind_addr: PaAddr) {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
-
         let config = unwrap!(ConfigFile::new_temporary());
-        let (listener_pk, our_sk) = gen_keypair();
-        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, our_sk.clone());
+        let (listener_pk, listener_sk) = gen_keypair();
+        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, listener_sk.clone());
 
-        let res: Result<_, Void> = core.run({
-            let listen_addrs = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
-            stream::iter_ok(listen_addrs).for_each(move |listen_addr| {
-                let listener = unwrap!(PaListener::bind(
-                    &listen_addr,
-                    &handle,
-                    anon_decrypt_ctx.clone(),
-                    our_sk.clone(),
-                ));
-                let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
+        let listener = unwrap!(PaListener::bind(
+            &bind_addr,
+            &handle,
+            anon_decrypt_ctx.clone(),
+            listener_sk,
+        ));
+        let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
-                let num_msgs = 1000;
-                let mut msgs = Vec::with_capacity(num_msgs);
-                for _ in 0..num_msgs {
-                    let size = rand::thread_rng().gen_range(0, 10_000);
-                    let data = util::random_vec(size);
-                    let msg = data;
-                    msgs.push(msg);
-                }
+        let num_msgs = 1000;
+        let msgs = random_msgs(num_msgs);
 
-                let msgs_send: Vec<(Priority, Vec<_>)> =
-                    msgs.iter().cloned().map(|m| (1, m)).collect();
+        let f0 = {
+            let msgs: Vec<(Priority, _)> = msgs.iter().cloned().map(|m| (1, m)).collect();
+            let handle = handle.clone();
+            PaStream::direct_connect(&handle, &addr, listener_pk, &config)
+                .map_err(SocketError::from)
+                .and_then(move |(stream, _peer_addr)| {
+                    let socket =
+                        Socket::<Vec<u8>>::wrap_pa(&handle, stream, addr, CryptoContext::null());
+                    socket
+                        .send_all(stream::iter_ok::<_, SocketError>(msgs))
+                        .map(|(_, _)| ())
+                })
+        };
 
-                let handle0 = handle.clone();
-                let f0 = PaStream::direct_connect(&handle, &addr, listener_pk, &config)
-                    .map_err(SocketError::from)
-                    .and_then(move |(stream, _peer_addr)| {
-                        let socket = Socket::<Vec<u8>>::wrap_pa(
-                            &handle0,
-                            stream,
-                            addr,
-                            CryptoContext::null(),
-                        );
-                        socket
-                            .send_all(stream::iter_ok::<_, SocketError>(msgs_send))
-                            .map(|(_, _)| ())
-                    });
+        let f1 = {
+            let handle = handle.clone();
+            listener
+                .incoming()
+                .into_future()
+                .map_err(|(err, _)| panic!("incoming error: {}", err))
+                .and_then(move |(stream_opt, _)| {
+                    let (stream, addr) = unwrap!(stream_opt);
+                    let socket =
+                        Socket::<Vec<u8>>::wrap_pa(&handle, stream, addr, CryptoContext::null());
+                    socket.take(num_msgs as u64).collect().map(
+                        move |msgs_recv| {
+                            assert_eq!(msgs_recv, msgs);
+                        },
+                    )
+                })
+        };
 
-                let handle1 = handle.clone();
-                let f1 = {
-                    listener
-                        .incoming()
-                        .into_future()
-                        .map_err(|(err, _)| panic!("incoming error: {}", err))
-                        .and_then(move |(stream_opt, _)| {
-                            let (stream, addr) = unwrap!(stream_opt);
-                            let socket = Socket::<Vec<u8>>::wrap_pa(
-                                &handle1,
-                                stream,
-                                addr,
-                                CryptoContext::null(),
-                            );
-                            socket.take(num_msgs as u64).collect().map(
-                                move |msgs_recv| {
-                                    assert_eq!(msgs_recv, msgs);
-                                },
-                            )
-                        })
-                };
+        let _ = unwrap!(core.run(f0.join(f1)));
+    }
 
-                f0
-                .join(f1)
-                .and_then(|((), ())| Ok(()))
-                .map_err(|e| panic!(e))
-            })
-        });
-        unwrap!(res);
+    #[test]
+    fn socket_exchanges_messages_via_tcp() {
+        exchange_messages(tcp_addr!("0.0.0.0:0"));
+    }
+
+    #[test]
+    fn socket_exchanges_messages_via_utp() {
+        exchange_messages(utp_addr!("0.0.0.0:0"));
     }
 }
