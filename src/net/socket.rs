@@ -219,11 +219,9 @@ where
     }
 }
 
-impl Future for SocketTask {
-    type Item = ();
-    type Error = io::Error;
-
-    fn poll(&mut self) -> io::Result<Async<()>> {
+impl SocketTask {
+    /// Check if there's anything to send. If there is, enqueue the messages.
+    fn poll_task(&mut self) {
         let now = Instant::now();
         loop {
             match unwrap!(self.write_rx.poll()) {
@@ -241,7 +239,15 @@ impl Future for SocketTask {
                 Async::NotReady => break,
             }
         }
+    }
+}
 
+impl Future for SocketTask {
+    type Item = ();
+    type Error = io::Error;
+
+    fn poll(&mut self) -> io::Result<Async<()>> {
+        self.poll_task();
         let expired_keys: Vec<u8> = self.write_queue
             .iter()
             .skip_while(|&(&priority, queue)| {
