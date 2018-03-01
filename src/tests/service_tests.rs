@@ -291,6 +291,77 @@ fn service_responds_to_tcp_echo_address_requests() {
     assert_eq!(our_addr.ip(), ipv4!("127.0.0.1"));
 }
 
+#[test]
+fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
+    let mut evloop = unwrap!(Core::new());
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+    let service1 = service_with_config(&mut evloop, config);
+    let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+    let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+    let service2 = service_with_config(&mut evloop, config);
+    let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
+    let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect = service1
+        .connect(service1_priv_conn_info, service2_pub_conn_info)
+        .join(service2.connect(
+            service2_priv_conn_info,
+            service1_pub_conn_info,
+        ));
+    let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
+
+    let data_len = MAX_PAYLOAD_SIZE + 10;
+    let mut data = vec![1u8; data_len];
+    data[0] = ((data_len >> 24) & 0xff) as u8;
+    data[1] = ((data_len >> 16) & 0xff) as u8;
+    data[2] = ((data_len >> 8) & 0xff) as u8;
+    data[3] = (data_len & 0xff) as u8;
+    let send_data = service1_peer
+        .socket()
+        .into_inner()
+        .map_err(|e| panic!("Failed to extract peer inner stream: {}", e))
+        .map(|framed_stream| framed_stream.into_inner())
+        .and_then(|peer_stream| {
+            tokio_io::io::write_all(peer_stream, data).map(|(peer_stream, _data)| peer_stream)
+        });
+    let recv_data = service2_peer.into_future().then(|_result| Ok(()));
+    let res = evloop.run(send_data.join(recv_data));
+    match res {
+        // On Mac OS, when remote peer gets too big packet, it terminates connection and
+        // tokio_io::io::write_all() terminates immediately with broken pipe.
+        Err(e) => {
+            let broken_pipe = match e.kind() {
+                io::ErrorKind::BrokenPipe => true,
+                _ => false,
+            };
+            assert!(broken_pipe);
+        }
+        // On other OSes we need to try to receive to get connection reset error.
+        Ok((service1_peer_stream, _)) => {
+            let recv_response = tokio_io::io::read_to_end(service1_peer_stream, Vec::new())
+                .map(|_| ());
+            let res = evloop.run(recv_response);
+            let connection_closed = match res {
+                Err(e) => {
+                    match e.kind() {
+                        io::ErrorKind::ConnectionReset => true,
+                        _ => false,
+                    }
+                }
+                _ => false,
+            };
+            assert!(connection_closed);
+        }
+    };
+}
+
 mod encryption {
     use super::*;
 
