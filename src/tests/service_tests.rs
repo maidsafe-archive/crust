@@ -377,7 +377,9 @@ mod encryption {
         let listener_addr = listener.addr().unspecified_to_localhost().inner();
 
         let send_text = TcpStream::connect(&listener_addr, &handle)
-            .and_then(|stream| tokio_io::io::write_all(stream, b"random data"))
+            .and_then(|stream| {
+                tokio_io::io::write_all(stream, b"\x00\x00\x00\x0brandom data")
+            })
             .and_then(|(stream, _buf)| {
                 tokio_io::io::read_to_end(stream, Vec::new())
             })
