@@ -117,13 +117,7 @@ impl<M: 'static> Socket<M> {
     ) -> Socket<M> {
         let (stream_tx, stream_rx) = stream.split();
         let (write_tx, write_rx) = mpsc::unbounded();
-        let task = SocketTask {
-            handle: handle.clone(),
-            stream_tx: Some(stream_tx),
-            stream_rx: None,
-            write_queue: BTreeMap::new(),
-            write_rx: write_rx,
-        };
+        let task = SocketTask::new(handle, stream_tx, write_rx);
         handle.spawn({
             task.map_err(|e| {
                 error!("Socket task failed!: {}", e);
@@ -252,6 +246,20 @@ where
     T: Stream<Item = BytesMut>,
     T: Sink<SinkItem = BytesMut, SinkError = io::Error>,
 {
+    fn new(
+        handle: &Handle,
+        stream_tx: SplitSink<T>,
+        task_rx: UnboundedReceiver<TaskMsg<T>>,
+    ) -> Self {
+        Self {
+            handle: handle.clone(),
+            stream_tx: Some(stream_tx),
+            stream_rx: None,
+            write_queue: BTreeMap::new(),
+            write_rx: task_rx,
+        }
+    }
+
     /// Check if there's anything to send. If there is, enqueue the messages.
     /// Returns true, when socket task should be terminated, false otherwise.
     fn poll_task(&mut self) -> bool {
@@ -469,15 +477,8 @@ mod test {
                     io::Error::new(io::ErrorKind::Other, "sink.send() failed")
                 });
                 let (stream_tx, stream_rx) = channel.split();
-
                 let (task_tx, task_rx) = mpsc::unbounded();
-                let mut task = SocketTask {
-                    handle: handle.clone(),
-                    stream_tx: Some(stream_tx),
-                    stream_rx: None,
-                    write_queue: BTreeMap::new(),
-                    write_rx: task_rx,
-                };
+                let mut task = SocketTask::new(&handle, stream_tx, task_rx);
 
                 let (inner_stream_tx, _inner_stream_rx) = oneshot::channel();
                 let send_task = task_tx.send(TaskMsg::GetInnerStream(inner_stream_tx, stream_rx));
