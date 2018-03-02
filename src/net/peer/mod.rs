@@ -22,6 +22,7 @@ pub use self::connect::{BootstrapAcceptError, BootstrapAcceptor, BootstrapError,
                         start_rendezvous_connect};
 pub use self::peer_message::PeerMessage;
 pub use self::uid::Uid;
+use std::fmt;
 
 mod connect;
 mod peer_message;
@@ -58,6 +59,15 @@ pub struct Peer<UID: Uid> {
     last_send_time: Instant,
     send_heartbeat_timeout: Timeout,
     recv_heartbeat_timeout: Timeout,
+}
+
+impl<UID: Uid> fmt::Debug for Peer<UID> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Peer")
+            .field("id", &self.their_uid)
+            .field("kind", &self.kind)
+            .finish()
+    }
 }
 
 quick_error! {
