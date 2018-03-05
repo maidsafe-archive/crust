@@ -49,11 +49,17 @@ struct DemuxInner<UID: Uid> {
     connection_handler: Mutex<LruCache<UID, UnboundedSender<ConnectMessage<UID>>>>,
     available_connections: Mutex<LruCache<UID, ConnectMessage<UID>>>,
     handle: Handle,
+    bootstrap_cache: BootstrapCache,
 }
 
 impl<UID: Uid> Demux<UID> {
     /// Create a demultiplexer from a stream of incoming peers.
-    pub fn new(handle: &Handle, incoming: SocketIncoming, crypto_ctx: CryptoContext) -> Demux<UID> {
+    pub fn new(
+        handle: &Handle,
+        incoming: SocketIncoming,
+        crypto_ctx: CryptoContext,
+        bootstrap_cache: &BootstrapCache,
+    ) -> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(LruCache::with_expiry_duration(
@@ -63,6 +69,7 @@ impl<UID: Uid> Demux<UID> {
                 Duration::from_secs(INCOMING_CONNECTIONS_TIMEOUT),
             )),
             handle: handle.clone(),
+            bootstrap_cache: bootstrap_cache.clone(),
         });
         handle.spawn(handle_incoming_connections(
             handle,
@@ -101,6 +108,7 @@ impl<UID: Uid> Demux<UID> {
             their_info,
             config,
             peer_rx,
+            &self.inner.bootstrap_cache,
         )
     }
 

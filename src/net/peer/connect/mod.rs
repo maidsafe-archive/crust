@@ -30,6 +30,7 @@ mod demux;
 mod handshake_message;
 mod bootstrap_acceptor;
 
+use config::PeerInfo;
 use future_utils::bi_channel::UnboundedBiChannel;
 use futures::sync::mpsc::{SendError, UnboundedReceiver};
 use futures::sync::oneshot;
@@ -132,6 +133,7 @@ pub fn connect<UID: Uid>(
     their_info: PubConnectionInfo<UID>,
     config: &ConfigFile,
     peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
+    bootstrap_cache: &BootstrapCache,
 ) -> BoxFuture<Peer<UID>, ConnectError> {
     let config = config.clone();
     if our_info.id == their_info.id {
@@ -153,8 +155,14 @@ pub fn connect<UID: Uid>(
     let our_id = our_info.id;
     let our_sk = our_info.our_sk.clone();
 
-    let all_outgoing_connections =
-        attempt_to_connect(handle, &config, &our_connect_request, their_info, our_info);
+    let all_outgoing_connections = attempt_to_connect(
+        handle,
+        &config,
+        &our_connect_request,
+        their_info,
+        our_info,
+        bootstrap_cache,
+    );
     let direct_incoming =
         handshake_incoming_connections(our_connect_request, peer_rx, their_id, our_sk);
     let all_connections = all_outgoing_connections
@@ -179,19 +187,25 @@ fn attempt_to_connect<UID: Uid>(
     our_connect_request: &ConnectRequest<UID>,
     their_info: PubConnectionInfo<UID>,
     our_info: PrivConnectionInfo<UID>,
+    bootstrap_cache: &BootstrapCache,
 ) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
     let direct_connections = {
         let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
         let handle = handle.clone();
-        connect_directly(&handle, their_info.for_direct, their_info.pub_key, config)
-            .and_then(move |(stream, peer_addr)| {
-                Ok(Socket::wrap_pa(
-                    &handle,
-                    stream,
-                    peer_addr,
-                    crypto_ctx.clone(),
-                ))
-            })
+        connect_directly(
+            &handle,
+            their_info.for_direct,
+            their_info.pub_key,
+            config,
+            bootstrap_cache,
+        ).and_then(move |(stream, peer_addr)| {
+            Ok(Socket::wrap_pa(
+                &handle,
+                stream,
+                peer_addr,
+                crypto_ctx.clone(),
+            ))
+        })
     };
     let all_connections = if config.rendezvous_connections_disabled() {
         direct_connections.into_boxed()
@@ -285,15 +299,33 @@ fn connect_directly(
     addrs: Vec<PaAddr>,
     their_pk: PublicKey,
     config: &ConfigFile,
+    bootstrap_cache: &BootstrapCache,
 ) -> BoxStream<(FramedPaStream, PaAddr), SingleConnectionError> {
-    stream::futures_unordered(
-        addrs
-            .into_iter()
-            .map(|addr| {
-                PaStream::direct_connect(evloop_handle, &addr, their_pk, config)
-            })
-            .collect::<Vec<_>>(),
-    ).map_err(SingleConnectionError::Io)
+    let bootstrap_cache = bootstrap_cache.clone();
+    let connections = addrs
+        .into_iter()
+        .map(move |addr| {
+            let bootstrap_cache1 = bootstrap_cache.clone();
+            let bootstrap_cache2 = bootstrap_cache.clone();
+            PaStream::direct_connect(evloop_handle, &addr, their_pk, config)
+                .map(move |conn| {
+                    bootstrap_cache1.put(&PeerInfo::new(addr, their_pk));
+                    let _ = bootstrap_cache1.commit().map_err(|e| {
+                        error!("Failed to commit bootstrap cache: {}", e)
+                    });
+                    conn
+                })
+                .map_err(move |e| {
+                    bootstrap_cache2.remove(&PeerInfo::new(addr, their_pk));
+                    let _ = bootstrap_cache2.commit().map_err(|e| {
+                        error!("Failed to commit bootstrap cache: {}", e)
+                    });
+                    e
+                })
+        })
+        .collect::<Vec<_>>();
+    stream::futures_unordered(connections)
+        .map_err(SingleConnectionError::Io)
         .into_boxed()
 }
 

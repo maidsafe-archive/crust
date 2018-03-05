@@ -77,20 +77,20 @@ impl<UID: Uid> Service<UID> {
         let (our_pk, our_sk) = gen_keypair();
         let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
 
-        let (listeners, socket_incoming) = Acceptor::new(
-            &handle,
-            p2p.clone(),
-            anon_decrypt_ctx.clone(),
-            our_sk.clone(),
-        );
-        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx);
-
         let bootstrap_cache = try_bfut!(
             BootstrapCache::new(config.read().bootstrap_cache_name.as_ref().map(
                 |p| p.as_ref(),
             )).map_err(CrustError::ReadBootstrapCache)
         );
         bootstrap_cache.read_file();
+
+        let (listeners, socket_incoming) = Acceptor::new(
+            &handle,
+            p2p.clone(),
+            anon_decrypt_ctx.clone(),
+            our_sk.clone(),
+        );
+        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx, &bootstrap_cache);
 
         future::ok(Service {
             handle,
