@@ -20,9 +20,9 @@ pub use self::listener::{AcceptError, PaIncoming, PaListener};
 pub use self::stream::{FramedPaStream, PaRendezvousConnectError, PaRendezvousMsg, PaStream,
                        UtpRendezvousConnectError, framed_stream};
 
-mod stream;
-mod listener;
 #[macro_use]
 mod addr;
+mod stream;
+mod listener;
 
 const CRUST_TCP_INIT: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', b'T', b'C', b'P'];

@@ -28,10 +28,6 @@ use tokio_io::{self, AsyncRead, AsyncWrite};
 use tokio_io::codec::length_delimited::{self, Framed};
 use void;
 
-/// The maximum size of packets sent by `PaStream` in bytes.
-const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
-const MAX_HEADER_SIZE: usize = 8;
-
 /// Converts given stream into length delimited framed stream.
 /// This stream takes care of deconstructing messages and spits `BytesMut` with exactly the
 /// same amount of bytes as were sent.
@@ -40,7 +36,7 @@ where
     T: AsyncRead + AsyncWrite,
 {
     length_delimited::Builder::new()
-        .max_frame_length(MAX_PAYLOAD_SIZE + MAX_HEADER_SIZE)
+        .max_frame_length(MAX_PAYLOAD_SIZE)
         .new_framed(stream)
 }
 
@@ -531,5 +527,116 @@ mod test {
                 })
         });
         unwrap!(r)
+    }
+
+    mod framed_pastream {
+        use super::*;
+        use rust_sodium::crypto::box_::gen_keypair;
+        use tokio_io;
+
+        mod tcp {
+            use super::*;
+
+            #[test]
+            fn it_fails_to_send_packets_bigger_than_the_size_limit() {
+                let mut evloop = unwrap!(Core::new());
+                let handle = evloop.handle();
+                let (listener_pk, listener_sk) = gen_keypair();
+                let crypto_ctx = CryptoContext::anonymous_decrypt(listener_pk, listener_sk.clone());
+                let listener = unwrap!(PaListener::bind_reusable(
+                    &tcp_addr!("0.0.0.0:0"),
+                    &handle,
+                    crypto_ctx,
+                    listener_sk,
+                ));
+                let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
+
+                let config = unwrap!(ConfigFile::new_temporary());
+                let data = vec![1; MAX_PAYLOAD_SIZE + 1];
+                let send_data =
+                    PaStream::direct_connect(&handle, &listener_addr, listener_pk, &config)
+                        .and_then(move |(stream, _addr)| stream.send(BytesMut::from(data)))
+                        .and_then(|_stream| Ok(()));
+
+                let task = listener
+                    .incoming()
+                    .into_future()
+                    .map_err(|(e, _incoming)| {
+                        panic!("Failed to accept connection: {}", e)
+                    })
+                    .map(|(stream_addr_opt, _incoming)| unwrap!(stream_addr_opt))
+                    .and_then(|(stream, _addr)| {
+                        stream
+                            .into_future()
+                            .map_err(|(e, _stream)| panic!("Failed to read from client: {}", e))
+                            .map(|(_msg_opt, _stream)| ())
+                    })
+                    .join(send_data);
+                let res = evloop.run(task);
+
+                let packet_too_big = match res {
+                    Err(e) => {
+                        match e.kind() {
+                            io::ErrorKind::InvalidInput => true,
+                            _ => false,
+                        }
+                    }
+                    _ => false,
+                };
+                assert!(packet_too_big);
+            }
+
+            #[test]
+            fn when_client_sends_too_big_packet_it_closes_its_connection() {
+                let mut evloop = unwrap!(Core::new());
+                let handle = evloop.handle();
+                let (listener_pk, listener_sk) = gen_keypair();
+                let crypto_ctx = CryptoContext::anonymous_decrypt(listener_pk, listener_sk.clone());
+                let listener = unwrap!(PaListener::bind_reusable(
+                    &tcp_addr!("0.0.0.0:0"),
+                    &handle,
+                    crypto_ctx,
+                    listener_sk,
+                ));
+                let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
+
+                let config = unwrap!(ConfigFile::new_temporary());
+                let data = vec![1; MAX_PAYLOAD_SIZE + 1];
+                let send_data = {
+                    PaStream::direct_connect(&handle, &listener_addr, listener_pk, &config)
+                        // let's unwrap Framed, so that we could send big packets (evil)
+                        .map(|(stream, _addr)| stream.into_inner())
+                        .and_then(move |stream| tokio_io::io::write_all(stream, data))
+                        .map_err(|e| panic!("Failed to send data: {}", e))
+                        .map(|_stream| ())
+                };
+
+                let task = listener
+                    .incoming()
+                    .into_future()
+                    .map_err(|(e, _incoming)| {
+                        panic!("Failed to accept connection: {}", e)
+                    })
+                    .map(|(stream_addr_opt, _incoming)| unwrap!(stream_addr_opt))
+                    .and_then(|(stream, _addr)| {
+                        stream.into_future().map_err(|(e, _stream)| e).map(
+                            |(_msg_opt, _stream)| (),
+                        )
+                    })
+                    .join(send_data);
+
+                let res = evloop.run(task);
+                let packet_too_big = match res {
+                    Err(e) => {
+                        match e.kind() {
+                            io::ErrorKind::InvalidData => true,
+                            _ => false,
+                        }
+                    }
+                    _ => false,
+                };
+                assert!(packet_too_big);
+            }
+        }
     }
 }

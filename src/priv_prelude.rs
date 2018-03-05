@@ -30,7 +30,7 @@ pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandsha
               Priority, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
               SingleConnectionError, Socket, SocketError, UtpRendezvousConnectError};
 pub use net::{FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream, framed_stream};
-pub use net::Uid;
+pub use net::{MAX_PAYLOAD_SIZE, Uid};
 pub use net2::TcpBuilder;
 pub use p2p::{CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt,
               TcpRendezvousConnectError, TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt};
