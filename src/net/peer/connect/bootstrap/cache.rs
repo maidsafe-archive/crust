@@ -28,13 +28,15 @@ pub struct Cache {
 }
 
 struct Inner {
-    file_handler: FileHandler<Vec<PeerInfo>>,
+    file_handler: FileHandler<HashSet<PeerInfo>>,
+    peers: HashSet<PeerInfo>,
 }
 
 impl Cache {
     pub fn new(name: Option<&Path>) -> Result<Self, config_file_handler::Error> {
         let inner = Inner {
             file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
+            peers: HashSet::new(),
         };
         Ok(Cache { inner: Rc::new(Mutex::new(inner)) })
     }
@@ -45,11 +47,36 @@ impl Cache {
         Ok(PathBuf::from(name))
     }
 
-    pub fn read_file(self) -> Vec<PeerInfo> {
+    /// Updates cache by reading it from file and returns the current snapshot of peers.
+    pub fn read_file(&self) {
+        let mut inner = unwrap!(self.inner.lock());
+        inner.peers = inner.file_handler.read_file().ok().unwrap_or_else(
+            HashSet::new,
+        );
+    }
+
+    /// Writes bootstrap cache to disk.
+    pub fn commit(&self) -> Result<(), config_file_handler::Error> {
         let inner = unwrap!(self.inner.lock());
-        inner.file_handler.read_file().ok().unwrap_or_else(
-            || vec![],
-        )
+        inner.file_handler.write_file(&inner.peers)
+    }
+
+    /// Inserts given peer to the cache.
+    pub fn put(&self, peer: &PeerInfo) {
+        let mut inner = unwrap!(self.inner.lock());
+        let _ = inner.peers.insert(peer.clone());
+    }
+
+    /// Removes given peer from the cache.
+    pub fn remove(&self, peer: &PeerInfo) {
+        let mut inner = unwrap!(self.inner.lock());
+        let _ = inner.peers.remove(peer);
+    }
+
+    /// Returns current snapshot of peers in the cache.
+    pub fn peers(&self) -> HashSet<PeerInfo> {
+        let inner = unwrap!(self.inner.lock());
+        inner.peers.clone()
     }
 }
 
@@ -59,13 +86,23 @@ mod tests {
 
     mod cache {
         use super::*;
+        use hamcrest::prelude::*;
+        use rand;
+        use std::env;
+
+        fn tmp_file() -> PathBuf {
+            let file_name = format!("{:016x}.bootstrap.cache", rand::random::<u64>());
+            let mut path = env::temp_dir();
+            path.push(file_name);
+            path
+        }
 
         mod read_file {
             use super::*;
             use util::write_bootstrap_cache_to_tmp_file;
 
             #[test]
-            fn it_returns_addresses_read_from_json_formatted_file() {
+            fn it_reads_peer_info_from_json_formatted_file() {
                 let fname = write_bootstrap_cache_to_tmp_file(
                     br#"
                     [
@@ -82,10 +119,58 @@ mod tests {
                 );
                 let cache = unwrap!(Cache::new(Some(Path::new(&fname))));
 
-                let addrs: Vec<PaAddr> = cache.read_file().iter().map(|peer| peer.addr).collect();
+                cache.read_file();
 
+                let addrs: Vec<PaAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
                 assert!(addrs.contains(&tcp_addr!("1.2.3.4:4000")));
                 assert!(addrs.contains(&utp_addr!("1.2.3.5:5000")));
+            }
+        }
+
+        #[test]
+        fn put() {
+            let cache = unwrap!(Cache::new(Some(bootstrap_cache_tmp_file().as_path())));
+
+            cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")));
+            cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
+
+            let peers: Vec<PaAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
+            assert_that!(
+                &peers,
+                contains(vec![tcp_addr!("1.2.3.4:4000"), tcp_addr!("1.2.3.5:5000")]).exactly()
+            );
+        }
+
+        #[test]
+        fn remove() {
+            let cache = unwrap!(Cache::new(Some(bootstrap_cache_tmp_file().as_path())));
+            let peer = PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000"));
+            cache.put(&peer);
+
+            cache.remove(&peer);
+
+            assert!(cache.peers().is_empty());
+        }
+
+        mod commit {
+            use super::*;
+
+            #[test]
+            fn it_writes_cache_to_file() {
+                let tmp_fname = tmp_file();
+                let cache = unwrap!(Cache::new(Some(tmp_fname.as_path())));
+                cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")));
+                cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
+
+                unwrap!(cache.commit());
+
+                let cache = unwrap!(Cache::new(Some(tmp_fname.as_path())));
+                cache.read_file();
+                let peers: Vec<PaAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
+                assert_that!(
+                    &peers,
+                    contains(vec![tcp_addr!("1.2.3.4:4000"), tcp_addr!("1.2.3.5:5000")]).exactly()
+                );
             }
         }
     }

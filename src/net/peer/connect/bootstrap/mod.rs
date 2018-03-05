@@ -136,8 +136,9 @@ pub fn bootstrap<UID: Uid>(
 fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PeerInfo>, BootstrapError> {
     let config = config.read();
     let cache = Cache::new(config.bootstrap_cache_name.as_ref().map(|p| p.as_ref()))?;
+    cache.read_file();
     let mut peers = Vec::new();
-    peers.extend(cache.read_file());
+    peers.extend(cache.peers());
     peers.extend(config.hard_coded_contacts.clone());
     Ok(peers)
 }
