@@ -65,6 +65,7 @@ pub fn bootstrap<UID: Uid>(
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let config = config.clone();
     let handle = handle.clone();
+    let cache = cache.clone();
     let try = || -> Result<_, BootstrapError> {
         let sd_peers = if use_service_discovery {
             let sd_port = config.read().service_discovery_port.unwrap_or(
@@ -84,28 +85,16 @@ pub fn bootstrap<UID: Uid>(
             sd_peers.until(Timeout::new(timeout, &handle).infallible())
         };
 
-        let peers = bootstrap_peers(&config, cache)?;
+        let peers = bootstrap_peers(&config, &cache)?;
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         let mut i = 0;
         let first_ok_peer = sd_peers
             .chain(stream::iter_ok(peers))
             .filter(move |peer| !blacklist.contains(&peer.addr))
             .map(move |peer| {
-                // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to the
-                // same peer multiple times. This can cause the different peers using the compat
-                // API to choose different connections. We also shouldn't bootstrap to all
-                // addresses simultaneously.
-                let delay = Timeout::new(Duration::from_millis(200) * i, &handle);
+                let fut = bootstrap_to_peer(&handle, peer, i, &config, &cache, &request, &our_sk);
                 i += 1;
-                let config = config.clone();
-                let handle = handle.clone();
-                let our_sk = our_sk.clone();
-                let request = request.clone();
-
-                delay.infallible().and_then(move |()| {
-                    try_peer(&handle, &peer.addr, &config, request, our_sk, peer.pub_key)
-                        .map_err(move |e| (peer.addr, e))
-                })
+                fut
             })
             .buffer_unordered(64)
             .until(timeout.infallible())
@@ -116,6 +105,46 @@ pub fn bootstrap<UID: Uid>(
         Ok(first_ok_peer)
     };
     future::result(try()).flatten().into_boxed()
+}
+
+/// Attempts to bootstrap to single given peer.
+fn bootstrap_to_peer<UID: Uid>(
+    handle: &Handle,
+    peer: PeerInfo,
+    peer_nr: u32,
+    config: &ConfigFile,
+    cache: &Cache,
+    request: &BootstrapRequest<UID>,
+    our_sk: &SecretKey,
+) -> BoxFuture<Peer<UID>, (PaAddr, TryPeerError)> {
+    let config = config.clone();
+    let handle = handle.clone();
+    let our_sk = our_sk.clone();
+    let request = request.clone();
+    let cache = cache.clone();
+    let cache2 = cache.clone();
+    let peer2 = peer.clone();
+
+    // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to the
+    // same peer multiple times. This can cause the different peers using the compat
+    // API to choose different connections. We also shouldn't bootstrap to all
+    // addresses simultaneously.
+    let delay = Timeout::new(Duration::from_millis(200) * peer_nr, &handle);
+    delay.infallible().and_then(move |()| {
+        try_peer(&handle, &peer.addr, &config, request, our_sk, peer.pub_key)
+            .map(move |peer_conn| {
+                cache.put(&peer);
+                let _ = cache.commit()
+                    .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
+                peer_conn
+            })
+            .map_err(move |e| {
+                cache2.remove(&peer2);
+                let _ = cache2.commit()
+                    .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
+                (peer2.addr, e)
+            })
+    }).into_boxed()
 }
 
 /// Collects bootstrap peers from cache and config.
