@@ -21,8 +21,7 @@ mod try_peer;
 pub use self::try_peer::{ConnectHandshakeError, TryPeerError};
 
 use config::PeerInfo;
-use config_file_handler;
-use net::peer::connect::bootstrap::cache::Cache;
+pub use net::peer::connect::bootstrap::cache::{Cache, CacheError};
 use net::peer::connect::bootstrap::try_peer::try_peer;
 use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
@@ -38,12 +37,6 @@ quick_error! {
     /// Error returned when bootstrapping fails.
     #[derive(Debug)]
     pub enum BootstrapError {
-        ReadCache(e: config_file_handler::Error)  {
-            description("Error reading bootstrap cache")
-            display("Error reading bootstrap cache: {}", e)
-            cause(e)
-            from()
-        }
         ServiceDiscovery(e: io::Error) {
             description("IO error using service discovery")
             display("IO error using service discovery: {}", e)
@@ -68,6 +61,7 @@ pub fn bootstrap<UID: Uid>(
     config: &ConfigFile,
     our_sk: SecretKey,
     our_pk: PublicKey,
+    cache: &Cache,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let config = config.clone();
     let handle = handle.clone();
@@ -90,7 +84,7 @@ pub fn bootstrap<UID: Uid>(
             sd_peers.until(Timeout::new(timeout, &handle).infallible())
         };
 
-        let peers = bootstrap_peers(&config)?;
+        let peers = bootstrap_peers(&config, cache)?;
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         let mut i = 0;
         let first_ok_peer = sd_peers
@@ -125,13 +119,10 @@ pub fn bootstrap<UID: Uid>(
 }
 
 /// Collects bootstrap peers from cache and config.
-fn bootstrap_peers(config: &ConfigFile) -> Result<Vec<PeerInfo>, BootstrapError> {
-    let config = config.read();
-    let cache = Cache::new(config.bootstrap_cache_name.as_ref().map(|p| p.as_ref()))?;
-    cache.read_file();
+fn bootstrap_peers(config: &ConfigFile, cache: &Cache) -> Result<Vec<PeerInfo>, BootstrapError> {
     let mut peers = Vec::new();
     peers.extend(cache.peers());
-    peers.extend(config.hard_coded_contacts.clone());
+    peers.extend(config.read().hard_coded_contacts.clone());
     Ok(peers)
 }
 
@@ -142,30 +133,17 @@ mod tests {
     mod bootstrap_peers {
         use super::*;
         use config::PeerInfo;
-        use util::write_bootstrap_cache_to_tmp_file;
+        use util::bootstrap_cache_tmp_file;
 
         #[test]
         fn it_returns_hard_coded_contacts_and_addresses_from_cache() {
-            let bootstrap_cache = write_bootstrap_cache_to_tmp_file(
-                br#"
-                [
-                    {
-                      "addr": "tcp://1.2.3.5:5000",
-                      "pub_key": [1, 2, 3]
-                    }
-                ]
-            "#,
-            );
             let config = unwrap!(ConfigFile::new_temporary());
+            unwrap!(config.write()).hard_coded_contacts =
+                vec![PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000"))];
+            let cache = unwrap!(Cache::new(Some(bootstrap_cache_tmp_file().as_path())));
+            cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
 
-            {
-                let mut conf_write = unwrap!(config.write());
-                conf_write.hard_coded_contacts =
-                    vec![PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000"))];
-                conf_write.bootstrap_cache_name = Some(Path::new(&bootstrap_cache).to_path_buf());
-            }
-
-            let peers: Vec<PaAddr> = unwrap!(bootstrap_peers(&config))
+            let peers: Vec<PaAddr> = unwrap!(bootstrap_peers(&config, &cache))
                 .iter()
                 .map(|peer| peer.addr)
                 .collect();

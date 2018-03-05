@@ -20,6 +20,7 @@
 use config_file_handler::current_bin_dir;
 use priv_prelude::*;
 use rand::{self, Rng};
+use std::env;
 use std::fs::File;
 use std::io::Write;
 
@@ -64,4 +65,12 @@ pub fn write_bootstrap_cache_to_tmp_file(content: &[u8]) -> String {
     let mut f = unwrap!(File::create(path));
     unwrap!(f.write_all(content));
     fname
+}
+
+/// Constructs random bootstrap cache file name.
+pub fn bootstrap_cache_tmp_file() -> PathBuf {
+    let file_name = format!("{:016x}.bootstrap.cache", rand::random::<u64>());
+    let mut path = env::temp_dir();
+    path.push(file_name);
+    path
 }

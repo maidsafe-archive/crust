@@ -21,6 +21,20 @@ use priv_prelude::*;
 use std::rc::Rc;
 use std::sync::Mutex;
 
+quick_error! {
+    /// Bootstrap cache error
+    #[derive(Debug)]
+    pub enum CacheError {
+        /// File related error: read or write.
+        Io(e: config_file_handler::Error) {
+            description("Failed to access bootstrap cache file")
+            display("Failed to access bootstrap cache file: {}", e)
+            cause(e)
+            from()
+        }
+    }
+}
+
 /// Reference-counted bootstrap cache - keeps log of known publicly accessible peers.
 #[derive(Clone)]
 pub struct Cache {
@@ -33,7 +47,7 @@ struct Inner {
 }
 
 impl Cache {
-    pub fn new(name: Option<&Path>) -> Result<Self, config_file_handler::Error> {
+    pub fn new(name: Option<&Path>) -> Result<Self, CacheError> {
         let inner = Inner {
             file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
             peers: HashSet::new(),
@@ -41,7 +55,7 @@ impl Cache {
         Ok(Cache { inner: Rc::new(Mutex::new(inner)) })
     }
 
-    pub fn default_file_name() -> Result<PathBuf, config_file_handler::Error> {
+    pub fn default_file_name() -> Result<PathBuf, CacheError> {
         let mut name = config_file_handler::exe_file_stem()?;
         name.push(".bootstrap.cache");
         Ok(PathBuf::from(name))
@@ -56,9 +70,11 @@ impl Cache {
     }
 
     /// Writes bootstrap cache to disk.
-    pub fn commit(&self) -> Result<(), config_file_handler::Error> {
+    pub fn commit(&self) -> Result<(), CacheError> {
         let inner = unwrap!(self.inner.lock());
-        inner.file_handler.write_file(&inner.peers)
+        inner.file_handler.write_file(&inner.peers).map_err(
+            CacheError::Io,
+        )
     }
 
     /// Inserts given peer to the cache.
@@ -87,15 +103,7 @@ mod tests {
     mod cache {
         use super::*;
         use hamcrest::prelude::*;
-        use rand;
-        use std::env;
-
-        fn tmp_file() -> PathBuf {
-            let file_name = format!("{:016x}.bootstrap.cache", rand::random::<u64>());
-            let mut path = env::temp_dir();
-            path.push(file_name);
-            path
-        }
+        use util::bootstrap_cache_tmp_file;
 
         mod read_file {
             use super::*;
@@ -157,7 +165,7 @@ mod tests {
 
             #[test]
             fn it_writes_cache_to_file() {
-                let tmp_fname = tmp_file();
+                let tmp_fname = bootstrap_cache_tmp_file();
                 let cache = unwrap!(Cache::new(Some(tmp_fname.as_path())));
                 cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")));
                 cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));

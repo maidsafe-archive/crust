@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::bootstrap::{BootstrapError, ConnectHandshakeError, bootstrap};
+pub use self::bootstrap::{BootstrapError, Cache as BootstrapCache,
+                          CacheError as BootstrapCacheError, ConnectHandshakeError, bootstrap};
 pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
 pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo};
 pub use self::demux::Demux;

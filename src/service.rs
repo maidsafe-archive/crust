@@ -49,6 +49,7 @@ pub struct Service<UID: Uid> {
     p2p: P2p,
     our_pk: PublicKey,
     our_sk: SecretKey,
+    bootstrap_cache: BootstrapCache,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -84,6 +85,13 @@ impl<UID: Uid> Service<UID> {
         );
         let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx);
 
+        let bootstrap_cache = try_bfut!(
+            BootstrapCache::new(config.read().bootstrap_cache_name.as_ref().map(
+                |p| p.as_ref(),
+            )).map_err(CrustError::ReadBootstrapCache)
+        );
+        bootstrap_cache.read_file();
+
         future::ok(Service {
             handle,
             config,
@@ -93,6 +101,7 @@ impl<UID: Uid> Service<UID> {
             p2p,
             our_pk,
             our_sk,
+            bootstrap_cache,
         }).into_boxed()
     }
 
@@ -142,6 +151,7 @@ impl<UID: Uid> Service<UID> {
             &self.config,
             self.our_sk.clone(),
             self.our_pk,
+            &self.bootstrap_cache,
         )
     }
 
