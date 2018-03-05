@@ -18,16 +18,25 @@
 use config::PeerInfo;
 use config_file_handler::{self, FileHandler};
 use priv_prelude::*;
+use std::rc::Rc;
+use std::sync::Mutex;
 
+/// Reference-counted bootstrap cache - keeps log of known publicly accessible peers.
+#[derive(Clone)]
 pub struct Cache {
+    inner: Rc<Mutex<Inner>>,
+}
+
+struct Inner {
     file_handler: FileHandler<Vec<PeerInfo>>,
 }
 
 impl Cache {
     pub fn new(name: Option<&Path>) -> Result<Self, config_file_handler::Error> {
-        Ok(Cache {
+        let inner = Inner {
             file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
-        })
+        };
+        Ok(Cache { inner: Rc::new(Mutex::new(inner)) })
     }
 
     pub fn default_file_name() -> Result<PathBuf, config_file_handler::Error> {
@@ -36,8 +45,11 @@ impl Cache {
         Ok(PathBuf::from(name))
     }
 
-    pub fn read_file(&mut self) -> Vec<PeerInfo> {
-        self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
+    pub fn read_file(self) -> Vec<PeerInfo> {
+        let inner = unwrap!(self.inner.lock());
+        inner.file_handler.read_file().ok().unwrap_or_else(
+            || vec![],
+        )
     }
 }
 
@@ -68,7 +80,7 @@ mod tests {
                     ]
                 "#,
                 );
-                let mut cache = unwrap!(Cache::new(Some(Path::new(&fname))));
+                let cache = unwrap!(Cache::new(Some(Path::new(&fname))));
 
                 let addrs: Vec<PaAddr> = cache.read_file().iter().map(|peer| peer.addr).collect();
 
