@@ -93,41 +93,33 @@ pub fn bootstrap<UID: Uid>(
         let peers = bootstrap_peers(&config)?;
         let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
         let mut i = 0;
-        Ok(
-            sd_peers
-                .chain(stream::iter_ok(peers))
-                .filter(move |peer| !blacklist.contains(&peer.addr))
-                .map(move |peer| {
-                    // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to
-                    // the same peer multiple times. This can cause the different peers using the
-                    // compat API to choose different connections. We also shouldn't bootstrap to
-                    // all addresses simultaneously.
-                    let delay = Timeout::new(Duration::from_millis(200) * i, &handle);
-                    i += 1;
-                    let config = config.clone();
-                    let handle = handle.clone();
-                    let our_sk = our_sk.clone();
-                    let request = request.clone();
+        let first_ok_peer = sd_peers
+            .chain(stream::iter_ok(peers))
+            .filter(move |peer| !blacklist.contains(&peer.addr))
+            .map(move |peer| {
+                // TODO(canndrew): come up with a more reliable way to avoid bootstrapping to the
+                // same peer multiple times. This can cause the different peers using the compat
+                // API to choose different connections. We also shouldn't bootstrap to all
+                // addresses simultaneously.
+                let delay = Timeout::new(Duration::from_millis(200) * i, &handle);
+                i += 1;
+                let config = config.clone();
+                let handle = handle.clone();
+                let our_sk = our_sk.clone();
+                let request = request.clone();
 
-                    delay.infallible().and_then(move |()| {
-                        try_peer(
-                            &handle,
-                            &peer.addr,
-                            &config,
-                            request,
-                            our_sk,
-                            peer.pub_key,
-                        )
-                            .map_err(move |e| (peer.addr, e))
-                    })
+                delay.infallible().and_then(move |()| {
+                    try_peer(&handle, &peer.addr, &config, request, our_sk, peer.pub_key)
+                        .map_err(move |e| (peer.addr, e))
                 })
-                .buffer_unordered(64)
-                .until(timeout.infallible())
-                .first_ok()
-                .map_err(|errs| {
-                    BootstrapError::AllPeersFailed(errs.into_iter().collect())
-                }),
-        )
+            })
+            .buffer_unordered(64)
+            .until(timeout.infallible())
+            .first_ok()
+            .map_err(|errs| {
+                BootstrapError::AllPeersFailed(errs.into_iter().collect())
+            });
+        Ok(first_ok_peer)
     };
     future::result(try()).flatten().into_boxed()
 }
