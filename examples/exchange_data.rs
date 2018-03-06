@@ -23,6 +23,9 @@
 //! 2. sends "Hello from peer '`$peer_id`'" message
 //! 3. sends "Goodbye from peer '`$peer_id`'" message
 //! 4. prints any messages received from remote peer
+//!
+//! To modify example behavior edit *sample.config* file. It's a Crust config that exchange_data
+//! expects to be located next to executable.
 
 #[macro_use]
 extern crate unwrap;
