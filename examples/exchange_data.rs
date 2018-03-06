@@ -40,6 +40,7 @@ extern crate rand;
 extern crate rand_derive;
 extern crate void;
 extern crate future_utils;
+extern crate env_logger;
 
 extern crate crust;
 
@@ -52,6 +53,8 @@ mod utils;
 use utils::{PeerId, connect_to_peer};
 
 fn main() {
+    unwrap!(env_logger::init());
+
     let mut event_loop = unwrap!(Core::new());
     // generate random unique ID for this node
     let service_id: PeerId = rand::random();
