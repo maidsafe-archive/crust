@@ -111,25 +111,7 @@ fn main() {
             .and_then(|d| d.deserialize())
             .unwrap_or_else(|e| e.exit())
     };
-
-    let config = unwrap!(ConfigFile::new_temporary());
-    if let Some(rendezvous_addr) = args.flag_rendezvous_peer {
-        let peer_pub_key =
-            unwrap!(
-            args.flag_rendezvous_peer_key.clone(),
-            "If rendezvous peer is specified, it's public key must be given too.",
-        );
-        let peer_pub_key: PublicKey = unwrap!(serde_json::from_str(&peer_pub_key));
-        let peer_info = PeerInfo::new(rendezvous_addr, peer_pub_key);
-        unwrap!(config.write()).hard_coded_contacts = vec![peer_info];
-    }
-
-    if args.flag_disable_tcp {
-        unwrap!(config.write()).dev = Some(DevConfigSettings {
-            disable_tcp: true,
-            ..Default::default()
-        });
-    }
+    let config = args.make_config();
 
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
@@ -174,6 +156,32 @@ fn main() {
     match core.run(future) {
         Ok(()) => (),
         Err(v) => void::unreachable(v),
+    }
+}
+
+impl Args {
+    /// Constructs `Crust` config from CLI arguments.
+    fn make_config(&self) -> ConfigFile {
+        let config = unwrap!(ConfigFile::new_temporary());
+        if let Some(rendezvous_addr) = self.flag_rendezvous_peer {
+            let peer_pub_key =
+                unwrap!(
+                self.flag_rendezvous_peer_key.clone(),
+                "If rendezvous peer is specified, it's public key must be given too.",
+            );
+            let peer_pub_key: PublicKey = unwrap!(serde_json::from_str(&peer_pub_key));
+            let peer_info = PeerInfo::new(rendezvous_addr, peer_pub_key);
+            unwrap!(config.write()).hard_coded_contacts = vec![peer_info];
+        }
+
+        if self.flag_disable_tcp {
+            unwrap!(config.write()).dev = Some(DevConfigSettings {
+                disable_tcp: true,
+                ..Default::default()
+            });
+        }
+
+        config
     }
 }
 
