@@ -239,6 +239,7 @@ impl Stream for SocketIncoming {
 }
 
 impl Listener {
+    /// Returns local listener address.
     pub fn addr(&self) -> PaAddr {
         self.local_addr
     }

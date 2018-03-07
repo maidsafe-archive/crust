@@ -17,7 +17,7 @@
 
 //! Some common utilities to stay DRY (Don't Repeat Yourself).
 
-use crust::{ConfigFile, Peer, PubConnectionInfo, Service, Uid};
+use crust::{ConfigFile, Listener, Peer, PubConnectionInfo, Service, Uid};
 use future_utils::{BoxFuture, FutureExt, thread_future};
 
 use futures::{Future, Stream};
@@ -52,8 +52,9 @@ impl fmt::Display for PeerId {
 }
 
 /// Starts accepting peer connections and connects itself to a given peer.
-/// After successful connection peer is returned.
-pub fn connect_to_peer(event_loop: &mut Core, service_id: PeerId) -> Peer<PeerId> {
+/// After successful connection returns peer and listeners. Hold on to those listeners, because
+/// otherwise direct connections won't be accepted.
+pub fn connect_to_peer(event_loop: &mut Core, service_id: PeerId) -> (Peer<PeerId>, Vec<Listener>) {
     let config =
         unwrap!(
         ConfigFile::open_path(PathBuf::from("sample.config")),
@@ -91,5 +92,5 @@ pub fn connect_to_peer(event_loop: &mut Core, service_id: PeerId) -> Peer<PeerId
         let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
         service.connect(our_conn_info, their_info)
     });
-    unwrap!(event_loop.run(connect))
+    (unwrap!(event_loop.run(connect)), listeners)
 }

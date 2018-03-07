@@ -23,6 +23,9 @@
 //! 2. sends "Hello from peer '`$peer_id`'" message
 //! 3. sends "Goodbye from peer '`$peer_id`'" message
 //! 4. prints any messages received from remote peer
+//!
+//! To modify example behavior edit *sample.config* file. It's a Crust config that exchange_data
+//! expects to be located next to executable.
 
 #[macro_use]
 extern crate unwrap;
@@ -37,6 +40,7 @@ extern crate rand;
 extern crate rand_derive;
 extern crate void;
 extern crate future_utils;
+extern crate env_logger;
 
 extern crate crust;
 
@@ -49,13 +53,15 @@ mod utils;
 use utils::{PeerId, connect_to_peer};
 
 fn main() {
+    unwrap!(env_logger::init());
+
     let mut event_loop = unwrap!(Core::new());
     // generate random unique ID for this node
     let service_id: PeerId = rand::random();
     println!("Service id: {}", service_id);
 
     // does the p2p connection as demonstrated in `connect.rs` example
-    let peer = connect_to_peer(&mut event_loop, service_id);
+    let (peer, _listeners) = connect_to_peer(&mut event_loop, service_id);
     println!(
         "Connected to peer: {}, {}",
         peer.uid(),
