@@ -166,6 +166,14 @@ impl ConfigFile {
         }
     }
 
+    /// Checks if rendezvous connections are disabled.
+    pub fn rendezvous_connections_disabled(&self) -> bool {
+        match self.read().dev {
+            Some(ref dev) => dev.disable_rendezvous_connections,
+            None => false,
+        }
+    }
+
     /// Attach an observer to this config. Observers will be notified via the returned channel
     /// whenever a change is made to the config.
     pub fn observe(&self) -> UnboundedReceiver<()> {
@@ -347,6 +355,9 @@ pub struct DevConfigSettings {
     pub disable_external_reachability_requirement: bool,
     /// If `true` then TCP is disabled
     pub disable_tcp: bool,
+    /// If `true`, then Crust attempts only direct connections. Useful for testing.
+    /// Default is `false`.
+    pub disable_rendezvous_connections: bool,
 }
 
 impl Default for ConfigSettings {
