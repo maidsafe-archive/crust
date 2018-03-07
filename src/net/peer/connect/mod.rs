@@ -192,21 +192,27 @@ fn attempt_to_connect<UID: Uid>(
                 ))
             })
     };
-    let p2p_connection = {
+    let all_connections = if config.rendezvous_connections_disabled() {
+        direct_connections.into_boxed()
+    } else {
         let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk.clone());
         let handle = handle.clone();
-        connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info).and_then(move |stream| {
-            let peer_addr = stream.peer_addr()?;
-            Ok(Socket::wrap_pa(
-                &handle,
-                framed_stream(stream),
-                peer_addr,
-                crypto_ctx,
-            ))
-        })
+        let rendezvous_conn = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info)
+            .and_then(move |stream| {
+                let peer_addr = stream.peer_addr()?;
+                Ok(Socket::wrap_pa(
+                    &handle,
+                    framed_stream(stream),
+                    peer_addr,
+                    crypto_ctx,
+                ))
+            });
+        direct_connections
+            .select(rendezvous_conn.into_stream())
+            .into_boxed()
     };
     handshake_outgoing_connections(
-        direct_connections.select(p2p_connection.into_stream()),
+        all_connections,
         our_connect_request.clone(),
         their_info.id,
         their_info.pub_key,
