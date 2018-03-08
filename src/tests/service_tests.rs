@@ -166,6 +166,52 @@ fn direct_utp_connections_on_localhost() {
     direct_connections_on_localhost(utp_addr!("0.0.0.0:0"));
 }
 
+#[test]
+fn direct_connections_on_localhost_when_only_one_peer_is_directly_accessible() {
+    let mut evloop = unwrap!(Core::new());
+    let handle = evloop.handle();
+
+    let config1 = unwrap!(ConfigFile::new_temporary());
+    let mut dev_cfg = DevConfigSettings::default();
+    dev_cfg.disable_rendezvous_connections = true;
+    unwrap!(config1.write()).dev = Some(dev_cfg.clone());
+    unwrap!(config1.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+
+    let service1 = service_with_config(&mut evloop, config1);
+    let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+    let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
+    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+    let config2 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config2.write()).dev = Some(dev_cfg);
+    unwrap!(config2.write()).listen_addresses = vec![];
+
+    let service2 = service_with_config(&mut evloop, config2);
+    let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
+    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+    let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
+    let connect1 = {
+        let delay = Timeout::new(Duration::from_secs(2), &handle);
+        delay.infallible().and_then(|()| {
+            service1.connect(service1_priv_conn_info, service2_pub_conn_info)
+        })
+    };
+
+    let (service2_peer, service1_peer) = unwrap!(
+        evloop.run(
+            connect2
+                .join(connect1)
+                .with_timeout(Duration::from_secs(5), &handle)
+                .map(|res_opt| {
+                    unwrap!(res_opt, "Failed to connect within reasonable time")
+                }),
+        )
+    );
+    assert_eq!(service1_peer.uid(), service2.id());
+    assert_eq!(service2_peer.uid(), service1.id());
+}
+
 // None of the services in this test has listeners, therefore peer-to-peer connections are made.
 #[test]
 fn p2p_connections_on_localhost() {
