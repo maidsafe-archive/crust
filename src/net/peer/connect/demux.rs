@@ -42,6 +42,7 @@ pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UI
 struct DemuxInner<UID: Uid> {
     bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
     connection_handler: Mutex<HashMap<UID, UnboundedSender<ConnectMessage<UID>>>>,
+    available_connections: Mutex<HashMap<UID, ConnectMessage<UID>>>,
     handle: Handle,
 }
 
@@ -51,6 +52,7 @@ impl<UID: Uid> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(HashMap::new()),
+            available_connections: Mutex::new(HashMap::new()),
             handle: handle.clone(),
         });
         handle.spawn(handle_incoming_connections(
@@ -83,11 +85,16 @@ impl<UID: Uid> Demux<UID> {
         config: &ConfigFile,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
         let their_uid = their_info.id;
-        let peer_rx = {
-            let (peer_tx, peer_rx) = mpsc::unbounded();
-            let mut connection_handler = unwrap!(self.inner.connection_handler.lock());
-            let _ = connection_handler.insert(their_uid, peer_tx);
-            peer_rx
+        let (peer_tx, peer_rx) = mpsc::unbounded();
+        let mut available_conns = unwrap!(self.inner.available_connections.lock());
+        match available_conns.remove(&their_uid) {
+            Some(conn) => {
+                let _ = peer_tx.unbounded_send(conn);
+            }
+            None => {
+                let mut connection_handler = unwrap!(self.inner.connection_handler.lock());
+                let _ = connection_handler.insert(their_uid, peer_tx);
+            }
         };
 
         connect(
@@ -173,11 +180,18 @@ fn handle_incoming_socket<UID: Uid>(
                 }
                 HandshakeMessage::Connect(connect_request) => {
                     let connection_handler_map = unwrap!(inner.connection_handler.lock());
-                    if let Some(connection_handler) =
-                        connection_handler_map.get(&connect_request.uid)
-                    {
-                        let _ = connection_handler.unbounded_send((socket, connect_request));
-                    }
+                    match connection_handler_map.get(&connect_request.uid) {
+                        Some(conn_handler) => {
+                            let _ = conn_handler.unbounded_send((socket, connect_request));
+                        }
+                        None => {
+                            let mut available_conns = unwrap!(inner.available_connections.lock());
+                            let _ = available_conns.insert(
+                                connect_request.uid,
+                                (socket, connect_request),
+                            );
+                        }
+                    };
                     future::ok(()).into_boxed()
                 }
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
