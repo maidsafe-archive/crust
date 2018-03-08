@@ -15,8 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use super::CONNECTIONS_TIMEOUT;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
+use lru_time_cache::LruCache;
 
 use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
@@ -26,6 +28,9 @@ use net::protocol_agnostic::AcceptError;
 use priv_prelude::*;
 use rust_sodium::crypto::box_::SecretKey;
 use std::sync::{Arc, Mutex};
+
+/// Don't keep incoming connections much longer than the attempted connection timeout.
+const INCOMING_CONNECTIONS_TIMEOUT: u64 = CONNECTIONS_TIMEOUT + 10;
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
@@ -41,8 +46,8 @@ pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UI
 
 struct DemuxInner<UID: Uid> {
     bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
-    connection_handler: Mutex<HashMap<UID, UnboundedSender<ConnectMessage<UID>>>>,
-    available_connections: Mutex<HashMap<UID, ConnectMessage<UID>>>,
+    connection_handler: Mutex<LruCache<UID, UnboundedSender<ConnectMessage<UID>>>>,
+    available_connections: Mutex<LruCache<UID, ConnectMessage<UID>>>,
     handle: Handle,
 }
 
@@ -51,8 +56,12 @@ impl<UID: Uid> Demux<UID> {
     pub fn new(handle: &Handle, incoming: SocketIncoming, crypto_ctx: CryptoContext) -> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
-            connection_handler: Mutex::new(HashMap::new()),
-            available_connections: Mutex::new(HashMap::new()),
+            connection_handler: Mutex::new(LruCache::with_expiry_duration(
+                Duration::from_secs(INCOMING_CONNECTIONS_TIMEOUT),
+            )),
+            available_connections: Mutex::new(LruCache::with_expiry_duration(
+                Duration::from_secs(INCOMING_CONNECTIONS_TIMEOUT),
+            )),
             handle: handle.clone(),
         });
         handle.spawn(handle_incoming_connections(
@@ -198,7 +207,7 @@ fn handle_connect_request<UID: Uid>(
     socket: Socket<HandshakeMessage<UID>>,
     connect_request: ConnectRequest<UID>,
 ) -> BoxFuture<(), IncomingError> {
-    let connection_handler_map = unwrap!(inner.connection_handler.lock());
+    let mut connection_handler_map = unwrap!(inner.connection_handler.lock());
     match connection_handler_map.get(&connect_request.uid) {
         Some(conn_handler) => {
             let _ = conn_handler.unbounded_send((socket, connect_request));

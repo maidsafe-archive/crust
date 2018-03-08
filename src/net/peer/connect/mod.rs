@@ -42,7 +42,7 @@ use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
 // Seconds after which all connections will timeout.
-const CONNECTIONS_TIMEOUT: u64 = 60;
+pub const CONNECTIONS_TIMEOUT: u64 = 60;
 
 quick_error! {
     #[derive(Debug)]
