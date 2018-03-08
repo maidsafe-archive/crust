@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use futures::sync::mpsc::{self, UnboundedSender};
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 
 use net::listener::SocketIncoming;
@@ -84,7 +84,21 @@ impl<UID: Uid> Demux<UID> {
         their_info: PubConnectionInfo<UID>,
         config: &ConfigFile,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
-        let their_uid = their_info.id;
+        let peer_rx = self.direct_conn_receiver(their_info.id);
+        connect(
+            &self.inner.handle,
+            name_hash,
+            our_info,
+            their_info,
+            config,
+            peer_rx,
+        )
+    }
+
+    /// If there's already available connection for given peer ID, returns connection receiver
+    /// that immediately gets connection. Otherwise, returned connection receiver is in waiting
+    /// state and when new connection with given peer ID arrives, it will be sent to receiver.
+    fn direct_conn_receiver(&self, their_uid: UID) -> UnboundedReceiver<ConnectMessage<UID>> {
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let mut available_conns = unwrap!(self.inner.available_connections.lock());
         match available_conns.remove(&their_uid) {
@@ -96,15 +110,7 @@ impl<UID: Uid> Demux<UID> {
                 let _ = connection_handler.insert(their_uid, peer_tx);
             }
         };
-
-        connect(
-            &self.inner.handle,
-            name_hash,
-            our_info,
-            their_info,
-            config,
-            peer_rx,
-        )
+        peer_rx
     }
 }
 
@@ -178,24 +184,29 @@ fn handle_incoming_socket<UID: Uid>(
                     }
                     future::ok(()).into_boxed()
                 }
-                HandshakeMessage::Connect(connect_request) => {
-                    let connection_handler_map = unwrap!(inner.connection_handler.lock());
-                    match connection_handler_map.get(&connect_request.uid) {
-                        Some(conn_handler) => {
-                            let _ = conn_handler.unbounded_send((socket, connect_request));
-                        }
-                        None => {
-                            let mut available_conns = unwrap!(inner.available_connections.lock());
-                            let _ = available_conns.insert(
-                                connect_request.uid,
-                                (socket, connect_request),
-                            );
-                        }
-                    };
-                    future::ok(()).into_boxed()
+                HandshakeMessage::Connect(conn_request) => {
+                    handle_connect_request(&inner, socket, conn_request)
                 }
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
             }
         })
         .into_boxed()
+}
+
+fn handle_connect_request<UID: Uid>(
+    inner: &Arc<DemuxInner<UID>>,
+    socket: Socket<HandshakeMessage<UID>>,
+    connect_request: ConnectRequest<UID>,
+) -> BoxFuture<(), IncomingError> {
+    let connection_handler_map = unwrap!(inner.connection_handler.lock());
+    match connection_handler_map.get(&connect_request.uid) {
+        Some(conn_handler) => {
+            let _ = conn_handler.unbounded_send((socket, connect_request));
+        }
+        None => {
+            let mut available_conns = unwrap!(inner.available_connections.lock());
+            let _ = available_conns.insert(connect_request.uid, (socket, connect_request));
+        }
+    };
+    future::ok(()).into_boxed()
 }
