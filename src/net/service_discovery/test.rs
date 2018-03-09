@@ -48,7 +48,7 @@ fn multiple_server_instances_in_parallel() {
             for _ in 0..num_discovers {
                 let (our_pk, our_sk) = gen_keypair();
                 let discover = unwrap!(discover::<u16>(&handle, starting_port + i, our_pk, our_sk))
-                    .with_timeout(Duration::from_secs(1), &handle)
+                    .with_timeout(Duration::from_secs(2), &handle)
                     .collect()
                     .and_then(move |v| {
                         assert_eq!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>(), &[i]);
@@ -97,7 +97,7 @@ fn service_discovery() {
             port,
             our_pk,
             our_sk.clone(),
-        )).with_timeout(Duration::from_millis(200), &handle)
+        )).with_timeout(Duration::from_secs(2), &handle)
             .collect()
             .and_then(move |v| {
                 assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
