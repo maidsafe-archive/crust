@@ -165,7 +165,7 @@ impl SockInner {
         }
 
         // the mio reading window is max at 64k (64 * 1024)
-        let mut buffer = [0; 0x1_0000];
+        let mut buffer = [0; 64 * 1024];
         let mut is_something_read = false;
 
         loop {
