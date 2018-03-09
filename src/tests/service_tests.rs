@@ -41,175 +41,183 @@ fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
     service_with_config(event_loop, config)
 }
 
-#[test]
-fn bootstrap_using_hard_coded_contacts() {
-    let mut event_loop = unwrap!(Core::new());
-    let loop_handle = event_loop.handle();
+mod bootstrap {
+    use super::*;
 
-    let mut service1 = service_with_tmp_config(&mut event_loop);
-    let listeners = unwrap!(event_loop.run(service1.start_listening().collect()));
-    let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
-    let service1_addr1 = listeners[1].addr().unspecified_to_localhost();
+    #[test]
+    fn using_hard_coded_contacts() {
+        let mut event_loop = unwrap!(Core::new());
+        let loop_handle = event_loop.handle();
 
-    loop_handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
-        |_| Ok(()),
-    ));
+        let mut service1 = service_with_tmp_config(&mut event_loop);
+        let listeners = unwrap!(event_loop.run(service1.start_listening().collect()));
+        let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
+        let service1_addr1 = listeners[1].addr().unspecified_to_localhost();
 
-    let config2 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config2.write()).hard_coded_contacts =
-        vec![PeerInfo::new(service1_addr0, service1.public_key())];
-    let mut service2 = unwrap!(event_loop.run(Service::with_config(
-        &loop_handle,
-        config2,
-        util::random_id(),
-    )));
-
-    let service_discovery = false;
-    let peer = unwrap!(event_loop.run(service2.bootstrap(
-        HashSet::new(),
-        service_discovery,
-        CrustUser::Client,
-    )));
-
-    assert_eq!(peer.uid(), service1.id());
-
-    let config3 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config3.write()).hard_coded_contacts =
-        vec![PeerInfo::new(service1_addr1, service1.public_key())];
-    let mut service3 = unwrap!(event_loop.run(Service::with_config(
-        &loop_handle,
-        config3,
-        util::random_id(),
-    )));
-
-    let service_discovery = false;
-    let peer = unwrap!(event_loop.run(service3.bootstrap(
-        HashSet::new(),
-        service_discovery,
-        CrustUser::Client,
-    )));
-
-    assert_eq!(peer.uid(), service1.id());
-}
-
-#[test]
-fn bootstrap_using_service_discovery() {
-    let mut evloop = unwrap!(Core::new());
-
-    let config = unwrap!(ConfigFile::new_temporary());
-    {
-        let mut conf_rw = unwrap!(config.write());
-        conf_rw.listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
-        conf_rw.service_discovery_port = Some(0);
-    }
-    let mut service1 = service_with_config(&mut evloop, config);
-    let _listeners1 = unwrap!(evloop.run(service1.start_listening().collect()));
-    let service_discovery = unwrap!(service1.start_service_discovery());
-    evloop.handle().spawn(
-        service1
-            .bootstrap_acceptor()
-            .for_each(|_| Ok(()))
-            .then(|_| Ok(())),
-    );
-
-    let config = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config.write()).service_discovery_port = Some(service_discovery.port());
-    let mut service2 = service_with_config(&mut evloop, config);
-    let peer = unwrap!(evloop.run(service2.bootstrap(
-        HashSet::new(),
-        true,
-        CrustUser::Client,
-    )));
-
-    assert_eq!(peer.uid(), service1.id());
-}
-
-fn direct_connections_on_localhost(listen_addr: PaAddr) {
-    let mut event_loop = unwrap!(Core::new());
-
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    let mut dev_cfg = DevConfigSettings::default();
-    dev_cfg.disable_rendezvous_connections = true;
-    unwrap!(config1.write()).dev = Some(dev_cfg);
-    unwrap!(config1.write()).listen_addresses = vec![listen_addr];
-    let config2 = config1.clone();
-
-    let service1 = service_with_config(&mut event_loop, config1);
-    let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
-    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
-    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
-
-    let service2 = service_with_config(&mut event_loop, config2);
-    let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
-    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
-    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
-
-    let connect = service1
-        .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(
-            service2_priv_conn_info,
-            service1_pub_conn_info,
+        loop_handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
+            |_| Ok(()),
         ));
 
-    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
-    assert_eq!(service1_peer.uid(), service2.id());
-    assert_eq!(service2_peer.uid(), service1.id());
+        let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).hard_coded_contacts =
+            vec![PeerInfo::new(service1_addr0, service1.public_key())];
+        let mut service2 = unwrap!(event_loop.run(Service::with_config(
+            &loop_handle,
+            config2,
+            util::random_id(),
+        )));
+
+        let service_discovery = false;
+        let peer = unwrap!(event_loop.run(service2.bootstrap(
+            HashSet::new(),
+            service_discovery,
+            CrustUser::Client,
+        )));
+
+        assert_eq!(peer.uid(), service1.id());
+
+        let config3 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config3.write()).hard_coded_contacts =
+            vec![PeerInfo::new(service1_addr1, service1.public_key())];
+        let mut service3 = unwrap!(event_loop.run(Service::with_config(
+            &loop_handle,
+            config3,
+            util::random_id(),
+        )));
+
+        let service_discovery = false;
+        let peer = unwrap!(event_loop.run(service3.bootstrap(
+            HashSet::new(),
+            service_discovery,
+            CrustUser::Client,
+        )));
+
+        assert_eq!(peer.uid(), service1.id());
+    }
+
+    #[test]
+    fn using_service_discovery() {
+        let mut evloop = unwrap!(Core::new());
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        {
+            let mut conf_rw = unwrap!(config.write());
+            conf_rw.listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+            conf_rw.service_discovery_port = Some(0);
+        }
+        let mut service1 = service_with_config(&mut evloop, config);
+        let _listeners1 = unwrap!(evloop.run(service1.start_listening().collect()));
+        let service_discovery = unwrap!(service1.start_service_discovery());
+        evloop.handle().spawn(
+            service1
+                .bootstrap_acceptor()
+                .for_each(|_| Ok(()))
+                .then(|_| Ok(())),
+        );
+
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).service_discovery_port = Some(service_discovery.port());
+        let mut service2 = service_with_config(&mut evloop, config);
+        let peer = unwrap!(evloop.run(service2.bootstrap(
+            HashSet::new(),
+            true,
+            CrustUser::Client,
+        )));
+
+        assert_eq!(peer.uid(), service1.id());
+    }
 }
 
-#[test]
-fn direct_tcp_connections_on_localhost() {
-    direct_connections_on_localhost(tcp_addr!("0.0.0.0:0"));
-}
+mod direct_connections {
+    use super::*;
 
-#[test]
-fn direct_utp_connections_on_localhost() {
-    direct_connections_on_localhost(utp_addr!("0.0.0.0:0"));
-}
+    fn connect_on_localhost(listen_addr: PaAddr) {
+        let mut event_loop = unwrap!(Core::new());
 
-#[test]
-fn direct_connections_on_localhost_when_only_one_peer_is_directly_accessible() {
-    let mut evloop = unwrap!(Core::new());
-    let handle = evloop.handle();
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_rendezvous_connections = true;
+        unwrap!(config1.write()).dev = Some(dev_cfg);
+        unwrap!(config1.write()).listen_addresses = vec![listen_addr];
+        let config2 = config1.clone();
 
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    let mut dev_cfg = DevConfigSettings::default();
-    dev_cfg.disable_rendezvous_connections = true;
-    unwrap!(config1.write()).dev = Some(dev_cfg.clone());
-    unwrap!(config1.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        let service1 = service_with_config(&mut event_loop, config1);
+        let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
+        let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
+        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
-    let service1 = service_with_config(&mut evloop, config1);
-    let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
-    let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
-    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+        let service2 = service_with_config(&mut event_loop, config2);
+        let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
+        let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
+        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
-    let config2 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config2.write()).dev = Some(dev_cfg);
-    unwrap!(config2.write()).listen_addresses = vec![];
+        let connect = service1
+            .connect(service1_priv_conn_info, service2_pub_conn_info)
+            .join(service2.connect(
+                service2_priv_conn_info,
+                service1_pub_conn_info,
+            ));
 
-    let service2 = service_with_config(&mut evloop, config2);
-    let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
-    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+        let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
+        assert_eq!(service1_peer.uid(), service2.id());
+        assert_eq!(service2_peer.uid(), service1.id());
+    }
 
-    let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
-    let connect1 = {
-        let delay = Timeout::new(Duration::from_secs(2), &handle);
-        delay.infallible().and_then(|()| {
-            service1.connect(service1_priv_conn_info, service2_pub_conn_info)
-        })
-    };
+    #[test]
+    fn tcp_connections_on_localhost() {
+        connect_on_localhost(tcp_addr!("0.0.0.0:0"));
+    }
 
-    let (service2_peer, service1_peer) = unwrap!(
-        evloop.run(
-            connect2
-                .join(connect1)
-                .with_timeout(Duration::from_secs(5), &handle)
-                .map(|res_opt| {
-                    unwrap!(res_opt, "Failed to connect within reasonable time")
-                }),
-        )
-    );
-    assert_eq!(service1_peer.uid(), service2.id());
-    assert_eq!(service2_peer.uid(), service1.id());
+    #[test]
+    fn utp_connections_on_localhost() {
+        connect_on_localhost(utp_addr!("0.0.0.0:0"));
+    }
+
+    #[test]
+    fn localhost_when_only_one_peer_is_directly_accessible() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_rendezvous_connections = true;
+        unwrap!(config1.write()).dev = Some(dev_cfg.clone());
+        unwrap!(config1.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+
+        let service1 = service_with_config(&mut evloop, config1);
+        let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
+        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+        let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).dev = Some(dev_cfg);
+        unwrap!(config2.write()).listen_addresses = vec![];
+
+        let service2 = service_with_config(&mut evloop, config2);
+        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
+        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+        let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
+        let connect1 = {
+            let delay = Timeout::new(Duration::from_secs(2), &handle);
+            delay.infallible().and_then(|()| {
+                service1.connect(service1_priv_conn_info, service2_pub_conn_info)
+            })
+        };
+
+        let (service2_peer, service1_peer) = unwrap!(
+            evloop.run(
+                connect2
+                    .join(connect1)
+                    .with_timeout(Duration::from_secs(5), &handle)
+                    .map(|res_opt| {
+                        unwrap!(res_opt, "Failed to connect within reasonable time")
+                    }),
+            )
+        );
+        assert_eq!(service1_peer.uid(), service2.id());
+        assert_eq!(service2_peer.uid(), service1.id());
+    }
 }
 
 // None of the services in this test has listeners, therefore peer-to-peer connections are made.
