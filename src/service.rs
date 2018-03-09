@@ -151,7 +151,6 @@ impl<UID: Uid> Service<UID> {
             use_service_discovery,
             &self.config,
             self.our_sk.clone(),
-            self.our_pk,
             &self.bootstrap_cache,
         )
     }

@@ -60,9 +60,9 @@ pub fn bootstrap<UID: Uid>(
     use_service_discovery: bool,
     config: &ConfigFile,
     our_sk: SecretKey,
-    our_pk: PublicKey,
     cache: &Cache,
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
+    let our_pk = request.their_pk;
     let config = config.clone();
     let handle = handle.clone();
     let cache = cache.clone();
