@@ -57,20 +57,20 @@ pub fn random_vec(size: usize) -> Vec<u8> {
 /// # Returns
 ///
 /// file name where content was written to.
-pub fn write_bootstrap_cache_to_tmp_file(content: &[u8]) -> String {
+pub fn write_bootstrap_cache_to_tmp_file(content: &[u8]) -> OsString {
     let mut path = unwrap!(current_bin_dir());
     let fname = format!("{:08x}.bootstrap.cache", rand::random::<u64>());
     path.push(fname.clone());
 
     let mut f = unwrap!(File::create(path));
     unwrap!(f.write_all(content));
-    fname
+    fname.into()
 }
 
 /// Constructs random bootstrap cache file name.
-pub fn bootstrap_cache_tmp_file() -> PathBuf {
+pub fn bootstrap_cache_tmp_file() -> OsString {
     let file_name = format!("{:016x}.bootstrap.cache", rand::random::<u64>());
     let mut path = env::temp_dir();
     path.push(file_name);
-    path
+    path.into()
 }

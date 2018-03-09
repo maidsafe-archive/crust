@@ -169,7 +169,7 @@ mod tests {
             let config = unwrap!(ConfigFile::new_temporary());
             unwrap!(config.write()).hard_coded_contacts =
                 vec![PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000"))];
-            let cache = unwrap!(Cache::new(Some(bootstrap_cache_tmp_file().as_path())));
+            let cache = unwrap!(Cache::new(Some(&bootstrap_cache_tmp_file())));
             cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
 
             let peers: Vec<PaAddr> = unwrap!(bootstrap_peers(&config, &cache))

@@ -77,10 +77,11 @@ impl<UID: Uid> Service<UID> {
         let (our_pk, our_sk) = gen_keypair();
         let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
 
+        let bootstrap_cache_name = config.read().bootstrap_cache_name.clone();
         let bootstrap_cache = try_bfut!(
-            BootstrapCache::new(config.read().bootstrap_cache_name.as_ref().map(
-                |p| p.as_ref(),
-            )).map_err(CrustError::ReadBootstrapCache)
+            BootstrapCache::new(
+                bootstrap_cache_name.as_ref().map(|s| s.as_os_str()),
+            ).map_err(CrustError::ReadBootstrapCache)
         );
         bootstrap_cache.read_file();
 

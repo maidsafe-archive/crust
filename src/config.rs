@@ -334,7 +334,7 @@ pub struct ConfigSettings {
     /// Port for service discovery on local network
     pub service_discovery_port: Option<u16>,
     /// File for bootstrap cache
-    pub bootstrap_cache_name: Option<PathBuf>,
+    pub bootstrap_cache_name: Option<OsString>,
     /// Whitelisted nodes who are allowed to bootstrap off us or to connect to us
     pub whitelisted_node_ips: Option<HashSet<IpAddr>>,
     /// Whitelisted clients who are allowed to bootstrap off us

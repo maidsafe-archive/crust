@@ -40,6 +40,7 @@ pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
 pub use std::{fmt, io, mem};
 pub use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
+pub use std::ffi::{OsStr, OsString};
 pub use std::marker::PhantomData;
 pub use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 pub use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
