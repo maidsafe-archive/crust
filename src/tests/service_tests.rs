@@ -126,6 +126,39 @@ mod bootstrap {
 
         assert_eq!(peer.uid(), service1.id());
     }
+
+    #[test]
+    fn connected_peer_is_inserted_into_bootstrap_cache() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let mut service1 = service_with_tmp_config(&mut evloop);
+        let listeners = unwrap!(evloop.run(service1.start_listening().collect()));
+        let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
+
+        handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
+            |_| Ok(()),
+        ));
+
+        let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).hard_coded_contacts =
+            vec![PeerInfo::new(service1_addr0, service1.public_key())];
+        let mut service2 = unwrap!(evloop.run(Service::with_config(
+            &handle,
+            config2,
+            util::random_id(),
+        )));
+
+        let service_discovery = false;
+        let peer = unwrap!(evloop.run(service2.bootstrap(
+            HashSet::new(),
+            service_discovery,
+            CrustUser::Client,
+        )));
+
+        let peer_info = PeerInfo::new(unwrap!(peer.addr()), service1.public_key());
+        assert!(service2.bootstrap_cache().peers().contains(&peer_info));
+    }
 }
 
 mod direct_connections {
@@ -217,6 +250,38 @@ mod direct_connections {
         );
         assert_eq!(service1_peer.uid(), service2.id());
         assert_eq!(service2_peer.uid(), service1.id());
+    }
+
+    #[test]
+    fn connected_peer_is_inserted_into_bootstrap_cache() {
+        let mut evloop = unwrap!(Core::new());
+
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_rendezvous_connections = true;
+        unwrap!(config1.write()).dev = Some(dev_cfg.clone());
+        unwrap!(config1.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+
+        let service1 = service_with_config(&mut evloop, config1);
+        let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
+        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
+
+        let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).dev = Some(dev_cfg);
+        unwrap!(config2.write()).listen_addresses = vec![];
+
+        let service2 = service_with_config(&mut evloop, config2);
+        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
+        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
+
+        let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
+        let connect1 = service1.connect(service1_priv_conn_info, service2_pub_conn_info);
+
+        let (service2_peer, _service1_peer) = unwrap!(evloop.run(connect2.join(connect1)));
+
+        let service2_peer = PeerInfo::new(unwrap!(service2_peer.addr()), service1.public_key());
+        assert!(service2.bootstrap_cache().peers().contains(&service2_peer));
     }
 }
 

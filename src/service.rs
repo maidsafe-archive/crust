@@ -261,6 +261,11 @@ impl<UID: Uid> Service<UID> {
         self.our_sk.clone()
     }
 
+    #[cfg(test)]
+    pub fn bootstrap_cache(&self) -> BootstrapCache {
+        self.bootstrap_cache.clone()
+    }
+
     /// Constructs private connection info with p2p info returned from `p2p` crate.
     /// p2p info is used for rendezvous connections - hole punching.
     fn with_p2p_connection_info(
