@@ -24,7 +24,7 @@
 //! 3. sends "Goodbye from peer '`$peer_id`'" message
 //! 4. prints any messages received from remote peer
 //!
-//! To modify example behavior edit *sample.config* file. It's a Crust config that exchange_data
+//! To modify example behavior edit *sample.config* file. It's a Crust config that `exchange_data`
 //! expects to be located next to executable.
 
 #[macro_use]
@@ -44,24 +44,56 @@ extern crate env_logger;
 
 extern crate crust;
 
+use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
+use future_utils::{BoxFuture, FutureExt, thread_future};
 use futures::future::{Future, empty};
 use futures::sink::Sink;
 use futures::stream::Stream;
+use std::{fmt, io};
+use std::path::PathBuf;
 use tokio_core::reactor::Core;
-
-mod utils;
-use utils::{PeerId, connect_to_peer};
+use void::Void;
 
 fn main() {
     unwrap!(env_logger::init());
 
     let mut event_loop = unwrap!(Core::new());
+    let handle = event_loop.handle();
     // generate random unique ID for this node
     let service_id: PeerId = rand::random();
     println!("Service id: {}", service_id);
 
-    // does the p2p connection as demonstrated in `connect.rs` example
-    let (peer, _listeners) = connect_to_peer(&mut event_loop, service_id);
+    let config =
+        unwrap!(
+        ConfigFile::open_path(PathBuf::from("sample.config")),
+        "Failed to read crust config file: sample.config",
+    );
+    let service = unwrap!(event_loop.run(
+        Service::with_config(&handle, config, service_id),
+    ));
+    let listeners = unwrap!(event_loop.run(service.start_listening().collect()));
+    for listener in &listeners {
+        println!("Listening on {}", listener.addr());
+    }
+
+    let our_conn_info = unwrap!(event_loop.run(service.prepare_connection_info()));
+    let pub_conn_info = our_conn_info.to_pub_connection_info();
+    println!(
+        "Public connection information:\n{}\n",
+        unwrap!(serde_json::to_string(&pub_conn_info))
+    );
+
+    println!("Enter remote peer public connection info:");
+    // does the p2p connection
+    let connect = read_line().infallible().and_then(move |ln| {
+        let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
+        service.connect(our_conn_info, their_info).map(
+            move |peer| {
+                (peer, service)
+            },
+        )
+    });
+    let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
         "Connected to peer: {}, {}",
         peer.uid(),
@@ -70,7 +102,7 @@ fn main() {
 
     let (peer_sink, peer_stream) = peer.split();
     // spawn an asynchronous task that handles incoming data
-    event_loop.handle().spawn(
+    handle.spawn(
         peer_stream
             .for_each(|data: Vec<u8>| {
                 println!("Received: {}", unwrap!(String::from_utf8(data)));
@@ -100,4 +132,28 @@ fn main() {
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());
     unwrap!(res);
+}
+
+/// Reads single line from stdin.
+fn read_line() -> BoxFuture<String, Void> {
+    thread_future(|| {
+        let stdin = io::stdin();
+        let mut line = String::new();
+        unwrap!(stdin.read_line(&mut line));
+        line
+    }).into_boxed()
+}
+
+// Some peer ID boilerplate.
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
+pub struct PeerId(u64);
+
+impl Uid for PeerId {}
+
+impl fmt::Display for PeerId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let PeerId(ref id) = *self;
+        write!(f, "{:x}", id)
+    }
 }

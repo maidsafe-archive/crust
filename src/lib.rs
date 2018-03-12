@@ -74,6 +74,7 @@ extern crate url;
 extern crate tokio_utp;
 extern crate bincode;
 extern crate rust_sodium;
+extern crate lru_time_cache;
 
 pub use net::MAX_PAYLOAD_SIZE;
 
