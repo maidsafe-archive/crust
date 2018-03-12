@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-//! This example demonstrates how to make a P2P connection using `crust`.
+//! This example demonstrates how to make a rendezvous connection using `crust`.
 //!
 //! In order to make a connection we need to:
 //!
