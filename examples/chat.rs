@@ -141,8 +141,8 @@ fn main() {
                         );
                         read_line().and_then(move |line| {
                             let their_pub_info: PubConnectionInfo<PeerId> = unwrap!(
-                        serde_json::from_str(&line)
-                    );
+                                serde_json::from_str(&line)
+                            );
 
                             service
                                 .connect(our_priv_info, their_pub_info)
