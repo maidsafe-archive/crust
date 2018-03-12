@@ -351,10 +351,9 @@ fn bootstrap_with_disable_external_reachability() {
 
     let (event_tx0, event_rx0) = event_sender();
     let config0 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config0.write()).dev = Some(DevConfigSettings {
-        disable_external_reachability_requirement: true,
-        disable_tcp: false,
-    });
+    let mut dev_cfg = DevConfigSettings::default();
+    dev_cfg.disable_external_reachability_requirement = true;
+    unwrap!(config0.write()).dev = Some(dev_cfg);
     unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
     let uid0: UniqueId = rand::random();
     let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, uid0));
