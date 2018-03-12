@@ -50,7 +50,6 @@ extern crate clap;
 
 extern crate crust;
 
-
 use clap::App;
 use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
 use futures::Stream;
@@ -58,7 +57,6 @@ use futures::Stream;
 use futures::future::empty;
 use rand::Rng;
 use std::{fmt, io};
-use std::path::PathBuf;
 use tokio_core::reactor::Core;
 
 // Some peer ID boilerplate.
@@ -89,11 +87,11 @@ fn main() {
     let service_id = rand::thread_rng().gen::<PeerId>();
     println!("Service id: {}", service_id);
 
-    let config =
-        unwrap!(
-        ConfigFile::open_path(PathBuf::from("sample.config")),
-        "Failed to read crust config file: sample.config",
-    );
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![
+        unwrap!("tcp://0.0.0.0:0".parse()),
+        unwrap!("utp://0.0.0.0:0".parse()),
+    ];
     let make_service = Service::with_config(&event_loop.handle(), config, service_id);
     let service =
         unwrap!(
@@ -130,7 +128,11 @@ fn main() {
         event_loop.run(service.connect(our_conn_info, their_info)),
         "Failed to connect to given peer",
     );
-    println!("Connected to peer: {}", peer.uid());
+    println!(
+        "Connected to peer: {} - {}",
+        peer.uid(),
+        unwrap!(peer.addr())
+    );
 
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());

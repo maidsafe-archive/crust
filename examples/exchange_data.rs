@@ -50,7 +50,6 @@ use futures::future::{Future, empty};
 use futures::sink::Sink;
 use futures::stream::Stream;
 use std::{fmt, io};
-use std::path::PathBuf;
 use tokio_core::reactor::Core;
 use void::Void;
 
@@ -63,11 +62,11 @@ fn main() {
     let service_id: PeerId = rand::random();
     println!("Service id: {}", service_id);
 
-    let config =
-        unwrap!(
-        ConfigFile::open_path(PathBuf::from("sample.config")),
-        "Failed to read crust config file: sample.config",
-    );
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![
+        unwrap!("tcp://0.0.0.0:0".parse()),
+        unwrap!("utp://0.0.0.0:0".parse()),
+    ];
     let service = unwrap!(event_loop.run(
         Service::with_config(&handle, config, service_id),
     ));
