@@ -60,7 +60,7 @@ extern crate crust;
 
 mod utils;
 
-use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service};
+use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service, Uid};
 use crust::config::{DevConfigSettings, PeerInfo};
 use docopt::Docopt;
 use future_utils::{BoxFuture, FutureExt};
@@ -114,38 +114,38 @@ fn main() {
                 if args.flag_disable_igd {
                     service.p2p_config().disable_igd();
                 }
-
-                service
-                    .prepare_connection_info()
-                    .map_err(|e| panic!("error preparing connection info: {}", e))
-                    .and_then(move |our_priv_info| {
-                        let our_pub_info = our_priv_info.to_pub_connection_info();
-                        let as_str = unwrap!(serde_json::to_string(&our_pub_info));
-                        println!("Our connection info:");
-                        println!("{}", as_str);
-                        println!();
-                        println!(
-                            "Copy this info and share it with your connecting partner. Then paste \
-                          their info below."
-                        );
-                        read_line().and_then(move |line| {
-                            let their_pub_info: PubConnectionInfo<PeerId> = unwrap!(
-                                serde_json::from_str(&line)
-                            );
-
-                            service
-                                .connect(our_priv_info, their_pub_info)
-                                .map_err(|e| panic!("error connecting to peer: {}", e))
-                                .and_then(move |peer| have_a_conversation(service, peer))
-                        })
-                    })
+                connect(service).and_then(|(service, peer)| have_a_conversation(service, peer))
             })
     };
-
     match core.run(future) {
         Ok(()) => (),
         Err(v) => void::unreachable(v),
     }
+}
+
+fn connect<UID: Uid>(service: Service<UID>) -> BoxFuture<(Service<UID>, Peer<UID>), Void> {
+    service
+        .prepare_connection_info()
+        .map_err(|e| panic!("error preparing connection info: {}", e))
+        .and_then(move |our_priv_info| {
+            let our_pub_info = our_priv_info.to_pub_connection_info();
+            let as_str = unwrap!(serde_json::to_string(&our_pub_info));
+            println!("Our connection info:");
+            println!("{}", as_str);
+            println!();
+            println!(
+                "Copy this info and share it with your connecting partner. Then paste \
+              their info below."
+            );
+            read_line().and_then(move |ln| {
+                let their_pub_info: PubConnectionInfo<UID> = unwrap!(serde_json::from_str(&ln));
+                service
+                    .connect(our_priv_info, their_pub_info)
+                    .map_err(|e| panic!("error connecting to peer: {}", e))
+                    .map(move |peer| (service, peer))
+            })
+        })
+        .into_boxed()
 }
 
 impl Args {
