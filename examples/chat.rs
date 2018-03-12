@@ -58,16 +58,17 @@ extern crate rust_sodium;
 
 extern crate crust;
 
+mod utils;
 
-use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service, Uid};
+use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service};
 use crust::config::{DevConfigSettings, PeerInfo};
 use docopt::Docopt;
-use future_utils::{BoxFuture, FutureExt, thread_future};
+use future_utils::{BoxFuture, FutureExt};
 use futures::{Future, Sink, Stream, future};
 use futures::future::{Either, Loop};
 use rust_sodium::crypto::box_::PublicKey;
-use std::{fmt, io};
 use tokio_core::reactor::Core;
+use utils::{PeerId, read_line};
 use void::Void;
 
 const USAGE: &str = "
@@ -89,18 +90,6 @@ struct Args {
     flag_rendezvous_peer_key: Option<String>,
     flag_disable_tcp: bool,
     flag_disable_igd: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
-struct PeerId(u64);
-
-impl Uid for PeerId {}
-
-impl fmt::Display for PeerId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let PeerId(ref id) = *self;
-        write!(f, "{:x}", id)
-    }
 }
 
 fn main() {
@@ -183,15 +172,6 @@ impl Args {
 
         config
     }
-}
-
-fn read_line() -> BoxFuture<String, Void> {
-    thread_future(|| {
-        let stdin = io::stdin();
-        let mut line = String::new();
-        unwrap!(stdin.read_line(&mut line));
-        line
-    }).into_boxed()
 }
 
 fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
