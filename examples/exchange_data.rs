@@ -41,11 +41,13 @@ extern crate rand_derive;
 extern crate void;
 extern crate future_utils;
 extern crate env_logger;
+extern crate clap;
 
 extern crate crust;
 
 mod utils;
 
+use clap::App;
 use crust::{ConfigFile, PubConnectionInfo, Service};
 use future_utils::FutureExt;
 use futures::future::{Future, empty};
@@ -56,6 +58,14 @@ use utils::{PeerId, read_line};
 
 fn main() {
     unwrap!(env_logger::init());
+    let _ = App::new("Crust data exchange example")
+        .about(
+            "Attempts to connect to remote peer given its connection information and exchange \
+            messages. Start two instances of this example. Each instance generates and prints its \
+            connection information to stdout in JSON format. You have to manually copy/paste this \
+            info from one instance to the other and hit ENTER to start connection.",
+        )
+        .get_matches();
 
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
