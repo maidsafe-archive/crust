@@ -64,5 +64,12 @@ quick_error! {
             description("error starting listener")
             display("error starting listener, {}", e)
         }
+        /// Error reading bootstrap cache.
+        ReadBootstrapCache(e: BootstrapCacheError)  {
+            description("Error reading bootstrap cache")
+            display("Error reading bootstrap cache: {}", e)
+            cause(e)
+            from()
+        }
     }
 }

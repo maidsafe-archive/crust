@@ -25,10 +25,11 @@ pub use config::ConfigFile;
 pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
-pub use net::{BootstrapAcceptError, BootstrapError, ConnectError, ConnectHandshakeError,
-              ExternalReachability, P2pConnectionInfo, PaRendezvousConnectError, Peer, PeerError,
-              Priority, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
-              SingleConnectionError, Socket, SocketError, UtpRendezvousConnectError};
+pub use net::{BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError,
+              ConnectError, ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
+              PaRendezvousConnectError, Peer, PeerError, Priority, PrivConnectionInfo,
+              PubConnectionInfo, RendezvousConnectError, SingleConnectionError, Socket,
+              SocketError, UtpRendezvousConnectError};
 pub use net::{FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream, framed_stream};
 pub use net::{MAX_PAYLOAD_SIZE, Uid};
 pub use net2::TcpBuilder;
@@ -39,6 +40,7 @@ pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
 pub use std::{fmt, io, mem};
 pub use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
+pub use std::ffi::{OsStr, OsString};
 pub use std::marker::PhantomData;
 pub use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 pub use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};

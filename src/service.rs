@@ -49,6 +49,7 @@ pub struct Service<UID: Uid> {
     p2p: P2p,
     our_pk: PublicKey,
     our_sk: SecretKey,
+    bootstrap_cache: BootstrapCache,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -76,13 +77,21 @@ impl<UID: Uid> Service<UID> {
         let (our_pk, our_sk) = gen_keypair();
         let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
 
+        let bootstrap_cache_name = config.read().bootstrap_cache_name.clone();
+        let bootstrap_cache = try_bfut!(
+            BootstrapCache::new(
+                bootstrap_cache_name.as_ref().map(|s| s.as_os_str()),
+            ).map_err(CrustError::ReadBootstrapCache)
+        );
+        bootstrap_cache.read_file();
+
         let (listeners, socket_incoming) = Acceptor::new(
             &handle,
             p2p.clone(),
             anon_decrypt_ctx.clone(),
             our_sk.clone(),
         );
-        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx);
+        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx, &bootstrap_cache);
 
         future::ok(Service {
             handle,
@@ -93,6 +102,7 @@ impl<UID: Uid> Service<UID> {
             p2p,
             our_pk,
             our_sk,
+            bootstrap_cache,
         }).into_boxed()
     }
 
@@ -141,7 +151,7 @@ impl<UID: Uid> Service<UID> {
             use_service_discovery,
             &self.config,
             self.our_sk.clone(),
-            self.our_pk,
+            &self.bootstrap_cache,
         )
     }
 
@@ -249,6 +259,11 @@ impl<UID: Uid> Service<UID> {
     /// Returns service private key.
     pub fn private_key(&self) -> SecretKey {
         self.our_sk.clone()
+    }
+
+    #[cfg(test)]
+    pub fn bootstrap_cache(&self) -> BootstrapCache {
+        self.bootstrap_cache.clone()
     }
 
     /// Constructs private connection info with p2p info returned from `p2p` crate.
