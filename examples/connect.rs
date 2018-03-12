@@ -15,9 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-//! This example demonstrates how to make a P2P connection using `crust`.
-//! We are using `crust::Service` to listen for incoming connections
-//! and to establish connection to remote peer.
+//! This example demonstrates how to make connection using `crust`.  We are using `crust::Service`
+//! to listen for incoming connections and to establish connection to remote peer.
 //!
 //! In a nutshell connetion looks like this:
 //!
@@ -26,13 +25,10 @@
 //! 3. exchange public information
 //! 4. connect
 //!
-//! Run two instances of this sample: preferably on separate computers but
-//! localhost is fine too.
-//! When the sample starts it prints generated public information which
-//! is represented as JSON object.
-//! Copy this object from first to second peer and hit ENTER.
-//! Do the same with the second peer: copy it's public information JSON
-//! to first peer and hit ENTER.
+//! Run two instances of this sample: preferably on separate computers but localhost is fine too.
+//! When the sample starts it prints generated public information which is represented as JSON
+//! object.  Copy this object from first to second peer and hit ENTER.  Do the same with the second
+//! peer: copy it's public information JSON to first peer and hit ENTER.
 //! On both peers you should see something like:
 //! ```
 //! Connected to peer: 4a755684f72fe63fba86725b80d42d69ed649392
