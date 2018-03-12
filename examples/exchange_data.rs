@@ -44,13 +44,16 @@ extern crate env_logger;
 
 extern crate crust;
 
-use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
+mod utils;
+
+use crust::{ConfigFile, PubConnectionInfo, Service};
 use future_utils::{BoxFuture, FutureExt, thread_future};
 use futures::future::{Future, empty};
 use futures::sink::Sink;
 use futures::stream::Stream;
-use std::{fmt, io};
+use std::io;
 use tokio_core::reactor::Core;
+use utils::PeerId;
 use void::Void;
 
 fn main() {
@@ -141,18 +144,4 @@ fn read_line() -> BoxFuture<String, Void> {
         unwrap!(stdin.read_line(&mut line));
         line
     }).into_boxed()
-}
-
-// Some peer ID boilerplate.
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
-pub struct PeerId(u64);
-
-impl Uid for PeerId {}
-
-impl fmt::Display for PeerId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let PeerId(ref id) = *self;
-        write!(f, "{:x}", id)
-    }
 }

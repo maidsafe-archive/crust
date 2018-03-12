@@ -50,28 +50,18 @@ extern crate clap;
 
 extern crate crust;
 
+mod utils;
+
 use clap::App;
-use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
+use crust::{ConfigFile, PubConnectionInfo, Service};
 use futures::Stream;
 
 use futures::future::empty;
 use rand::Rng;
-use std::{fmt, io};
+use std::io;
 use tokio_core::reactor::Core;
+use utils::PeerId;
 
-// Some peer ID boilerplate.
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
-struct PeerId(u64);
-
-impl Uid for PeerId {}
-
-impl fmt::Display for PeerId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let PeerId(ref id) = *self;
-        write!(f, "{:x}", id)
-    }
-}
 
 fn main() {
     let _ = App::new("Crust basic connection example")
