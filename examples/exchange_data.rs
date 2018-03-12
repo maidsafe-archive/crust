@@ -47,14 +47,12 @@ extern crate crust;
 mod utils;
 
 use crust::{ConfigFile, PubConnectionInfo, Service};
-use future_utils::{BoxFuture, FutureExt, thread_future};
+use future_utils::FutureExt;
 use futures::future::{Future, empty};
 use futures::sink::Sink;
 use futures::stream::Stream;
-use std::io;
 use tokio_core::reactor::Core;
-use utils::PeerId;
-use void::Void;
+use utils::{PeerId, read_line};
 
 fn main() {
     unwrap!(env_logger::init());
@@ -134,14 +132,4 @@ fn main() {
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());
     unwrap!(res);
-}
-
-/// Reads single line from stdin.
-fn read_line() -> BoxFuture<String, Void> {
-    thread_future(|| {
-        let stdin = io::stdin();
-        let mut line = String::new();
-        unwrap!(stdin.read_line(&mut line));
-        line
-    }).into_boxed()
 }

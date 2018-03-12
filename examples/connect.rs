@@ -39,6 +39,7 @@
 extern crate unwrap;
 extern crate tokio_core;
 extern crate futures;
+extern crate future_utils;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
@@ -47,6 +48,7 @@ extern crate serde_json;
 extern crate rand_derive;
 extern crate rand;
 extern crate clap;
+extern crate void;
 
 extern crate crust;
 
@@ -54,13 +56,12 @@ mod utils;
 
 use clap::App;
 use crust::{ConfigFile, PubConnectionInfo, Service};
+use future_utils::FutureExt;
 use futures::Stream;
-
-use futures::future::empty;
+use futures::future::{Future, empty};
 use rand::Rng;
-use std::io;
 use tokio_core::reactor::Core;
-use utils::PeerId;
+use utils::{PeerId, read_line};
 
 
 fn main() {
@@ -110,14 +111,15 @@ fn main() {
     );
 
     println!("Enter remote peer public connection info:");
-    let their_info = readln();
-    let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&their_info));
-
-    let peer =
-        unwrap!(
-        event_loop.run(service.connect(our_conn_info, their_info)),
-        "Failed to connect to given peer",
-    );
+    let connect = read_line().infallible().and_then(move |ln| {
+        let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
+        service.connect(our_conn_info, their_info).map(
+            move |peer| {
+                (peer, service)
+            },
+        )
+    });
+    let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
         "Connected to peer: {} - {}",
         peer.uid(),
@@ -127,10 +129,4 @@ fn main() {
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());
     unwrap!(res);
-}
-
-fn readln() -> String {
-    let mut ln = String::new();
-    unwrap!(io::stdin().read_line(&mut ln));
-    String::from(ln.trim())
 }
