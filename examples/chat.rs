@@ -50,41 +50,30 @@ extern crate serde_json;
 #[macro_use]
 extern crate rand_derive;
 extern crate rand;
-extern crate docopt;
 extern crate void;
 extern crate future_utils;
 extern crate env_logger;
 extern crate rust_sodium;
+#[macro_use]
+extern crate clap;
 
 extern crate crust;
 
 mod utils;
 
+use clap::{App, Arg};
 use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service};
 use crust::config::{DevConfigSettings, PeerInfo};
-use docopt::Docopt;
 use future_utils::{BoxFuture, FutureExt};
 use futures::{Future, Sink, Stream, future};
 use futures::future::{Either, Loop};
 use rust_sodium::crypto::box_::PublicKey;
+use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
 use utils::{PeerId, read_line};
 use void::Void;
 
-const USAGE: &str = "
-Usage:
-    chat [--rendezvous-peer=<addr>] [--rendezvous-peer-key=<key>] [--disable-tcp] [--disable-igd]
-    chat (-h | --help)
-
-Options:
-    -h --help                     Show this screen.
-    --rendezvous-peer=<addr>      Address of peer to use as a rendezvous server.
-    --rendezvous-peer-key=<addr>  Rendezvous peer public key.
-    --disable-tcp                 Connect using uTP only.
-    --disable-igd                 Disable IGD/UPnP.
-";
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 struct Args {
     flag_rendezvous_peer: Option<PaAddr>,
     flag_rendezvous_peer_key: Option<String>,
@@ -94,14 +83,10 @@ struct Args {
 
 fn main() {
     unwrap!(env_logger::init());
-
-    let args: Args = {
-        Docopt::new(USAGE)
-            .and_then(|d| d.deserialize())
-            .unwrap_or_else(|e| e.exit())
-    };
+    let args = parse_cli_args();
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
+
     let future = Node::run(&handle, args)
         .and_then(|node| node.connect())
         .and_then(|(node, peer)| have_a_conversation(node.service, peer));
@@ -156,6 +141,51 @@ impl Node {
                 })
             })
             .into_boxed()
+    }
+}
+
+fn parse_cli_args() -> Args {
+    let matches = App::new("Simple chat app built on Crust")
+        .about(
+            "This chat app connects two machines directly without intermediate servers and allows \
+to exchange messages securely. All the messages are end to end encrypted.",
+        )
+        .arg(
+            Arg::with_name("rendezvous-peer")
+                .long("rendezvous-peer")
+                .value_name("ADDR")
+                .help("Address of peer to use as a rendezvous server.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("rendezvous-peer-key")
+                .long("rendezvous-peer-key")
+                .value_name("KEY")
+                .help("Rendezvous peer public key.")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("disable-tcp")
+                .long("disable-tcp")
+                .help("Connect using uTP only.")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("disable-igd")
+                .long("disable-igd")
+                .help("Disable IGD/UPnP.")
+                .takes_value(false),
+        )
+        .get_matches();
+
+    let rendezvous_peer = matches.value_of("rendezvous-peer")
+        .map(|addr| unwrap!(PaAddr::from_str(addr)));
+    let rendezvous_peer_key = matches.value_of("rendezvous-peer-key").map(|addr| addr.to_owned());
+    Args {
+        flag_rendezvous_peer: rendezvous_peer,
+        flag_rendezvous_peer_key: rendezvous_peer_key,
+        flag_disable_tcp: matches.occurrences_of("disable-tcp") > 0,
+        flag_disable_igd: matches.occurrences_of("disable-igd") > 0,
     }
 }
 
