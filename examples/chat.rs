@@ -54,7 +54,6 @@ extern crate void;
 extern crate future_utils;
 extern crate env_logger;
 extern crate rust_sodium;
-#[macro_use]
 extern crate clap;
 
 extern crate crust;
@@ -67,7 +66,6 @@ use crust::config::{DevConfigSettings, PeerInfo};
 use future_utils::{BoxFuture, FutureExt};
 use futures::{Future, Sink, Stream, future};
 use futures::future::{Either, Loop};
-use rust_sodium::crypto::box_::PublicKey;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
 use utils::{PeerId, read_line};
@@ -75,15 +73,17 @@ use void::Void;
 
 #[derive(Debug)]
 struct Args {
-    flag_rendezvous_peer: Option<PaAddr>,
-    flag_rendezvous_peer_key: Option<String>,
+    rendezvous_peer: Option<PeerInfo>,
     flag_disable_tcp: bool,
     flag_disable_igd: bool,
 }
 
 fn main() {
     unwrap!(env_logger::init());
-    let args = parse_cli_args();
+    let args = match parse_cli_args() {
+        Ok(args) => args,
+        Err(e) => e.exit(),
+    };
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
 
@@ -144,7 +144,7 @@ impl Node {
     }
 }
 
-fn parse_cli_args() -> Args {
+fn parse_cli_args() -> Result<Args, clap::Error> {
     let matches = App::new("Simple chat app built on Crust")
         .about(
             "This chat app connects two machines directly without intermediate servers and allows \
@@ -178,32 +178,37 @@ to exchange messages securely. All the messages are end to end encrypted.",
         )
         .get_matches();
 
-    let rendezvous_peer = matches.value_of("rendezvous-peer")
-        .map(|addr| unwrap!(PaAddr::from_str(addr)));
-    let rendezvous_peer_key = matches.value_of("rendezvous-peer-key").map(|addr| addr.to_owned());
-    Args {
-        flag_rendezvous_peer: rendezvous_peer,
-        flag_rendezvous_peer_key: rendezvous_peer_key,
+    let rendezvous_peer = match matches.value_of("rendezvous-peer") {
+        Some(addr) => {
+            let peer_addr = unwrap!(PaAddr::from_str(addr));
+            let peer_key = matches
+                .value_of("rendezvous-peer-key")
+                .map(|key| unwrap!(serde_json::from_str(key)))
+                .ok_or_else(|| {
+                    clap::Error::with_description(
+                        "If rendezvous peer address is given, public key must be present too.",
+                        clap::ErrorKind::EmptyValue,
+                    )
+                })?;
+            Some(PeerInfo::new(peer_addr, peer_key))
+        }
+        None => None,
+    };
+    Ok(Args {
+        rendezvous_peer,
         flag_disable_tcp: matches.occurrences_of("disable-tcp") > 0,
         flag_disable_igd: matches.occurrences_of("disable-igd") > 0,
-    }
+    })
 }
 
 impl Args {
     /// Constructs `Crust` config from CLI arguments.
     fn make_config(&self) -> ConfigFile {
         let config = unwrap!(ConfigFile::new_temporary());
-        if let Some(rendezvous_addr) = self.flag_rendezvous_peer {
-            let peer_pub_key =
-                unwrap!(
-                self.flag_rendezvous_peer_key.clone(),
-                "If rendezvous peer is specified, it's public key must be given too.",
-            );
-            let peer_pub_key: PublicKey = unwrap!(serde_json::from_str(&peer_pub_key));
-            let peer_info = PeerInfo::new(rendezvous_addr, peer_pub_key);
-            unwrap!(config.write()).hard_coded_contacts = vec![peer_info];
-        }
 
+        if let Some(ref peer_info) = self.rendezvous_peer {
+            unwrap!(config.write()).hard_coded_contacts = vec![peer_info.clone()];
+        }
         if self.flag_disable_tcp {
             unwrap!(config.write()).dev = Some(DevConfigSettings {
                 disable_tcp: true,
