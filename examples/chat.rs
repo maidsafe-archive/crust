@@ -61,7 +61,7 @@ extern crate crust;
 mod utils;
 
 use clap::{App, Arg};
-use crust::{ConfigFile, PaAddr, Peer, PubConnectionInfo, Service};
+use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service};
 use crust::config::{DevConfigSettings, PeerInfo};
 use future_utils::{BoxFuture, FutureExt};
 use futures::{Future, Sink, Stream, future};
@@ -76,6 +76,7 @@ struct Args {
     rendezvous_peer: Option<PeerInfo>,
     flag_disable_tcp: bool,
     flag_disable_igd: bool,
+    disable_direct_connections: bool,
 }
 
 fn main() {
@@ -99,6 +100,8 @@ fn main() {
 /// Chat node/peer
 struct Node {
     service: Service<PeerId>,
+    #[allow(unused)]
+    listeners: Vec<Listener>,
 }
 
 impl Node {
@@ -112,7 +115,14 @@ impl Node {
                 if args.flag_disable_igd {
                     service.p2p_config().disable_igd();
                 }
-                Self { service }
+                service
+            })
+            .and_then(|service| {
+                service
+                    .start_listening()
+                    .map_err(|e| panic!("Failed to start listeners: {}", e))
+                    .collect()
+                    .map(move |listeners| Self { service, listeners })
             })
             .into_boxed()
     }
@@ -176,6 +186,16 @@ to exchange messages securely. All the messages are end to end encrypted.",
                 .help("Disable IGD/UPnP.")
                 .takes_value(false),
         )
+        .arg(
+            Arg::with_name("disable-direct-connections")
+                .long("disable-direct-connections")
+                .help(
+                    "By default chat will try to connect to the peer in all possible methods: \
+                      directly or via hole punching. This flag disables direct connections leaving \
+                      only rendezvous connections to try.",
+                )
+                .takes_value(false),
+        )
         .get_matches();
 
     let rendezvous_peer = match matches.value_of("rendezvous-peer") {
@@ -198,6 +218,7 @@ to exchange messages securely. All the messages are end to end encrypted.",
         rendezvous_peer,
         flag_disable_tcp: matches.occurrences_of("disable-tcp") > 0,
         flag_disable_igd: matches.occurrences_of("disable-igd") > 0,
+        disable_direct_connections: matches.occurrences_of("disable-direct-connections") > 0,
     })
 }
 
@@ -214,6 +235,12 @@ impl Args {
                 disable_tcp: true,
                 ..Default::default()
             });
+        }
+        if !self.disable_direct_connections {
+            unwrap!(config.write()).listen_addresses = vec![
+                unwrap!("utp://0.0.0.0:0".parse()),
+                unwrap!("tcp://0.0.0.0:0".parse()),
+            ];
         }
 
         config
