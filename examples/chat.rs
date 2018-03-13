@@ -74,8 +74,8 @@ use void::Void;
 #[derive(Debug)]
 struct Args {
     rendezvous_peer: Option<PeerInfo>,
-    flag_disable_tcp: bool,
-    flag_disable_igd: bool,
+    disable_tcp: bool,
+    disable_igd: bool,
     disable_direct_connections: bool,
 }
 
@@ -112,7 +112,7 @@ impl Node {
         Service::with_config(handle, config, our_uid)
             .map_err(|e| panic!("error starting service: {}", e))
             .map(move |service| {
-                if args.flag_disable_igd {
+                if args.disable_igd {
                     service.p2p_config().disable_igd();
                 }
                 service
@@ -216,8 +216,8 @@ to exchange messages securely. All the messages are end to end encrypted.",
     };
     Ok(Args {
         rendezvous_peer,
-        flag_disable_tcp: matches.occurrences_of("disable-tcp") > 0,
-        flag_disable_igd: matches.occurrences_of("disable-igd") > 0,
+        disable_tcp: matches.occurrences_of("disable-tcp") > 0,
+        disable_igd: matches.occurrences_of("disable-igd") > 0,
         disable_direct_connections: matches.occurrences_of("disable-direct-connections") > 0,
     })
 }
@@ -230,7 +230,7 @@ impl Args {
         if let Some(ref peer_info) = self.rendezvous_peer {
             unwrap!(config.write()).hard_coded_contacts = vec![peer_info.clone()];
         }
-        if self.flag_disable_tcp {
+        if self.disable_tcp {
             unwrap!(config.write()).dev = Some(DevConfigSettings {
                 disable_tcp: true,
                 ..Default::default()
