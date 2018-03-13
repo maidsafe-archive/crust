@@ -44,15 +44,15 @@ fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
 mod bootstrap {
     use super::*;
 
-    #[test]
-    fn using_hard_coded_contacts() {
+    fn bootstrap_using_hard_coded_contacts(listen_addr: PaAddr) {
         let mut event_loop = unwrap!(Core::new());
         let loop_handle = event_loop.handle();
 
-        let mut service1 = service_with_tmp_config(&mut event_loop);
-        let listeners = unwrap!(event_loop.run(service1.start_listening().collect()));
-        let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
-        let service1_addr1 = listeners[1].addr().unspecified_to_localhost();
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![listen_addr];
+        let mut service1 = service_with_config(&mut event_loop, config);
+        let listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
+        let service1_addr = listener1.addr().unspecified_to_localhost();
 
         loop_handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
             |_| Ok(()),
@@ -60,7 +60,7 @@ mod bootstrap {
 
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).hard_coded_contacts =
-            vec![PeerInfo::new(service1_addr0, service1.public_key())];
+            vec![PeerInfo::new(service1_addr, service1.public_key())];
         let mut service2 = unwrap!(event_loop.run(Service::with_config(
             &loop_handle,
             config2,
@@ -75,24 +75,16 @@ mod bootstrap {
         )));
 
         assert_eq!(peer.uid(), service1.id());
+    }
 
-        let config3 = unwrap!(ConfigFile::new_temporary());
-        unwrap!(config3.write()).hard_coded_contacts =
-            vec![PeerInfo::new(service1_addr1, service1.public_key())];
-        let mut service3 = unwrap!(event_loop.run(Service::with_config(
-            &loop_handle,
-            config3,
-            util::random_id(),
-        )));
+    #[test]
+    fn using_hard_coded_tcp_contacts() {
+        bootstrap_using_hard_coded_contacts(tcp_addr!("0.0.0.0:0"));
+    }
 
-        let service_discovery = false;
-        let peer = unwrap!(event_loop.run(service3.bootstrap(
-            HashSet::new(),
-            service_discovery,
-            CrustUser::Client,
-        )));
-
-        assert_eq!(peer.uid(), service1.id());
+    #[test]
+    fn using_hard_coded_utp_contacts() {
+        bootstrap_using_hard_coded_contacts(utp_addr!("0.0.0.0:0"));
     }
 
     #[test]
