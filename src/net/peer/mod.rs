@@ -71,26 +71,32 @@ impl<UID: Uid> fmt::Debug for Peer<UID> {
 }
 
 quick_error! {
+    /// Peer related errors.
     #[derive(Debug)]
     pub enum PeerError {
+        /// Peer was destroyed while still trying to do some actions on it.
         Destroyed {
             description("Socket has been destroyed")
         }
+        /// Peer socket related failure.
         Io(e: io::Error) {
             description("Io error on socket")
             display("Io error on socket: {}", e)
             cause(e)
             from()
         }
+        /// Peer was irresponsive.
         InactivityTimeout {
             description("connection to peer timed out")
             display("connection to peer timed out after {}s", INACTIVITY_TIMEOUT_MS / 1000)
         }
+        /// Failure to encrypt message.
         Encrypt(e: CryptoError) {
             description("Error encrypting message to peer")
             display("Error encrypting message to peer: {}", e)
             cause(e)
         }
+        /// Failure to decrypt message.
         Decrypt(e: CryptoError) {
             description("Error decrypting message from peer")
             display("Error decrypting message from peer: {}", e)
