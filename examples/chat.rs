@@ -105,7 +105,7 @@ fn main() {
 
     let future = Node::run(&handle, args)
         .and_then(|node| node.connect())
-        .and_then(|(node, peer)| have_a_conversation(node.service, peer));
+        .and_then(|(node, peer)| node.have_a_conversation_with(peer));
     match core.run(future) {
         Ok(()) => (),
         Err(v) => void::unreachable(v),
@@ -165,6 +165,63 @@ impl Node {
                         .map_err(|e| panic!("error connecting to peer: {}", e))
                         .map(move |peer| (self, peer))
                 })
+            })
+            .into_boxed()
+    }
+
+    fn have_a_conversation_with(self, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
+        out!(
+            "You are now connected to '{}'! Say hello :) Or type /help to see possible commands.",
+            unwrap!(peer.addr())
+        );
+
+        let peer_display_name = peer.uid();
+        let (peer_sink, peer_stream) = peer.split();
+        let writer = {
+            future::loop_fn(peer_sink, |peer_sink| {
+                print!("> ");
+                unwrap!(io::stdout().flush());
+                read_line().and_then(|line| {
+                    let line = line.trim_right().to_owned();
+                    if !handle_cmd(&line) {
+                        peer_sink
+                            .send((0, line.into_bytes()))
+                            .map(Loop::Continue)
+                            .map_err(|e| panic!("error sending message to peer: {}", e))
+                            .into_boxed()
+                    } else {
+                        future::ok(Loop::Continue(peer_sink)).into_boxed()
+                    }
+                })
+            })
+        };
+        let reader = {
+            peer_stream
+            .map_err(|e| panic!("error receiving message from peer: {}", e))
+            .for_each(move |line| {
+                let line = match String::from_utf8(line) {
+                    Ok(line) => line,
+                    Err(..) => String::from("<peer sent invalid utf8>"),
+                };
+                out!("<{}> {}", peer_display_name, line);
+                print!("> ");
+                unwrap!(io::stdout().flush());
+                Ok(())
+            })
+            .map(move |()| {
+                out!("Peer <{}> disconnected", peer_display_name);
+            })
+        };
+
+        writer
+            .select2(reader)
+            .map(move |either| match either {
+                Either::A((v, _next)) => void::unreachable(v),
+                Either::B(((), _next)) => drop(self.service),
+            })
+            .map_err(|either| match either {
+                Either::A((v, _next)) => v,
+                Either::B((v, _next)) => v,
             })
             .into_boxed()
     }
@@ -261,63 +318,6 @@ impl Args {
 
         config
     }
-}
-
-fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
-    out!(
-        "You are now connected to '{}'! Say hello :) Or type /help to see possible commands.",
-        unwrap!(peer.addr())
-    );
-
-    let peer_display_name = peer.uid();
-    let (peer_sink, peer_stream) = peer.split();
-    let writer = {
-        future::loop_fn(peer_sink, |peer_sink| {
-            print!("> ");
-            unwrap!(io::stdout().flush());
-            read_line().and_then(|line| {
-                let line = line.trim_right().to_owned();
-                if !handle_cmd(&line) {
-                    peer_sink
-                        .send((0, line.into_bytes()))
-                        .map(Loop::Continue)
-                        .map_err(|e| panic!("error sending message to peer: {}", e))
-                        .into_boxed()
-                } else {
-                    future::ok(Loop::Continue(peer_sink)).into_boxed()
-                }
-            })
-        })
-    };
-    let reader = {
-        peer_stream
-        .map_err(|e| panic!("error receiving message from peer: {}", e))
-        .for_each(move |line| {
-            let line = match String::from_utf8(line) {
-                Ok(line) => line,
-                Err(..) => String::from("<peer sent invalid utf8>"),
-            };
-            out!("<{}> {}", peer_display_name, line);
-            print!("> ");
-            unwrap!(io::stdout().flush());
-            Ok(())
-        })
-        .map(move |()| {
-            out!("Peer <{}> disconnected", peer_display_name);
-        })
-    };
-
-    writer
-        .select2(reader)
-        .map(|either| match either {
-            Either::A((v, _next)) => void::unreachable(v),
-            Either::B(((), _next)) => drop(service),
-        })
-        .map_err(|either| match either {
-            Either::A((v, _next)) => v,
-            Either::B((v, _next)) => v,
-        })
-        .into_boxed()
 }
 
 fn handle_cmd(cmd: &String) -> bool {
