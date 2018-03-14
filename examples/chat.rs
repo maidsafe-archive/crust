@@ -68,6 +68,7 @@ use crust::config::{DevConfigSettings, PeerInfo};
 use future_utils::{BoxFuture, FutureExt};
 use futures::{Future, Sink, Stream, future};
 use futures::future::{Either, Loop};
+use std::io::{self, Write};
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
 use utils::{PeerId, read_line};
@@ -77,7 +78,7 @@ use void::Void;
 macro_rules! out {
     ($($arg:tt)*) => {
         let date = Local::now();
-        print!("{} ", date.format("%H:%M"));
+        print!("\r{} ", date.format("%H:%M"));
         println!($($arg)*);
     };
 }
@@ -271,6 +272,8 @@ fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFutur
     let (peer_sink, peer_stream) = peer.split();
     let writer = {
         future::loop_fn(peer_sink, |peer_sink| {
+            print!("> ");
+            unwrap!(io::stdout().flush());
             read_line().and_then(|line| {
                 let line = line.trim_right().to_owned().into_bytes();
                 peer_sink.send((0, line)).map(Loop::Continue).map_err(|e| {
@@ -288,6 +291,8 @@ fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFutur
                 Err(..) => String::from("<peer sent invalid utf8>"),
             };
             out!("<{}> {}", peer_display_name, line);
+            print!("> ");
+            unwrap!(io::stdout().flush());
             Ok(())
         })
         .map(move |()| {
