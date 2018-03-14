@@ -56,6 +56,7 @@ extern crate env_logger;
 extern crate rust_sodium;
 extern crate clap;
 extern crate chrono;
+extern crate maidsafe_utilities;
 
 extern crate crust;
 
@@ -63,25 +64,32 @@ mod utils;
 
 use chrono::Local;
 use clap::{App, Arg};
-use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service};
+use crust::{ConfigFile, Listener, MAX_PAYLOAD_SIZE, PaAddr, Peer, PubConnectionInfo, Service};
 use crust::config::{DevConfigSettings, PeerInfo};
-use future_utils::{BoxFuture, FutureExt};
-use futures::{Future, Sink, Stream, future};
-use futures::future::{Either, Loop};
-use std::io::{self, Write};
+use future_utils::{BoxFuture, FutureExt, thread_future};
+use futures::{Async, Future, Sink, Stream};
+use futures::future::Either;
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use maidsafe_utilities::serialisation::{deserialise, serialise};
+use std::fs::{File, OpenOptions};
+use std::io::{self, Read, Write};
+use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
 use utils::{PeerId, read_line};
 use void::Void;
 
+/// Leave some room for our metadata.
+const FILE_CHUNK_SIZE: usize = MAX_PAYLOAD_SIZE - 1024;
+
 /// Prints current time and given formatted string.
 macro_rules! out {
-    ($($arg:tt)*) => {
+    ($($arg:tt)*) => ({
         let date = Local::now();
         print!("\r{} ", date.format("%H:%M"));
         println!($($arg)*);
-    };
+    });
 }
 
 #[derive(Debug)]
@@ -90,6 +98,26 @@ struct Args {
     disable_tcp: bool,
     disable_igd: bool,
     disable_direct_connections: bool,
+}
+
+/// Message type that will be exchange between peers.
+#[derive(Debug, Serialize, Deserialize)]
+enum Message {
+    Text(String),
+    FileRequest(String),
+    FileAccept(String),
+    FileReject(String),
+    FileChunk(String, Vec<u8>),
+    FileAllSent(String),
+}
+
+#[derive(Debug, Clone)]
+enum InputState {
+    /// Usual state when ordinary text is being typed.
+    Text,
+    /// Waiting for y/n confirmation.
+    WaitingToConfirmFile(String),
+    SendingFile(String),
 }
 
 fn main() {
@@ -177,46 +205,29 @@ impl Node {
 
         let peer_display_name = peer.uid();
         let (peer_sink, peer_stream) = peer.split();
-        let writer = {
-            future::loop_fn(peer_sink, |peer_sink| {
-                print!("> ");
-                unwrap!(io::stdout().flush());
-                read_line().and_then(|line| {
-                    let line = line.trim_right().to_owned();
-                    if !handle_cmd(&line) {
-                        peer_sink
-                            .send((0, line.into_bytes()))
-                            .map(Loop::Continue)
-                            .map_err(|e| panic!("error sending message to peer: {}", e))
-                            .into_boxed()
-                    } else {
-                        future::ok(Loop::Continue(peer_sink)).into_boxed()
-                    }
-                })
-            })
-        };
-        let reader = {
-            peer_stream
+        let (input_handler, input_state_tx) = InputHandler::new();
+
+        let writer = peer_sink
+            .sink_map_err(|e| panic!("error sending message to peer: {}", e))
+            .send_all(input_handler.map(|msg| {
+                let msg = unwrap!(serialise(&msg));
+                let priority = 0;
+                (priority, msg)
+            }));
+        let reader = peer_stream
             .map_err(|e| panic!("error receiving message from peer: {}", e))
-            .for_each(move |line| {
-                let line = match String::from_utf8(line) {
-                    Ok(line) => line,
-                    Err(..) => String::from("<peer sent invalid utf8>"),
-                };
-                out!("<{}> {}", peer_display_name, line);
-                print!("> ");
-                unwrap!(io::stdout().flush());
+            .for_each(move |msg| {
+                handle_peer_msg(&msg, &input_state_tx, &format!("{}", peer_display_name));
                 Ok(())
             })
             .map(move |()| {
                 out!("Peer <{}> disconnected", peer_display_name);
-            })
-        };
+            });
 
         writer
             .select2(reader)
             .map(move |either| match either {
-                Either::A((v, _next)) => void::unreachable(v),
+                Either::A((_, _next)) => (),
                 Either::B(((), _next)) => drop(self.service),
             })
             .map_err(|either| match either {
@@ -225,6 +236,179 @@ impl Node {
             })
             .into_boxed()
     }
+}
+
+/// Asynchronous file read result. On EOF, None is expected.
+type FileContentResult = Option<(Vec<u8>, File)>;
+
+/// Our input handler: reads commands from stdin, reacts accordingly and emits messages to
+/// be sent to connected peer.
+struct InputHandler {
+    input_state_rx: UnboundedReceiver<InputState>,
+    input_state: InputState,
+    fut_read_ln: BoxFuture<String, Void>,
+    read_file_fut: Option<BoxFuture<FileContentResult, Void>>,
+}
+
+impl InputHandler {
+    /// Returns new input handler and input state sender.
+    fn new() -> (Self, UnboundedSender<InputState>) {
+        print!("\r> ");
+        unwrap!(io::stdout().flush());
+        let (input_state_tx, input_state_rx) = mpsc::unbounded();
+        let input_handler = Self {
+            input_state_rx,
+            input_state: InputState::Text,
+            fut_read_ln: read_line(),
+            read_file_fut: None,
+        };
+        (input_handler, input_state_tx)
+    }
+
+    /// Handles command that the user inputs.
+    /// Returns message that will be sent to connected peer, if applicable to given command.
+    fn handle_input(&mut self, line: &str) -> Option<Message> {
+        let cmd = line.trim_right().to_owned();
+        if cmd.starts_with("/send") {
+            Some(Message::FileRequest(cmd[6..].to_owned()))
+        } else if cmd.starts_with("/exit") {
+            process::exit(0)
+        } else if cmd.starts_with("/help") {
+            println!("Possible commands:");
+            println!("  /help - prints this help menu");
+            println!("  /exit - terminates chat app");
+            println!(
+                "  /send $file_path - attempts to send given file to connected peer. File path \
+                     might be relative or absolute."
+            );
+            print!("\r> ");
+            unwrap!(io::stdout().flush());
+            None
+        } else {
+            let msg = match self.input_state {
+                InputState::WaitingToConfirmFile(ref fname) => {
+                    if &cmd[..] == "y" {
+                        truncate_file(&file_name(fname));
+                        Message::FileAccept(fname.clone())
+                    } else {
+                        Message::FileReject(fname.clone())
+                    }
+                }
+                _ => Message::Text(cmd),
+            };
+            self.input_state = InputState::Text;
+            Some(msg)
+        }
+    }
+
+    /// Opens file to be sent out.
+    fn open_file(&mut self, fname: &str) {
+        let file = unwrap!(OpenOptions::new().read(true).open(fname));
+        self.read_file_fut = Some(async_read_file(file));
+    }
+
+    /// If we're in `SendingFile` state, let's read file chunk from disk.
+    /// None is returned, when EOF is reached.
+    fn poll_file_chunk(&mut self) -> Result<Async<Option<Vec<u8>>>, Void> {
+        if let Some(mut read_file_fut) = self.read_file_fut.take() {
+            let ret = match read_file_fut.poll() {
+                Ok(Async::Ready(Some((chunk, file)))) => {
+                    self.read_file_fut = Some(async_read_file(file));
+                    return Ok(Async::Ready(Some(chunk)));
+                }
+                Ok(Async::Ready(None)) => Async::Ready(None),
+                _ => Async::NotReady,
+            };
+            self.read_file_fut = Some(read_file_fut);
+            return Ok(ret);
+        }
+        Ok(Async::NotReady)
+    }
+
+    /// See if we should change input state.
+    fn check_state_change(&mut self) {
+        if let Ok(Async::Ready(Some(state))) = self.input_state_rx.poll() {
+            if let InputState::SendingFile(ref fname) = state {
+                self.open_file(fname);
+            }
+            self.input_state = state;
+        }
+    }
+
+    /// Updates read line future.
+    fn read_ln_from_stdin(&mut self) {
+        print!("\r> ");
+        unwrap!(io::stdout().flush());
+        self.fut_read_ln = read_line();
+    }
+}
+
+impl Stream for InputHandler {
+    type Item = Message;
+    type Error = Void;
+
+    /// Yields messages to send to connected peer.
+    fn poll(&mut self) -> Result<Async<Option<Self::Item>>, Self::Error> {
+        self.check_state_change();
+        if let InputState::SendingFile(fname) = self.input_state.clone() {
+            if let Ok(Async::Ready(chunk)) = self.poll_file_chunk() {
+                let msg = match chunk {
+                    Some(content) => Message::FileChunk(fname, content),
+                    None => {
+                        self.input_state = InputState::Text;
+                        out!("Finished sending file: {}", fname);
+                        Message::FileAllSent(fname)
+                    }
+                };
+                return Ok(Async::Ready(Some(msg)));
+            }
+        }
+
+        match self.fut_read_ln.poll() {
+            Ok(Async::Ready(line)) => {
+                self.read_ln_from_stdin();
+                let msg_to_send = self.handle_input(&line);
+                Ok(msg_to_send.map(|msg| Async::Ready(Some(msg))).unwrap_or(
+                    Async::NotReady,
+                ))
+            }
+            Ok(Async::NotReady) => Ok(Async::NotReady),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+/// Handles message received from connected peer.
+fn handle_peer_msg(
+    msg: &[u8],
+    input_state_tx: &UnboundedSender<InputState>,
+    peer_display_name: &str,
+) {
+    let msg = unwrap!(deserialise(msg));
+    match msg {
+        Message::Text(line) => {
+            out!("<{}> {}", peer_display_name, line);
+        }
+        Message::FileRequest(fname) => {
+            out!(
+                "<{}> is trying to send you file '{}'. Accept? y/n?",
+                peer_display_name,
+                fname
+            );
+            let _ = input_state_tx.unbounded_send(InputState::WaitingToConfirmFile(fname));
+        }
+        Message::FileAccept(fname) => {
+            out!("Request to send '{}'  was accepted, sending...", fname);
+            let _ = input_state_tx.unbounded_send(InputState::SendingFile(fname));
+        }
+        Message::FileReject(fname) => out!("Request to send '{}'  was rejected!", fname),
+        Message::FileChunk(fname, content) => {
+            append_to_file(&file_name(&fname), &content);
+        }
+        Message::FileAllSent(fname) => out!("'{}'  was successfully received.", file_name(&fname)),
+    };
+    print!("\r> ");
+    unwrap!(io::stdout().flush());
 }
 
 fn parse_cli_args() -> Result<Args, clap::Error> {
@@ -320,26 +504,6 @@ impl Args {
     }
 }
 
-fn handle_cmd(cmd: &String) -> bool {
-    let mut valid_command = false;
-    if cmd.starts_with("/send") {
-        println!("Let's send a file: {}", cmd[6..].to_owned());
-        valid_command = true;
-    } else if cmd.starts_with("/exit") {
-        process::exit(0);
-    } else if cmd.starts_with("/help") {
-        println!("Possible commands:");
-        println!("  /help - prints this help menu");
-        println!("  /exit - terminates chat app");
-        println!(
-            "  /send $file_path - attempts to send given file to connected peer. File path \
-                 might be relative or absolute."
-        );
-        valid_command = true;
-    }
-    valid_command
-}
-
 fn print_logo() {
     println!(
         r#"
@@ -352,4 +516,43 @@ fn print_logo() {
 
   "#
     );
+}
+
+fn append_to_file(fname: &str, content: &[u8]) {
+    let mut file = unwrap!(OpenOptions::new().create(true).append(true).open(fname));
+    unwrap!(file.write(content));
+}
+
+fn truncate_file(fname: &str) {
+    let _ = unwrap!(
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(fname)
+    );
+}
+
+/// Since we support cross-platforms, it would be best, if we stick to UTF-8 for filenames.
+fn file_name(path: &str) -> String {
+    unwrap!(Path::new(path).file_name().map(|s| {
+        unwrap!(s.to_str()).to_owned()
+    }))
+}
+
+/// Reads file in a separate thread, hence doesn't block current thread.
+/// On EOF, returns None and file get's closed.
+fn async_read_file(mut file: File) -> BoxFuture<FileContentResult, Void> {
+    thread_future(move || {
+        let mut buf = Vec::with_capacity(FILE_CHUNK_SIZE);
+        unsafe { buf.set_len(FILE_CHUNK_SIZE) };
+
+        let bytes_read = unwrap!(file.read(&mut buf));
+        if bytes_read > 0 {
+            unsafe { buf.set_len(bytes_read) };
+            Some((buf, file))
+        } else {
+            None
+        }
+    }).into_boxed()
 }
