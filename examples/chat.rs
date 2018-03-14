@@ -69,6 +69,7 @@ use future_utils::{BoxFuture, FutureExt};
 use futures::{Future, Sink, Stream, future};
 use futures::future::{Either, Loop};
 use std::io::{self, Write};
+use std::process;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
 use utils::{PeerId, read_line};
@@ -264,7 +265,7 @@ impl Args {
 
 fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
     out!(
-        "You are now connected to '{}'! Press CTRL+C to exit. Say hello :)",
+        "You are now connected to '{}'! Say hello :) Or type /help to see possible commands.",
         unwrap!(peer.addr())
     );
 
@@ -275,10 +276,16 @@ fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFutur
             print!("> ");
             unwrap!(io::stdout().flush());
             read_line().and_then(|line| {
-                let line = line.trim_right().to_owned().into_bytes();
-                peer_sink.send((0, line)).map(Loop::Continue).map_err(|e| {
-                    panic!("error sending message to peer: {}", e)
-                })
+                let line = line.trim_right().to_owned();
+                if !handle_cmd(&line) {
+                    peer_sink
+                        .send((0, line.into_bytes()))
+                        .map(Loop::Continue)
+                        .map_err(|e| panic!("error sending message to peer: {}", e))
+                        .into_boxed()
+                } else {
+                    future::ok(Loop::Continue(peer_sink)).into_boxed()
+                }
             })
         })
     };
@@ -311,6 +318,26 @@ fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFutur
             Either::B((v, _next)) => v,
         })
         .into_boxed()
+}
+
+fn handle_cmd(cmd: &String) -> bool {
+    let mut valid_command = false;
+    if cmd.starts_with("/send") {
+        println!("Let's send a file: {}", cmd[6..].to_owned());
+        valid_command = true;
+    } else if cmd.starts_with("/exit") {
+        process::exit(0);
+    } else if cmd.starts_with("/help") {
+        println!("Possible commands:");
+        println!("  /help - prints this help menu");
+        println!("  /exit - terminates chat app");
+        println!(
+            "  /send $file_path - attempts to send given file to connected peer. File path \
+                 might be relative or absolute."
+        );
+        valid_command = true;
+    }
+    valid_command
 }
 
 fn print_logo() {
