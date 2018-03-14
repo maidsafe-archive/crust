@@ -55,11 +55,13 @@ extern crate future_utils;
 extern crate env_logger;
 extern crate rust_sodium;
 extern crate clap;
+extern crate chrono;
 
 extern crate crust;
 
 mod utils;
 
+use chrono::Local;
 use clap::{App, Arg};
 use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service};
 use crust::config::{DevConfigSettings, PeerInfo};
@@ -70,6 +72,15 @@ use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
 use utils::{PeerId, read_line};
 use void::Void;
+
+/// Prints current time and given formatted string.
+macro_rules! out {
+    ($($arg:tt)*) => {
+        let date = Local::now();
+        print!("{} ", date.format("%H:%M"));
+        println!($($arg)*);
+    };
+}
 
 #[derive(Debug)]
 struct Args {
@@ -87,6 +98,8 @@ fn main() {
     };
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
+
+    print_logo();
 
     let future = Node::run(&handle, args)
         .and_then(|node| node.connect())
@@ -118,6 +131,7 @@ impl Node {
                 service
             })
             .and_then(|service| {
+                out!("Our ID: {}", service.id());
                 service
                     .start_listening()
                     .map_err(|e| panic!("Failed to start listeners: {}", e))
@@ -135,10 +149,10 @@ impl Node {
             .and_then(move |our_priv_info| {
                 let our_pub_info = our_priv_info.to_pub_connection_info();
                 let as_str = unwrap!(serde_json::to_string(&our_pub_info));
-                println!("Our connection info:");
+                out!("Our connection info:");
                 println!("{}", as_str);
                 println!();
-                println!(
+                out!(
                     "Copy this info and share it with your connecting partner. Then paste \
                   their info below."
                 );
@@ -248,16 +262,17 @@ impl Args {
 }
 
 fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
-    println!(
-        "You are now connected to '{}'! say hello :)",
+    out!(
+        "You are now connected to '{}'! Press CTRL+C to exit. Say hello :)",
         unwrap!(peer.addr())
     );
 
+    let peer_display_name = peer.uid();
     let (peer_sink, peer_stream) = peer.split();
     let writer = {
         future::loop_fn(peer_sink, |peer_sink| {
             read_line().and_then(|line| {
-                let line = line.into_bytes();
+                let line = line.trim_right().to_owned().into_bytes();
                 peer_sink.send((0, line)).map(Loop::Continue).map_err(|e| {
                     panic!("error sending message to peer: {}", e)
                 })
@@ -267,16 +282,16 @@ fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFutur
     let reader = {
         peer_stream
         .map_err(|e| panic!("error receiving message from peer: {}", e))
-        .for_each(|line| {
+        .for_each(move |line| {
             let line = match String::from_utf8(line) {
                 Ok(line) => line,
                 Err(..) => String::from("<peer sent invalid utf8>"),
             };
-            println!("{}", line);
+            out!("<{}> {}", peer_display_name, line);
             Ok(())
         })
-        .map(|()| {
-            println!("peer disconnected");
+        .map(move |()| {
+            out!("Peer <{}> disconnected", peer_display_name);
         })
     };
 
@@ -291,4 +306,18 @@ fn have_a_conversation(service: Service<PeerId>, peer: Peer<PeerId>) -> BoxFutur
             Either::B((v, _next)) => v,
         })
         .into_boxed()
+}
+
+fn print_logo() {
+    println!(
+        r#"
+   _____                _      _____ _           _
+  / ____|              | |    / ____| |         | |
+ | |     _ __ _   _ ___| |_  | |    | |__   __ _| |_
+ | |    | '__| | | / __| __| | |    | '_ \ / _` | __|
+ | |____| |  | |_| \__ \ |_  | |____| | | | (_| | |_
+  \_____|_|   \__,_|___/\__|  \_____|_| |_|\__,_|\__|
+
+  "#
+    );
 }
