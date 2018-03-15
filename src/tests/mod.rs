@@ -17,3 +17,7 @@
 
 mod service_tests;
 mod compat_api;
+
+#[cfg(target_os = "linux")]
+#[cfg(feature = "netsim")]
+mod netsim;
