@@ -74,7 +74,10 @@ pub fn spawn_event_loop<UID: Uid>(
                 unwrap!(result_tx.send(Ok(tx)));
                 unwrap!(core.run({
                     rx
-                    .for_each(move |cb| Ok(cb.call_box(&mut service_state)))
+                    .for_each(move |cb| {
+                        cb.call_box(&mut service_state);
+                        Ok(())
+                    })
                     .and_then(move |()| {
                         Timeout::new(Duration::from_millis(200), &handle)
                             .infallible()
