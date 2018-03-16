@@ -41,21 +41,31 @@ extern crate rand_derive;
 extern crate void;
 extern crate future_utils;
 extern crate env_logger;
+extern crate clap;
 
 extern crate crust;
 
-use crust::{ConfigFile, PubConnectionInfo, Service, Uid};
-use future_utils::{BoxFuture, FutureExt, thread_future};
+mod utils;
+
+use clap::App;
+use crust::{ConfigFile, PubConnectionInfo, Service};
+use future_utils::FutureExt;
 use futures::future::{Future, empty};
 use futures::sink::Sink;
 use futures::stream::Stream;
-use std::{fmt, io};
-use std::path::PathBuf;
 use tokio_core::reactor::Core;
-use void::Void;
+use utils::{PeerId, read_line};
 
 fn main() {
     unwrap!(env_logger::init());
+    let _ = App::new("Crust data exchange example")
+        .about(
+            "Attempts to connect to remote peer given its connection information and exchange \
+            messages. Start two instances of this example. Each instance generates and prints its \
+            connection information to stdout in JSON format. You have to manually copy/paste this \
+            info from one instance to the other and hit ENTER to start connection.",
+        )
+        .get_matches();
 
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
@@ -63,11 +73,11 @@ fn main() {
     let service_id: PeerId = rand::random();
     println!("Service id: {}", service_id);
 
-    let config =
-        unwrap!(
-        ConfigFile::open_path(PathBuf::from("sample.config")),
-        "Failed to read crust config file: sample.config",
-    );
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![
+        unwrap!("tcp://0.0.0.0:0".parse()),
+        unwrap!("utp://0.0.0.0:0".parse()),
+    ];
     let service = unwrap!(event_loop.run(
         Service::with_config(&handle, config, service_id),
     ));
@@ -132,28 +142,4 @@ fn main() {
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());
     unwrap!(res);
-}
-
-/// Reads single line from stdin.
-fn read_line() -> BoxFuture<String, Void> {
-    thread_future(|| {
-        let stdin = io::stdin();
-        let mut line = String::new();
-        unwrap!(stdin.read_line(&mut line));
-        line
-    }).into_boxed()
-}
-
-// Some peer ID boilerplate.
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
-pub struct PeerId(u64);
-
-impl Uid for PeerId {}
-
-impl fmt::Display for PeerId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let PeerId(ref id) = *self;
-        write!(f, "{:x}", id)
-    }
 }

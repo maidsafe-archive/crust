@@ -58,5 +58,6 @@ version = "~0.4"
 git = "https://github.com/ustulation/p2p"
 
 [dev-dependencies]
+clap = "~2.31.1"
 docopt = "~0.8.3"
 hamcrest = "~0.1.5"
