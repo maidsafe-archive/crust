@@ -28,6 +28,7 @@ pub struct BootstrapRequest<UID> {
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct ConnectRequest<UID> {
+    pub connection_id: u64,
     /// Unique ID of the peer that sent us connect request.
     pub peer_uid: UID,
     /// Public key of the peer that sent us connect request.

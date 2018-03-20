@@ -22,6 +22,7 @@ use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use net::peer::BootstrapRequest;
 use p2p::{self, P2p};
 use priv_prelude::*;
+use rand::{self, Rng};
 use rust_sodium::crypto::box_::{gen_keypair, PublicKey, SecretKey};
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
@@ -175,6 +176,7 @@ impl<UID: Uid> Service<UID> {
     pub fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
         let (direct_addrs, _) = self.listeners.addresses();
         let priv_conn_info = PrivConnectionInfo {
+            connection_id: rand::thread_rng().gen(),
             id: self.our_uid,
             for_direct: direct_addrs.into_iter().collect(),
             p2p_conn_info: None,

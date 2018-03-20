@@ -148,6 +148,7 @@ pub fn connect<UID: Uid>(
 
     let their_id = their_info.id;
     let our_connect_request = ConnectRequest {
+        connection_id: their_info.connection_id,
         peer_uid: our_info.id,
         peer_pk: our_info.our_pk,
         name_hash: name_hash,

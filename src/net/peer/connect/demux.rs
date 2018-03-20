@@ -47,8 +47,8 @@ pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UI
 
 struct DemuxInner<UID: Uid> {
     bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
-    connection_handler: Mutex<LruCache<UID, UnboundedSender<ConnectMessage<UID>>>>,
-    available_connections: Mutex<LruCache<UID, ConnectMessage<UID>>>,
+    connection_handler: Mutex<LruCache<u64, UnboundedSender<ConnectMessage<UID>>>>,
+    available_connections: Mutex<LruCache<u64, ConnectMessage<UID>>>,
     handle: Handle,
     bootstrap_cache: BootstrapCache,
 }
@@ -101,7 +101,7 @@ impl<UID: Uid> Demux<UID> {
         their_info: PubConnectionInfo<UID>,
         config: &ConfigFile,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
-        let peer_rx = self.direct_conn_receiver(their_info.id);
+        let peer_rx = self.direct_conn_receiver(our_info.connection_id);
         connect(
             &self.inner.handle,
             name_hash,
@@ -116,16 +116,16 @@ impl<UID: Uid> Demux<UID> {
     /// If there's already available connection for given peer ID, returns connection receiver
     /// that immediately gets connection. Otherwise, returned connection receiver is in waiting
     /// state and when new connection with given peer ID arrives, it will be sent to receiver.
-    fn direct_conn_receiver(&self, their_uid: UID) -> UnboundedReceiver<ConnectMessage<UID>> {
+    fn direct_conn_receiver(&self, connection_id: u64) -> UnboundedReceiver<ConnectMessage<UID>> {
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let mut available_conns = unwrap!(self.inner.available_connections.lock());
-        match available_conns.remove(&their_uid) {
+        match available_conns.remove(&connection_id) {
             Some(conn) => {
                 let _ = peer_tx.unbounded_send(conn);
             }
             None => {
                 let mut connection_handler = unwrap!(self.inner.connection_handler.lock());
-                let _ = connection_handler.insert(their_uid, peer_tx);
+                let _ = connection_handler.insert(connection_id, peer_tx);
             }
         };
         peer_rx
@@ -214,13 +214,14 @@ fn handle_connect_request<UID: Uid>(
     connect_request: ConnectRequest<UID>,
 ) -> BoxFuture<(), IncomingError> {
     let mut connection_handler_map = unwrap!(inner.connection_handler.lock());
-    match connection_handler_map.get(&connect_request.peer_uid) {
+    match connection_handler_map.get(&connect_request.connection_id) {
         Some(conn_handler) => {
             let _ = conn_handler.unbounded_send((socket, connect_request));
         }
         None => {
             let mut available_conns = unwrap!(inner.available_connections.lock());
-            let _ = available_conns.insert(connect_request.peer_uid, (socket, connect_request));
+            let _ =
+                available_conns.insert(connect_request.connection_id, (socket, connect_request));
         }
     };
     future::ok(()).into_boxed()
