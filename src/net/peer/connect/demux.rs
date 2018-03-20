@@ -214,13 +214,13 @@ fn handle_connect_request<UID: Uid>(
     connect_request: ConnectRequest<UID>,
 ) -> BoxFuture<(), IncomingError> {
     let mut connection_handler_map = unwrap!(inner.connection_handler.lock());
-    match connection_handler_map.get(&connect_request.uid) {
+    match connection_handler_map.get(&connect_request.peer_uid) {
         Some(conn_handler) => {
             let _ = conn_handler.unbounded_send((socket, connect_request));
         }
         None => {
             let mut available_conns = unwrap!(inner.available_connections.lock());
-            let _ = available_conns.insert(connect_request.uid, (socket, connect_request));
+            let _ = available_conns.insert(connect_request.peer_uid, (socket, connect_request));
         }
     };
     future::ok(()).into_boxed()

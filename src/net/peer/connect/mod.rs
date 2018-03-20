@@ -148,9 +148,9 @@ pub fn connect<UID: Uid>(
 
     let their_id = their_info.id;
     let our_connect_request = ConnectRequest {
-        uid: our_info.id,
+        peer_uid: our_info.id,
+        peer_pk: our_info.our_pk,
         name_hash: name_hash,
-        their_pk: our_info.our_pk,
     };
     let our_id = our_info.id;
     let our_sk = our_info.our_sk.clone();
@@ -341,7 +341,7 @@ fn handshake_incoming_connections<UID: Uid>(
         .and_then(move |(mut socket, connect_request)| {
             validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
             socket.use_crypto_ctx(CryptoContext::authenticated(
-                connect_request.their_pk,
+                connect_request.peer_pk,
                 our_sk.clone(),
             ));
             Ok({
@@ -383,7 +383,7 @@ where
             None => Err(SingleConnectionError::ConnectionDropped),
             Some(HandshakeMessage::Connect(connect_request)) => {
                 validate_connect_request(their_id, our_name_hash, &connect_request)?;
-                Ok((socket, connect_request.uid))
+                Ok((socket, connect_request.peer_uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
         })
@@ -422,7 +422,7 @@ fn validate_connect_request<UID: Uid>(
     connect_request: &ConnectRequest<UID>,
 ) -> Result<(), SingleConnectionError> {
     let &ConnectRequest {
-        uid: their_uid,
+        peer_uid: their_uid,
         name_hash: their_name_hash,
         ..
     } = connect_request;
