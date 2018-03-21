@@ -18,20 +18,19 @@
 //! This module re-exports a bunch of common imports so they can be glob-imported into other
 //! modules using `use priv_prelude::*`
 
-
 pub use bytes::{Bytes, BytesMut};
-pub use common::{CrustUser, HASH_SIZE, NameHash};
+pub use common::{CrustUser, NameHash, HASH_SIZE};
 pub use config::ConfigFile;
 pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
-pub use futures::{Async, AsyncSink, Future, IntoFuture, Sink, Stream, future, stream};
+pub use futures::{future, stream, Async, AsyncSink, Future, IntoFuture, Sink, Stream};
 pub use net::{BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError,
               ConnectError, ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
               PaRendezvousConnectError, Peer, PeerError, Priority, PrivConnectionInfo,
               PubConnectionInfo, RendezvousConnectError, SingleConnectionError, Socket,
               SocketError, UtpRendezvousConnectError};
-pub use net::{FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream, framed_stream};
-pub use net::{MAX_PAYLOAD_SIZE, Uid};
+pub use net::{framed_stream, FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream};
+pub use net::{Uid, MAX_PAYLOAD_SIZE};
 pub use net2::TcpBuilder;
 pub use p2p::{CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt,
               TcpRendezvousConnectError, TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt};

@@ -19,13 +19,11 @@ mod cache;
 mod try_peer;
 
 pub use self::try_peer::{ConnectHandshakeError, TryPeerError};
-
 use config::PeerInfo;
 pub use net::peer::connect::bootstrap::cache::{Cache, CacheError};
 use net::peer::connect::bootstrap::try_peer::try_peer;
 use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
-
 use priv_prelude::*;
 use rust_sodium::crypto::box_::SecretKey;
 use service;
@@ -68,9 +66,10 @@ pub fn bootstrap<UID: Uid>(
     let cache = cache.clone();
     let try = || -> Result<_, BootstrapError> {
         let sd_peers = if use_service_discovery {
-            let sd_port = config.read().service_discovery_port.unwrap_or(
-                service::SERVICE_DISCOVERY_DEFAULT_PORT,
-            );
+            let sd_port = config
+                .read()
+                .service_discovery_port
+                .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
             service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk.clone())
                 .map_err(BootstrapError::ServiceDiscovery)?
                 .infallible::<(PaAddr, TryPeerError)>()
@@ -99,9 +98,7 @@ pub fn bootstrap<UID: Uid>(
             .buffer_unordered(64)
             .until(timeout.infallible())
             .first_ok()
-            .map_err(|errs| {
-                BootstrapError::AllPeersFailed(errs.into_iter().collect())
-            });
+            .map_err(|errs| BootstrapError::AllPeersFailed(errs.into_iter().collect()));
         Ok(first_ok_peer)
     };
     future::result(try()).flatten().into_boxed()
@@ -130,21 +127,26 @@ fn bootstrap_to_peer<UID: Uid>(
     // API to choose different connections. We also shouldn't bootstrap to all
     // addresses simultaneously.
     let delay = Timeout::new(Duration::from_millis(200) * peer_nr, &handle);
-    delay.infallible().and_then(move |()| {
-        try_peer(&handle, &peer.addr, &config, request, our_sk, peer.pub_key)
-            .map(move |peer_conn| {
-                cache.put(&peer);
-                let _ = cache.commit()
-                    .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
-                peer_conn
-            })
-            .map_err(move |e| {
-                cache2.remove(&peer2);
-                let _ = cache2.commit()
-                    .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
-                (peer2.addr, e)
-            })
-    }).into_boxed()
+    delay
+        .infallible()
+        .and_then(move |()| {
+            try_peer(&handle, &peer.addr, &config, request, our_sk, peer.pub_key)
+                .map(move |peer_conn| {
+                    cache.put(&peer);
+                    let _ = cache
+                        .commit()
+                        .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
+                    peer_conn
+                })
+                .map_err(move |e| {
+                    cache2.remove(&peer2);
+                    let _ = cache2
+                        .commit()
+                        .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
+                    (peer2.addr, e)
+                })
+        })
+        .into_boxed()
 }
 
 /// Collects bootstrap peers from cache and config.

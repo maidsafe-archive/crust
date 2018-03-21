@@ -52,7 +52,9 @@ impl Cache {
             file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
             peers: HashSet::new(),
         };
-        Ok(Cache { inner: Rc::new(Mutex::new(inner)) })
+        Ok(Cache {
+            inner: Rc::new(Mutex::new(inner)),
+        })
     }
 
     pub fn default_file_name() -> Result<OsString, CacheError> {
@@ -64,17 +66,20 @@ impl Cache {
     /// Updates cache by reading it from file and returns the current snapshot of peers.
     pub fn read_file(&self) {
         let mut inner = unwrap!(self.inner.lock());
-        inner.peers = inner.file_handler.read_file().ok().unwrap_or_else(
-            HashSet::new,
-        );
+        inner.peers = inner
+            .file_handler
+            .read_file()
+            .ok()
+            .unwrap_or_else(HashSet::new);
     }
 
     /// Writes bootstrap cache to disk.
     pub fn commit(&self) -> Result<(), CacheError> {
         let inner = unwrap!(self.inner.lock());
-        inner.file_handler.write_file(&inner.peers).map_err(
-            CacheError::Io,
-        )
+        inner
+            .file_handler
+            .write_file(&inner.peers)
+            .map_err(CacheError::Io)
     }
 
     /// Inserts given peer to the cache.

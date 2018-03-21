@@ -17,11 +17,9 @@
 
 use compat::CrustEventSender;
 use compat::service::{ServiceCommand, ServiceState};
-
 use error::CrustError;
 use futures::sync::mpsc::{self, UnboundedSender};
 use maidsafe_utilities::thread::{self, Joiner};
-
 use priv_prelude::*;
 use std;
 use tokio_core::reactor::Core;
@@ -73,14 +71,11 @@ pub fn spawn_event_loop<UID: Uid>(
                 let (tx, rx) = mpsc::unbounded::<ServiceCommand<UID>>();
                 unwrap!(result_tx.send(Ok(tx)));
                 unwrap!(core.run({
-                    rx
-                    .for_each(move |cb| {
+                    rx.for_each(move |cb| {
                         cb.call_box(&mut service_state);
                         Ok(())
-                    })
-                    .and_then(move |()| {
-                        Timeout::new(Duration::from_millis(200), &handle)
-                            .infallible()
+                    }).and_then(move |()| {
+                        Timeout::new(Duration::from_millis(200), &handle).infallible()
                     })
                 }));
             }

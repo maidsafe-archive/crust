@@ -171,10 +171,9 @@ impl<M: 'static> Socket<M> {
         let mut inner = try_bfut!(self.inner.take().ok_or(SocketError::Destroyed));
         let stream_rx = unwrap!(inner.stream_rx.take());
         let (inner_stream_tx, inner_stream_rx) = oneshot::channel();
-        let _ = inner.write_tx.unbounded_send(TaskMsg::GetInnerStream(
-            inner_stream_tx,
-            stream_rx,
-        ));
+        let _ = inner
+            .write_tx
+            .unbounded_send(TaskMsg::GetInnerStream(inner_stream_tx, stream_rx));
         inner_stream_rx
             .map_err(|_e| SocketError::Destroyed)
             .into_boxed()
@@ -206,9 +205,10 @@ where
                 Some(data) => data,
                 None => return Ok(Async::Ready(None)),
             };
-            let msg = inner.crypto_ctx.decrypt(&data).map_err(
-                SocketError::Decrypt,
-            )?;
+            let msg = inner
+                .crypto_ctx
+                .decrypt(&data)
+                .map_err(SocketError::Decrypt)?;
             Ok(Async::Ready(Some(msg)))
         } else {
             Ok(Async::NotReady)
@@ -234,7 +234,10 @@ where
             None => return Err(SocketError::Destroyed),
         };
 
-        let data = inner.crypto_ctx.encrypt(&msg).map_err(SocketError::Encrypt)?;
+        let data = inner
+            .crypto_ctx
+            .encrypt(&msg)
+            .map_err(SocketError::Encrypt)?;
         let _ = inner.write_tx.unbounded_send(TaskMsg::Send(priority, data));
         Ok(AsyncSink::Ready)
     }
@@ -270,9 +273,9 @@ where
         loop {
             match unwrap!(self.write_rx.poll()) {
                 Async::Ready(Some(TaskMsg::Send(priority, data))) => {
-                    let queue = self.write_queue.entry(priority).or_insert_with(
-                        VecDeque::new,
-                    );
+                    let queue = self.write_queue
+                        .entry(priority)
+                        .or_insert_with(VecDeque::new);
                     queue.push_back((now, data));
                 }
                 Async::Ready(Some(TaskMsg::Shutdown(stream_rx))) => {
@@ -285,8 +288,7 @@ where
                     let _ = send_me_stream.send(inner_stream);
                     return true;
                 }
-                Async::Ready(None) |
-                Async::NotReady => break,
+                Async::Ready(None) | Async::NotReady => break,
             }
         }
         false
@@ -349,13 +351,15 @@ impl Future for SocketTask<FramedPaStream> {
                     let hard_timeout = Timeout::new(Duration::from_secs(10), &self.handle);
                     self.handle.spawn({
                         tokio_io::io::shutdown(tcp_stream)
-                        .map(|_stream| ())
-                        .log_error(LogLevel::Warn, "shutdown socket")
-                        .join(soft_timeout)
-                        .map(|((), ())| ())
-                        .until(hard_timeout)
-                        .map(|opt| opt.unwrap_or_else(|| warn!("timed out shutting down socket")))
-                        .infallible()
+                            .map(|_stream| ())
+                            .log_error(LogLevel::Warn, "shutdown socket")
+                            .join(soft_timeout)
+                            .map(|((), ())| ())
+                            .until(hard_timeout)
+                            .map(|opt| {
+                                opt.unwrap_or_else(|| warn!("timed out shutting down socket"))
+                            })
+                            .infallible()
                     });
                     return Ok(Async::Ready(()));
                 }
@@ -369,10 +373,8 @@ impl Future for SocketTask<FramedPaStream> {
 #[cfg(test)]
 mod test {
     use super::*;
-
     use rust_sodium::crypto::box_::gen_keypair;
     use tokio_core::reactor::Core;
-
     use util;
 
     mod socket {
@@ -441,11 +443,12 @@ mod test {
                             addr,
                             CryptoContext::null(),
                         );
-                        socket.take(num_msgs as u64).collect().map(
-                            move |msgs_recv| {
+                        socket
+                            .take(num_msgs as u64)
+                            .collect()
+                            .map(move |msgs_recv| {
                                 assert_eq!(msgs_recv, msgs);
-                            },
-                        )
+                            })
                     })
             };
 
@@ -476,9 +479,8 @@ mod test {
                 let handle = evloop.handle();
 
                 let (channel, _other_channel) = bi_channel::unbounded();
-                let channel = channel.sink_map_err(|_e| {
-                    io::Error::new(io::ErrorKind::Other, "sink.send() failed")
-                });
+                let channel = channel
+                    .sink_map_err(|_e| io::Error::new(io::ErrorKind::Other, "sink.send() failed"));
                 let (stream_tx, stream_rx) = channel.split();
                 let (task_tx, task_rx) = mpsc::unbounded();
                 let mut task = SocketTask::new(&handle, stream_tx, task_rx);

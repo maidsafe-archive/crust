@@ -22,10 +22,9 @@ use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use net::peer::BootstrapRequest;
 use p2p::{self, P2p};
 use priv_prelude::*;
-use rust_sodium::crypto::box_::{PublicKey, SecretKey, gen_keypair};
+use rust_sodium::crypto::box_::{gen_keypair, PublicKey, SecretKey};
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
-
 
 /// The main entry point to Crust.
 ///
@@ -79,9 +78,8 @@ impl<UID: Uid> Service<UID> {
 
         let bootstrap_cache_name = config.read().bootstrap_cache_name.clone();
         let bootstrap_cache = try_bfut!(
-            BootstrapCache::new(
-                bootstrap_cache_name.as_ref().map(|s| s.as_os_str()),
-            ).map_err(CrustError::ReadBootstrapCache)
+            BootstrapCache::new(bootstrap_cache_name.as_ref().map(|s| s.as_os_str()),)
+                .map_err(CrustError::ReadBootstrapCache)
         );
         bootstrap_cache.read_file();
 
@@ -128,14 +126,12 @@ impl<UID: Uid> Service<UID> {
         remove_rendezvous_servers(&self.p2p, &blacklist);
         let (current_addrs, _) = self.listeners.addresses();
         let ext_reachability = match crust_user {
-            CrustUser::Node => {
-                ExternalReachability::Required {
-                    direct_listeners: current_addrs
-                        .into_iter()
-                        .map(|addr| PeerInfo::new(addr, self.our_pk))
-                        .collect(),
-                }
-            }
+            CrustUser::Node => ExternalReachability::Required {
+                direct_listeners: current_addrs
+                    .into_iter()
+                    .map(|addr| PeerInfo::new(addr, self.our_pk))
+                    .collect(),
+            },
             CrustUser::Client => ExternalReachability::NotRequired,
         };
         let request = BootstrapRequest {
@@ -159,11 +155,8 @@ impl<UID: Uid> Service<UID> {
     /// who are bootstrapping to us. It can be dropped again to re-disable accepting bootstrapping
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor<UID> {
-        self.demux.bootstrap_acceptor(
-            &self.config,
-            self.our_uid,
-            self.our_sk.clone(),
-        )
+        self.demux
+            .bootstrap_acceptor(&self.config, self.our_uid, self.our_sk.clone())
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -173,9 +166,9 @@ impl<UID: Uid> Service<UID> {
     pub fn start_listening(&self) -> BoxStream<Listener, CrustError> {
         let addrs = self.config.listen_addresses();
         let futures = addrs.iter().map(|addr| {
-            self.listeners.listener::<UID>(addr).map_err(
-                CrustError::StartListener,
-            )
+            self.listeners
+                .listener::<UID>(addr)
+                .map_err(CrustError::StartListener)
         });
         stream::futures_unordered(futures).into_boxed()
     }
@@ -346,11 +339,10 @@ mod tests {
         #[test]
         fn it_sets_hard_coded_tcp_contacts_as_rendezvous_servers() {
             let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts =
-                vec![
-                    PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")),
-                    PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")),
-                ];
+            unwrap!(config.write()).hard_coded_contacts = vec![
+                PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")),
+                PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")),
+            ];
             let p2p = P2p::default();
 
             set_rendezvous_servers(&p2p, &config);
@@ -363,11 +355,10 @@ mod tests {
         #[test]
         fn it_sets_hard_coded_utp_contacts_as_rendezvous_servers() {
             let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts =
-                vec![
-                    PeerInfo::with_rand_key(utp_addr!("1.2.3.4:4000")),
-                    PeerInfo::with_rand_key(utp_addr!("1.2.3.5:5000")),
-                ];
+            unwrap!(config.write()).hard_coded_contacts = vec![
+                PeerInfo::with_rand_key(utp_addr!("1.2.3.4:4000")),
+                PeerInfo::with_rand_key(utp_addr!("1.2.3.5:5000")),
+            ];
             let p2p = P2p::default();
 
             set_rendezvous_servers(&p2p, &config);

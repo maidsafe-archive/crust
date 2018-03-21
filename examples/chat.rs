@@ -39,24 +39,24 @@
 //! That's it, it means we successfully did a peer-to-peer connection. You can now use this
 //! connection to chat to the remote peer.
 
-#[macro_use]
-extern crate unwrap;
-extern crate tokio_core;
+extern crate chrono;
+extern crate clap;
+extern crate env_logger;
+extern crate future_utils;
 extern crate futures;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+extern crate maidsafe_utilities;
+extern crate rand;
 #[macro_use]
 extern crate rand_derive;
-extern crate rand;
-extern crate void;
-extern crate future_utils;
-extern crate env_logger;
 extern crate rust_sodium;
-extern crate clap;
-extern crate chrono;
-extern crate maidsafe_utilities;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate tokio_core;
+#[macro_use]
+extern crate unwrap;
+extern crate void;
 
 extern crate crust;
 
@@ -64,9 +64,9 @@ mod utils;
 
 use chrono::Local;
 use clap::{App, Arg};
-use crust::{ConfigFile, Listener, MAX_PAYLOAD_SIZE, PaAddr, Peer, PubConnectionInfo, Service};
+use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service, MAX_PAYLOAD_SIZE};
 use crust::config::{DevConfigSettings, PeerInfo};
-use future_utils::{BoxFuture, FutureExt, thread_future};
+use future_utils::{thread_future, BoxFuture, FutureExt};
 use futures::{Async, Future, Sink, Stream};
 use futures::future::Either;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
@@ -77,7 +77,7 @@ use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
-use utils::{PeerId, read_line};
+use utils::{read_line, PeerId};
 use void::Void;
 
 /// Leave some room for our metadata.
@@ -184,7 +184,7 @@ impl Node {
                 println!();
                 out!(
                     "Copy this info and share it with your connecting partner. Then paste \
-                  their info below."
+                     their info below."
                 );
                 read_line().and_then(move |ln| {
                     let their_pub_info: PubConnectionInfo<_> = unwrap!(serde_json::from_str(&ln));
@@ -279,7 +279,7 @@ impl InputHandler {
             println!("  /exit - terminates chat app");
             println!(
                 "  /send $file_path - attempts to send given file to connected peer. File path \
-                     might be relative or absolute."
+                 might be relative or absolute."
             );
             print!("\r> ");
             unwrap!(io::stdout().flush());
@@ -368,9 +368,9 @@ impl Stream for InputHandler {
             Ok(Async::Ready(line)) => {
                 self.read_ln_from_stdin();
                 let msg_to_send = self.handle_input(&line);
-                Ok(msg_to_send.map(|msg| Async::Ready(Some(msg))).unwrap_or(
-                    Async::NotReady,
-                ))
+                Ok(msg_to_send
+                    .map(|msg| Async::Ready(Some(msg)))
+                    .unwrap_or(Async::NotReady))
             }
             Ok(Async::NotReady) => Ok(Async::NotReady),
             Err(e) => Err(e),
@@ -415,7 +415,7 @@ fn parse_cli_args() -> Result<Args, clap::Error> {
     let matches = App::new("Simple chat app built on Crust")
         .about(
             "This chat app connects two machines directly without intermediate servers and allows \
-to exchange messages securely. All the messages are end to end encrypted.",
+             to exchange messages securely. All the messages are end to end encrypted.",
         )
         .arg(
             Arg::with_name("rendezvous-peer")
@@ -448,8 +448,8 @@ to exchange messages securely. All the messages are end to end encrypted.",
                 .long("disable-direct-connections")
                 .help(
                     "By default chat will try to connect to the peer in all possible methods: \
-                      directly or via hole punching. This flag disables direct connections leaving \
-                      only rendezvous connections to try.",
+                     directly or via hole punching. This flag disables direct connections leaving \
+                     only rendezvous connections to try.",
                 )
                 .takes_value(false),
         )
@@ -535,9 +535,11 @@ fn truncate_file(fname: &str) {
 
 /// Since we support cross-platforms, it would be best, if we stick to UTF-8 for filenames.
 fn file_name(path: &str) -> String {
-    unwrap!(Path::new(path).file_name().map(|s| {
-        unwrap!(s.to_str()).to_owned()
-    }))
+    unwrap!(
+        Path::new(path)
+            .file_name()
+            .map(|s| unwrap!(s.to_str()).to_owned())
+    )
 }
 
 /// Reads file in a separate thread, hence doesn't block current thread.

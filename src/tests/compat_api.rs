@@ -256,8 +256,8 @@ fn bootstrap_using_hard_coded_contacts() {
 
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::new(addr0, service0.public_key())];
+    unwrap!(config1.write()).hard_coded_contacts =
+        vec![PeerInfo::new(addr0, service0.public_key())];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 
@@ -366,7 +366,8 @@ fn bootstrap_with_disable_external_reachability() {
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::new(addr0.unspecified_to_localhost(), service0.public_key())];
+        PeerInfo::new(addr0.unspecified_to_localhost(), service0.public_key()),
+    ];
     let uid1: UniqueId = rand::random();
     let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
 

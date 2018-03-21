@@ -35,46 +35,46 @@
 #![allow(box_pointers, missing_copy_implementations, missing_debug_implementations,
          variant_size_differences)]
 
-extern crate maidsafe_utilities;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
+extern crate bincode;
+extern crate bytes;
 extern crate config_file_handler;
-#[macro_use]
-extern crate quick_error;
-#[macro_use]
-extern crate unwrap;
-extern crate tokio_core;
-extern crate tokio_io;
-extern crate futures;
+#[cfg(test)]
+extern crate env_logger;
 extern crate future_utils;
+extern crate futures;
+#[cfg(test)]
+#[macro_use]
+extern crate hamcrest;
+#[macro_use]
+extern crate log;
+extern crate lru_time_cache;
+extern crate maidsafe_utilities;
+#[cfg(test)]
+#[macro_use]
+extern crate maplit;
 extern crate net2;
 #[macro_use]
 extern crate net_literals;
+extern crate notify;
+extern crate p2p;
 #[macro_use]
-extern crate log;
-extern crate void;
-extern crate bytes;
+extern crate quick_error;
 extern crate rand;
 #[cfg(test)]
 #[macro_use]
 extern crate rand_derive;
-#[cfg(test)]
-extern crate env_logger;
-extern crate tiny_keccak;
-extern crate notify;
-#[cfg(test)]
-#[macro_use]
-extern crate hamcrest;
-extern crate p2p;
-#[cfg(test)]
-#[macro_use]
-extern crate maplit;
-extern crate url;
-extern crate tokio_utp;
-extern crate bincode;
 extern crate rust_sodium;
-extern crate lru_time_cache;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate tiny_keccak;
+extern crate tokio_core;
+extern crate tokio_io;
+extern crate tokio_utp;
+#[macro_use]
+extern crate unwrap;
+extern crate url;
+extern crate void;
 
 pub use net::MAX_PAYLOAD_SIZE;
 

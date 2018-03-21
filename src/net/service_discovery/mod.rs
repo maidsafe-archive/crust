@@ -22,13 +22,11 @@ mod discover;
 #[cfg(test)]
 mod test;
 
-pub use self::discover::{Discover, discover};
+pub use self::discover::{discover, Discover};
 pub use self::server::Server;
-
 use config::PeerInfo;
 use future_utils::{self, DropNotify};
 use futures::sync::mpsc::UnboundedReceiver;
-
 use net::service_discovery;
 use priv_prelude::*;
 use service;
@@ -48,9 +46,10 @@ impl ServiceDiscovery {
         addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
         our_pk: PublicKey,
     ) -> io::Result<ServiceDiscovery> {
-        let port = config.read().service_discovery_port.unwrap_or(
-            service::SERVICE_DISCOVERY_DEFAULT_PORT,
-        );
+        let port = config
+            .read()
+            .service_discovery_port
+            .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
 
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let current_addrs = current_addrs

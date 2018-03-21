@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::bootstrap::{BootstrapError, Cache as BootstrapCache,
-                          CacheError as BootstrapCacheError, ConnectHandshakeError, bootstrap};
+pub use self::bootstrap::{bootstrap, BootstrapError, Cache as BootstrapCache,
+                          CacheError as BootstrapCacheError, ConnectHandshakeError};
 pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
 pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo};
 pub use self::demux::Demux;
@@ -310,16 +310,16 @@ fn connect_directly(
             PaStream::direct_connect(evloop_handle, &addr, their_pk, config)
                 .map(move |conn| {
                     bootstrap_cache1.put(&PeerInfo::new(addr, their_pk));
-                    let _ = bootstrap_cache1.commit().map_err(|e| {
-                        error!("Failed to commit bootstrap cache: {}", e)
-                    });
+                    let _ = bootstrap_cache1
+                        .commit()
+                        .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     conn
                 })
                 .map_err(move |e| {
                     bootstrap_cache2.remove(&PeerInfo::new(addr, their_pk));
-                    let _ = bootstrap_cache2.commit().map_err(|e| {
-                        error!("Failed to commit bootstrap cache: {}", e)
-                    });
+                    let _ = bootstrap_cache2
+                        .commit()
+                        .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     e
                 })
         })
@@ -340,14 +340,15 @@ fn handshake_incoming_connections<UID: Uid>(
         .infallible::<SingleConnectionError>()
         .and_then(move |(mut socket, connect_request)| {
             validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
-            socket.use_crypto_ctx(
-                CryptoContext::authenticated(connect_request.their_pk, our_sk.clone())
-            );
+            socket.use_crypto_ctx(CryptoContext::authenticated(
+                connect_request.their_pk,
+                our_sk.clone(),
+            ));
             Ok({
                 socket
-                .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
-                .map_err(SingleConnectionError::Socket)
-                .map(move |socket| (socket, their_id))
+                    .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
+                    .map_err(SingleConnectionError::Socket)
+                    .map(move |socket| (socket, their_id))
             })
         })
         .and_then(|f| f)
@@ -374,9 +375,9 @@ where
         })
         .and_then(move |mut socket| {
             socket.use_crypto_ctx(CryptoContext::authenticated(their_pk, our_sk.clone()));
-            socket.into_future().map_err(|(err, _socket)| {
-                SingleConnectionError::Socket(err)
-            })
+            socket
+                .into_future()
+                .map_err(|(err, _socket)| SingleConnectionError::Socket(err))
         })
         .and_then(move |(msg_opt, socket)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
@@ -462,7 +463,6 @@ pub fn start_rendezvous_connect(
     conn_rx
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -522,9 +522,8 @@ mod tests {
             let fut = connect_p2p(our_conn_info, their_conn_info);
             core.handle().spawn(fut.then(|_| Ok(())));
 
-            let received_conn_info = unwrap!(core.run(info_rx.into_future().and_then(
-                |(info, _stream)| Ok(info),
-            )));
+            let received_conn_info =
+                unwrap!(core.run(info_rx.into_future().and_then(|(info, _stream)| Ok(info),)));
 
             assert_eq!(received_conn_info, Some(Bytes::from(vec![1, 2, 3, 4])));
         }
@@ -547,12 +546,10 @@ mod tests {
 
             let result = core.run(fut);
             let channel_is_dead = match result {
-                Err(e) => {
-                    match e {
-                        SingleConnectionError::DeadChannel => true,
-                        _ => false,
-                    }
-                }
+                Err(e) => match e {
+                    SingleConnectionError::DeadChannel => true,
+                    _ => false,
+                },
                 _ => false,
             };
             assert!(channel_is_dead);

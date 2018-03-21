@@ -112,9 +112,11 @@ impl<UID: Uid> ConnectionMap<UID> {
     /// Returns peer socket address or error, if peer is not found.
     pub fn peer_addr(&self, uid: &UID) -> Result<PaAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
-        inner.map.get(uid).map(|pw| Ok(pw.addr)).unwrap_or(Err(
-            CrustError::PeerNotFound,
-        ))
+        inner
+            .map
+            .get(uid)
+            .map(|pw| Ok(pw.addr))
+            .unwrap_or(Err(CrustError::PeerNotFound))
     }
 
     /// Remove peer from the hashmap by id.

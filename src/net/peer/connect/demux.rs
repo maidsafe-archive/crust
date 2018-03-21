@@ -19,7 +19,6 @@ use super::CONNECTIONS_TIMEOUT;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use lru_time_cache::LruCache;
-
 use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect;
@@ -62,9 +61,9 @@ impl<UID: Uid> Demux<UID> {
     ) -> Demux<UID> {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
-            connection_handler: Mutex::new(LruCache::with_expiry_duration(
-                Duration::from_secs(INCOMING_CONNECTIONS_TIMEOUT),
-            )),
+            connection_handler: Mutex::new(LruCache::with_expiry_duration(Duration::from_secs(
+                INCOMING_CONNECTIONS_TIMEOUT,
+            ))),
             available_connections: Mutex::new(LruCache::with_expiry_duration(
                 Duration::from_secs(INCOMING_CONNECTIONS_TIMEOUT),
             )),

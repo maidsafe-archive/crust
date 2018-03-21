@@ -56,8 +56,7 @@ impl PaAddr {
     /// Returns socket IP address.
     pub fn ip(&self) -> IpAddr {
         match *self {
-            PaAddr::Tcp(ref addr) |
-            PaAddr::Utp(ref addr) => addr.ip(),
+            PaAddr::Tcp(ref addr) | PaAddr::Utp(ref addr) => addr.ip(),
         }
     }
 
@@ -65,8 +64,7 @@ impl PaAddr {
     #[cfg(test)]
     pub fn inner(&self) -> SocketAddr {
         match *self {
-            PaAddr::Tcp(ref addr) |
-            PaAddr::Utp(ref addr) => *addr,
+            PaAddr::Tcp(ref addr) | PaAddr::Utp(ref addr) => *addr,
         }
     }
 
@@ -74,22 +72,14 @@ impl PaAddr {
     /// Otherwise a list with only current address is returned.
     pub fn expand_local_unspecified(&self) -> io::Result<Vec<PaAddr>> {
         match *self {
-            PaAddr::Tcp(ref addr) => {
-                Ok(
-                    addr.expand_local_unspecified()?
-                        .into_iter()
-                        .map(PaAddr::Tcp)
-                        .collect(),
-                )
-            }
-            PaAddr::Utp(ref addr) => {
-                Ok(
-                    addr.expand_local_unspecified()?
-                        .into_iter()
-                        .map(PaAddr::Utp)
-                        .collect(),
-                )
-            }
+            PaAddr::Tcp(ref addr) => Ok(addr.expand_local_unspecified()?
+                .into_iter()
+                .map(PaAddr::Tcp)
+                .collect()),
+            PaAddr::Utp(ref addr) => Ok(addr.expand_local_unspecified()?
+                .into_iter()
+                .map(PaAddr::Utp)
+                .collect()),
         }
     }
 
@@ -221,12 +211,10 @@ impl FromStr for PaAddr {
 fn addr_from_url(url: &Url) -> Result<SocketAddr, ParseError> {
     let ip = match url.host_str() {
         None => return Err(ParseError::MalformedUrl(url::ParseError::EmptyHost)),
-        Some(host) => {
-            match IpAddr::from_str(host) {
-                Err(e) => return Err(ParseError::MalformedHost(e)),
-                Ok(addr) => addr,
-            }
-        }
+        Some(host) => match IpAddr::from_str(host) {
+            Err(e) => return Err(ParseError::MalformedHost(e)),
+            Ok(addr) => addr,
+        },
     };
     let port = match url.port() {
         Some(port) => port,

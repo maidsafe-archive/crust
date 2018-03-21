@@ -16,13 +16,11 @@
 // relating to use of the SAFE Network Software.
 
 use compat::{ConnectionInfoResult, ConnectionMap, Event};
-use compat::{CrustEventSender, EventLoop, event_loop};
+use compat::{event_loop, CrustEventSender, EventLoop};
 use error::CrustError;
 use future_utils::{self, DropNotify};
 use log::LogLevel;
-
-use net::{ServiceDiscovery, service_discovery};
-
+use net::{service_discovery, ServiceDiscovery};
 use priv_prelude::*;
 #[cfg(test)]
 use rust_sodium::crypto::box_::PublicKey;
@@ -92,18 +90,17 @@ impl<UID: Uid> Service<UID> {
 
     /// Enables service discovery during bootstrapping.
     pub fn start_service_discovery(&self) {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 state.service_discovery_enabled = true;
-            },
-        ));
+            }));
     }
 
     /// Depending on given argument either starts *Crust* peer discovery on LAN (via UDP broadcast)
     /// or stops it.
     pub fn set_service_discovery_listen(&self, listen: bool) {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 if !listen {
                     let _ = state.service_discovery.take();
                     return;
@@ -117,14 +114,13 @@ impl<UID: Uid> Service<UID> {
                     }
                 };
                 state.service_discovery = Some(sd);
-            },
-        ));
+            }));
     }
 
     /// Depending on given argument either starts *Crust* bootstrap acceptor or stops it.
     pub fn set_accept_bootstrap(&self, accept: bool) -> Result<(), CrustError> {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 if accept {
                     if state.bootstrap_acceptor.is_none() {
                         let handle0 = state.service.handle().clone();
@@ -152,10 +148,8 @@ impl<UID: Uid> Service<UID> {
                                         }
                                     };
                                     if cm.insert_peer(&handle1, peer, their_addr) {
-                                        let _ = event_tx.send(Event::BootstrapAccept(
-                                            their_uid,
-                                            their_kind,
-                                        ));
+                                        let _ = event_tx
+                                            .send(Event::BootstrapAccept(their_uid, their_kind));
                                     }
                                     Ok(())
                                 })
@@ -165,8 +159,7 @@ impl<UID: Uid> Service<UID> {
                 } else {
                     let _ = state.bootstrap_acceptor.take();
                 }
-            },
-        ));
+            }));
         Ok(())
     }
 
@@ -175,11 +168,10 @@ impl<UID: Uid> Service<UID> {
     pub fn get_peer_socket_addr(&self, peer_uid: &UID) -> Result<PaAddr, CrustError> {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.cm.peer_addr(&peer_uid)));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
@@ -193,23 +185,24 @@ impl<UID: Uid> Service<UID> {
     pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let config = state.service.config();
                 let res = {
                     state
                         .cm
                         .peer_addr(&peer_uid)
                         .map(|peer_addr| {
-                            config.read().hard_coded_contacts.iter().any(|peer| {
-                                peer.addr.ip() == peer_addr.ip()
-                            })
+                            config
+                                .read()
+                                .hard_coded_contacts
+                                .iter()
+                                .any(|peer| peer.addr.ip() == peer_addr.ip())
                         })
                         .unwrap_or(false)
                 };
                 unwrap!(tx.send(res));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
@@ -220,8 +213,8 @@ impl<UID: Uid> Service<UID> {
         blacklist: HashSet<PaAddr>,
         crust_user: CrustUser,
     ) -> Result<(), CrustError> {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
                 let use_service_discovery = state.service_discovery_enabled;
                 state.bootstrap_connect = Some(drop_tx);
@@ -258,26 +251,24 @@ impl<UID: Uid> Service<UID> {
                         .map(|_| ())
                 };
                 state.service.handle().spawn(f);
-            },
-        ));
+            }));
         Ok(())
     }
 
     /// Cancels the bootstrap process.
     pub fn stop_bootstrap(&self) -> Result<(), CrustError> {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let _ = state.bootstrap_connect.take();
-            },
-        ));
+            }));
         Ok(())
     }
 
     /// Asynchronously starts listening for incoming connections.
     /// Returns immediately.
     pub fn start_listening(&self) -> Result<(), CrustError> {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 if state.listeners.is_some() {
                     return;
                 }
@@ -293,8 +284,7 @@ impl<UID: Uid> Service<UID> {
                         .map(move |listener| {
                             let addr = listener.addr();
                             let _ = event_tx.send(Event::ListenerStarted(addr));
-                            future::empty::<(), ()>()
-                                .map(move |()| drop(listener))
+                            future::empty::<(), ()>().map(move |()| drop(listener))
                         })
                         .buffer_unordered(256)
                         .for_each(|()| Ok(()))
@@ -302,39 +292,37 @@ impl<UID: Uid> Service<UID> {
                         .map(|_unit_opt| ())
                 };
                 state.service.handle().spawn(f)
-            },
-        ));
+            }));
         Ok(())
     }
 
     /// Stops direct connection listener.
     pub fn stop_listening(&self) -> Result<(), CrustError> {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let _ = state.listeners.take();
-            },
-        ));
+            }));
         Ok(())
     }
 
     /// Fires event to start connection info preparation.
     /// Another event will be fired to `event_tx` to notify that info is ready.
     pub fn prepare_connection_info(&self, result_token: u32) {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let event_tx = state.event_tx.clone();
                 let f = {
                     state.service.prepare_connection_info().then(move |result| {
-                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                            result_token,
-                            result,
-                        }));
+                        let _ =
+                            event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                result_token,
+                                result,
+                            }));
                         Ok(())
                     })
                 };
                 state.service.handle().spawn(f);
-            },
-        ));
+            }));
     }
 
     /// Connect to a peer. To call this method you must follow these steps:
@@ -348,8 +336,8 @@ impl<UID: Uid> Service<UID> {
         our_ci: PrivConnectionInfo<UID>,
         their_ci: PubConnectionInfo<UID>,
     ) -> Result<(), CrustError> {
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let uid = their_ci.id;
                 let cm = state.cm.clone();
                 let event_tx = state.event_tx.clone();
@@ -380,8 +368,7 @@ impl<UID: Uid> Service<UID> {
                         })
                 };
                 state.service.handle().spawn(f);
-            },
-        ));
+            }));
         Ok(())
     }
 
@@ -389,11 +376,10 @@ impl<UID: Uid> Service<UID> {
     pub fn disconnect(&self, peer_uid: &UID) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.cm.remove(&peer_uid)));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
@@ -401,11 +387,10 @@ impl<UID: Uid> Service<UID> {
     pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.cm.send(&peer_uid, msg, priority)));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
@@ -413,35 +398,34 @@ impl<UID: Uid> Service<UID> {
     pub fn is_connected(&self, peer_uid: &UID) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.cm.contains_peer(&peer_uid)));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
     /// Returns our ID.
     pub fn id(&self) -> UID {
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.service.id()));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
     /// Checks if there are other crust on our LAN.
     pub fn has_peers_on_lan(&self) -> bool {
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 let handle = state.service.handle();
                 let config = state.service.config();
-                let sd_port = config.read().service_discovery_port.unwrap_or(
-                    ::service::SERVICE_DISCOVERY_DEFAULT_PORT,
-                );
+                let sd_port = config
+                    .read()
+                    .service_discovery_port
+                    .unwrap_or(::service::SERVICE_DISCOVERY_DEFAULT_PORT);
                 let our_pk = state.service.public_key();
                 let our_sk = state.service.private_key();
                 let f = {
@@ -460,8 +444,7 @@ impl<UID: Uid> Service<UID> {
                         })
                 };
                 handle.spawn(f);
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 
@@ -469,11 +452,10 @@ impl<UID: Uid> Service<UID> {
     #[cfg(test)]
     pub fn public_key(&self) -> PublicKey {
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop.send(Box::new(
-            move |state: &mut ServiceState<UID>| {
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState<UID>| {
                 unwrap!(tx.send(state.service.public_key()));
-            },
-        ));
+            }));
         unwrap!(rx.recv())
     }
 }

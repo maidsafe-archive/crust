@@ -27,21 +27,21 @@
 //! To modify example behavior edit *sample.config* file. It's a Crust config that `exchange_data`
 //! expects to be located next to executable.
 
-#[macro_use]
-extern crate unwrap;
-extern crate tokio_core;
+extern crate clap;
+extern crate env_logger;
+extern crate future_utils;
 extern crate futures;
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
 extern crate rand;
 #[macro_use]
 extern crate rand_derive;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate tokio_core;
+#[macro_use]
+extern crate unwrap;
 extern crate void;
-extern crate future_utils;
-extern crate env_logger;
-extern crate clap;
 
 extern crate crust;
 
@@ -50,20 +50,20 @@ mod utils;
 use clap::App;
 use crust::{ConfigFile, PubConnectionInfo, Service};
 use future_utils::FutureExt;
-use futures::future::{Future, empty};
+use futures::future::{empty, Future};
 use futures::sink::Sink;
 use futures::stream::Stream;
 use tokio_core::reactor::Core;
-use utils::{PeerId, read_line};
+use utils::{read_line, PeerId};
 
 fn main() {
     unwrap!(env_logger::init());
     let _ = App::new("Crust data exchange example")
         .about(
             "Attempts to connect to remote peer given its connection information and exchange \
-            messages. Start two instances of this example. Each instance generates and prints its \
-            connection information to stdout in JSON format. You have to manually copy/paste this \
-            info from one instance to the other and hit ENTER to start connection.",
+             messages. Start two instances of this example. Each instance generates and prints its \
+             connection information to stdout in JSON format. You have to manually copy/paste this \
+             info from one instance to the other and hit ENTER to start connection.",
         )
         .get_matches();
 
@@ -78,9 +78,7 @@ fn main() {
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let service = unwrap!(event_loop.run(
-        Service::with_config(&handle, config, service_id),
-    ));
+    let service = unwrap!(event_loop.run(Service::with_config(&handle, config, service_id),));
     let listeners = unwrap!(event_loop.run(service.start_listening().collect()));
     for listener in &listeners {
         println!("Listening on {}", listener.addr());
@@ -97,11 +95,9 @@ fn main() {
     // does the p2p connection
     let connect = read_line().infallible().and_then(move |ln| {
         let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
-        service.connect(our_conn_info, their_info).map(
-            move |peer| {
-                (peer, service)
-            },
-        )
+        service
+            .connect(our_conn_info, their_info)
+            .map(move |peer| (peer, service))
     });
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
@@ -130,14 +126,16 @@ fn main() {
     let bye_msg = format!("Goodbye from peer '{}'!", service_id).into_bytes();
 
     // let's send multiple messages to connected peer
-    unwrap!(event_loop.run(
-        peer_sink
+    unwrap!(
+        event_loop.run(
+            peer_sink
         .send((msg_priority, hello_msg)) // send first message
         .and_then(|peer_sink| { // when it's done, send the second
             // sink.send() on completion returns sink which implements Future trait
             peer_sink.send((msg_priority, bye_msg))
         }),
-    ));
+        )
+    );
 
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());

@@ -35,19 +35,19 @@
 //! ```
 //! That's it, it means we successfully did a peer-to-peer connection.
 
-#[macro_use]
-extern crate unwrap;
-extern crate tokio_core;
-extern crate futures;
+extern crate clap;
 extern crate future_utils;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+extern crate futures;
+extern crate rand;
 #[macro_use]
 extern crate rand_derive;
-extern crate rand;
-extern crate clap;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate tokio_core;
+#[macro_use]
+extern crate unwrap;
 extern crate void;
 
 extern crate crust;
@@ -58,19 +58,18 @@ use clap::App;
 use crust::{ConfigFile, PubConnectionInfo, Service};
 use future_utils::FutureExt;
 use futures::Stream;
-use futures::future::{Future, empty};
+use futures::future::{empty, Future};
 use rand::Rng;
 use tokio_core::reactor::Core;
-use utils::{PeerId, read_line};
-
+use utils::{read_line, PeerId};
 
 fn main() {
     let _ = App::new("Crust basic connection example")
         .about(
             "Attempts to connect to remote peer given its connection information. \
-            Start two instances of this example. Each instance generates and prints its \
-            connection information to stdout in JSON format. You have to manually copy/paste \
-            this info from one instance to the other and hit ENTER to start connection.",
+             Start two instances of this example. Each instance generates and prints its \
+             connection information to stdout in JSON format. You have to manually copy/paste \
+             this info from one instance to the other and hit ENTER to start connection.",
         )
         .get_matches();
 
@@ -84,14 +83,12 @@ fn main() {
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
     let make_service = Service::with_config(&event_loop.handle(), config, service_id);
-    let service =
-        unwrap!(
+    let service = unwrap!(
         event_loop.run(make_service),
         "Failed to create Service object",
     );
 
-    let listeners =
-        unwrap!(
+    let listeners = unwrap!(
         event_loop.run(service.start_listening().collect()),
         "Failed to start listening to peers",
     );
@@ -99,8 +96,7 @@ fn main() {
         println!("Listening on {}", listener.addr());
     }
 
-    let our_conn_info =
-        unwrap!(
+    let our_conn_info = unwrap!(
         event_loop.run(service.prepare_connection_info()),
         "Failed to prepare connection info",
     );
@@ -113,11 +109,9 @@ fn main() {
     println!("Enter remote peer public connection info:");
     let connect = read_line().infallible().and_then(move |ln| {
         let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
-        service.connect(our_conn_info, their_info).map(
-            move |peer| {
-                (peer, service)
-            },
-        )
+        service
+            .connect(our_conn_info, their_info)
+            .map(move |peer| (peer, service))
     });
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
