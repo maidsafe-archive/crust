@@ -25,6 +25,9 @@ use tokio_io;
 
 /// The maximum size of packets sent by `Socket` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+
+/// Message priority. Messages with lower number (higher priority) will be sent first.
+/// Priority `0` is reserved for internal messages. Use `priority = 1` and upwards.
 pub type Priority = u8;
 
 /// Minimum priority for droppable messages. Messages with lower values will never be dropped.
