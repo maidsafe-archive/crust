@@ -141,7 +141,8 @@ where
         }
 
         if state.borrow().stun_children.is_empty() && state.borrow().igd_children == 0 {
-            return Ok(state.borrow_mut().terminate(core, poll));
+            state.borrow_mut().terminate(core, poll);
+            return Ok(());
         }
 
         let _ = core.insert_state(token, state);

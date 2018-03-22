@@ -426,9 +426,11 @@ impl<UID: Uid> Service<UID> {
         let cm = self.cm.clone();
         let our_nh = self.name_hash;
 
-        Ok(self.post(move |core, poll| {
+        self.post(move |core, poll| {
             let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
-        })?)
+        })?;
+
+        Ok(())
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
@@ -547,7 +549,8 @@ impl<UID: Uid> Service<UID> {
     where
         F: FnOnce(&mut Core, &Poll) + Send + 'static,
     {
-        Ok(self.el.send(CoreMessage::new(f))?)
+        self.el.send(CoreMessage::new(f))?;
+        Ok(())
     }
 }
 

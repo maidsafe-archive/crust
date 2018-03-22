@@ -39,8 +39,8 @@
 
 // FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
 // on code in the master branch
-#![cfg_attr(feature="cargo-clippy", allow(too_many_arguments, clone_on_ref_ptr,
-                                          needless_pass_by_value))]
+#![cfg_attr(feature="cargo-clippy", allow(clone_on_ref_ptr, decimal_literal_representation,
+                                          needless_pass_by_value, too_many_arguments))]
 // TODO FIXME Remove this soon
 #![allow(deprecated)]
 
