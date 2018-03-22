@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use crust::Uid;
-use future_utils::{BoxFuture, FutureExt, thread_future};
+use future_utils::{thread_future, BoxFuture, FutureExt};
 use std::{fmt, io};
 use void::Void;
 

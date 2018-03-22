@@ -21,10 +21,9 @@ use config_file_handler::{self, FileHandler};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use maidsafe_utilities::thread;
 use notify::{self, Watcher};
-
 use priv_prelude::*;
 use rand;
-use rust_sodium::crypto::box_::{PublicKey, gen_keypair};
+use rust_sodium::crypto::box_::{gen_keypair, PublicKey};
 use std;
 use std::env;
 use std::ops::{Deref, DerefMut};
@@ -46,10 +45,7 @@ impl ConfigFile {
         let mut watcher = notify::watcher(tx, Duration::from_secs(1))?;
 
         let (config_wrapper, real_path) = ConfigWrapper::open(file_name)?;
-        watcher.watch(
-            &real_path,
-            notify::RecursiveMode::NonRecursive,
-        )?;
+        watcher.watch(&real_path, notify::RecursiveMode::NonRecursive)?;
 
         let inner = Arc::new(RwLock::new(config_wrapper));
         let weak = Arc::downgrade(&inner);
@@ -101,7 +97,9 @@ impl ConfigFile {
 
     /// Lock the config for reading.
     pub fn read(&self) -> ConfigReadGuard {
-        ConfigReadGuard { guard: unwrap!(self.inner.read()) }
+        ConfigReadGuard {
+            guard: unwrap!(self.inner.read()),
+        }
     }
 
     /// Lock the config for writing. Any changes made to the config will be synced to disc when the
@@ -190,7 +188,13 @@ impl ConfigFile {
         let addrs = &self.read().listen_addresses;
         addrs
             .iter()
-            .filter(|addr| if disable_tcp { !addr.is_tcp() } else { true })
+            .filter(|addr| {
+                if disable_tcp {
+                    !addr.is_tcp()
+                } else {
+                    true
+                }
+            })
             .cloned()
             .collect()
     }
@@ -246,8 +250,7 @@ impl<'c> Drop for ConfigWriteGuard<'c> {
             Err(e) => {
                 error!(
                     "Unable to write config file {:?}: {}",
-                    self.guard.file_name,
-                    e
+                    self.guard.file_name, e
                 );
             }
         };
@@ -282,9 +285,8 @@ impl ConfigWrapper {
         let modified = self.cfg != new_config;
         if modified {
             self.cfg = new_config;
-            self.observers.retain(
-                |observer| observer.unbounded_send(()).is_ok(),
-            );
+            self.observers
+                .retain(|observer| observer.unbounded_send(()).is_ok());
         }
         Ok(())
     }

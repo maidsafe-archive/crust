@@ -19,7 +19,6 @@ use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use net::protocol_agnostic::AcceptError;
 use p2p::P2p;
-
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -86,9 +85,8 @@ impl ObservableAddresses {
     {
         let mut current = mem::replace(&mut self.current, HashSet::new());
         modifier(&mut current);
-        self.observers.retain(|observer| {
-            observer.unbounded_send(current.clone()).is_ok()
-        });
+        self.observers
+            .retain(|observer| observer.unbounded_send(current.clone()).is_ok());
         self.current = current;
     }
 
@@ -504,84 +502,77 @@ mod test {
 
         let future = {
             acceptor
-            .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
-            .map_err(|e| panic!(e))
-            .and_then(move |listener0| {
-                let addr0 = listener0.addr();
-                let addrs0 = {
-                    unwrap!(addr0.expand_local_unspecified())
-                    .into_iter()
-                    .collect::<HashSet<_>>()
-                };
-                let (addrs, addrs_rx) = acceptor.addresses();
-                assert!(addrs0.is_subset(&addrs));
-
-                acceptor
                 .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
-                .map(move |listener1| {
-                    let addr1 = listener1.addr();
-                    let addrs1 = {
-                        unwrap!(addr1.expand_local_unspecified())
-                        .into_iter()
-                        .collect::<HashSet<_>>()
+                .and_then(move |listener0| {
+                    let addr0 = listener0.addr();
+                    let addrs0 = {
+                        unwrap!(addr0.expand_local_unspecified())
+                            .into_iter()
+                            .collect::<HashSet<_>>()
                     };
-                    drop(listener0);
-                    (addrs_rx, acceptor, listener1, addrs0, addrs1)
+                    let (addrs, addrs_rx) = acceptor.addresses();
+                    assert!(addrs0.is_subset(&addrs));
+
+                    acceptor
+                        .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                        .map_err(|e| panic!(e))
+                        .map(move |listener1| {
+                            let addr1 = listener1.addr();
+                            let addrs1 = {
+                                unwrap!(addr1.expand_local_unspecified())
+                                    .into_iter()
+                                    .collect::<HashSet<_>>()
+                            };
+                            drop(listener0);
+                            (addrs_rx, acceptor, listener1, addrs0, addrs1)
+                        })
                 })
-            })
-            .and_then(|(addrs_rx, acceptor, listener1, addrs0, addrs1)| {
-                drop(listener1);
+                .and_then(|(addrs_rx, acceptor, listener1, addrs0, addrs1)| {
+                    drop(listener1);
 
-                let addrs0_c0 = addrs0.clone();
-                let addrs0_c1 = addrs0.clone();
-                let addrs0_c2 = addrs0.clone();
-                let addrs1_c0 = addrs1.clone();
-                let addrs1_c1 = addrs1.clone();
-                let addrs1_c2 = addrs1.clone();
-
-                addrs_rx
-                .into_future()
-                .and_then(move |(addrs_opt, addrs_rx)| {
-                    let addrs = unwrap!(addrs_opt);
-                    assert!(addrs0_c0.is_subset(&addrs));
-                    assert!(addrs1_c0.is_subset(&addrs));
-
-                    addrs_rx
-                    .into_future()
-                })
-                .and_then(move |(addrs_opt, addrs_rx)| {
-                    let addrs = unwrap!(addrs_opt);
-                    assert!(!addrs0_c1.is_subset(&addrs));
-                    assert!(addrs1_c1.is_subset(&addrs));
+                    let addrs0_c0 = addrs0.clone();
+                    let addrs0_c1 = addrs0.clone();
+                    let addrs0_c2 = addrs0.clone();
+                    let addrs1_c0 = addrs1.clone();
+                    let addrs1_c1 = addrs1.clone();
+                    let addrs1_c2 = addrs1.clone();
 
                     addrs_rx
-                    .into_future()
-                })
-                .and_then(move |(addrs_opt, addrs_rx)| {
-                    let addrs = unwrap!(addrs_opt);
-                    assert!(!addrs0_c2.is_subset(&addrs));
-                    assert!(!addrs1_c2.is_subset(&addrs));
-                    drop(acceptor);
+                        .into_future()
+                        .and_then(move |(addrs_opt, addrs_rx)| {
+                            let addrs = unwrap!(addrs_opt);
+                            assert!(addrs0_c0.is_subset(&addrs));
+                            assert!(addrs1_c0.is_subset(&addrs));
 
-                    addrs_rx
-                    .into_future()
+                            addrs_rx.into_future()
+                        })
+                        .and_then(move |(addrs_opt, addrs_rx)| {
+                            let addrs = unwrap!(addrs_opt);
+                            assert!(!addrs0_c1.is_subset(&addrs));
+                            assert!(addrs1_c1.is_subset(&addrs));
+
+                            addrs_rx.into_future()
+                        })
+                        .and_then(move |(addrs_opt, addrs_rx)| {
+                            let addrs = unwrap!(addrs_opt);
+                            assert!(!addrs0_c2.is_subset(&addrs));
+                            assert!(!addrs1_c2.is_subset(&addrs));
+                            drop(acceptor);
+
+                            addrs_rx.into_future()
+                        })
+                        .map(|(addrs_opt, _addrs_rx)| assert_eq!(addrs_opt, None))
+                        .map_err(|_e| unreachable!())
                 })
-                .map(|(addrs_opt, _addrs_rx)| {
-                    assert_eq!(addrs_opt, None)
+                .join({
+                    socket_incoming
+                        .map_err(|e| panic!("incoming error: {}", e))
+                        .for_each(|_socket| -> io::Result<()> {
+                            panic!("unexpected connection");
+                        })
                 })
-                .map_err(|_e| {
-                    unreachable!()
-                })
-            })
-            .join({
-                socket_incoming
-                .map_err(|e| panic!("incoming error: {}", e))
-                .for_each(|_socket| -> io::Result<()> {
-                    panic!("unexpected connection");
-                })
-            })
-            .map(|((), ())| ())
+                .map(|((), ())| ())
         };
         let res = core.run(future);
         unwrap!(res)
@@ -649,9 +640,9 @@ mod test {
                     let f = {
                         let handle = handle.clone();
                         future::join_all(connectors)
-                    .and_then(move |_| Timeout::new(Duration::from_secs(1), &handle))
-                    .map_err(|e| panic!(e))
-                    .map(|()| drop(acceptor))
+                            .and_then(move |_| Timeout::new(Duration::from_secs(1), &handle))
+                            .map_err(|e| panic!(e))
+                            .map(|()| drop(acceptor))
                     };
 
                     handle.spawn(f);

@@ -135,14 +135,9 @@ pub fn bootstrap_connect_handshake<UID: Uid>(
                 .into_future()
                 .map_err(|(e, _)| ConnectHandshakeError::from(e))
                 .and_then(move |(msg_opt, socket)| match msg_opt {
-                    Some(HandshakeMessage::BootstrapGranted(peer_uid)) => {
-                        Ok(peer::from_handshaken_socket(
-                            &handle0,
-                            socket,
-                            peer_uid,
-                            CrustUser::Node,
-                        ))
-                    }
+                    Some(HandshakeMessage::BootstrapGranted(peer_uid)) => Ok(
+                        peer::from_handshaken_socket(&handle0, socket, peer_uid, CrustUser::Node),
+                    ),
                     Some(HandshakeMessage::BootstrapDenied(reason)) => {
                         Err(ConnectHandshakeError::BootstrapDenied(reason))
                     }

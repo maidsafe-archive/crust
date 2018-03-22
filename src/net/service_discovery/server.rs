@@ -15,13 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
 use future_utils::FutureExt;
 use futures::{Async, Future, Sink, Stream};
 use futures::sink;
 use futures::stream::StreamFuture;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-
 use maidsafe_utilities::serialisation::SerialisationError;
 use net::service_discovery::msg::DiscoveryMsg;
 use priv_prelude::*;
@@ -56,8 +54,12 @@ where
 #[allow(unknown_lints)]
 #[allow(large_enum_variant)]
 enum ServerTaskState {
-    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
-    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
+    Reading {
+        reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
+    },
+    Writing {
+        writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
+    },
     Invalid,
 }
 
@@ -73,7 +75,9 @@ where
 
         let (data_tx, data_rx) = mpsc::unbounded();
 
-        let state = ServerTaskState::Reading { reading: framed.into_future() };
+        let state = ServerTaskState::Reading {
+            reading: framed.into_future(),
+        };
         let server_task = ServerTask {
             data_rx,
             data,
@@ -127,7 +131,9 @@ where
             }
             None => unreachable!(),
         }
-        ServerTaskState::Reading { reading: framed.into_future() }
+        ServerTaskState::Reading {
+            reading: framed.into_future(),
+        }
     }
 }
 
@@ -163,7 +169,9 @@ where
                 }
                 ServerTaskState::Writing { mut writing } => {
                     if let Async::Ready(framed) = unwrap!(writing.poll()) {
-                        state = ServerTaskState::Reading { reading: framed.into_future() };
+                        state = ServerTaskState::Reading {
+                            reading: framed.into_future(),
+                        };
                         continue;
                     } else {
                         state = ServerTaskState::Writing { writing };
@@ -192,8 +200,7 @@ mod tests {
             let mut evloop = unwrap!(Core::new());
             let handle = evloop.handle();
 
-            let current_addrs =
-                hashset!{
+            let current_addrs = hashset!{
                 tcp_addr!("1.2.3.4:4000"),
                 tcp_addr!("1.2.3.5:5000"),
             };

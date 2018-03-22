@@ -19,7 +19,6 @@
 //! API on top of the new futures API.
 
 pub use self::connection_map::ConnectionMap;
-
 pub use self::event::{ConnectionInfoResult, Event};
 pub use self::event_loop::EventLoop;
 pub use self::service::Service;

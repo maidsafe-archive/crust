@@ -18,7 +18,7 @@
 use config::{DevConfigSettings, PeerInfo};
 use futures::stream;
 use net::peer;
-use p2p::{self, Protocol, query_public_addr};
+use p2p::{self, query_public_addr, Protocol};
 use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
@@ -54,9 +54,12 @@ mod bootstrap {
         let listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
         let service1_addr = listener1.addr().unspecified_to_localhost();
 
-        loop_handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
-            |_| Ok(()),
-        ));
+        loop_handle.spawn(
+            service1
+                .bootstrap_acceptor()
+                .for_each(|_| Ok(()))
+                .then(|_| Ok(())),
+        );
 
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).hard_coded_contacts =
@@ -110,11 +113,8 @@ mod bootstrap {
         let config = unwrap!(ConfigFile::new_temporary());
         unwrap!(config.write()).service_discovery_port = Some(service_discovery.port());
         let mut service2 = service_with_config(&mut evloop, config);
-        let peer = unwrap!(evloop.run(service2.bootstrap(
-            HashSet::new(),
-            true,
-            CrustUser::Client,
-        )));
+        let peer =
+            unwrap!(evloop.run(service2.bootstrap(HashSet::new(), true, CrustUser::Client,)));
 
         assert_eq!(peer.uid(), service1.id());
     }
@@ -128,18 +128,18 @@ mod bootstrap {
         let listeners = unwrap!(evloop.run(service1.start_listening().collect()));
         let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
 
-        handle.spawn(service1.bootstrap_acceptor().for_each(|_| Ok(())).then(
-            |_| Ok(()),
-        ));
+        handle.spawn(
+            service1
+                .bootstrap_acceptor()
+                .for_each(|_| Ok(()))
+                .then(|_| Ok(())),
+        );
 
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr0, service1.public_key())];
-        let mut service2 = unwrap!(evloop.run(Service::with_config(
-            &handle,
-            config2,
-            util::random_id(),
-        )));
+        let mut service2 =
+            unwrap!(evloop.run(Service::with_config(&handle, config2, util::random_id(),)));
 
         let service_discovery = false;
         let peer = unwrap!(evloop.run(service2.bootstrap(
@@ -178,10 +178,7 @@ mod direct_connections {
 
         let connect = service1
             .connect(service1_priv_conn_info, service2_pub_conn_info)
-            .join(service2.connect(
-                service2_priv_conn_info,
-                service1_pub_conn_info,
-            ));
+            .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
 
         let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
         assert_eq!(service1_peer.uid(), service2.id());
@@ -225,9 +222,9 @@ mod direct_connections {
         let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
         let connect1 = {
             let delay = Timeout::new(Duration::from_secs(2), &handle);
-            delay.infallible().and_then(|()| {
-                service1.connect(service1_priv_conn_info, service2_pub_conn_info)
-            })
+            delay
+                .infallible()
+                .and_then(|()| service1.connect(service1_priv_conn_info, service2_pub_conn_info))
         };
 
         let (service2_peer, service1_peer) = unwrap!(
@@ -235,9 +232,7 @@ mod direct_connections {
                 connect2
                     .join(connect1)
                     .with_timeout(Duration::from_secs(5), &handle)
-                    .map(|res_opt| {
-                        unwrap!(res_opt, "Failed to connect within reasonable time")
-                    }),
+                    .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
             )
         );
         assert_eq!(service1_peer.uid(), service2.id());
@@ -294,10 +289,7 @@ fn p2p_connections_on_localhost() {
 
     let connect = service1
         .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(
-            service2_priv_conn_info,
-            service1_pub_conn_info,
-        ))
+        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info))
         .with_timeout(Duration::from_secs(3), &event_loop.handle())
         .map(|res_opt| unwrap!(res_opt, "p2p connection timed out"));
 
@@ -323,10 +315,7 @@ fn peer_shutdown_closes_remote_peer_too() {
 
     let connect = service1
         .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(
-            service2_priv_conn_info,
-            service1_pub_conn_info,
-        ));
+        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     drop(service1_peer);
@@ -359,10 +348,7 @@ fn exchange_data_between_two_peers() {
 
     let connect = service1
         .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(
-            service2_priv_conn_info,
-            service1_pub_conn_info,
-        ));
+        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     const NUM_MESSAGES: u64 = 100;
@@ -438,10 +424,7 @@ fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
 
     let connect = service1
         .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(
-            service2_priv_conn_info,
-            service1_pub_conn_info,
-        ));
+        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
     let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
 
     let data_len = MAX_PAYLOAD_SIZE + 10;
@@ -472,16 +455,14 @@ fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
         }
         // On other OSes we need to try to receive to get connection reset error.
         Ok((service1_peer_stream, _)) => {
-            let recv_response = tokio_io::io::read_to_end(service1_peer_stream, Vec::new())
-                .map(|_| ());
+            let recv_response =
+                tokio_io::io::read_to_end(service1_peer_stream, Vec::new()).map(|_| ());
             let res = evloop.run(recv_response);
             let connection_closed = match res {
-                Err(e) => {
-                    match e.kind() {
-                        io::ErrorKind::ConnectionReset => true,
-                        _ => false,
-                    }
-                }
+                Err(e) => match e.kind() {
+                    io::ErrorKind::ConnectionReset => true,
+                    _ => false,
+                },
                 _ => false,
             };
             assert!(connection_closed);
@@ -504,12 +485,8 @@ mod encryption {
         let listener_addr = listener.addr().unspecified_to_localhost().inner();
 
         let send_text = TcpStream::connect(&listener_addr, &handle)
-            .and_then(|stream| {
-                tokio_io::io::write_all(stream, b"\x00\x00\x00\x0brandom data")
-            })
-            .and_then(|(stream, _buf)| {
-                tokio_io::io::read_to_end(stream, Vec::new())
-            })
+            .and_then(|stream| tokio_io::io::write_all(stream, b"\x00\x00\x00\x0brandom data"))
+            .and_then(|(stream, _buf)| tokio_io::io::read_to_end(stream, Vec::new()))
             .map(|(_stream, buf)| buf);
         let resp = unwrap!(evloop.run(send_text));
 
@@ -556,10 +533,7 @@ mod encryption {
 
         let connect = service1
             .connect(service1_priv_conn_info, service2_pub_conn_info)
-            .join(service2.connect(
-                service2_priv_conn_info,
-                service1_pub_conn_info,
-            ));
+            .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
 
         let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
         let service2_peer = {
@@ -585,12 +559,10 @@ mod encryption {
         let res = evloop.run(send_text);
 
         let failed_to_decrypt_plaintext = match res {
-            Err(e) => {
-                match e {
-                    PeerError::Decrypt(_) => true,
-                    _ => false,
-                }
-            }
+            Err(e) => match e {
+                PeerError::Decrypt(_) => true,
+                _ => false,
+            },
             _ => false,
         };
         assert!(failed_to_decrypt_plaintext);

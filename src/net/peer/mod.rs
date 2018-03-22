@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::connect::{BootstrapAcceptError, BootstrapAcceptor, BootstrapCache,
-                        BootstrapCacheError, BootstrapError, BootstrapRequest, ConnectError,
-                        ConnectHandshakeError, Demux, ExternalReachability, P2pConnectionInfo,
-                        PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
-                        SingleConnectionError, bootstrap, start_rendezvous_connect};
+pub use self::connect::{bootstrap, start_rendezvous_connect, BootstrapAcceptError,
+                        BootstrapAcceptor, BootstrapCache, BootstrapCacheError, BootstrapError,
+                        BootstrapRequest, ConnectError, ConnectHandshakeError, Demux,
+                        ExternalReachability, P2pConnectionInfo, PrivConnectionInfo,
+                        PubConnectionInfo, RendezvousConnectError, SingleConnectionError};
 pub use self::peer_message::PeerMessage;
 pub use self::uid::Uid;
 use std::fmt;
@@ -176,10 +176,8 @@ impl<UID: Uid> Stream for Peer<UID> {
         let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
         let now = Instant::now();
         while let Async::Ready(..) = self.send_heartbeat_timeout.poll().void_unwrap() {
-            self.send_heartbeat_timeout.reset(
-                self.last_send_time +
-                    heartbeat_period,
-            );
+            self.send_heartbeat_timeout
+                .reset(self.last_send_time + heartbeat_period);
             if now - self.last_send_time >= heartbeat_period {
                 self.last_send_time = now;
                 let _ = self.socket.start_send((0, PeerMessage::Heartbeat));
@@ -222,9 +220,9 @@ impl<UID: Uid> Sink for Peer<UID> {
                 self.last_send_time = Instant::now();
                 Ok(AsyncSink::Ready)
             }
-            AsyncSink::NotReady((priority, PeerMessage::Data(v))) => Ok(AsyncSink::NotReady(
-                (priority, v),
-            )),
+            AsyncSink::NotReady((priority, PeerMessage::Data(v))) => {
+                Ok(AsyncSink::NotReady((priority, v)))
+            }
             AsyncSink::NotReady(..) => unreachable!(),
         }
     }

@@ -15,11 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-
 use futures::{Async, Future, Sink, Stream};
 use futures::sink;
 use futures::stream::StreamFuture;
-
 use maidsafe_utilities::serialisation::SerialisationError;
 use net::service_discovery::msg::DiscoveryMsg;
 use priv_prelude::*;
@@ -41,7 +39,6 @@ pub fn discover<T>(
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
-
     let bind_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
     let socket = UdpSocket::bind(&bind_addr, handle)?;
     socket.set_broadcast(true)?;
@@ -72,8 +69,12 @@ pub struct Discover<T> {
 #[allow(unknown_lints)]
 #[allow(large_enum_variant)]
 enum DiscoverState {
-    Reading { reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
-    Writing { writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>, },
+    Reading {
+        reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
+    },
+    Writing {
+        writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
+    },
     Invalid,
 }
 
@@ -126,7 +127,9 @@ where
                     if let Async::Ready((response, framed)) =
                         unwrap!(reading.poll().map_err(|(e, _)| e))
                     {
-                        state = DiscoverState::Reading { reading: framed.into_future() };
+                        state = DiscoverState::Reading {
+                            reading: framed.into_future(),
+                        };
                         let resp_item = self.handle_response(response);
                         if let Some(item) = resp_item {
                             break Async::Ready(Some(item));
@@ -138,7 +141,9 @@ where
                 }
                 DiscoverState::Writing { mut writing } => {
                     if let Async::Ready(framed) = unwrap!(writing.poll()) {
-                        state = DiscoverState::Reading { reading: framed.into_future() };
+                        state = DiscoverState::Reading {
+                            reading: framed.into_future(),
+                        };
                         continue;
                     } else {
                         state = DiscoverState::Writing { writing };

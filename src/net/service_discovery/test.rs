@@ -19,7 +19,7 @@ use super::*;
 use config::PeerInfo;
 use env_logger;
 use future_utils::StreamExt;
-use futures::{Future, Stream, future, stream};
+use futures::{future, stream, Future, Stream};
 use futures::sync::mpsc;
 use net::service_discovery::server::Server;
 use priv_prelude::*;
@@ -102,8 +102,7 @@ fn service_discovery() {
             .and_then(move |v| {
                 assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
 
-                let some_addrs =
-                    hashset!{
+                let some_addrs = hashset!{
                     tcp_addr!("1.2.3.4:555"),
                     tcp_addr!("5.4.3.2:111"),
                 };
@@ -114,16 +113,23 @@ fn service_discovery() {
                 Timeout::new(Duration::from_millis(100), &handle)
                     .map_err(|e| panic!(e))
                     .map(move |()| {
-                        unwrap!(discover::<HashSet<PeerInfo>>(&handle0, port, our_pk, our_sk))
+                        unwrap!(discover::<HashSet<PeerInfo>>(
+                            &handle0,
+                            port,
+                            our_pk,
+                            our_sk
+                        ))
                     })
                     .flatten_stream()
                     .until({
-                        Timeout::new(Duration::from_millis(200), &handle)
-                        .map_err(|e| panic!(e))
+                        Timeout::new(Duration::from_millis(200), &handle).map_err(|e| panic!(e))
                     })
                     .collect()
                     .map(move |v| {
-                        assert!(v.into_iter().any(|(_, peers)| peer_addrs(&peers) == some_addrs));
+                        assert!(
+                            v.into_iter()
+                                .any(|(_, peers)| peer_addrs(&peers) == some_addrs)
+                        );
                         drop(sd);
                     })
             })
