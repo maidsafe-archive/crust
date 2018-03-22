@@ -76,6 +76,11 @@ extern crate unwrap;
 extern crate url;
 extern crate void;
 
+#[cfg(test)]
+#[cfg(target_os = "linux")]
+#[cfg(feature = "netsim")]
+extern crate netsim;
+
 pub use net::MAX_PAYLOAD_SIZE;
 
 mod error;

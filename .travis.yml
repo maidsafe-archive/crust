@@ -23,7 +23,7 @@ script:
   - if [ "${TRAVIS_RUST_VERSION}" = 1.24.1 ]; then
       (
         set -x;
-        cargo test --release --verbose
+        cargo test --no-default-features --release --verbose
       );
     elif [ "${TRAVIS_OS_NAME}" = linux ]; then
       (
