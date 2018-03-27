@@ -54,13 +54,19 @@ fn event_sender() -> (CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
     )
 }
 
-fn service() -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
+fn service_with_config(
+    config: ConfigFile,
+) -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
     let (event_tx, event_rx) = event_sender();
-    let config = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     let uid: UniqueId = rand::random();
     let service = unwrap!(compat::Service::with_config(event_tx, config, uid));
     (service, event_rx)
+}
+
+fn service() -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
+    service_with_config(config)
 }
 
 fn exchange_messages<UID: Uid>(
@@ -256,6 +262,7 @@ fn bootstrap_using_hard_coded_contacts() {
 
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts =
         vec![PeerInfo::new(addr0, service0.public_key())];
     let uid1: UniqueId = rand::random();
@@ -330,11 +337,10 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     addresses.push(PeerInfo::new(valid_address, service0.public_key()));
 
-    let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts = addresses;
-    let uid1: UniqueId = rand::random();
-    let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
+    let (service1, event_rx1) = service_with_config(config1);
 
     bootstrap_and_exchange(
         &service0,
@@ -363,13 +369,12 @@ fn bootstrap_with_disable_external_reachability() {
 
     unwrap!(service0.set_accept_bootstrap(true));
 
-    let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts = vec![
         PeerInfo::new(addr0.unspecified_to_localhost(), service0.public_key()),
     ];
-    let uid1: UniqueId = rand::random();
-    let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
+    let (service1, event_rx1) = service_with_config(config1);
 
     bootstrap_and_exchange(
         &service0,
@@ -399,14 +404,13 @@ fn bootstrap_with_blacklist() {
     let blacklisted_addr = PaAddr::Tcp(blacklisted_addr).unspecified_to_localhost();
     unwrap!(blacklisted_listener.set_nonblocking(true));
 
-    let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts = vec![
         PeerInfo::new(valid_addr, service0.public_key()),
         PeerInfo::with_rand_key(blacklisted_addr),
     ];
-    let uid1: UniqueId = rand::random();
-    let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
+    let (service1, event_rx1) = service_with_config(config1);
 
     let uid0 = service0.id();
     let uid1 = service1.id();
@@ -450,11 +454,10 @@ fn bootstrap_fails_only_blacklisted_contacts() {
 
     unwrap!(service0.set_accept_bootstrap(true));
 
-    let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(blacklisted_addr)];
-    let uid1: UniqueId = rand::random();
-    let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
+    let (service1, event_rx1) = service_with_config(config1);
 
     unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
 
@@ -476,11 +479,10 @@ fn bootstrap_fails_if_there_are_only_invalid_contacts() {
     let dead_addr = unwrap!(dead_listener.local_addr());
     let dead_addr = PaAddr::Tcp(dead_addr).unspecified_to_localhost();
 
-    let (event_tx0, event_rx0) = event_sender();
     let config0 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config0.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config0.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(dead_addr)];
-    let uid0: UniqueId = rand::random();
-    let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, uid0));
+    let (service0, event_rx0) = service_with_config(config0);
 
     unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
     expect_event!(event_rx0, Event::BootstrapFailed);

@@ -76,13 +76,7 @@ impl<UID: Uid> Service<UID> {
         let (our_pk, our_sk) = gen_keypair();
         let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
 
-        let bootstrap_cache_name = config.read().bootstrap_cache_name.clone();
-        let bootstrap_cache = try_bfut!(
-            BootstrapCache::new(bootstrap_cache_name.as_ref().map(|s| s.as_os_str()),)
-                .map_err(CrustError::ReadBootstrapCache)
-        );
-        bootstrap_cache.read_file();
-
+        let bootstrap_cache = try_bfut!(make_bootstrap_cache(&config));
         let (listeners, socket_incoming) = Acceptor::new(
             &handle,
             p2p.clone(),
@@ -316,6 +310,14 @@ fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
             PaAddr::Utp(addr) => p2p.remove_udp_traversal_server(addr),
         }
     }
+}
+
+fn make_bootstrap_cache(config: &ConfigFile) -> Result<BootstrapCache, CrustError> {
+    let bootstrap_cache_name = config.read().bootstrap_cache_name.clone();
+    let cache_file = bootstrap_cache_name.as_ref().map(|s| s.as_os_str());
+    let bootstrap_cache = BootstrapCache::new(cache_file).map_err(CrustError::ReadBootstrapCache)?;
+    bootstrap_cache.read_file();
+    Ok(bootstrap_cache)
 }
 
 #[cfg(test)]

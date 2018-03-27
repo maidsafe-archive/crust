@@ -62,6 +62,7 @@ mod bootstrap {
         );
 
         let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr, service1.public_key())];
         let mut service2 = unwrap!(event_loop.run(Service::with_config(
@@ -112,6 +113,7 @@ mod bootstrap {
 
         let config = unwrap!(ConfigFile::new_temporary());
         unwrap!(config.write()).service_discovery_port = Some(service_discovery.port());
+        unwrap!(config.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         let mut service2 = service_with_config(&mut evloop, config);
         let peer =
             unwrap!(evloop.run(service2.bootstrap(HashSet::new(), true, CrustUser::Client,)));
@@ -136,6 +138,7 @@ mod bootstrap {
         );
 
         let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr0, service1.public_key())];
         let mut service2 =
