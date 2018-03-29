@@ -23,13 +23,15 @@ use net::listener::SocketIncoming;
 use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
-use net::protocol_agnostic::AcceptError;
 use priv_prelude::*;
 use rust_sodium::crypto::box_::SecretKey;
 use std::sync::{Arc, Mutex};
 
 /// Don't keep incoming connections much longer than the attempted connection timeout.
 const INCOMING_CONNECTIONS_TIMEOUT: u64 = CONNECTIONS_TIMEOUT + 10;
+
+/// How many incoming connections do we allow to buffer in our queues.
+const MAX_INCOMING_CONNECTIONS_BACKLOG: usize = 128;
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
@@ -133,11 +135,6 @@ impl<UID: Uid> Demux<UID> {
 quick_error! {
     #[derive(Debug)]
     pub enum IncomingError {
-        Io(e: AcceptError) {
-            description("error accepting incoming connection")
-            display("error accepting incoming connection: {}", e)
-            cause(e)
-        }
         TimedOut {
             description("timed out waiting for the peer to send their request")
         }
@@ -164,14 +161,15 @@ fn handle_incoming_connections<UID: Uid>(
     let inner = Arc::clone(inner);
     let handle = handle.clone();
     incoming
-        .map_err(IncomingError::Io)
-        .for_each(move |(stream, addr)| {
+        .log_errors(LogLevel::Error, "SocketIncoming errored!")
+        .map(move |(stream, addr)| {
             let socket: Socket<HandshakeMessage<UID>> =
                 Socket::wrap_pa(&handle, stream, addr, crypto_ctx.clone());
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, socket)
         })
-        .log_error(LogLevel::Error, "Failed to accept incoming connections!")
+        .buffer_unordered(MAX_INCOMING_CONNECTIONS_BACKLOG)
+        .for_each(|()| Ok(()))
         .infallible()
         .into_boxed()
 }
@@ -181,7 +179,7 @@ fn handle_incoming_socket<UID: Uid>(
     handle: &Handle,
     inner: Arc<DemuxInner<UID>>,
     socket: Socket<HandshakeMessage<UID>>,
-) -> BoxFuture<(), IncomingError> {
+) -> BoxFuture<(), Void> {
     socket
         .into_future()
         .map_err(|(e, _s)| IncomingError::Socket(e))
@@ -206,6 +204,7 @@ fn handle_incoming_socket<UID: Uid>(
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
             }
         })
+        .log_error(LogLevel::Error, "Failed to accept incoming connection")
         .into_boxed()
 }
 
