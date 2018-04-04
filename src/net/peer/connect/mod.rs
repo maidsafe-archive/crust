@@ -181,6 +181,9 @@ pub fn connect<UID: Uid>(
         .into_boxed()
 }
 
+/// Socket whose message type is `HandshakeMessage`.
+type ConnectingSocket<UID> = Socket<HandshakeMessage<UID>>;
+
 /// Initiates both direct and p2p connections.
 fn attempt_to_connect<UID: Uid>(
     handle: &Handle,
@@ -189,7 +192,7 @@ fn attempt_to_connect<UID: Uid>(
     their_info: PubConnectionInfo<UID>,
     our_info: PrivConnectionInfo<UID>,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
+) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError> {
     let direct_connections = {
         let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
         let handle = handle.clone();
@@ -236,35 +239,29 @@ fn attempt_to_connect<UID: Uid>(
     )
 }
 
+/// When "choose connection" message is received, this data is given.
+type ChooseConnectionResult<UID> = (Option<HandshakeMessage<UID>>, ConnectingSocket<UID>, UID);
+
 /// Future that ensures that both peers select the same connection.
 /// Takes all pending handshaken connections and chooses the first one successful.
 /// Then this connection is wrapped in a `Peer` structure.
 /// Depending on service id either initiates connection choice message or waits for one.
 struct ChooseOneConnection<S, UID: Uid>
 where
-    S: Stream<Item = (Socket<HandshakeMessage<UID>>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (ConnectingSocket<UID>, UID), Error = SingleConnectionError> + 'static,
 {
     handle: Handle,
     all_connections: S,
     all_connections_are_done: bool,
     our_uid: UID,
-    choose_sent: Option<BoxFuture<(Socket<HandshakeMessage<UID>>, UID), ConnectError>>,
-    choose_waiting: Vec<
-        BoxFuture<
-            (
-                Option<HandshakeMessage<UID>>,
-                Socket<HandshakeMessage<UID>>,
-                UID,
-            ),
-            SingleConnectionError,
-        >,
-    >,
+    choose_sent: Option<BoxFuture<(ConnectingSocket<UID>, UID), ConnectError>>,
+    choose_waiting: Vec<BoxFuture<ChooseConnectionResult<UID>, SingleConnectionError>>,
     errors: Vec<SingleConnectionError>,
 }
 
 impl<S, UID: Uid> ChooseOneConnection<S, UID>
 where
-    S: Stream<Item = (Socket<HandshakeMessage<UID>>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (ConnectingSocket<UID>, UID), Error = SingleConnectionError> + 'static,
 {
     fn new(handle: &Handle, connections: S, our_uid: UID) -> Self {
         Self {
@@ -296,7 +293,7 @@ where
         }
     }
 
-    fn on_conn_ready(&mut self, socket: Socket<HandshakeMessage<UID>>, their_uid: UID) {
+    fn on_conn_ready(&mut self, socket: ConnectingSocket<UID>, their_uid: UID) {
         if self.our_uid > their_uid {
             self.choose_sent = Some(
                 socket
@@ -374,7 +371,7 @@ where
 
 impl<S, UID: Uid> Future for ChooseOneConnection<S, UID>
 where
-    S: Stream<Item = (Socket<HandshakeMessage<UID>>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (ConnectingSocket<UID>, UID), Error = SingleConnectionError> + 'static,
 {
     type Item = Peer<UID>;
     type Error = ConnectError;
@@ -443,7 +440,7 @@ fn handshake_incoming_connections<UID: Uid>(
     conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
     their_id: UID,
     our_sk: SecretKey,
-) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError> {
+) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError> {
     conn_rx
         .map_err(|()| unreachable!())
         .infallible::<SingleConnectionError>()
@@ -471,9 +468,9 @@ fn handshake_outgoing_connections<UID: Uid, S>(
     their_id: UID,
     their_pk: PublicKey,
     our_sk: SecretKey,
-) -> BoxStream<(Socket<HandshakeMessage<UID>>, UID), SingleConnectionError>
+) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError>
 where
-    S: Stream<Item = Socket<HandshakeMessage<UID>>, Error = SingleConnectionError> + 'static,
+    S: Stream<Item = ConnectingSocket<UID>, Error = SingleConnectionError> + 'static,
 {
     let our_name_hash = our_connect_request.name_hash;
     connections
