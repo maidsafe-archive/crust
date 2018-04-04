@@ -30,7 +30,7 @@ futures = "~0.1.17"
 get_if_addrs = "~0.4.0"
 log = "~0.3.8"
 lru_time_cache = "~0.8.0"
-maidsafe_utilities = "~0.14.0"
+maidsafe_utilities = "~0.15.0"
 maplit = "~1.0.1"
 net-literals = "~0.1"
 net2 = "~0.2.31"
@@ -56,6 +56,7 @@ version = "~0.4"
 
 [dependencies.p2p]
 git = "https://github.com/ustulation/p2p"
+rev = "ee0f536848a9bed36d2183f1dff8ec14f8f50d6d"
 
 [dev-dependencies]
 clap = "~2.31.1"
