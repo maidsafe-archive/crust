@@ -191,17 +191,20 @@ impl<UID: Uid> Service<UID> {
         }
     }
 
-    /// Perform a p2p connection to a peer. You must generate connection info first using
-    /// `prepare_connection_info`.
+    /// Perform a p2p connection to a peer. Bidirectional channel is used to exchange connection
+    /// info with remote peer.
     pub fn connect(
         &self,
         our_info: PrivConnectionInfo<UID>,
         their_info: PubConnectionInfo<UID>,
     ) -> BoxFuture<Peer<UID>, ConnectError> {
+        // TODO(povilas): prepare our conn info and send to ci_channel
+        let (ci_channel, ci_channel_tx) = bi_channel::unbounded();
+        unwrap!(ci_channel_tx.unbounded_send(their_info));
         self.demux.connect(
             self.config.network_name_hash(),
             our_info,
-            their_info,
+            ci_channel,
             &self.config,
         )
     }

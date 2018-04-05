@@ -49,9 +49,6 @@ pub const CONNECTIONS_TIMEOUT: u64 = 60;
 quick_error! {
     #[derive(Debug)]
     pub enum ConnectError {
-        RequestedConnectToSelf {
-            description("requested a connection to ourselves")
-        }
         Io(e: io::Error) {
             description("io error initiating connection")
             display("io error initiating connection: {}", e)
@@ -121,55 +118,53 @@ quick_error! {
             display("rendezvous connect failed: {}", e)
             cause(e)
         }
+        RequestedConnectToSelf {
+            description("requested a connection to ourselves")
+        }
+        NotWhitelisted(ip: IpAddr) {
+            description("peer is not whitelisted")
+            display("peer {} is not whitelisted", ip)
+        }
     }
 }
 
 /// Perform a rendezvous connect to a peer. Both peers call this simultaneously using
 /// `PubConnectionInfo` they received from the other peer out-of-band.
-pub fn connect<UID: Uid>(
+pub fn connect<UID: Uid, C>(
     handle: &Handle,
     name_hash: NameHash,
-    our_info: PrivConnectionInfo<UID>,
-    their_info: PubConnectionInfo<UID>,
+    mut our_info: PrivConnectionInfo<UID>,
+    conn_info_rx: C,
     config: &ConfigFile,
     peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
     bootstrap_cache: &BootstrapCache,
-) -> BoxFuture<Peer<UID>, ConnectError> {
-    let config = config.clone();
-    if our_info.id == their_info.id {
-        return future::result(Err(ConnectError::RequestedConnectToSelf)).into_boxed();
-    }
-
-    for addr in &their_info.for_direct {
-        if !config.is_peer_whitelisted(addr.ip(), CrustUser::Node) {
-            return future::result(Err(ConnectError::NotWhitelisted(addr.ip()))).into_boxed();
-        }
-    }
-
-    let their_id = their_info.id;
-    let our_connect_request = ConnectRequest {
-        connection_id: their_info.connection_id,
+) -> BoxFuture<Peer<UID>, ConnectError>
+where
+    C: Stream<Item = PubConnectionInfo<UID>>,
+    C: 'static,
+{
+    let our_connect_request1 = ConnectRequest {
+        connection_id: 0,
         peer_uid: our_info.id,
         peer_pk: our_info.our_pk,
         name_hash: name_hash,
     };
-    let our_id = our_info.id;
-    let our_sk = our_info.our_sk.clone();
-
-    let all_outgoing_connections = attempt_to_connect(
+    let all_outgoing_connections = get_conn_info_and_connect(
         handle,
-        &config,
-        &our_connect_request,
-        their_info,
-        our_info,
+        conn_info_rx,
+        &mut our_info,
+        &our_connect_request1,
+        config,
         bootstrap_cache,
     );
     let direct_incoming =
-        handshake_incoming_connections(our_connect_request, peer_rx, their_id, our_sk);
+        handshake_incoming_connections(our_connect_request1, our_info.our_sk, peer_rx);
     let all_connections = all_outgoing_connections
         .select(direct_incoming)
         .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
-    ChooseOneConnection::new(handle, all_connections, our_id)
+
+    let config = config.clone();
+    ChooseOneConnection::new(handle, all_connections, our_info.id)
         .and_then(move |peer| {
             let ip = peer.ip().map_err(ConnectError::Peer)?;
             if config.is_peer_whitelisted(ip, CrustUser::Node) {
@@ -184,13 +179,68 @@ pub fn connect<UID: Uid>(
 /// Socket whose message type is `HandshakeMessage`.
 type ConnectingSocket<UID> = Socket<HandshakeMessage<UID>>;
 
+fn get_conn_info_and_connect<C, UID: Uid>(
+    handle: &Handle,
+    conn_info_rx: C,
+    our_info: &mut PrivConnectionInfo<UID>,
+    our_connect_request: &ConnectRequest<UID>,
+    config: &ConfigFile,
+    bootstrap_cache: &BootstrapCache,
+) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError>
+where
+    C: Stream<Item = PubConnectionInfo<UID>>,
+    C: 'static,
+{
+    let our_id = our_info.id;
+    let our_sk = our_info.our_sk.clone();
+    let our_p2p_conn_info = our_info.p2p_conn_info.take();
+    let mut our_connect_request = our_connect_request.clone();
+    let config = config.clone();
+    let handle = handle.clone();
+    let bootstrap_cache = bootstrap_cache.clone();
+
+    // We'll retain semantics and take only first connection info for now.
+    // Also, note that we can't clone our_p2p_conn_info.
+    conn_info_rx
+        .into_future()
+        .map_err(|_e| SingleConnectionError::DeadChannel)
+        .and_then(|(their_info_opt, _conn_info_rx)| {
+            their_info_opt.ok_or(SingleConnectionError::DeadChannel)
+        })
+        .and_then(move |their_info| {
+            if our_id == their_info.id {
+                return future::err(SingleConnectionError::RequestedConnectToSelf);
+            }
+
+            for addr in &their_info.for_direct {
+                if !config.is_peer_whitelisted(addr.ip(), CrustUser::Node) {
+                    return future::err(SingleConnectionError::NotWhitelisted(addr.ip()));
+                }
+            }
+
+            our_connect_request.connection_id = their_info.connection_id;
+            future::ok(attempt_to_connect(
+                &handle,
+                &config,
+                &our_connect_request,
+                our_sk,
+                our_p2p_conn_info,
+                their_info,
+                &bootstrap_cache,
+            ))
+        })
+        .flatten_stream()
+        .into_boxed()
+}
+
 /// Initiates both direct and p2p connections.
 fn attempt_to_connect<UID: Uid>(
     handle: &Handle,
     config: &ConfigFile,
     our_connect_request: &ConnectRequest<UID>,
+    our_sk: SecretKey,
+    our_p2p_conn_info: Option<P2pConnectionInfo>,
     their_info: PubConnectionInfo<UID>,
-    our_info: PrivConnectionInfo<UID>,
     bootstrap_cache: &BootstrapCache,
 ) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError> {
     let direct_connections = {
@@ -214,10 +264,10 @@ fn attempt_to_connect<UID: Uid>(
     let all_connections = if config.rendezvous_connections_disabled() {
         direct_connections.into_boxed()
     } else {
-        let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_info.our_sk.clone());
+        let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_sk.clone());
         let handle = handle.clone();
-        let rendezvous_conn = connect_p2p(our_info.p2p_conn_info, their_info.p2p_conn_info)
-            .and_then(move |stream| {
+        let rendezvous_conn =
+            connect_p2p(our_p2p_conn_info, their_info.p2p_conn_info).and_then(move |stream| {
                 let peer_addr = stream.peer_addr()?;
                 Ok(Socket::wrap_pa(
                     &handle,
@@ -233,9 +283,8 @@ fn attempt_to_connect<UID: Uid>(
     handshake_outgoing_connections(
         all_connections,
         our_connect_request.clone(),
-        their_info.id,
         their_info.pub_key,
-        our_info.our_sk,
+        our_sk,
     )
 }
 
@@ -436,25 +485,25 @@ fn connect_directly(
 }
 
 fn handshake_incoming_connections<UID: Uid>(
-    our_connect_request: ConnectRequest<UID>,
-    conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
-    their_id: UID,
+    mut our_connect_request: ConnectRequest<UID>,
     our_sk: SecretKey,
+    conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
 ) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError> {
     conn_rx
         .map_err(|()| unreachable!())
         .infallible::<SingleConnectionError>()
         .and_then(move |(mut socket, connect_request)| {
-            validate_connect_request(their_id, our_connect_request.name_hash, &connect_request)?;
+            validate_connect_request(our_connect_request.name_hash, &connect_request)?;
             socket.use_crypto_ctx(CryptoContext::authenticated(
                 connect_request.peer_pk,
                 our_sk.clone(),
             ));
+            our_connect_request.connection_id = connect_request.connection_id;
             Ok({
                 socket
                     .send((0, HandshakeMessage::Connect(our_connect_request.clone())))
                     .map_err(SingleConnectionError::Socket)
-                    .map(move |socket| (socket, their_id))
+                    .map(move |socket| (socket, connect_request.peer_uid))
             })
         })
         .and_then(|f| f)
@@ -465,7 +514,6 @@ fn handshake_incoming_connections<UID: Uid>(
 fn handshake_outgoing_connections<UID: Uid, S>(
     connections: S,
     our_connect_request: ConnectRequest<UID>,
-    their_id: UID,
     their_pk: PublicKey,
     our_sk: SecretKey,
 ) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError>
@@ -488,7 +536,7 @@ where
         .and_then(move |(msg_opt, socket)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
             Some(HandshakeMessage::Connect(connect_request)) => {
-                validate_connect_request(their_id, our_name_hash, &connect_request)?;
+                validate_connect_request(our_name_hash, &connect_request)?;
                 Ok((socket, connect_request.peer_uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
@@ -523,21 +571,13 @@ fn connect_p2p(
 }
 
 fn validate_connect_request<UID: Uid>(
-    expected_uid: UID,
     our_name_hash: NameHash,
     connect_request: &ConnectRequest<UID>,
 ) -> Result<(), SingleConnectionError> {
     let &ConnectRequest {
-        peer_uid: their_uid,
         name_hash: their_name_hash,
         ..
     } = connect_request;
-    if their_uid != expected_uid {
-        return Err(SingleConnectionError::InvalidUid(
-            format!("{}", their_uid),
-            format!("{}", expected_uid),
-        ));
-    }
     if our_name_hash != their_name_hash {
         return Err(SingleConnectionError::InvalidNameHash(their_name_hash));
     }

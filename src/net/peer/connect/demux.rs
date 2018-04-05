@@ -94,19 +94,23 @@ impl<UID: Uid> Demux<UID> {
         acceptor
     }
 
-    pub fn connect(
+    pub fn connect<C>(
         &self,
         name_hash: NameHash,
         our_info: PrivConnectionInfo<UID>,
-        their_info: PubConnectionInfo<UID>,
+        conn_info_rx: C,
         config: &ConfigFile,
-    ) -> BoxFuture<Peer<UID>, ConnectError> {
+    ) -> BoxFuture<Peer<UID>, ConnectError>
+    where
+        C: Stream<Item = PubConnectionInfo<UID>>,
+        C: 'static,
+    {
         let peer_rx = self.direct_conn_receiver(our_info.connection_id);
         connect(
             &self.inner.handle,
             name_hash,
             our_info,
-            their_info,
+            conn_info_rx,
             config,
             peer_rx,
             &self.inner.bootstrap_cache,
