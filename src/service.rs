@@ -168,45 +168,34 @@ impl<UID: Uid> Service<UID> {
         stream::futures_unordered(futures).into_boxed()
     }
 
-    /// Prepare a connection info. This is the first step to doing a p2p connection to a peer. Both
-    /// peers must call `prepare_connection_info`, use the returned `PrivConnectionInfo` to
-    /// generate a `PubConnectionInfo`, trade `PubConnectionInfo`s using some out-of-channel, then
-    /// call connect simultaneously using each other's `PubConnectionInfo` and their own
-    /// `PrivConnectionInfo`.
-    pub fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
-        let (direct_addrs, _) = self.listeners.addresses();
-        let priv_conn_info = PrivConnectionInfo {
-            connection_id: rand::thread_rng().gen(),
-            id: self.our_uid,
-            for_direct: direct_addrs.into_iter().collect(),
-            p2p_conn_info: None,
-            our_pk: self.our_pk,
-            our_sk: self.our_sk.clone(),
-        };
-
-        if self.listeners.has_public_addrs() {
-            future::ok(priv_conn_info).into_boxed()
-        } else {
-            self.with_p2p_connection_info(priv_conn_info)
-        }
-    }
-
     /// Perform a p2p connection to a peer. Bidirectional channel is used to exchange connection
     /// info with remote peer.
-    pub fn connect(
-        &self,
-        our_info: PrivConnectionInfo<UID>,
-        their_info: PubConnectionInfo<UID>,
-    ) -> BoxFuture<Peer<UID>, ConnectError> {
-        // TODO(povilas): prepare our conn info and send to ci_channel
-        let (ci_channel, ci_channel_tx) = bi_channel::unbounded();
-        unwrap!(ci_channel_tx.unbounded_send(their_info));
-        self.demux.connect(
-            self.config.network_name_hash(),
-            our_info,
-            ci_channel,
-            &self.config,
-        )
+    pub fn connect<C>(&self, ci_channel: C) -> BoxFuture<Peer<UID>, CrustError>
+    where
+        C: Stream<Item = PubConnectionInfo<UID>>,
+        C: Sink<SinkItem = PubConnectionInfo<UID>>,
+        <C as Stream>::Error: fmt::Debug,
+        <C as Sink>::SinkError: fmt::Debug,
+        C: 'static,
+    {
+        let config = self.config.clone();
+        let demux = self.demux.clone();
+        self.prepare_connection_info()
+            .and_then(move |our_info| {
+                let (ci_tx, ci_rx) = ci_channel.split();
+                ci_tx
+                    .send(our_info.to_pub_connection_info())
+                    .map_err(|_e| ConnectError::ExchangeConnectionInfo)
+                    .while_driving(demux.connect(
+                        config.network_name_hash(),
+                        our_info,
+                        ci_rx,
+                        &config,
+                    ))
+                    .map_err(|(e, _connect)| CrustError::ConnectError(e))
+                    .and_then(|(_ci_tx, connect)| connect.map_err(CrustError::ConnectError))
+            })
+            .into_boxed()
     }
 
     /// The returned `ServiceDiscovery` advertises the existence of this peer to any other peers on
@@ -256,6 +245,29 @@ impl<UID: Uid> Service<UID> {
     #[cfg(test)]
     pub fn bootstrap_cache(&self) -> BootstrapCache {
         self.bootstrap_cache.clone()
+    }
+
+    /// Prepare a connection info. This is the first step to doing a p2p connection to a peer. Both
+    /// peers must call `prepare_connection_info`, use the returned `PrivConnectionInfo` to
+    /// generate a `PubConnectionInfo`, trade `PubConnectionInfo`s using some out-of-channel, then
+    /// call connect simultaneously using each other's `PubConnectionInfo` and their own
+    /// `PrivConnectionInfo`.
+    fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
+        let (direct_addrs, _) = self.listeners.addresses();
+        let priv_conn_info = PrivConnectionInfo {
+            connection_id: rand::thread_rng().gen(),
+            id: self.our_uid,
+            for_direct: direct_addrs.into_iter().collect(),
+            p2p_conn_info: None,
+            our_pk: self.our_pk,
+            our_sk: self.our_sk.clone(),
+        };
+
+        if self.listeners.has_public_addrs() {
+            future::ok(priv_conn_info).into_boxed()
+        } else {
+            self.with_p2p_connection_info(priv_conn_info)
+        }
     }
 
     /// Constructs private connection info with p2p info returned from `p2p` crate.

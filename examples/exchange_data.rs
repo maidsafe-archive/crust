@@ -48,13 +48,13 @@ extern crate crust;
 mod utils;
 
 use clap::App;
-use crust::{ConfigFile, PubConnectionInfo, Service};
-use future_utils::FutureExt;
+use crust::{ConfigFile, Service};
+use future_utils::bi_channel;
 use futures::future::{empty, Future};
 use futures::sink::Sink;
 use futures::stream::Stream;
 use tokio_core::reactor::Core;
-use utils::{read_line, PeerId};
+use utils::PeerId;
 
 fn main() {
     unwrap!(env_logger::init());
@@ -84,21 +84,11 @@ fn main() {
         println!("Listening on {}", listener.addr());
     }
 
-    let our_conn_info = unwrap!(event_loop.run(service.prepare_connection_info()));
-    let pub_conn_info = our_conn_info.to_pub_connection_info();
-    println!(
-        "Public connection information:\n{}\n",
-        unwrap!(serde_json::to_string(&pub_conn_info))
-    );
-
-    println!("Enter remote peer public connection info:");
-    // does the p2p connection
-    let connect = read_line().infallible().and_then(move |ln| {
-        let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
-        service
-            .connect(our_conn_info, their_info)
-            .map(move |peer| (peer, service))
-    });
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+    utils::exchange_conn_info(&handle, ci_channel2);
+    let connect = service
+        .connect(ci_channel1)
+        .map(move |peer| (peer, service));
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
         "Connected to peer: {}, {}",

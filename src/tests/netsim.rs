@@ -19,6 +19,7 @@ use {util, Service};
 use config::PeerInfo;
 use env_logger;
 use future_utils;
+use future_utils::bi_channel;
 use futures::sync::oneshot;
 use netsim::{self, SubnetV4};
 use netsim::device::NatV4Builder;
@@ -172,8 +173,7 @@ fn rendezvous_connect_over_poor_connection() {
     let (drop_tx_b1, drop_rx_b1) = future_utils::drop_notify();
     let (addr_tx_a1, addr_rx_a1) = oneshot::channel();
     let (addr_tx_b1, addr_rx_b1) = oneshot::channel();
-    let (ci_tx_a, ci_rx_a) = oneshot::channel();
-    let (ci_tx_b, ci_rx_b) = oneshot::channel();
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let res = core.run(future::lazy(|| {
         let rendezvous_server_node_0 = netsim::node::endpoint_v4(|ip| {
             let mut core = unwrap!(Core::new());
@@ -274,36 +274,25 @@ fn rendezvous_connect_over_poor_connection() {
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service
-                                    .prepare_connection_info()
-                                    .map_err(|e| panic!("error preparing connection info: {}", e))
-                                    .and_then(move |our_ci| {
-                                        unwrap!(ci_tx_a.send(our_ci.to_pub_connection_info()));
-
-                                        ci_rx_b.map_err(|_e| panic!("channel hung up!")).and_then(
-                                            move |their_ci| {
-                                                service
-                                                    .connect(our_ci, their_ci)
-                                                    .map_err(|e| panic!("connect error: {}", e))
-                                                    .and_then(move |stream| {
-                                                        stream
-                                                            .send((0, send_data_a_clone))
-                                                            .map_err(|e| {
-                                                                panic!("send error: {}", e)
-                                                            })
-                                                            .and_then(move |stream| {
-                                                                stream
-                                        .into_future()
-                                        .map_err(|(e, _)| panic!("receive error: {}", e))
-                                        .map(move |(recv_data_b, _stream)| {
-                                            drop(drop_tx_a0);
-                                            drop(drop_tx_a1);
-                                            drop(service);
-                                            unwrap!(recv_data_b)
-                                        })
-                                                            })
+                                    .connect(ci_channel1)
+                                    .map_err(|e| panic!("connect error: {}", e))
+                                    .and_then(move |stream| {
+                                        stream
+                                            .send((0, send_data_a_clone))
+                                            .map_err(|e| panic!("send error: {}", e))
+                                            .and_then(move |stream| {
+                                                stream
+                                                    .into_future()
+                                                    .map_err(|(e, _)| {
+                                                        panic!("receive error: {}", e)
                                                     })
-                                            },
-                                        )
+                                                    .map(move |(recv_data_b, _stream)| {
+                                                        drop(drop_tx_a0);
+                                                        drop(drop_tx_a1);
+                                                        drop(service);
+                                                        unwrap!(recv_data_b)
+                                                    })
+                                            })
                                     })
                             })
                     })
@@ -330,36 +319,25 @@ fn rendezvous_connect_over_poor_connection() {
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service
-                                    .prepare_connection_info()
-                                    .map_err(|e| panic!("error preparing connection info: {}", e))
-                                    .and_then(move |our_ci| {
-                                        unwrap!(ci_tx_b.send(our_ci.to_pub_connection_info()));
-
-                                        ci_rx_a.map_err(|_e| panic!("channel hung up!")).and_then(
-                                            move |their_ci| {
-                                                service
-                                                    .connect(our_ci, their_ci)
-                                                    .map_err(|e| panic!("connect error: {}", e))
-                                                    .and_then(move |stream| {
-                                                        stream
-                                                            .send((0, send_data_b_clone))
-                                                            .map_err(|e| {
-                                                                panic!("send error: {}", e)
-                                                            })
-                                                            .and_then(move |stream| {
-                                                                stream
-                                        .into_future()
-                                        .map_err(|(e, _)| panic!("receive error: {}", e))
-                                        .map(move |(recv_data_a, _stream)| {
-                                            drop(drop_tx_b0);
-                                            drop(drop_tx_b1);
-                                            drop(service);
-                                            unwrap!(recv_data_a)
-                                        })
-                                                            })
+                                    .connect(ci_channel2)
+                                    .map_err(|e| panic!("connect error: {}", e))
+                                    .and_then(move |stream| {
+                                        stream
+                                            .send((0, send_data_b_clone))
+                                            .map_err(|e| panic!("send error: {}", e))
+                                            .and_then(move |stream| {
+                                                stream
+                                                    .into_future()
+                                                    .map_err(|(e, _)| {
+                                                        panic!("receive error: {}", e)
                                                     })
-                                            },
-                                        )
+                                                    .map(move |(recv_data_a, _stream)| {
+                                                        drop(drop_tx_b0);
+                                                        drop(drop_tx_b1);
+                                                        drop(service);
+                                                        unwrap!(recv_data_a)
+                                                    })
+                                            })
                                     })
                             })
                     })

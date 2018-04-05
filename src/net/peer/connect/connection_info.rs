@@ -53,7 +53,7 @@ pub struct PrivConnectionInfo<UID> {
 }
 
 /// Contact info used to connect to another peer.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PubConnectionInfo<UID> {
     #[doc(hidden)]
     pub connection_id: u64,

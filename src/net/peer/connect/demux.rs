@@ -35,6 +35,7 @@ const MAX_INCOMING_CONNECTIONS_BACKLOG: usize = 128;
 
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
+#[derive(Clone)]
 pub struct Demux<UID: Uid> {
     inner: Arc<DemuxInner<UID>>,
 }

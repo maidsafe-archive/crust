@@ -66,7 +66,7 @@ use chrono::Local;
 use clap::{App, Arg};
 use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service, MAX_PAYLOAD_SIZE};
 use crust::config::{DevConfigSettings, PeerInfo};
-use future_utils::{thread_future, BoxFuture, FutureExt};
+use future_utils::{bi_channel, thread_future, BoxFuture, FutureExt};
 use futures::{Async, Future, Sink, Stream};
 use futures::future::Either;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
@@ -145,6 +145,7 @@ struct Node {
     service: Service<PeerId>,
     #[allow(unused)]
     listeners: Vec<Listener>,
+    handle: Handle,
 }
 
 impl Node {
@@ -152,7 +153,8 @@ impl Node {
     fn run(handle: &Handle, args: Args) -> BoxFuture<Self, Void> {
         let config = args.make_config();
         let our_uid = rand::random();
-        Service::with_config(handle, config, our_uid)
+        let handle = handle.clone();
+        Service::with_config(&handle, config, our_uid)
             .map_err(|e| panic!("error starting service: {}", e))
             .map(move |service| {
                 if args.disable_igd {
@@ -166,19 +168,23 @@ impl Node {
                     .start_listening()
                     .map_err(|e| panic!("Failed to start listeners: {}", e))
                     .collect()
-                    .map(move |listeners| Self { service, listeners })
+                    .map(move |listeners| Self {
+                        service,
+                        listeners,
+                        handle,
+                    })
             })
             .into_boxed()
     }
 
     /// Get peer info from stdin and attempt to connect to it.
     fn connect(self) -> BoxFuture<(Node, Peer<PeerId>), Void> {
-        self.service
-            .prepare_connection_info()
-            .map_err(|e| panic!("error preparing connection info: {}", e))
-            .and_then(move |our_priv_info| {
-                let our_pub_info = our_priv_info.to_pub_connection_info();
-                let as_str = unwrap!(serde_json::to_string(&our_pub_info));
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+        let exchange_ci = ci_channel2
+            .into_future()
+            .and_then(|(our_ci_opt, ci_channel2)| {
+                let our_ci = unwrap!(our_ci_opt);
+                let as_str = unwrap!(serde_json::to_string(&our_ci));
                 out!("Our connection info:");
                 println!("{}", as_str);
                 println!();
@@ -186,14 +192,19 @@ impl Node {
                     "Copy this info and share it with your connecting partner. Then paste \
                      their info below."
                 );
-                read_line().and_then(move |ln| {
-                    let their_pub_info: PubConnectionInfo<_> = unwrap!(serde_json::from_str(&ln));
-                    self.service
-                        .connect(our_priv_info, their_pub_info)
-                        .map_err(|e| panic!("error connecting to peer: {}", e))
-                        .map(move |peer| (self, peer))
+                read_line().infallible().and_then(move |ln| {
+                    let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
+                    unwrap!(ci_channel2.unbounded_send(their_info));
+                    Ok(())
                 })
             })
+            .then(|_| Ok(()));
+        self.handle.spawn(exchange_ci);
+
+        self.service
+            .connect(ci_channel1)
+            .map_err(|e| panic!("error connecting to peer: {}", e))
+            .map(move |peer| (self, peer))
             .into_boxed()
     }
 

@@ -23,7 +23,7 @@ pub struct ConnectionInfoResult<UID> {
     /// The token that was passed to `prepare_connection_info`.
     pub result_token: u32,
     /// The new contact info, if successful.
-    pub result: Result<PrivConnectionInfo<UID>, CrustError>,
+    pub result: Result<PubConnectionInfo<UID>, CrustError>,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user

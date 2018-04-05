@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use config::{DevConfigSettings, PeerInfo};
+use future_utils::bi_channel;
 use futures::stream;
 use net::peer;
 use p2p::{self, query_public_addr, Protocol};
@@ -171,18 +172,14 @@ mod direct_connections {
 
         let service1 = service_with_config(&mut event_loop, config1);
         let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
-        let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
-        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
         let service2 = service_with_config(&mut event_loop, config2);
         let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
-        let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
-        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         let connect = service1
-            .connect(service1_priv_conn_info, service2_pub_conn_info)
-            .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
-
+            .connect(ci_channel1)
+            .join(service2.connect(ci_channel2));
         let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
         assert_eq!(service1_peer.uid(), service2.id());
         assert_eq!(service2_peer.uid(), service1.id());
@@ -211,29 +208,18 @@ mod direct_connections {
 
         let service1 = service_with_config(&mut evloop, config1);
         let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
-        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
-        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).dev = Some(dev_cfg);
         unwrap!(config2.write()).listen_addresses = vec![];
-
         let service2 = service_with_config(&mut evloop, config2);
-        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
-        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
-        let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
-        let connect1 = {
-            let delay = Timeout::new(Duration::from_secs(2), &handle);
-            delay
-                .infallible()
-                .and_then(|()| service1.connect(service1_priv_conn_info, service2_pub_conn_info))
-        };
-
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         let (service2_peer, service1_peer) = unwrap!(
             evloop.run(
-                connect2
-                    .join(connect1)
+                service2
+                    .connect(ci_channel2)
+                    .join(service1.connect(ci_channel1))
                     .with_timeout(Duration::from_secs(5), &handle)
                     .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
             )
@@ -251,24 +237,21 @@ mod direct_connections {
         dev_cfg.disable_rendezvous_connections = true;
         unwrap!(config1.write()).dev = Some(dev_cfg.clone());
         unwrap!(config1.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
-
+        unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         let service1 = service_with_config(&mut evloop, config1);
         let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
-        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
-        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).dev = Some(dev_cfg);
         unwrap!(config2.write()).listen_addresses = vec![];
-
+        unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         let service2 = service_with_config(&mut evloop, config2);
-        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
-        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
-        let connect2 = service2.connect(service2_priv_conn_info, service1_pub_conn_info);
-        let connect1 = service1.connect(service1_priv_conn_info, service2_pub_conn_info);
-
-        let (service2_peer, _service1_peer) = unwrap!(evloop.run(connect2.join(connect1)));
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+        let connect = service2
+            .connect(ci_channel2)
+            .join(service1.connect(ci_channel1));
+        let (service2_peer, _service1_peer) = unwrap!(evloop.run(connect));
 
         let service2_peer = PeerInfo::new(unwrap!(service2_peer.addr()), service1.public_key());
         assert!(service2.bootstrap_cache().peers().contains(&service2_peer));
@@ -282,18 +265,15 @@ fn p2p_connections_on_localhost() {
 
     let config = unwrap!(ConfigFile::new_temporary());
     let service1 = service_with_config(&mut event_loop, config);
-    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
-    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let config = unwrap!(ConfigFile::new_temporary());
     let service2 = service_with_config(&mut event_loop, config);
-    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
-    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let connect = service1
-        .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info))
-        .with_timeout(Duration::from_secs(3), &event_loop.handle())
+        .connect(ci_channel1)
+        .join(service2.connect(ci_channel2))
+        .with_timeout(Duration::from_secs(5), &event_loop.handle())
         .map(|res_opt| unwrap!(res_opt, "p2p connection timed out"));
 
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
@@ -308,17 +288,14 @@ fn peer_shutdown_closes_remote_peer_too() {
 
     let service1 = service_with_tmp_config(&mut event_loop);
     let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
-    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
-    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let service2 = service_with_tmp_config(&mut event_loop);
     let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
-    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
-    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let connect = service1
-        .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
+        .connect(ci_channel1)
+        .join(service2.connect(ci_channel2));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     drop(service1_peer);
@@ -341,17 +318,14 @@ fn exchange_data_between_two_peers() {
 
     let service1 = service_with_tmp_config(&mut event_loop);
     let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
-    let service1_priv_conn_info = unwrap!(event_loop.run(service1.prepare_connection_info()));
-    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let service2 = service_with_tmp_config(&mut event_loop);
     let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
-    let service2_priv_conn_info = unwrap!(event_loop.run(service2.prepare_connection_info()));
-    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let connect = service1
-        .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
+        .connect(ci_channel1)
+        .join(service2.connect(ci_channel2));
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
 
     const NUM_MESSAGES: u64 = 100;
@@ -415,19 +389,16 @@ fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
     unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
     let service1 = service_with_config(&mut evloop, config);
     let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
-    let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
-    let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
     let config = unwrap!(ConfigFile::new_temporary());
     unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
     let service2 = service_with_config(&mut evloop, config);
     let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
-    let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
-    let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let connect = service1
-        .connect(service1_priv_conn_info, service2_pub_conn_info)
-        .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
+        .connect(ci_channel1)
+        .join(service2.connect(ci_channel2));
     let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
 
     let data_len = MAX_PAYLOAD_SIZE + 10;
@@ -526,18 +497,14 @@ mod encryption {
 
         let service1 = service_with_tmp_config(&mut evloop);
         let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
-        let service1_priv_conn_info = unwrap!(evloop.run(service1.prepare_connection_info()));
-        let service1_pub_conn_info = service1_priv_conn_info.to_pub_connection_info();
 
         let service2 = service_with_tmp_config(&mut evloop);
         let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
-        let service2_priv_conn_info = unwrap!(evloop.run(service2.prepare_connection_info()));
-        let service2_pub_conn_info = service2_priv_conn_info.to_pub_connection_info();
 
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         let connect = service1
-            .connect(service1_priv_conn_info, service2_pub_conn_info)
-            .join(service2.connect(service2_priv_conn_info, service1_pub_conn_info));
-
+            .connect(ci_channel1)
+            .join(service2.connect(ci_channel2));
         let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
         let service2_peer = {
             let id = service2_peer.uid();

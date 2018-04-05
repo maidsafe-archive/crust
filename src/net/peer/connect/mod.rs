@@ -74,6 +74,9 @@ quick_error! {
             description("peer is not whitelisted")
             display("peer {} is not whitelisted", ip)
         }
+        ExchangeConnectionInfo {
+            description("Failed to exchange connection info")
+        }
     }
 }
 

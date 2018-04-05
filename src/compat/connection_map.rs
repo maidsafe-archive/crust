@@ -17,6 +17,7 @@
 
 use compat::{CrustEventSender, Event};
 use future_utils::{self, DropNotify};
+use future_utils::bi_channel::UnboundedBiChannel;
 use futures::stream::SplitSink;
 use log::LogLevel;
 use priv_prelude::*;
@@ -30,6 +31,7 @@ pub struct ConnectionMap<UID: Uid> {
 
 struct Inner<UID: Uid> {
     map: HashMap<UID, PeerWrapper<UID>>,
+    ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo<UID>>>,
     event_tx: CrustEventSender<UID>,
 }
 
@@ -47,6 +49,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     pub fn new(event_tx: CrustEventSender<UID>) -> ConnectionMap<UID> {
         let inner = Inner {
             map: HashMap::new(),
+            ci_channel: HashMap::new(),
             event_tx: event_tx,
         };
         let inner = Arc::new(Mutex::new(inner));
@@ -144,5 +147,26 @@ impl<UID: Uid> ConnectionMap<UID> {
     pub fn clear(&self) {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.clear();
+    }
+
+    /// Store connection information channel associated with connection ID.
+    /// This channel is used to transfer peer's connection info.
+    pub fn insert_ci_channel(
+        &mut self,
+        conn_id: u64,
+        chann: UnboundedBiChannel<PubConnectionInfo<UID>>,
+    ) {
+        let mut inner = unwrap!(self.inner.lock());
+        let _ = inner.ci_channel.insert(conn_id, chann);
+    }
+
+    /// Retrieves connection info channel by connection ID.
+    /// The channel is permanently removed from the connection map after this operation.
+    pub fn get_ci_channel(
+        &mut self,
+        conn_id: u64,
+    ) -> Option<UnboundedBiChannel<PubConnectionInfo<UID>>> {
+        let mut inner = unwrap!(self.inner.lock());
+        inner.ci_channel.remove(&conn_id)
     }
 }
