@@ -42,6 +42,7 @@ extern crate config_file_handler;
 extern crate env_logger;
 extern crate future_utils;
 extern crate futures;
+extern crate get_if_addrs;
 #[cfg(test)]
 #[macro_use]
 extern crate hamcrest;

@@ -22,7 +22,7 @@ mod discover;
 #[cfg(test)]
 mod test;
 
-pub use self::discover::{discover, Discover};
+pub use self::discover::discover;
 pub use self::server::Server;
 use config::PeerInfo;
 use future_utils::{self, DropNotify};
