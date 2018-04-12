@@ -18,7 +18,8 @@
 use compat::{ConnectionInfoResult, ConnectionMap, Event};
 use compat::{event_loop, CrustEventSender, EventLoop};
 use error::CrustError;
-use future_utils::{self, DropNotify};
+use future_utils::{self, bi_channel, DropNotify};
+use futures::unsync::mpsc;
 use log::LogLevel;
 use net::{service_discovery, ServiceDiscovery};
 use priv_prelude::*;
@@ -308,19 +309,36 @@ impl<UID: Uid> Service<UID> {
     /// Fires event to start connection info preparation.
     /// Another event will be fired to `event_tx` to notify that info is ready.
     pub fn prepare_connection_info(&self, result_token: u32) {
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState<UID>| {
+                state.spawn_connect(ci_channel1);
                 let event_tx = state.event_tx.clone();
-                let f = {
-                    state.service.prepare_connection_info().then(move |result| {
+                let mut cm = state.cm.clone();
+                let f = ci_channel2
+                    .into_future()
+                    .map_err(|(_e, _chann)| CrustError::PrepareConnectionInfo)
+                    .and_then(|(our_conn_info_opt, ci_channel)| {
+                        our_conn_info_opt
+                            .ok_or(CrustError::PrepareConnectionInfo)
+                            .map(move |conn_info| (conn_info, ci_channel))
+                    })
+                    .then(move |result| {
+                        let result = match result {
+                            Ok((our_conn_info, ci_channel)) => {
+                                cm.insert_ci_channel(our_conn_info.connection_id, ci_channel);
+                                Ok(our_conn_info)
+                            }
+                            Err(e) => Err(e),
+                        };
+
                         let _ =
                             event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                 result_token,
                                 result,
                             }));
                         Ok(())
-                    })
-                };
+                    });
                 state.service.handle().spawn(f);
             }));
     }
@@ -333,41 +351,14 @@ impl<UID: Uid> Service<UID> {
     ///    obtained from the peer
     pub fn connect(
         &self,
-        our_ci: PrivConnectionInfo<UID>,
+        our_ci: PubConnectionInfo<UID>,
         their_ci: PubConnectionInfo<UID>,
     ) -> Result<(), CrustError> {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState<UID>| {
-                let uid = their_ci.id;
-                let cm = state.cm.clone();
-                let event_tx = state.event_tx.clone();
-                let f = {
-                    let handle = state.service.handle().clone();
-                    state
-                        .service
-                        .connect(our_ci, their_ci)
-                        .map_err(move |e| {
-                            error!("connection to {:?} failed: {}", uid, e);
-                        })
-                        .and_then(move |peer| {
-                            let addr = {
-                                peer.addr().map_err(|e| {
-                                    error!("failed to get address of peer we connected to: {}", e)
-                                })
-                            }?;
-                            let _ = cm.insert_peer(&handle, peer, addr);
-                            Ok(())
-                        })
-                        .then(move |res| {
-                            let event = match res {
-                                Ok(()) => Event::ConnectSuccess(uid),
-                                Err(()) => Event::ConnectFailure(uid),
-                            };
-                            let _ = event_tx.send(event);
-                            Ok(())
-                        })
-                };
-                state.service.handle().spawn(f);
+                if let Some(ci_chann) = state.cm.get_ci_channel(our_ci.connection_id) {
+                    unwrap!(ci_chann.unbounded_send(their_ci));
+                }
             }));
         Ok(())
     }
@@ -485,6 +476,51 @@ impl<UID: Uid> ServiceState<UID> {
             service_discovery: None,
             service_discovery_enabled: false,
         }
+    }
+
+    /// Spawns connection task that yields our connection info to provided conn info channel
+    /// and waits for peer's connection info on the same channel.
+    /// Emits `ConnectSuccess` and `ConnectFailure` events.
+    fn spawn_connect(
+        &mut self,
+        ci_channel1: bi_channel::UnboundedBiChannel<PubConnectionInfo<UID>>,
+    ) {
+        let event_tx1 = self.event_tx.clone();
+        let event_tx2 = event_tx1.clone();
+        let cm = self.cm.clone();
+        let handle = self.service.handle().clone();
+        let (their_ci_tx, mut their_ci_rx) = mpsc::unbounded();
+        let f = {
+            let handle = handle.clone();
+            self.service
+                .connect(
+                    ci_channel1.and_then(move |their_ci: PubConnectionInfo<UID>| {
+                        unwrap!(their_ci_tx.clone().unbounded_send(their_ci.id));
+                        Ok(their_ci)
+                    }),
+                )
+                .map_err(move |e| {
+                    error!("connection failed: {}", e);
+                })
+                .and_then(move |peer| {
+                    let addr = {
+                        peer.addr().map_err(|e| {
+                            error!("failed to get address of peer we connected to: {}", e)
+                        })
+                    }?;
+                    let _ = event_tx1.send(Event::ConnectSuccess(peer.uid()));
+                    let _ = cm.insert_peer(&handle, peer, addr);
+                    Ok(())
+                })
+                .or_else(move |_err| {
+                    // if we know ID of the peer we were trying to connect with
+                    if let Ok(Async::Ready(Some(peer_uid))) = their_ci_rx.poll() {
+                        let _ = event_tx2.send(Event::ConnectFailure(peer_uid));
+                    }
+                    Ok(())
+                })
+        };
+        handle.spawn(f);
     }
 }
 

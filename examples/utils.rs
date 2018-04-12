@@ -15,9 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use crust::Uid;
-use future_utils::{thread_future, BoxFuture, FutureExt};
+use crust::{PubConnectionInfo, Uid};
+use future_utils::{bi_channel, thread_future, BoxFuture, FutureExt};
+use futures::Stream;
+use futures::future::Future;
+use serde_json;
 use std::{fmt, io};
+use tokio_core::reactor::Handle;
 use void::Void;
 
 // Some peer ID boilerplate.
@@ -42,4 +46,30 @@ pub fn read_line() -> BoxFuture<String, Void> {
         unwrap!(stdin.read_line(&mut line));
         line
     }).into_boxed()
+}
+
+/// Spawns background task that prints our connection info and waits for us to input theirs.
+#[allow(unused)]
+pub fn exchange_conn_info(
+    handle: &Handle,
+    ci_channel2: bi_channel::UnboundedBiChannel<PubConnectionInfo<PeerId>>,
+) {
+    let exchange_ci = ci_channel2
+        .into_future()
+        .and_then(|(our_ci_opt, ci_channel2)| {
+            let our_ci = unwrap!(our_ci_opt);
+            println!(
+                "Public connection information:\n{}\n",
+                unwrap!(serde_json::to_string(&our_ci))
+            );
+            println!("Enter remote peer public connection info:");
+
+            read_line().infallible().and_then(move |ln| {
+                let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
+                unwrap!(ci_channel2.unbounded_send(their_info));
+                Ok(())
+            })
+        })
+        .then(|_| Ok(()));
+    handle.spawn(exchange_ci);
 }

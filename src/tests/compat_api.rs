@@ -167,7 +167,7 @@ fn start_two_services_exchange_data() {
             assert_eq!(res.result_token, token);
             unwrap!(res.result)
         });
-        unwrap!(ci_tx0.send(ci0.to_pub_connection_info()));
+        unwrap!(ci_tx0.send(ci0.clone()));
         let pub_ci1 = unwrap!(ci_rx1.recv());
 
         unwrap!(service0.connect(ci0, pub_ci1));
@@ -207,7 +207,7 @@ fn start_two_services_exchange_data() {
             assert_eq!(res.result_token, token);
             unwrap!(res.result)
         });
-        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+        unwrap!(ci_tx1.send(ci1.clone()));
         let pub_ci0 = unwrap!(ci_rx0.recv());
 
         unwrap!(service1.connect(ci1, pub_ci0));

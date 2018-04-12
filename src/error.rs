@@ -71,5 +71,16 @@ quick_error! {
             cause(e)
             from()
         }
+        /// Error connecting to peer.
+        ConnectError(e: ConnectError) {
+            description("Failed to connect to peer")
+            display("Failed to connect to peer: {}", e)
+            cause(e)
+            from()
+        }
+        /// Failed to prepare our connection information.
+        PrepareConnectionInfo {
+            description("Failed to prepare our connection info")
+        }
     }
 }

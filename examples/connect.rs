@@ -55,13 +55,13 @@ extern crate crust;
 mod utils;
 
 use clap::App;
-use crust::{ConfigFile, PubConnectionInfo, Service};
-use future_utils::FutureExt;
+use crust::{ConfigFile, Service};
+use future_utils::bi_channel;
 use futures::Stream;
 use futures::future::{empty, Future};
 use rand::Rng;
 use tokio_core::reactor::Core;
-use utils::{read_line, PeerId};
+use utils::PeerId;
 
 fn main() {
     let _ = App::new("Crust basic connection example")
@@ -74,6 +74,7 @@ fn main() {
         .get_matches();
 
     let mut event_loop = unwrap!(Core::new());
+    let handle = event_loop.handle();
     let service_id = rand::thread_rng().gen::<PeerId>();
     println!("Service id: {}", service_id);
 
@@ -96,23 +97,12 @@ fn main() {
         println!("Listening on {}", listener.addr());
     }
 
-    let our_conn_info = unwrap!(
-        event_loop.run(service.prepare_connection_info()),
-        "Failed to prepare connection info",
-    );
-    let pub_conn_info = our_conn_info.to_pub_connection_info();
-    println!(
-        "Public connection information:\n{}\n",
-        unwrap!(serde_json::to_string(&pub_conn_info))
-    );
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+    utils::exchange_conn_info(&handle, ci_channel2);
 
-    println!("Enter remote peer public connection info:");
-    let connect = read_line().infallible().and_then(move |ln| {
-        let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
-        service
-            .connect(our_conn_info, their_info)
-            .map(move |peer| (peer, service))
-    });
+    let connect = service
+        .connect(ci_channel1)
+        .map(move |peer| (peer, service));
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
         "Connected to peer: {} - {}",

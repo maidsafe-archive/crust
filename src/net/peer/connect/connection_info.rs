@@ -36,6 +36,8 @@ pub struct P2pConnectionInfo {
 #[derive(Debug)]
 pub struct PrivConnectionInfo<UID> {
     #[doc(hidden)]
+    pub connection_id: u64,
+    #[doc(hidden)]
     pub id: UID,
     #[doc(hidden)]
     pub for_direct: Vec<PaAddr>,
@@ -51,8 +53,10 @@ pub struct PrivConnectionInfo<UID> {
 }
 
 /// Contact info used to connect to another peer.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PubConnectionInfo<UID> {
+    #[doc(hidden)]
+    pub connection_id: u64,
     #[doc(hidden)]
     pub id: UID,
     #[doc(hidden)]
@@ -78,6 +82,7 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
             .as_ref()
             .and_then(|conn_info| Some(conn_info.our_info.to_vec()));
         PubConnectionInfo {
+            connection_id: self.connection_id,
             for_direct: self.for_direct.clone(),
             id: self.id,
             p2p_conn_info,
@@ -103,6 +108,7 @@ mod tests {
             fn when_p2p_conn_info_is_none_it_sets_none_in_public_conn_info_too() {
                 let (our_pk, our_sk) = gen_keypair();
                 let priv_conn_info = PrivConnectionInfo {
+                    connection_id: 123,
                     id: util::random_id(),
                     for_direct: vec![],
                     p2p_conn_info: None,
@@ -126,6 +132,7 @@ mod tests {
                 });
                 let (our_pk, our_sk) = gen_keypair();
                 let priv_conn_info = PrivConnectionInfo {
+                    connection_id: 123,
                     id: util::random_id(),
                     for_direct: vec![],
                     p2p_conn_info,
