@@ -24,6 +24,7 @@ pub use config::ConfigFile;
 pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{future, stream, Async, AsyncSink, Future, IntoFuture, Sink, Stream};
+pub use log::LogLevel;
 pub use net::{BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError,
               ConnectError, ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
               PaRendezvousConnectError, Peer, PeerError, Priority, PrivConnectionInfo,

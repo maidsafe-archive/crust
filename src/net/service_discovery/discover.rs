@@ -15,145 +15,93 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use futures::{Async, Future, Sink, Stream};
-use futures::sink;
-use futures::stream::StreamFuture;
+use futures::{Future, Sink, Stream};
+use get_if_addrs::{self, IfAddr};
 use maidsafe_utilities::serialisation::SerialisationError;
 use net::service_discovery::msg::DiscoveryMsg;
 use priv_prelude::*;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use std::{io, mem};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
-use tokio_core::net::{UdpFramed, UdpSocket};
+use std::net::Ipv4Addr;
+use tokio_core::net::UdpSocket;
 use tokio_core::reactor::Handle;
 use util::SerdeUdpCodec;
-use void::Void;
 
 pub fn discover<T>(
     handle: &Handle,
     port: u16,
     our_pk: PublicKey,
     our_sk: SecretKey,
-) -> io::Result<Discover<T>>
+) -> IoFuture<BoxStream<(Ipv4Addr, T), Void>>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
-    let bind_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
-    let socket = UdpSocket::bind(&bind_addr, handle)?;
-    socket.set_broadcast(true)?;
-    let framed = socket.framed(SerdeUdpCodec::new());
-
+    let bind_addr = addr!("0.0.0.0:0");
     let request = DiscoveryMsg::Request(our_pk);
-    let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(255, 255, 255, 255), port));
-    let writing = framed.send((broadcast_addr, request));
-
     let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk);
 
-    Ok(Discover {
-        state: DiscoverState::Writing { writing },
-        anon_decrypt_ctx,
-        _ph: PhantomData,
-    })
-}
+    future::result(UdpSocket::bind(&bind_addr, handle))
+        .and_then(|socket| {
+            socket.set_broadcast(true)?;
+            let framed = socket.framed(SerdeUdpCodec::new());
+            Ok(framed)
+        })
+        .and_then(move |framed| {
+            future::result(get_if_addrs::get_if_addrs())
+                .map(stream::iter_ok)
+                .flatten_stream()
+                .filter_map(|iface| match iface.addr {
+                    IfAddr::V4(ifv4_addr) => match ifv4_addr.broadcast {
+                        Some(broadcast) => Some(broadcast),
+                        None => {
+                            let ip = u32::from(ifv4_addr.ip);
+                            let netmask = u32::from(ifv4_addr.netmask);
+                            let broadcast = u32::from(ipv4!("255.255.255.255"));
 
-pub struct Discover<T> {
-    state: DiscoverState,
-    anon_decrypt_ctx: CryptoContext,
-    _ph: PhantomData<T>,
-}
+                            let prefix = ip & netmask;
+                            let postfix = broadcast & !netmask;
 
-// The only large size difference between variance is because of `Invalid` variant.
-// This variant is not really used, hence it makes sense to disable this lint.
-//#[cfg_attr(feature = "clippy", allow(large_enum_variant))]
-#[allow(unknown_lints)]
-#[allow(large_enum_variant)]
-enum DiscoverState {
-    Reading {
-        reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
-    },
-    Writing {
-        writing: sink::Send<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
-    },
-    Invalid,
-}
-
-impl<T> Discover<T>
-where
-    T: Serialize + DeserializeOwned + Clone + 'static,
-{
-    /// Handles service discovery response: deserializes and decrypts it.
-    /// None is returned on failure.
-    fn handle_response(
-        &self,
-        response: Option<(SocketAddr, Result<DiscoveryMsg, SerialisationError>)>,
-    ) -> Option<(Ipv4Addr, T)> {
-        match response {
-            Some((addr, Ok(DiscoveryMsg::Response(response)))) => {
-                let ip = match addr.ip() {
-                    IpAddr::V4(ip) => ip,
-                    _ => unreachable!(),
-                };
-                match self.anon_decrypt_ctx.decrypt(&response) {
-                    Ok(response) => Some((ip, response)),
-                    Err(e) => {
-                        warn!("Failed to decrypt service discovery response: {}", e);
-                        None
-                    }
-                }
-            }
-            Some((_, Ok(..))) => None,
-            Some((addr, Err(e))) => {
-                warn!("Error deserialising message from {}: {}", addr, e);
-                None
-            }
-            None => unreachable!(),
-        }
-    }
-}
-
-impl<T> Stream for Discover<T>
-where
-    T: Serialize + DeserializeOwned + Clone + 'static,
-{
-    type Item = (Ipv4Addr, T);
-    type Error = Void;
-
-    fn poll(&mut self) -> Result<Async<Option<(Ipv4Addr, T)>>, Void> {
-        let mut state = mem::replace(&mut self.state, DiscoverState::Invalid);
-        let ret = loop {
-            match state {
-                DiscoverState::Reading { mut reading } => {
-                    if let Async::Ready((response, framed)) =
-                        unwrap!(reading.poll().map_err(|(e, _)| e))
-                    {
-                        state = DiscoverState::Reading {
-                            reading: framed.into_future(),
-                        };
-                        let resp_item = self.handle_response(response);
-                        if let Some(item) = resp_item {
-                            break Async::Ready(Some(item));
+                            Some(Ipv4Addr::from(prefix | postfix))
                         }
-                    } else {
-                        state = DiscoverState::Reading { reading };
-                        break Async::NotReady;
-                    }
+                    },
+                    IfAddr::V6(..) => None,
+                })
+                .fold(framed, move |framed, broadcast_ip| {
+                    let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(broadcast_ip, port));
+                    framed.send((broadcast_addr, request.clone()))
+                })
+                .map(move |framed| {
+                    framed
+                        .log_errors(LogLevel::Warn, "receiving on service_discovery::discover")
+                        .filter_map(move |response| handle_response(response, &anon_decrypt_ctx))
+                        .into_boxed()
+                })
+        })
+        .into_boxed()
+}
+
+fn handle_response<T: Serialize + DeserializeOwned>(
+    response: (SocketAddr, Result<DiscoveryMsg, SerialisationError>),
+    anon_decrypt_ctx: &CryptoContext,
+) -> Option<(Ipv4Addr, T)> {
+    match response {
+        (addr, Ok(DiscoveryMsg::Response(response))) => {
+            let ip = match addr.ip() {
+                IpAddr::V4(ip) => ip,
+                _ => unreachable!(),
+            };
+            match anon_decrypt_ctx.decrypt(&response) {
+                Ok(response) => Some((ip, response)),
+                Err(e) => {
+                    warn!("Failed to decrypt service discovery response: {}", e);
+                    None
                 }
-                DiscoverState::Writing { mut writing } => {
-                    if let Async::Ready(framed) = unwrap!(writing.poll()) {
-                        state = DiscoverState::Reading {
-                            reading: framed.into_future(),
-                        };
-                        continue;
-                    } else {
-                        state = DiscoverState::Writing { writing };
-                        break Async::NotReady;
-                    }
-                }
-                DiscoverState::Invalid => panic!(),
             }
-        };
-        self.state = state;
-        Ok(ret)
+        }
+        (_, Ok(..)) => None,
+        (addr, Err(e)) => {
+            warn!("Error deserialising message from {}: {}", addr, e);
+            None
+        }
     }
 }

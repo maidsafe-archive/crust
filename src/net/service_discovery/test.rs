@@ -45,13 +45,26 @@ fn multiple_server_instances_in_parallel() {
 
         let mut futures = Vec::new();
         for i in 0..num_servers {
-            for _ in 0..num_discovers {
+            for j in 0..num_discovers {
                 let (our_pk, our_sk) = gen_keypair();
-                let discover = unwrap!(discover::<u16>(&handle, starting_port + i, our_pk, our_sk))
+                let discover = discover::<u16>(&handle, starting_port + i, our_pk, our_sk)
+                    .map_err(|e| panic!("error discovering: {}", e))
+                    .flatten_stream()
                     .with_timeout(Duration::from_secs(2), &handle)
                     .collect()
-                    .and_then(move |v| {
-                        assert_eq!(v.into_iter().map(|(_, p)| p).collect::<Vec<_>>(), &[i]);
+                    .and_then(move |responses| {
+                        trace!(
+                            "trying discoverer {} of {} for server {}, got {:?}",
+                            j,
+                            num_discovers,
+                            i,
+                            responses
+                        );
+
+                        assert!(responses.len() >= 1);
+                        for (_, msg) in responses {
+                            assert_eq!(msg, i);
+                        }
                         Ok(())
                     });
                 futures.push(discover);
@@ -92,12 +105,10 @@ fn service_discovery() {
 
     let f = {
         let (our_pk, our_sk) = gen_keypair();
-        unwrap!(discover::<HashSet<PeerInfo>>(
-            &handle,
-            port,
-            our_pk,
-            our_sk.clone(),
-        )).with_timeout(Duration::from_secs(2), &handle)
+        discover::<HashSet<PeerInfo>>(&handle, port, our_pk, our_sk.clone())
+            .map_err(|e| panic!("discover error: {}", e))
+            .flatten_stream()
+            .with_timeout(Duration::from_secs(2), &handle)
             .collect()
             .and_then(move |v| {
                 assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
@@ -112,13 +123,9 @@ fn service_discovery() {
 
                 Timeout::new(Duration::from_millis(100), &handle)
                     .map_err(|e| panic!(e))
-                    .map(move |()| {
-                        unwrap!(discover::<HashSet<PeerInfo>>(
-                            &handle0,
-                            port,
-                            our_pk,
-                            our_sk
-                        ))
+                    .and_then(move |()| {
+                        discover::<HashSet<PeerInfo>>(&handle0, port, our_pk, our_sk)
+                            .map_err(|e| panic!("discover error: {}", e))
                     })
                     .flatten_stream()
                     .until({

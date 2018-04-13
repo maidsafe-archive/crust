@@ -64,44 +64,53 @@ pub fn bootstrap<UID: Uid>(
     let config = config.clone();
     let handle = handle.clone();
     let cache = cache.clone();
-    let try = || -> Result<_, BootstrapError> {
-        let sd_peers = if use_service_discovery {
-            let sd_port = config
-                .read()
-                .service_discovery_port
-                .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
-            service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk.clone())
-                .map_err(BootstrapError::ServiceDiscovery)?
-                .infallible::<(PaAddr, TryPeerError)>()
-                .map(|(_, v)| stream::iter_ok(v))
-                .flatten()
-                .into_boxed()
-        } else {
-            future::empty().into_stream().into_boxed()
-        };
-        let sd_peers = {
-            let timeout = Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS);
-            sd_peers.until(Timeout::new(timeout, &handle).infallible())
-        };
 
-        let peers = bootstrap_peers(&config, &cache)?;
-        let timeout = Timeout::new(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle);
-        let mut i = 0;
-        let first_ok_peer = sd_peers
-            .chain(stream::iter_ok(peers))
-            .filter(move |peer| !blacklist.contains(&peer.addr))
-            .map(move |peer| {
-                let fut = bootstrap_to_peer(&handle, peer, i, &config, &cache, &request, &our_sk);
-                i += 1;
-                fut
+    let handle1 = handle.clone();
+    let handle2 = handle.clone();
+    let sd_peers = if use_service_discovery {
+        let sd_port = config
+            .read()
+            .service_discovery_port
+            .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
+        service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk.clone())
+            .map_err(BootstrapError::ServiceDiscovery)
+            .map(move |s| {
+                s.map(|(_, v)| stream::iter_ok(v))
+                    .flatten()
+                    .with_timeout(
+                        Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS),
+                        &handle1,
+                    )
+                    .infallible()
+                    .into_boxed()
             })
-            .buffer_unordered(64)
-            .until(timeout.infallible())
-            .first_ok()
-            .map_err(|errs| BootstrapError::AllPeersFailed(errs.into_iter().collect()));
-        Ok(first_ok_peer)
+            .into_boxed()
+    } else {
+        future::ok(stream::empty().into_boxed()).into_boxed()
     };
-    future::result(try()).flatten().into_boxed()
+
+    let cached_peers = future::result(bootstrap_peers(&config, &cache));
+
+    sd_peers
+        .join(cached_peers)
+        .and_then(move |(sd_peers, cached_peers)| {
+            let mut i = 0;
+
+            sd_peers
+                .chain(stream::iter_ok(cached_peers))
+                .filter(move |peer| !blacklist.contains(&peer.addr))
+                .map(move |peer| {
+                    let fut =
+                        bootstrap_to_peer(&handle2, peer, i, &config, &cache, &request, &our_sk);
+                    i += 1;
+                    fut
+                })
+                .buffer_unordered(64)
+                .with_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle)
+                .first_ok()
+                .map_err(|errs| BootstrapError::AllPeersFailed(errs.into_iter().collect()))
+        })
+        .into_boxed()
 }
 
 /// Attempts to bootstrap to single given peer.
