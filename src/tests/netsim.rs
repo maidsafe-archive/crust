@@ -173,6 +173,8 @@ fn rendezvous_connect_over_poor_connection() {
     let (drop_tx_b1, drop_rx_b1) = future_utils::drop_notify();
     let (addr_tx_a1, addr_rx_a1) = oneshot::channel();
     let (addr_tx_b1, addr_rx_b1) = oneshot::channel();
+    let (drop_tx_ac, drop_rx_ac) = future_utils::drop_notify();
+    let (drop_tx_bc, drop_rx_bc) = future_utils::drop_notify();
     let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let res = core.run(future::lazy(|| {
         let rendezvous_server_node_0 = netsim::node::endpoint_v4(|ip| {
@@ -281,16 +283,22 @@ fn rendezvous_connect_over_poor_connection() {
                                             .send((0, send_data_a_clone))
                                             .map_err(|e| panic!("send error: {}", e))
                                             .and_then(move |stream| {
+                                                trace!("node_a connected!");
                                                 stream
                                                     .into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("receive error: {}", e)
                                                     })
-                                                    .map(move |(recv_data_b, _stream)| {
+                                                    .and_then(move |(recv_data_b, stream)| {
                                                         drop(drop_tx_a0);
                                                         drop(drop_tx_a1);
-                                                        drop(service);
-                                                        unwrap!(recv_data_b)
+                                                        drop(drop_tx_ac);
+
+                                                        drop_rx_bc.map(move |()| {
+                                                            drop(stream);
+                                                            drop(service);
+                                                            unwrap!(recv_data_b)
+                                                        })
                                                     })
                                             })
                                     })
@@ -326,16 +334,22 @@ fn rendezvous_connect_over_poor_connection() {
                                             .send((0, send_data_b_clone))
                                             .map_err(|e| panic!("send error: {}", e))
                                             .and_then(move |stream| {
+                                                trace!("node_b connected!");
                                                 stream
                                                     .into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("receive error: {}", e)
                                                     })
-                                                    .map(move |(recv_data_a, _stream)| {
+                                                    .and_then(move |(recv_data_a, stream)| {
                                                         drop(drop_tx_b0);
                                                         drop(drop_tx_b1);
-                                                        drop(service);
-                                                        unwrap!(recv_data_a)
+                                                        drop(drop_tx_bc);
+
+                                                        drop_rx_ac.map(move |()| {
+                                                            drop(stream);
+                                                            drop(service);
+                                                            unwrap!(recv_data_a)
+                                                        })
                                                     })
                                             })
                                     })
@@ -346,14 +360,16 @@ fn rendezvous_connect_over_poor_connection() {
         });
 
         let node_a = {
-            netsim::node::nat_v4(NatV4Builder::default(), node_a)
+            let nat = NatV4Builder::default().blacklist_unrecognized_addrs();
+            netsim::node::nat_v4(nat, node_a)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
                 .packet_loss(0.1, Duration::from_millis(20))
         };
 
         let node_b = {
-            netsim::node::nat_v4(NatV4Builder::default(), node_b)
+            let nat = NatV4Builder::default().blacklist_unrecognized_addrs();
+            netsim::node::nat_v4(nat, node_b)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
                 .packet_loss(0.1, Duration::from_millis(20))
