@@ -252,12 +252,17 @@ impl<UID: Uid> Service<UID> {
     /// generate a `PubConnectionInfo`, trade `PubConnectionInfo`s using some out-of-channel, then
     /// call connect simultaneously using each other's `PubConnectionInfo` and their own
     /// `PrivConnectionInfo`.
+    /// Note, that loopback addresses are filtered out.
     fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
         let (direct_addrs, _) = self.listeners.addresses();
+        let direct_addrs = direct_addrs
+            .into_iter()
+            .filter(|addr| !addr.ip().is_loopback())
+            .collect();
         let priv_conn_info = PrivConnectionInfo {
             connection_id: rand::thread_rng().gen(),
             id: self.our_uid,
-            for_direct: direct_addrs.into_iter().collect(),
+            for_direct: direct_addrs,
             p2p_conn_info: None,
             our_pk: self.our_pk,
             our_sk: self.our_sk.clone(),
@@ -420,6 +425,41 @@ mod tests {
             let p2p = configure_nat_traversal(&config);
 
             assert!(!p2p.is_igd_enabled_for_rendezvous());
+        }
+    }
+
+    mod service {
+        use super::*;
+        use tokio_core::reactor::Core;
+        use util;
+
+        mod prepare_connection_info {
+            use super::*;
+
+            #[test]
+            fn it_does_not_include_loopback_address() {
+                let mut evloop = unwrap!(Core::new());
+                let handle = evloop.handle();
+                let config = unwrap!(ConfigFile::new_temporary());
+                unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+
+                let prep_conn_info = Service::with_config(&handle, config, util::random_id())
+                    .and_then(|service| {
+                        service
+                            .start_listening()
+                            .collect()
+                            .map(|listeners| (service, listeners))
+                    })
+                    .and_then(|(service, _listeners)| service.prepare_connection_info());
+                let conn_info = unwrap!(evloop.run(prep_conn_info));
+
+                assert!(
+                    conn_info
+                        .for_direct
+                        .iter()
+                        .all(|addr| !addr.ip().is_loopback())
+                );
+            }
         }
     }
 }
