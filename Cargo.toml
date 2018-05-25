@@ -52,7 +52,7 @@ chrono = "~0.4.0"
 hamcrest = "~0.1.5"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-netsim = { version = "~0.1.9", optional = true }
+netsim = { version = "~0.2.2", optional = true }
 
 [features]
 default = ["netsim"]
