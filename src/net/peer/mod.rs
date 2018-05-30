@@ -31,15 +31,8 @@ mod uid;
 
 use priv_prelude::*;
 
-#[cfg(not(test))]
 pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
-#[cfg(not(test))]
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
-
-#[cfg(test)]
-pub const INACTIVITY_TIMEOUT_MS: u64 = 900_000;
-#[cfg(test)]
-const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 
 /// A connection to a remote peer.
 ///
