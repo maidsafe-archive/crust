@@ -357,7 +357,7 @@ impl<UID: Uid> Service<UID> {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState<UID>| {
                 if let Some(ci_chann) = state.cm.get_ci_channel(our_ci.connection_id) {
-                    unwrap!(ci_chann.unbounded_send(their_ci));
+                    let _ = ci_chann.unbounded_send(their_ci);
                 }
             }));
         Ok(())
