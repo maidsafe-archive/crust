@@ -55,9 +55,9 @@ impl<UID: Uid> TryPeer<UID> {
         )?;
 
         let state = TryPeer {
-            token: token,
-            peer: peer,
-            socket: socket,
+            token,
+            peer,
+            socket,
             request: Some((
                 Message::BootstrapRequest(
                     our_uid,
@@ -66,7 +66,7 @@ impl<UID: Uid> TryPeer<UID> {
                 ),
                 0,
             )),
-            finish: finish,
+            finish,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));

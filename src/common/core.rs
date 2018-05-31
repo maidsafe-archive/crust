@@ -87,7 +87,7 @@ pub fn spawn_event_loop(
     });
 
     Ok(EventLoop {
-        tx: tx,
+        tx,
         _joiner: joiner,
     })
 }
@@ -155,8 +155,8 @@ pub struct Core {
 impl Core {
     fn new(token_counter_start: usize, tx: Sender<CoreMessage>, timer: Timer<CoreTimer>) -> Self {
         Core {
-            tx: tx,
-            timer: timer,
+            tx,
+            timer,
             token_counter: token_counter_start,
             states: HashMap::new(),
         }
@@ -231,8 +231,8 @@ impl CoreMessage {
 impl CoreTimer {
     pub fn new(state_id: Token, timer_id: u8) -> Self {
         CoreTimer {
-            state_id: state_id,
-            timer_id: timer_id,
+            state_id,
+            timer_id,
         }
     }
 }

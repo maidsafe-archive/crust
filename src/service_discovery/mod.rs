@@ -61,16 +61,16 @@ impl ServiceDiscovery {
         let remote_addr = SocketAddr::from_str(&format!("255.255.255.255:{}", port))?;
 
         let service_discovery = ServiceDiscovery {
-            token: token,
+            token,
             socket: udp_socket,
-            remote_addr: remote_addr,
+            remote_addr,
             listen: false,
             read_buf: [0; 1024],
-            our_listeners: our_listeners,
-            seek_peers_req: serialise(&DiscoveryMsg::Request { guid: guid })?,
+            our_listeners,
+            seek_peers_req: serialise(&DiscoveryMsg::Request { guid })?,
             reply_to: VecDeque::new(),
             observers: Vec::new(),
-            guid: guid,
+            guid,
         };
 
         poll.register(

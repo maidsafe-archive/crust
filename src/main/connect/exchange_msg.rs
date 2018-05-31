@@ -65,13 +65,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
 
         let state = Self {
-            token: token,
-            expected_id: expected_id,
+            token,
+            expected_id,
             expected_nh: name_hash,
-            socket: socket,
-            cm: cm,
+            socket,
+            cm,
             msg: Some((Message::Connect(our_id, name_hash), 0)),
-            finish: finish,
+            finish,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));

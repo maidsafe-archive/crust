@@ -76,14 +76,14 @@ impl<UID: Uid> ActiveConnection<UID> {
         };
 
         let state = Rc::new(RefCell::new(ActiveConnection {
-            token: token,
-            socket: socket,
-            cm: cm,
-            our_id: our_id,
-            their_id: their_id,
-            their_role: their_role,
-            event_tx: event_tx,
-            heartbeat: heartbeat,
+            token,
+            socket,
+            cm,
+            our_id,
+            their_id,
+            their_role,
+            event_tx,
+            heartbeat,
         }));
 
         let _ = core.insert_state(token, state.clone());
@@ -266,10 +266,10 @@ impl Heartbeat {
         )?;
 
         Ok(Heartbeat {
-            recv_timeout: recv_timeout,
-            recv_timer: recv_timer,
-            send_timeout: send_timeout,
-            send_timer: send_timer,
+            recv_timeout,
+            recv_timer,
+            send_timeout,
+            send_timer,
         })
     }
 

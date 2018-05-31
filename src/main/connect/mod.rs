@@ -60,19 +60,19 @@ impl<UID: Uid> Connect<UID> {
         let token = core.get_new_token();
 
         let state = Rc::new(RefCell::new(Self {
-            token: token,
+            token,
             timeout: core.set_timeout(
                 Duration::from_secs(TIMEOUT_SEC),
                 CoreTimer::new(token, 0),
             )?,
-            cm: cm,
-            our_nh: our_nh,
+            cm,
+            our_nh,
             our_id: our_ci.id,
-            their_id: their_id,
+            their_id,
             self_weak: Weak::new(),
             listener: None,
             children: HashSet::with_capacity(their_direct.len() + their_hole_punch.len()),
-            event_tx: event_tx,
+            event_tx,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);

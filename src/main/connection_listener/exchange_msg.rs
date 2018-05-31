@@ -76,18 +76,18 @@ impl<UID: Uid> ExchangeMsg<UID> {
         );
 
         let state = Rc::new(RefCell::new(Self {
-            token: token,
-            cm: cm,
-            config: config,
-            event_tx: event_tx,
-            name_hash: name_hash,
+            token,
+            cm,
+            config,
+            event_tx,
+            name_hash,
             next_state: NextState::None,
-            our_uid: our_uid,
-            socket: socket,
-            timeout: timeout,
+            our_uid,
+            socket,
+            timeout,
             reachability_children: HashSet::with_capacity(4),
-            accept_bootstrap: accept_bootstrap,
-            require_reachability: require_reachability,
+            accept_bootstrap,
+            require_reachability,
             self_weak: Default::default(),
         }));
 

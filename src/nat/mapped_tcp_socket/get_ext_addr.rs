@@ -41,10 +41,10 @@ impl<UID: Uid> GetExtAddr<UID> {
         let token = core.get_new_token();
 
         let state = Self {
-            token: token,
-            socket: socket,
+            token,
+            socket,
             request: Some((Message::EchoAddrReq, 0)),
-            finish: finish,
+            finish,
         };
 
         poll.register(

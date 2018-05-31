@@ -79,8 +79,8 @@ impl<UID: Uid> Bootstrap<UID> {
         let sd_meta = match seek_peers(core, service_discovery_token, token) {
             Ok((rx, timeout)) => {
                 Some(ServiceDiscMeta {
-                    rx: rx,
-                    timeout: timeout,
+                    rx,
+                    timeout,
                 })
             }
             Err(CrustError::ServiceDiscNotEnabled) => None,
@@ -91,18 +91,18 @@ impl<UID: Uid> Bootstrap<UID> {
         };
 
         let state = Rc::new(RefCell::new(Self {
-            token: token,
-            cm: cm,
-            peers: peers,
-            blacklist: blacklist,
-            name_hash: name_hash,
-            ext_reachability: ext_reachability,
-            our_uid: our_uid,
-            event_tx: event_tx,
-            sd_meta: sd_meta,
-            bs_timer: bs_timer,
-            bs_timeout: bs_timeout,
-            cache: cache,
+            token,
+            cm,
+            peers,
+            blacklist,
+            name_hash,
+            ext_reachability,
+            our_uid,
+            event_tx,
+            sd_meta,
+            bs_timer,
+            bs_timeout,
+            cache,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
             self_weak: Weak::new(),
         }));

@@ -42,11 +42,11 @@ impl<UID: Uid> ConfigRefresher<UID> {
         )?;
 
         let state = Rc::new(RefCell::new(ConfigRefresher {
-            token: token,
-            timer: timer,
-            timeout: timeout,
-            cm: cm,
-            config: config,
+            token,
+            timer,
+            timeout,
+            cm,
+            config,
         }));
         let _ = core.insert_state(token, state);
 

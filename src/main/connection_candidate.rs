@@ -40,13 +40,13 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         finish: Finish,
     ) -> ::Res<Token> {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
-            token: token,
-            cm: cm,
-            socket: socket,
-            our_id: our_id,
-            their_id: their_id,
+            token,
+            cm,
+            socket,
+            our_id,
+            their_id,
             msg: Some((Message::ChooseConnection, 0)),
-            finish: finish,
+            finish,
         }));
 
         let _ = core.insert_state(token, state.clone());

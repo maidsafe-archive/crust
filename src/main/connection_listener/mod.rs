@@ -130,14 +130,14 @@ impl<UID: Uid> ConnectionListener<UID> {
         *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
 
         let state = Self {
-            token: token,
-            cm: cm,
-            config: config,
+            token,
+            cm,
+            config,
             event_tx: event_tx.clone(),
-            listener: listener,
-            name_hash: name_hash,
-            our_uid: our_uid,
-            timeout_sec: timeout_sec,
+            listener,
+            name_hash,
+            our_uid,
+            timeout_sec,
             accept_bootstrap: false,
         };
 
@@ -309,9 +309,9 @@ mod tests {
 
         Listener {
             _el: el,
-            uid: uid,
-            addr: addr,
-            event_rx: event_rx,
+            uid,
+            addr,
+            event_rx,
         }
     }
 

@@ -55,11 +55,11 @@ where
         )?;
 
         let state = CheckReachability {
-            token: token,
-            socket: socket,
-            timeout: timeout,
-            finish: finish,
-            t: t,
+            token,
+            socket,
+            timeout,
+            finish,
+            t,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));

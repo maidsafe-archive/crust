@@ -76,12 +76,12 @@ impl<UID: Uid> Service<UID> {
         let service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
-            event_tx: event_tx,
+            event_tx,
             mc: Arc::new(mc),
-            el: el,
-            name_hash: name_hash,
-            our_uid: our_uid,
-            our_listeners: our_listeners,
+            el,
+            name_hash,
+            our_uid,
+            our_listeners,
         };
 
         service.start_config_refresher()?;
@@ -465,7 +465,7 @@ impl<UID: Uid> Service<UID> {
         let our_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
         if DISABLE_NAT {
             let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token: result_token,
+                result_token,
                 result: Ok(PrivConnectionInfo {
                     id: self.our_uid,
                     for_direct: our_listeners,
@@ -492,7 +492,7 @@ impl<UID: Uid> Service<UID> {
                             .collect();
                         let event_tx = event_tx_clone;
                         let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                            result_token: result_token,
+                            result_token,
                             result: Ok(PrivConnectionInfo {
                                 id: our_uid,
                                 for_direct: our_listeners,
@@ -507,7 +507,7 @@ impl<UID: Uid> Service<UID> {
                     Err(e) => {
                         debug!("Error mapping tcp socket: {}", e);
                         let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                            result_token: result_token,
+                            result_token,
                             result: Err(From::from(e)),
                         }));
                     }
@@ -516,7 +516,7 @@ impl<UID: Uid> Service<UID> {
             {
                 let _ = self.event_tx.send(Event::ConnectionInfoPrepared(
                     ConnectionInfoResult {
-                        result_token: result_token,
+                        result_token,
                         result: Err(e),
                     },
                 ));
@@ -746,8 +746,8 @@ mod tests {
                 let (ci_tx, ci_rx) = mpsc::channel();
                 (
                     TestNode {
-                        event_rx: event_rx,
-                        service: service,
+                        event_rx,
+                        service,
                         connection_id_rx: ci_rx,
                         our_cis: Vec::new(),
                         our_index: index,

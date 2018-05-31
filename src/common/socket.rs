@@ -36,7 +36,7 @@ impl Socket {
     pub fn wrap(stream: TcpStream) -> Self {
         Socket {
             inner: Some(SockInner {
-                stream: stream,
+                stream,
                 read_buffer: Vec::new(),
                 read_len: 0,
                 write_queue: BTreeMap::new(),
