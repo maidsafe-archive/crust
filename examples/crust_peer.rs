@@ -11,20 +11,26 @@
 
 // For explanation of lint checks, run `rustc -W help` or see
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
-#![forbid(exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
-          unknown_crate_types, warnings)]
-#![deny(bad_style, deprecated, improper_ctypes, missing_docs,
-        non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
-        private_no_mangle_fns, private_no_mangle_statics, stable_features,
-        unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
-        unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
-#![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
-        unused_qualifications, unused_results)]
-#![allow(box_pointers, missing_copy_implementations,
-         missing_debug_implementations, variant_size_differences)]
+#![forbid(
+    exceeding_bitshifts, mutable_transmutes, no_mangle_const_items, unknown_crate_types, warnings
+)]
+#![deny(
+    bad_style, deprecated, improper_ctypes, missing_docs, non_shorthand_field_patterns,
+    overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+    stable_features, unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
+    unused_attributes, unused_comparisons, unused_features, unused_parens, while_true
+)]
+#![warn(
+    trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
+    unused_qualifications, unused_results
+)]
+#![allow(
+    box_pointers, missing_copy_implementations, missing_debug_implementations,
+    variant_size_differences
+)]
 // FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
 // on code in the master branch
-#![cfg_attr(feature="cargo-clippy", allow(clone_on_ref_ptr, needless_pass_by_value))]
+#![cfg_attr(feature = "cargo-clippy", allow(clone_on_ref_ptr, needless_pass_by_value))]
 
 #[macro_use]
 extern crate log;
@@ -32,9 +38,9 @@ extern crate log;
 extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
-extern crate maidsafe_utilities;
-extern crate crust;
 extern crate clap;
+extern crate crust;
+extern crate maidsafe_utilities;
 extern crate rand;
 extern crate serde_json;
 
@@ -46,8 +52,8 @@ use std::cmp;
 use std::collections::{BTreeMap, HashMap};
 use std::io;
 use std::str::FromStr;
+use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{RecvTimeoutError, Sender, channel};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -171,7 +177,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
                 }
                 println!(
                     "Didn't bootstrap to an existing network - this may be the first node \
-                          of a new network."
+                     of a new network."
                 );
             }
         }
@@ -198,7 +204,7 @@ fn main() {
     let matches = App::new("crust_peer")
         .about(
             "The crust peer will run, using any config file it can find to \
-                try and bootstrap off any provided peers.",
+             try and bootstrap off any provided peers.",
         )
         .arg(
             Arg::with_name("discovery-port")
@@ -214,7 +220,7 @@ fn main() {
                 .value_name("RATE")
                 .help(
                     "Keep sending random data at a maximum speed of RATE bytes/second to the \
-                   first connected peer.",
+                     first connected peer.",
                 )
                 .takes_value(true),
         )
@@ -239,10 +245,7 @@ fn main() {
 
     config.service_discovery_port = if matches.is_present("discovery-port") {
         Some(unwrap!(
-            unwrap!(
-                matches.value_of("discovery-port"),
-                "Expected <PORT>"
-            ).parse(),
+            unwrap!(matches.value_of("discovery-port"), "Expected <PORT>").parse(),
             "Expected number for <PORT>"
         ))
     } else {
@@ -286,9 +289,10 @@ fn main() {
                                 println!(
                                     "\nReceived from {:?} message: {}",
                                     peer_id,
-                                    String::from_utf8(bytes).unwrap_or_else(|_| {
-                                        format!("non-UTF-8 message of {} bytes", message_length)
-                                    })
+                                    String::from_utf8(bytes)
+                                        .unwrap_or_else(|_| {
+                                            format!("non-UTF-8 message of {} bytes", message_length)
+                                        })
                                 );
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
@@ -320,8 +324,7 @@ fn main() {
                             crust::Event::BootstrapConnect(peer_id, addr) => {
                                 println!(
                                     "\nBootstrapConnect with peer {:?} (address: <{:?}>)",
-                                    peer_id,
-                                    addr
+                                    peer_id, addr
                                 );
                                 let peer_index = handle_new_peer(
                                     &unwrap!(service.lock()),
@@ -372,7 +375,6 @@ fn main() {
                                 println!("\nReceived event {:?} (not handled)", e);
                             }
                         }
-
                     } else {
                         break;
                     }
@@ -416,15 +418,12 @@ fn main() {
             for _ in 0..times {
                 unwrap!(unwrap!(service.lock()).send(
                     peer_id,
-                    generate_random_vec_u8(
-                        length as usize,
-                    ),
+                    generate_random_vec_u8(length as usize),
                     0,
                 ));
                 debug!(
                     "Sent a message with length of {} bytes to {:?}",
-                    length,
-                    peer_id
+                    length, peer_id
                 );
                 std::thread::sleep(Duration::from_millis(sleep_time));
             }
@@ -524,9 +523,9 @@ enum UserCommand {
 fn parse_user_command(cmd: &str) -> Option<UserCommand> {
     let app = App::new("cli")
         .setting(AppSettings::NoBinaryName)
-        .subcommand(SubCommand::with_name("prepare-connection-info").about(
-            "Prepare a connection info",
-        ))
+        .subcommand(
+            SubCommand::with_name("prepare-connection-info").about("Prepare a connection info"),
+        )
         .subcommand(
             SubCommand::with_name("connect")
                 .about("Initiate a connection to the remote peer")
@@ -569,9 +568,9 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .index(1),
                 ),
         )
-        .subcommand(SubCommand::with_name("list").about(
-            "List existing connections and UDP sockets",
-        ))
+        .subcommand(
+            SubCommand::with_name("list").about("List existing connections and UDP sockets"),
+        )
         .subcommand(SubCommand::with_name("stop").about("Exit the app"))
         .subcommand(SubCommand::with_name("help").about("Print this help"));
     let mut help_message = Vec::new();

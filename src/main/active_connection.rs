@@ -9,8 +9,8 @@
 
 use common::{Core, CoreTimer, CrustUser, Message, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap, Event};
-use mio::{Poll, Ready, Token};
 use mio::timer::Timeout;
+use mio::{Poll, Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -63,10 +63,8 @@ impl<UID: Uid> ActiveConnection<UID> {
             Err(e) => {
                 debug!(
                     "{:?} - Failed to initialize heartbeat: {:?} - killing ActiveConnection \
-                        to {:?}",
-                    our_id,
-                    e,
-                    their_id
+                     to {:?}",
+                    our_id, e, their_id
                 );
                 let _ = poll.deregister(&socket);
                 let _ = event_tx.send(Event::LostPeer(their_id));
@@ -113,11 +111,9 @@ impl<UID: Uid> ActiveConnection<UID> {
         loop {
             match self.socket.read::<Message<UID>>() {
                 Ok(Some(Message::Data(data))) => {
-                    let _ = self.event_tx.send(Event::NewMessage(
-                        self.their_id,
-                        self.their_role,
-                        data,
-                    ));
+                    let _ =
+                        self.event_tx
+                            .send(Event::NewMessage(self.their_id, self.their_role, data));
                     self.reset_receive_heartbeat(core, poll);
                 }
                 Ok(Some(Message::Heartbeat)) => {
@@ -181,7 +177,7 @@ impl<UID: Uid> State for ActiveConnection<UID> {
         if kind.is_error() || kind.is_hup() {
             trace!(
                 "{:?} Terminating connection to peer: {:?}. \
-                    Event reason: {:?} - Optional Error: {:?}",
+                 Event reason: {:?} - Optional Error: {:?}",
                 self.our_id,
                 self.their_id,
                 kind,
@@ -254,16 +250,12 @@ struct Heartbeat {
 impl Heartbeat {
     fn new(core: &mut Core, state_id: Token) -> ::Res<Self> {
         let recv_timer = CoreTimer::new(state_id, 0);
-        let recv_timeout = core.set_timeout(
-            Duration::from_millis(INACTIVITY_TIMEOUT_MS),
-            recv_timer,
-        )?;
+        let recv_timeout =
+            core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer)?;
 
         let send_timer = CoreTimer::new(state_id, 1);
-        let send_timeout = core.set_timeout(
-            Duration::from_millis(HEARTBEAT_PERIOD_MS),
-            send_timer,
-        )?;
+        let send_timeout =
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), send_timer)?;
 
         Ok(Heartbeat {
             recv_timeout,
@@ -300,10 +292,8 @@ impl Heartbeat {
 
     fn reset_send(&mut self, core: &mut Core) -> ::Res<()> {
         let _ = core.cancel_timeout(&self.send_timeout);
-        self.send_timeout = core.set_timeout(
-            Duration::from_millis(HEARTBEAT_PERIOD_MS),
-            self.send_timer,
-        )?;
+        self.send_timeout =
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)?;
         Ok(())
     }
 

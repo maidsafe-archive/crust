@@ -56,8 +56,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
             token,
             Ready::writable() | Ready::error() | Ready::hup(),
             PollOpt::edge(),
-        )
-        {
+        ) {
             state.borrow_mut().terminate(core, poll);
             return Err(From::from(e));
         }
@@ -75,7 +74,10 @@ impl<UID: Uid> ConnectionCandidate<UID> {
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
-            Some(&ConnectionId { active_connection: Some(_), .. }) => true,
+            Some(&ConnectionId {
+                active_connection: Some(_),
+                ..
+            }) => true,
             _ => false,
         };
         if terminate {
@@ -93,8 +95,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
             self.token,
             Ready::readable() | Ready::error() | Ready::hup(),
             PollOpt::edge(),
-        )
-        {
+        ) {
             debug!("Error in re-registeration: {:?}", e);
             self.handle_error(core, poll);
         } else {

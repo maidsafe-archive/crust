@@ -10,7 +10,7 @@
 #[macro_use]
 pub mod utils;
 
-pub use self::utils::{UniqueId, gen_config, get_event_sender, timebomb};
+pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
 use common::CrustUser;
 use main::{self, Config, DevConfig, Event};
@@ -19,7 +19,7 @@ use rand;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::thread;
 use std::time::Duration;
 
@@ -93,7 +93,11 @@ fn bootstrap_two_services_using_service_discovery() {
     config.service_discovery_port = Some(service_discovery_port);
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, config.clone(), rand::random()));
+    let mut service0 = unwrap!(Service::with_config(
+        event_tx0,
+        config.clone(),
+        rand::random()
+    ));
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config, rand::random()));
@@ -123,7 +127,11 @@ fn bootstrap_with_multiple_contact_endpoints() {
     use std::net::TcpListener;
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default(), rand::random()));
+    let mut service0 = unwrap!(Service::with_config(
+        event_tx0,
+        Config::default(),
+        rand::random()
+    ));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
@@ -181,7 +189,11 @@ fn bootstrap_with_blacklist() {
     use std::net::TcpListener;
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, Config::default(), rand::random()));
+    let mut service0 = unwrap!(Service::with_config(
+        event_tx0,
+        Config::default(),
+        rand::random()
+    ));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
@@ -208,9 +220,10 @@ fn bootstrap_with_blacklist() {
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
     assert_eq!(peer_id1, service1.id());
 
-    let blacklisted_listener = unwrap!(
-            mio::tcp::TcpListener::from_listener(blacklisted_listener, &blacklisted_address)
-    );
+    let blacklisted_listener = unwrap!(mio::tcp::TcpListener::from_listener(
+        blacklisted_listener,
+        &blacklisted_address
+    ));
     thread::sleep(Duration::from_secs(5));
     // TODO See if these are doing the right thing - wait for Adam to explain as he might have
     // written this test case. Also check the similar one below.
@@ -236,9 +249,10 @@ fn bootstrap_fails_only_blacklisted_contact() {
 
     expect_event!(event_rx, Event::BootstrapFailed);
 
-    let blacklisted_listener = unwrap!(
-            mio::tcp::TcpListener::from_listener(blacklisted_listener, &blacklisted_address)
-    );
+    let blacklisted_listener = unwrap!(mio::tcp::TcpListener::from_listener(
+        blacklisted_listener,
+        &blacklisted_address
+    ));
     thread::sleep(Duration::from_secs(5));
     let res = blacklisted_listener.accept();
     assert!(res.is_err())
@@ -304,8 +318,8 @@ fn drop_disconnects() {
 // and handle non-responsive peers correctly.
 mod broken_peer {
     use common::{Core, Message, Socket, State};
-    use mio::{Poll, PollOpt, Ready, Token};
     use mio::tcp::TcpListener;
+    use mio::{Poll, PollOpt, Ready, Token};
     use rand;
     use std::any::Any;
     use std::cell::RefCell;
@@ -388,9 +402,9 @@ mod broken_peer {
 
 #[test]
 fn drop_peer_when_no_message_received_within_inactivity_period() {
-    use common::{CoreMessage, spawn_event_loop};
-    use mio::tcp::TcpListener;
     use self::broken_peer;
+    use common::{spawn_event_loop, CoreMessage};
+    use mio::tcp::TcpListener;
     use rust_sodium;
 
     let _ = rust_sodium::init();
@@ -402,9 +416,11 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
     let address = unwrap!(listener.local_addr());
 
-    unwrap!(el.send(CoreMessage::new(|core, poll| {
-        broken_peer::Listen::start(core, poll, listener)
-    })));
+    unwrap!(
+        el.send(CoreMessage::new(|core, poll| broken_peer::Listen::start(
+            core, poll, listener
+        )))
+    );
 
     // Spin up normal service that will connect to the above guy.
     let mut config = gen_config();
@@ -424,9 +440,9 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 
 #[test]
 fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_period() {
+    use main::INACTIVITY_TIMEOUT_MS;
     use std::thread;
     use std::time::Duration;
-    use main::INACTIVITY_TIMEOUT_MS;
 
     let config0 = gen_config();
     let (event_tx0, event_rx0) = get_event_sender();

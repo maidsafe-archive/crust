@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-pub use self::core::{Core, CoreMessage, CoreTimer, EventLoop, spawn_event_loop};
+pub use self::core::{spawn_event_loop, Core, CoreMessage, CoreTimer, EventLoop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::socket::Socket;
@@ -51,8 +51,8 @@ pub enum ExternalReachability {
 }
 
 /// Trait for specifying a unique identifier for a Crust peer
-pub trait Uid
-    : 'static
+pub trait Uid:
+    'static
     + Send
     + fmt::Debug
     + Clone
@@ -63,7 +63,8 @@ pub trait Uid
     + PartialOrd
     + Hash
     + Serialize
-    + DeserializeOwned {
+    + DeserializeOwned
+{
 }
 
 mod core;

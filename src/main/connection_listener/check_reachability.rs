@@ -8,8 +8,8 @@
 // Software.
 
 use common::{Core, CoreTimer, Socket, State};
-use mio::{Poll, PollOpt, Ready, Token};
 use mio::timer::Timeout;
+use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -102,7 +102,7 @@ where
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
         trace!(
             "Bootstrapper's external reachability check timed out to one of its given IP's. \
-                Erroring out for this remote endpoint."
+             Erroring out for this remote endpoint."
         );
         self.handle_error(core, poll)
     }

@@ -8,7 +8,7 @@
 // Software.
 
 use mio::tcp::TcpListener;
-use nat::{NatError, util};
+use nat::{util, NatError};
 use net2::TcpBuilder;
 use std::net::TcpStream;
 

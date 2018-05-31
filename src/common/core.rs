@@ -11,9 +11,9 @@
 
 use common::{Result, State};
 use maidsafe_utilities::thread::{self, Joiner};
-use mio::{Event, Events, Poll, PollOpt, Ready, Token};
 use mio::channel::{self, Receiver, Sender};
 use mio::timer::{Timeout, Timer};
+use mio::{Event, Events, Poll, PollOpt, Ready, Token};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -43,7 +43,7 @@ impl Drop for EventLoop {
         if let Err(e) = self.tx.send(CoreMessage(None)) {
             warn!(
                 "Could not send a terminator to event-loop. We will possibly not be able to \
-                   gracefully exit. Error: {:?}",
+                 gracefully exit. Error: {:?}",
                 e
             );
         }
@@ -218,21 +218,16 @@ impl Core {
 impl CoreMessage {
     pub fn new<F: FnOnce(&mut Core, &Poll) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        CoreMessage(Some(Box::new(
-            move |core: &mut Core, poll: &Poll| if let Some(f) =
-                f.take()
-            {
+        CoreMessage(Some(Box::new(move |core: &mut Core, poll: &Poll| {
+            if let Some(f) = f.take() {
                 f(core, poll)
-            },
-        )))
+            }
+        })))
     }
 }
 
 impl CoreTimer {
     pub fn new(state_id: Token, timer_id: u8) -> Self {
-        CoreTimer {
-            state_id,
-            timer_id,
-        }
+        CoreTimer { state_id, timer_id }
     }
 }

@@ -8,17 +8,21 @@
 // Software.
 
 use super::check_reachability::CheckReachability;
-use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message,
-             NameHash, Priority, Socket, State, Uid};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap, CrustConfig, Event,
-           read_config_file};
-use mio::{Poll, PollOpt, Ready, Token};
+use common::{
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message, NameHash,
+    Priority, Socket, State, Uid,
+};
+use main::{
+    read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
+    CrustConfig, Event,
+};
 use mio::timer::Timeout;
+use mio::{Poll, PollOpt, Ready, Token};
 use nat::ip_addr_is_global;
 use std::any::Any;
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::collections::hash_map::Entry;
+use std::collections::HashSet;
 use std::mem;
 use std::rc::{Rc, Weak};
 use std::time::Duration;
@@ -60,20 +64,19 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll.register(&socket, token, kind, PollOpt::edge())?;
 
         let timeout = core.set_timeout(
-            Duration::from_secs(
-                timeout_sec.unwrap_or(EXCHANGE_MSG_TIMEOUT_SEC),
-            ),
+            Duration::from_secs(timeout_sec.unwrap_or(EXCHANGE_MSG_TIMEOUT_SEC)),
             CoreTimer::new(token, 0),
         )?;
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
-        let require_reachability = unwrap!(config.lock()).cfg.dev.as_ref().map_or(
-            true,
-            |dev_cfg| {
+        let require_reachability = unwrap!(config.lock())
+            .cfg
+            .dev
+            .as_ref()
+            .map_or(true, |dev_cfg| {
                 !dev_cfg.disable_external_reachability_requirement
-            },
-        );
+            });
 
         let state = Rc::new(RefCell::new(Self {
             token,
@@ -107,15 +110,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 }
 
                 match self.validate_peer_uid(their_uid) {
-                    Ok(their_uid) => {
-                        self.handle_bootstrap_req(
-                            core,
-                            poll,
-                            their_uid,
-                            name_hash,
-                            ext_reachability,
-                        )
-                    }
+                    Ok(their_uid) => self.handle_bootstrap_req(
+                        core,
+                        poll,
+                        their_uid,
+                        name_hash,
+                        ext_reachability,
+                    ),
                     Err(()) => self.terminate(core, poll),
                 }
             }
@@ -152,9 +153,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 core,
                 poll,
                 Some((
-                    Message::BootstrapDenied(
-                        BootstrapDenyReason::InvalidNameHash,
-                    ),
+                    Message::BootstrapDenied(BootstrapDenyReason::InvalidNameHash),
                     0,
                 )),
             );
@@ -175,19 +174,16 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
                 }
 
-                for their_listener in direct_listeners.into_iter().filter(|addr| {
-                    ip_addr_is_global(&addr.ip())
-                })
+                for their_listener in direct_listeners
+                    .into_iter()
+                    .filter(|addr| ip_addr_is_global(&addr.ip()))
                 {
                     let self_weak = self.self_weak.clone();
                     let finish = move |core: &mut Core, poll: &Poll, child, res| {
                         if let Some(self_rc) = self_weak.upgrade() {
-                            self_rc.borrow_mut().handle_check_reachability(
-                                core,
-                                poll,
-                                child,
-                                res,
-                            )
+                            self_rc
+                                .borrow_mut()
+                                .handle_check_reachability(core, poll, child, res)
                         }
                     };
 
@@ -197,15 +193,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
                         their_listener,
                         their_uid,
                         Box::new(finish),
-                    )
-                    {
+                    ) {
                         let _ = self.reachability_children.insert(child);
                     }
                 }
                 if self.reachability_children.is_empty() {
                     trace!(
                         "Bootstrapper failed to pass requisite condition of external \
-                            recheability. Denying bootstrap."
+                         recheability. Denying bootstrap."
                     );
                     let reason = BootstrapDenyReason::FailedExternalReachability;
                     self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
@@ -236,20 +231,16 @@ impl<UID: Uid> ExchangeMsg<UID> {
         };
 
         let res = match peer_kind {
-            CrustUser::Node => {
-                unwrap!(self.config.lock())
-                    .cfg
-                    .whitelisted_node_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
-            }
-            CrustUser::Client => {
-                unwrap!(self.config.lock())
-                    .cfg
-                    .whitelisted_client_ips
-                    .as_ref()
-                    .map_or(true, |ips| ips.contains(&peer_ip))
-            }
+            CrustUser::Node => unwrap!(self.config.lock())
+                .cfg
+                .whitelisted_node_ips
+                .as_ref()
+                .map_or(true, |ips| ips.contains(&peer_ip)),
+            CrustUser::Client => unwrap!(self.config.lock())
+                .cfg
+                .whitelisted_client_ips
+                .as_ref()
+                .map_or(true, |ips| ips.contains(&peer_ip)),
         };
 
         if !res {
@@ -274,7 +265,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         if self.reachability_children.is_empty() {
             trace!(
                 "Bootstrapper failed to pass requisite condition of external recheability. \
-                    Denying bootstrap."
+                 Denying bootstrap."
             );
             let reason = BootstrapDenyReason::FailedExternalReachability;
             self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
@@ -371,7 +362,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_uid, _) = self.next_state {
             let terminate = match unwrap!(self.cm.lock()).get(&their_uid).cloned() {
-                Some(ConnectionId { active_connection: Some(_), .. }) => true,
+                Some(ConnectionId {
+                    active_connection: Some(_),
+                    ..
+                }) => true,
                 _ => false,
             };
             if terminate {
@@ -414,8 +408,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
             }
             NextState::ConnectionCandidate(their_uid) => {
                 let cm = self.cm.clone();
-                let handler =
-                    move |core: &mut Core, poll: &Poll, token, res| if let Some(socket) = res {
+                let handler = move |core: &mut Core, poll: &Poll, token, res| {
+                    if let Some(socket) = res {
                         ActiveConnection::start(
                             core,
                             poll,
@@ -430,7 +424,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
                             Event::ConnectSuccess(their_uid),
                             event_tx.clone(),
                         );
-                    };
+                    }
+                };
 
                 let socket = mem::replace(&mut self.socket, Socket::default());
                 let _ = ConnectionCandidate::start(
@@ -450,9 +445,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn terminate_childern(&mut self, core: &mut Core, poll: &Poll) {
         for child in self.reachability_children.drain() {
-            core.get_state(child).map_or((), |c| {
-                c.borrow_mut().terminate(core, poll)
-            });
+            core.get_state(child)
+                .map_or((), |c| c.borrow_mut().terminate(core, poll));
         }
     }
 }
@@ -476,8 +470,8 @@ impl<UID: Uid> State for ExchangeMsg<UID> {
         let _ = core.remove_state(self.token);
 
         match self.next_state {
-            NextState::ConnectionCandidate(their_uid) |
-            NextState::ActiveConnection(their_uid, _) => {
+            NextState::ConnectionCandidate(their_uid)
+            | NextState::ActiveConnection(their_uid, _) => {
                 let mut guard = unwrap!(self.cm.lock());
                 if let Entry::Occupied(mut oe) = guard.entry(their_uid) {
                     oe.get_mut().currently_handshaking -= 1;

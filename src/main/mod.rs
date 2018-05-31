@@ -17,8 +17,9 @@ pub use self::connection_listener::ConnectionListener;
 pub use self::error::CrustError;
 pub use self::event::Event;
 pub use self::service::Service;
-pub use self::types::{ConfigWrapper, ConnectionId, ConnectionInfoResult, PrivConnectionInfo,
-                      PubConnectionInfo};
+pub use self::types::{
+    ConfigWrapper, ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo,
+};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -32,8 +33,8 @@ mod config_refresher;
 mod connect;
 mod connection_candidate;
 mod connection_listener;
-mod event;
 mod error;
+mod event;
 mod service;
 mod types;
 

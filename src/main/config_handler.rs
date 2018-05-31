@@ -90,8 +90,8 @@ pub fn read_config_file() -> ::Res<Config> {
 #[cfg(test)]
 #[allow(dead_code)]
 pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<PathBuf> {
-    use std::io::Write;
     use serde_json;
+    use std::io::Write;
 
     let mut config = Config::default();
 

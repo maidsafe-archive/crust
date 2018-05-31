@@ -7,8 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket,
-             State, Uid};
+use common::{
+    BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket, State,
+    Uid,
+};
 use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
 use std::cell::RefCell;
@@ -17,13 +19,12 @@ use std::net::SocketAddr;
 use std::rc::Rc;
 
 pub type Finish<UID> = Box<
-    FnMut(&mut Core,
-          &Poll,
-          Token,
-          Result<
-        (Socket, SocketAddr, UID),
-        (SocketAddr, Option<BootstrapDenyReason>),
-    >),
+    FnMut(
+        &mut Core,
+        &Poll,
+        Token,
+        Result<(Socket, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+    ),
 >;
 
 pub struct TryPeer<UID: Uid> {
@@ -59,11 +60,7 @@ impl<UID: Uid> TryPeer<UID> {
             peer,
             socket,
             request: Some((
-                Message::BootstrapRequest(
-                    our_uid,
-                    name_hash,
-                    ext_reachability,
-                ),
+                Message::BootstrapRequest(our_uid, name_hash, ext_reachability),
                 0,
             )),
             finish,

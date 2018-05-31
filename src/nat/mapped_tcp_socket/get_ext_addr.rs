@@ -8,9 +8,9 @@
 // Software.
 
 use common::{Core, Message, Priority, Socket, State, Uid};
-use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
-use nat::{NatError, util};
+use mio::{Poll, PollOpt, Ready, Token};
+use nat::{util, NatError};
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;

@@ -8,9 +8,9 @@
 // Software.
 
 use common::{Core, CoreTimer, CrustUser, State, Uid};
-use main::{ActiveConnection, ConnectionMap, CrustConfig, read_config_file};
-use mio::{Poll, Token};
+use main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig};
 use mio::timer::Timeout;
+use mio::{Poll, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -36,10 +36,7 @@ impl<UID: Uid> ConfigRefresher<UID> {
         trace!("Entered state ConfigRefresher");
 
         let timer = CoreTimer::new(token, 0);
-        let timeout = core.set_timeout(
-            Duration::from_secs(REFRESH_INTERVAL_SEC),
-            timer,
-        )?;
+        let timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), timer)?;
 
         let state = Rc::new(RefCell::new(ConfigRefresher {
             token,
@@ -61,14 +58,14 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
     }
 
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
-        self.timeout =
-            match core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer) {
-                Ok(t) => t,
-                Err(e) => {
-                    debug!("Config Refresher Timer Errored out: {:?}", e);
-                    return self.terminate(core, poll);
-                }
-            };
+        self.timeout = match core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer)
+        {
+            Ok(t) => t,
+            Err(e) => {
+                debug!("Config Refresher Timer Errored out: {:?}", e);
+                return self.terminate(core, poll);
+            }
+        };
 
         let config = match read_config_file() {
             Ok(cfg) => cfg,
@@ -84,53 +81,61 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
         let whitelisted_node_ips = config.whitelisted_node_ips.clone();
         let whitelisted_client_ips = config.whitelisted_client_ips.clone();
 
-        if !unwrap!(self.config.lock()).check_for_refresh_and_reset_modified(config) ||
-            (whitelisted_node_ips.is_none() && whitelisted_client_ips.is_none())
+        if !unwrap!(self.config.lock()).check_for_refresh_and_reset_modified(config)
+            || (whitelisted_node_ips.is_none() && whitelisted_client_ips.is_none())
         {
             return;
         }
 
         trace!(
             "Crust config has been updated - going to purge any nodes or clients that are no \
-               longer whitelisted"
+             longer whitelisted"
         );
 
         // Peers collected to avoid keeping the mutex lock alive which might lead to deadlock
-        let peers_to_terminate: Vec<_> =
-            unwrap!(self.cm.lock())
-                .values()
-                .filter_map(|cid| {
-                    cid.active_connection.and_then(|token| core.get_state(token)).and_then(|peer| {
-                    let should_drop = {
-                        let mut state = peer.borrow_mut();
-                        let ac = match state.as_any().downcast_mut::<ActiveConnection<UID>>() {
-                            Some(ac) => ac,
-                            None => {
-                                warn!("Token reserved for ActiveConnection has something else.");
-                                return None;
+        let peers_to_terminate: Vec<_> = unwrap!(self.cm.lock())
+            .values()
+            .filter_map(|cid| {
+                cid.active_connection
+                    .and_then(|token| core.get_state(token))
+                    .and_then(|peer| {
+                        let should_drop = {
+                            let mut state = peer.borrow_mut();
+                            let ac = match state.as_any().downcast_mut::<ActiveConnection<UID>>() {
+                                Some(ac) => ac,
+                                None => {
+                                    warn!(
+                                        "Token reserved for ActiveConnection has something else."
+                                    );
+                                    return None;
+                                }
+                            };
+                            match ac.peer_addr() {
+                                Err(e) => {
+                                    debug!(
+                                        "Could not obtain Peer IP: {:?} - dropping this peer.",
+                                        e
+                                    );
+                                    true
+                                }
+                                Ok(s) => match ac.peer_kind() {
+                                    CrustUser::Node => whitelisted_node_ips
+                                        .as_ref()
+                                        .map_or(false, |ips| !ips.contains(&s.ip())),
+                                    CrustUser::Client => whitelisted_client_ips
+                                        .as_ref()
+                                        .map_or(false, |ips| !ips.contains(&s.ip())),
+                                },
                             }
                         };
-                        match ac.peer_addr() {
-                            Err(e) => {
-                                debug!("Could not obtain Peer IP: {:?} - dropping this peer.", e);
-                                true
-                            }
-                            Ok(s) => {
-                                match ac.peer_kind() {
-                                    CrustUser::Node =>
-                                        whitelisted_node_ips.as_ref()
-                                              .map_or(false, |ips| !ips.contains(&s.ip())),
-                                    CrustUser::Client =>
-                                        whitelisted_client_ips.as_ref()
-                                              .map_or(false, |ips| !ips.contains(&s.ip())),
-                                }
-                            }
+                        if should_drop {
+                            Some(peer)
+                        } else {
+                            None
                         }
-                    };
-                    if should_drop { Some(peer) } else { None }
-                })
-                })
-                .collect();
+                    })
+            })
+            .collect();
 
         for peer in peers_to_terminate {
             peer.borrow_mut().terminate(core, poll);
