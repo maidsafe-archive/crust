@@ -8,10 +8,10 @@
 // Software.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use common::{CommonError, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY, Priority, Result};
+use common::{CommonError, Priority, Result, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
-use mio::{Evented, Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
+use mio::{Evented, Poll, PollOpt, Ready, Token};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::collections::{BTreeMap, VecDeque};
@@ -36,7 +36,7 @@ impl Socket {
     pub fn wrap(stream: TcpStream) -> Self {
         Socket {
             inner: Some(SockInner {
-                stream: stream,
+                stream,
                 read_buffer: Vec::new(),
                 read_len: 0,
                 write_queue: BTreeMap::new(),
@@ -178,8 +178,8 @@ impl SockInner {
                     is_something_read = true;
                 }
                 Err(error) => {
-                    return if error.kind() == ErrorKind::WouldBlock ||
-                        error.kind() == ErrorKind::Interrupted
+                    return if error.kind() == ErrorKind::WouldBlock
+                        || error.kind() == ErrorKind::Interrupted
                     {
                         if is_something_read {
                             self.read_from_buffer()
@@ -236,7 +236,8 @@ impl SockInner {
         token: Token,
         msg: Option<(T, Priority)>,
     ) -> ::Res<bool> {
-        let expired_keys: Vec<u8> = self.write_queue
+        let expired_keys: Vec<u8> = self
+            .write_queue
             .iter()
             .skip_while(|&(&priority, queue)| {
                 priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.
@@ -270,9 +271,10 @@ impl SockInner {
             data.set_position(0);
             data.write_u32::<LittleEndian>(len as u32)?;
 
-            let entry = self.write_queue.entry(priority).or_insert_with(|| {
-                VecDeque::with_capacity(10)
-            });
+            let entry = self
+                .write_queue
+                .entry(priority)
+                .or_insert_with(|| VecDeque::with_capacity(10));
             entry.push_back((Instant::now(), data.into_inner()));
         }
 
@@ -295,8 +297,8 @@ impl SockInner {
                     }
                 }
                 Err(error) => {
-                    if error.kind() == ErrorKind::WouldBlock ||
-                        error.kind() == ErrorKind::Interrupted
+                    if error.kind() == ErrorKind::WouldBlock
+                        || error.kind() == ErrorKind::Interrupted
                     {
                         self.current_write = Some(data);
                     } else {

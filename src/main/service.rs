@@ -7,12 +7,16 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
-             NameHash, Priority, Uid};
-use main::{ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
-           ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError,
-           Event, PrivConnectionInfo, PubConnectionInfo};
+use common::{
+    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Priority, Uid,
+    HASH_SIZE,
+};
 use main::config_handler::{self, Config};
+use main::{
+    ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
+    ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError, Event,
+    PrivConnectionInfo, PubConnectionInfo,
+};
 use mio::{Poll, Token};
 use nat;
 use nat::{MappedTcpSocket, MappingContext};
@@ -21,7 +25,7 @@ use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{mpsc, Arc, Mutex};
 use tiny_keccak::sha3_256;
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
@@ -76,12 +80,12 @@ impl<UID: Uid> Service<UID> {
         let service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
-            event_tx: event_tx,
+            event_tx,
             mc: Arc::new(mc),
-            el: el,
-            name_hash: name_hash,
-            our_uid: our_uid,
-            our_listeners: our_listeners,
+            el,
+            name_hash,
+            our_uid,
+            our_listeners,
         };
 
         service.start_config_refresher()?;
@@ -150,8 +154,7 @@ impl<UID: Uid> Service<UID> {
                     our_listeners,
                     SERVICE_DISCOVERY_TOKEN,
                     port,
-                )
-                {
+                ) {
                     debug!("Could not start ServiceDiscovery: {:?}", e);
                 }
             }
@@ -181,7 +184,10 @@ impl<UID: Uid> Service<UID> {
 
     fn get_peer_socket_addr(&self, peer_uid: &UID) -> ::Res<SocketAddr> {
         let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId { active_connection: Some(token), .. }) => token,
+            Some(&ConnectionId {
+                active_connection: Some(token),
+                ..
+            }) => token,
             _ => return Err(CrustError::PeerNotFound),
         };
 
@@ -198,7 +204,8 @@ impl<UID: Uid> Service<UID> {
             match state
                 .borrow_mut()
                 .as_any()
-                .downcast_mut::<ActiveConnection<UID>>() {
+                .downcast_mut::<ActiveConnection<UID>>()
+            {
                 Some(active_connection) => {
                     let _ = tx.send(Some(active_connection.peer_addr()));
                 }
@@ -226,9 +233,11 @@ impl<UID: Uid> Service<UID> {
         match self.get_peer_socket_addr(peer_uid) {
             Ok(s) => {
                 let config = unwrap!(self.config.lock());
-                config.cfg.hard_coded_contacts.iter().any(|addr| {
-                    addr.ip() == s.ip()
-                })
+                config
+                    .cfg
+                    .hard_coded_contacts
+                    .iter()
+                    .any(|addr| addr.ip() == s.ip())
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -240,8 +249,8 @@ impl<UID: Uid> Service<UID> {
     // TODO temp remove
     /// Check if we have peers on LAN
     pub fn has_peers_on_lan(&self) -> bool {
-        use std::time::Duration;
         use std::thread;
+        use std::time::Duration;
 
         let (obs, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
@@ -278,44 +287,40 @@ impl<UID: Uid> Service<UID> {
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
         let ext_reachability = match crust_user {
-            CrustUser::Node => {
-                ExternalReachability::Required {
-                    direct_listeners: unwrap!(self.our_listeners.lock()).iter().cloned().collect(),
-                }
-            }
+            CrustUser::Node => ExternalReachability::Required {
+                direct_listeners: unwrap!(self.our_listeners.lock()).iter().cloned().collect(),
+            },
             CrustUser::Client => ExternalReachability::NotRequired,
         };
 
-        self.post(move |core, poll| if core.get_state(BOOTSTRAP_TOKEN)
-            .is_none()
-        {
-            if let Err(e) = Bootstrap::start(
-                core,
-                poll,
-                name_hash,
-                ext_reachability,
-                our_uid,
-                cm,
-                config,
-                blacklist,
-                BOOTSTRAP_TOKEN,
-                SERVICE_DISCOVERY_TOKEN,
-                event_tx.clone(),
-            )
-            {
-                error!("Could not bootstrap: {:?}", e);
-                let _ = event_tx.send(Event::BootstrapFailed);
+        self.post(move |core, poll| {
+            if core.get_state(BOOTSTRAP_TOKEN).is_none() {
+                if let Err(e) = Bootstrap::start(
+                    core,
+                    poll,
+                    name_hash,
+                    ext_reachability,
+                    our_uid,
+                    cm,
+                    config,
+                    blacklist,
+                    BOOTSTRAP_TOKEN,
+                    SERVICE_DISCOVERY_TOKEN,
+                    event_tx.clone(),
+                ) {
+                    error!("Could not bootstrap: {:?}", e);
+                    let _ = event_tx.send(Event::BootstrapFailed);
+                }
             }
         })
     }
 
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
-        self.post(move |core, poll| if let Some(state) = core.get_state(
-            BOOTSTRAP_TOKEN,
-        )
-        {
-            state.borrow_mut().terminate(core, poll);
+        self.post(move |core, poll| {
+            if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
+                state.borrow_mut().terminate(core, poll);
+            }
         })
     }
 
@@ -337,34 +342,33 @@ impl<UID: Uid> Service<UID> {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
-        self.post(move |core, poll| if core.get_state(LISTENER_TOKEN)
-            .is_none()
-        {
-            ConnectionListener::start(
-                core,
-                poll,
-                None,
-                port,
-                force_include_port,
-                our_uid,
-                name_hash,
-                cm,
-                config,
-                mc,
-                our_listeners,
-                LISTENER_TOKEN,
-                event_tx,
-            );
+        self.post(move |core, poll| {
+            if core.get_state(LISTENER_TOKEN).is_none() {
+                ConnectionListener::start(
+                    core,
+                    poll,
+                    None,
+                    port,
+                    force_include_port,
+                    our_uid,
+                    name_hash,
+                    cm,
+                    config,
+                    mc,
+                    our_listeners,
+                    LISTENER_TOKEN,
+                    event_tx,
+                );
+            }
         })
     }
 
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
-        self.post(move |core, poll| if let Some(state) = core.get_state(
-            LISTENER_TOKEN,
-        )
-        {
-            state.borrow_mut().terminate(core, poll);
+        self.post(move |core, poll| {
+            if let Some(state) = core.get_state(LISTENER_TOKEN) {
+                state.borrow_mut().terminate(core, poll);
+            }
         })
     }
 
@@ -428,15 +432,17 @@ impl<UID: Uid> Service<UID> {
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_uid: &UID) -> bool {
         let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId { active_connection: Some(token), .. }) => token,
+            Some(&ConnectionId {
+                active_connection: Some(token),
+                ..
+            }) => token,
             _ => return false,
         };
 
-        let _ = self.post(move |core, poll| if let Some(state) = core.get_state(
-            token,
-        )
-        {
-            state.borrow_mut().terminate(core, poll);
+        let _ = self.post(move |core, poll| {
+            if let Some(state) = core.get_state(token) {
+                state.borrow_mut().terminate(core, poll);
+            }
         });
 
         true
@@ -445,15 +451,17 @@ impl<UID: Uid> Service<UID> {
     /// Send data to a peer.
     pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> ::Res<()> {
         let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId { active_connection: Some(token), .. }) => token,
+            Some(&ConnectionId {
+                active_connection: Some(token),
+                ..
+            }) => token,
             _ => return Err(CrustError::PeerNotFound),
         };
 
-        self.post(move |core, poll| if let Some(state) = core.get_state(
-            token,
-        )
-        {
-            state.borrow_mut().write(core, poll, msg, priority);
+        self.post(move |core, poll| {
+            if let Some(state) = core.get_state(token) {
+                state.borrow_mut().write(core, poll, msg, priority);
+            }
         })
     }
 
@@ -465,7 +473,7 @@ impl<UID: Uid> Service<UID> {
         let our_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
         if DISABLE_NAT {
             let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token: result_token,
+                result_token,
                 result: Ok(PrivConnectionInfo {
                     id: self.our_uid,
                     for_direct: our_listeners,
@@ -492,7 +500,7 @@ impl<UID: Uid> Service<UID> {
                             .collect();
                         let event_tx = event_tx_clone;
                         let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                            result_token: result_token,
+                            result_token,
                             result: Ok(PrivConnectionInfo {
                                 id: our_uid,
                                 for_direct: our_listeners,
@@ -506,20 +514,20 @@ impl<UID: Uid> Service<UID> {
                     Ok(()) => (),
                     Err(e) => {
                         debug!("Error mapping tcp socket: {}", e);
-                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                            result_token: result_token,
-                            result: Err(From::from(e)),
-                        }));
+                        let _ =
+                            event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                                result_token,
+                                result: Err(From::from(e)),
+                            }));
                     }
                 };
-            })
-            {
-                let _ = self.event_tx.send(Event::ConnectionInfoPrepared(
-                    ConnectionInfoResult {
-                        result_token: result_token,
+            }) {
+                let _ = self
+                    .event_tx
+                    .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                        result_token,
                         result: Err(e),
-                    },
-                ));
+                    }));
             }
         }
     }
@@ -527,7 +535,10 @@ impl<UID: Uid> Service<UID> {
     /// Check if we are connected to the given peer
     pub fn is_connected(&self, peer_uid: &UID) -> bool {
         match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId { active_connection: Some(_), .. }) => true,
+            Some(&ConnectionId {
+                active_connection: Some(_),
+                ..
+            }) => true,
             _ => false,
         }
     }
@@ -557,19 +568,19 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 
 #[cfg(test)]
 mod tests {
-    use CrustError;
     use common::CrustUser;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
     use main::{self, Event};
     use rand;
-    use std::collections::{HashMap, hash_map};
-    use std::sync::{Arc, Barrier, mpsc};
-    use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+    use std::collections::{hash_map, HashMap};
+    use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
     use std::sync::mpsc::Receiver;
+    use std::sync::{mpsc, Arc, Barrier};
     use std::thread;
     use std::time::Duration;
-    use tests::{UniqueId, get_event_sender, timebomb};
+    use tests::{get_event_sender, timebomb, UniqueId};
+    use CrustError;
 
     type Service = super::Service<UniqueId>;
     type PrivConnectionInfo = main::PrivConnectionInfo<UniqueId>;
@@ -734,9 +745,8 @@ mod tests {
             fn new(index: usize) -> (TestNode, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
                 let config = unwrap!(::main::config_handler::read_config_file());
-                let mut service = unwrap!(Service::with_config(event_sender,
-                                                               config,
-                                                               rand::random()));
+                let mut service =
+                    unwrap!(Service::with_config(event_sender, config, rand::random()));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());
                 match unwrap!(event_rx.recv()) {
@@ -746,8 +756,8 @@ mod tests {
                 let (ci_tx, ci_rx) = mpsc::channel();
                 (
                     TestNode {
-                        event_rx: event_rx,
-                        service: service,
+                        event_rx,
+                        service,
                         connection_id_rx: ci_rx,
                         our_cis: Vec::new(),
                         our_index: index,
@@ -771,10 +781,10 @@ mod tests {
 
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> Joiner {
                 maidsafe_utilities::thread::named("run!", move || {
-                    for (our_ci, their_ci) in
-                        self.our_cis.into_iter().zip(
-                            self.connection_id_rx.into_iter(),
-                        )
+                    for (our_ci, their_ci) in self
+                        .our_cis
+                        .into_iter()
+                        .zip(self.connection_id_rx.into_iter())
                     {
                         let _ = self.service.connect(our_ci, their_ci);
                     }
@@ -830,12 +840,10 @@ mod tests {
 
                     drop(self.service);
                     match self.event_rx.recv() {
-                        Ok(m) => {
-                            match m {
-                                Event::LostPeer(..) => (),
-                                _ => panic!("Unexpected message when shutting down: {:?}", m),
-                            }
-                        }
+                        Ok(m) => match m {
+                            Event::LostPeer(..) => (),
+                            _ => panic!("Unexpected message when shutting down: {:?}", m),
+                        },
                         Err(mpsc::RecvError) => (),
                     }
                 })
@@ -866,10 +874,9 @@ mod tests {
         // Wait one hundred millisecond per message
         // TODO(canndrew): drop this limit
         let timeout_ms = 10_000 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
-        timebomb(
-            Duration::from_millis(timeout_ms),
-            move || { drop(threads); },
-        );
+        timebomb(Duration::from_millis(timeout_ms), move || {
+            drop(threads);
+        });
     }
 
     // TODO See how to now do this test

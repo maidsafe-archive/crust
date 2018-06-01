@@ -11,7 +11,7 @@ use common::Uid;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::{Config, Event};
-use std::sync::atomic::{ATOMIC_USIZE_INIT, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::Duration;
@@ -31,7 +31,7 @@ macro_rules! expect_event {
             $pattern => $arm,
             e => panic!("unexpected event {:?}", e),
         }
-    }
+    };
 }
 
 pub type UniqueId = [u8; 20];
@@ -72,8 +72,7 @@ where
         thread::park_timeout(dur);
         match done_rx.try_recv() {
             Err(mpsc::TryRecvError::Empty) => panic!("Timed out!"),
-            Ok(()) |
-            Err(mpsc::TryRecvError::Disconnected) => jh.join(),
+            Ok(()) | Err(mpsc::TryRecvError::Disconnected) => jh.join(),
         }
     })
 }

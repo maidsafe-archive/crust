@@ -95,7 +95,7 @@ pub struct ConfigWrapper {
 impl ConfigWrapper {
     pub fn new(cfg: Config) -> Self {
         Self {
-            cfg: cfg,
+            cfg,
             is_modified_for_next_refresh: false,
         }
     }

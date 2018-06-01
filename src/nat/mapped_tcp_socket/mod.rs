@@ -11,9 +11,9 @@ use self::get_ext_addr::GetExtAddr;
 use common::{Core, CoreMessage, CoreTimer, State, Uid};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
-use mio::{Poll, Token};
 use mio::timer::Timeout;
-use nat::{MappingContext, NatError, util};
+use mio::{Poll, Token};
+use nat::{util, MappingContext, NatError};
 use net2::TcpBuilder;
 use std::any::Any;
 use std::cell::RefCell;
@@ -94,21 +94,19 @@ where
             igd_children += 1;
         }
 
-        let mapped_addrs = mc.ifv4s()
+        let mapped_addrs = mc
+            .ifv4s()
             .iter()
             .map(|&(ip, _)| SocketAddr::new(IpAddr::V4(ip), addr.port()))
             .collect();
 
         let state = Rc::new(RefCell::new(Self {
-            token: token,
+            token,
             socket: Some(socket),
-            igd_children: igd_children,
+            igd_children,
             stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
-            mapped_addrs: mapped_addrs,
-            timeout: core.set_timeout(
-                Duration::from_secs(TIMEOUT_SEC),
-                CoreTimer::new(token, 0),
-            )?,
+            mapped_addrs,
+            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
             finish: Some(finish),
             phantom: PhantomData,
         }));
@@ -118,12 +116,9 @@ where
             let self_weak = Rc::downgrade(&state);
             let handler = move |core: &mut Core, poll: &Poll, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
-                    self_rc.borrow_mut().handle_stun_resp(
-                        core,
-                        poll,
-                        child_token,
-                        res,
-                    )
+                    self_rc
+                        .borrow_mut()
+                        .handle_stun_resp(core, poll, child_token, res)
                 }
             };
 
@@ -180,8 +175,7 @@ where
 
 impl<F, UID> State for MappedTcpSocket<F, UID>
 where
-    F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>)
-        + Any,
+    F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
     UID: Uid,
 {
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _: u8) {

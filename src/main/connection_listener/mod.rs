@@ -13,10 +13,10 @@ mod exchange_msg;
 use self::exchange_msg::ExchangeMsg;
 use common::{Core, NameHash, Socket, State, Uid};
 use main::{ConnectionMap, CrustConfig, Event};
-use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpListener;
-use nat::{MappedTcpSocket, MappingContext};
+use mio::{Poll, PollOpt, Ready, Token};
 use nat::ip_addr_is_global;
+use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
 use std::any::Any;
 use std::cell::RefCell;
@@ -62,12 +62,14 @@ impl<UID: Uid> ConnectionListener<UID> {
                 if force_include_port && port != 0 && !mapped_addrs.iter().any(checker) {
                     let global_addrs: Vec<_> = mapped_addrs
                         .iter()
-                        .filter_map(|s| if ip_addr_is_global(&s.ip()) {
-                            let mut s = *s;
-                            s.set_port(port);
-                            Some(s)
-                        } else {
-                            None
+                        .filter_map(|s| {
+                            if ip_addr_is_global(&s.ip()) {
+                                let mut s = *s;
+                                s.set_port(port);
+                                Some(s)
+                            } else {
+                                None
+                            }
                         })
                         .collect();
                     mapped_addrs.extend(global_addrs);
@@ -85,8 +87,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                     our_listeners,
                     token,
                     event_tx.clone(),
-                )
-                {
+                ) {
                     error!("TCP Listener failed to handle mapped socket: {:?}", e);
                     let _ = event_tx.send(Event::ListenerFailed);
                 }
@@ -130,14 +131,14 @@ impl<UID: Uid> ConnectionListener<UID> {
         *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
 
         let state = Self {
-            token: token,
-            cm: cm,
-            config: config,
+            token,
+            cm,
+            config,
             event_tx: event_tx.clone(),
-            listener: listener,
-            name_hash: name_hash,
-            our_uid: our_uid,
-            timeout_sec: timeout_sec,
+            listener,
+            name_hash,
+            our_uid,
+            timeout_sec,
             accept_bootstrap: false,
         };
 
@@ -162,13 +163,13 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.cm.clone(),
                         self.config.clone(),
                         self.event_tx.clone(),
-                    )
-                    {
+                    ) {
                         debug!("Error accepting direct connection: {:?}", e);
                     }
                 }
                 Err(ref e)
-                    if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted => {
+                    if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted =>
+                {
                     return
                 }
                 Err(ref e) => {
@@ -202,11 +203,12 @@ impl<UID: Uid> State for ConnectionListener<UID> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
+    use super::*;
     use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-    use common::{self, CoreMessage, CrustUser, EventLoop, ExternalReachability, HASH_SIZE,
-                 Message, NameHash};
+    use common::{
+        self, CoreMessage, CrustUser, EventLoop, ExternalReachability, Message, NameHash, HASH_SIZE,
+    };
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use maidsafe_utilities::serialisation::{deserialise, serialise};
     use main::Event;
@@ -220,8 +222,8 @@ mod tests {
     use std::mem;
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
-    use std::sync::{Arc, Mutex};
     use std::sync::mpsc;
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
     use tests::UniqueId;
 
@@ -309,9 +311,9 @@ mod tests {
 
         Listener {
             _el: el,
-            uid: uid,
-            addr: addr,
-            event_rx: event_rx,
+            uid,
+            addr,
+            event_rx,
         }
     }
 
@@ -344,8 +346,8 @@ mod tests {
         let mut payload_size_buffer = [0; 4];
         stream.read_exact(&mut payload_size_buffer)?;
 
-        let payload_size = Cursor::new(&payload_size_buffer[..])
-            .read_u32::<LittleEndian>()? as usize;
+        let payload_size =
+            Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()? as usize;
 
         let mut payload = Vec::with_capacity(payload_size);
         unsafe {

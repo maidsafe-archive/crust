@@ -13,8 +13,8 @@ mod errors;
 
 use common::{Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use mio::{Poll, PollOpt, Ready, Token};
 use mio::udp::UdpSocket;
+use mio::{Poll, PollOpt, Ready, Token};
 use rand;
 use std::any::Any;
 use std::cell::RefCell;
@@ -23,8 +23,8 @@ use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
+use std::sync::{Arc, Mutex};
 use std::u16;
 
 #[derive(Serialize, Deserialize)]
@@ -61,16 +61,16 @@ impl ServiceDiscovery {
         let remote_addr = SocketAddr::from_str(&format!("255.255.255.255:{}", port))?;
 
         let service_discovery = ServiceDiscovery {
-            token: token,
+            token,
             socket: udp_socket,
-            remote_addr: remote_addr,
+            remote_addr,
             listen: false,
             read_buf: [0; 1024],
-            our_listeners: our_listeners,
-            seek_peers_req: serialise(&DiscoveryMsg::Request { guid: guid })?,
+            our_listeners,
+            seek_peers_req: serialise(&DiscoveryMsg::Request { guid })?,
             reply_to: VecDeque::new(),
             observers: Vec::new(),
-            guid: guid,
+            guid,
         };
 
         poll.register(
@@ -93,7 +93,9 @@ impl ServiceDiscovery {
 
     /// Interrogate the network to find peers.
     pub fn seek_peers(&mut self) -> Result<(), ServiceDiscoveryError> {
-        let _ = self.socket.send_to(&self.seek_peers_req, &self.remote_addr)?;
+        let _ = self
+            .socket
+            .send_to(&self.seek_peers_req, &self.remote_addr)?;
         Ok(())
     }
 
@@ -130,9 +132,8 @@ impl ServiceDiscovery {
                 }
             }
             DiscoveryMsg::Response(peer_listeners) => {
-                self.observers.retain(
-                    |obs| obs.send(peer_listeners.clone()).is_ok(),
-                );
+                self.observers
+                    .retain(|obs| obs.send(peer_listeners.clone()).is_ok());
             }
         }
     }
@@ -156,7 +157,8 @@ impl ServiceDiscovery {
                 Ok(Some(_)) => (),
                 Ok(None) => self.reply_to.push_front(peer_addr),
                 Err(ref e)
-                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {
+                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock =>
+                {
                     self.reply_to.push_front(peer_addr)
                 }
                 Err(e) => return Err(From::from(e)),
@@ -169,12 +171,7 @@ impl ServiceDiscovery {
             Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
         };
 
-        poll.reregister(
-            &self.socket,
-            self.token,
-            kind,
-            PollOpt::edge(),
-        )?;
+        poll.reregister(&self.socket, self.token, kind, PollOpt::edge())?;
 
         Ok(())
     }
@@ -223,11 +220,11 @@ mod tests {
     use super::*;
     use common::{self, CoreMessage};
     use mio::Token;
-    use std::{net, thread};
     use std::str::FromStr;
-    use std::sync::{Arc, Mutex};
     use std::sync::mpsc;
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
+    use std::{net, thread};
 
     #[test]
     fn service_discovery() {

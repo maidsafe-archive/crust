@@ -11,11 +11,13 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use common::{Core, CoreTimer, CrustUser, NameHash, Socket, State, Uid};
-use main::{ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event,
-           PrivConnectionInfo, PubConnectionInfo};
-use mio::{Poll, PollOpt, Ready, Token};
+use main::{
+    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PrivConnectionInfo,
+    PubConnectionInfo,
+};
 use mio::tcp::{TcpListener, TcpStream};
 use mio::timer::Timeout;
+use mio::{Poll, PollOpt, Ready, Token};
 use nat;
 use std::any::Any;
 use std::cell::RefCell;
@@ -60,19 +62,16 @@ impl<UID: Uid> Connect<UID> {
         let token = core.get_new_token();
 
         let state = Rc::new(RefCell::new(Self {
-            token: token,
-            timeout: core.set_timeout(
-                Duration::from_secs(TIMEOUT_SEC),
-                CoreTimer::new(token, 0),
-            )?,
-            cm: cm,
-            our_nh: our_nh,
+            token,
+            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
+            cm,
+            our_nh,
             our_id: our_ci.id,
-            their_id: their_id,
+            their_id,
             self_weak: Weak::new(),
             listener: None,
             children: HashSet::with_capacity(their_direct.len() + their_hole_punch.len()),
-            event_tx: event_tx,
+            event_tx,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -115,15 +114,12 @@ impl<UID: Uid> Connect<UID> {
 
     fn exchange_msg(&mut self, core: &mut Core, poll: &Poll, socket: Socket) {
         let self_weak = self.self_weak.clone();
-        let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-            self_weak.upgrade()
-        {
-            self_rc.borrow_mut().handle_exchange_msg(
-                core,
-                poll,
-                child,
-                res,
-            );
+        let handler = move |core: &mut Core, poll: &Poll, child, res| {
+            if let Some(self_rc) = self_weak.upgrade() {
+                self_rc
+                    .borrow_mut()
+                    .handle_exchange_msg(core, poll, child, res);
+            }
         };
 
         if let Ok(child) = ExchangeMsg::start(
@@ -135,8 +131,7 @@ impl<UID: Uid> Connect<UID> {
             self.our_nh,
             self.cm.clone(),
             Box::new(handler),
-        )
-        {
+        ) {
             let _ = self.children.insert(child);
         }
         self.maybe_terminate(core, poll);
@@ -152,15 +147,12 @@ impl<UID: Uid> Connect<UID> {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
             let self_weak = self.self_weak.clone();
-            let handler = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-                self_weak.upgrade()
-            {
-                self_rc.borrow_mut().handle_connection_candidate(
-                    core,
-                    poll,
-                    child,
-                    res,
-                );
+            let handler = move |core: &mut Core, poll: &Poll, child, res| {
+                if let Some(self_rc) = self_weak.upgrade() {
+                    self_rc
+                        .borrow_mut()
+                        .handle_connection_candidate(core, poll, child, res);
+                }
             };
 
             if let Ok(child) = ConnectionCandidate::start(
@@ -172,8 +164,7 @@ impl<UID: Uid> Connect<UID> {
                 self.our_id,
                 self.their_id,
                 Box::new(handler),
-            )
-            {
+            ) {
                 let _ = self.children.insert(child);
             }
         }

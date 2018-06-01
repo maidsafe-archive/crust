@@ -8,9 +8,9 @@
 // Software.
 
 use common::{Core, Message, Priority, Socket, State, Uid};
-use mio::{Poll, PollOpt, Ready, Token};
 use mio::tcp::TcpStream;
-use nat::{NatError, util};
+use mio::{Poll, PollOpt, Ready, Token};
+use nat::{util, NatError};
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -41,10 +41,10 @@ impl<UID: Uid> GetExtAddr<UID> {
         let token = core.get_new_token();
 
         let state = Self {
-            token: token,
-            socket: socket,
+            token,
+            socket,
             request: Some((Message::EchoAddrReq, 0)),
-            finish: finish,
+            finish,
         };
 
         poll.register(

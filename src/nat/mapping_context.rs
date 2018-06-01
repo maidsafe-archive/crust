@@ -9,7 +9,6 @@
 
 //! Defines the `MappingContext` type
 
-
 use super::NatError;
 use crossbeam;
 use get_if_addrs::{self, IfAddr};
@@ -43,8 +42,8 @@ impl MappingContext {
             for ifv4 in &mut ifv4s {
                 if !ifv4.0.is_loopback() {
                     guards.push(scope.spawn(move || {
-                        ifv4.1 = igd::search_gateway_from_timeout(ifv4.0, Duration::from_secs(1))
-                            .ok();
+                        ifv4.1 =
+                            igd::search_gateway_from_timeout(ifv4.0, Duration::from_secs(1)).ok();
                     }));
                 }
             }
@@ -60,9 +59,9 @@ impl MappingContext {
     /// Inform the context about external "STUN" servers. Note that crust does not actually use
     /// STUN but a custom STUN-like protocol.
     pub fn add_peer_stuns<A: IntoIterator<Item = SocketAddr>>(&mut self, stun_addrs: A) {
-        let listeners = stun_addrs.into_iter().filter(|elt| {
-            nat::ip_addr_is_global(&elt.ip())
-        });
+        let listeners = stun_addrs
+            .into_iter()
+            .filter(|elt| nat::ip_addr_is_global(&elt.ip()));
         self.peer_stuns.extend(listeners);
     }
 

@@ -12,11 +12,13 @@ mod try_peer;
 
 use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash,
-             Socket, State, Uid};
+use common::{
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, Socket, State,
+    Uid,
+};
 use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
-use mio::{Poll, Token};
 use mio::timer::Timeout;
+use mio::{Poll, Token};
 use rand::{self, Rng};
 use service_discovery::ServiceDiscovery;
 use std::any::Any;
@@ -72,17 +74,9 @@ impl<UID: Uid> Bootstrap<UID> {
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
-        let bs_timeout = core.set_timeout(
-            Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC),
-            bs_timer,
-        )?;
+        let bs_timeout = core.set_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), bs_timer)?;
         let sd_meta = match seek_peers(core, service_discovery_token, token) {
-            Ok((rx, timeout)) => {
-                Some(ServiceDiscMeta {
-                    rx: rx,
-                    timeout: timeout,
-                })
-            }
+            Ok((rx, timeout)) => Some(ServiceDiscMeta { rx, timeout }),
             Err(CrustError::ServiceDiscNotEnabled) => None,
             Err(e) => {
                 warn!("Failed to seek peers using service discovery: {:?}", e);
@@ -91,18 +85,18 @@ impl<UID: Uid> Bootstrap<UID> {
         };
 
         let state = Rc::new(RefCell::new(Self {
-            token: token,
-            cm: cm,
-            peers: peers,
-            blacklist: blacklist,
-            name_hash: name_hash,
-            ext_reachability: ext_reachability,
-            our_uid: our_uid,
-            event_tx: event_tx,
-            sd_meta: sd_meta,
-            bs_timer: bs_timer,
-            bs_timeout: bs_timeout,
-            cache: cache,
+            token,
+            cm,
+            peers,
+            blacklist,
+            name_hash,
+            ext_reachability,
+            our_uid,
+            event_tx,
+            sd_meta,
+            bs_timer,
+            bs_timeout,
+            cache,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
             self_weak: Weak::new(),
         }));
@@ -129,10 +123,10 @@ impl<UID: Uid> Bootstrap<UID> {
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
-            let finish = move |core: &mut Core, poll: &Poll, child, res| if let Some(self_rc) =
-                self_weak.upgrade()
-            {
-                self_rc.borrow_mut().handle_result(core, poll, child, res)
+            let finish = move |core: &mut Core, poll: &Poll, child, res| {
+                if let Some(self_rc) = self_weak.upgrade() {
+                    self_rc.borrow_mut().handle_result(core, poll, child, res)
+                }
             };
 
             if let Ok(child) = TryPeer::start(
@@ -143,14 +137,12 @@ impl<UID: Uid> Bootstrap<UID> {
                 self.name_hash,
                 self.ext_reachability.clone(),
                 Box::new(finish),
-            )
-            {
+            ) {
                 let _ = self.children.insert(child);
             }
         }
         self.maybe_terminate(core, poll);
     }
-
 
     fn handle_result(
         &mut self,
@@ -186,7 +178,7 @@ impl<UID: Uid> Bootstrap<UID> {
                         #[cfg_attr(rustfmt, rustfmt_skip)]
                         BootstrapDenyReason::FailedExternalReachability => {
                             "Bootstrappee node could not establish connection to us."
-                        }
+                        },
                         BootstrapDenyReason::NodeNotWhitelisted => {
                             is_err_fatal = false;
                             "Our Node is not whitelisted"
@@ -204,9 +196,7 @@ impl<UID: Uid> Bootstrap<UID> {
                     } else {
                         info!(
                             "Failed to Bootstrap with {}: ({:?}) {}",
-                            bad_peer,
-                            reason,
-                            err_msg
+                            bad_peer, reason, err_msg
                         );
                     }
                 }
