@@ -29,7 +29,7 @@ script:
       (
         set -x;
         cargo fmt -- --check &&
-        cargo clippy && cargo clippy --profile=test
+        cargo clippy --profile=test
       );
     fi
   - cargo check --examples
