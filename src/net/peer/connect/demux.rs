@@ -79,7 +79,7 @@ impl<UID: Uid> Demux<UID> {
             &inner,
             crypto_ctx,
         ));
-        Demux { inner: inner }
+        Demux { inner }
     }
 
     pub fn bootstrap_acceptor(

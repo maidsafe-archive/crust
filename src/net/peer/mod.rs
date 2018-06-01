@@ -126,8 +126,8 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
     let now = Instant::now();
     Peer {
         socket: socket.change_message_type(),
-        their_uid: their_uid,
-        kind: kind,
+        their_uid,
+        kind,
         last_send_time: now,
         send_heartbeat_timeout: Timeout::new_at(
             now + Duration::from_millis(HEARTBEAT_PERIOD_MS),

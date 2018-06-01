@@ -88,7 +88,7 @@ pub fn spawn_event_loop<UID: Uid>(
     let tx = unwrap!(result_rx.recv())?;
 
     Ok(EventLoop {
-        tx: tx,
+        tx,
         _joiner: joiner,
     })
 }

@@ -50,7 +50,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         let inner = Inner {
             map: HashMap::new(),
             ci_channel: HashMap::new(),
-            event_tx: event_tx,
+            event_tx,
         };
         let inner = Arc::new(Mutex::new(inner));
         ConnectionMap { inner }

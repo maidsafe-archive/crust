@@ -108,8 +108,8 @@ impl ConfigFile {
         let guard = unwrap!(self.inner.write());
         let file_handler = FileHandler::new(&guard.file_name, false)?;
         Ok(ConfigWriteGuard {
-            file_handler: file_handler,
-            guard: guard,
+            file_handler,
+            guard,
         })
     }
 
@@ -272,7 +272,7 @@ impl ConfigWrapper {
         Ok((
             ConfigWrapper {
                 cfg: config,
-                file_name: file_name,
+                file_name,
                 observers: Vec::new(),
             },
             path,

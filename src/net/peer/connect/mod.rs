@@ -150,7 +150,7 @@ where
         connection_id: 0,
         peer_uid: our_info.id,
         peer_pk: our_info.our_pk,
-        name_hash: name_hash,
+        name_hash,
     };
     let all_outgoing_connections = get_conn_info_and_connect(
         handle,

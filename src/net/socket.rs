@@ -128,8 +128,8 @@ impl<M: 'static> Socket<M> {
         });
         let inner = Inner {
             stream_rx: Some(stream_rx),
-            write_tx: write_tx,
-            peer_addr: peer_addr,
+            write_tx,
+            peer_addr,
             crypto_ctx,
         };
         Socket {

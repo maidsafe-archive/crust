@@ -467,9 +467,9 @@ impl<UID: Uid> ServiceState<UID> {
     pub fn new(service: ::Service<UID>, event_tx: CrustEventSender<UID>) -> ServiceState<UID> {
         let cm = ConnectionMap::new(event_tx.clone());
         ServiceState {
-            service: service,
-            event_tx: event_tx,
-            cm: cm,
+            service,
+            event_tx,
+            cm,
             bootstrap_acceptor: None,
             bootstrap_connect: None,
             listeners: None,

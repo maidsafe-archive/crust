@@ -125,7 +125,7 @@ impl Acceptor {
         let incoming = SocketIncoming {
             listeners_rx: rx,
             listeners: Vec::new(),
-            addresses: addresses,
+            addresses,
         };
         (acceptor, incoming)
     }
