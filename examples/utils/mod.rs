@@ -17,8 +17,8 @@
 
 use crust::{PubConnectionInfo, Uid};
 use future_utils::{bi_channel, thread_future, BoxFuture, FutureExt};
-use futures::Stream;
 use futures::future::Future;
+use futures::Stream;
 use serde_json;
 use std::{fmt, io};
 use tokio_core::reactor::Handle;

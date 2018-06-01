@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{ConnectionInfoResult, ConnectionMap, Event};
 use compat::{event_loop, CrustEventSender, EventLoop};
+use compat::{ConnectionInfoResult, ConnectionMap, Event};
 use error::CrustError;
 use future_utils::{self, bi_channel, DropNotify};
 use futures::unsync::mpsc;
@@ -467,9 +467,9 @@ impl<UID: Uid> ServiceState<UID> {
     pub fn new(service: ::Service<UID>, event_tx: CrustEventSender<UID>) -> ServiceState<UID> {
         let cm = ConnectionMap::new(event_tx.clone());
         ServiceState {
-            service: service,
-            event_tx: event_tx,
-            cm: cm,
+            service,
+            event_tx,
+            cm,
             bootstrap_acceptor: None,
             bootstrap_connect: None,
             listeners: None,

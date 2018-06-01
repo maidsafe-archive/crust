@@ -20,9 +20,9 @@ use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use lru_time_cache::LruCache;
 use net::listener::SocketIncoming;
-use net::peer::connect::BootstrapAcceptor;
 use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
+use net::peer::connect::BootstrapAcceptor;
 use priv_prelude::*;
 use rust_sodium::crypto::box_::SecretKey;
 use std::sync::{Arc, Mutex};
@@ -67,19 +67,16 @@ impl<UID: Uid> Demux<UID> {
             connection_handler: Mutex::new(LruCache::with_expiry_duration(Duration::from_secs(
                 INCOMING_CONNECTIONS_TIMEOUT,
             ))),
-            available_connections: Mutex::new(LruCache::with_expiry_duration(
-                Duration::from_secs(INCOMING_CONNECTIONS_TIMEOUT),
-            )),
+            available_connections: Mutex::new(LruCache::with_expiry_duration(Duration::from_secs(
+                INCOMING_CONNECTIONS_TIMEOUT,
+            ))),
             handle: handle.clone(),
             bootstrap_cache: bootstrap_cache.clone(),
         });
         handle.spawn(handle_incoming_connections(
-            handle,
-            incoming,
-            &inner,
-            crypto_ctx,
+            handle, incoming, &inner, crypto_ctx,
         ));
-        Demux { inner: inner }
+        Demux { inner }
     }
 
     pub fn bootstrap_acceptor(

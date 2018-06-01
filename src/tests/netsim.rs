@@ -15,17 +15,17 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use {util, Service};
 use config::PeerInfo;
 use env_logger;
 use future_utils;
 use future_utils::bi_channel;
 use futures::sync::oneshot;
-use netsim::{self, SubnetV4};
 use netsim::device::NatV4Builder;
 use netsim::node::Ipv4Node;
+use netsim::{self, SubnetV4};
 use priv_prelude::*;
 use tokio_core::reactor::Core;
+use {util, Service};
 
 #[test]
 fn tcp_bootstrap_over_poor_connection() {

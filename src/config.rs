@@ -108,8 +108,8 @@ impl ConfigFile {
         let guard = unwrap!(self.inner.write());
         let file_handler = FileHandler::new(&guard.file_name, false)?;
         Ok(ConfigWriteGuard {
-            file_handler: file_handler,
-            guard: guard,
+            file_handler,
+            guard,
         })
     }
 
@@ -188,13 +188,7 @@ impl ConfigFile {
         let addrs = &self.read().listen_addresses;
         addrs
             .iter()
-            .filter(|addr| {
-                if disable_tcp {
-                    !addr.is_tcp()
-                } else {
-                    true
-                }
-            })
+            .filter(|addr| if disable_tcp { !addr.is_tcp() } else { true })
             .cloned()
             .collect()
     }
@@ -272,7 +266,7 @@ impl ConfigWrapper {
         Ok((
             ConfigWrapper {
                 cfg: config,
-                file_name: file_name,
+                file_name,
                 observers: Vec::new(),
             },
             path,

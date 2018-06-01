@@ -24,10 +24,10 @@ pub use self::event_loop::EventLoop;
 pub use self::service::Service;
 use maidsafe_utilities;
 
-mod event;
-mod service;
-mod event_loop;
 mod connection_map;
+mod event;
+mod event_loop;
+mod service;
 
 /// Used to receive events from a `Service`.
 pub type CrustEventSender<UID> = maidsafe_utilities::event_sender::MaidSafeObserver<Event<UID>>;

@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::CrustEventSender;
 use compat::service::{ServiceCommand, ServiceState};
+use compat::CrustEventSender;
 use error::CrustError;
 use futures::sync::mpsc::{self, UnboundedSender};
 use maidsafe_utilities::thread::{self, Joiner};
@@ -88,7 +88,7 @@ pub fn spawn_event_loop<UID: Uid>(
     let tx = unwrap!(result_rx.recv())?;
 
     Ok(EventLoop {
-        tx: tx,
+        tx,
         _joiner: joiner,
     })
 }

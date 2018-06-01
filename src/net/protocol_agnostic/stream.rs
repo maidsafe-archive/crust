@@ -24,8 +24,8 @@ use priv_prelude::*;
 use rust_sodium::crypto;
 use std::error::Error;
 use std::io::{Read, Write};
-use tokio_io::{self, AsyncRead, AsyncWrite};
 use tokio_io::codec::length_delimited::{self, Framed};
+use tokio_io::{self, AsyncRead, AsyncWrite};
 use void;
 
 /// Converts given stream into length delimited framed stream.

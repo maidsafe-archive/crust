@@ -17,8 +17,10 @@
 
 use futures::stream::FuturesUnordered;
 use net::protocol_agnostic::CRUST_TCP_INIT;
-use p2p::{self, tcp_respond_with_addr, udp_respond_with_addr, EncryptedRequest, P2p,
-          RendezvousServerError, ECHO_REQ};
+use p2p::{
+    self, tcp_respond_with_addr, udp_respond_with_addr, EncryptedRequest, P2p,
+    RendezvousServerError, ECHO_REQ,
+};
 use priv_prelude::*;
 use tokio_core;
 use tokio_utp;

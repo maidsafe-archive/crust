@@ -15,8 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::bootstrap::{bootstrap, BootstrapError, Cache as BootstrapCache,
-                          CacheError as BootstrapCacheError, ConnectHandshakeError};
+pub use self::bootstrap::{
+    bootstrap, BootstrapError, Cache as BootstrapCache, CacheError as BootstrapCacheError,
+    ConnectHandshakeError,
+};
 pub use self::bootstrap_acceptor::{BootstrapAcceptError, BootstrapAcceptor};
 pub use self::connection_info::{P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo};
 pub use self::demux::Demux;
@@ -24,11 +26,11 @@ pub use self::ext_reachability::ExternalReachability;
 pub use self::handshake_message::{BootstrapDenyReason, BootstrapRequest};
 
 mod bootstrap;
-mod connection_info;
-mod ext_reachability;
-mod demux;
-mod handshake_message;
 mod bootstrap_acceptor;
+mod connection_info;
+mod demux;
+mod ext_reachability;
+mod handshake_message;
 
 use config::PeerInfo;
 use future_utils::bi_channel::UnboundedBiChannel;
@@ -150,7 +152,7 @@ where
         connection_id: 0,
         peer_uid: our_info.id,
         peer_pk: our_info.our_pk,
-        name_hash: name_hash,
+        name_hash,
     };
     let all_outgoing_connections = get_conn_info_and_connect(
         handle,
@@ -441,7 +443,8 @@ where
             return Ok(Async::Ready(peer));
         }
 
-        if self.all_connections_are_done && self.choose_sent.is_none()
+        if self.all_connections_are_done
+            && self.choose_sent.is_none()
             && self.choose_waiting.is_empty()
         {
             let errors = mem::replace(&mut self.errors, Vec::new());

@@ -41,7 +41,7 @@ macro_rules! expect_event {
             $pattern => $arm,
             e => panic!("unexpected event {:?}", e),
         }
-    }
+    };
 }
 
 fn event_sender() -> (CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
@@ -371,9 +371,10 @@ fn bootstrap_with_disable_external_reachability() {
 
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::new(addr0.unspecified_to_localhost(), service0.public_key()),
-    ];
+    unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(
+        addr0.unspecified_to_localhost(),
+        service0.public_key(),
+    )];
     let (service1, event_rx1) = service_with_config(config1);
 
     bootstrap_and_exchange(

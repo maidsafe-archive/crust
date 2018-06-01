@@ -17,12 +17,14 @@
 
 pub use self::addr::PaAddr;
 pub use self::listener::{AcceptError, PaIncoming, PaListener};
-pub use self::stream::{framed_stream, FramedPaStream, PaRendezvousConnectError, PaRendezvousMsg,
-                       PaStream, UtpRendezvousConnectError};
+pub use self::stream::{
+    framed_stream, FramedPaStream, PaRendezvousConnectError, PaRendezvousMsg, PaStream,
+    UtpRendezvousConnectError,
+};
 
 #[macro_use]
 mod addr;
-mod stream;
 mod listener;
+mod stream;
 
 const CRUST_TCP_INIT: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', b'T', b'C', b'P'];

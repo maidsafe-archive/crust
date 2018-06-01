@@ -19,8 +19,9 @@ use futures::stream::FuturesUnordered;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use net::peer;
 use net::peer::connect::demux::BootstrapMessage;
-use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
-                                            HandshakeMessage};
+use net::peer::connect::handshake_message::{
+    BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
+};
 use priv_prelude::*;
 use rust_sodium::crypto::box_::SecretKey;
 use util;

@@ -19,8 +19,8 @@ use super::*;
 use config::PeerInfo;
 use env_logger;
 use future_utils::StreamExt;
-use futures::{future, stream, Future, Stream};
 use futures::sync::mpsc;
+use futures::{future, stream, Future, Stream};
 use net::service_discovery::server::Server;
 use priv_prelude::*;
 use rust_sodium::crypto::box_::gen_keypair;
@@ -61,7 +61,7 @@ fn multiple_server_instances_in_parallel() {
                             responses
                         );
 
-                        assert!(responses.len() >= 1);
+                        assert!(!responses.is_empty());
                         for (_, msg) in responses {
                             assert_eq!(msg, i);
                         }

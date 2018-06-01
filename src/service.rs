@@ -18,8 +18,8 @@
 use config::PeerInfo;
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
-use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use net::peer::BootstrapRequest;
+use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use p2p::{self, P2p};
 use priv_prelude::*;
 use rand::{self, Rng};
@@ -344,11 +344,9 @@ mod tests {
     /// Constructs peer info with given address and random public key.
     /// Usable in cases when public key is not used and we just want to get `PeerInfo`.
     macro_rules! peer_addr {
-        ($addr:pat) => {
-            {
-                p2p::PeerInfo::with_rand_key(addr!($addr))
-            }
-        };
+        ($addr:pat) => {{
+            p2p::PeerInfo::with_rand_key(addr!($addr))
+        }};
     }
 
     mod set_rendezvous_servers {

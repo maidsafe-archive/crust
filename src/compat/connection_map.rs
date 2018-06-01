@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use compat::{CrustEventSender, Event};
-use future_utils::{self, DropNotify};
 use future_utils::bi_channel::UnboundedBiChannel;
+use future_utils::{self, DropNotify};
 use futures::stream::SplitSink;
 use log::LogLevel;
 use priv_prelude::*;
@@ -50,7 +50,7 @@ impl<UID: Uid> ConnectionMap<UID> {
         let inner = Inner {
             map: HashMap::new(),
             ci_channel: HashMap::new(),
-            event_tx: event_tx,
+            event_tx,
         };
         let inner = Arc::new(Mutex::new(inner));
         ConnectionMap { inner }

@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::connect::{bootstrap, start_rendezvous_connect, BootstrapAcceptError,
-                        BootstrapAcceptor, BootstrapCache, BootstrapCacheError, BootstrapError,
-                        BootstrapRequest, ConnectError, ConnectHandshakeError, Demux,
-                        ExternalReachability, P2pConnectionInfo, PrivConnectionInfo,
-                        PubConnectionInfo, RendezvousConnectError, SingleConnectionError};
+pub use self::connect::{
+    bootstrap, start_rendezvous_connect, BootstrapAcceptError, BootstrapAcceptor, BootstrapCache,
+    BootstrapCacheError, BootstrapError, BootstrapRequest, ConnectError, ConnectHandshakeError,
+    Demux, ExternalReachability, P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo,
+    RendezvousConnectError, SingleConnectionError,
+};
 pub use self::peer_message::PeerMessage;
 pub use self::uid::Uid;
 use std::fmt;
@@ -126,8 +127,8 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
     let now = Instant::now();
     Peer {
         socket: socket.change_message_type(),
-        their_uid: their_uid,
-        kind: kind,
+        their_uid,
+        kind,
         last_send_time: now,
         send_heartbeat_timeout: Timeout::new_at(
             now + Duration::from_millis(HEARTBEAT_PERIOD_MS),
