@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-mod service_tests;
 mod compat_api;
+mod service_tests;
 
 #[cfg(target_os = "linux")]
 #[cfg(feature = "netsim")]

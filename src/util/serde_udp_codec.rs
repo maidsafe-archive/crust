@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use maidsafe_utilities::serialisation::{deserialise, serialise_into, SerialisationError};
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::io;
 use std::marker::PhantomData;
 use std::net::SocketAddr;

@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::connect::{bootstrap, start_rendezvous_connect, BootstrapAcceptError,
-                        BootstrapAcceptor, BootstrapCache, BootstrapCacheError, BootstrapError,
-                        BootstrapRequest, ConnectError, ConnectHandshakeError, Demux,
-                        ExternalReachability, P2pConnectionInfo, PrivConnectionInfo,
-                        PubConnectionInfo, RendezvousConnectError, SingleConnectionError};
+pub use self::connect::{
+    bootstrap, start_rendezvous_connect, BootstrapAcceptError, BootstrapAcceptor, BootstrapCache,
+    BootstrapCacheError, BootstrapError, BootstrapRequest, ConnectError, ConnectHandshakeError,
+    Demux, ExternalReachability, P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo,
+    RendezvousConnectError, SingleConnectionError,
+};
 pub use self::peer_message::PeerMessage;
 pub use self::uid::Uid;
 use std::fmt;

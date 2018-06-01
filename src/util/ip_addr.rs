@@ -27,8 +27,13 @@ pub fn ip_addr_is_global(ip: &IpAddr) -> bool {
 
 /// A replacement for `Ipv4Addr::is_global` while we wait for that to enter stable.
 pub fn ipv4_addr_is_global(ipv4: &Ipv4Addr) -> bool {
-    !(ipv4.is_loopback() || ipv4.is_private() || ipv4.is_link_local() || ipv4.is_multicast()
-        || ipv4.is_broadcast() || ipv4.is_documentation() || ipv4.octets() == [0, 0, 0, 0])
+    !(ipv4.is_loopback()
+        || ipv4.is_private()
+        || ipv4.is_link_local()
+        || ipv4.is_multicast()
+        || ipv4.is_broadcast()
+        || ipv4.is_documentation()
+        || ipv4.octets() == [0, 0, 0, 0])
 }
 
 /// A replacement for `Ipv6Addr::is_global` while we wait for that to enter stable.

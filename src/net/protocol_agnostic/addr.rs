@@ -26,20 +26,16 @@ use url::{self, Url};
 
 #[cfg(test)]
 macro_rules! utp_addr {
-    ($addr:pat) => {
-        {
-            PaAddr::Utp(addr!($addr))
-        }
-    };
+    ($addr:pat) => {{
+        PaAddr::Utp(addr!($addr))
+    }};
 }
 
 #[cfg(test)]
 macro_rules! tcp_addr {
-    ($addr:pat) => {
-        {
-            PaAddr::Tcp(addr!($addr))
-        }
-    };
+    ($addr:pat) => {{
+        PaAddr::Tcp(addr!($addr))
+    }};
 }
 
 /// Protocol agnostic address.
@@ -72,11 +68,13 @@ impl PaAddr {
     /// Otherwise a list with only current address is returned.
     pub fn expand_local_unspecified(&self) -> io::Result<Vec<PaAddr>> {
         match *self {
-            PaAddr::Tcp(ref addr) => Ok(addr.expand_local_unspecified()?
+            PaAddr::Tcp(ref addr) => Ok(addr
+                .expand_local_unspecified()?
                 .into_iter()
                 .map(PaAddr::Tcp)
                 .collect()),
-            PaAddr::Utp(ref addr) => Ok(addr.expand_local_unspecified()?
+            PaAddr::Utp(ref addr) => Ok(addr
+                .expand_local_unspecified()?
                 .into_iter()
                 .map(PaAddr::Utp)
                 .collect()),

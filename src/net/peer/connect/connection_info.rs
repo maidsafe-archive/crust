@@ -78,7 +78,8 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
     /// Use private connection info to create public connection info that can be shared with the
     /// peer.
     pub fn to_pub_connection_info(&self) -> PubConnectionInfo<UID> {
-        let p2p_conn_info = self.p2p_conn_info
+        let p2p_conn_info = self
+            .p2p_conn_info
             .as_ref()
             .and_then(|conn_info| Some(conn_info.our_info.to_vec()));
         PubConnectionInfo {

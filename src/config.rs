@@ -188,13 +188,7 @@ impl ConfigFile {
         let addrs = &self.read().listen_addresses;
         addrs
             .iter()
-            .filter(|addr| {
-                if disable_tcp {
-                    !addr.is_tcp()
-                } else {
-                    true
-                }
-            })
+            .filter(|addr| if disable_tcp { !addr.is_tcp() } else { true })
             .cloned()
             .collect()
     }

@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{ConnectionInfoResult, ConnectionMap, Event};
 use compat::{event_loop, CrustEventSender, EventLoop};
+use compat::{ConnectionInfoResult, ConnectionMap, Event};
 use error::CrustError;
 use future_utils::{self, bi_channel, DropNotify};
 use futures::unsync::mpsc;

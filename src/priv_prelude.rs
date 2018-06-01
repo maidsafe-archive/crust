@@ -25,20 +25,22 @@ pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{future, stream, Async, AsyncSink, Future, IntoFuture, Sink, Stream};
 pub use log::LogLevel;
-pub use net::{BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError,
-              ConnectError, ConnectHandshakeError, ExternalReachability, P2pConnectionInfo,
-              PaRendezvousConnectError, Peer, PeerError, Priority, PrivConnectionInfo,
-              PubConnectionInfo, RendezvousConnectError, SingleConnectionError, Socket,
-              SocketError, UtpRendezvousConnectError};
 pub use net::{framed_stream, FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream};
+pub use net::{
+    BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError, ConnectError,
+    ConnectHandshakeError, ExternalReachability, P2pConnectionInfo, PaRendezvousConnectError, Peer,
+    PeerError, Priority, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
+    SingleConnectionError, Socket, SocketError, UtpRendezvousConnectError,
+};
 pub use net::{Uid, MAX_PAYLOAD_SIZE};
 pub use net2::TcpBuilder;
-pub use p2p::{CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt,
-              TcpRendezvousConnectError, TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt};
+pub use p2p::{
+    CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt, TcpRendezvousConnectError,
+    TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt,
+};
 pub use rust_sodium::crypto::box_::{PublicKey, SecretKey};
-pub use serde::Serialize;
 pub use serde::de::DeserializeOwned;
-pub use std::{fmt, io, mem};
+pub use serde::Serialize;
 pub use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
 pub use std::ffi::{OsStr, OsString};
 pub use std::marker::PhantomData;
@@ -46,6 +48,7 @@ pub use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 pub use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
 pub use std::path::{Path, PathBuf};
 pub use std::time::{Duration, Instant};
+pub use std::{fmt, io, mem};
 pub use tokio_core::net::{TcpListener, TcpStream, UdpSocket};
 pub use tokio_core::reactor::Handle;
 pub use tokio_utp::{UtpListener, UtpSocket, UtpStream};

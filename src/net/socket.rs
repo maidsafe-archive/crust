@@ -273,7 +273,8 @@ where
         loop {
             match unwrap!(self.write_rx.poll()) {
                 Async::Ready(Some(TaskMsg::Send(priority, data))) => {
-                    let queue = self.write_queue
+                    let queue = self
+                        .write_queue
                         .entry(priority)
                         .or_insert_with(VecDeque::new);
                     queue.push_back((now, data));
@@ -305,7 +306,8 @@ impl Future for SocketTask<FramedPaStream> {
             return Ok(Async::Ready(()));
         }
 
-        let expired_keys: Vec<u8> = self.write_queue
+        let expired_keys: Vec<u8> = self
+            .write_queue
             .iter()
             .skip_while(|&(&priority, queue)| {
                 priority < MSG_DROP_PRIORITY || // Don't drop high-priority messages.

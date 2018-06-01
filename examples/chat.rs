@@ -64,12 +64,12 @@ mod utils;
 
 use chrono::Local;
 use clap::{App, Arg};
-use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service, MAX_PAYLOAD_SIZE};
 use crust::config::{DevConfigSettings, PeerInfo};
+use crust::{ConfigFile, Listener, PaAddr, Peer, PubConnectionInfo, Service, MAX_PAYLOAD_SIZE};
 use future_utils::{bi_channel, thread_future, BoxFuture, FutureExt};
-use futures::{Async, Future, Sink, Stream};
 use futures::future::Either;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use futures::{Async, Future, Sink, Stream};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};

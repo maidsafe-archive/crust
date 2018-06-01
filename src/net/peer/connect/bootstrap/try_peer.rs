@@ -16,8 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 use net::peer;
-use net::peer::connect::handshake_message::{BootstrapDenyReason, BootstrapRequest,
-                                            HandshakeMessage};
+use net::peer::connect::handshake_message::{
+    BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
+};
 use priv_prelude::*;
 use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 
