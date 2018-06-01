@@ -61,7 +61,7 @@ fn multiple_server_instances_in_parallel() {
                             responses
                         );
 
-                        assert!(responses.len() >= 1);
+                        assert!(!responses.is_empty());
                         for (_, msg) in responses {
                             assert_eq!(msg, i);
                         }
