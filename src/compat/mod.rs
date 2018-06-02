@@ -30,4 +30,4 @@ mod event_loop;
 mod service;
 
 /// Used to receive events from a `Service`.
-pub type CrustEventSender<UID> = maidsafe_utilities::event_sender::MaidSafeObserver<Event<UID>>;
+pub type CrustEventSender = maidsafe_utilities::event_sender::MaidSafeObserver<Event>;

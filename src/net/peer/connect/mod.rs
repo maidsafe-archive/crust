@@ -41,7 +41,6 @@ use net::peer::connect::demux::ConnectMessage;
 use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use p2p::P2p;
 use priv_prelude::*;
-use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
@@ -135,23 +134,22 @@ quick_error! {
 
 /// Perform a rendezvous connect to a peer. Both peers call this simultaneously using
 /// `PubConnectionInfo` they received from the other peer out-of-band.
-pub fn connect<UID: Uid, C>(
+pub fn connect<C>(
     handle: &Handle,
     name_hash: NameHash,
-    mut our_info: PrivConnectionInfo<UID>,
+    mut our_info: PrivConnectionInfo,
     conn_info_rx: C,
     config: &ConfigFile,
-    peer_rx: UnboundedReceiver<ConnectMessage<UID>>,
+    peer_rx: UnboundedReceiver<ConnectMessage>,
     bootstrap_cache: &BootstrapCache,
-) -> BoxFuture<Peer<UID>, ConnectError>
+) -> BoxFuture<Peer, ConnectError>
 where
-    C: Stream<Item = PubConnectionInfo<UID>>,
+    C: Stream<Item = PubConnectionInfo>,
     C: 'static,
 {
     let our_connect_request1 = ConnectRequest {
         connection_id: 0,
         peer_uid: our_info.id,
-        peer_pk: our_info.our_pk,
         name_hash,
     };
     let all_outgoing_connections = get_conn_info_and_connect(
@@ -182,18 +180,18 @@ where
 }
 
 /// Socket whose message type is `HandshakeMessage`.
-type ConnectingSocket<UID> = Socket<HandshakeMessage<UID>>;
+type ConnectingSocket = Socket<HandshakeMessage>;
 
-fn get_conn_info_and_connect<C, UID: Uid>(
+fn get_conn_info_and_connect<C>(
     handle: &Handle,
     conn_info_rx: C,
-    our_info: &mut PrivConnectionInfo<UID>,
-    our_connect_request: &ConnectRequest<UID>,
+    our_info: &mut PrivConnectionInfo,
+    our_connect_request: &ConnectRequest,
     config: &ConfigFile,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError>
+) -> BoxStream<(ConnectingSocket, Uid), SingleConnectionError>
 where
-    C: Stream<Item = PubConnectionInfo<UID>>,
+    C: Stream<Item = PubConnectionInfo>,
     C: 'static,
 {
     let our_id = our_info.id;
@@ -239,22 +237,22 @@ where
 }
 
 /// Initiates both direct and p2p connections.
-fn attempt_to_connect<UID: Uid>(
+fn attempt_to_connect(
     handle: &Handle,
     config: &ConfigFile,
-    our_connect_request: &ConnectRequest<UID>,
+    our_connect_request: &ConnectRequest,
     our_sk: SecretKey,
     our_p2p_conn_info: Option<P2pConnectionInfo>,
-    their_info: PubConnectionInfo<UID>,
+    their_info: PubConnectionInfo,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError> {
+) -> BoxStream<(ConnectingSocket, Uid), SingleConnectionError> {
     let direct_connections = {
-        let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.pub_key);
+        let crypto_ctx = CryptoContext::anonymous_encrypt(their_info.id.pkey());
         let handle = handle.clone();
         connect_directly(
             &handle,
             their_info.for_direct,
-            their_info.pub_key,
+            their_info.id.pkey(),
             config,
             bootstrap_cache,
         ).and_then(move |(stream, peer_addr)| {
@@ -269,7 +267,7 @@ fn attempt_to_connect<UID: Uid>(
     let all_connections = if config.rendezvous_connections_disabled() {
         direct_connections.into_boxed()
     } else {
-        let crypto_ctx = CryptoContext::authenticated(their_info.pub_key, our_sk.clone());
+        let crypto_ctx = CryptoContext::authenticated(their_info.id.pkey(), our_sk.clone());
         let handle = handle.clone();
         let rendezvous_conn =
             connect_p2p(our_p2p_conn_info, their_info.p2p_conn_info).and_then(move |stream| {
@@ -288,36 +286,36 @@ fn attempt_to_connect<UID: Uid>(
     handshake_outgoing_connections(
         all_connections,
         our_connect_request.clone(),
-        their_info.pub_key,
+        their_info.id.pkey(),
         our_sk,
     )
 }
 
 /// When "choose connection" message is received, this data is given.
-type ChooseConnectionResult<UID> = (Option<HandshakeMessage<UID>>, ConnectingSocket<UID>, UID);
+type ChooseConnectionResult = (Option<HandshakeMessage>, ConnectingSocket, Uid);
 
 /// Future that ensures that both peers select the same connection.
 /// Takes all pending handshaken connections and chooses the first one successful.
 /// Then this connection is wrapped in a `Peer` structure.
 /// Depending on service id either initiates connection choice message or waits for one.
-struct ChooseOneConnection<S, UID: Uid>
+struct ChooseOneConnection<S>
 where
-    S: Stream<Item = (ConnectingSocket<UID>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (ConnectingSocket, Uid), Error = SingleConnectionError> + 'static,
 {
     handle: Handle,
     all_connections: S,
     all_connections_are_done: bool,
-    our_uid: UID,
-    choose_sent: Option<BoxFuture<(ConnectingSocket<UID>, UID), ConnectError>>,
-    choose_waiting: Vec<BoxFuture<ChooseConnectionResult<UID>, SingleConnectionError>>,
+    our_uid: Uid,
+    choose_sent: Option<BoxFuture<(ConnectingSocket, Uid), ConnectError>>,
+    choose_waiting: Vec<BoxFuture<ChooseConnectionResult, SingleConnectionError>>,
     errors: Vec<SingleConnectionError>,
 }
 
-impl<S, UID: Uid> ChooseOneConnection<S, UID>
+impl<S> ChooseOneConnection<S>
 where
-    S: Stream<Item = (ConnectingSocket<UID>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (ConnectingSocket, Uid), Error = SingleConnectionError> + 'static,
 {
-    fn new(handle: &Handle, connections: S, our_uid: UID) -> Self {
+    fn new(handle: &Handle, connections: S, our_uid: Uid) -> Self {
         Self {
             handle: handle.clone(),
             all_connections: connections,
@@ -347,7 +345,7 @@ where
         }
     }
 
-    fn on_conn_ready(&mut self, socket: ConnectingSocket<UID>, their_uid: UID) {
+    fn on_conn_ready(&mut self, socket: ConnectingSocket, their_uid: Uid) {
         if self.our_uid > their_uid {
             self.choose_sent = Some(
                 socket
@@ -369,7 +367,7 @@ where
         }
     }
 
-    fn send_choose(&mut self) -> Result<Option<Peer<UID>>, ConnectError> {
+    fn send_choose(&mut self) -> Result<Option<Peer>, ConnectError> {
         let handle = &self.handle;
         if let Some(mut fut) = self.choose_sent.take() {
             match fut.poll() {
@@ -389,7 +387,7 @@ where
     }
 
     /// Wait for the first connection that receives "Choose Connection" message.
-    fn recv_choose(&mut self) -> Option<Peer<UID>> {
+    fn recv_choose(&mut self) -> Option<Peer> {
         let handle = &self.handle;
         let mut i = 0;
         while i < self.choose_waiting.len() {
@@ -423,11 +421,11 @@ where
     }
 }
 
-impl<S, UID: Uid> Future for ChooseOneConnection<S, UID>
+impl<S> Future for ChooseOneConnection<S>
 where
-    S: Stream<Item = (ConnectingSocket<UID>, UID), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (ConnectingSocket, Uid), Error = SingleConnectionError> + 'static,
 {
-    type Item = Peer<UID>;
+    type Item = Peer;
     type Error = ConnectError;
 
     /// Yields first successful connection.
@@ -490,18 +488,18 @@ fn connect_directly(
         .into_boxed()
 }
 
-fn handshake_incoming_connections<UID: Uid>(
-    mut our_connect_request: ConnectRequest<UID>,
+fn handshake_incoming_connections(
+    mut our_connect_request: ConnectRequest,
     our_sk: SecretKey,
-    conn_rx: UnboundedReceiver<ConnectMessage<UID>>,
-) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError> {
+    conn_rx: UnboundedReceiver<ConnectMessage>,
+) -> BoxStream<(ConnectingSocket, Uid), SingleConnectionError> {
     conn_rx
         .map_err(|()| unreachable!())
         .infallible::<SingleConnectionError>()
         .and_then(move |(mut socket, connect_request)| {
             validate_connect_request(our_connect_request.name_hash, &connect_request)?;
             socket.use_crypto_ctx(CryptoContext::authenticated(
-                connect_request.peer_pk,
+                connect_request.peer_uid.pkey(),
                 our_sk.clone(),
             ));
             our_connect_request.connection_id = connect_request.connection_id;
@@ -517,14 +515,14 @@ fn handshake_incoming_connections<UID: Uid>(
 }
 
 /// Executes handshake process for the given connections.
-fn handshake_outgoing_connections<UID: Uid, S>(
+fn handshake_outgoing_connections<S>(
     connections: S,
-    our_connect_request: ConnectRequest<UID>,
+    our_connect_request: ConnectRequest,
     their_pk: PublicKey,
     our_sk: SecretKey,
-) -> BoxStream<(ConnectingSocket<UID>, UID), SingleConnectionError>
+) -> BoxStream<(ConnectingSocket, Uid), SingleConnectionError>
 where
-    S: Stream<Item = ConnectingSocket<UID>, Error = SingleConnectionError> + 'static,
+    S: Stream<Item = ConnectingSocket, Error = SingleConnectionError> + 'static,
 {
     let our_name_hash = our_connect_request.name_hash;
     connections
@@ -576,9 +574,9 @@ fn connect_p2p(
     }
 }
 
-fn validate_connect_request<UID: Uid>(
+fn validate_connect_request(
     our_name_hash: NameHash,
-    connect_request: &ConnectRequest<UID>,
+    connect_request: &ConnectRequest,
 ) -> Result<(), SingleConnectionError> {
     let &ConnectRequest {
         name_hash: their_name_hash,

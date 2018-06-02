@@ -53,8 +53,8 @@ const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 // layer and then re-serialises them for no reason. This behaviour is inherited from the old crust
 // (where `Peer` and `Socket` were the same type) but should really be fixed. The heartbeat could
 // simply be encoded as a zero-byte message.
-pub struct Peer<UID: Uid> {
-    their_uid: UID,
+pub struct Peer {
+    their_uid: Uid,
     kind: CrustUser,
     socket: Socket<PeerMessage>,
     last_send_time: Instant,
@@ -62,7 +62,7 @@ pub struct Peer<UID: Uid> {
     recv_heartbeat_timeout: Timeout,
 }
 
-impl<UID: Uid> fmt::Debug for Peer<UID> {
+impl fmt::Debug for Peer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Peer")
             .field("id", &self.their_uid)
@@ -118,12 +118,12 @@ impl From<SocketError> for PeerError {
 }
 
 /// Construct a `Peer` from a `Socket` once we have completed the initial handshake.
-pub fn from_handshaken_socket<UID: Uid, M: 'static>(
+pub fn from_handshaken_socket<M: 'static>(
     handle: &Handle,
     socket: Socket<M>,
-    their_uid: UID,
+    their_uid: Uid,
     kind: CrustUser,
-) -> Peer<UID> {
+) -> Peer {
     let now = Instant::now();
     Peer {
         socket: socket.change_message_type(),
@@ -141,14 +141,14 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
     }
 }
 
-impl<UID: Uid> Peer<UID> {
+impl Peer {
     /// Return peer socket address.
     pub fn addr(&self) -> Result<PaAddr, PeerError> {
         Ok(self.socket.peer_addr()?)
     }
 
     /// Return peer id.
-    pub fn uid(&self) -> UID {
+    pub fn uid(&self) -> Uid {
         self.their_uid
     }
 
@@ -169,7 +169,7 @@ impl<UID: Uid> Peer<UID> {
     }
 }
 
-impl<UID: Uid> Stream for Peer<UID> {
+impl Stream for Peer {
     type Item = Vec<u8>;
     type Error = PeerError;
 
@@ -208,7 +208,7 @@ impl<UID: Uid> Stream for Peer<UID> {
     }
 }
 
-impl<UID: Uid> Sink for Peer<UID> {
+impl Sink for Peer {
     type SinkItem = (Priority, Vec<u8>);
     type SinkError = PeerError;
 

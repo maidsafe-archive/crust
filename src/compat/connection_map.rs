@@ -25,28 +25,28 @@ use std::sync::{Arc, Mutex};
 
 /// Reference counted connection hashmap.
 #[derive(Clone)]
-pub struct ConnectionMap<UID: Uid> {
-    inner: Arc<Mutex<Inner<UID>>>,
+pub struct ConnectionMap {
+    inner: Arc<Mutex<Inner>>,
 }
 
-struct Inner<UID: Uid> {
-    map: HashMap<UID, PeerWrapper<UID>>,
-    ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo<UID>>>,
-    event_tx: CrustEventSender<UID>,
+struct Inner {
+    map: HashMap<Uid, PeerWrapper>,
+    ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo>>,
+    event_tx: CrustEventSender,
 }
 
-struct PeerWrapper<UID: Uid> {
+struct PeerWrapper {
     _drop_tx: DropNotify,
     addr: PaAddr,
     kind: CrustUser,
-    peer_sink: SplitSink<Peer<UID>>,
+    peer_sink: SplitSink<Peer>,
 }
 
-impl<UID: Uid> ConnectionMap<UID> {
+impl ConnectionMap {
     /// Creates new peer connection hashmap that is able to fire events when:
     /// * new messages arrive to peers;
     /// * peer connection is lost.
-    pub fn new(event_tx: CrustEventSender<UID>) -> ConnectionMap<UID> {
+    pub fn new(event_tx: CrustEventSender) -> ConnectionMap {
         let inner = Inner {
             map: HashMap::new(),
             ci_channel: HashMap::new(),
@@ -57,7 +57,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Insert new peer into the map and registers peer event handlers.
-    pub fn insert_peer(&self, handle: &Handle, peer: Peer<UID>, addr: PaAddr) -> bool {
+    pub fn insert_peer(&self, handle: &Handle, peer: Peer, addr: PaAddr) -> bool {
         let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let uid = peer.uid();
@@ -99,7 +99,7 @@ impl<UID: Uid> ConnectionMap<UID> {
 
     /// Sends a message to a given peer.
     /// If peer is not found in the hashmap, error is returned.
-    pub fn send(&self, uid: &UID, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
+    pub fn send(&self, uid: &Uid, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
         let mut inner = unwrap!(self.inner.lock());
         let peer = match inner.map.get_mut(uid) {
             Some(peer) => peer,
@@ -113,7 +113,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Returns peer socket address or error, if peer is not found.
-    pub fn peer_addr(&self, uid: &UID) -> Result<PaAddr, CrustError> {
+    pub fn peer_addr(&self, uid: &Uid) -> Result<PaAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
         inner
             .map
@@ -123,13 +123,13 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Remove peer from the hashmap by id.
-    pub fn remove(&self, uid: &UID) -> bool {
+    pub fn remove(&self, uid: &Uid) -> bool {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.remove(uid).is_some()
     }
 
     /// Checks if peer with given id exists in the hashmap.
-    pub fn contains_peer(&self, uid: &UID) -> bool {
+    pub fn contains_peer(&self, uid: &Uid) -> bool {
         let inner = unwrap!(self.inner.lock());
         inner.map.contains_key(uid)
     }
@@ -154,7 +154,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     pub fn insert_ci_channel(
         &mut self,
         conn_id: u64,
-        chann: UnboundedBiChannel<PubConnectionInfo<UID>>,
+        chann: UnboundedBiChannel<PubConnectionInfo>,
     ) {
         let mut inner = unwrap!(self.inner.lock());
         let _ = inner.ci_channel.insert(conn_id, chann);
@@ -165,7 +165,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     pub fn get_ci_channel(
         &mut self,
         conn_id: u64,
-    ) -> Option<UnboundedBiChannel<PubConnectionInfo<UID>>> {
+    ) -> Option<UnboundedBiChannel<PubConnectionInfo>> {
         let mut inner = unwrap!(self.inner.lock());
         inner.ci_channel.remove(&conn_id)
     }

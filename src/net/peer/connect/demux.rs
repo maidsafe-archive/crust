@@ -36,32 +36,32 @@ const MAX_INCOMING_CONNECTIONS_BACKLOG: usize = 128;
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
 #[derive(Clone)]
-pub struct Demux<UID: Uid> {
-    inner: Arc<DemuxInner<UID>>,
+pub struct Demux {
+    inner: Arc<DemuxInner>,
 }
 
 /// `BootstrapRequest` paired with socket object.
-pub type BootstrapMessage<UID> = (Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>);
+pub type BootstrapMessage = (Socket<HandshakeMessage>, BootstrapRequest);
 
 /// `ConnectRequest` paired with socket object.
-pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UID>);
+pub type ConnectMessage = (Socket<HandshakeMessage>, ConnectRequest);
 
-struct DemuxInner<UID: Uid> {
-    bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
-    connection_handler: Mutex<LruCache<u64, UnboundedSender<ConnectMessage<UID>>>>,
-    available_connections: Mutex<LruCache<u64, ConnectMessage<UID>>>,
+struct DemuxInner {
+    bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage>>>,
+    connection_handler: Mutex<LruCache<u64, UnboundedSender<ConnectMessage>>>,
+    available_connections: Mutex<LruCache<u64, ConnectMessage>>,
     handle: Handle,
     bootstrap_cache: BootstrapCache,
 }
 
-impl<UID: Uid> Demux<UID> {
+impl Demux {
     /// Create a demultiplexer from a stream of incoming peers.
     pub fn new(
         handle: &Handle,
         incoming: SocketIncoming,
         crypto_ctx: CryptoContext,
         bootstrap_cache: &BootstrapCache,
-    ) -> Demux<UID> {
+    ) -> Demux {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(LruCache::with_expiry_duration(Duration::from_secs(
@@ -82,9 +82,9 @@ impl<UID: Uid> Demux<UID> {
     pub fn bootstrap_acceptor(
         &self,
         config: &ConfigFile,
-        our_uid: UID,
+        our_uid: Uid,
         our_sk: SecretKey,
-    ) -> BootstrapAcceptor<UID> {
+    ) -> BootstrapAcceptor {
         let (acceptor, peer_tx) =
             BootstrapAcceptor::new(&self.inner.handle, config, our_uid, our_sk);
         let mut bootstrap_handler = unwrap!(self.inner.bootstrap_handler.lock());
@@ -95,12 +95,12 @@ impl<UID: Uid> Demux<UID> {
     pub fn connect<C>(
         &self,
         name_hash: NameHash,
-        our_info: PrivConnectionInfo<UID>,
+        our_info: PrivConnectionInfo,
         conn_info_rx: C,
         config: &ConfigFile,
-    ) -> BoxFuture<Peer<UID>, ConnectError>
+    ) -> BoxFuture<Peer, ConnectError>
     where
-        C: Stream<Item = PubConnectionInfo<UID>>,
+        C: Stream<Item = PubConnectionInfo>,
         C: 'static,
     {
         let peer_rx = self.direct_conn_receiver(our_info.connection_id);
@@ -118,7 +118,7 @@ impl<UID: Uid> Demux<UID> {
     /// If there's already available connection for given peer ID, returns connection receiver
     /// that immediately gets connection. Otherwise, returned connection receiver is in waiting
     /// state and when new connection with given peer ID arrives, it will be sent to receiver.
-    fn direct_conn_receiver(&self, connection_id: u64) -> UnboundedReceiver<ConnectMessage<UID>> {
+    fn direct_conn_receiver(&self, connection_id: u64) -> UnboundedReceiver<ConnectMessage> {
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let mut available_conns = unwrap!(self.inner.available_connections.lock());
         match available_conns.remove(&connection_id) {
@@ -154,10 +154,10 @@ quick_error! {
     }
 }
 
-fn handle_incoming_connections<UID: Uid>(
+fn handle_incoming_connections(
     handle: &Handle,
     incoming: SocketIncoming,
-    inner: &Arc<DemuxInner<UID>>,
+    inner: &Arc<DemuxInner>,
     crypto_ctx: CryptoContext,
 ) -> BoxFuture<(), ()> {
     let inner = Arc::clone(inner);
@@ -165,7 +165,7 @@ fn handle_incoming_connections<UID: Uid>(
     incoming
         .log_errors(LogLevel::Error, "SocketIncoming errored!")
         .map(move |(stream, addr)| {
-            let socket: Socket<HandshakeMessage<UID>> =
+            let socket: Socket<HandshakeMessage> =
                 Socket::wrap_pa(&handle, stream, addr, crypto_ctx.clone());
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, socket)
@@ -177,10 +177,10 @@ fn handle_incoming_connections<UID: Uid>(
 }
 
 /// This methods is called when connection sends valid 8 byte header.
-fn handle_incoming_socket<UID: Uid>(
+fn handle_incoming_socket(
     handle: &Handle,
-    inner: Arc<DemuxInner<UID>>,
-    socket: Socket<HandshakeMessage<UID>>,
+    inner: Arc<DemuxInner>,
+    socket: Socket<HandshakeMessage>,
 ) -> BoxFuture<(), Void> {
     socket
         .into_future()
@@ -210,10 +210,10 @@ fn handle_incoming_socket<UID: Uid>(
         .into_boxed()
 }
 
-fn handle_connect_request<UID: Uid>(
-    inner: &Arc<DemuxInner<UID>>,
-    socket: Socket<HandshakeMessage<UID>>,
-    connect_request: ConnectRequest<UID>,
+fn handle_connect_request(
+    inner: &Arc<DemuxInner>,
+    socket: Socket<HandshakeMessage>,
+    connect_request: ConnectRequest,
 ) -> BoxFuture<(), IncomingError> {
     let mut connection_handler_map = unwrap!(inner.connection_handler.lock());
     match connection_handler_map.get(&connect_request.connection_id) {

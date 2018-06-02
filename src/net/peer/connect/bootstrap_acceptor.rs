@@ -62,30 +62,30 @@ quick_error! {
 }
 
 /// A stream of incoming bootstrap connections.
-pub struct BootstrapAcceptor<UID: Uid> {
+pub struct BootstrapAcceptor {
     handle: Handle,
-    peer_rx: UnboundedReceiver<BootstrapMessage<UID>>,
-    handshaking: FuturesUnordered<BoxFuture<Peer<UID>, BootstrapAcceptError>>,
+    peer_rx: UnboundedReceiver<BootstrapMessage>,
+    handshaking: FuturesUnordered<BoxFuture<Peer, BootstrapAcceptError>>,
     config: ConfigFile,
-    our_uid: UID,
+    our_uid: Uid,
     our_sk: SecretKey,
 }
 
-impl<UID: Uid> BootstrapAcceptor<UID> {
+impl BootstrapAcceptor {
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
-        our_uid: UID,
+        our_uid: Uid,
         our_sk: SecretKey,
     ) -> (
-        BootstrapAcceptor<UID>,
-        UnboundedSender<BootstrapMessage<UID>>,
+        BootstrapAcceptor,
+        UnboundedSender<BootstrapMessage>,
     ) {
         let config = config.clone();
         let handle = handle.clone();
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let handshaking =
-            stream::futures_unordered(Vec::<BoxFuture<Peer<UID>, BootstrapAcceptError>>::new());
+            stream::futures_unordered(Vec::<BoxFuture<Peer, BootstrapAcceptError>>::new());
         let acceptor = BootstrapAcceptor {
             handle,
             peer_rx,
@@ -98,11 +98,11 @@ impl<UID: Uid> BootstrapAcceptor<UID> {
     }
 }
 
-impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
-    type Item = Peer<UID>;
+impl Stream for BootstrapAcceptor {
+    type Item = Peer;
     type Error = BootstrapAcceptError;
 
-    fn poll(&mut self) -> Result<Async<Option<Peer<UID>>>, BootstrapAcceptError> {
+    fn poll(&mut self) -> Result<Async<Option<Peer>>, BootstrapAcceptError> {
         let stream_ended;
         loop {
             match self.peer_rx.poll() {
@@ -142,20 +142,20 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
 /// Construct a `Peer` by finishing a bootstrap accept handshake on a socket.
 /// The initial `BootstrapRequest` message sent by the peer has already been read from the
 /// socket.
-fn bootstrap_accept<UID: Uid>(
+fn bootstrap_accept(
     handle: &Handle,
-    mut socket: Socket<HandshakeMessage<UID>>,
+    mut socket: Socket<HandshakeMessage>,
     config: &ConfigFile,
-    our_uid: UID,
-    bootstrap_request: BootstrapRequest<UID>,
+    our_uid: Uid,
+    bootstrap_request: BootstrapRequest,
     our_sk: SecretKey,
-) -> BoxFuture<Peer<UID>, BootstrapAcceptError> {
+) -> BoxFuture<Peer, BootstrapAcceptError> {
     let handle = handle.clone();
     let their_uid = bootstrap_request.uid;
     let their_name_hash = bootstrap_request.name_hash;
     let their_ext_reachability = bootstrap_request.ext_reachability;
     socket.use_crypto_ctx(CryptoContext::authenticated(
-        bootstrap_request.their_pk,
+        bootstrap_request.uid.pkey(),
         our_sk,
     ));
 
@@ -269,13 +269,13 @@ fn bootstrap_accept<UID: Uid>(
     future::result(try()).flatten().into_boxed()
 }
 
-fn grant_bootstrap<UID: Uid>(
+fn grant_bootstrap(
     handle: &Handle,
-    socket: Socket<HandshakeMessage<UID>>,
-    our_uid: UID,
-    their_uid: UID,
+    socket: Socket<HandshakeMessage>,
+    our_uid: Uid,
+    their_uid: Uid,
     kind: CrustUser,
-) -> BoxFuture<Peer<UID>, SocketError> {
+) -> BoxFuture<Peer, SocketError> {
     let handle = handle.clone();
     socket
         .send((0, HandshakeMessage::BootstrapGranted(our_uid)))

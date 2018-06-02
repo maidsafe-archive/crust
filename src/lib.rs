@@ -67,9 +67,6 @@ extern crate p2p;
 #[macro_use]
 extern crate quick_error;
 extern crate rand;
-#[cfg(test)]
-#[macro_use]
-extern crate rand_derive;
 extern crate rust_sodium;
 extern crate serde;
 #[macro_use]

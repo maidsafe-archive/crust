@@ -87,14 +87,14 @@ impl From<SocketError> for ConnectHandshakeError {
 }
 
 /// Try to bootstrap to the given peer.
-pub fn try_peer<UID: Uid>(
+pub fn try_peer(
     handle: &Handle,
     addr: &PaAddr,
     config: &ConfigFile,
-    request: BootstrapRequest<UID>,
+    request: BootstrapRequest,
     our_sk: SecretKey,
     their_pk: PublicKey,
-) -> BoxFuture<Peer<UID>, TryPeerError> {
+) -> BoxFuture<Peer, TryPeerError> {
     let handle0 = handle.clone();
     let handle1 = handle.clone();
     let addr = *addr;
@@ -118,13 +118,13 @@ pub fn try_peer<UID: Uid>(
 }
 
 /// Construct a `Peer` by performing a bootstrap connection handshake on a socket.
-pub fn bootstrap_connect_handshake<UID: Uid>(
+pub fn bootstrap_connect_handshake(
     handle: &Handle,
-    socket: Socket<HandshakeMessage<UID>>,
-    request: BootstrapRequest<UID>,
+    socket: Socket<HandshakeMessage>,
+    request: BootstrapRequest,
     our_sk: SecretKey,
     their_pk: PublicKey,
-) -> BoxFuture<Peer<UID>, ConnectHandshakeError> {
+) -> BoxFuture<Peer, ConnectHandshakeError> {
     let handle0 = handle.clone();
     let msg = HandshakeMessage::BootstrapRequest(request);
     socket

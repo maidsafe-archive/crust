@@ -25,18 +25,20 @@ use service::Service;
 use std::time::Duration;
 use tokio_core::reactor::Core;
 use tokio_io;
-use util;
+use util::{self};
 
-fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service<util::UniqueId> {
+fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service {
     let loop_handle = event_loop.handle();
+    let (id, sk) = Uid::generate();
     unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
         config,
-        util::random_id(),
+        id,
+        sk
     )))
 }
 
-fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
+fn service_with_tmp_config(event_loop: &mut Core) -> Service {
     let config = unwrap!(ConfigFile::new_temporary());
     unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     service_with_config(event_loop, config)
@@ -66,10 +68,12 @@ mod bootstrap {
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr, service1.public_key())];
+        let (uid2, sk2) = Uid::generate();
         let mut service2 = unwrap!(event_loop.run(Service::with_config(
             &loop_handle,
             config2,
-            util::random_id(),
+            uid2,
+            sk2
         )));
 
         let service_discovery = false;
@@ -142,8 +146,9 @@ mod bootstrap {
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr0, service1.public_key())];
+        let (uid2, sk2) = Uid::generate();
         let mut service2 =
-            unwrap!(evloop.run(Service::with_config(&handle, config2, util::random_id(),)));
+            unwrap!(evloop.run(Service::with_config(&handle, config2, uid2, sk2)));
 
         let service_discovery = false;
         let peer = unwrap!(evloop.run(service2.bootstrap(
@@ -339,7 +344,7 @@ fn exchange_data_between_two_peers() {
     let data1 = random_data();
     let data2 = random_data();
 
-    let spawn_sending = |data, peer: Peer<util::UniqueId>| {
+    let spawn_sending = |data, peer: Peer| {
         let (peer_sink, peer_stream) = peer.split();
         let data_stream = stream::iter_ok::<_, ()>(data)
             .map_err(|_| PeerError::Destroyed) // makes compiler happy regarding error type
