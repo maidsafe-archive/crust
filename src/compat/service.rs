@@ -27,49 +27,51 @@ use priv_prelude::*;
 use rust_sodium::crypto::box_::PublicKey;
 use std;
 
-pub trait FnBox<UID: Uid> {
-    fn call_box(self: Box<Self>, state: &mut ServiceState<UID>);
+pub trait FnBox {
+    fn call_box(self: Box<Self>, state: &mut ServiceState);
 }
 
-impl<UID: Uid, F: FnOnce(&mut ServiceState<UID>)> FnBox<UID> for F {
+impl<F: FnOnce(&mut ServiceState)> FnBox for F {
     #[cfg_attr(feature = "cargo-clippy", allow(boxed_local))]
-    fn call_box(self: Box<Self>, state: &mut ServiceState<UID>) {
+    fn call_box(self: Box<Self>, state: &mut ServiceState) {
         (*self)(state)
     }
 }
 
-pub type ServiceCommand<UID> = Box<FnBox<UID> + Send>;
+pub type ServiceCommand = Box<FnBox + Send>;
 
 /// This type is a compatibility layer to provide a message-passing API over the underlying
 /// futures-based implementation of Service.
-pub struct Service<UID: Uid> {
-    event_loop: EventLoop<UID>,
+pub struct Service {
+    event_loop: EventLoop,
 }
 
-impl<UID: Uid> Service<UID> {
+impl Service {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
-    pub fn new(event_tx: CrustEventSender<UID>, our_uid: UID) -> Result<Service<UID>, CrustError> {
+    pub fn new(event_tx: CrustEventSender, our_uid: Uid, our_sk: SecretKey) -> Result<Service, CrustError> {
         let config = ConfigFile::open_default()?;
-        Service::with_config(event_tx, config, our_uid)
+        Service::with_config(event_tx, config, our_uid, our_sk)
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
     pub fn with_config(
-        event_tx: CrustEventSender<UID>,
+        event_tx: CrustEventSender,
         config: ConfigFile,
-        our_uid: UID,
-    ) -> Result<Service<UID>, CrustError> {
+        our_uid: Uid,
+        our_sk: SecretKey
+    ) -> Result<Service, CrustError> {
         let event_loop_id = Some(format!("{:?}", our_uid));
         let event_loop = event_loop::spawn_event_loop(
             event_loop_id.as_ref().map(|s| s.as_ref()),
             event_tx,
             our_uid,
+            our_sk,
             config.clone(),
         )?;
-        event_loop.send(Box::new(move |state: &mut ServiceState<UID>| {
+        event_loop.send(Box::new(move |state: &mut ServiceState| {
             let config_updates = state.service.config().observe();
             let cm = state.cm.clone();
             state.service.handle().spawn({
@@ -92,7 +94,7 @@ impl<UID: Uid> Service<UID> {
     /// Enables service discovery during bootstrapping.
     pub fn start_service_discovery(&self) {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 state.service_discovery_enabled = true;
             }));
     }
@@ -101,7 +103,7 @@ impl<UID: Uid> Service<UID> {
     /// or stops it.
     pub fn set_service_discovery_listen(&self, listen: bool) {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 if !listen {
                     let _ = state.service_discovery.take();
                     return;
@@ -121,7 +123,7 @@ impl<UID: Uid> Service<UID> {
     /// Depending on given argument either starts *Crust* bootstrap acceptor or stops it.
     pub fn set_accept_bootstrap(&self, accept: bool) -> Result<(), CrustError> {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 if accept {
                     if state.bootstrap_acceptor.is_none() {
                         let handle0 = state.service.handle().clone();
@@ -166,28 +168,28 @@ impl<UID: Uid> Service<UID> {
 
     /// Fetches given peer socket address.
     /// Blocks until address is retrieved.
-    pub fn get_peer_socket_addr(&self, peer_uid: &UID) -> Result<PaAddr, CrustError> {
+    pub fn get_peer_socket_addr(&self, peer_uid: &Uid) -> Result<PaAddr, CrustError> {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 unwrap!(tx.send(state.cm.peer_addr(&peer_uid)));
             }));
         unwrap!(rx.recv())
     }
 
     /// Same as `get_peer_socket_addr()`, but it returns IP address instead.
-    pub fn get_peer_ip_addr(&self, peer_uid: &UID) -> Result<IpAddr, CrustError> {
+    pub fn get_peer_ip_addr(&self, peer_uid: &Uid) -> Result<IpAddr, CrustError> {
         self.get_peer_socket_addr(peer_uid).map(|a| a.ip())
     }
 
     /// Checks if given peer is the one from hard coded contacts list.
     /// Blocks until response is received.
-    pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
+    pub fn is_peer_hard_coded(&self, peer_uid: &Uid) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 let config = state.service.config();
                 let res = {
                     state
@@ -215,7 +217,7 @@ impl<UID: Uid> Service<UID> {
         crust_user: CrustUser,
     ) -> Result<(), CrustError> {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 let (drop_tx, drop_rx) = future_utils::drop_notify();
                 let use_service_discovery = state.service_discovery_enabled;
                 state.bootstrap_connect = Some(drop_tx);
@@ -259,7 +261,7 @@ impl<UID: Uid> Service<UID> {
     /// Cancels the bootstrap process.
     pub fn stop_bootstrap(&self) -> Result<(), CrustError> {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 let _ = state.bootstrap_connect.take();
             }));
         Ok(())
@@ -269,7 +271,7 @@ impl<UID: Uid> Service<UID> {
     /// Returns immediately.
     pub fn start_listening(&self) -> Result<(), CrustError> {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 if state.listeners.is_some() {
                     return;
                 }
@@ -300,7 +302,7 @@ impl<UID: Uid> Service<UID> {
     /// Stops direct connection listener.
     pub fn stop_listening(&self) -> Result<(), CrustError> {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 let _ = state.listeners.take();
             }));
         Ok(())
@@ -311,7 +313,7 @@ impl<UID: Uid> Service<UID> {
     pub fn prepare_connection_info(&self, result_token: u32) {
         let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 state.spawn_connect(ci_channel1);
                 let event_tx = state.event_tx.clone();
                 let mut cm = state.cm.clone();
@@ -351,11 +353,11 @@ impl<UID: Uid> Service<UID> {
     ///    obtained from the peer
     pub fn connect(
         &self,
-        our_ci: PubConnectionInfo<UID>,
-        their_ci: PubConnectionInfo<UID>,
+        our_ci: PubConnectionInfo,
+        their_ci: PubConnectionInfo,
     ) -> Result<(), CrustError> {
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 if let Some(ci_chann) = state.cm.get_ci_channel(our_ci.connection_id) {
                     let _ = ci_chann.unbounded_send(their_ci);
                 }
@@ -364,43 +366,43 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, peer_uid: &UID) -> bool {
+    pub fn disconnect(&self, peer_uid: &Uid) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 unwrap!(tx.send(state.cm.remove(&peer_uid)));
             }));
         unwrap!(rx.recv())
     }
 
     /// Send data to a peer.
-    pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
+    pub fn send(&self, peer_uid: &Uid, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 unwrap!(tx.send(state.cm.send(&peer_uid, msg, priority)));
             }));
         unwrap!(rx.recv())
     }
 
     /// Check if we are connected to the given peer
-    pub fn is_connected(&self, peer_uid: &UID) -> bool {
+    pub fn is_connected(&self, peer_uid: &Uid) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 unwrap!(tx.send(state.cm.contains_peer(&peer_uid)));
             }));
         unwrap!(rx.recv())
     }
 
     /// Returns our ID.
-    pub fn id(&self) -> UID {
+    pub fn id(&self) -> Uid {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 unwrap!(tx.send(state.service.id()));
             }));
         unwrap!(rx.recv())
@@ -410,7 +412,7 @@ impl<UID: Uid> Service<UID> {
     pub fn has_peers_on_lan(&self) -> bool {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 let handle = state.service.handle();
                 let config = state.service.config();
                 let sd_port = config
@@ -444,17 +446,17 @@ impl<UID: Uid> Service<UID> {
     pub fn public_key(&self) -> PublicKey {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
-            .send(Box::new(move |state: &mut ServiceState<UID>| {
+            .send(Box::new(move |state: &mut ServiceState| {
                 unwrap!(tx.send(state.service.public_key()));
             }));
         unwrap!(rx.recv())
     }
 }
 
-pub struct ServiceState<UID: Uid> {
-    service: ::Service<UID>,
-    event_tx: CrustEventSender<UID>,
-    cm: ConnectionMap<UID>,
+pub struct ServiceState {
+    service: ::Service,
+    event_tx: CrustEventSender,
+    cm: ConnectionMap,
 
     bootstrap_acceptor: Option<DropNotify>,
     bootstrap_connect: Option<DropNotify>,
@@ -463,8 +465,8 @@ pub struct ServiceState<UID: Uid> {
     service_discovery_enabled: bool,
 }
 
-impl<UID: Uid> ServiceState<UID> {
-    pub fn new(service: ::Service<UID>, event_tx: CrustEventSender<UID>) -> ServiceState<UID> {
+impl ServiceState {
+    pub fn new(service: ::Service, event_tx: CrustEventSender) -> ServiceState {
         let cm = ConnectionMap::new(event_tx.clone());
         ServiceState {
             service,
@@ -483,7 +485,7 @@ impl<UID: Uid> ServiceState<UID> {
     /// Emits `ConnectSuccess` and `ConnectFailure` events.
     fn spawn_connect(
         &mut self,
-        ci_channel1: bi_channel::UnboundedBiChannel<PubConnectionInfo<UID>>,
+        ci_channel1: bi_channel::UnboundedBiChannel<PubConnectionInfo>,
     ) {
         let event_tx1 = self.event_tx.clone();
         let event_tx2 = event_tx1.clone();
@@ -494,7 +496,7 @@ impl<UID: Uid> ServiceState<UID> {
             let handle = handle.clone();
             self.service
                 .connect(
-                    ci_channel1.and_then(move |their_ci: PubConnectionInfo<UID>| {
+                    ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
                         unwrap!(their_ci_tx.clone().unbounded_send(their_ci.id));
                         Ok(their_ci)
                     }),
@@ -524,7 +526,7 @@ impl<UID: Uid> ServiceState<UID> {
     }
 }
 
-impl<UID: Uid> Drop for ServiceState<UID> {
+impl Drop for ServiceState {
     fn drop(&mut self) {
         self.cm.clear()
     }

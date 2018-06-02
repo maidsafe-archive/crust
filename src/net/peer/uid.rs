@@ -15,23 +15,39 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use priv_prelude::*;
-use std::hash::Hash;
+use std::fmt;
+use rust_sodium::crypto::box_::{PublicKey, SecretKey, gen_keypair};
 
-/// Trait for specifying a unique identifier for a Crust peer
-pub trait Uid:
-    'static
-    + Send
-    + fmt::Debug
-    + fmt::Display
-    + Clone
-    + Copy
-    + Eq
-    + PartialEq
-    + Ord
-    + PartialOrd
-    + Hash
-    + Serialize
-    + DeserializeOwned
-{
+/// Peer unique identifier
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+pub struct Uid(pub PublicKey);
+
+impl Uid {
+    /// Create a new Uid struct from a PublicKey
+    pub fn new(pkey: PublicKey) -> Uid {
+        Uid(pkey)
+    }
+
+    /// Generate a Uid and a SecretKey
+    pub fn generate() -> (Uid, SecretKey) {
+        let (pkey, skey) = gen_keypair();
+        (Uid(pkey), skey)
+    }
+
+    /// Returns the public key of the Uid struct
+    pub fn pkey(&self) -> PublicKey {
+        self.0
+    }
+}
+
+impl fmt::Display for Uid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut hex: String = String::new();
+        
+        self.pkey().0
+            .iter()
+            .for_each(|b| hex.push_str(&format!("{:x}", *b)));
+
+        write!(f, "{}", hex)
+    }
 }

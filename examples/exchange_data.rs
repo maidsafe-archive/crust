@@ -32,11 +32,7 @@ extern crate env_logger;
 extern crate future_utils;
 extern crate futures;
 extern crate rand;
-#[macro_use]
-extern crate rand_derive;
 extern crate serde;
-#[macro_use]
-extern crate serde_derive;
 extern crate serde_json;
 extern crate tokio_core;
 #[macro_use]
@@ -48,13 +44,12 @@ extern crate crust;
 mod utils;
 
 use clap::App;
-use crust::{ConfigFile, Service};
+use crust::{ConfigFile, Service, Uid};
 use future_utils::bi_channel;
 use futures::future::{empty, Future};
 use futures::sink::Sink;
 use futures::stream::Stream;
 use tokio_core::reactor::Core;
-use utils::PeerId;
 
 fn main() {
     unwrap!(env_logger::init());
@@ -70,7 +65,7 @@ fn main() {
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
     // generate random unique ID for this node
-    let service_id: PeerId = rand::random();
+    let (service_id, service_sk) = Uid::generate();
     println!("Service id: {}", service_id);
 
     let config = unwrap!(ConfigFile::new_temporary());
@@ -78,7 +73,7 @@ fn main() {
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let service = unwrap!(event_loop.run(Service::with_config(&handle, config, service_id),));
+    let service = unwrap!(event_loop.run(Service::with_config(&handle, config, service_id, service_sk),));
     let listeners = unwrap!(event_loop.run(service.start_listening().collect()));
     for listener in &listeners {
         println!("Listening on {}", listener.addr());

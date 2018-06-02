@@ -24,24 +24,6 @@ use std::env;
 use std::fs::File;
 use std::io::Write;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
-pub struct UniqueId(pub [u8; 20]);
-impl Uid for UniqueId {}
-
-impl fmt::Display for UniqueId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let UniqueId(ref id) = *self;
-        for byte in id {
-            write!(f, "{:02x}", byte)?;
-        }
-        Ok(())
-    }
-}
-
-pub fn random_id() -> UniqueId {
-    rand::thread_rng().gen()
-}
-
 #[allow(unsafe_code)]
 pub fn random_vec(size: usize) -> Vec<u8> {
     let mut ret = Vec::with_capacity(size);

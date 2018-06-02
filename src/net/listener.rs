@@ -147,7 +147,7 @@ impl Acceptor {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
+    pub fn listener(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
@@ -250,7 +250,7 @@ mod test {
     use hamcrest::prelude::*;
     use rust_sodium::crypto::box_::gen_keypair;
     use tokio_core::reactor::Core;
-    use util::{self, UniqueId};
+    use util::{self};
 
     fn decrypt_ctx_with_rand_keys() -> (CryptoContext, SecretKey) {
         let (our_pk, our_sk) = gen_keypair();
@@ -502,7 +502,7 @@ mod test {
 
         let future = {
             acceptor
-                .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                .listener(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .and_then(move |listener0| {
                     let addr0 = listener0.addr();
@@ -515,7 +515,7 @@ mod test {
                     assert!(addrs0.is_subset(&addrs));
 
                     acceptor
-                        .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                        .listener(&tcp_addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener1| {
                             let addr1 = listener1.addr();
@@ -594,7 +594,7 @@ mod test {
         let config = unwrap!(ConfigFile::new_temporary());
         let future = {
             acceptor
-                .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                .listener(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener| {
                     mem::forget(listener);
@@ -602,7 +602,7 @@ mod test {
                 })
                 .and_then(move |acceptor| {
                     acceptor
-                        .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                        .listener(&tcp_addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);

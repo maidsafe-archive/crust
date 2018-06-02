@@ -51,16 +51,16 @@ quick_error! {
 /// Try to bootstrap to the network.
 ///
 /// On success, returns the first peer that we've bootstrapped to.
-pub fn bootstrap<UID: Uid>(
+pub fn bootstrap(
     handle: &Handle,
-    request: BootstrapRequest<UID>,
+    request: BootstrapRequest,
     blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
     our_sk: SecretKey,
     cache: &Cache,
-) -> BoxFuture<Peer<UID>, BootstrapError> {
-    let our_pk = request.their_pk;
+) -> BoxFuture<Peer, BootstrapError> {
+    let our_pk = request.uid.pkey();
     let config = config.clone();
     let handle = handle.clone();
     let cache = cache.clone();
@@ -114,15 +114,15 @@ pub fn bootstrap<UID: Uid>(
 }
 
 /// Attempts to bootstrap to single given peer.
-fn bootstrap_to_peer<UID: Uid>(
+fn bootstrap_to_peer(
     handle: &Handle,
     peer: PeerInfo,
     peer_nr: u32,
     config: &ConfigFile,
     cache: &Cache,
-    request: &BootstrapRequest<UID>,
+    request: &BootstrapRequest,
     our_sk: &SecretKey,
-) -> BoxFuture<Peer<UID>, (PaAddr, TryPeerError)> {
+) -> BoxFuture<Peer, (PaAddr, TryPeerError)> {
     let config = config.clone();
     let handle = handle.clone();
     let our_sk = our_sk.clone();

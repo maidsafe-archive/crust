@@ -39,11 +39,7 @@ extern crate clap;
 extern crate future_utils;
 extern crate futures;
 extern crate rand;
-#[macro_use]
-extern crate rand_derive;
 extern crate serde;
-#[macro_use]
-extern crate serde_derive;
 extern crate serde_json;
 extern crate tokio_core;
 #[macro_use]
@@ -55,13 +51,11 @@ extern crate crust;
 mod utils;
 
 use clap::App;
-use crust::{ConfigFile, Service};
+use crust::{ConfigFile, Service, Uid};
 use future_utils::bi_channel;
 use futures::future::{empty, Future};
 use futures::Stream;
-use rand::Rng;
 use tokio_core::reactor::Core;
-use utils::PeerId;
 
 fn main() {
     let _ = App::new("Crust basic connection example")
@@ -75,7 +69,7 @@ fn main() {
 
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
-    let service_id = rand::thread_rng().gen::<PeerId>();
+    let (service_id, service_sk) = Uid::generate();
     println!("Service id: {}", service_id);
 
     let config = unwrap!(ConfigFile::new_temporary());
@@ -83,7 +77,7 @@ fn main() {
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let make_service = Service::with_config(&event_loop.handle(), config, service_id);
+    let make_service = Service::with_config(&event_loop.handle(), config, service_id, service_sk);
     let service = unwrap!(
         event_loop.run(make_service),
         "Failed to create Service object",
