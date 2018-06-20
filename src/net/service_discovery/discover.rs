@@ -27,6 +27,8 @@ use tokio_core::net::UdpSocket;
 use tokio_core::reactor::Handle;
 use util::SerdeUdpCodec;
 
+/// Returns IP address and listener addresses of a first node to respond to service discovery
+/// request.
 pub fn discover<T>(
     handle: &Handle,
     port: u16,
