@@ -88,12 +88,10 @@ pub fn bootstrap<UID: Uid>(
     } else {
         future::ok(stream::empty().into_boxed()).into_boxed()
     };
-
-    let cached_peers = future::result(bootstrap_peers(&config, &cache));
+    let cached_peers = bootstrap_peers(&config, &cache);
 
     sd_peers
-        .join(cached_peers)
-        .and_then(move |(sd_peers, cached_peers)| {
+        .and_then(move |sd_peers| {
             let mut i = 0;
 
             sd_peers
@@ -159,11 +157,11 @@ fn bootstrap_to_peer<UID: Uid>(
 }
 
 /// Collects bootstrap peers from cache and config.
-fn bootstrap_peers(config: &ConfigFile, cache: &Cache) -> Result<Vec<PeerInfo>, BootstrapError> {
+fn bootstrap_peers(config: &ConfigFile, cache: &Cache) -> Vec<PeerInfo> {
     let mut peers = Vec::new();
     peers.extend(cache.peers());
     peers.extend(config.read().hard_coded_contacts.clone());
-    Ok(peers)
+    peers
 }
 
 #[cfg(test)]
@@ -183,7 +181,7 @@ mod tests {
             let cache = unwrap!(Cache::new(Some(&bootstrap_cache_tmp_file())));
             cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
 
-            let peers: Vec<PaAddr> = unwrap!(bootstrap_peers(&config, &cache))
+            let peers: Vec<PaAddr> = bootstrap_peers(&config, &cache)
                 .iter()
                 .map(|peer| peer.addr)
                 .collect();
