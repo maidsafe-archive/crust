@@ -16,10 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 use config::{DevConfigSettings, PeerInfo};
+use env_logger;
 use future_utils::bi_channel;
 use futures::stream;
-use net::peer;
-use p2p::{self, query_public_addr, Protocol};
 use priv_prelude::*;
 use service::Service;
 use std::time::Duration;
@@ -27,16 +26,17 @@ use tokio_core::reactor::Core;
 use tokio_io;
 use util;
 
-fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service<util::UniqueId> {
+fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service {
     let loop_handle = event_loop.handle();
     unwrap!(event_loop.run(Service::with_config(
         &loop_handle,
         config,
-        util::random_id(),
+        SecretId::new(),
+        Vec::new(),
     )))
 }
 
-fn service_with_tmp_config(event_loop: &mut Core) -> Service<util::UniqueId> {
+fn service_with_tmp_config(event_loop: &mut Core) -> Service {
     let config = unwrap!(ConfigFile::new_temporary());
     unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     service_with_config(event_loop, config)
@@ -69,7 +69,8 @@ mod bootstrap {
         let mut service2 = unwrap!(event_loop.run(Service::with_config(
             &loop_handle,
             config2,
-            util::random_id(),
+            SecretId::new(),
+            Vec::new(),
         )));
 
         let service_discovery = false;
@@ -79,7 +80,7 @@ mod bootstrap {
             CrustUser::Client,
         )));
 
-        assert_eq!(peer.uid(), service1.id());
+        assert_eq!(peer.uid(), &service1.id());
     }
 
     #[test]
@@ -119,7 +120,7 @@ mod bootstrap {
         let peer =
             unwrap!(evloop.run(service2.bootstrap(HashSet::new(), true, CrustUser::Client,)));
 
-        assert_eq!(peer.uid(), service1.id());
+        assert_eq!(peer.uid(), &service1.id());
     }
 
     #[test]
@@ -142,8 +143,12 @@ mod bootstrap {
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr0, service1.public_key())];
-        let mut service2 =
-            unwrap!(evloop.run(Service::with_config(&handle, config2, util::random_id(),)));
+        let mut service2 = unwrap!(evloop.run(Service::with_config(
+            &handle,
+            config2,
+            SecretId::new(),
+            Vec::new()
+        )));
 
         let service_discovery = false;
         let peer = unwrap!(evloop.run(service2.bootstrap(
@@ -181,8 +186,8 @@ mod direct_connections {
             .connect(ci_channel1)
             .join(service2.connect(ci_channel2));
         let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
-        assert_eq!(service1_peer.uid(), service2.id());
-        assert_eq!(service2_peer.uid(), service1.id());
+        assert_eq!(service1_peer.uid(), &service2.id());
+        assert_eq!(service2_peer.uid(), &service1.id());
     }
 
     #[test]
@@ -224,8 +229,8 @@ mod direct_connections {
                     .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
             )
         );
-        assert_eq!(service1_peer.uid(), service2.id());
-        assert_eq!(service2_peer.uid(), service1.id());
+        assert_eq!(service1_peer.uid(), &service2.id());
+        assert_eq!(service2_peer.uid(), &service1.id());
     }
 
     #[test]
@@ -261,6 +266,8 @@ mod direct_connections {
 // None of the services in this test has listeners, therefore peer-to-peer connections are made.
 #[test]
 fn p2p_connections_on_localhost() {
+    let _ = env_logger::init();
+
     let mut event_loop = unwrap!(Core::new());
 
     let config = unwrap!(ConfigFile::new_temporary());
@@ -273,12 +280,12 @@ fn p2p_connections_on_localhost() {
     let connect = service1
         .connect(ci_channel1)
         .join(service2.connect(ci_channel2))
-        .with_timeout(Duration::from_secs(5), &event_loop.handle())
+        .with_timeout(Duration::from_secs(10), &event_loop.handle())
         .map(|res_opt| unwrap!(res_opt, "p2p connection timed out"));
 
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
-    assert_eq!(service1_peer.uid(), service2.id());
-    assert_eq!(service2_peer.uid(), service1.id());
+    assert_eq!(service1_peer.uid(), &service2.id());
+    assert_eq!(service2_peer.uid(), &service1.id());
 }
 
 #[test]
@@ -332,18 +339,16 @@ fn exchange_data_between_two_peers() {
     let random_data = || {
         const MAX_DATA_SIZE: usize = 512;
         (0..NUM_MESSAGES)
-            .map(|_| util::random_vec(MAX_DATA_SIZE))
+            .map(|_| Bytes::from(util::random_vec(MAX_DATA_SIZE)))
             .collect::<Vec<_>>()
     };
 
     let data1 = random_data();
     let data2 = random_data();
 
-    let spawn_sending = |data, peer: Peer<util::UniqueId>| {
+    let spawn_sending = |data, peer: Peer| {
         let (peer_sink, peer_stream) = peer.split();
-        let data_stream = stream::iter_ok::<_, ()>(data)
-            .map_err(|_| PeerError::Destroyed) // makes compiler happy regarding error type
-            .map(|item| (1, item));
+        let data_stream = stream::iter_ok::<_, ()>(data).map_err(|_| PeerError::Destroyed);
         let send_all = peer_sink.send_all(data_stream).then(|_| Ok(()));
         loop_handle.spawn(send_all);
         peer_stream
@@ -370,12 +375,8 @@ fn service_responds_to_tcp_echo_address_requests() {
     let listener = unwrap!(event_loop.run(service.start_listening().first_ok()));
     let listener_addr = listener.addr().unspecified_to_localhost().inner();
 
-    let resp = event_loop.run(query_public_addr(
-        Protocol::Tcp,
-        &addr!("0.0.0.0:0"),
-        &p2p::PeerInfo::new(listener_addr, service.public_key()),
-        &handle,
-    ));
+    let addr_querier = PaTcpAddrQuerier::new(&listener_addr, service.public_key());
+    let resp = event_loop.run(addr_querier.query(&addr!("0.0.0.0:0"), &handle));
     let our_addr = unwrap!(resp);
 
     assert_eq!(our_addr.ip(), ipv4!("127.0.0.1"));
@@ -401,31 +402,26 @@ fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
         .join(service2.connect(ci_channel2));
     let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
 
-    let data_len = MAX_PAYLOAD_SIZE + 10;
+    let data_len = ::MAX_PAYLOAD_SIZE + 10;
     let mut data = vec![1u8; data_len];
     data[0] = ((data_len >> 24) & 0xff) as u8;
     data[1] = ((data_len >> 16) & 0xff) as u8;
     data[2] = ((data_len >> 8) & 0xff) as u8;
     data[3] = (data_len & 0xff) as u8;
-    let send_data = service1_peer
-        .socket()
-        .into_inner()
-        .map_err(|e| panic!("Failed to extract peer inner stream: {}", e))
-        .map(|framed_stream| framed_stream.into_inner())
-        .and_then(|peer_stream| {
-            tokio_io::io::write_all(peer_stream, data).map(|(peer_stream, _data)| peer_stream)
-        });
+    let peer_stream = service1_peer.into_pa_stream().into_tcp_stream();
+    let send_data =
+        { tokio_io::io::write_all(peer_stream, data).map(|(peer_stream, _data)| peer_stream) };
     let recv_data = service2_peer.into_future().then(|_result| Ok(()));
     let res = evloop.run(send_data.join(recv_data));
     match res {
         // On Mac OS, when remote peer gets too big packet, it terminates connection and
         // tokio_io::io::write_all() terminates immediately with broken pipe.
         Err(e) => {
-            let broken_pipe = match e.kind() {
-                io::ErrorKind::BrokenPipe => true,
-                _ => false,
+            match e.kind() {
+                io::ErrorKind::BrokenPipe => (),
+                io::ErrorKind::ConnectionReset => (),
+                _ => panic!("unexpected error: {}", e),
             };
-            assert!(broken_pipe);
         }
         // On other OSes we need to try to receive to get connection reset error.
         Ok((service1_peer_stream, _)) => {
@@ -493,12 +489,17 @@ mod encryption {
     #[test]
     fn when_peer_sends_unencrypted_traffic_other_peer_closes_connection_with_error() {
         let mut evloop = unwrap!(Core::new());
-        let handle = evloop.handle();
 
         let service1 = service_with_tmp_config(&mut evloop);
         let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
 
-        let service2 = service_with_tmp_config(&mut evloop);
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![utp_addr!("0.0.0.0:0")];
+        unwrap!(config.write()).dev = Some(DevConfigSettings {
+            disable_tcp: true,
+            ..DevConfigSettings::default()
+        });
+        let service2 = service_with_config(&mut evloop, config);
         let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
 
         let (ci_channel1, ci_channel2) = bi_channel::unbounded();
@@ -506,47 +507,26 @@ mod encryption {
             .connect(ci_channel1)
             .join(service2.connect(ci_channel2));
         let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
-        let service2_peer = {
-            let id = service2_peer.uid();
-            let kind = service2_peer.kind();
-            let mut peer1_socket = service2_peer.socket();
-            peer1_socket.use_crypto_ctx(CryptoContext::null());
-            peer::from_handshaken_socket(&handle, peer1_socket, id, kind)
-        };
+        let service2_tcp = service2_peer.into_pa_stream().into_utp_stream();
 
-        let send_text = service2_peer.send((1, vec![1, 2, 3])) // let's send unencrypted data
-            .and_then(|peer| {
-                peer.into_future()
-                    .map_err(|(e, _peer)| panic!("service2 failed to receive {}", e))
-                    .map(|(data_opt, _peer)| unwrap!(data_opt))
+        let mut data = util::random_vec(1024 + 4);
+        data[0..4].clone_from_slice(&[0, 0, 4, 0]);
+
+        evloop
+            .run({
+                tokio_io::io::write_all(service2_tcp, data)
+                    .map_err(|e| panic!("error writing: {}", e))
+                    .join({
+                        service1_peer
+                            .into_future()
+                            .map(|x| panic!("unexpected success: {:?}", x))
+                            .or_else(|(e, _service1_peer)| match e {
+                                PeerError::Read(_e) => Ok(()),
+                                e => panic!("unexpected error: {}", e),
+                            })
+                    })
+                    .map(|(_service2_tcp, ())| ())
             })
-            .join(service1_peer.into_future()
-                .map_err(|(e, _peer)| e) // we'll return error for assertion
-                .and_then(|(data_opt, peer)| {
-                    peer.send((1, vec![3, 2, 1])).map(move |_peer| unwrap!(data_opt))
-                })
-            );
-        let res = evloop.run(send_text);
-
-        let failed_to_decrypt_plaintext = match res {
-            Err(e) => match e {
-                PeerError::Decrypt(_) => true,
-                _ => false,
-            },
-            _ => false,
-        };
-        assert!(failed_to_decrypt_plaintext);
+            .void_unwrap()
     }
 }
-
-/*
-
-    Things to test:
-
-    are bootstrap blacklists respected?
-    are external reachability requirements respected?
-    are whitelists respected?
-
-    can we connect with no listeners? - not really testable over loopback
-
-*/

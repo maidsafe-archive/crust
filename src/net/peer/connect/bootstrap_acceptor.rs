@@ -23,16 +23,15 @@ use net::peer::connect::handshake_message::{
     BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
 };
 use priv_prelude::*;
-use rust_sodium::crypto::box_::SecretKey;
 use util;
 
 quick_error! {
     #[derive(Debug)]
     pub enum BootstrapAcceptError {
-        Socket(e: SocketError) {
-            description("Error on the underlying socket")
-            display("Error on the underlying socket: {}", e)
-            from()
+        SocketIo(e: io::Error) {
+            description("io error on socket")
+            display("io error on socket: {}", e)
+            cause(e)
         }
         Disconnected {
             description("Disconnected from peer")
@@ -48,7 +47,7 @@ quick_error! {
             description("Node is not whitelisted")
             display("Node {} is not whitelisted", ip)
         }
-        FailedExternalReachability(errors: Vec<io::Error>) {
+        FailedExternalReachability(errors: Vec<ExternalReachabilityError>) {
             description("All external reachability checks failed")
             display("All external reachability checks failed. \
                     Tried {} addresses, errors: {:?}",
@@ -58,51 +57,64 @@ quick_error! {
             description("Client is not whitelisted")
             display("Client {} is not whitelisted", ip)
         }
+        Write(e: PaStreamWriteError) {
+            description("error writing to accepted stream")
+            display("error writing to accepted stream: {}", e)
+            cause(e)
+        }
+    }
+}
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum ExternalReachabilityError {
+        Connect(e: DirectConnectError) {
+            description("error connecting to endpoint")
+            display("error connecting to endpoint: {}", e)
+            cause(e)
+        }
+        TimedOut {
+            description("timed out connecting to endpoint")
+        }
     }
 }
 
 /// A stream of incoming bootstrap connections.
-pub struct BootstrapAcceptor<UID: Uid> {
+pub struct BootstrapAcceptor {
     handle: Handle,
-    peer_rx: UnboundedReceiver<BootstrapMessage<UID>>,
-    handshaking: FuturesUnordered<BoxFuture<Peer<UID>, BootstrapAcceptError>>,
+    peer_rx: UnboundedReceiver<BootstrapMessage>,
+    handshaking: FuturesUnordered<BoxFuture<Peer, BootstrapAcceptError>>,
     config: ConfigFile,
-    our_uid: UID,
-    our_sk: SecretKey,
+    our_uid: PublicUid,
 }
 
-impl<UID: Uid> BootstrapAcceptor<UID> {
+impl BootstrapAcceptor {
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
-        our_uid: UID,
-        our_sk: SecretKey,
-    ) -> (
-        BootstrapAcceptor<UID>,
-        UnboundedSender<BootstrapMessage<UID>>,
-    ) {
+        our_uid: PublicUid,
+    ) -> (BootstrapAcceptor, UnboundedSender<BootstrapMessage>) {
         let config = config.clone();
         let handle = handle.clone();
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let handshaking =
-            stream::futures_unordered(Vec::<BoxFuture<Peer<UID>, BootstrapAcceptError>>::new());
+            stream::futures_unordered(Vec::<BoxFuture<Peer, BootstrapAcceptError>>::new());
         let acceptor = BootstrapAcceptor {
             handle,
             peer_rx,
             handshaking,
             config,
             our_uid,
-            our_sk,
         };
         (acceptor, peer_tx)
     }
 }
 
-impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
-    type Item = Peer<UID>;
+impl Stream for BootstrapAcceptor {
+    type Item = Peer;
     type Error = BootstrapAcceptError;
 
-    fn poll(&mut self) -> Result<Async<Option<Peer<UID>>>, BootstrapAcceptError> {
+    fn poll(&mut self) -> Result<Async<Option<Peer>>, BootstrapAcceptError> {
         let stream_ended;
         loop {
             match self.peer_rx.poll() {
@@ -111,9 +123,8 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
                         &self.handle,
                         socket,
                         &self.config,
-                        self.our_uid,
+                        self.our_uid.clone(),
                         bootstrap_request,
-                        self.our_sk.clone(),
                     );
                     self.handshaking.push(handshaker);
                 }
@@ -142,34 +153,29 @@ impl<UID: Uid> Stream for BootstrapAcceptor<UID> {
 /// Construct a `Peer` by finishing a bootstrap accept handshake on a socket.
 /// The initial `BootstrapRequest` message sent by the peer has already been read from the
 /// socket.
-fn bootstrap_accept<UID: Uid>(
+fn bootstrap_accept(
     handle: &Handle,
-    mut socket: Socket<HandshakeMessage<UID>>,
+    stream: PaStream,
     config: &ConfigFile,
-    our_uid: UID,
-    bootstrap_request: BootstrapRequest<UID>,
-    our_sk: SecretKey,
-) -> BoxFuture<Peer<UID>, BootstrapAcceptError> {
+    our_uid: PublicUid,
+    bootstrap_request: BootstrapRequest,
+) -> BoxFuture<Peer, BootstrapAcceptError> {
     let handle = handle.clone();
-    let their_uid = bootstrap_request.uid;
+    let their_uid = bootstrap_request.client_uid;
     let their_name_hash = bootstrap_request.name_hash;
     let their_ext_reachability = bootstrap_request.ext_reachability;
-    socket.use_crypto_ctx(CryptoContext::authenticated(
-        bootstrap_request.their_pk,
-        our_sk,
-    ));
 
     let try = move || {
         if our_uid == their_uid {
             return Err(BootstrapAcceptError::ConnectionFromOurself);
         }
+        let our_uid_data = our_uid.data;
         if config.network_name_hash() != their_name_hash {
-            return Ok(socket
-                .send((
-                    0,
-                    HandshakeMessage::BootstrapDenied(BootstrapDenyReason::InvalidNameHash),
+            return Ok(stream
+                .send_serialized(HandshakeMessage::BootstrapDenied(
+                    BootstrapDenyReason::InvalidNameHash,
                 ))
-                .map_err(BootstrapAcceptError::Socket)
+                .map_err(BootstrapAcceptError::Write)
                 .and_then(move |_socket| {
                     Err(BootstrapAcceptError::InvalidNameHash(their_name_hash))
                 })
@@ -187,12 +193,15 @@ fn bootstrap_accept<UID: Uid>(
         };
         match their_ext_reachability {
             ExternalReachability::Required { direct_listeners } => {
-                let their_ip = socket.peer_addr()?.ip();
+                let their_ip = stream
+                    .peer_addr()
+                    .map_err(BootstrapAcceptError::SocketIo)?
+                    .ip();
                 if !config.is_peer_whitelisted(their_ip, CrustUser::Node) {
                     let reason = BootstrapDenyReason::NodeNotWhitelisted;
-                    return Ok(socket
-                        .send((0, HandshakeMessage::BootstrapDenied(reason)))
-                        .map_err(BootstrapAcceptError::Socket)
+                    return Ok(stream
+                        .send_serialized(HandshakeMessage::BootstrapDenied(reason))
+                        .map_err(BootstrapAcceptError::Write)
                         .and_then(move |_socket| {
                             Err(BootstrapAcceptError::NodeNotWhiteListed(their_ip))
                         })
@@ -202,11 +211,11 @@ fn bootstrap_accept<UID: Uid>(
                 if !require_reachability {
                     return Ok(grant_bootstrap(
                         &handle,
-                        socket,
-                        our_uid,
+                        stream,
+                        our_uid_data,
                         their_uid,
                         CrustUser::Node,
-                    ).map_err(BootstrapAcceptError::Socket)
+                    ).map_err(BootstrapAcceptError::Write)
                         .into_boxed());
                 }
 
@@ -216,8 +225,9 @@ fn bootstrap_accept<UID: Uid>(
                         .filter(|peer| util::ip_addr_is_global(&peer.addr.ip()))
                         .map(|peer| {
                             PaStream::direct_connect(&handle, &peer.addr, peer.pub_key, config)
+                                .map_err(ExternalReachabilityError::Connect)
                                 .with_timeout(Duration::from_secs(3), &handle)
-                                .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
+                                .and_then(|res| res.ok_or(ExternalReachabilityError::TimedOut))
                                 .into_boxed()
                         })
                         .collect::<Vec<_>>()
@@ -227,16 +237,19 @@ fn bootstrap_accept<UID: Uid>(
                 Ok(connectors
                     .first_ok()
                     .then(move |res| match res {
-                        Ok(_connection) => {
-                            grant_bootstrap(&handle, socket, our_uid, their_uid, CrustUser::Node)
-                                .map_err(BootstrapAcceptError::Socket)
-                                .into_boxed()
-                        }
+                        Ok(_connection) => grant_bootstrap(
+                            &handle,
+                            stream,
+                            our_uid_data,
+                            their_uid,
+                            CrustUser::Node,
+                        ).map_err(BootstrapAcceptError::Write)
+                            .into_boxed(),
                         Err(v) => {
                             let reason = BootstrapDenyReason::FailedExternalReachability;
-                            socket
-                                .send((0, HandshakeMessage::BootstrapDenied(reason)))
-                                .map_err(BootstrapAcceptError::Socket)
+                            stream
+                                .send_serialized(HandshakeMessage::BootstrapDenied(reason))
+                                .map_err(BootstrapAcceptError::Write)
                                 .and_then(move |_socket| {
                                     Err(BootstrapAcceptError::FailedExternalReachability(v))
                                 })
@@ -246,12 +259,15 @@ fn bootstrap_accept<UID: Uid>(
                     .into_boxed())
             }
             ExternalReachability::NotRequired => {
-                let their_ip = socket.peer_addr()?.ip();
+                let their_ip = stream
+                    .peer_addr()
+                    .map_err(BootstrapAcceptError::SocketIo)?
+                    .ip();
                 if !config.is_peer_whitelisted(their_ip, CrustUser::Client) {
                     let reason = BootstrapDenyReason::ClientNotWhitelisted;
-                    return Ok(socket
-                        .send((0, HandshakeMessage::BootstrapDenied(reason)))
-                        .map_err(BootstrapAcceptError::Socket)
+                    return Ok(stream
+                        .send_serialized(HandshakeMessage::BootstrapDenied(reason))
+                        .map_err(BootstrapAcceptError::Write)
                         .and_then(move |_socket| {
                             Err(BootstrapAcceptError::ClientNotWhiteListed(their_ip))
                         })
@@ -259,8 +275,8 @@ fn bootstrap_accept<UID: Uid>(
                 }
 
                 Ok(
-                    grant_bootstrap(&handle, socket, our_uid, their_uid, CrustUser::Client)
-                        .map_err(BootstrapAcceptError::Socket)
+                    grant_bootstrap(&handle, stream, our_uid_data, their_uid, CrustUser::Client)
+                        .map_err(BootstrapAcceptError::Write)
                         .into_boxed(),
                 )
             }
@@ -269,16 +285,16 @@ fn bootstrap_accept<UID: Uid>(
     future::result(try()).flatten().into_boxed()
 }
 
-fn grant_bootstrap<UID: Uid>(
+fn grant_bootstrap(
     handle: &Handle,
-    socket: Socket<HandshakeMessage<UID>>,
-    our_uid: UID,
-    their_uid: UID,
+    stream: PaStream,
+    our_uid_data: Vec<u8>,
+    their_uid: PublicUid,
     kind: CrustUser,
-) -> BoxFuture<Peer<UID>, SocketError> {
+) -> BoxFuture<Peer, PaStreamWriteError> {
     let handle = handle.clone();
-    socket
-        .send((0, HandshakeMessage::BootstrapGranted(our_uid)))
-        .map(move |socket| peer::from_handshaken_socket(&handle, socket, their_uid, kind))
+    stream
+        .send_serialized(HandshakeMessage::BootstrapGranted(our_uid_data))
+        .map(move |stream| peer::from_handshaken_stream(&handle, their_uid, stream, kind))
         .into_boxed()
 }

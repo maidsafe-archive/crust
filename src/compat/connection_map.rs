@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{CrustEventSender, Event};
+use compat::{CompatPeer, CrustEventSender, Event, Priority, Uid};
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::{self, DropNotify};
 use futures::stream::SplitSink;
@@ -31,7 +31,7 @@ pub struct ConnectionMap<UID: Uid> {
 
 struct Inner<UID: Uid> {
     map: HashMap<UID, PeerWrapper<UID>>,
-    ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo<UID>>>,
+    ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo>>,
     event_tx: CrustEventSender<UID>,
 }
 
@@ -39,7 +39,7 @@ struct PeerWrapper<UID: Uid> {
     _drop_tx: DropNotify,
     addr: PaAddr,
     kind: CrustUser,
-    peer_sink: SplitSink<Peer<UID>>,
+    peer_sink: SplitSink<CompatPeer<UID>>,
 }
 
 impl<UID: Uid> ConnectionMap<UID> {
@@ -57,7 +57,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Insert new peer into the map and registers peer event handlers.
-    pub fn insert_peer(&self, handle: &Handle, peer: Peer<UID>, addr: PaAddr) -> bool {
+    pub fn insert_peer(&self, handle: &Handle, peer: CompatPeer<UID>, addr: PaAddr) -> bool {
         let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let uid = peer.uid();
@@ -76,7 +76,8 @@ impl<UID: Uid> ConnectionMap<UID> {
                 .log_errors(LogLevel::Info, "receiving data from peer")
                 .until(drop_rx)
                 .for_each(move |msg| {
-                    let _ = event_tx0.send(Event::NewMessage(uid, kind, msg));
+                    let vec = Vec::from(&msg[..]);
+                    let _ = event_tx0.send(Event::NewMessage(uid, kind, vec));
                     Ok(())
                 })
                 .finally(move || {
@@ -105,7 +106,12 @@ impl<UID: Uid> ConnectionMap<UID> {
             Some(peer) => peer,
             None => return Err(CrustError::PeerNotFound),
         };
-        match peer.peer_sink.start_send((priority, msg))? {
+        let msg = Bytes::from(msg);
+        match peer
+            .peer_sink
+            .start_send((priority, msg))
+            .map_err(|e| CrustError::CompatPeerError(e.to_string()))?
+        {
             AsyncSink::NotReady(..) => unreachable!(),
             AsyncSink::Ready => (),
         };
@@ -154,7 +160,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     pub fn insert_ci_channel(
         &mut self,
         conn_id: u64,
-        chann: UnboundedBiChannel<PubConnectionInfo<UID>>,
+        chann: UnboundedBiChannel<PubConnectionInfo>,
     ) {
         let mut inner = unwrap!(self.inner.lock());
         let _ = inner.ci_channel.insert(conn_id, chann);
@@ -165,7 +171,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     pub fn get_ci_channel(
         &mut self,
         conn_id: u64,
-    ) -> Option<UnboundedBiChannel<PubConnectionInfo<UID>>> {
+    ) -> Option<UnboundedBiChannel<PubConnectionInfo>> {
         let mut inner = unwrap!(self.inner.lock());
         inner.ci_channel.remove(&conn_id)
     }

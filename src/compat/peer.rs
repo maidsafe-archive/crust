@@ -1,29 +1,10 @@
-// Copyright 2017 MaidSafe.net limited.
-//
-// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
-// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
-// licence you accepted on initial access to the Software (the "Licences").
-//
-// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement.  This, along with the Licenses can be
-// found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
-//
-// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
-// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.
-//
-// Please review the Licences for the specific language governing permissions and limitations
-// relating to use of the SAFE Network Software.
-
-use bytes::BytesMut;
+use compat::Uid;
+use future_utils::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::stream::{SplitSink, SplitStream};
-use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::sync::oneshot;
-use log::LogLevel;
 use priv_prelude::*;
-use tokio_io;
 
-/// The maximum size of packets sent by `Socket` in bytes.
+/// The maximum size of packets sent by `CompatPeer` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
 
 /// Message priority. Messages with lower number (higher priority) will be sent first.
@@ -38,33 +19,28 @@ const MAX_MSG_AGE_SECS: u64 = 60;
 quick_error! {
     /// Errors that can occur on sockets.
     #[derive(Debug)]
-    pub enum SocketError {
+    pub enum CompatPeerError {
+        /// Peer was destroyed
         Destroyed {
-            description("Socket has been destroyed")
+            description("CompatPeer has been destroyed")
         }
-        Io(e: io::Error) {
-            description("Io error on socket")
-            display("Io error on socket: {}", e)
+        /// Peer error
+        Peer(e: PeerError) {
+            description("peer error")
+            display("peer error: {}", e)
             cause(e)
             from()
         }
-        Encrypt(e: EncryptError) {
-            description("Error encrypting message")
-            display("Error encrypting message: {}", e)
-            cause(e)
-        }
-        Decrypt(e: DecryptError) {
-            description("Error decrypting message")
-            display("Error decrypting message: {}", e)
-            cause(e)
+        /// Tried to send a message that was too big
+        OversizedMessage {
+            description("tried to send a message that was too big")
         }
     }
 }
 
-/// A `Socket` wraps an underlying transport protocol (eg. TCP) and acts a `Sink`/`Stream` for
-/// sending/receiving messages of type `M`.
+/// A `CompatPeer` wraps an underlying transport protocol (eg. TCP).
 ///
-/// An important thing to understand about `Socket`s is that they are *infinitely buffered*. You
+/// An important thing to understand about `CompatPeer`s is that they are *infinitely buffered*. You
 /// can just keep pumping more and more data into them without blocking the writing task even if
 /// the underlying transport can't keep up. Eventually, once the latency builds up too much (ie.
 /// the messages it's writing are more than `MAX_MSG_AGE_SECS` old) then it will drop its entire
@@ -75,112 +51,98 @@ quick_error! {
 /// priorities will always be sent first. Highest-priority messages, those with priority below
 /// `MSG_DROP_PRIORITY`, will never be dropped no matter how much the latency on the socket builds
 /// up or how large the buffer grows 😬
-pub struct Socket<M> {
-    inner: Option<Inner>,
-    _ph: PhantomData<M>,
+pub struct CompatPeer<UID: Uid> {
+    inner: Option<Inner<UID>>,
 }
 
-pub struct Inner {
-    stream_rx: Option<SplitStream<FramedPaStream>>,
+pub struct Inner<UID: Uid> {
+    stream_rx: Option<SplitStream<Peer>>,
     write_tx: UnboundedSender<TaskMsg>,
     peer_addr: PaAddr,
-    crypto_ctx: CryptoContext,
+    kind: CrustUser,
+    uid: UID,
 }
 
-enum TaskMsg<T = FramedPaStream>
+enum TaskMsg<T = Peer>
 where
     T: Stream<Item = BytesMut>,
-    T: Sink<SinkItem = BytesMut, SinkError = io::Error>,
+    T: Sink<SinkItem = Bytes, SinkError = PeerError>,
 {
-    Send(Priority, BytesMut),
+    Send(Priority, Bytes),
     Shutdown(SplitStream<T>),
-    /// Tells `SocketTask` to close it's activity, reunite and return the inner stream.
+    /// Tells `CompatPeerTask` to close it's activity, reunite and return the inner peer.
     GetInnerStream(oneshot::Sender<T>, SplitStream<T>),
 }
 
-struct SocketTask<T = FramedPaStream>
+struct CompatPeerTask<T = Peer>
 where
     T: Stream<Item = BytesMut>,
-    T: Sink<SinkItem = BytesMut, SinkError = io::Error>,
+    T: Sink<SinkItem = Bytes, SinkError = PeerError>,
 {
     handle: Handle,
     stream_rx: Option<SplitStream<T>>,
     stream_tx: Option<SplitSink<T>>,
-    write_queue: BTreeMap<Priority, VecDeque<(Instant, BytesMut)>>,
+    write_queue: BTreeMap<Priority, VecDeque<(Instant, Bytes)>>,
     write_rx: UnboundedReceiver<TaskMsg<T>>,
 }
 
-impl<M: 'static> Socket<M> {
-    /// Wraps a `PaStream` and turns it into a `Socket`.
-    pub fn wrap_pa(
-        handle: &Handle,
-        stream: FramedPaStream,
-        peer_addr: PaAddr,
-        crypto_ctx: CryptoContext,
-    ) -> Socket<M> {
-        let (stream_tx, stream_rx) = stream.split();
+impl<UID: Uid> CompatPeer<UID> {
+    /// Get the kind of peer
+    pub fn kind(&self) -> CrustUser {
+        unwrap!(self.inner.as_ref()).kind
+    }
+
+    /// Get the peer's uid
+    pub fn uid(&self) -> UID {
+        unwrap!(self.inner.as_ref()).uid
+    }
+
+    /// Wraps a `PaStream` and turns it into a `CompatPeer`.
+    pub fn wrap_peer(handle: &Handle, peer: Peer, uid: UID, peer_addr: PaAddr) -> CompatPeer<UID> {
+        let kind = peer.kind();
+        let (stream_tx, stream_rx) = peer.split();
         let (write_tx, write_rx) = mpsc::unbounded();
-        let task = SocketTask::new(handle, stream_tx, write_rx);
+        let task = CompatPeerTask::new(handle, stream_tx, write_rx);
         handle.spawn({
             task.map_err(|e| {
-                error!("Socket task failed!: {}", e);
+                error!("CompatPeer task failed!: {}", e);
             })
         });
         let inner = Inner {
             stream_rx: Some(stream_rx),
             write_tx,
             peer_addr,
-            crypto_ctx,
+            kind,
+            uid,
         };
-        Socket {
-            inner: Some(inner),
-            _ph: PhantomData,
-        }
-    }
-
-    /// Replace crypto context used to encrypt/decrypt data.
-    /// This is useful, for example, when we want to switch from anonymous encryption to
-    /// authenticated one.
-    pub fn use_crypto_ctx(&mut self, crypto_ctx: CryptoContext) {
-        if let Some(ref mut inner) = self.inner {
-            inner.crypto_ctx = crypto_ctx;
-        }
+        CompatPeer { inner: Some(inner) }
     }
 
     /// Get the address of the remote peer (if the socket is still active).
-    pub fn peer_addr(&self) -> Result<PaAddr, SocketError> {
+    pub fn peer_addr(&self) -> Result<PaAddr, CompatPeerError> {
         match self.inner {
             Some(ref inner) => Ok(inner.peer_addr),
-            None => Err(SocketError::Destroyed),
+            None => Err(CompatPeerError::Destroyed),
         }
     }
 
-    /// Consume this socket and return it as a socket with a different messages type. Any messages
-    /// of the old type that are in the outgoing buffer will still be sent.
-    pub fn change_message_type<N>(self) -> Socket<N> {
-        Socket {
-            inner: self.inner,
-            _ph: PhantomData,
-        }
-    }
-
-    /// Returns an inner stream that is wrapped by this `Socket`.
+    /// Returns an inner peer that is wrapped by this `CompatPeer`.
     /// This method is only meant to be used in tests.
     /// Note, that socket write buffer will be destroyed.
-    pub fn into_inner(mut self) -> BoxFuture<FramedPaStream, SocketError> {
-        let mut inner = try_bfut!(self.inner.take().ok_or(SocketError::Destroyed));
+    pub fn into_inner(mut self) -> BoxFuture<Peer, CompatPeerError> {
+        let mut inner = try_bfut!(self.inner.take().ok_or(CompatPeerError::Destroyed));
         let stream_rx = unwrap!(inner.stream_rx.take());
         let (inner_stream_tx, inner_stream_rx) = oneshot::channel();
         let _ = inner
             .write_tx
             .unbounded_send(TaskMsg::GetInnerStream(inner_stream_tx, stream_rx));
         inner_stream_rx
-            .map_err(|_e| SocketError::Destroyed)
+            .map_err(|_e| CompatPeerError::Destroyed)
             .into_boxed()
     }
 }
 
-impl Drop for Inner {
+impl<UID: Uid> Drop for Inner<UID> {
     fn drop(&mut self) {
         if let Some(stream_rx) = self.stream_rx.take() {
             let _ = self.write_tx.unbounded_send(TaskMsg::Shutdown(stream_rx));
@@ -188,69 +150,49 @@ impl Drop for Inner {
     }
 }
 
-impl<M> Stream for Socket<M>
-where
-    M: Serialize + DeserializeOwned,
-{
-    type Item = M;
-    type Error = SocketError;
+impl<UID: Uid> Stream for CompatPeer<UID> {
+    type Item = BytesMut;
+    type Error = CompatPeerError;
 
-    fn poll(&mut self) -> Result<Async<Option<M>>, SocketError> {
+    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, CompatPeerError> {
         let mut inner = match self.inner.take() {
             Some(inner) => inner,
-            None => return Err(SocketError::Destroyed),
+            None => return Err(CompatPeerError::Destroyed),
         };
-        let ret = if let Async::Ready(data_opt) = unwrap!(inner.stream_rx.as_mut()).poll()? {
-            let data = match data_opt {
-                Some(data) => data,
-                None => return Ok(Async::Ready(None)),
-            };
-            let msg = inner
-                .crypto_ctx
-                .decrypt(&data)
-                .map_err(SocketError::Decrypt)?;
-            Ok(Async::Ready(Some(msg)))
-        } else {
-            Ok(Async::NotReady)
-        };
+        let ret = Ok(unwrap!(inner.stream_rx.as_mut()).poll()?);
         self.inner = Some(inner);
         ret
     }
 }
 
-impl<M> Sink for Socket<M>
-where
-    M: Serialize + DeserializeOwned,
-{
-    type SinkItem = (Priority, M);
-    type SinkError = SocketError;
+impl<UID: Uid> Sink for CompatPeer<UID> {
+    type SinkItem = (Priority, Bytes);
+    type SinkError = CompatPeerError;
 
     fn start_send(
         &mut self,
-        (priority, msg): (Priority, M),
-    ) -> Result<AsyncSink<(Priority, M)>, SocketError> {
+        (priority, msg): (Priority, Bytes),
+    ) -> Result<AsyncSink<(Priority, Bytes)>, CompatPeerError> {
+        if msg.len() > MAX_PAYLOAD_SIZE {
+            return Err(CompatPeerError::OversizedMessage);
+        }
         let inner = match self.inner {
             Some(ref mut inner) => inner,
-            None => return Err(SocketError::Destroyed),
+            None => return Err(CompatPeerError::Destroyed),
         };
-
-        let data = inner
-            .crypto_ctx
-            .encrypt(&msg)
-            .map_err(SocketError::Encrypt)?;
-        let _ = inner.write_tx.unbounded_send(TaskMsg::Send(priority, data));
+        let _ = inner.write_tx.unbounded_send(TaskMsg::Send(priority, msg));
         Ok(AsyncSink::Ready)
     }
 
-    fn poll_complete(&mut self) -> Result<Async<()>, SocketError> {
+    fn poll_complete(&mut self) -> Result<Async<()>, CompatPeerError> {
         Ok(Async::Ready(()))
     }
 }
 
-impl<T> SocketTask<T>
+impl<T> CompatPeerTask<T>
 where
     T: Stream<Item = BytesMut>,
-    T: Sink<SinkItem = BytesMut, SinkError = io::Error>,
+    T: Sink<SinkItem = Bytes, SinkError = PeerError>,
 {
     fn new(
         handle: &Handle,
@@ -296,11 +238,11 @@ where
     }
 }
 
-impl Future for SocketTask<FramedPaStream> {
+impl Future for CompatPeerTask<Peer> {
     type Item = ();
-    type Error = io::Error;
+    type Error = CompatPeerError;
 
-    fn poll(&mut self) -> io::Result<Async<()>> {
+    fn poll(&mut self) -> Result<Async<()>, CompatPeerError> {
         let close_socket_task = self.poll_task();
         if close_socket_task {
             return Ok(Async::Ready(()));
@@ -348,12 +290,11 @@ impl Future for SocketTask<FramedPaStream> {
             if all_messages_sent {
                 if let Some(stream_rx) = self.stream_rx.take() {
                     let stream_tx = unwrap!(self.stream_tx.take());
-                    let tcp_stream = unwrap!(stream_rx.reunite(stream_tx)).into_inner();
+                    let peer = unwrap!(stream_rx.reunite(stream_tx));
                     let soft_timeout = Timeout::new(Duration::from_secs(1), &self.handle);
                     let hard_timeout = Timeout::new(Duration::from_secs(10), &self.handle);
                     self.handle.spawn({
-                        tokio_io::io::shutdown(tcp_stream)
-                            .map(|_stream| ())
+                        peer.finalize()
                             .log_error(LogLevel::Warn, "shutdown socket")
                             .join(soft_timeout)
                             .map(|((), ())| ())
@@ -375,7 +316,8 @@ impl Future for SocketTask<FramedPaStream> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use rust_sodium::crypto::box_::gen_keypair;
+    use net::peer;
+    use tests::compat_api::UniqueId;
     use tokio_core::reactor::Core;
     use util;
 
@@ -383,12 +325,12 @@ mod test {
         use super::*;
         use rand::{self, Rng};
 
-        fn random_msgs(num_msgs: usize) -> Vec<Vec<u8>> {
+        fn random_msgs(num_msgs: usize) -> Vec<Bytes> {
             let mut msgs = Vec::with_capacity(num_msgs);
             for _ in 0..num_msgs {
                 let size = rand::thread_rng().gen_range(0, 10_000);
                 let data = util::random_vec(size);
-                let msg = data;
+                let msg = Bytes::from(data);
                 msgs.push(msg);
             }
             msgs
@@ -398,16 +340,12 @@ mod test {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
             let config = unwrap!(ConfigFile::new_temporary());
-            let (listener_pk, listener_sk) = gen_keypair();
-            let anon_decrypt_ctx =
-                CryptoContext::anonymous_decrypt(listener_pk, listener_sk.clone());
+            let listener_sk = SecretId::new();
+            let listener_pk = listener_sk.public_id().clone();
+            let client_sk = SecretId::new();
+            let client_pk = client_sk.public_id().clone();
 
-            let listener = unwrap!(PaListener::bind(
-                &bind_addr,
-                &handle,
-                anon_decrypt_ctx.clone(),
-                listener_sk,
-            ));
+            let listener = unwrap!(PaListener::bind(&bind_addr, &handle, listener_sk,));
             let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
             let num_msgs = 1000;
@@ -416,18 +354,25 @@ mod test {
             let f0 = {
                 let msgs: Vec<(Priority, _)> = msgs.iter().cloned().map(|m| (1, m)).collect();
                 let handle = handle.clone();
-                PaStream::direct_connect(&handle, &addr, listener_pk, &config)
-                    .map_err(SocketError::from)
-                    .and_then(move |(stream, _peer_addr)| {
-                        let socket = Socket::<Vec<u8>>::wrap_pa(
+                PaStream::direct_connect(&handle, &addr, listener_pk.clone(), &config)
+                    .map_err(|e| panic!("error connecting: {}", e))
+                    .and_then(move |stream| {
+                        let uid: UniqueId = rand::random();
+                        let their_uid = PublicUid {
+                            pub_key: listener_pk,
+                            data: unwrap!(serialisation::serialise(&uid)),
+                        };
+                        let peer = peer::from_handshaken_stream(
                             &handle,
+                            their_uid,
                             stream,
-                            addr,
-                            CryptoContext::null(),
+                            CrustUser::Node,
                         );
+                        let socket = CompatPeer::wrap_peer(&handle, peer, uid, addr);
                         socket
-                            .send_all(stream::iter_ok::<_, SocketError>(msgs))
-                            .map(|(_, _)| ())
+                            .send_all(stream::iter_ok::<_, CompatPeerError>(msgs))
+                            .map_err(|e| panic!("error sending: {}", e))
+                            .map(|(_socket, _msgs)| ())
                     })
             };
 
@@ -438,23 +383,38 @@ mod test {
                     .into_future()
                     .map_err(|(err, _)| panic!("incoming error: {}", err))
                     .and_then(move |(stream_opt, _)| {
-                        let (stream, addr) = unwrap!(stream_opt);
-                        let socket = Socket::<Vec<u8>>::wrap_pa(
+                        let stream = unwrap!(stream_opt);
+                        let uid: UniqueId = rand::random();
+                        let their_uid = PublicUid {
+                            pub_key: client_pk,
+                            data: unwrap!(serialisation::serialise(&uid)),
+                        };
+                        let peer = peer::from_handshaken_stream(
                             &handle,
+                            their_uid,
                             stream,
-                            addr,
-                            CryptoContext::null(),
+                            CrustUser::Node,
                         );
+                        let socket = CompatPeer::wrap_peer(&handle, peer, uid, addr);
                         socket
                             .take(num_msgs as u64)
+                            .map_err(|e| panic!("error reading: {}", e))
                             .collect()
                             .map(move |msgs_recv| {
+                                for i in 0..msgs.len() {
+                                    if msgs[i] != unwrap!(msgs_recv.get(i), "msg {} missing", i) {
+                                        panic!(
+                                            "error in msg[{}]\n{:?} != {:?}",
+                                            i, msgs_recv[i], msgs[i]
+                                        );
+                                    }
+                                }
                                 assert_eq!(msgs_recv, msgs);
                             })
                     })
             };
 
-            let _ = unwrap!(core.run(f0.join(f1)));
+            core.run(f0.join(f1).map(|((), ())| ())).void_unwrap()
         }
 
         #[test]
@@ -470,22 +430,34 @@ mod test {
 
     mod socket_task {
         use super::*;
-        use future_utils::bi_channel;
 
         mod poll_task {
             use super::*;
+            use config::ConfigFile;
 
             #[test]
             fn when_task_is_get_inner_stream_it_returns_true() {
                 let mut evloop = unwrap!(Core::new());
                 let handle = evloop.handle();
 
-                let (channel, _other_channel) = bi_channel::unbounded();
-                let channel = channel
-                    .sink_map_err(|_e| io::Error::new(io::ErrorKind::Other, "sink.send() failed"));
-                let (stream_tx, stream_rx) = channel.split();
+                let config = unwrap!(ConfigFile::new_temporary());
+                let listener_sk = SecretId::new();
+                let listener_pk = listener_sk.public_id().clone();
+                let addr = PaAddr::Tcp(addr!("0.0.0.0:0"));
+                let listener = unwrap!(PaListener::bind(&addr, &handle, listener_sk));
+                let stream = unwrap!(evloop.run(PaStream::direct_connect(
+                    &handle,
+                    &unwrap!(listener.local_addr()),
+                    listener_pk,
+                    &config
+                )));
+
+                let stream = stream
+                    .sink_map_err(|e| panic!("oh damn: {}", e))
+                    .map_err(|e| panic!("oh no: {}", e));
+                let (stream_tx, stream_rx) = stream.split();
                 let (task_tx, task_rx) = mpsc::unbounded();
-                let mut task = SocketTask::new(&handle, stream_tx, task_rx);
+                let mut task = CompatPeerTask::new(&handle, stream_tx, task_rx);
 
                 let (inner_stream_tx, _inner_stream_rx) = oneshot::channel();
                 let send_task = task_tx.send(TaskMsg::GetInnerStream(inner_stream_tx, stream_rx));

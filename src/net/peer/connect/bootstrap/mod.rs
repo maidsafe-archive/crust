@@ -26,7 +26,6 @@ use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
 use priv_prelude::*;
 use rand::{thread_rng, Rng};
-use rust_sodium::crypto::box_::SecretKey;
 use service;
 
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 200;
@@ -52,21 +51,20 @@ quick_error! {
 /// Try to bootstrap to the network.
 ///
 /// On success, returns the first peer that we've bootstrapped to.
-pub fn bootstrap<UID: Uid>(
+pub fn bootstrap(
     handle: &Handle,
-    request: BootstrapRequest<UID>,
+    request: BootstrapRequest,
     blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
-    our_sk: SecretKey,
+    our_sk: &SecretId,
     cache: &Cache,
-) -> BoxFuture<Peer<UID>, BootstrapError> {
-    let our_pk = request.their_pk;
+) -> BoxFuture<Peer, BootstrapError> {
     let config = config.clone();
     let cache = cache.clone();
 
     let sd_peers = if use_service_discovery {
-        discover_peers_on_lan(handle, &config, &our_sk, our_pk)
+        discover_peers_on_lan(handle, &config, &our_sk)
     } else {
         future::ok(stream::empty().into_boxed()).into_boxed()
     };
@@ -84,8 +82,7 @@ pub fn bootstrap<UID: Uid>(
                 .chain(stream::iter_ok(hard_coded_peers))
                 .filter(move |peer| !blacklist.contains(&peer.addr))
                 .map(move |peer| {
-                    let fut =
-                        bootstrap_to_peer(&handle1, peer, i, &config, &cache, &request, &our_sk);
+                    let fut = bootstrap_to_peer(&handle1, peer, i, &config, &cache, &request);
                     i += 1;
                     fut
                 })
@@ -100,8 +97,7 @@ pub fn bootstrap<UID: Uid>(
 fn discover_peers_on_lan(
     handle: &Handle,
     config: &ConfigFile,
-    our_sk: &SecretKey,
-    our_pk: PublicKey,
+    our_sk: &SecretId,
 ) -> BoxFuture<BoxStream<PeerInfo, (PaAddr, TryPeerError)>, BootstrapError> {
     let handle = handle.clone();
     let our_sk = our_sk.clone();
@@ -110,7 +106,7 @@ fn discover_peers_on_lan(
         .service_discovery_port
         .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
 
-    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk)
+    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_sk.clone())
         .map_err(BootstrapError::ServiceDiscovery)
         .map(move |s| {
             s.map(|(_, v)| stream::iter_ok(v))
@@ -123,18 +119,16 @@ fn discover_peers_on_lan(
 }
 
 /// Attempts to bootstrap to single given peer.
-fn bootstrap_to_peer<UID: Uid>(
+fn bootstrap_to_peer(
     handle: &Handle,
     peer: PeerInfo,
     peer_nr: u32,
     config: &ConfigFile,
     cache: &Cache,
-    request: &BootstrapRequest<UID>,
-    our_sk: &SecretKey,
-) -> BoxFuture<Peer<UID>, (PaAddr, TryPeerError)> {
+    request: &BootstrapRequest,
+) -> BoxFuture<Peer, (PaAddr, TryPeerError)> {
     let config = config.clone();
     let handle = handle.clone();
-    let our_sk = our_sk.clone();
     let request = request.clone();
     let cache = cache.clone();
     let cache2 = cache.clone();
@@ -148,7 +142,7 @@ fn bootstrap_to_peer<UID: Uid>(
     delay
         .infallible()
         .and_then(move |()| {
-            try_peer(&handle, &peer.addr, &config, request, our_sk, peer.pub_key)
+            try_peer(&handle, &peer.addr, &config, request, peer.pub_key.clone())
                 .map(move |peer_conn| {
                     cache.put(&peer);
                     let _ = cache

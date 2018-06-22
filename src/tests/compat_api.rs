@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{self, CrustEventSender, Event};
+use compat::{self, CrustEventSender, Event, Uid};
 use config::{DevConfigSettings, PeerInfo};
 use env_logger;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
@@ -24,7 +24,21 @@ use rand;
 use std;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
-use util::{self, UniqueId};
+use util;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
+pub struct UniqueId(pub [u8; 20]);
+impl Uid for UniqueId {}
+
+impl fmt::Display for UniqueId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let UniqueId(ref id) = *self;
+        for byte in id {
+            write!(f, "{:02x}", byte)?;
+        }
+        Ok(())
+    }
+}
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.

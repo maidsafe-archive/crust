@@ -44,7 +44,7 @@ impl ServiceDiscovery {
         config: &ConfigFile,
         current_addrs: &HashSet<PaAddr>,
         addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
-        our_pk: PublicKey,
+        our_pk: PublicId,
     ) -> io::Result<ServiceDiscovery> {
         let port = config
             .read()
@@ -54,7 +54,7 @@ impl ServiceDiscovery {
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let current_addrs = current_addrs
             .iter()
-            .map(|addr| PeerInfo::new(*addr, our_pk))
+            .map(|addr| PeerInfo::new(*addr, our_pk.clone()))
             .collect::<Vec<_>>();
         let mut server = service_discovery::Server::new(handle, port, current_addrs)?;
         let actual_port = server.port();
@@ -65,7 +65,7 @@ impl ServiceDiscovery {
                 .for_each(move |addrs| {
                     let addrs = addrs
                         .iter()
-                        .map(|addr| PeerInfo::new(*addr, our_pk))
+                        .map(|addr| PeerInfo::new(*addr, our_pk.clone()))
                         .collect();
                     server.set_data(addrs);
                     Ok(())

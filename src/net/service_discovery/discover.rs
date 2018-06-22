@@ -32,15 +32,14 @@ use util::SerdeUdpCodec;
 pub fn discover<T>(
     handle: &Handle,
     port: u16,
-    our_pk: PublicKey,
-    our_sk: SecretKey,
+    our_sk: SecretId,
 ) -> IoFuture<BoxStream<(Ipv4Addr, T), Void>>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
+    let our_pk = our_sk.public_id().clone();
     let bind_addr = addr!("0.0.0.0:0");
     let request = DiscoveryMsg::Request(our_pk);
-    let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk);
 
     future::result(UdpSocket::bind(&bind_addr, handle))
         .and_then(|socket| {
@@ -75,7 +74,7 @@ where
                 .map(move |framed| {
                     framed
                         .log_errors(LogLevel::Warn, "receiving on service_discovery::discover")
-                        .filter_map(move |response| handle_response(response, &anon_decrypt_ctx))
+                        .filter_map(move |response| handle_response(response, &our_sk))
                         .into_boxed()
                 })
         })
@@ -84,7 +83,7 @@ where
 
 fn handle_response<T: Serialize + DeserializeOwned>(
     response: (SocketAddr, Result<DiscoveryMsg, SerialisationError>),
-    anon_decrypt_ctx: &CryptoContext,
+    our_sk: &SecretId,
 ) -> Option<(Ipv4Addr, T)> {
     match response {
         (addr, Ok(DiscoveryMsg::Response(response))) => {
@@ -92,7 +91,7 @@ fn handle_response<T: Serialize + DeserializeOwned>(
                 IpAddr::V4(ip) => ip,
                 _ => unreachable!(),
             };
-            match anon_decrypt_ctx.decrypt(&response) {
+            match our_sk.decrypt_anonymous(&response) {
                 Ok(response) => Some((ip, response)),
                 Err(e) => {
                     warn!("Failed to decrypt service discovery response: {}", e);

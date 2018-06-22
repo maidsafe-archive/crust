@@ -16,33 +16,28 @@
 // relating to use of the SAFE Network Software.
 
 use priv_prelude::*;
-use rust_sodium::crypto::box_::PublicKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct BootstrapRequest<UID> {
-    pub uid: UID,
+pub struct BootstrapRequest {
     pub name_hash: NameHash,
     pub ext_reachability: ExternalReachability,
-    pub their_pk: PublicKey,
+    pub client_uid: PublicUid,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct ConnectRequest<UID> {
+pub struct ConnectRequest {
     pub connection_id: u64,
-    /// Unique ID of the peer that sent us connect request.
-    pub peer_uid: UID,
-    /// Public key of the peer that sent us connect request.
-    pub peer_pk: PublicKey,
+    pub client_uid: PublicUid,
     pub name_hash: NameHash,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum HandshakeMessage<UID> {
-    BootstrapRequest(BootstrapRequest<UID>),
-    BootstrapGranted(UID),
+pub enum HandshakeMessage {
+    BootstrapRequest(BootstrapRequest),
+    BootstrapGranted(Vec<u8>),
     BootstrapDenied(BootstrapDenyReason),
     ChooseConnection,
-    Connect(ConnectRequest<UID>),
+    Connect(ConnectRequest),
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

@@ -15,99 +15,112 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use bincode::{self, Infinite};
 use future_utils::bi_channel;
 use futures::sync::mpsc::SendError;
-use net::protocol_agnostic::CRUST_TCP_INIT;
-use p2p::{EncryptedRequest, P2p};
+use maidsafe_utilities::serialisation;
+use net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
+use p2p::P2p;
 use priv_prelude::*;
-use rust_sodium::crypto;
 use std::error::Error;
-use std::io::{Read, Write};
-use tokio_io::codec::length_delimited::{self, Framed};
-use tokio_io::{self, AsyncRead, AsyncWrite};
+use tokio_io;
+use tokio_io::codec::length_delimited::Framed;
+use tokio_io::{AsyncRead, AsyncWrite};
 use void;
 
-/// Converts given stream into length delimited framed stream.
-/// This stream takes care of deconstructing messages and spits `BytesMut` with exactly the
-/// same amount of bytes as were sent.
-pub fn framed_stream<T>(stream: T) -> Framed<T>
-where
-    T: AsyncRead + AsyncWrite,
-{
-    length_delimited::Builder::new()
-        .max_frame_length(MAX_PAYLOAD_SIZE)
-        .new_framed(stream)
+#[derive(Debug)]
+pub struct PaStream {
+    inner: PaStreamInner,
+    shared_secret: SharedSecretKey,
 }
 
-/// Protocol agnostic stream that yields length delimited frames of `BytesMut`.
-pub type FramedPaStream = Framed<PaStream, BytesMut>;
-
 #[derive(Debug)]
-pub enum PaStream {
-    Tcp(TcpStream),
-    Utp(UtpStream),
+enum PaStreamInner {
+    Tcp(Framed<TcpStream>),
+    Utp(Framed<UtpStream>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaRendezvousMsg {
-    pub enc_pk: PublicKey,
+    pub enc_pk: PublicId,
     pub tcp: Option<Bytes>,
     pub utp: Option<Bytes>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct ChooseMsg;
+
 impl PaStream {
-    pub fn from_tcp_stream(stream: TcpStream) -> PaStream {
-        PaStream::Tcp(stream)
+    pub fn from_framed_tcp_stream(
+        framed: Framed<TcpStream>,
+        shared_secret: SharedSecretKey,
+    ) -> PaStream {
+        PaStream {
+            inner: PaStreamInner::Tcp(framed),
+            shared_secret,
+        }
     }
 
-    pub fn from_utp_stream(stream: UtpStream) -> PaStream {
-        PaStream::Utp(stream)
+    pub fn from_framed_utp_stream(
+        framed: Framed<UtpStream>,
+        shared_secret: SharedSecretKey,
+    ) -> PaStream {
+        PaStream {
+            inner: PaStreamInner::Utp(framed),
+            shared_secret,
+        }
+    }
+
+    pub fn finalize(self) -> IoFuture<()> {
+        match self.inner {
+            PaStreamInner::Tcp(tcp_stream) => tokio_io::io::shutdown(tcp_stream.into_inner())
+                .map(|_stream| ())
+                .into_boxed(),
+            PaStreamInner::Utp(utp_stream) => tokio_io::io::shutdown(utp_stream.into_inner())
+                .map(|_stream| ())
+                .into_boxed(),
+        }
     }
 
     pub fn direct_connect(
         handle: &Handle,
         addr: &PaAddr,
-        their_pk: PublicKey,
+        their_pk: PublicId,
         config: &ConfigFile,
-    ) -> IoFuture<(Framed<PaStream>, PaAddr)> {
+    ) -> BoxFuture<PaStream, DirectConnectError> {
         let disable_tcp = config.tcp_disabled();
 
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 if disable_tcp {
-                    future::err(io::Error::new(io::ErrorKind::Other, "tcp disabled")).into_boxed()
+                    future::err(DirectConnectError::TcpDisabled).into_boxed()
                 } else {
                     TcpStream::connect(tcp_addr, handle)
-                        .and_then(|stream| {
-                            let peer_addr = stream.peer_addr()?;
-                            Ok((PaStream::Tcp(stream), PaAddr::Tcp(peer_addr)))
-                        })
-                        .and_then(move |(stream, peer_addr)| {
-                            let crypto_ctx = CryptoContext::anonymous_encrypt(their_pk);
-                            let (unused_pk, _sk) = crypto::box_::gen_keypair();
-                            let conn_init_req =
-                                EncryptedRequest::new(unused_pk, CRUST_TCP_INIT.to_vec());
-                            let conn_init_req =
-                                try_bfut!(crypto_ctx.encrypt(&conn_init_req).map_err(|_e| {
-                                    io::Error::new(io::ErrorKind::Other, "encryption failure")
-                                }));
-                            framed_stream(stream)
-                                .send(conn_init_req)
-                                .map(move |stream| (stream, peer_addr))
-                                .into_boxed()
+                        .map_err(DirectConnectError::TcpConnect)
+                        .and_then(move |stream| {
+                            connect_handshake(stream, &their_pk).map(|(framed, shared_secret)| {
+                                PaStream::from_framed_tcp_stream(framed, shared_secret)
+                            })
                         })
                         .into_boxed()
                 }
             }
-            PaAddr::Utp(utp_addr) => UtpSocket::bind(&addr!("0.0.0.0:0"), handle)
-                .into_future()
-                .and_then(move |(socket, _listener)| socket.connect(&utp_addr).map(PaStream::Utp))
-                .and_then(|stream| {
-                    let peer_addr = stream.peer_addr()?;
-                    Ok((framed_stream(stream), peer_addr))
-                })
-                .into_boxed(),
+            PaAddr::Utp(utp_addr) => {
+                let (socket, _listener) = try_bfut!(
+                    UtpSocket::bind(&addr!("0.0.0.0:0"), handle)
+                        .map_err(DirectConnectError::UtpBind)
+                );
+
+                future::lazy(move || {
+                    socket
+                        .connect(&utp_addr)
+                        .map_err(DirectConnectError::UtpConnect)
+                        .and_then(move |stream| {
+                            connect_handshake(stream, &their_pk).map(|(framed, shared_secret)| {
+                                PaStream::from_framed_utp_stream(framed, shared_secret)
+                            })
+                        })
+                }).into_boxed()
+            }
         }
     }
 
@@ -129,8 +142,10 @@ impl PaStream {
         let (tcp_ch_0, tcp_ch_1) = bi_channel::unbounded();
         let (utp_ch_0, utp_ch_1) = bi_channel::unbounded();
 
-        let (our_pk, _sk) = crypto::box_::gen_keypair();
+        let our_sk = SecretId::new();
+        let our_pk = our_sk.public_id().clone();
         let pump_channels = {
+            let our_pk = our_pk.clone();
             tcp_ch_0
                 .into_future()
                 .map_err(|(v, _)| void::unreachable(v))
@@ -144,7 +159,10 @@ impl PaStream {
                                 tcp: if disable_tcp { None } else { tcp_msg_opt },
                                 utp: utp_msg_opt,
                             };
-                            let msg = unwrap!(bincode::serialize(&msg, Infinite));
+                            let msg = try_bfut!(
+                                serialisation::serialise(&msg)
+                                    .map_err(PaRendezvousConnectError::SerializeMsg)
+                            );
                             let msg = Bytes::from(msg);
                             channel
                                 .send(msg)
@@ -156,11 +174,10 @@ impl PaStream {
                                 })
                                 .and_then(move |(msg_opt, _channel)| {
                                     if let Some(msg) = msg_opt {
-                                        let msg: PaRendezvousMsg = {
-                                        bincode::deserialize(&msg).map_err(
-                                            PaRendezvousConnectError::DeserializeMsg,
-                                        )?
-                                    };
+                                        let msg: PaRendezvousMsg = (
+                                            serialisation::deserialise(&msg)
+                                                .map_err(PaRendezvousConnectError::DeserializeMsg)
+                                        )?;
                                         if let Some(tcp) = msg.tcp {
                                             if !disable_tcp {
                                                 let _ = tcp_ch_0.unbounded_send(tcp);
@@ -175,13 +192,13 @@ impl PaStream {
                                         Err(PaRendezvousConnectError::ChannelClosed)
                                     }
                                 })
+                                .into_boxed()
                         })
                 })
         };
 
         let handle = handle.clone();
-        let tcp_connect =
-            { TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p).map(PaStream::Tcp) };
+        let tcp_connect = { TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p) };
         let udp_connect = {
             UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
                 .map_err(UtpRendezvousConnectError::Rendezvous)
@@ -202,13 +219,22 @@ impl PaStream {
                 .while_driving(udp_connect)
                 .map_err(|((e, _tcp_connect), _udp_connect)| e)
                 .and_then(move |((their_pk, tcp_connect), udp_connect)| {
+                    let shared_secret = our_sk.shared_secret(&their_pk);
+                    let shared_key0 = shared_secret.clone();
+                    let tcp_connect = tcp_connect.map(|stream| PaStream {
+                        inner: PaStreamInner::Tcp(Framed::new(stream)),
+                        shared_secret: shared_key0,
+                    });
                     if our_pk > their_pk {
                         let utp_connect = {
                             udp_connect.and_then(|(utp_socket, _utp_listener, addr)| {
                                 utp_socket
                                     .connect(&addr)
                                     .map_err(UtpRendezvousConnectError::UtpConnect)
-                                    .map(PaStream::Utp)
+                                    .map(|stream| PaStream {
+                                        inner: PaStreamInner::Utp(Framed::new(stream)),
+                                        shared_secret,
+                                    })
                             })
                         };
                         let connect = {
@@ -223,10 +249,10 @@ impl PaStream {
                         };
                         connect
                             .and_then(|stream| {
-                                tokio_io::io::write_all(stream, b"CHOOSE")
+                                stream
+                                    .send_serialized(&ChooseMsg)
                                     .map_err(PaRendezvousConnectError::SendChoose)
                             })
-                            .map(|(stream, _buf)| stream)
                             .into_boxed()
                     } else {
                         let tcp_connect = tcp_connect.map(take_chosen);
@@ -237,8 +263,11 @@ impl PaStream {
                                         .incoming()
                                         .filter(move |stream| stream.peer_addr() == addr)
                                         .first_ok()
-                                        .map(PaStream::Utp)
                                         .map_err(UtpRendezvousConnectError::UtpAccept)
+                                        .map(|stream| PaStream {
+                                            inner: PaStreamInner::Utp(Framed::new(stream)),
+                                            shared_secret,
+                                        })
                                 })
                                 .map(take_chosen)
                         };
@@ -262,61 +291,224 @@ impl PaStream {
         ret.into_boxed()
     }
 
+    pub fn send_serialized<T: Serialize>(self, item: T) -> BoxFuture<PaStream, PaStreamWriteError> {
+        let serialized =
+            try_bfut!(serialisation::serialise(&item).map_err(PaStreamWriteError::Serialize));
+        self.send(Bytes::from(serialized)).into_boxed()
+    }
+
+    pub fn recv_serialized<T: Serialize + DeserializeOwned + 'static>(
+        self,
+    ) -> BoxFuture<(Option<T>, PaStream), PaStreamReadError> {
+        self.into_future()
+            .map_err(|(e, _stream)| e)
+            .and_then(|(msg_opt, stream)| match msg_opt {
+                None => Ok((None, stream)),
+                Some(msg) => {
+                    let deserialized = {
+                        serialisation::deserialise(&msg).map_err(PaStreamReadError::Deserialise)?
+                    };
+                    Ok((Some(deserialized), stream))
+                }
+            })
+            .into_boxed()
+    }
+
     pub fn peer_addr(&self) -> io::Result<PaAddr> {
-        match *self {
-            PaStream::Tcp(ref stream) => Ok(PaAddr::Tcp(stream.peer_addr()?)),
-            PaStream::Utp(ref stream) => Ok(PaAddr::Utp(stream.peer_addr())),
+        match self.inner {
+            PaStreamInner::Tcp(ref stream) => Ok(PaAddr::Tcp(stream.get_ref().peer_addr()?)),
+            PaStreamInner::Utp(ref stream) => Ok(PaAddr::Utp(stream.get_ref().peer_addr())),
         }
     }
+
+    #[cfg(test)]
+    pub fn into_tcp_stream(self) -> TcpStream {
+        match self.inner {
+            PaStreamInner::Tcp(stream) => stream.into_inner(),
+            _ => panic!("not a tcp stream"),
+        }
+    }
+
+    #[cfg(test)]
+    pub fn into_utp_stream(self) -> UtpStream {
+        match self.inner {
+            PaStreamInner::Utp(stream) => stream.into_inner(),
+            _ => panic!("not a utp stream"),
+        }
+    }
+}
+
+fn connect_handshake<S: AsyncRead + AsyncWrite + 'static>(
+    stream: S,
+    server_pk: &PublicId,
+) -> BoxFuture<(Framed<S>, SharedSecretKey), DirectConnectError> {
+    let client_sk = SecretId::new();
+    let client_pk = client_sk.public_id().clone();
+    let req = ListenerMsg {
+        client_pk,
+        kind: ListenerMsgKind::Connect,
+    };
+    let msg = try_bfut!(
+        server_pk
+            .encrypt_anonymous(&req)
+            .map_err(DirectConnectError::Encrypt)
+    );
+    let msg = BytesMut::from(msg);
+
+    let shared_secret = client_sk.shared_secret(server_pk);
+    Framed::new(stream)
+        .send(msg)
+        .map_err(DirectConnectError::Write)
+        .map(|framed| (framed, shared_secret))
+        .into_boxed()
 }
 
 fn take_chosen<Ei: 'static, Eo: 'static>(
     stream: PaStream,
 ) -> BoxFuture<PaStream, PaRendezvousConnectError<Ei, Eo>> {
-    tokio_io::io::read_exact(stream, [0u8; 6])
+    stream
+        .recv_serialized()
         .map_err(PaRendezvousConnectError::ReadStream)
-        .and_then(|(stream, buff)| {
-            if &buff == b"CHOOSE" {
-                Ok(stream)
-            } else {
-                Err(PaRendezvousConnectError::ExpectedChoose)
-            }
+        .and_then(|(msg_opt, stream)| {
+            let _: ChooseMsg = msg_opt.ok_or(PaRendezvousConnectError::RemoteDisconnected)?;
+            Ok(stream)
         })
         .into_boxed()
 }
 
-impl Read for PaStream {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        match *self {
-            PaStream::Tcp(ref mut stream) => stream.read(buf),
-            PaStream::Utp(ref mut stream) => stream.read(buf),
+impl Stream for PaStream {
+    type Item = BytesMut;
+    type Error = PaStreamReadError;
+
+    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PaStreamReadError> {
+        let msg_opt_async = match self.inner {
+            PaStreamInner::Tcp(ref mut framed) => framed.poll().map_err(PaStreamReadError::Read)?,
+            PaStreamInner::Utp(ref mut framed) => framed.poll().map_err(PaStreamReadError::Read)?,
+        };
+        match msg_opt_async {
+            Async::Ready(Some(msg)) => {
+                let msg = self
+                    .shared_secret
+                    .decrypt_bytes(&msg)
+                    .map_err(PaStreamReadError::Decrypt)?;
+                Ok(Async::Ready(Some(BytesMut::from(msg))))
+            }
+            Async::Ready(None) => Ok(Async::Ready(None)),
+            Async::NotReady => Ok(Async::NotReady),
         }
     }
 }
 
-impl Write for PaStream {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        match *self {
-            PaStream::Tcp(ref mut stream) => stream.write(buf),
-            PaStream::Utp(ref mut stream) => stream.write(buf),
+impl Sink for PaStream {
+    type SinkItem = Bytes;
+    type SinkError = PaStreamWriteError;
+
+    fn start_send(&mut self, msg: Bytes) -> Result<AsyncSink<Bytes>, PaStreamWriteError> {
+        let encrypted_msg = BytesMut::from(
+            self.shared_secret
+                .encrypt_bytes(&msg)
+                .map_err(PaStreamWriteError::Encrypt)?,
+        );
+
+        let res = match self.inner {
+            PaStreamInner::Tcp(ref mut framed) => framed
+                .start_send(encrypted_msg)
+                .map_err(PaStreamWriteError::Write)?,
+            PaStreamInner::Utp(ref mut framed) => framed
+                .start_send(encrypted_msg)
+                .map_err(PaStreamWriteError::Write)?,
+        };
+        match res {
+            AsyncSink::Ready => Ok(AsyncSink::Ready),
+            // TODO: optimize this, we could buffer one encrypted msg rather than re-encrypting.
+            AsyncSink::NotReady(_encrypted_msg) => Ok(AsyncSink::NotReady(msg)),
         }
     }
 
-    fn flush(&mut self) -> io::Result<()> {
-        match *self {
-            PaStream::Tcp(ref mut stream) => stream.flush(),
-            PaStream::Utp(ref mut stream) => stream.flush(),
+    fn poll_complete(&mut self) -> Result<Async<()>, PaStreamWriteError> {
+        match self.inner {
+            PaStreamInner::Tcp(ref mut framed) => {
+                framed.poll_complete().map_err(PaStreamWriteError::Write)
+            }
+            PaStreamInner::Utp(ref mut framed) => {
+                framed.poll_complete().map_err(PaStreamWriteError::Write)
+            }
         }
     }
 }
 
-impl AsyncRead for PaStream {}
+quick_error! {
+    #[derive(Debug)]
+    pub enum DirectConnectError {
+        TcpDisabled {
+            description("tcp is disabled in the config")
+        }
+        TcpConnect(e: io::Error) {
+            description("error connecting to tcp endpoint")
+            display("error connecting to tcp endpoint: {}", e)
+            cause(e)
+        }
+        UtpBind(e: io::Error) {
+            description("error binding utp socket")
+            display("error binding utp socket: {}", e)
+            cause(e)
+        }
+        UtpConnect(e: io::Error) {
+            description("error forming utp connection")
+            display("error forming utp connection")
+            cause(e)
+        }
+        Write(e: io::Error) {
+            description("error writing to connected stream")
+            display("error writing to connected stream: {}", e)
+            cause(e)
+        }
+        Encrypt(e: EncryptionError) {
+            description("error encrypting connect request")
+            display("error encrypting connect request: {}", e)
+            cause(e)
+        }
+    }
+}
 
-impl AsyncWrite for PaStream {
-    fn shutdown(&mut self) -> io::Result<Async<()>> {
-        match *self {
-            PaStream::Tcp(ref mut stream) => stream.shutdown(),
-            PaStream::Utp(ref mut stream) => stream.shutdown(),
+quick_error! {
+    #[derive(Debug)]
+    pub enum PaStreamReadError {
+        Read(e: io::Error) {
+            description("error reading on the underlying socket")
+            display("error reading on the underlying socket: {}", e)
+            cause(e)
+        }
+        Decrypt(e: EncryptionError) {
+            description("error decrypting data received from remote peer")
+            display("error decrypting data received from remote peer: {}", e)
+            cause(e)
+        }
+        Deserialise(e: SerialisationError) {
+            description("error deserialising data from remote peer")
+            display("error deserialising data from remote peer: {}", e)
+            cause(e)
+        }
+    }
+}
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum PaStreamWriteError {
+        Write(e: io::Error) {
+            description("error writing to the underlying socket")
+            display("error writing to the underlying socket: {}", e)
+            cause(e)
+        }
+        Encrypt(e: EncryptionError) {
+            description("error encrypting message to send to remote peer")
+            display("error encrypting message to send to remote peer: {}", e)
+            cause(e)
+        }
+        Serialize(e: SerialisationError) {
+            description("error serialising data to send to remote peer")
+            display("error serialising data to send to remote peer: {}", e)
+            cause(e)
         }
     }
 }
@@ -380,19 +572,20 @@ where
 }
 
 #[derive(Debug)]
-
 pub enum PaRendezvousConnectError<Ei, Eo> {
     ChannelWrite(Eo),
     ChannelRead(Ei),
     ChannelClosed,
-    DeserializeMsg(bincode::Error),
+    SerializeMsg(SerialisationError),
+    DeserializeMsg(SerialisationError),
+    RemoteDisconnected,
     AllProtocolsFailed {
         tcp: Box<TcpRendezvousConnectError<Void, SendError<Bytes>>>,
         utp: Box<UtpRendezvousConnectError<Void, SendError<Bytes>>>,
     },
-    ReadStream(io::Error),
+    ReadStream(PaStreamReadError),
     ExpectedChoose,
-    SendChoose(io::Error),
+    SendChoose(PaStreamWriteError),
 }
 
 impl<Ei, Eo> fmt::Display for PaRendezvousConnectError<Ei, Eo>
@@ -411,11 +604,19 @@ where
             PaRendezvousConnectError::ChannelClosed => {
                 write!(formatter, "rendezvous channel closed unexpectedly")
             }
+            PaRendezvousConnectError::SerializeMsg(ref e) => write!(
+                formatter,
+                "error serializing message to remote channel: {}",
+                e,
+            ),
             PaRendezvousConnectError::DeserializeMsg(ref e) => write!(
                 formatter,
                 "error deserializing message from rendezvous channel: {}",
                 e
             ),
+            PaRendezvousConnectError::RemoteDisconnected => {
+                write!(formatter, "remote peer disconnected",)
+            }
             PaRendezvousConnectError::AllProtocolsFailed { ref tcp, ref utp } => write!(
                 formatter,
                 "all rendezvous connect protocols failed. tcp error: {}; utp error: {}",
@@ -445,9 +646,13 @@ where
             PaRendezvousConnectError::ChannelWrite(..) => "error writing to rendezvous channel",
             PaRendezvousConnectError::ChannelRead(..) => "error reading from rendezvous channel",
             PaRendezvousConnectError::ChannelClosed => "rendezvous channel closed unexpectedly",
+            PaRendezvousConnectError::SerializeMsg(..) => {
+                "error serializing message to remote channel"
+            }
             PaRendezvousConnectError::DeserializeMsg(..) => {
                 "error deserializing message from rendezvous channel"
             }
+            PaRendezvousConnectError::RemoteDisconnected => "remote peer disconnected",
             PaRendezvousConnectError::AllProtocolsFailed { .. } => {
                 "all rendezvous connect protocols failed"
             }
@@ -463,11 +668,13 @@ where
         match *self {
             PaRendezvousConnectError::ChannelWrite(ref e) => Some(e),
             PaRendezvousConnectError::ChannelRead(ref e) => Some(e),
+            PaRendezvousConnectError::SerializeMsg(ref e) => Some(e),
             PaRendezvousConnectError::DeserializeMsg(ref e) => Some(e),
-            PaRendezvousConnectError::ReadStream(ref e)
-            | PaRendezvousConnectError::SendChoose(ref e) => Some(e),
+            PaRendezvousConnectError::ReadStream(ref e) => Some(e),
+            PaRendezvousConnectError::SendChoose(ref e) => Some(e),
             PaRendezvousConnectError::AllProtocolsFailed { .. }
             | PaRendezvousConnectError::ExpectedChoose
+            | PaRendezvousConnectError::RemoteDisconnected
             | PaRendezvousConnectError::ChannelClosed => None,
         }
     }
@@ -475,9 +682,9 @@ where
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use config::DevConfigSettings;
     use future_utils::bi_channel;
-    use priv_prelude::*;
     use tokio_core::reactor::Core;
 
     #[test]
@@ -511,7 +718,6 @@ mod test {
 
     mod framed_pastream {
         use super::*;
-        use rust_sodium::crypto::box_::gen_keypair;
         use tokio_io;
 
         mod tcp {
@@ -521,21 +727,21 @@ mod test {
             fn it_fails_to_send_packets_bigger_than_the_size_limit() {
                 let mut evloop = unwrap!(Core::new());
                 let handle = evloop.handle();
-                let (listener_pk, listener_sk) = gen_keypair();
-                let crypto_ctx = CryptoContext::anonymous_decrypt(listener_pk, listener_sk.clone());
+                let listener_sk = SecretId::new();
+                let listener_pk = listener_sk.public_id().clone();
                 let listener = unwrap!(PaListener::bind_reusable(
                     &tcp_addr!("0.0.0.0:0"),
                     &handle,
-                    crypto_ctx,
                     listener_sk,
                 ));
                 let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
                 let config = unwrap!(ConfigFile::new_temporary());
-                let data = vec![1; MAX_PAYLOAD_SIZE + 1];
+                let data = vec![1; ::MAX_PAYLOAD_SIZE + 1];
                 let send_data =
                     PaStream::direct_connect(&handle, &listener_addr, listener_pk, &config)
-                        .and_then(move |(stream, _addr)| stream.send(BytesMut::from(data)))
+                        .map_err(|e| panic!("failed to connect: {}", e))
+                        .and_then(move |stream| stream.send(Bytes::from(data)))
                         .and_then(|_stream| Ok(()));
 
                 let task = listener
@@ -543,7 +749,7 @@ mod test {
                     .into_future()
                     .map_err(|(e, _incoming)| panic!("Failed to accept connection: {}", e))
                     .map(|(stream_addr_opt, _incoming)| unwrap!(stream_addr_opt))
-                    .and_then(|(stream, _addr)| {
+                    .and_then(|stream| {
                         stream
                             .into_future()
                             .map_err(|(e, _stream)| panic!("Failed to read from client: {}", e))
@@ -552,36 +758,40 @@ mod test {
                     .join(send_data);
                 let res = evloop.run(task);
 
-                let packet_too_big = match res {
-                    Err(e) => match e.kind() {
-                        io::ErrorKind::InvalidInput => true,
-                        _ => false,
+                match res {
+                    Err(PaStreamWriteError::Write(e)) => match e.kind() {
+                        io::ErrorKind::InvalidInput => (),
+                        k => panic!("unexpected error kind: {:?}", k),
                     },
-                    _ => false,
+                    res => panic!("unexpected result: {:?}", res),
                 };
-                assert!(packet_too_big);
             }
 
             #[test]
             fn when_client_sends_too_big_packet_it_closes_its_connection() {
                 let mut evloop = unwrap!(Core::new());
                 let handle = evloop.handle();
-                let (listener_pk, listener_sk) = gen_keypair();
-                let crypto_ctx = CryptoContext::anonymous_decrypt(listener_pk, listener_sk.clone());
+                let listener_sk = SecretId::new();
+                let listener_pk = listener_sk.public_id().clone();
                 let listener = unwrap!(PaListener::bind_reusable(
                     &tcp_addr!("0.0.0.0:0"),
                     &handle,
-                    crypto_ctx,
                     listener_sk,
                 ));
                 let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
                 let config = unwrap!(ConfigFile::new_temporary());
-                let data = vec![1; MAX_PAYLOAD_SIZE + 1];
+                let data = vec![1; ::MAX_PAYLOAD_SIZE + 1];
                 let send_data = {
                     PaStream::direct_connect(&handle, &listener_addr, listener_pk, &config)
+                        .map_err(|e| panic!("error connecting: {}", e))
                         // let's unwrap Framed, so that we could send big packets (evil)
-                        .map(|(stream, _addr)| stream.into_inner())
+                        .map(|stream| {
+                            match stream.inner {
+                                PaStreamInner::Tcp(framed) => framed.into_inner(),
+                                _ => panic!("we got a utp stream somehow"),
+                            }
+                        })
                         .and_then(move |stream| tokio_io::io::write_all(stream, data))
                         .map_err(|e| panic!("Failed to send data: {}", e))
                         .map(|_stream| ())
@@ -592,7 +802,7 @@ mod test {
                     .into_future()
                     .map_err(|(e, _incoming)| panic!("Failed to accept connection: {}", e))
                     .map(|(stream_addr_opt, _incoming)| unwrap!(stream_addr_opt))
-                    .and_then(|(stream, _addr)| {
+                    .and_then(|stream| {
                         stream
                             .into_future()
                             .map_err(|(e, _stream)| e)
@@ -601,14 +811,13 @@ mod test {
                     .join(send_data);
 
                 let res = evloop.run(task);
-                let packet_too_big = match res {
-                    Err(e) => match e.kind() {
-                        io::ErrorKind::InvalidData => true,
-                        _ => false,
+                match res {
+                    Err(PaStreamReadError::Read(e)) => match e.kind() {
+                        io::ErrorKind::InvalidData => (),
+                        k => panic!("unexpected error kind: {:?}", k),
                     },
-                    _ => false,
+                    res => panic!("unexpected result: {:?}", res),
                 };
-                assert!(packet_too_big);
             }
         }
     }

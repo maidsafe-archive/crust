@@ -20,10 +20,9 @@ use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::peer::BootstrapRequest;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
-use p2p::{self, P2p};
+use p2p::P2p;
 use priv_prelude::*;
 use rand::{self, Rng};
-use rust_sodium::crypto::box_::{gen_keypair, PublicKey, SecretKey};
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 
@@ -40,26 +39,30 @@ pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 /// `Service` provides futures based API compatible with [Tokio](https://tokio.rs/) event loop.
 ///
 /// Once you are connected, use [Peer](struct.Peer.html) to exchange data.
-pub struct Service<UID: Uid> {
+pub struct Service {
     handle: Handle,
     config: ConfigFile,
-    our_uid: UID,
+    our_uid: PublicUid,
     listeners: Acceptor,
-    demux: Demux<UID>,
+    demux: Demux,
     p2p: P2p,
-    our_pk: PublicKey,
-    our_sk: SecretKey,
+    our_sk: SecretId,
     bootstrap_cache: BootstrapCache,
 }
 
-impl<UID: Uid> Service<UID> {
+impl Service {
     /// Create a new `Service` with the default config.
-    pub fn new(handle: &Handle, our_uid: UID) -> BoxFuture<Service<UID>, CrustError> {
+    pub fn new(
+        handle: &Handle,
+        our_sk: SecretId,
+        our_uid_data: Vec<u8>,
+    ) -> BoxFuture<Service, CrustError> {
         let try = || -> Result<_, CrustError> {
             Ok(Service::with_config(
                 handle,
                 ConfigFile::open_default()?,
-                our_uid,
+                our_sk,
+                our_uid_data,
             ))
         };
         future::result(try()).flatten().into_boxed()
@@ -69,22 +72,21 @@ impl<UID: Uid> Service<UID> {
     pub fn with_config(
         handle: &Handle,
         config: ConfigFile,
-        our_uid: UID,
-    ) -> BoxFuture<Service<UID>, CrustError> {
+        our_sk: SecretId,
+        our_uid_data: Vec<u8>,
+    ) -> BoxFuture<Service, CrustError> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
 
-        let (our_pk, our_sk) = gen_keypair();
-        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(our_pk, our_sk.clone());
+        let our_pk = our_sk.public_id().clone();
+        let our_uid = PublicUid {
+            pub_key: our_pk,
+            data: our_uid_data,
+        };
 
         let bootstrap_cache = try_bfut!(make_bootstrap_cache(&config));
-        let (listeners, socket_incoming) = Acceptor::new(
-            &handle,
-            p2p.clone(),
-            anon_decrypt_ctx.clone(),
-            our_sk.clone(),
-        );
-        let demux = Demux::new(&handle, socket_incoming, anon_decrypt_ctx, &bootstrap_cache);
+        let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone(), our_sk.clone());
+        let demux = Demux::new(&handle, socket_incoming, &bootstrap_cache);
 
         future::ok(Service {
             handle,
@@ -93,7 +95,6 @@ impl<UID: Uid> Service<UID> {
             listeners,
             demux,
             p2p,
-            our_pk,
             our_sk,
             bootstrap_cache,
         }).into_boxed()
@@ -117,23 +118,22 @@ impl<UID: Uid> Service<UID> {
         blacklist: HashSet<PaAddr>,
         use_service_discovery: bool,
         crust_user: CrustUser,
-    ) -> BoxFuture<Peer<UID>, BootstrapError> {
+    ) -> BoxFuture<Peer, BootstrapError> {
         remove_rendezvous_servers(&self.p2p, &blacklist);
         let (current_addrs, _) = self.listeners.addresses();
         let ext_reachability = match crust_user {
             CrustUser::Node => ExternalReachability::Required {
                 direct_listeners: current_addrs
                     .into_iter()
-                    .map(|addr| PeerInfo::new(addr, self.our_pk))
+                    .map(|addr| PeerInfo::new(addr, self.our_uid.pub_key.clone()))
                     .collect(),
             },
             CrustUser::Client => ExternalReachability::NotRequired,
         };
         let request = BootstrapRequest {
-            uid: self.our_uid,
             name_hash: self.config.network_name_hash(),
             ext_reachability,
-            their_pk: self.our_pk,
+            client_uid: self.our_uid.clone(),
         };
         net::bootstrap(
             &self.handle,
@@ -141,7 +141,7 @@ impl<UID: Uid> Service<UID> {
             blacklist,
             use_service_discovery,
             &self.config,
-            self.our_sk.clone(),
+            &self.our_sk,
             &self.bootstrap_cache,
         )
     }
@@ -149,9 +149,9 @@ impl<UID: Uid> Service<UID> {
     /// Start a bootstrap acceptor. The returned `BootstrapAcceptor` can be used to receive peers
     /// who are bootstrapping to us. It can be dropped again to re-disable accepting bootstrapping
     /// peers.
-    pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor<UID> {
+    pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor {
         self.demux
-            .bootstrap_acceptor(&self.config, self.our_uid, self.our_sk.clone())
+            .bootstrap_acceptor(&self.config, self.our_uid.clone())
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -162,7 +162,7 @@ impl<UID: Uid> Service<UID> {
         let addrs = self.config.listen_addresses();
         let futures = addrs.iter().map(|addr| {
             self.listeners
-                .listener::<UID>(addr)
+                .listener(addr)
                 .map_err(CrustError::StartListener)
         });
         stream::futures_unordered(futures).into_boxed()
@@ -170,10 +170,10 @@ impl<UID: Uid> Service<UID> {
 
     /// Perform a p2p connection to a peer. Bidirectional channel is used to exchange connection
     /// info with remote peer.
-    pub fn connect<C>(&self, ci_channel: C) -> BoxFuture<Peer<UID>, CrustError>
+    pub fn connect<C>(&self, ci_channel: C) -> BoxFuture<Peer, CrustError>
     where
-        C: Stream<Item = PubConnectionInfo<UID>>,
-        C: Sink<SinkItem = PubConnectionInfo<UID>>,
+        C: Stream<Item = PubConnectionInfo>,
+        C: Sink<SinkItem = PubConnectionInfo>,
         <C as Stream>::Error: fmt::Debug,
         <C as Sink>::SinkError: fmt::Debug,
         C: 'static,
@@ -192,8 +192,10 @@ impl<UID: Uid> Service<UID> {
                         ci_rx,
                         &config,
                     ))
-                    .map_err(|(e, _connect)| CrustError::ConnectError(e))
-                    .and_then(|(_ci_tx, connect)| connect.map_err(CrustError::ConnectError))
+                    .map_err(|(e, _connect)| CrustError::ConnectError(e.to_string()))
+                    .and_then(|(_ci_tx, connect)| {
+                        connect.map_err(|e| CrustError::ConnectError(e.to_string()))
+                    })
             })
             .into_boxed()
     }
@@ -207,7 +209,7 @@ impl<UID: Uid> Service<UID> {
             &self.config,
             &current_addrs,
             addrs_rx,
-            self.our_pk,
+            self.our_uid.pub_key.clone(),
         )
     }
 
@@ -218,8 +220,8 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Get our ID.
-    pub fn id(&self) -> UID {
-        self.our_uid
+    pub fn id(&self) -> PublicUid {
+        self.our_uid.clone()
     }
 
     /// Get the tokio `Handle` that this service is using.
@@ -233,12 +235,12 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Returns service public key.
-    pub fn public_key(&self) -> PublicKey {
-        self.our_pk
+    pub fn public_key(&self) -> PublicId {
+        self.our_uid.pub_key.clone()
     }
 
     /// Returns service private key.
-    pub fn private_key(&self) -> SecretKey {
+    pub fn private_key(&self) -> SecretId {
         self.our_sk.clone()
     }
 
@@ -252,14 +254,14 @@ impl<UID: Uid> Service<UID> {
     /// generate a `PubConnectionInfo`, trade `PubConnectionInfo`s using some out-of-channel, then
     /// call connect simultaneously using each other's `PubConnectionInfo` and their own
     /// `PrivConnectionInfo`.
-    fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
+    fn prepare_connection_info(&self) -> BoxFuture<PrivConnectionInfo, CrustError> {
         let (direct_addrs, _) = self.listeners.addresses();
         let priv_conn_info = PrivConnectionInfo {
             connection_id: rand::thread_rng().gen(),
-            id: self.our_uid,
+            our_uid: self.our_uid.clone(),
             for_direct: direct_addrs.into_iter().collect(),
             p2p_conn_info: None,
-            our_pk: self.our_pk,
+            our_pk: self.our_uid.pub_key.clone(),
             our_sk: self.our_sk.clone(),
         };
 
@@ -274,8 +276,8 @@ impl<UID: Uid> Service<UID> {
     /// p2p info is used for rendezvous connections - hole punching.
     fn with_p2p_connection_info(
         &self,
-        mut priv_conn_info: PrivConnectionInfo<UID>,
-    ) -> BoxFuture<PrivConnectionInfo<UID>, CrustError> {
+        mut priv_conn_info: PrivConnectionInfo,
+    ) -> BoxFuture<PrivConnectionInfo, CrustError> {
         let (ch1, ch2) = bi_channel::unbounded();
         let conn_rx =
             net::peer::start_rendezvous_connect(&self.handle, &self.config, ch2, &self.p2p);
@@ -310,11 +312,11 @@ fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
     let hard_coded_contacts = &config.read().hard_coded_contacts;
     for peer in hard_coded_contacts {
         match peer.addr {
-            PaAddr::Tcp(addr) => {
-                p2p.add_tcp_traversal_server(&p2p::PeerInfo::new(addr, peer.pub_key));
+            PaAddr::Tcp(ref addr) => {
+                p2p.add_tcp_addr_querier(PaTcpAddrQuerier::new(addr, peer.pub_key.clone()))
             }
-            PaAddr::Utp(addr) => {
-                p2p.add_udp_traversal_server(&p2p::PeerInfo::new(addr, peer.pub_key));
+            PaAddr::Utp(ref addr) => {
+                p2p.add_udp_addr_querier(PaUdpAddrQuerier::new(addr, peer.pub_key.clone()))
             }
         }
     }
@@ -323,8 +325,8 @@ fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
 fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
     for addr in addrs {
         match *addr {
-            PaAddr::Tcp(addr) => p2p.remove_tcp_traversal_server(addr),
-            PaAddr::Utp(addr) => p2p.remove_udp_traversal_server(addr),
+            PaAddr::Tcp(addr) => p2p.remove_tcp_addr_querier(&addr),
+            PaAddr::Utp(addr) => p2p.remove_udp_addr_querier(&addr),
         }
     }
 }
@@ -340,49 +342,86 @@ fn make_bootstrap_cache(config: &ConfigFile) -> Result<BootstrapCache, CrustErro
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    /// Constructs peer info with given address and random public key.
-    /// Usable in cases when public key is not used and we just want to get `PeerInfo`.
-    macro_rules! peer_addr {
-        ($addr:pat) => {{
-            p2p::PeerInfo::with_rand_key(addr!($addr))
-        }};
-    }
+    use tokio_core::reactor::Core;
 
     mod set_rendezvous_servers {
         use super::*;
         use config::PeerInfo;
 
         #[test]
-        fn it_sets_hard_coded_tcp_contacts_as_rendezvous_servers() {
+        fn it_sets_hard_coded_contacts_as_rendezvous_servers() {
+            let mut core = unwrap!(Core::new());
+            let handle = core.handle();
+
+            let listener0_sk = SecretId::new();
+            let listener0_pk = listener0_sk.public_id().clone();
+            let listener0 = unwrap!(TcpListener::bind(&addr!("0.0.0.0:0"), &handle));
+            let listener0_info =
+                PeerInfo::new(PaAddr::Tcp(unwrap!(listener0.local_addr())), listener0_pk);
+
+            let listener1_sk = SecretId::new();
+            let listener1_pk = listener1_sk.public_id().clone();
+            let (_socket, listener1) = unwrap!(UtpSocket::bind(&addr!("0.0.0.0:0"), &handle));
+            let listener1_info =
+                PeerInfo::new(PaAddr::Utp(unwrap!(listener1.local_addr())), listener1_pk);
+
             let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts = vec![
-                PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000")),
-                PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")),
-            ];
+            unwrap!(config.write()).hard_coded_contacts = vec![listener0_info, listener1_info];
             let p2p = P2p::default();
 
             set_rendezvous_servers(&p2p, &config);
 
-            let servers = p2p.tcp_traversal_servers().addrs_snapshot();
-            assert!(servers.contains(&addr!("1.2.3.4:4000")));
-            assert!(servers.contains(&addr!("1.2.3.5:5000")));
-        }
+            let query_tcp: BoxFuture<(), Void> = {
+                let handle = handle.clone();
+                p2p.tcp_addr_queriers()
+                    .infallible()
+                    .and_then(move |addr_querier| addr_querier.query(&addr!("0.0.0.0:0"), &handle))
+                    .then(|res| match res {
+                        Ok(x) => panic!("unexpected success: {:?}", x),
+                        Err(_e) => Ok(()),
+                    })
+                    .for_each(|()| Ok(()))
+                    .into_boxed()
+            };
 
-        #[test]
-        fn it_sets_hard_coded_utp_contacts_as_rendezvous_servers() {
-            let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts = vec![
-                PeerInfo::with_rand_key(utp_addr!("1.2.3.4:4000")),
-                PeerInfo::with_rand_key(utp_addr!("1.2.3.5:5000")),
-            ];
-            let p2p = P2p::default();
+            let query_udp: BoxFuture<(), Void> = {
+                let handle = handle.clone();
+                p2p.udp_addr_queriers()
+                    .infallible()
+                    .and_then(move |addr_querier| addr_querier.query(&addr!("0.0.0.0:0"), &handle))
+                    .then(|res| match res {
+                        Ok(x) => panic!("unexpected success: {:?}", x),
+                        Err(_e) => Ok(()),
+                    })
+                    .for_each(|()| Ok(()))
+                    .into_boxed()
+            };
 
-            set_rendezvous_servers(&p2p, &config);
+            let l0 = {
+                listener0
+                    .incoming()
+                    .with_timeout(Duration::from_secs(1), &handle)
+                    .first_ok()
+                    .map(|_stream| ())
+                    .map_err(|e| panic!("didn't get a connection: {:?}", e))
+            };
+            let l1 = {
+                listener1
+                    .incoming()
+                    .with_timeout(Duration::from_secs(1), &handle)
+                    .first_ok()
+                    .map(|_stream| ())
+                    .map_err(|e| panic!("didn't get a connection: {:?}", e))
+            };
 
-            let servers = p2p.udp_traversal_servers().addrs_snapshot();
-            assert!(servers.contains(&addr!("1.2.3.4:4000")));
-            assert!(servers.contains(&addr!("1.2.3.5:5000")));
+            core.run(
+                l0.join(l1)
+                    .while_driving(query_tcp)
+                    .map_err(|(v, _)| v)
+                    .while_driving(query_udp)
+                    .map_err(|(v, _)| v)
+                    .map(|((((), ()), _query_tcp), _query_udp)| ()),
+            ).void_unwrap()
         }
     }
 
@@ -392,8 +431,17 @@ mod tests {
         #[test]
         fn it_removes_specified_rendezvous_servers_from_global_list() {
             let p2p = P2p::default();
-            p2p.add_tcp_traversal_server(&peer_addr!("1.2.3.4:4000"));
-            p2p.add_udp_traversal_server(&peer_addr!("1.2.3.5:5000"));
+
+            let sk = SecretId::new();
+            let pk = sk.public_id().clone();
+            let addr_querier0 = PaTcpAddrQuerier::new(&addr!("1.2.3.4:4000"), pk);
+
+            let sk = SecretId::new();
+            let pk = sk.public_id().clone();
+            let addr_querier1 = PaUdpAddrQuerier::new(&addr!("1.2.3.5:5000"), pk);
+
+            p2p.add_tcp_addr_querier(addr_querier0);
+            p2p.add_udp_addr_querier(addr_querier1);
 
             let rm_servers: HashSet<PaAddr> =
                 vec![tcp_addr!("1.2.3.4:4000"), utp_addr!("1.2.3.5:5000")]
@@ -402,9 +450,21 @@ mod tests {
                     .collect();
             remove_rendezvous_servers(&p2p, &rm_servers);
 
-            let servers = p2p.tcp_traversal_servers().snapshot();
+            let mut core = unwrap!(Core::new());
+            let handle = core.handle();
+            let servers =
+                core.run({
+                    p2p.tcp_addr_queriers()
+                        .with_readiness_timeout(Duration::from_secs(1), &handle)
+                        .collect()
+                }).void_unwrap();
             assert!(servers.is_empty());
-            let servers = p2p.udp_traversal_servers().snapshot();
+            let servers =
+                core.run({
+                    p2p.udp_addr_queriers()
+                        .with_readiness_timeout(Duration::from_secs(1), &handle)
+                        .collect()
+                }).void_unwrap();
             assert!(servers.is_empty());
         }
     }

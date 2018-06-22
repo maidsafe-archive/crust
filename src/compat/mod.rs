@@ -21,13 +21,17 @@
 pub use self::connection_map::ConnectionMap;
 pub use self::event::{ConnectionInfoResult, Event};
 pub use self::event_loop::EventLoop;
+pub use self::peer::{CompatPeer, CompatPeerError, Priority};
 pub use self::service::Service;
+pub use self::uid::Uid;
 use maidsafe_utilities;
 
 mod connection_map;
 mod event;
 mod event_loop;
+mod peer;
 mod service;
+mod uid;
 
 /// Used to receive events from a `Service`.
 pub type CrustEventSender<UID> = maidsafe_utilities::event_sender::MaidSafeObserver<Event<UID>>;

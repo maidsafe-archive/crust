@@ -23,7 +23,6 @@ use futures::sync::mpsc;
 use futures::{future, stream, Future, Stream};
 use net::service_discovery::server::Server;
 use priv_prelude::*;
-use rust_sodium::crypto::box_::gen_keypair;
 use std::time::Duration;
 use tokio_core::reactor::Core;
 
@@ -46,8 +45,8 @@ fn multiple_server_instances_in_parallel() {
         let mut futures = Vec::new();
         for i in 0..num_servers {
             for j in 0..num_discovers {
-                let (our_pk, our_sk) = gen_keypair();
-                let discover = discover::<u16>(&handle, starting_port + i, our_pk, our_sk)
+                let our_sk = SecretId::new();
+                let discover = discover::<u16>(&handle, starting_port + i, our_sk)
                     .map_err(|e| panic!("error discovering: {}", e))
                     .flatten_stream()
                     .with_timeout(Duration::from_secs(2), &handle)
@@ -93,7 +92,8 @@ fn service_discovery() {
     unwrap!(config.write()).service_discovery_port = Some(0);
     let (tx, rx) = mpsc::unbounded();
 
-    let (our_pk, _our_sk) = gen_keypair();
+    let our_sk = SecretId::new();
+    let our_pk = our_sk.public_id().clone();
     let sd = unwrap!(ServiceDiscovery::new(
         &handle,
         &config,
@@ -104,8 +104,8 @@ fn service_discovery() {
     let port = sd.port();
 
     let f = {
-        let (our_pk, our_sk) = gen_keypair();
-        discover::<HashSet<PeerInfo>>(&handle, port, our_pk, our_sk.clone())
+        let our_sk = SecretId::new();
+        discover::<HashSet<PeerInfo>>(&handle, port, our_sk.clone())
             .map_err(|e| panic!("discover error: {}", e))
             .flatten_stream()
             .with_timeout(Duration::from_secs(2), &handle)
@@ -124,7 +124,7 @@ fn service_discovery() {
                 Timeout::new(Duration::from_millis(100), &handle)
                     .map_err(|e| panic!(e))
                     .and_then(move |()| {
-                        discover::<HashSet<PeerInfo>>(&handle0, port, our_pk, our_sk)
+                        discover::<HashSet<PeerInfo>>(&handle0, port, our_sk)
                             .map_err(|e| panic!("discover error: {}", e))
                     })
                     .flatten_stream()

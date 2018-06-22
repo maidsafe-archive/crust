@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use compat::service::{ServiceCommand, ServiceState};
-use compat::CrustEventSender;
+use compat::{CrustEventSender, Uid};
 use error::CrustError;
 use futures::sync::mpsc::{self, UnboundedSender};
 use maidsafe_utilities::thread::{self, Joiner};
@@ -42,7 +42,7 @@ impl<UID: Uid> EventLoop<UID> {
 pub fn spawn_event_loop<UID: Uid>(
     event_loop_id: Option<&str>,
     event_tx: CrustEventSender<UID>,
-    our_uid: UID,
+    our_uid_data: Vec<u8>,
     config: ConfigFile,
 ) -> Result<EventLoop<UID>, CrustError> {
     let mut name = "CRUST-Event-Loop".to_string();
@@ -52,13 +52,19 @@ pub fn spawn_event_loop<UID: Uid>(
     }
 
     let (result_tx, result_rx) = std::sync::mpsc::channel::<Result<_, CrustError>>();
+    let our_sk = SecretId::new();
 
     let joiner = thread::named(name, move || {
         let try = move || {
             let mut core = Core::new()?;
             let handle = core.handle();
 
-            let service = core.run(::Service::with_config(&handle, config, our_uid))?;
+            let service = core.run(::Service::with_config(
+                &handle,
+                config,
+                our_sk,
+                our_uid_data,
+            ))?;
 
             let service_state = ServiceState::new(service, event_tx);
 

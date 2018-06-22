@@ -34,8 +34,7 @@ pub struct Acceptor {
     listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: SharedObservableAddresses,
     p2p: P2p,
-    anon_decrypt_ctx: CryptoContext,
-    our_sk: SecretKey,
+    our_sk: SecretId,
 }
 
 /// Holds a collection of addresses and notifies about changes.
@@ -106,12 +105,7 @@ pub struct SocketIncoming {
 
 impl Acceptor {
     /// Create connection acceptor and a handle to its incoming stream of connections.
-    pub fn new(
-        handle: &Handle,
-        p2p: P2p,
-        anon_decrypt_ctx: CryptoContext,
-        our_sk: SecretKey,
-    ) -> (Acceptor, SocketIncoming) {
+    pub fn new(handle: &Handle, p2p: P2p, our_sk: SecretId) -> (Acceptor, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
         let addresses = ObservableAddresses::shared();
         let acceptor = Acceptor {
@@ -119,7 +113,6 @@ impl Acceptor {
             listeners_tx: tx,
             addresses: Arc::clone(&addresses),
             p2p,
-            anon_decrypt_ctx,
             our_sk,
         };
         let incoming = SocketIncoming {
@@ -147,23 +140,17 @@ impl Acceptor {
 
     /// Adds a new listener to the set of listeners, listening on the given local address, and
     /// returns a handle to it.
-    pub fn listener<UID: Uid>(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
+    pub fn listener(&self, listen_addr: &PaAddr) -> IoFuture<Listener> {
         let handle = self.handle.clone();
         let tx = self.listeners_tx.clone();
         let addresses = Arc::clone(&self.addresses);
         let listen_addr = *listen_addr;
-        let anon_decrypt_ctx = self.anon_decrypt_ctx.clone();
         let our_sk = self.our_sk.clone();
 
-        PaListener::bind_public(
-            &listen_addr,
-            &handle,
-            &self.p2p,
-            anon_decrypt_ctx.clone(),
-            our_sk.clone(),
-        ).map(|(listener, public_addr)| (listener, Some(public_addr)))
+        PaListener::bind_public(&listen_addr, &handle, &self.p2p, our_sk.clone())
+            .map(|(listener, public_addr)| (listener, Some(public_addr)))
             .or_else(move |_| {
-                PaListener::bind_reusable(&listen_addr, &handle, anon_decrypt_ctx, our_sk)
+                PaListener::bind_reusable(&listen_addr, &handle, our_sk)
                     .map(|listener| (listener, None))
             })
             .and_then(move |(listener, public_addr)| {
@@ -204,7 +191,7 @@ fn make_listener(
 }
 
 impl Stream for SocketIncoming {
-    type Item = (FramedPaStream, PaAddr);
+    type Item = PaStream;
     type Error = AcceptError;
 
     fn poll(&mut self) -> Result<Async<Option<Self::Item>>, AcceptError> {
@@ -248,17 +235,8 @@ mod test {
     use super::*;
     use env_logger;
     use hamcrest::prelude::*;
-    use rust_sodium::crypto::box_::gen_keypair;
     use tokio_core::reactor::Core;
-    use util::{self, UniqueId};
-
-    fn decrypt_ctx_with_rand_keys() -> (CryptoContext, SecretKey) {
-        let (our_pk, our_sk) = gen_keypair();
-        (
-            CryptoContext::anonymous_decrypt(our_pk, our_sk.clone()),
-            our_sk,
-        )
-    }
+    use util;
 
     mod observable_addresses {
         use super::*;
@@ -377,9 +355,8 @@ mod test {
             #[test]
             fn it_returns_true_when_theres_at_least_one_public_address() {
                 let core = unwrap!(Core::new());
-                let (anon_decrypt_ctx, our_sk) = decrypt_ctx_with_rand_keys();
-                let (acceptor, _) =
-                    Acceptor::new(&core.handle(), P2p::default(), anon_decrypt_ctx, our_sk);
+                let our_sk = SecretId::new();
+                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default(), our_sk);
                 unwrap!(acceptor.addresses.lock()).add_public(utp_addr!("1.2.3.4:4000"));
 
                 assert!(acceptor.has_public_addrs());
@@ -388,9 +365,8 @@ mod test {
             #[test]
             fn it_returns_false_when_none_of_listeners_have_public_address() {
                 let core = unwrap!(Core::new());
-                let (anon_decrypt_ctx, our_sk) = decrypt_ctx_with_rand_keys();
-                let (acceptor, _) =
-                    Acceptor::new(&core.handle(), P2p::default(), anon_decrypt_ctx, our_sk);
+                let our_sk = SecretId::new();
+                let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default(), our_sk);
 
                 assert!(!acceptor.has_public_addrs());
             }
@@ -414,14 +390,9 @@ mod test {
         }
 
         fn palistener(handle: &Handle) -> PaListener {
-            let (anon_decrypt_ctx, our_sk) = decrypt_ctx_with_rand_keys();
+            let our_sk = SecretId::new();
             let bind_addr = utp_addr!("0.0.0.0:0");
-            unwrap!(PaListener::bind(
-                &bind_addr,
-                handle,
-                anon_decrypt_ctx,
-                our_sk,
-            ))
+            unwrap!(PaListener::bind(&bind_addr, handle, our_sk,))
         }
 
         #[test]
@@ -496,13 +467,12 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
 
-        let (anon_decrypt_ctx, our_sk) = decrypt_ctx_with_rand_keys();
-        let (acceptor, socket_incoming) =
-            Acceptor::new(&handle, P2p::default(), anon_decrypt_ctx, our_sk);
+        let our_sk = SecretId::new();
+        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), our_sk);
 
         let future = {
             acceptor
-                .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                .listener(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .and_then(move |listener0| {
                     let addr0 = listener0.addr();
@@ -515,7 +485,7 @@ mod test {
                     assert!(addrs0.is_subset(&addrs));
 
                     acceptor
-                        .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                        .listener(&tcp_addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener1| {
                             let addr1 = listener1.addr();
@@ -584,17 +554,15 @@ mod test {
 
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
-        let handle0 = handle.clone();
 
-        let (listener_pk, our_sk) = gen_keypair();
-        let anon_decrypt_ctx = CryptoContext::anonymous_decrypt(listener_pk, our_sk.clone());
-        let (acceptor, socket_incoming) =
-            Acceptor::new(&handle, P2p::default(), anon_decrypt_ctx, our_sk);
+        let listener_sk = SecretId::new();
+        let listener_pk = listener_sk.public_id().clone();
+        let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), listener_sk);
 
         let config = unwrap!(ConfigFile::new_temporary());
         let future = {
             acceptor
-                .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                .listener(&tcp_addr!("0.0.0.0:0"))
                 .map_err(|e| panic!(e))
                 .map(move |listener| {
                     mem::forget(listener);
@@ -602,7 +570,7 @@ mod test {
                 })
                 .and_then(move |acceptor| {
                     acceptor
-                        .listener::<UniqueId>(&tcp_addr!("0.0.0.0:0"))
+                        .listener(&tcp_addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
                         .map(move |listener| {
                             mem::forget(listener);
@@ -618,20 +586,12 @@ mod test {
                     let mut connectors = Vec::new();
                     for addr in &addrs {
                         let addr = *addr;
-                        let handle0 = handle.clone();
                         let f = {
-                            PaStream::direct_connect(&handle, &addr, listener_pk, &config)
+                            PaStream::direct_connect(&handle, &addr, listener_pk.clone(), &config)
                                 .map_err(|e| panic!(e))
-                                .map(move |(stream, _peer_addr)| {
-                                    Socket::<PaAddr>::wrap_pa(
-                                        &handle0,
-                                        stream,
-                                        addr,
-                                        CryptoContext::null(),
-                                    )
+                                .and_then(move |stream| {
+                                    stream.send_serialized(addr).map(|_stream| ())
                                 })
-                                .and_then(move |socket| socket.send((0, addr)))
-                                .map(|_socket| ())
                                 .map_err(|e| panic!(e))
                         };
                         connectors.push(f);
@@ -651,17 +611,10 @@ mod test {
                 })
                 .join({
                     socket_incoming
-                        .map(move |(stream, addr)| {
-                            let socket = Socket::<PaAddr>::wrap_pa(
-                                &handle0,
-                                stream,
-                                addr,
-                                CryptoContext::null(),
-                            );
-                            socket
-                                .change_message_type::<PaAddr>()
-                                .into_future()
-                                .map_err(|(e, _stream_with_addr)| panic!(e))
+                        .map(move |stream| {
+                            stream
+                                .recv_serialized()
+                                .map_err(|e| panic!("error receiving: {}", e))
                                 .map(|(msg_opt, _stream_with_addr)| unwrap!(msg_opt))
                         })
                         .buffer_unordered(64)
