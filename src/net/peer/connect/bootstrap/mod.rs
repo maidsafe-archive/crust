@@ -25,6 +25,7 @@ use net::peer::connect::bootstrap::try_peer::try_peer;
 use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
 use priv_prelude::*;
+use rand::{thread_rng, Rng};
 use rust_sodium::crypto::box_::SecretKey;
 use service;
 
@@ -69,7 +70,8 @@ pub fn bootstrap<UID: Uid>(
     } else {
         future::ok(stream::empty().into_boxed()).into_boxed()
     };
-    let cached_peers = bootstrap_peers(&config, &cache);
+    let cached_peers = shuffle_vec(cache.peers_vec());
+    let hard_coded_peers = shuffle_vec(config.read().hard_coded_contacts.clone());
 
     let handle1 = handle.clone();
     let handle2 = handle.clone();
@@ -79,6 +81,7 @@ pub fn bootstrap<UID: Uid>(
 
             sd_peers
                 .chain(stream::iter_ok(cached_peers))
+                .chain(stream::iter_ok(hard_coded_peers))
                 .filter(move |peer| !blacklist.contains(&peer.addr))
                 .map(move |peer| {
                     let fut =
@@ -164,38 +167,8 @@ fn bootstrap_to_peer<UID: Uid>(
         .into_boxed()
 }
 
-/// Collects bootstrap peers from cache and config.
-fn bootstrap_peers(config: &ConfigFile, cache: &Cache) -> Vec<PeerInfo> {
-    let mut peers = Vec::new();
-    peers.extend(cache.peers());
-    peers.extend(config.read().hard_coded_contacts.clone());
-    peers
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    mod bootstrap_peers {
-        use super::*;
-        use config::PeerInfo;
-        use util::bootstrap_cache_tmp_file;
-
-        #[test]
-        fn it_returns_hard_coded_contacts_and_addresses_from_cache() {
-            let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts =
-                vec![PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000"))];
-            let cache = unwrap!(Cache::new(Some(&bootstrap_cache_tmp_file())));
-            cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
-
-            let peers: Vec<PaAddr> = bootstrap_peers(&config, &cache)
-                .iter()
-                .map(|peer| peer.addr)
-                .collect();
-
-            assert!(peers.contains(&tcp_addr!("1.2.3.4:4000")));
-            assert!(peers.contains(&tcp_addr!("1.2.3.5:5000")));
-        }
-    }
+/// Randomly shuffle vector items and return the vector.
+fn shuffle_vec<T>(mut v: Vec<T>) -> Vec<T> {
+    thread_rng().shuffle(&mut v);
+    v
 }
