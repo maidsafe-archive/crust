@@ -16,3 +16,7 @@ src/tmp*
 /bin/
 .cargo/
 *.rs.bk
+.direnv.*
+.envrc
+default.nix
+
