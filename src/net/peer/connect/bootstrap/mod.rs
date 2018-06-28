@@ -62,34 +62,17 @@ pub fn bootstrap<UID: Uid>(
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let our_pk = request.their_pk;
     let config = config.clone();
-    let handle = handle.clone();
     let cache = cache.clone();
 
-    let handle1 = handle.clone();
-    let handle2 = handle.clone();
     let sd_peers = if use_service_discovery {
-        let sd_port = config
-            .read()
-            .service_discovery_port
-            .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
-        service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk.clone())
-            .map_err(BootstrapError::ServiceDiscovery)
-            .map(move |s| {
-                s.map(|(_, v)| stream::iter_ok(v))
-                    .flatten()
-                    .with_timeout(
-                        Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS),
-                        &handle1,
-                    )
-                    .infallible()
-                    .into_boxed()
-            })
-            .into_boxed()
+        discover_peers_on_lan(handle, &config, &our_sk, our_pk)
     } else {
         future::ok(stream::empty().into_boxed()).into_boxed()
     };
     let cached_peers = bootstrap_peers(&config, &cache);
 
+    let handle1 = handle.clone();
+    let handle2 = handle.clone();
     sd_peers
         .and_then(move |sd_peers| {
             let mut i = 0;
@@ -99,14 +82,39 @@ pub fn bootstrap<UID: Uid>(
                 .filter(move |peer| !blacklist.contains(&peer.addr))
                 .map(move |peer| {
                     let fut =
-                        bootstrap_to_peer(&handle2, peer, i, &config, &cache, &request, &our_sk);
+                        bootstrap_to_peer(&handle1, peer, i, &config, &cache, &request, &our_sk);
                     i += 1;
                     fut
                 })
                 .buffer_unordered(64)
-                .with_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle)
+                .with_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle2)
                 .first_ok()
                 .map_err(|errs| BootstrapError::AllPeersFailed(errs.into_iter().collect()))
+        })
+        .into_boxed()
+}
+
+fn discover_peers_on_lan(
+    handle: &Handle,
+    config: &ConfigFile,
+    our_sk: &SecretKey,
+    our_pk: PublicKey,
+) -> BoxFuture<BoxStream<PeerInfo, (PaAddr, TryPeerError)>, BootstrapError> {
+    let handle = handle.clone();
+    let our_sk = our_sk.clone();
+    let sd_port = config
+        .read()
+        .service_discovery_port
+        .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
+
+    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk)
+        .map_err(BootstrapError::ServiceDiscovery)
+        .map(move |s| {
+            s.map(|(_, v)| stream::iter_ok(v))
+                .flatten()
+                .with_timeout(Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS), &handle)
+                .infallible()
+                .into_boxed()
         })
         .into_boxed()
 }
