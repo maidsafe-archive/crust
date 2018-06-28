@@ -20,9 +20,9 @@ use env_logger;
 use future_utils;
 use future_utils::bi_channel;
 use futures::sync::oneshot;
-use netsim::device::NatV4Builder;
+use netsim::device::ipv4::Ipv4NatBuilder;
 use netsim::node::Ipv4Node;
-use netsim::{self, SubnetV4};
+use netsim::{self, Ipv4Range, Network};
 use priv_prelude::*;
 use tokio_core::reactor::Core;
 use {util, Service};
@@ -33,11 +33,13 @@ fn tcp_bootstrap_over_poor_connection() {
 
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
+    let network = Network::new(&handle);
+    let network_handle = network.handle();
 
     let res = core.run(future::lazy(|| {
         let (addr_tx, addr_rx) = oneshot::channel();
 
-        let server_node = netsim::node::endpoint_v4(|ip| {
+        let server_node = netsim::node::ipv4::machine(|ip| {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
@@ -94,7 +96,7 @@ fn tcp_bootstrap_over_poor_connection() {
             res.void_unwrap()
         });
 
-        let client_node = netsim::node::endpoint_v4(|_ip| {
+        let client_node = netsim::node::ipv4::machine(|_ip| {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
@@ -136,16 +138,16 @@ fn tcp_bootstrap_over_poor_connection() {
         });
 
         let client_node = {
-            netsim::node::nat_v4(NatV4Builder::default(), client_node)
+            netsim::node::ipv4::nat(Ipv4NatBuilder::default(), client_node)
                 .latency(Duration::from_millis(300), Duration::from_millis(30))
                 .hops(5)
                 .packet_loss(0.1, Duration::from_millis(30))
         };
 
-        let (spawn_complete, _plug) = netsim::spawn::network_v4(
-            &handle,
-            SubnetV4::global(),
-            netsim::node::router_v4((server_node, client_node)),
+        let (spawn_complete, _plug) = netsim::spawn::ipv4_tree(
+            &network_handle,
+            Ipv4Range::global(),
+            netsim::node::ipv4::router((server_node, client_node)),
         );
 
         spawn_complete.resume_unwind().map(|((), ())| ())
@@ -159,6 +161,8 @@ fn rendezvous_connect_over_poor_connection() {
 
     let mut core = unwrap!(Core::new());
     let handle = core.handle();
+    let network = Network::new(&handle);
+    let network_handle = network.handle();
 
     let send_data_a = util::random_vec(1024);
     let send_data_a_clone = send_data_a.clone();
@@ -177,7 +181,7 @@ fn rendezvous_connect_over_poor_connection() {
     let (drop_tx_bc, drop_rx_bc) = future_utils::drop_notify();
     let (ci_channel1, ci_channel2) = bi_channel::unbounded();
     let res = core.run(future::lazy(|| {
-        let rendezvous_server_node_0 = netsim::node::endpoint_v4(|ip| {
+        let rendezvous_server_node_0 = netsim::node::ipv4::machine(|ip| {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
@@ -217,7 +221,7 @@ fn rendezvous_connect_over_poor_connection() {
             res.void_unwrap()
         });
 
-        let rendezvous_server_node_1 = netsim::node::endpoint_v4(|ip| {
+        let rendezvous_server_node_1 = netsim::node::ipv4::machine(|ip| {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
@@ -257,7 +261,7 @@ fn rendezvous_connect_over_poor_connection() {
             res.void_unwrap()
         });
 
-        let node_a = netsim::node::endpoint_v4(|_ip| {
+        let node_a = netsim::node::ipv4::machine(|_ip| {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
@@ -308,7 +312,7 @@ fn rendezvous_connect_over_poor_connection() {
             res.void_unwrap()
         });
 
-        let node_b = netsim::node::endpoint_v4(|_ip| {
+        let node_b = netsim::node::ipv4::machine(|_ip| {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
@@ -360,29 +364,29 @@ fn rendezvous_connect_over_poor_connection() {
         });
 
         let node_a = {
-            let nat = NatV4Builder::default().blacklist_unrecognized_addrs();
-            netsim::node::nat_v4(nat, node_a)
+            let nat = Ipv4NatBuilder::default().blacklist_unrecognized_addrs();
+            netsim::node::ipv4::nat(nat, node_a)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
                 .packet_loss(0.1, Duration::from_millis(20))
         };
 
         let node_b = {
-            let nat = NatV4Builder::default().blacklist_unrecognized_addrs();
-            netsim::node::nat_v4(nat, node_b)
+            let nat = Ipv4NatBuilder::default().blacklist_unrecognized_addrs();
+            netsim::node::ipv4::nat(nat, node_b)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
                 .packet_loss(0.1, Duration::from_millis(20))
         };
 
-        let router = netsim::node::router_v4((
+        let router = netsim::node::ipv4::router((
             rendezvous_server_node_0,
             rendezvous_server_node_1,
             node_a,
             node_b,
         ));
         let (spawn_complete, _plug) =
-            netsim::spawn::network_v4(&handle, SubnetV4::global(), router);
+            netsim::spawn::ipv4_tree(&network_handle, Ipv4Range::global(), router);
 
         spawn_complete
             .resume_unwind()
