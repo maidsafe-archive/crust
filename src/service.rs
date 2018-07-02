@@ -337,14 +337,18 @@ mod tests {
             let listener0_sk = SecretId::new();
             let listener0_pk = listener0_sk.public_id().clone();
             let listener0 = unwrap!(TcpListener::bind(&addr!("0.0.0.0:0"), &handle));
-            let listener0_info =
-                PeerInfo::new(PaAddr::Tcp(unwrap!(listener0.local_addr())), listener0_pk);
+            let listener0_info = PeerInfo::new(
+                PaAddr::Tcp(unwrap!(listener0.local_addr()).unspecified_to_localhost()),
+                listener0_pk,
+            );
 
             let listener1_sk = SecretId::new();
             let listener1_pk = listener1_sk.public_id().clone();
             let (_socket, listener1) = unwrap!(UtpSocket::bind(&addr!("0.0.0.0:0"), &handle));
-            let listener1_info =
-                PeerInfo::new(PaAddr::Utp(unwrap!(listener1.local_addr())), listener1_pk);
+            let listener1_info = PeerInfo::new(
+                PaAddr::Utp(unwrap!(listener1.local_addr()).unspecified_to_localhost()),
+                listener1_pk,
+            );
 
             let config = unwrap!(ConfigFile::new_temporary());
             unwrap!(config.write()).hard_coded_contacts = vec![listener0_info, listener1_info];
