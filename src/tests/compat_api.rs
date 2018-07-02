@@ -248,14 +248,14 @@ fn start_two_services_exchange_data() {
 mod bootstrap {
     use super::*;
 
-    #[test]
-    fn using_hard_coded_contacts() {
+    fn bootstrap_using_hard_coded_contacts(listen_addr: PaAddr) {
         let _ = env_logger::init();
 
-        let (service0, event_rx0) = service();
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![listen_addr];
+        let (service0, event_rx0) = service_with_config(config);
 
         unwrap!(service0.start_listening());
-        let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
         let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
         let addr0 = addr0.unspecified_to_localhost();
 
@@ -289,6 +289,16 @@ mod bootstrap {
         expect_event!(event_rx1, Event::LostPeer(id) => {
             assert_eq!(id, service0.public_id());
         });
+    }
+
+    #[test]
+    fn using_hard_coded_tcp_contacts() {
+        bootstrap_using_hard_coded_contacts(tcp_addr!("0.0.0.0:0"));
+    }
+
+    #[test]
+    fn using_hard_coded_utp_contacts() {
+        bootstrap_using_hard_coded_contacts(utp_addr!("0.0.0.0:0"));
     }
 
     #[test]
@@ -391,14 +401,14 @@ mod bootstrap {
         );
     }
 
-    #[test]
-    fn with_blacklist() {
+    fn bootstrap_with_blacklist(listen_addr: PaAddr) {
         let _ = env_logger::init();
 
-        let (service0, event_rx0) = service();
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![listen_addr];
+        let (service0, event_rx0) = service_with_config(config);
 
         unwrap!(service0.start_listening());
-        let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
         let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
 
         unwrap!(service0.set_accept_bootstrap(true));
@@ -445,6 +455,16 @@ mod bootstrap {
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => (),
             _ => panic!("unexpected result: {:?}", res),
         }
+    }
+
+    #[test]
+    fn with_blacklist_over_tcp() {
+        bootstrap_with_blacklist(tcp_addr!("0.0.0.0:0"));
+    }
+
+    #[test]
+    fn with_blacklist_over_utp() {
+        bootstrap_with_blacklist(utp_addr!("0.0.0.0:0"));
     }
 
     #[test]
