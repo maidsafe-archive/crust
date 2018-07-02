@@ -25,6 +25,7 @@ use net::peer::connect::bootstrap::try_peer::try_peer;
 use net::peer::connect::handshake_message::BootstrapRequest;
 use net::service_discovery;
 use priv_prelude::*;
+use rand::{thread_rng, Rng};
 use rust_sodium::crypto::box_::SecretKey;
 use service;
 
@@ -62,53 +63,61 @@ pub fn bootstrap<UID: Uid>(
 ) -> BoxFuture<Peer<UID>, BootstrapError> {
     let our_pk = request.their_pk;
     let config = config.clone();
-    let handle = handle.clone();
     let cache = cache.clone();
 
-    let handle1 = handle.clone();
-    let handle2 = handle.clone();
     let sd_peers = if use_service_discovery {
-        let sd_port = config
-            .read()
-            .service_discovery_port
-            .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
-        service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk.clone())
-            .map_err(BootstrapError::ServiceDiscovery)
-            .map(move |s| {
-                s.map(|(_, v)| stream::iter_ok(v))
-                    .flatten()
-                    .with_timeout(
-                        Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS),
-                        &handle1,
-                    )
-                    .infallible()
-                    .into_boxed()
-            })
-            .into_boxed()
+        discover_peers_on_lan(handle, &config, &our_sk, our_pk)
     } else {
         future::ok(stream::empty().into_boxed()).into_boxed()
     };
+    let cached_peers = shuffle_vec(cache.peers_vec());
+    let hard_coded_peers = shuffle_vec(config.read().hard_coded_contacts.clone());
 
-    let cached_peers = future::result(bootstrap_peers(&config, &cache));
-
+    let handle1 = handle.clone();
+    let handle2 = handle.clone();
     sd_peers
-        .join(cached_peers)
-        .and_then(move |(sd_peers, cached_peers)| {
+        .and_then(move |sd_peers| {
             let mut i = 0;
 
             sd_peers
                 .chain(stream::iter_ok(cached_peers))
+                .chain(stream::iter_ok(hard_coded_peers))
                 .filter(move |peer| !blacklist.contains(&peer.addr))
                 .map(move |peer| {
                     let fut =
-                        bootstrap_to_peer(&handle2, peer, i, &config, &cache, &request, &our_sk);
+                        bootstrap_to_peer(&handle1, peer, i, &config, &cache, &request, &our_sk);
                     i += 1;
                     fut
                 })
                 .buffer_unordered(64)
-                .with_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle)
+                .with_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle2)
                 .first_ok()
                 .map_err(|errs| BootstrapError::AllPeersFailed(errs.into_iter().collect()))
+        })
+        .into_boxed()
+}
+
+fn discover_peers_on_lan(
+    handle: &Handle,
+    config: &ConfigFile,
+    our_sk: &SecretKey,
+    our_pk: PublicKey,
+) -> BoxFuture<BoxStream<PeerInfo, (PaAddr, TryPeerError)>, BootstrapError> {
+    let handle = handle.clone();
+    let our_sk = our_sk.clone();
+    let sd_port = config
+        .read()
+        .service_discovery_port
+        .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
+
+    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_pk, our_sk)
+        .map_err(BootstrapError::ServiceDiscovery)
+        .map(move |s| {
+            s.map(|(_, v)| stream::iter_ok(v))
+                .flatten()
+                .with_timeout(Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS), &handle)
+                .infallible()
+                .into_boxed()
         })
         .into_boxed()
 }
@@ -158,38 +167,8 @@ fn bootstrap_to_peer<UID: Uid>(
         .into_boxed()
 }
 
-/// Collects bootstrap peers from cache and config.
-fn bootstrap_peers(config: &ConfigFile, cache: &Cache) -> Result<Vec<PeerInfo>, BootstrapError> {
-    let mut peers = Vec::new();
-    peers.extend(cache.peers());
-    peers.extend(config.read().hard_coded_contacts.clone());
-    Ok(peers)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    mod bootstrap_peers {
-        use super::*;
-        use config::PeerInfo;
-        use util::bootstrap_cache_tmp_file;
-
-        #[test]
-        fn it_returns_hard_coded_contacts_and_addresses_from_cache() {
-            let config = unwrap!(ConfigFile::new_temporary());
-            unwrap!(config.write()).hard_coded_contacts =
-                vec![PeerInfo::with_rand_key(tcp_addr!("1.2.3.4:4000"))];
-            let cache = unwrap!(Cache::new(Some(&bootstrap_cache_tmp_file())));
-            cache.put(&PeerInfo::with_rand_key(tcp_addr!("1.2.3.5:5000")));
-
-            let peers: Vec<PaAddr> = unwrap!(bootstrap_peers(&config, &cache))
-                .iter()
-                .map(|peer| peer.addr)
-                .collect();
-
-            assert!(peers.contains(&tcp_addr!("1.2.3.4:4000")));
-            assert!(peers.contains(&tcp_addr!("1.2.3.5:5000")));
-        }
-    }
+/// Randomly shuffle vector items and return the vector.
+fn shuffle_vec<T>(mut v: Vec<T>) -> Vec<T> {
+    thread_rng().shuffle(&mut v);
+    v
 }

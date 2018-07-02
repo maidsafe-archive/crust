@@ -95,9 +95,16 @@ impl Cache {
     }
 
     /// Returns current snapshot of peers in the cache.
+    #[cfg(test)]
     pub fn peers(&self) -> HashSet<PeerInfo> {
         let inner = unwrap!(self.inner.lock());
         inner.peers.clone()
+    }
+
+    /// Returns `Vec` of peers in the cache.
+    pub fn peers_vec(&self) -> Vec<PeerInfo> {
+        let inner = unwrap!(self.inner.lock());
+        inner.peers.iter().cloned().collect()
     }
 }
 
