@@ -539,6 +539,95 @@ mod encryption {
     }
 }
 
+#[test]
+fn connections_stay_alive_even_with_no_activity() {
+    let mut event_loop = unwrap!(Core::new());
+    let handle = event_loop.handle();
+
+    let config1 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config1.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+    let config2 = config1.clone();
+
+    let service1 = service_with_config(&mut event_loop, config1);
+    let _listener1 = unwrap!(event_loop.run(service1.start_listening().first_ok()));
+
+    let service2 = service_with_config(&mut event_loop, config2);
+    let _listener2 = unwrap!(event_loop.run(service2.start_listening().first_ok()));
+
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+
+    let res = event_loop.run({
+        let connect1 = service1.connect(ci_channel1);
+        let connect2 = service2.connect(ci_channel2);
+
+        connect1
+            .join(connect2)
+            .map_err(|e| panic!("error connecting: {}", e))
+            .and_then(move |(service1_peer, service2_peer)| {
+                assert_eq!(service1_peer.uid(), service2.id());
+                assert_eq!(service2_peer.uid(), service1.id());
+
+                let send_msg1 = util::random_vec(1024);
+                let send_msg2 = util::random_vec(1024);
+                let recv_msg1 = send_msg1.clone();
+                let recv_msg2 = send_msg2.clone();
+
+                let (service1_peer_tx, service1_peer_rx) = service1_peer.split();
+                let (service2_peer_tx, service2_peer_rx) = service2_peer.split();
+
+                let timeout = Duration::from_millis(500 + ::net::peer::INACTIVITY_TIMEOUT_MS);
+
+                let tx1 = {
+                    Timeout::new(timeout, &handle)
+                        .infallible()
+                        .and_then(move |()| {
+                            service1_peer_tx
+                                .send((0, send_msg1))
+                                .map_err(|e| panic!("service1 send error: {}", e))
+                                .map(|_service1_peer_tx| ())
+                        })
+                };
+
+                let tx2 = {
+                    Timeout::new(timeout, &handle)
+                        .infallible()
+                        .and_then(move |()| {
+                            service2_peer_tx
+                                .send((0, send_msg2))
+                                .map_err(|e| panic!("service2 send error: {}", e))
+                                .map(|_service2_peer_tx| ())
+                        })
+                };
+
+                let rx1 = {
+                    service1_peer_rx
+                        .into_future()
+                        .map_err(|(e, _service1_peer_rx)| panic!("service1 error receiving: {}", e))
+                        .map(move |(recv_msg2_opt, _service1_peer_rx)| {
+                            let actual_recv_msg2 = unwrap!(recv_msg2_opt);
+                            assert_eq!(recv_msg2, actual_recv_msg2);
+                        })
+                };
+
+                let rx2 = {
+                    service2_peer_rx
+                        .into_future()
+                        .map_err(|(e, _service2_peer_rx)| panic!("service2 error receiving: {}", e))
+                        .map(move |(recv_msg1_opt, _service2_peer_rx)| {
+                            let actual_recv_msg1 = unwrap!(recv_msg1_opt);
+                            assert_eq!(recv_msg1, actual_recv_msg1);
+                        })
+                };
+
+                tx1.join(tx2)
+                    .join(rx1)
+                    .join(rx2)
+                    .map(|((((), ()), ()), ())| ())
+            })
+    });
+    res.void_unwrap()
+}
+
 /*
 
     Things to test:
