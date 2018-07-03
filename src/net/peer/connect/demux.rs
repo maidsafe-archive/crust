@@ -75,7 +75,7 @@ impl Demux {
         Demux { inner }
     }
 
-    pub fn bootstrap_acceptor(&self, config: &ConfigFile, our_uid: PublicUid) -> BootstrapAcceptor {
+    pub fn bootstrap_acceptor(&self, config: &ConfigFile, our_uid: PublicId) -> BootstrapAcceptor {
         let (acceptor, peer_tx) = BootstrapAcceptor::new(&self.inner.handle, config, our_uid);
         let mut bootstrap_handler = unwrap!(self.inner.bootstrap_handler.lock());
         *bootstrap_handler = Some(peer_tx);

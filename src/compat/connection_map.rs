@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{CompatPeer, CrustEventSender, Event, Priority, Uid};
+use compat::{CompatPeer, CrustEventSender, Event, Priority};
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::{self, DropNotify};
 use futures::stream::SplitSink;
@@ -25,28 +25,28 @@ use std::sync::{Arc, Mutex};
 
 /// Reference counted connection hashmap.
 #[derive(Clone)]
-pub struct ConnectionMap<UID: Uid> {
-    inner: Arc<Mutex<Inner<UID>>>,
+pub struct ConnectionMap {
+    inner: Arc<Mutex<Inner>>,
 }
 
-struct Inner<UID: Uid> {
-    map: HashMap<UID, PeerWrapper<UID>>,
+struct Inner {
+    map: HashMap<PublicId, PeerWrapper>,
     ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo>>,
-    event_tx: CrustEventSender<UID>,
+    event_tx: CrustEventSender,
 }
 
-struct PeerWrapper<UID: Uid> {
+struct PeerWrapper {
     _drop_tx: DropNotify,
     addr: PaAddr,
     kind: CrustUser,
-    peer_sink: SplitSink<CompatPeer<UID>>,
+    peer_sink: SplitSink<CompatPeer>,
 }
 
-impl<UID: Uid> ConnectionMap<UID> {
+impl ConnectionMap {
     /// Creates new peer connection hashmap that is able to fire events when:
     /// * new messages arrive to peers;
     /// * peer connection is lost.
-    pub fn new(event_tx: CrustEventSender<UID>) -> ConnectionMap<UID> {
+    pub fn new(event_tx: CrustEventSender) -> ConnectionMap {
         let inner = Inner {
             map: HashMap::new(),
             ci_channel: HashMap::new(),
@@ -57,10 +57,10 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Insert new peer into the map and registers peer event handlers.
-    pub fn insert_peer(&self, handle: &Handle, peer: CompatPeer<UID>, addr: PaAddr) -> bool {
+    pub fn insert_peer(&self, handle: &Handle, peer: CompatPeer, addr: PaAddr) -> bool {
         let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
-        let uid = peer.uid();
+        let uid = peer.public_id();
         let kind = peer.kind();
         let (peer_sink, peer_stream) = peer.split();
 
@@ -72,17 +72,20 @@ impl<UID: Uid> ConnectionMap<UID> {
         let event_tx0 = inner.event_tx.clone();
         let event_tx1 = inner.event_tx.clone();
         handle.spawn({
+            let uid0 = uid.clone();
+            let uid1 = uid.clone();
+            let uid2 = uid.clone();
             peer_stream
                 .log_errors(LogLevel::Info, "receiving data from peer")
                 .until(drop_rx)
                 .for_each(move |msg| {
                     let vec = Vec::from(&msg[..]);
-                    let _ = event_tx0.send(Event::NewMessage(uid, kind, vec));
+                    let _ = event_tx0.send(Event::NewMessage(uid1.clone(), kind, vec));
                     Ok(())
                 })
                 .finally(move || {
-                    let _ = cm.remove(&uid);
-                    let _ = event_tx1.send(Event::LostPeer(uid));
+                    let _ = cm.remove(&uid0);
+                    let _ = event_tx1.send(Event::LostPeer(uid2));
                 })
                 .infallible()
         });
@@ -100,7 +103,7 @@ impl<UID: Uid> ConnectionMap<UID> {
 
     /// Sends a message to a given peer.
     /// If peer is not found in the hashmap, error is returned.
-    pub fn send(&self, uid: &UID, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
+    pub fn send(&self, uid: &PublicId, msg: Vec<u8>, priority: Priority) -> Result<(), CrustError> {
         let mut inner = unwrap!(self.inner.lock());
         let peer = match inner.map.get_mut(uid) {
             Some(peer) => peer,
@@ -119,7 +122,7 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Returns peer socket address or error, if peer is not found.
-    pub fn peer_addr(&self, uid: &UID) -> Result<PaAddr, CrustError> {
+    pub fn peer_addr(&self, uid: &PublicId) -> Result<PaAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
         inner
             .map
@@ -129,13 +132,13 @@ impl<UID: Uid> ConnectionMap<UID> {
     }
 
     /// Remove peer from the hashmap by id.
-    pub fn remove(&self, uid: &UID) -> bool {
+    pub fn remove(&self, uid: &PublicId) -> bool {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.remove(uid).is_some()
     }
 
     /// Checks if peer with given id exists in the hashmap.
-    pub fn contains_peer(&self, uid: &UID) -> bool {
+    pub fn contains_peer(&self, uid: &PublicId) -> bool {
         let inner = unwrap!(self.inner.lock());
         inner.map.contains_key(uid)
     }

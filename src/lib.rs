@@ -66,9 +66,6 @@ extern crate p2p;
 #[macro_use]
 extern crate quick_error;
 extern crate rand;
-#[cfg(test)]
-#[macro_use]
-extern crate rand_derive;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -105,7 +102,6 @@ mod tests;
 pub use common::CrustUser;
 pub use config::ConfigFile;
 pub use error::CrustError;
-pub use net::PublicUid;
 pub use net::{Listener, PaAddr, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo};
 pub use service::Service;
 

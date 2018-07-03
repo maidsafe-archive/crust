@@ -79,12 +79,7 @@ fn main() {
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let service = unwrap!(event_loop.run(Service::with_config(
-        &handle,
-        config,
-        service_sk,
-        Vec::new()
-    ),));
+    let service = unwrap!(event_loop.run(Service::with_config(&handle, config, service_sk,),));
     let listeners = unwrap!(event_loop.run(service.start_listening().collect()));
     for listener in &listeners {
         println!("Listening on {}", listener.addr());
@@ -98,7 +93,7 @@ fn main() {
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
         "Connected to peer: {:?}, {}",
-        peer.uid(),
+        peer.public_id(),
         unwrap!(peer.addr())
     );
 

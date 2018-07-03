@@ -30,11 +30,11 @@ pub struct ConnectionInfoResult {
 /// of this module.
 #[derive(Debug)]
 #[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
-pub enum Event<UID> {
+pub enum Event {
     /// Invoked when a bootstrap peer connects to us
-    BootstrapAccept(UID, CrustUser),
+    BootstrapAccept(PublicId, CrustUser),
     /// Invoked when we bootstrap to a new peer.
-    BootstrapConnect(UID, PaAddr),
+    BootstrapConnect(PublicId, PaAddr),
     /// Invoked when we failed to connect to all bootstrap contacts.
     BootstrapFailed,
     /// Invoked when we are ready to listen for incomming connection. Contains
@@ -45,13 +45,13 @@ pub enum Event<UID> {
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
     /// Invoked when connection to a new peer has been established.
-    ConnectSuccess(UID),
+    ConnectSuccess(PublicId),
     /// Invoked when connection to a new peer has failed.
-    ConnectFailure(UID),
+    ConnectFailure(PublicId),
     /// Invoked when a peer disconnects or can no longer be contacted.
-    LostPeer(UID),
+    LostPeer(PublicId),
     /// Invoked when a new message is received. Passes the message.
-    NewMessage(UID, CrustUser, Vec<u8>),
+    NewMessage(PublicId, CrustUser, Vec<u8>),
     /// Invoked when trying to sending a too large data.
-    WriteMsgSizeProhibitive(UID, Vec<u8>),
+    WriteMsgSizeProhibitive(PublicId, Vec<u8>),
 }

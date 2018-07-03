@@ -44,7 +44,7 @@ pub struct PrivConnectionInfo {
     #[doc(hidden)]
     pub p2p_conn_info: Option<P2pConnectionInfo>,
     #[doc(hidden)]
-    pub our_uid: PublicUid,
+    pub our_uid: PublicId,
     #[doc(hidden)]
     pub our_pk: PublicId,
     #[doc(hidden)]
@@ -63,7 +63,7 @@ pub struct PubConnectionInfo {
     #[doc(hidden)]
     pub pub_key: PublicId,
     #[doc(hidden)]
-    pub uid: PublicUid,
+    pub uid: PublicId,
 }
 
 impl PubConnectionInfo {
@@ -106,10 +106,7 @@ mod tests {
             fn when_p2p_conn_info_is_none_it_sets_none_in_public_conn_info_too() {
                 let our_sk = SecretId::new();
                 let our_pk = our_sk.public_id().clone();
-                let our_uid = PublicUid {
-                    pub_key: our_pk.clone(),
-                    data: Vec::new(),
-                };
+                let our_uid = our_pk.clone();
                 let priv_conn_info = PrivConnectionInfo {
                     connection_id: 123,
                     our_uid,
@@ -135,10 +132,7 @@ mod tests {
                 });
                 let our_sk = SecretId::new();
                 let our_pk = our_sk.public_id().clone();
-                let our_uid = PublicUid {
-                    pub_key: our_pk.clone(),
-                    data: Vec::new(),
-                };
+                let our_uid = our_pk.clone();
                 let priv_conn_info = PrivConnectionInfo {
                     connection_id: 123,
                     our_uid,

@@ -21,12 +21,10 @@ pub use self::connect::{
     Demux, ExternalReachability, P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo,
     RendezvousConnectError, SingleConnectionError,
 };
-pub use self::uid::PublicUid;
 use std::fmt;
 
 mod connect;
 mod peer_message;
-mod uid;
 
 use priv_prelude::*;
 
@@ -53,7 +51,7 @@ const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 // (where `Peer` and `Socket` were the same type) but should really be fixed. The heartbeat could
 // simply be encoded as a zero-byte message.
 pub struct Peer {
-    their_uid: PublicUid,
+    their_uid: PublicId,
     kind: CrustUser,
     stream: PaStream,
     last_send_time: Instant,
@@ -141,7 +139,7 @@ quick_error! {
 /// Construct a `Peer` from a `Socket` once we have completed the initial handshake.
 pub fn from_handshaken_stream(
     handle: &Handle,
-    their_uid: PublicUid,
+    their_uid: PublicId,
     stream: PaStream,
     kind: CrustUser,
 ) -> Peer {
@@ -169,7 +167,7 @@ impl Peer {
     }
 
     /// Return peer id.
-    pub fn uid(&self) -> &PublicUid {
+    pub fn public_id(&self) -> &PublicId {
         &self.their_uid
     }
 
