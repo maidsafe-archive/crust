@@ -15,16 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{event_loop, CrustEventSender, EventLoop};
-use compat::{ConnectionInfoResult, ConnectionMap, Event};
+use compat::{event_loop, CompatPeer, CrustEventSender, EventLoop};
+use compat::{ConnectionInfoResult, ConnectionMap, Event, Priority, Uid};
 use error::CrustError;
 use future_utils::{self, bi_channel, DropNotify};
 use futures::unsync::mpsc;
 use log::LogLevel;
 use net::{service_discovery, ServiceDiscovery};
 use priv_prelude::*;
-#[cfg(test)]
-use rust_sodium::crypto::box_::PublicKey;
 use std;
 
 pub trait FnBox<UID: Uid> {
@@ -62,11 +60,12 @@ impl<UID: Uid> Service<UID> {
         config: ConfigFile,
         our_uid: UID,
     ) -> Result<Service<UID>, CrustError> {
+        let uid_data = unwrap!(serialisation::serialise(&our_uid));
         let event_loop_id = Some(format!("{:?}", our_uid));
         let event_loop = event_loop::spawn_event_loop(
             event_loop_id.as_ref().map(|s| s.as_ref()),
             event_tx,
-            our_uid,
+            uid_data,
             config.clone(),
         )?;
         event_loop.send(Box::new(move |state: &mut ServiceState<UID>| {
@@ -136,7 +135,7 @@ impl<UID: Uid> Service<UID> {
                                 .log_errors(LogLevel::Info, "accepting bootstrap connection")
                                 .until(drop_rx)
                                 .for_each(move |peer| {
-                                    let their_uid = peer.uid();
+                                    let their_uid = peer.uid().clone();
                                     let their_kind = peer.kind();
                                     let their_addr = match peer.addr() {
                                         Ok(addr) => addr,
@@ -148,9 +147,21 @@ impl<UID: Uid> Service<UID> {
                                             return Ok(());
                                         }
                                     };
+                                    let uid = match serialisation::deserialise(&their_uid.data) {
+                                        Ok(uid) => uid,
+                                        Err(e) => {
+                                            error!(
+                                                "error getting uid of bootstrapping peer: {}",
+                                                e
+                                            );
+                                            return Ok(());
+                                        }
+                                    };
+                                    let peer =
+                                        CompatPeer::wrap_peer(&handle1, peer, uid, their_addr);
                                     if cm.insert_peer(&handle1, peer, their_addr) {
-                                        let _ = event_tx
-                                            .send(Event::BootstrapAccept(their_uid, their_kind));
+                                        let _ =
+                                            event_tx.send(Event::BootstrapAccept(uid, their_kind));
                                     }
                                     Ok(())
                                 })
@@ -236,7 +247,18 @@ impl<UID: Uid> Service<UID> {
                                     )
                                 })
                             }?;
-                            let uid = peer.uid();
+                            let their_uid = peer.uid().clone();
+                            let uid: UID = match serialisation::deserialise(&their_uid.data) {
+                                Ok(uid) => uid,
+                                Err(e) => {
+                                    error!(
+                                        "failed to deserialise uid of peer we bootstrapped to: {}",
+                                        e
+                                    );
+                                    return Err(());
+                                }
+                            };
+                            let peer = CompatPeer::wrap_peer(&handle, peer, uid, addr);
                             let _ = cm.insert_peer(&handle, peer, addr);
                             Ok((addr, uid))
                         })
@@ -351,8 +373,8 @@ impl<UID: Uid> Service<UID> {
     ///    obtained from the peer
     pub fn connect(
         &self,
-        our_ci: PubConnectionInfo<UID>,
-        their_ci: PubConnectionInfo<UID>,
+        our_ci: PubConnectionInfo,
+        their_ci: PubConnectionInfo,
     ) -> Result<(), CrustError> {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState<UID>| {
@@ -401,7 +423,9 @@ impl<UID: Uid> Service<UID> {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState<UID>| {
-                unwrap!(tx.send(state.service.id()));
+                let our_uid = state.service.id();
+                let uid = unwrap!(serialisation::deserialise(&our_uid.data));
+                unwrap!(tx.send(uid));
             }));
         unwrap!(rx.recv())
     }
@@ -417,10 +441,9 @@ impl<UID: Uid> Service<UID> {
                     .read()
                     .service_discovery_port
                     .unwrap_or(::service::SERVICE_DISCOVERY_DEFAULT_PORT);
-                let our_pk = state.service.public_key();
                 let our_sk = state.service.private_key();
                 let f = {
-                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port, our_pk, our_sk)
+                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port, our_sk)
                         .into_future()
                         .map(|s| s.infallible())
                         .flatten_stream()
@@ -441,7 +464,7 @@ impl<UID: Uid> Service<UID> {
 
     /// Returns public key.
     #[cfg(test)]
-    pub fn public_key(&self) -> PublicKey {
+    pub fn public_key(&self) -> PublicId {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState<UID>| {
@@ -452,7 +475,7 @@ impl<UID: Uid> Service<UID> {
 }
 
 pub struct ServiceState<UID: Uid> {
-    service: ::Service<UID>,
+    service: ::Service,
     event_tx: CrustEventSender<UID>,
     cm: ConnectionMap<UID>,
 
@@ -464,7 +487,7 @@ pub struct ServiceState<UID: Uid> {
 }
 
 impl<UID: Uid> ServiceState<UID> {
-    pub fn new(service: ::Service<UID>, event_tx: CrustEventSender<UID>) -> ServiceState<UID> {
+    pub fn new(service: ::Service, event_tx: CrustEventSender<UID>) -> ServiceState<UID> {
         let cm = ConnectionMap::new(event_tx.clone());
         ServiceState {
             service,
@@ -481,10 +504,7 @@ impl<UID: Uid> ServiceState<UID> {
     /// Spawns connection task that yields our connection info to provided conn info channel
     /// and waits for peer's connection info on the same channel.
     /// Emits `ConnectSuccess` and `ConnectFailure` events.
-    fn spawn_connect(
-        &mut self,
-        ci_channel1: bi_channel::UnboundedBiChannel<PubConnectionInfo<UID>>,
-    ) {
+    fn spawn_connect(&mut self, ci_channel1: bi_channel::UnboundedBiChannel<PubConnectionInfo>) {
         let event_tx1 = self.event_tx.clone();
         let event_tx2 = event_tx1.clone();
         let cm = self.cm.clone();
@@ -493,12 +513,10 @@ impl<UID: Uid> ServiceState<UID> {
         let f = {
             let handle = handle.clone();
             self.service
-                .connect(
-                    ci_channel1.and_then(move |their_ci: PubConnectionInfo<UID>| {
-                        unwrap!(their_ci_tx.clone().unbounded_send(their_ci.id));
-                        Ok(their_ci)
-                    }),
-                )
+                .connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
+                    unwrap!(their_ci_tx.clone().unbounded_send(their_ci.uid.clone()));
+                    Ok(their_ci)
+                }))
                 .map_err(move |e| {
                     error!("connection failed: {}", e);
                 })
@@ -508,14 +526,25 @@ impl<UID: Uid> ServiceState<UID> {
                             error!("failed to get address of peer we connected to: {}", e)
                         })
                     }?;
-                    let _ = event_tx1.send(Event::ConnectSuccess(peer.uid()));
+                    let their_uid = peer.uid().clone();
+                    let uid: UID = match serialisation::deserialise(&their_uid.data) {
+                        Ok(uid) => uid,
+                        Err(e) => {
+                            error!("failed to deserialize uid of peer we connected to: {}", e);
+                            return Err(());
+                        }
+                    };
+                    let _ = event_tx1.send(Event::ConnectSuccess(uid));
+                    let peer = CompatPeer::wrap_peer(&handle, peer, uid, addr);
                     let _ = cm.insert_peer(&handle, peer, addr);
                     Ok(())
                 })
                 .or_else(move |_err| {
                     // if we know ID of the peer we were trying to connect with
                     if let Ok(Async::Ready(Some(peer_uid))) = their_ci_rx.poll() {
-                        let _ = event_tx2.send(Event::ConnectFailure(peer_uid));
+                        if let Ok(uid) = serialisation::deserialise(&peer_uid.data) {
+                            let _ = event_tx2.send(Event::ConnectFailure(uid));
+                        };
                     }
                     Ok(())
                 })

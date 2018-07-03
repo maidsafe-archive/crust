@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use super::CONNECTIONS_TIMEOUT;
-use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use future_utils::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use lru_time_cache::LruCache;
 use net::listener::SocketIncoming;
@@ -24,7 +24,6 @@ use net::peer::connect::connect;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use net::peer::connect::BootstrapAcceptor;
 use priv_prelude::*;
-use rust_sodium::crypto::box_::SecretKey;
 use std::sync::{Arc, Mutex};
 
 /// Don't keep incoming connections much longer than the attempted connection timeout.
@@ -36,32 +35,31 @@ const MAX_INCOMING_CONNECTIONS_BACKLOG: usize = 128;
 /// Demultiplexes the incoming stream of connections on the main listener and routes them to either
 /// the bootstrap acceptor (if there is one), or to the appropriate connection handler.
 #[derive(Clone)]
-pub struct Demux<UID: Uid> {
-    inner: Arc<DemuxInner<UID>>,
+pub struct Demux {
+    inner: Arc<DemuxInner>,
 }
 
-/// `BootstrapRequest` paired with socket object.
-pub type BootstrapMessage<UID> = (Socket<HandshakeMessage<UID>>, BootstrapRequest<UID>);
+/// `BootstrapRequest` paired with stream object.
+pub type BootstrapMessage = (PaStream, BootstrapRequest);
 
-/// `ConnectRequest` paired with socket object.
-pub type ConnectMessage<UID> = (Socket<HandshakeMessage<UID>>, ConnectRequest<UID>);
+/// `ConnectRequest` paired with stream object.
+pub type ConnectMessage = (PaStream, ConnectRequest);
 
-struct DemuxInner<UID: Uid> {
-    bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage<UID>>>>,
-    connection_handler: Mutex<LruCache<u64, UnboundedSender<ConnectMessage<UID>>>>,
-    available_connections: Mutex<LruCache<u64, ConnectMessage<UID>>>,
+struct DemuxInner {
+    bootstrap_handler: Mutex<Option<UnboundedSender<BootstrapMessage>>>,
+    connection_handler: Mutex<LruCache<u64, UnboundedSender<ConnectMessage>>>,
+    available_connections: Mutex<LruCache<u64, ConnectMessage>>,
     handle: Handle,
     bootstrap_cache: BootstrapCache,
 }
 
-impl<UID: Uid> Demux<UID> {
+impl Demux {
     /// Create a demultiplexer from a stream of incoming peers.
     pub fn new(
         handle: &Handle,
         incoming: SocketIncoming,
-        crypto_ctx: CryptoContext,
         bootstrap_cache: &BootstrapCache,
-    ) -> Demux<UID> {
+    ) -> Demux {
         let inner = Arc::new(DemuxInner {
             bootstrap_handler: Mutex::new(None),
             connection_handler: Mutex::new(LruCache::with_expiry_duration(Duration::from_secs(
@@ -73,20 +71,12 @@ impl<UID: Uid> Demux<UID> {
             handle: handle.clone(),
             bootstrap_cache: bootstrap_cache.clone(),
         });
-        handle.spawn(handle_incoming_connections(
-            handle, incoming, &inner, crypto_ctx,
-        ));
+        handle.spawn(handle_incoming_connections(handle, incoming, &inner));
         Demux { inner }
     }
 
-    pub fn bootstrap_acceptor(
-        &self,
-        config: &ConfigFile,
-        our_uid: UID,
-        our_sk: SecretKey,
-    ) -> BootstrapAcceptor<UID> {
-        let (acceptor, peer_tx) =
-            BootstrapAcceptor::new(&self.inner.handle, config, our_uid, our_sk);
+    pub fn bootstrap_acceptor(&self, config: &ConfigFile, our_uid: PublicUid) -> BootstrapAcceptor {
+        let (acceptor, peer_tx) = BootstrapAcceptor::new(&self.inner.handle, config, our_uid);
         let mut bootstrap_handler = unwrap!(self.inner.bootstrap_handler.lock());
         *bootstrap_handler = Some(peer_tx);
         acceptor
@@ -95,12 +85,12 @@ impl<UID: Uid> Demux<UID> {
     pub fn connect<C>(
         &self,
         name_hash: NameHash,
-        our_info: PrivConnectionInfo<UID>,
+        our_info: PrivConnectionInfo,
         conn_info_rx: C,
         config: &ConfigFile,
-    ) -> BoxFuture<Peer<UID>, ConnectError>
+    ) -> BoxFuture<Peer, ConnectError>
     where
-        C: Stream<Item = PubConnectionInfo<UID>>,
+        C: Stream<Item = PubConnectionInfo>,
         C: 'static,
     {
         let peer_rx = self.direct_conn_receiver(our_info.connection_id);
@@ -118,7 +108,7 @@ impl<UID: Uid> Demux<UID> {
     /// If there's already available connection for given peer ID, returns connection receiver
     /// that immediately gets connection. Otherwise, returned connection receiver is in waiting
     /// state and when new connection with given peer ID arrives, it will be sent to receiver.
-    fn direct_conn_receiver(&self, connection_id: u64) -> UnboundedReceiver<ConnectMessage<UID>> {
+    fn direct_conn_receiver(&self, connection_id: u64) -> UnboundedReceiver<ConnectMessage> {
         let (peer_tx, peer_rx) = mpsc::unbounded();
         let mut available_conns = unwrap!(self.inner.available_connections.lock());
         match available_conns.remove(&connection_id) {
@@ -140,9 +130,9 @@ quick_error! {
         TimedOut {
             description("timed out waiting for the peer to send their request")
         }
-        Socket(e: SocketError) {
-            description("error on the socket")
-            display("error on the socket: {}", e)
+        Read(e: PaStreamReadError) {
+            description("error reading from stream")
+            display("error reading from stream: {}", e)
             cause(e)
         }
         UnexpectedMessage {
@@ -154,21 +144,18 @@ quick_error! {
     }
 }
 
-fn handle_incoming_connections<UID: Uid>(
+fn handle_incoming_connections(
     handle: &Handle,
     incoming: SocketIncoming,
-    inner: &Arc<DemuxInner<UID>>,
-    crypto_ctx: CryptoContext,
+    inner: &Arc<DemuxInner>,
 ) -> BoxFuture<(), ()> {
     let inner = Arc::clone(inner);
     let handle = handle.clone();
     incoming
         .log_errors(LogLevel::Error, "SocketIncoming errored!")
-        .map(move |(stream, addr)| {
-            let socket: Socket<HandshakeMessage<UID>> =
-                Socket::wrap_pa(&handle, stream, addr, crypto_ctx.clone());
+        .map(move |stream| {
             let inner = Arc::clone(&inner);
-            handle_incoming_socket(&handle, inner, socket)
+            handle_incoming_socket(&handle, inner, stream)
         })
         .buffer_unordered(MAX_INCOMING_CONNECTIONS_BACKLOG)
         .for_each(|()| Ok(()))
@@ -177,17 +164,17 @@ fn handle_incoming_connections<UID: Uid>(
 }
 
 /// This methods is called when connection sends valid 8 byte header.
-fn handle_incoming_socket<UID: Uid>(
+fn handle_incoming_socket(
     handle: &Handle,
-    inner: Arc<DemuxInner<UID>>,
-    socket: Socket<HandshakeMessage<UID>>,
+    inner: Arc<DemuxInner>,
+    stream: PaStream,
 ) -> BoxFuture<(), Void> {
-    socket
-        .into_future()
-        .map_err(|(e, _s)| IncomingError::Socket(e))
+    stream
+        .recv_serialized()
+        .map_err(IncomingError::Read)
         .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or(IncomingError::TimedOut))
-        .and_then(move |(msg_opt, socket)| {
+        .and_then(move |(msg_opt, stream)| {
             let msg = match msg_opt {
                 Some(msg) => msg,
                 None => return future::err(IncomingError::Disconnected).into_boxed(),
@@ -196,12 +183,12 @@ fn handle_incoming_socket<UID: Uid>(
                 HandshakeMessage::BootstrapRequest(bootstrap_request) => {
                     let bootstrap_handler_opt = unwrap!(inner.bootstrap_handler.lock());
                     if let Some(bootstrap_handler) = bootstrap_handler_opt.as_ref() {
-                        let _ = bootstrap_handler.unbounded_send((socket, bootstrap_request));
+                        let _ = bootstrap_handler.unbounded_send((stream, bootstrap_request));
                     }
                     future::ok(()).into_boxed()
                 }
                 HandshakeMessage::Connect(conn_request) => {
-                    handle_connect_request(&inner, socket, conn_request)
+                    handle_connect_request(&inner, stream, conn_request)
                 }
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
             }
@@ -210,20 +197,20 @@ fn handle_incoming_socket<UID: Uid>(
         .into_boxed()
 }
 
-fn handle_connect_request<UID: Uid>(
-    inner: &Arc<DemuxInner<UID>>,
-    socket: Socket<HandshakeMessage<UID>>,
-    connect_request: ConnectRequest<UID>,
+fn handle_connect_request(
+    inner: &Arc<DemuxInner>,
+    stream: PaStream,
+    connect_request: ConnectRequest,
 ) -> BoxFuture<(), IncomingError> {
     let mut connection_handler_map = unwrap!(inner.connection_handler.lock());
     match connection_handler_map.get(&connect_request.connection_id) {
         Some(conn_handler) => {
-            let _ = conn_handler.unbounded_send((socket, connect_request));
+            let _ = conn_handler.unbounded_send((stream, connect_request));
         }
         None => {
             let mut available_conns = unwrap!(inner.available_connections.lock());
             let _ =
-                available_conns.insert(connect_request.connection_id, (socket, connect_request));
+                available_conns.insert(connect_request.connection_id, (stream, connect_request));
         }
     };
     future::ok(()).into_boxed()

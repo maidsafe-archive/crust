@@ -66,11 +66,10 @@ impl Cache {
     /// Updates cache by reading it from file and returns the current snapshot of peers.
     pub fn read_file(&self) {
         let mut inner = unwrap!(self.inner.lock());
-        inner.peers = inner
-            .file_handler
-            .read_file()
-            .ok()
-            .unwrap_or_else(HashSet::new);
+        inner.peers = inner.file_handler.read_file().unwrap_or_else(|e| {
+            error!("error reading cache file: {}", e);
+            HashSet::new()
+        })
     }
 
     /// Writes bootstrap cache to disk.
@@ -111,6 +110,7 @@ impl Cache {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use env_logger;
 
     mod cache {
         use super::*;
@@ -123,16 +123,43 @@ mod tests {
 
             #[test]
             fn it_reads_peer_info_from_json_formatted_file() {
+                let _ = env_logger::init();
                 let fname = write_bootstrap_cache_to_tmp_file(
                     br#"
                     [
                         {
                           "addr": "tcp://1.2.3.4:4000",
-                          "pub_key": [1, 2, 3]
+                          "pub_key": {
+                            "sign": [
+                              13, 20, 54, 184, 103, 132, 24, 122,
+                              206, 159, 197, 173, 32, 49, 70, 212,
+                              210, 199, 26, 169, 241, 236, 144, 216,
+                              114, 213, 32, 247, 180, 46, 50, 93
+                            ],
+                            "encrypt": [
+                              66, 192, 123, 121, 77, 106, 241, 176,
+                              72, 130, 194, 59, 168, 159, 4, 80,
+                              228, 99, 54, 157, 223, 111, 169, 176,
+                              149, 150, 249, 11, 165, 242, 193, 44
+                            ]
+                          }
                         },
                         {
                           "addr": "utp://1.2.3.5:5000",
-                          "pub_key": [3, 2, 1]
+                          "pub_key": {
+                            "sign": [
+                              102, 135, 126, 39, 25, 37, 164, 177,
+                              165, 7, 148, 119, 180, 25, 182, 6,
+                              191, 243, 39, 79, 219, 43, 131, 192,
+                              171, 37, 62, 138, 4, 171, 113, 243
+                            ],
+                            "encrypt": [
+                              51, 217, 206, 79, 229, 2, 54, 135,
+                              40, 80, 53, 184, 71, 196, 201, 37,
+                              181, 212, 185, 162, 185, 228, 136, 230,
+                              197, 53, 46, 242, 163, 157, 235, 103
+                            ]
+                          }
                         }
                     ]
                 "#,

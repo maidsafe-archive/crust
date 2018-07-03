@@ -41,7 +41,6 @@
     variant_size_differences
 )]
 
-extern crate bincode;
 extern crate bytes;
 extern crate config_file_handler;
 #[cfg(test)]
@@ -70,7 +69,6 @@ extern crate rand;
 #[cfg(test)]
 #[macro_use]
 extern crate rand_derive;
-extern crate rust_sodium;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -80,6 +78,7 @@ extern crate tokio_io;
 extern crate tokio_utp;
 #[macro_use]
 extern crate unwrap;
+extern crate safe_crypto;
 extern crate url;
 extern crate void;
 
@@ -87,8 +86,6 @@ extern crate void;
 #[cfg(target_os = "linux")]
 #[cfg(feature = "netsim")]
 extern crate netsim;
-
-pub use net::MAX_PAYLOAD_SIZE;
 
 mod error;
 #[macro_use]
@@ -108,6 +105,9 @@ mod tests;
 pub use common::CrustUser;
 pub use config::ConfigFile;
 pub use error::CrustError;
-pub use net::Uid;
-pub use net::{Listener, PaAddr, Peer, PeerError, Priority, PrivConnectionInfo, PubConnectionInfo};
+pub use net::PublicUid;
+pub use net::{Listener, PaAddr, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo};
 pub use service::Service;
+
+/// Crust maximum message size
+pub const MAX_PAYLOAD_SIZE: usize = 8 * 1024 * 1024;

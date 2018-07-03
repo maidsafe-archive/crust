@@ -16,22 +16,12 @@
 // relating to use of the SAFE Network Software.
 
 use priv_prelude::*;
-use std::hash::Hash;
 
-/// Trait for specifying a unique identifier for a Crust peer
-pub trait Uid:
-    'static
-    + Send
-    + fmt::Debug
-    + fmt::Display
-    + Clone
-    + Copy
-    + Eq
-    + PartialEq
-    + Ord
-    + PartialOrd
-    + Hash
-    + Serialize
-    + DeserializeOwned
-{
+/// Represents a peer's ID on the network.
+#[derive(Hash, Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PublicUid {
+    /// The public key of a peer.
+    pub pub_key: PublicId,
+    /// Arbitrary data that can be stored in the UID.
+    pub data: Vec<u8>,
 }

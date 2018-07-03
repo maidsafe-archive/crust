@@ -47,7 +47,7 @@ fn tcp_bootstrap_over_poor_connection() {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
                 unwrap!(config.write()).listen_addresses = vec![PaAddr::Tcp(addr)];
-                Service::with_config(&handle, config, util::random_id())
+                Service::with_config(&handle, config, SecretId::new(), Vec::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |mut service| {
                         let server_info = PeerInfo {
@@ -76,7 +76,7 @@ fn tcp_bootstrap_over_poor_connection() {
                                     .and_then(|(msg_opt, stream)| {
                                         let msg = unwrap!(msg_opt);
                                         stream
-                                            .send((0, msg))
+                                            .send(msg.freeze())
                                             .map_err(|e| panic!("error sending on stream: {}", e))
                                             .and_then(move |_stream| {
                                                 // TODO: find a better way to gracefully close a Service.
@@ -106,7 +106,7 @@ fn tcp_bootstrap_over_poor_connection() {
                     .and_then(move |server_info| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = vec![server_info];
-                        Service::with_config(&handle, config, util::random_id())
+                        Service::with_config(&handle, config, SecretId::new(), Vec::new())
                             .map_err(|e| panic!("error starting service: {}", e))
                             .and_then(move |mut service| {
                                 service
@@ -116,7 +116,7 @@ fn tcp_bootstrap_over_poor_connection() {
                                         let send_data = util::random_vec(1024);
 
                                         stream
-                                            .send((0, send_data.clone()))
+                                            .send(Bytes::from(send_data.clone()))
                                             .map_err(|e| panic!("error writing to stream: {}", e))
                                             .and_then(move |stream| {
                                                 stream
@@ -189,7 +189,7 @@ fn rendezvous_connect_over_poor_connection() {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
                 unwrap!(config.write()).listen_addresses = vec![PaAddr::Utp(addr)];
-                Service::with_config(&handle, config, util::random_id())
+                Service::with_config(&handle, config, SecretId::new(), Vec::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
@@ -229,7 +229,7 @@ fn rendezvous_connect_over_poor_connection() {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
                 unwrap!(config.write()).listen_addresses = vec![PaAddr::Utp(addr)];
-                Service::with_config(&handle, config, util::random_id())
+                Service::with_config(&handle, config, SecretId::new(), Vec::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
@@ -276,7 +276,7 @@ fn rendezvous_connect_over_poor_connection() {
                     .and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
-                        Service::with_config(&handle, config, util::random_id())
+                        Service::with_config(&handle, config, SecretId::new(), Vec::new())
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service
@@ -284,7 +284,7 @@ fn rendezvous_connect_over_poor_connection() {
                                     .map_err(|e| panic!("connect error: {}", e))
                                     .and_then(move |stream| {
                                         stream
-                                            .send((0, send_data_a_clone))
+                                            .send(Bytes::from(send_data_a_clone))
                                             .map_err(|e| panic!("send error: {}", e))
                                             .and_then(move |stream| {
                                                 trace!("node_a connected!");
@@ -327,7 +327,7 @@ fn rendezvous_connect_over_poor_connection() {
                     .and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
-                        Service::with_config(&handle, config, util::random_id())
+                        Service::with_config(&handle, config, SecretId::new(), Vec::new())
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service
@@ -335,7 +335,7 @@ fn rendezvous_connect_over_poor_connection() {
                                     .map_err(|e| panic!("connect error: {}", e))
                                     .and_then(move |stream| {
                                         stream
-                                            .send((0, send_data_b_clone))
+                                            .send(Bytes::from(send_data_b_clone))
                                             .map_err(|e| panic!("send error: {}", e))
                                             .and_then(move |stream| {
                                                 trace!("node_b connected!");
@@ -368,7 +368,7 @@ fn rendezvous_connect_over_poor_connection() {
             netsim::node::ipv4::nat(nat, node_a)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
-                .packet_loss(0.1, Duration::from_millis(20))
+            //.packet_loss(0.1, Duration::from_millis(20))
         };
 
         let node_b = {
@@ -376,7 +376,7 @@ fn rendezvous_connect_over_poor_connection() {
             netsim::node::ipv4::nat(nat, node_b)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
-                .packet_loss(0.1, Duration::from_millis(20))
+            //.packet_loss(0.1, Duration::from_millis(20))
         };
 
         let router = netsim::node::ipv4::router((

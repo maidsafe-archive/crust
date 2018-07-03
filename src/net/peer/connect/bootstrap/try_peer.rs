@@ -20,13 +20,15 @@ use net::peer::connect::handshake_message::{
     BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
 };
 use priv_prelude::*;
-use rust_sodium::crypto::box_::{PublicKey, SecretKey};
 
 quick_error! {
     /// Error returned when we fail to connect to some specific peer.
     #[derive(Debug)]
     pub enum TryPeerError {
-        Connect(e: io::Error) {
+        TimedOut {
+            description("timed out trying to make the connection")
+        }
+        Connect(e: DirectConnectError) {
             description("IO error connecting to remote peer")
             display("IO error connecting to remote peer: {}", e)
             from(e)
@@ -54,7 +56,17 @@ quick_error! {
             from()
         }
         InvalidResponse {
-            description("Invalid response from peer")
+            description("invalid response from peer")
+        }
+        Read(e: PaStreamReadError) {
+            description("error reading response from peer")
+            display("error reading response from peer: {}", e)
+            cause(e)
+        }
+        Write(e: PaStreamWriteError) {
+            description("error writing to underlying stream")
+            display("error writing to underlying stream: {}", e)
+            cause(e)
         }
         Disconnected {
             description("Disconnected from peer")
@@ -62,12 +74,12 @@ quick_error! {
         TimedOut {
             description("timed out performing handshake")
         }
-        Encrypt(e: CryptoError) {
+        Encrypt(e: EncryptionError) {
             description("Error encrypting request to peer")
             display("Error encrypting request to peer: {}", e)
             cause(e)
         }
-        Decrypt(e: CryptoError) {
+        Decrypt(e: EncryptionError) {
             description("Error decrypting message from peer")
             display("Error decrypting message from peer: {}", e)
             cause(e)
@@ -75,75 +87,62 @@ quick_error! {
     }
 }
 
-impl From<SocketError> for ConnectHandshakeError {
-    fn from(e: SocketError) -> ConnectHandshakeError {
-        match e {
-            SocketError::Io(e) => ConnectHandshakeError::Io(e),
-            SocketError::Destroyed => ConnectHandshakeError::Disconnected,
-            SocketError::Encrypt(e) => ConnectHandshakeError::Encrypt(e),
-            SocketError::Decrypt(e) => ConnectHandshakeError::Decrypt(e),
-        }
-    }
-}
-
 /// Try to bootstrap to the given peer.
-pub fn try_peer<UID: Uid>(
+pub fn try_peer(
     handle: &Handle,
     addr: &PaAddr,
     config: &ConfigFile,
-    request: BootstrapRequest<UID>,
-    our_sk: SecretKey,
-    their_pk: PublicKey,
-) -> BoxFuture<Peer<UID>, TryPeerError> {
+    request: BootstrapRequest,
+    their_pk: PublicId,
+) -> BoxFuture<Peer, TryPeerError> {
     let handle0 = handle.clone();
-    let handle1 = handle.clone();
     let addr = *addr;
-    PaStream::direct_connect(handle, &addr, their_pk, config)
-        .map(move |(stream, _peer_addr)| {
-            Socket::wrap_pa(
-                &handle0,
-                stream,
-                addr,
-                CryptoContext::anonymous_encrypt(their_pk),
-            )
-        })
-        .with_timeout(Duration::from_secs(10), handle)
-        .and_then(|res| res.ok_or_else(|| io::ErrorKind::TimedOut.into()))
+    PaStream::direct_connect(handle, &addr, their_pk.clone(), config)
         .map_err(TryPeerError::Connect)
+        .with_timeout(Duration::from_secs(10), handle)
+        .and_then(|res| res.ok_or(TryPeerError::TimedOut))
         .and_then(move |socket| {
-            bootstrap_connect_handshake(&handle1, socket, request, our_sk, their_pk)
+            bootstrap_connect_handshake(&handle0, socket, request, their_pk)
                 .map_err(TryPeerError::Handshake)
         })
         .into_boxed()
 }
 
 /// Construct a `Peer` by performing a bootstrap connection handshake on a socket.
-pub fn bootstrap_connect_handshake<UID: Uid>(
+pub fn bootstrap_connect_handshake(
     handle: &Handle,
-    socket: Socket<HandshakeMessage<UID>>,
-    request: BootstrapRequest<UID>,
-    our_sk: SecretKey,
-    their_pk: PublicKey,
-) -> BoxFuture<Peer<UID>, ConnectHandshakeError> {
+    stream: PaStream,
+    request: BootstrapRequest,
+    their_pk: PublicId,
+) -> BoxFuture<Peer, ConnectHandshakeError> {
     let handle0 = handle.clone();
-    let msg = HandshakeMessage::BootstrapRequest(request);
-    socket
-        .send((0, msg))
-        .map_err(ConnectHandshakeError::from)
-        .and_then(move |mut socket| {
-            socket.use_crypto_ctx(CryptoContext::authenticated(their_pk, our_sk));
-            socket
-                .into_future()
-                .map_err(|(e, _)| ConnectHandshakeError::from(e))
-                .and_then(move |(msg_opt, socket)| match msg_opt {
-                    Some(HandshakeMessage::BootstrapGranted(peer_uid)) => Ok(
-                        peer::from_handshaken_socket(&handle0, socket, peer_uid, CrustUser::Node),
-                    ),
-                    Some(HandshakeMessage::BootstrapDenied(reason)) => {
-                        Err(ConnectHandshakeError::BootstrapDenied(reason))
+    stream
+        .send_serialized(HandshakeMessage::BootstrapRequest(request))
+        .map_err(ConnectHandshakeError::Write)
+        .and_then(move |stream| {
+            stream
+                .recv_serialized()
+                .map_err(ConnectHandshakeError::Read)
+                .and_then(move |(msg_opt, stream)| {
+                    let msg = msg_opt.ok_or(ConnectHandshakeError::Disconnected)?;
+                    match msg {
+                        HandshakeMessage::BootstrapGranted(uid_data) => {
+                            let their_uid = PublicUid {
+                                pub_key: their_pk,
+                                data: uid_data,
+                            };
+                            Ok(peer::from_handshaken_stream(
+                                &handle0,
+                                their_uid,
+                                stream,
+                                CrustUser::Node,
+                            ))
+                        }
+                        HandshakeMessage::BootstrapDenied(reason) => {
+                            Err(ConnectHandshakeError::BootstrapDenied(reason))
+                        }
+                        _ => Err(ConnectHandshakeError::InvalidResponse),
                     }
-                    Some(..) => Err(ConnectHandshakeError::InvalidResponse),
-                    None => Err(ConnectHandshakeError::Disconnected),
                 })
         })
         .with_timeout(Duration::from_secs(9), handle)

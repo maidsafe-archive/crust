@@ -25,20 +25,25 @@ pub use error::CrustError;
 pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, StreamExt, Timeout};
 pub use futures::{future, stream, Async, AsyncSink, Future, IntoFuture, Sink, Stream};
 pub use log::LogLevel;
-pub use net::{framed_stream, FramedPaStream, PaAddr, PaIncoming, PaListener, PaStream};
+pub use maidsafe_utilities::serialisation::{self, SerialisationError};
+pub use net::PublicUid;
 pub use net::{
     BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError, ConnectError,
     ConnectHandshakeError, ExternalReachability, P2pConnectionInfo, PaRendezvousConnectError, Peer,
-    PeerError, Priority, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
-    SingleConnectionError, Socket, SocketError, UtpRendezvousConnectError,
+    PeerError, PrivConnectionInfo, PubConnectionInfo, RendezvousConnectError,
+    SingleConnectionError, UtpRendezvousConnectError,
 };
-pub use net::{Uid, MAX_PAYLOAD_SIZE};
+pub use net::{
+    DirectConnectError, PaAddr, PaIncoming, PaListener, PaStream, PaStreamReadError,
+    PaStreamWriteError, PaTcpAddrQuerier, PaUdpAddrQuerier,
+};
 pub use net2::TcpBuilder;
 pub use p2p::{
-    CryptoContext, CryptoError, P2p, SocketAddrExt, TcpListenerExt, TcpRendezvousConnectError,
-    TcpStreamExt, UdpRendezvousConnectError, UdpSocketExt,
+    ConnectReusableError, P2p, SocketAddrExt, TcpAddrQuerier, TcpListenerExt,
+    TcpRendezvousConnectError, TcpStreamExt, UdpAddrQuerier, UdpRendezvousConnectError,
+    UdpSocketExt,
 };
-pub use rust_sodium::crypto::box_::{PublicKey, SecretKey};
+pub use safe_crypto::{EncryptionError, PublicId, SecretId, SharedSecretKey};
 pub use serde::de::DeserializeOwned;
 pub use serde::Serialize;
 pub use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
@@ -51,5 +56,7 @@ pub use std::time::{Duration, Instant};
 pub use std::{fmt, io, mem};
 pub use tokio_core::net::{TcpListener, TcpStream, UdpSocket};
 pub use tokio_core::reactor::Handle;
+pub use tokio_io::codec::length_delimited::Framed;
+pub use tokio_io::{AsyncRead, AsyncWrite};
 pub use tokio_utp::{UtpListener, UtpSocket, UtpStream};
 pub use void::{ResultVoidExt, Void};

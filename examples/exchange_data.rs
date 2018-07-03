@@ -32,29 +32,29 @@ extern crate env_logger;
 extern crate future_utils;
 extern crate futures;
 extern crate rand;
-#[macro_use]
-extern crate rand_derive;
 extern crate serde;
-#[macro_use]
-extern crate serde_derive;
 extern crate serde_json;
 extern crate tokio_core;
 #[macro_use]
 extern crate unwrap;
+extern crate bytes;
+extern crate safe_crypto;
 extern crate void;
 
 extern crate crust;
 
 mod utils;
 
+use bytes::{Bytes, BytesMut};
 use clap::App;
 use crust::{ConfigFile, Service};
 use future_utils::bi_channel;
 use futures::future::{empty, Future};
 use futures::sink::Sink;
 use futures::stream::Stream;
+use safe_crypto::SecretId;
+use std::str;
 use tokio_core::reactor::Core;
-use utils::PeerId;
 
 fn main() {
     unwrap!(env_logger::init());
@@ -70,15 +70,21 @@ fn main() {
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
     // generate random unique ID for this node
-    let service_id: PeerId = rand::random();
-    println!("Service id: {}", service_id);
+    let service_sk = SecretId::new();
+    let service_pk = service_sk.public_id().clone();
+    println!("Service public id: {:?}", service_pk);
 
     let config = unwrap!(ConfigFile::new_temporary());
     unwrap!(config.write()).listen_addresses = vec![
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let service = unwrap!(event_loop.run(Service::with_config(&handle, config, service_id),));
+    let service = unwrap!(event_loop.run(Service::with_config(
+        &handle,
+        config,
+        service_sk,
+        Vec::new()
+    ),));
     let listeners = unwrap!(event_loop.run(service.start_listening().collect()));
     for listener in &listeners {
         println!("Listening on {}", listener.addr());
@@ -91,7 +97,7 @@ fn main() {
         .map(move |peer| (peer, service));
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
-        "Connected to peer: {}, {}",
+        "Connected to peer: {:?}, {}",
         peer.uid(),
         unwrap!(peer.addr())
     );
@@ -100,8 +106,8 @@ fn main() {
     // spawn an asynchronous task that handles incoming data
     handle.spawn(
         peer_stream
-            .for_each(|data: Vec<u8>| {
-                println!("Received: {}", unwrap!(String::from_utf8(data)));
+            .for_each(|data: BytesMut| {
+                println!("Received: {}", unwrap!(str::from_utf8(&data[..])));
                 Ok(()) // keep receiving data
             })
             // adapt to Handle::spawn() requirements, see:
@@ -111,21 +117,16 @@ fn main() {
 
     // lower priority is higher, 0 is the highest.
     // Note that 0 is used for internal crust messages though.
-    let msg_priority = 1;
-    let hello_msg = format!("Hello from peer '{}'!", service_id).into_bytes();
-    let bye_msg = format!("Goodbye from peer '{}'!", service_id).into_bytes();
+    let hello_msg = Bytes::from(format!("Hello from peer '{:?}'!", service_pk).into_bytes());
+    let bye_msg = Bytes::from(format!("Goodbye from peer '{:?}'!", service_pk).into_bytes());
 
     // let's send multiple messages to connected peer
-    unwrap!(
-        event_loop.run(
-            peer_sink
-        .send((msg_priority, hello_msg)) // send first message
+    unwrap!(event_loop.run(peer_sink
+        .send(hello_msg) // send first message
         .and_then(|peer_sink| { // when it's done, send the second
             // sink.send() on completion returns sink which implements Future trait
-            peer_sink.send((msg_priority, bye_msg))
-        }),
-        )
-    );
+            peer_sink.send(bye_msg)
+        }),));
 
     // Run event loop forever.
     let res = event_loop.run(empty::<(), ()>());

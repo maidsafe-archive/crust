@@ -21,8 +21,7 @@ pub use self::connect::{
     Demux, ExternalReachability, P2pConnectionInfo, PrivConnectionInfo, PubConnectionInfo,
     RendezvousConnectError, SingleConnectionError,
 };
-pub use self::peer_message::PeerMessage;
-pub use self::uid::Uid;
+pub use self::uid::PublicUid;
 use std::fmt;
 
 mod connect;
@@ -53,22 +52,28 @@ const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 // layer and then re-serialises them for no reason. This behaviour is inherited from the old crust
 // (where `Peer` and `Socket` were the same type) but should really be fixed. The heartbeat could
 // simply be encoded as a zero-byte message.
-pub struct Peer<UID: Uid> {
-    their_uid: UID,
+pub struct Peer {
+    their_uid: PublicUid,
     kind: CrustUser,
-    socket: Socket<PeerMessage>,
+    stream: PaStream,
     last_send_time: Instant,
     send_heartbeat_timeout: Timeout,
     recv_heartbeat_timeout: Timeout,
 }
 
-impl<UID: Uid> fmt::Debug for Peer<UID> {
+impl fmt::Debug for Peer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Peer")
             .field("id", &self.their_uid)
             .field("kind", &self.kind)
             .finish()
     }
+}
+
+#[derive(Serialize, Deserialize)]
+enum PeerMsg {
+    HeartBeat,
+    Data(BytesMut),
 }
 
 quick_error! {
@@ -79,10 +84,31 @@ quick_error! {
         Destroyed {
             description("Socket has been destroyed")
         }
+        /// Serialisation error
+        Serialisation(e: SerialisationError) {
+            description("serialisation error")
+            display("serialisation error: {}", e)
+            cause(e)
+            from()
+        }
         /// Peer socket related failure.
         Io(e: io::Error) {
             description("Io error on socket")
             display("Io error on socket: {}", e)
+            cause(e)
+            from()
+        }
+        /// Error reading from stream
+        Read(e: PaStreamReadError) {
+            description("error reading from stream")
+            display("error reading from stream: {}", e)
+            cause(e)
+            from()
+        }
+        /// Error writing to stream
+        Write(e: PaStreamWriteError) {
+            description("error writing to stream")
+            display("error writing to stream: {}", e)
             cause(e)
             from()
         }
@@ -92,42 +118,37 @@ quick_error! {
             display("connection to peer timed out after {}s", INACTIVITY_TIMEOUT_MS / 1000)
         }
         /// Failure to encrypt message.
-        Encrypt(e: CryptoError) {
+        Encrypt(e: EncryptionError) {
             description("Error encrypting message to peer")
             display("Error encrypting message to peer: {}", e)
             cause(e)
         }
         /// Failure to decrypt message.
-        Decrypt(e: CryptoError) {
+        Decrypt(e: EncryptionError) {
             description("Error decrypting message from peer")
             display("Error decrypting message from peer: {}", e)
+            cause(e)
+        }
+        /// Error deserializing message
+        Deserialize(e: SerialisationError) {
+            description("error deserializing message from remote peer")
+            display("error deserializing message from remote peer: {}", e)
             cause(e)
         }
     }
 }
 
-impl From<SocketError> for PeerError {
-    fn from(e: SocketError) -> PeerError {
-        match e {
-            SocketError::Io(e) => PeerError::Io(e),
-            SocketError::Destroyed => PeerError::Destroyed,
-            SocketError::Encrypt(e) => PeerError::Encrypt(e),
-            SocketError::Decrypt(e) => PeerError::Decrypt(e),
-        }
-    }
-}
-
 /// Construct a `Peer` from a `Socket` once we have completed the initial handshake.
-pub fn from_handshaken_socket<UID: Uid, M: 'static>(
+pub fn from_handshaken_stream(
     handle: &Handle,
-    socket: Socket<M>,
-    their_uid: UID,
+    their_uid: PublicUid,
+    stream: PaStream,
     kind: CrustUser,
-) -> Peer<UID> {
+) -> Peer {
     let now = Instant::now();
     Peer {
-        socket: socket.change_message_type(),
         their_uid,
+        stream,
         kind,
         last_send_time: now,
         send_heartbeat_timeout: Timeout::new_at(
@@ -141,15 +162,15 @@ pub fn from_handshaken_socket<UID: Uid, M: 'static>(
     }
 }
 
-impl<UID: Uid> Peer<UID> {
+impl Peer {
     /// Return peer socket address.
     pub fn addr(&self) -> Result<PaAddr, PeerError> {
-        Ok(self.socket.peer_addr()?)
+        Ok(self.stream.peer_addr()?)
     }
 
     /// Return peer id.
-    pub fn uid(&self) -> UID {
-        self.their_uid
+    pub fn uid(&self) -> &PublicUid {
+        &self.their_uid
     }
 
     /// Returns peer type.
@@ -159,21 +180,26 @@ impl<UID: Uid> Peer<UID> {
 
     /// Return peer IP address.
     pub fn ip(&self) -> Result<IpAddr, PeerError> {
-        Ok(self.socket.peer_addr().map(|a| a.ip())?)
+        Ok(self.stream.peer_addr().map(|a| a.ip())?)
     }
 
-    /// Transforms peer into underlying socket object.
+    /// Gracefully shutdown the connection to the remote peer
+    pub fn finalize(self) -> IoFuture<()> {
+        self.stream.finalize()
+    }
+
     #[cfg(test)]
-    pub fn socket(self) -> Socket<PeerMessage> {
-        self.socket
+    /// Consume the peer, return it's inner PaStream
+    pub fn into_pa_stream(self) -> PaStream {
+        self.stream
     }
 }
 
-impl<UID: Uid> Stream for Peer<UID> {
-    type Item = Vec<u8>;
+impl Stream for Peer {
+    type Item = BytesMut;
     type Error = PeerError;
 
-    fn poll(&mut self) -> Result<Async<Option<Vec<u8>>>, PeerError> {
+    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PeerError> {
         let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
         let now = Instant::now();
         while let Async::Ready(..) = self.send_heartbeat_timeout.poll().void_unwrap() {
@@ -181,20 +207,28 @@ impl<UID: Uid> Stream for Peer<UID> {
                 .reset(self.last_send_time + heartbeat_period);
             if now - self.last_send_time >= heartbeat_period {
                 self.last_send_time = now;
-                let _ = self.socket.start_send((0, PeerMessage::Heartbeat));
+                let msg = Bytes::from(unwrap!(serialisation::serialise(&PeerMsg::HeartBeat)));
+                let _ = self.stream.start_send(msg);
             }
         }
 
         loop {
-            match self.socket.poll() {
+            match self.stream.poll() {
                 Err(e) => return Err(PeerError::from(e)),
                 Ok(Async::NotReady) => break,
                 Ok(Async::Ready(None)) => return Ok(Async::Ready(None)),
                 Ok(Async::Ready(Some(msg))) => {
                     let instant = Instant::now() + Duration::from_millis(INACTIVITY_TIMEOUT_MS);
                     self.recv_heartbeat_timeout.reset(instant);
-                    if let PeerMessage::Data(data) = msg {
-                        return Ok(Async::Ready(Some(data)));
+                    let msg: PeerMsg = match serialisation::deserialise(&msg) {
+                        Ok(msg) => msg,
+                        Err(e) => return Err(PeerError::Deserialize(e)),
+                    };
+                    match msg {
+                        PeerMsg::Data(data) => {
+                            return Ok(Async::Ready(Some(data)));
+                        }
+                        PeerMsg::HeartBeat => (),
                     }
                 }
             }
@@ -208,27 +242,28 @@ impl<UID: Uid> Stream for Peer<UID> {
     }
 }
 
-impl<UID: Uid> Sink for Peer<UID> {
-    type SinkItem = (Priority, Vec<u8>);
+impl Sink for Peer {
+    type SinkItem = Bytes;
     type SinkError = PeerError;
 
-    fn start_send(
-        &mut self,
-        (priority, data): (Priority, Vec<u8>),
-    ) -> Result<AsyncSink<(Priority, Vec<u8>)>, PeerError> {
-        match self.socket.start_send((priority, PeerMessage::Data(data)))? {
+    fn start_send(&mut self, data: Bytes) -> Result<AsyncSink<Bytes>, PeerError> {
+        let data = BytesMut::from(data);
+        let peer_msg = PeerMsg::Data(data);
+        let msg = Bytes::from(unwrap!(serialisation::serialise(&peer_msg)));
+        let data = match peer_msg {
+            PeerMsg::Data(data) => data,
+            _ => unreachable!(),
+        };
+        match self.stream.start_send(msg)? {
             AsyncSink::Ready => {
                 self.last_send_time = Instant::now();
                 Ok(AsyncSink::Ready)
             }
-            AsyncSink::NotReady((priority, PeerMessage::Data(v))) => {
-                Ok(AsyncSink::NotReady((priority, v)))
-            }
-            AsyncSink::NotReady(..) => unreachable!(),
+            AsyncSink::NotReady(_msg) => Ok(AsyncSink::NotReady(data.freeze())),
         }
     }
 
     fn poll_complete(&mut self) -> Result<Async<()>, PeerError> {
-        self.socket.poll_complete().map_err(PeerError::from)
+        self.stream.poll_complete().map_err(PeerError::from)
     }
 }

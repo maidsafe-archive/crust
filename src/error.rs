@@ -52,6 +52,11 @@ quick_error! {
             cause(e)
             from()
         }
+        /// Error communicating with a peer at the compat level.
+        CompatPeerError(s: String) {
+            description("error raised on a compat peer")
+            display("error raised on a compat peer: {}", s)
+        }
         /// Error starting config file watcher.
         ConfigFileWatcher(e: notify::Error) {
             description("error starting config file watcher")
@@ -72,11 +77,9 @@ quick_error! {
             from()
         }
         /// Error connecting to peer.
-        ConnectError(e: ConnectError) {
+        ConnectError(s: String) {
             description("Failed to connect to peer")
-            display("Failed to connect to peer: {}", e)
-            cause(e)
-            from()
+            display("Failed to connect to peer: {}", s)
         }
         /// Failed to prepare our connection information.
         PrepareConnectionInfo {

@@ -19,19 +19,20 @@ pub use self::listener::{Acceptor, Listener};
 pub use self::peer::{
     bootstrap, BootstrapAcceptError, BootstrapAcceptor, BootstrapCache, BootstrapCacheError,
     BootstrapError, ConnectError, ConnectHandshakeError, Demux, ExternalReachability,
-    P2pConnectionInfo, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo,
-    RendezvousConnectError, SingleConnectionError, Uid,
+    P2pConnectionInfo, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo, PublicUid,
+    RendezvousConnectError, SingleConnectionError,
 };
 pub use self::protocol_agnostic::{
-    framed_stream, FramedPaStream, PaAddr, PaIncoming, PaListener, PaRendezvousConnectError,
-    PaStream, UtpRendezvousConnectError,
+    DirectConnectError, PaAddr, PaIncoming, PaListener, PaRendezvousConnectError, PaStream,
+    PaStreamReadError, PaStreamWriteError, PaTcpAddrQuerier, PaUdpAddrQuerier,
+    UtpRendezvousConnectError,
 };
 pub use self::service_discovery::ServiceDiscovery;
-pub use self::socket::{Priority, Socket, SocketError, MAX_PAYLOAD_SIZE};
+//pub use self::socket::{Priority, Socket, SocketError, MAX_PAYLOAD_SIZE};
 
 #[macro_use]
 mod protocol_agnostic;
 mod listener;
 pub mod peer;
 pub mod service_discovery;
-mod socket;
+//mod socket;

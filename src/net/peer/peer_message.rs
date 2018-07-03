@@ -14,9 +14,3 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum PeerMessage {
-    Heartbeat,
-    Data(Vec<u8>),
-}

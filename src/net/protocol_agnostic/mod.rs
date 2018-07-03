@@ -17,14 +17,27 @@
 
 pub use self::addr::PaAddr;
 pub use self::listener::{AcceptError, PaIncoming, PaListener};
+pub use self::query::{PaTcpAddrQuerier, PaUdpAddrQuerier};
 pub use self::stream::{
-    framed_stream, FramedPaStream, PaRendezvousConnectError, PaRendezvousMsg, PaStream,
-    UtpRendezvousConnectError,
+    DirectConnectError, PaRendezvousConnectError, PaRendezvousMsg, PaStream, PaStreamReadError,
+    PaStreamWriteError, UtpRendezvousConnectError,
 };
+use priv_prelude::*;
 
 #[macro_use]
 mod addr;
 mod listener;
+mod query;
 mod stream;
 
-const CRUST_TCP_INIT: [u8; 8] = [b'C', b'R', b'U', b'S', b'T', b'T', b'C', b'P'];
+#[derive(Debug, Serialize, Deserialize)]
+struct ListenerMsg {
+    client_pk: PublicId,
+    kind: ListenerMsgKind,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ListenerMsgKind {
+    EchoAddr,
+    Connect,
+}

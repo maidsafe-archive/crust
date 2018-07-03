@@ -23,7 +23,6 @@ use maidsafe_utilities::thread;
 use notify::{self, Watcher};
 use priv_prelude::*;
 use rand;
-use rust_sodium::crypto::box_::{gen_keypair, PublicKey};
 use std;
 use std::env;
 use std::ops::{Deref, DerefMut};
@@ -292,20 +291,21 @@ pub struct PeerInfo {
     /// Peer public address.
     pub addr: PaAddr,
     /// Peer public key.
-    pub pub_key: PublicKey,
+    pub pub_key: PublicId,
 }
 
 impl PeerInfo {
     /// Constructs peer info.
-    pub fn new(addr: PaAddr, pub_key: PublicKey) -> Self {
+    pub fn new(addr: PaAddr, pub_key: PublicId) -> Self {
         Self { addr, pub_key }
     }
 
     /// Constructs peer info with random generated public key.
     /// This is temporary method until peer public keys are implemented in all necessary places.
     pub fn with_rand_key(addr: PaAddr) -> Self {
-        let (pub_key, _) = gen_keypair();
-        Self::new(addr, pub_key)
+        let sk = SecretId::new();
+        let pk = sk.public_id().clone();
+        Self::new(addr, pk)
     }
 }
 

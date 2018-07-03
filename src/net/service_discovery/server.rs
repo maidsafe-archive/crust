@@ -110,26 +110,24 @@ where
     /// in reading state.
     fn handle_request(
         &self,
-        request: Option<(SocketAddr, Result<DiscoveryMsg, SerialisationError>)>,
+        request: (SocketAddr, Result<DiscoveryMsg, SerialisationError>),
         framed: UdpFramed<SerdeUdpCodec<DiscoveryMsg>>,
     ) -> ServerTaskState {
         match request {
-            Some((addr, Ok(DiscoveryMsg::Request(their_pk)))) => {
-                let crypto_ctx = CryptoContext::anonymous_encrypt(their_pk);
-                match crypto_ctx.encrypt(&self.data) {
+            (addr, Ok(DiscoveryMsg::Request(their_pk))) => {
+                match their_pk.encrypt_anonymous(&self.data) {
                     Ok(response) => {
-                        let response = DiscoveryMsg::Response(response);
+                        let response = DiscoveryMsg::Response(BytesMut::from(response));
                         let writing = framed.send((addr, response));
                         return ServerTaskState::Writing { writing };
                     }
                     Err(e) => warn!("Failed to encrypt service discovery response: {}", e),
                 }
             }
-            Some((_, Ok(..))) => (),
-            Some((addr, Err(e))) => {
+            (_, Ok(..)) => (),
+            (addr, Err(e)) => {
                 warn!("Error deserialising message from {}: {}", addr, e);
             }
-            None => unreachable!(),
         }
         ServerTaskState::Reading {
             reading: framed.into_future(),
@@ -160,7 +158,7 @@ where
                     if let Async::Ready((request, framed)) =
                         unwrap!(reading.poll().map_err(|(e, _)| e))
                     {
-                        state = self.handle_request(request, framed);
+                        state = self.handle_request(unwrap!(request), framed);
                         continue;
                     } else {
                         state = ServerTaskState::Reading { reading };

@@ -46,9 +46,6 @@ extern crate future_utils;
 extern crate futures;
 extern crate maidsafe_utilities;
 extern crate rand;
-#[macro_use]
-extern crate rand_derive;
-extern crate rust_sodium;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -56,12 +53,15 @@ extern crate serde_json;
 extern crate tokio_core;
 #[macro_use]
 extern crate unwrap;
+extern crate bytes;
+extern crate safe_crypto;
 extern crate void;
 
 extern crate crust;
 
 mod utils;
 
+use bytes::Bytes;
 use chrono::Local;
 use clap::{App, Arg};
 use crust::config::{DevConfigSettings, PeerInfo};
@@ -71,13 +71,14 @@ use futures::future::Either;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::{Async, Future, Sink, Stream};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
+use safe_crypto::SecretId;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
-use utils::{read_line, PeerId};
+use utils::read_line;
 use void::Void;
 
 /// Leave some room for our metadata.
@@ -142,7 +143,7 @@ fn main() {
 
 /// Chat node/peer
 struct Node {
-    service: Service<PeerId>,
+    service: Service,
     #[allow(unused)]
     listeners: Vec<Listener>,
     handle: Handle,
@@ -152,9 +153,9 @@ impl Node {
     /// Constructs Crust `Service` and starts listeners.
     fn run(handle: &Handle, args: Args) -> BoxFuture<Self, Void> {
         let config = args.make_config();
-        let our_uid = rand::random();
+        let our_sk = SecretId::new();
         let handle = handle.clone();
-        Service::with_config(&handle, config, our_uid)
+        Service::with_config(&handle, config, our_sk, Vec::new())
             .map_err(|e| panic!("error starting service: {}", e))
             .map(move |service| {
                 if args.disable_igd {
@@ -163,7 +164,7 @@ impl Node {
                 service
             })
             .and_then(|service| {
-                out!("Our ID: {}", service.id());
+                out!("Our ID: {:?}", service.id());
                 service
                     .start_listening()
                     .map_err(|e| panic!("Failed to start listeners: {}", e))
@@ -178,7 +179,7 @@ impl Node {
     }
 
     /// Get peer info from stdin and attempt to connect to it.
-    fn connect(self) -> BoxFuture<(Node, Peer<PeerId>), Void> {
+    fn connect(self) -> BoxFuture<(Node, Peer), Void> {
         let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         let exchange_ci = ci_channel2
             .into_future()
@@ -193,7 +194,7 @@ impl Node {
                      their info below."
                 );
                 read_line().infallible().and_then(move |ln| {
-                    let their_info: PubConnectionInfo<PeerId> = unwrap!(serde_json::from_str(&ln));
+                    let their_info: PubConnectionInfo = unwrap!(serde_json::from_str(&ln));
                     unwrap!(ci_channel2.unbounded_send(their_info));
                     Ok(())
                 })
@@ -208,31 +209,28 @@ impl Node {
             .into_boxed()
     }
 
-    fn have_a_conversation_with(self, peer: Peer<PeerId>) -> BoxFuture<(), Void> {
+    fn have_a_conversation_with(self, peer: Peer) -> BoxFuture<(), Void> {
         out!(
             "You are now connected to '{}'! Say hello :) Or type /help to see possible commands.",
             unwrap!(peer.addr())
         );
 
-        let peer_display_name = peer.uid();
+        let peer_display_name0 = peer.uid().clone();
+        let peer_display_name1 = peer.uid().clone();
         let (peer_sink, peer_stream) = peer.split();
         let (input_handler, input_state_tx) = InputHandler::new();
 
         let writer = peer_sink
             .sink_map_err(|e| panic!("error sending message to peer: {}", e))
-            .send_all(input_handler.map(|msg| {
-                let msg = unwrap!(serialise(&msg));
-                let priority = 0;
-                (priority, msg)
-            }));
+            .send_all(input_handler.map(|msg| Bytes::from(unwrap!(serialise(&msg)))));
         let reader = peer_stream
             .map_err(|e| panic!("error receiving message from peer: {}", e))
             .for_each(move |msg| {
-                handle_peer_msg(&msg, &input_state_tx, &format!("{}", peer_display_name));
+                handle_peer_msg(&msg, &input_state_tx, &format!("{:?}", peer_display_name0));
                 Ok(())
             })
             .map(move |()| {
-                out!("Peer <{}> disconnected", peer_display_name);
+                out!("Peer <{:?}> disconnected", peer_display_name1);
             });
 
         writer
