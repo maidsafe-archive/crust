@@ -155,7 +155,7 @@ impl Node {
         let config = args.make_config();
         let our_sk = SecretId::new();
         let handle = handle.clone();
-        Service::with_config(&handle, config, our_sk, Vec::new())
+        Service::with_config(&handle, config, our_sk)
             .map_err(|e| panic!("error starting service: {}", e))
             .map(move |service| {
                 if args.disable_igd {
@@ -164,7 +164,7 @@ impl Node {
                 service
             })
             .and_then(|service| {
-                out!("Our ID: {:?}", service.id());
+                out!("Our ID: {:?}", service.public_id());
                 service
                     .start_listening()
                     .map_err(|e| panic!("Failed to start listeners: {}", e))
@@ -215,8 +215,8 @@ impl Node {
             unwrap!(peer.addr())
         );
 
-        let peer_display_name0 = peer.uid().clone();
-        let peer_display_name1 = peer.uid().clone();
+        let peer_display_name0 = peer.public_id().clone();
+        let peer_display_name1 = peer.public_id().clone();
         let (peer_sink, peer_stream) = peer.split();
         let (input_handler, input_state_tx) = InputHandler::new();
 

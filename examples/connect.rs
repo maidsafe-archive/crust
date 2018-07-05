@@ -80,7 +80,7 @@ fn main() {
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let make_service = Service::with_config(&event_loop.handle(), config, service_sk, Vec::new());
+    let make_service = Service::with_config(&event_loop.handle(), config, service_sk);
     let service = unwrap!(
         event_loop.run(make_service),
         "Failed to create Service object",
@@ -103,7 +103,7 @@ fn main() {
     let (peer, _service) = unwrap!(event_loop.run(connect));
     println!(
         "Connected to peer: {:?} - {}",
-        peer.uid(),
+        peer.public_id(),
         unwrap!(peer.addr())
     );
 

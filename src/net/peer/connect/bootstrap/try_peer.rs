@@ -126,18 +126,12 @@ pub fn bootstrap_connect_handshake(
                 .and_then(move |(msg_opt, stream)| {
                     let msg = msg_opt.ok_or(ConnectHandshakeError::Disconnected)?;
                     match msg {
-                        HandshakeMessage::BootstrapGranted(uid_data) => {
-                            let their_uid = PublicUid {
-                                pub_key: their_pk,
-                                data: uid_data,
-                            };
-                            Ok(peer::from_handshaken_stream(
-                                &handle0,
-                                their_uid,
-                                stream,
-                                CrustUser::Node,
-                            ))
-                        }
+                        HandshakeMessage::BootstrapGranted => Ok(peer::from_handshaken_stream(
+                            &handle0,
+                            their_pk,
+                            stream,
+                            CrustUser::Node,
+                        )),
                         HandshakeMessage::BootstrapDenied(reason) => {
                             Err(ConnectHandshakeError::BootstrapDenied(reason))
                         }

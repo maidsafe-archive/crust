@@ -47,12 +47,12 @@ fn tcp_bootstrap_over_poor_connection() {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
                 unwrap!(config.write()).listen_addresses = vec![PaAddr::Tcp(addr)];
-                Service::with_config(&handle, config, SecretId::new(), Vec::new())
+                Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |mut service| {
                         let server_info = PeerInfo {
                             addr: PaAddr::Tcp(SocketAddr::V4(SocketAddrV4::new(ip, 1234))),
-                            pub_key: service.public_key(),
+                            pub_key: service.public_id(),
                         };
 
                         unwrap!(addr_tx.send(server_info));
@@ -106,7 +106,7 @@ fn tcp_bootstrap_over_poor_connection() {
                     .and_then(move |server_info| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = vec![server_info];
-                        Service::with_config(&handle, config, SecretId::new(), Vec::new())
+                        Service::with_config(&handle, config, SecretId::new())
                             .map_err(|e| panic!("error starting service: {}", e))
                             .and_then(move |mut service| {
                                 service
@@ -189,12 +189,12 @@ fn rendezvous_connect_over_poor_connection() {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
                 unwrap!(config.write()).listen_addresses = vec![PaAddr::Utp(addr)];
-                Service::with_config(&handle, config, SecretId::new(), Vec::new())
+                Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
                             addr: PaAddr::Utp(SocketAddr::V4(SocketAddrV4::new(ip, 1234))),
-                            pub_key: service.public_key(),
+                            pub_key: service.public_id(),
                         };
 
                         unwrap!(addr_tx_a0.send(server_info.clone()));
@@ -229,12 +229,12 @@ fn rendezvous_connect_over_poor_connection() {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
                 unwrap!(config.write()).listen_addresses = vec![PaAddr::Utp(addr)];
-                Service::with_config(&handle, config, SecretId::new(), Vec::new())
+                Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
                             addr: PaAddr::Utp(SocketAddr::V4(SocketAddrV4::new(ip, 1234))),
-                            pub_key: service.public_key(),
+                            pub_key: service.public_id(),
                         };
 
                         unwrap!(addr_tx_a1.send(server_info.clone()));
@@ -276,7 +276,7 @@ fn rendezvous_connect_over_poor_connection() {
                     .and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
-                        Service::with_config(&handle, config, SecretId::new(), Vec::new())
+                        Service::with_config(&handle, config, SecretId::new())
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service
@@ -327,7 +327,7 @@ fn rendezvous_connect_over_poor_connection() {
                     .and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
-                        Service::with_config(&handle, config, SecretId::new(), Vec::new())
+                        Service::with_config(&handle, config, SecretId::new())
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service

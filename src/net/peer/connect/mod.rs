@@ -191,7 +191,7 @@ fn get_conn_info_and_connect<C>(
     our_connect_request: &ConnectRequest,
     config: &ConfigFile,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(PaStream, PublicUid), SingleConnectionError>
+) -> BoxStream<(PaStream, PublicId), SingleConnectionError>
 where
     C: Stream<Item = PubConnectionInfo>,
     C: 'static,
@@ -244,7 +244,7 @@ fn attempt_to_connect(
     our_p2p_conn_info: Option<P2pConnectionInfo>,
     their_info: PubConnectionInfo,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(PaStream, PublicUid), SingleConnectionError> {
+) -> BoxStream<(PaStream, PublicId), SingleConnectionError> {
     let direct_connections = {
         let handle = handle.clone();
         connect_directly(
@@ -267,7 +267,7 @@ fn attempt_to_connect(
 }
 
 /// When "choose connection" message is received, this data is given.
-type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicUid)>;
+type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicId)>;
 
 /// Future that ensures that both peers select the same connection.
 /// Takes all pending handshaken connections and chooses the first one successful.
@@ -275,22 +275,22 @@ type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicUid)>;
 /// Depending on service id either initiates connection choice message or waits for one.
 struct ChooseOneConnection<S>
 where
-    S: Stream<Item = (PaStream, PublicUid), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (PaStream, PublicId), Error = SingleConnectionError> + 'static,
 {
     handle: Handle,
     all_connections: S,
     all_connections_are_done: bool,
-    our_uid: PublicUid,
-    choose_sent: Option<BoxFuture<(PaStream, PublicUid), ConnectError>>,
+    our_uid: PublicId,
+    choose_sent: Option<BoxFuture<(PaStream, PublicId), ConnectError>>,
     choose_waiting: Vec<BoxFuture<ChooseConnectionResult, SingleConnectionError>>,
     errors: Vec<SingleConnectionError>,
 }
 
 impl<S> ChooseOneConnection<S>
 where
-    S: Stream<Item = (PaStream, PublicUid), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (PaStream, PublicId), Error = SingleConnectionError> + 'static,
 {
-    fn new(handle: &Handle, connections: S, our_uid: PublicUid) -> Self {
+    fn new(handle: &Handle, connections: S, our_uid: PublicId) -> Self {
         Self {
             handle: handle.clone(),
             all_connections: connections,
@@ -324,7 +324,7 @@ where
     fn on_conn_ready(
         &mut self,
         stream: PaStream,
-        their_uid: PublicUid,
+        their_uid: PublicId,
     ) -> Result<(), SerialisationError> {
         if self.our_uid > their_uid {
             self.choose_sent = Some({
@@ -414,7 +414,7 @@ where
 
 impl<S> Future for ChooseOneConnection<S>
 where
-    S: Stream<Item = (PaStream, PublicUid), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (PaStream, PublicId), Error = SingleConnectionError> + 'static,
 {
     type Item = Peer;
     type Error = ConnectError;
@@ -485,7 +485,7 @@ fn connect_directly(
 fn handshake_incoming_connections(
     mut our_connect_request: ConnectRequest,
     conn_rx: UnboundedReceiver<ConnectMessage>,
-) -> BoxStream<(PaStream, PublicUid), SingleConnectionError> {
+) -> BoxStream<(PaStream, PublicId), SingleConnectionError> {
     conn_rx
         .infallible::<SingleConnectionError>()
         .and_then(move |(stream, connect_request)| {
@@ -506,7 +506,7 @@ fn handshake_incoming_connections(
 fn handshake_outgoing_connections<S>(
     connections: S,
     our_connect_request: ConnectRequest,
-) -> BoxStream<(PaStream, PublicUid), SingleConnectionError>
+) -> BoxStream<(PaStream, PublicId), SingleConnectionError>
 where
     S: Stream<Item = PaStream, Error = SingleConnectionError> + 'static,
 {

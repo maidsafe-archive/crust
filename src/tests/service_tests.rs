@@ -28,12 +28,7 @@ use util;
 
 fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service {
     let loop_handle = event_loop.handle();
-    unwrap!(event_loop.run(Service::with_config(
-        &loop_handle,
-        config,
-        SecretId::new(),
-        Vec::new(),
-    )))
+    unwrap!(event_loop.run(Service::with_config(&loop_handle, config, SecretId::new(),)))
 }
 
 fn service_with_tmp_config(event_loop: &mut Core) -> Service {
@@ -65,13 +60,9 @@ mod bootstrap {
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
-            vec![PeerInfo::new(service1_addr, service1.public_key())];
-        let mut service2 = unwrap!(event_loop.run(Service::with_config(
-            &loop_handle,
-            config2,
-            SecretId::new(),
-            Vec::new(),
-        )));
+            vec![PeerInfo::new(service1_addr, service1.public_id())];
+        let mut service2 =
+            unwrap!(event_loop.run(Service::with_config(&loop_handle, config2, SecretId::new(),)));
 
         let service_discovery = false;
         let peer = unwrap!(event_loop.run(service2.bootstrap(
@@ -80,7 +71,7 @@ mod bootstrap {
             CrustUser::Client,
         )));
 
-        assert_eq!(peer.uid(), &service1.id());
+        assert_eq!(peer.public_id(), &service1.public_id());
     }
 
     #[test]
@@ -120,7 +111,7 @@ mod bootstrap {
         let peer =
             unwrap!(evloop.run(service2.bootstrap(HashSet::new(), true, CrustUser::Client,)));
 
-        assert_eq!(peer.uid(), &service1.id());
+        assert_eq!(peer.public_id(), &service1.public_id());
     }
 
     #[test]
@@ -142,13 +133,9 @@ mod bootstrap {
         let config2 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
-            vec![PeerInfo::new(service1_addr0, service1.public_key())];
-        let mut service2 = unwrap!(evloop.run(Service::with_config(
-            &handle,
-            config2,
-            SecretId::new(),
-            Vec::new()
-        )));
+            vec![PeerInfo::new(service1_addr0, service1.public_id())];
+        let mut service2 =
+            unwrap!(evloop.run(Service::with_config(&handle, config2, SecretId::new(),)));
 
         let service_discovery = false;
         let peer = unwrap!(evloop.run(service2.bootstrap(
@@ -157,7 +144,7 @@ mod bootstrap {
             CrustUser::Client,
         )));
 
-        let peer_info = PeerInfo::new(unwrap!(peer.addr()), service1.public_key());
+        let peer_info = PeerInfo::new(unwrap!(peer.addr()), service1.public_id());
         assert!(service2.bootstrap_cache().peers().contains(&peer_info));
     }
 }
@@ -186,8 +173,8 @@ mod direct_connections {
             .connect(ci_channel1)
             .join(service2.connect(ci_channel2));
         let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
-        assert_eq!(service1_peer.uid(), &service2.id());
-        assert_eq!(service2_peer.uid(), &service1.id());
+        assert_eq!(service1_peer.public_id(), &service2.public_id());
+        assert_eq!(service2_peer.public_id(), &service1.public_id());
     }
 
     #[test]
@@ -229,8 +216,8 @@ mod direct_connections {
                     .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
             )
         );
-        assert_eq!(service1_peer.uid(), &service2.id());
-        assert_eq!(service2_peer.uid(), &service1.id());
+        assert_eq!(service1_peer.public_id(), &service2.public_id());
+        assert_eq!(service2_peer.public_id(), &service1.public_id());
     }
 
     #[test]
@@ -258,7 +245,7 @@ mod direct_connections {
             .join(service1.connect(ci_channel1));
         let (service2_peer, _service1_peer) = unwrap!(evloop.run(connect));
 
-        let service2_peer = PeerInfo::new(unwrap!(service2_peer.addr()), service1.public_key());
+        let service2_peer = PeerInfo::new(unwrap!(service2_peer.addr()), service1.public_id());
         assert!(service2.bootstrap_cache().peers().contains(&service2_peer));
     }
 }
@@ -284,8 +271,8 @@ fn p2p_connections_on_localhost() {
         .map(|res_opt| unwrap!(res_opt, "p2p connection timed out"));
 
     let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
-    assert_eq!(service1_peer.uid(), &service2.id());
-    assert_eq!(service2_peer.uid(), &service1.id());
+    assert_eq!(service1_peer.public_id(), &service2.public_id());
+    assert_eq!(service2_peer.public_id(), &service1.public_id());
 }
 
 #[test]
@@ -375,7 +362,7 @@ fn service_responds_to_tcp_echo_address_requests() {
     let listener = unwrap!(event_loop.run(service.start_listening().first_ok()));
     let listener_addr = listener.addr().unspecified_to_localhost().inner();
 
-    let addr_querier = PaTcpAddrQuerier::new(&listener_addr, service.public_key());
+    let addr_querier = PaTcpAddrQuerier::new(&listener_addr, service.public_id());
     let resp = event_loop.run(addr_querier.query(&addr!("0.0.0.0:0"), &handle));
     let our_addr = unwrap!(resp);
 

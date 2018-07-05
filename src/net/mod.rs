@@ -19,7 +19,7 @@ pub use self::listener::{Acceptor, Listener};
 pub use self::peer::{
     bootstrap, BootstrapAcceptError, BootstrapAcceptor, BootstrapCache, BootstrapCacheError,
     BootstrapError, ConnectError, ConnectHandshakeError, Demux, ExternalReachability,
-    P2pConnectionInfo, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo, PublicUid,
+    P2pConnectionInfo, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo,
     RendezvousConnectError, SingleConnectionError,
 };
 pub use self::protocol_agnostic::{

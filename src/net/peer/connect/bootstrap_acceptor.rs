@@ -85,14 +85,14 @@ pub struct BootstrapAcceptor {
     peer_rx: UnboundedReceiver<BootstrapMessage>,
     handshaking: FuturesUnordered<BoxFuture<Peer, BootstrapAcceptError>>,
     config: ConfigFile,
-    our_uid: PublicUid,
+    our_uid: PublicId,
 }
 
 impl BootstrapAcceptor {
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
-        our_uid: PublicUid,
+        our_uid: PublicId,
     ) -> (BootstrapAcceptor, UnboundedSender<BootstrapMessage>) {
         let config = config.clone();
         let handle = handle.clone();
@@ -157,7 +157,7 @@ fn bootstrap_accept(
     handle: &Handle,
     stream: PaStream,
     config: &ConfigFile,
-    our_uid: PublicUid,
+    our_uid: PublicId,
     bootstrap_request: BootstrapRequest,
 ) -> BoxFuture<Peer, BootstrapAcceptError> {
     let handle = handle.clone();
@@ -169,7 +169,6 @@ fn bootstrap_accept(
         if our_uid == their_uid {
             return Err(BootstrapAcceptError::ConnectionFromOurself);
         }
-        let our_uid_data = our_uid.data;
         if config.network_name_hash() != their_name_hash {
             return Ok(stream
                 .send_serialized(HandshakeMessage::BootstrapDenied(
@@ -209,13 +208,8 @@ fn bootstrap_accept(
                 }
 
                 if !require_reachability {
-                    return Ok(grant_bootstrap(
-                        &handle,
-                        stream,
-                        our_uid_data,
-                        their_uid,
-                        CrustUser::Node,
-                    ).map_err(BootstrapAcceptError::Write)
+                    return Ok(grant_bootstrap(&handle, stream, their_uid, CrustUser::Node)
+                        .map_err(BootstrapAcceptError::Write)
                         .into_boxed());
                 }
 
@@ -237,14 +231,11 @@ fn bootstrap_accept(
                 Ok(connectors
                     .first_ok()
                     .then(move |res| match res {
-                        Ok(_connection) => grant_bootstrap(
-                            &handle,
-                            stream,
-                            our_uid_data,
-                            their_uid,
-                            CrustUser::Node,
-                        ).map_err(BootstrapAcceptError::Write)
-                            .into_boxed(),
+                        Ok(_connection) => {
+                            grant_bootstrap(&handle, stream, their_uid, CrustUser::Node)
+                                .map_err(BootstrapAcceptError::Write)
+                                .into_boxed()
+                        }
                         Err(v) => {
                             let reason = BootstrapDenyReason::FailedExternalReachability;
                             stream
@@ -275,7 +266,7 @@ fn bootstrap_accept(
                 }
 
                 Ok(
-                    grant_bootstrap(&handle, stream, our_uid_data, their_uid, CrustUser::Client)
+                    grant_bootstrap(&handle, stream, their_uid, CrustUser::Client)
                         .map_err(BootstrapAcceptError::Write)
                         .into_boxed(),
                 )
@@ -288,13 +279,12 @@ fn bootstrap_accept(
 fn grant_bootstrap(
     handle: &Handle,
     stream: PaStream,
-    our_uid_data: Vec<u8>,
-    their_uid: PublicUid,
+    their_uid: PublicId,
     kind: CrustUser,
 ) -> BoxFuture<Peer, PaStreamWriteError> {
     let handle = handle.clone();
     stream
-        .send_serialized(HandshakeMessage::BootstrapGranted(our_uid_data))
+        .send_serialized(HandshakeMessage::BootstrapGranted)
         .map(move |stream| peer::from_handshaken_stream(&handle, their_uid, stream, kind))
         .into_boxed()
 }

@@ -42,7 +42,6 @@ pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 pub struct Service {
     handle: Handle,
     config: ConfigFile,
-    our_uid: PublicUid,
     listeners: Acceptor,
     demux: Demux,
     p2p: P2p,
@@ -52,17 +51,12 @@ pub struct Service {
 
 impl Service {
     /// Create a new `Service` with the default config.
-    pub fn new(
-        handle: &Handle,
-        our_sk: SecretId,
-        our_uid_data: Vec<u8>,
-    ) -> BoxFuture<Service, CrustError> {
+    pub fn new(handle: &Handle, our_sk: SecretId) -> BoxFuture<Service, CrustError> {
         let try = || -> Result<_, CrustError> {
             Ok(Service::with_config(
                 handle,
                 ConfigFile::open_default()?,
                 our_sk,
-                our_uid_data,
             ))
         };
         future::result(try()).flatten().into_boxed()
@@ -73,16 +67,9 @@ impl Service {
         handle: &Handle,
         config: ConfigFile,
         our_sk: SecretId,
-        our_uid_data: Vec<u8>,
     ) -> BoxFuture<Service, CrustError> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
-
-        let our_pk = our_sk.public_id().clone();
-        let our_uid = PublicUid {
-            pub_key: our_pk,
-            data: our_uid_data,
-        };
 
         let bootstrap_cache = try_bfut!(make_bootstrap_cache(&config));
         let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone(), our_sk.clone());
@@ -91,7 +78,6 @@ impl Service {
         future::ok(Service {
             handle,
             config,
-            our_uid,
             listeners,
             demux,
             p2p,
@@ -125,7 +111,7 @@ impl Service {
             CrustUser::Node => ExternalReachability::Required {
                 direct_listeners: current_addrs
                     .into_iter()
-                    .map(|addr| PeerInfo::new(addr, self.our_uid.pub_key.clone()))
+                    .map(|addr| PeerInfo::new(addr, self.public_id().clone()))
                     .collect(),
             },
             CrustUser::Client => ExternalReachability::NotRequired,
@@ -133,7 +119,7 @@ impl Service {
         let request = BootstrapRequest {
             name_hash: self.config.network_name_hash(),
             ext_reachability,
-            client_uid: self.our_uid.clone(),
+            client_uid: self.public_id().clone(),
         };
         net::bootstrap(
             &self.handle,
@@ -151,7 +137,7 @@ impl Service {
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor {
         self.demux
-            .bootstrap_acceptor(&self.config, self.our_uid.clone())
+            .bootstrap_acceptor(&self.config, self.public_id().clone())
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -209,7 +195,7 @@ impl Service {
             &self.config,
             &current_addrs,
             addrs_rx,
-            self.our_uid.pub_key.clone(),
+            self.public_id().clone(),
         )
     }
 
@@ -217,11 +203,6 @@ impl Service {
     /// on. Also returns a channel that can be used to monitor when this set changes.
     pub fn addresses(&self) -> (HashSet<PaAddr>, UnboundedReceiver<HashSet<PaAddr>>) {
         self.listeners.addresses()
-    }
-
-    /// Get our ID.
-    pub fn id(&self) -> PublicUid {
-        self.our_uid.clone()
     }
 
     /// Get the tokio `Handle` that this service is using.
@@ -235,12 +216,12 @@ impl Service {
     }
 
     /// Returns service public key.
-    pub fn public_key(&self) -> PublicId {
-        self.our_uid.pub_key.clone()
+    pub fn public_id(&self) -> PublicId {
+        self.our_sk.public_id().clone()
     }
 
     /// Returns service private key.
-    pub fn private_key(&self) -> SecretId {
+    pub fn secret_id(&self) -> SecretId {
         self.our_sk.clone()
     }
 
@@ -258,10 +239,10 @@ impl Service {
         let (direct_addrs, _) = self.listeners.addresses();
         let priv_conn_info = PrivConnectionInfo {
             connection_id: rand::thread_rng().gen(),
-            our_uid: self.our_uid.clone(),
+            our_uid: self.public_id().clone(),
             for_direct: direct_addrs.into_iter().collect(),
             p2p_conn_info: None,
-            our_pk: self.our_uid.pub_key.clone(),
+            our_pk: self.public_id().clone(),
             our_sk: self.our_sk.clone(),
         };
 

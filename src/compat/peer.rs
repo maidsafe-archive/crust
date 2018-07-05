@@ -1,4 +1,3 @@
-use compat::Uid;
 use future_utils::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::stream::{SplitSink, SplitStream};
 use futures::sync::oneshot;
@@ -51,16 +50,16 @@ quick_error! {
 /// priorities will always be sent first. Highest-priority messages, those with priority below
 /// `MSG_DROP_PRIORITY`, will never be dropped no matter how much the latency on the socket builds
 /// up or how large the buffer grows 😬
-pub struct CompatPeer<UID: Uid> {
-    inner: Option<Inner<UID>>,
+pub struct CompatPeer {
+    inner: Option<Inner>,
 }
 
-pub struct Inner<UID: Uid> {
+pub struct Inner {
     stream_rx: Option<SplitStream<Peer>>,
     write_tx: UnboundedSender<TaskMsg>,
     peer_addr: PaAddr,
     kind: CrustUser,
-    uid: UID,
+    uid: PublicId,
 }
 
 enum TaskMsg<T = Peer>
@@ -86,19 +85,19 @@ where
     write_rx: UnboundedReceiver<TaskMsg<T>>,
 }
 
-impl<UID: Uid> CompatPeer<UID> {
+impl CompatPeer {
     /// Get the kind of peer
     pub fn kind(&self) -> CrustUser {
         unwrap!(self.inner.as_ref()).kind
     }
 
     /// Get the peer's uid
-    pub fn uid(&self) -> UID {
-        unwrap!(self.inner.as_ref()).uid
+    pub fn public_id(&self) -> PublicId {
+        unwrap!(self.inner.as_ref()).uid.clone()
     }
 
     /// Wraps a `PaStream` and turns it into a `CompatPeer`.
-    pub fn wrap_peer(handle: &Handle, peer: Peer, uid: UID, peer_addr: PaAddr) -> CompatPeer<UID> {
+    pub fn wrap_peer(handle: &Handle, peer: Peer, uid: PublicId, peer_addr: PaAddr) -> CompatPeer {
         let kind = peer.kind();
         let (stream_tx, stream_rx) = peer.split();
         let (write_tx, write_rx) = mpsc::unbounded();
@@ -142,7 +141,7 @@ impl<UID: Uid> CompatPeer<UID> {
     }
 }
 
-impl<UID: Uid> Drop for Inner<UID> {
+impl Drop for Inner {
     fn drop(&mut self) {
         if let Some(stream_rx) = self.stream_rx.take() {
             let _ = self.write_tx.unbounded_send(TaskMsg::Shutdown(stream_rx));
@@ -150,7 +149,7 @@ impl<UID: Uid> Drop for Inner<UID> {
     }
 }
 
-impl<UID: Uid> Stream for CompatPeer<UID> {
+impl Stream for CompatPeer {
     type Item = BytesMut;
     type Error = CompatPeerError;
 
@@ -165,7 +164,7 @@ impl<UID: Uid> Stream for CompatPeer<UID> {
     }
 }
 
-impl<UID: Uid> Sink for CompatPeer<UID> {
+impl Sink for CompatPeer {
     type SinkItem = (Priority, Bytes);
     type SinkError = CompatPeerError;
 
@@ -317,7 +316,6 @@ impl Future for CompatPeerTask<Peer> {
 mod test {
     use super::*;
     use net::peer;
-    use tests::compat_api::UniqueId;
     use tokio_core::reactor::Core;
     use util;
 
@@ -357,18 +355,14 @@ mod test {
                 PaStream::direct_connect(&handle, &addr, listener_pk.clone(), &config)
                     .map_err(|e| panic!("error connecting: {}", e))
                     .and_then(move |stream| {
-                        let uid: UniqueId = rand::random();
-                        let their_uid = PublicUid {
-                            pub_key: listener_pk,
-                            data: unwrap!(serialisation::serialise(&uid)),
-                        };
+                        let their_uid = listener_pk;
                         let peer = peer::from_handshaken_stream(
                             &handle,
-                            their_uid,
+                            their_uid.clone(),
                             stream,
                             CrustUser::Node,
                         );
-                        let socket = CompatPeer::wrap_peer(&handle, peer, uid, addr);
+                        let socket = CompatPeer::wrap_peer(&handle, peer, their_uid, addr);
                         socket
                             .send_all(stream::iter_ok::<_, CompatPeerError>(msgs))
                             .map_err(|e| panic!("error sending: {}", e))
@@ -384,18 +378,13 @@ mod test {
                     .map_err(|(err, _)| panic!("incoming error: {}", err))
                     .and_then(move |(stream_opt, _)| {
                         let stream = unwrap!(stream_opt);
-                        let uid: UniqueId = rand::random();
-                        let their_uid = PublicUid {
-                            pub_key: client_pk,
-                            data: unwrap!(serialisation::serialise(&uid)),
-                        };
                         let peer = peer::from_handshaken_stream(
                             &handle,
-                            their_uid,
+                            client_pk.clone(),
                             stream,
                             CrustUser::Node,
                         );
-                        let socket = CompatPeer::wrap_peer(&handle, peer, uid, addr);
+                        let socket = CompatPeer::wrap_peer(&handle, peer, client_pk, addr);
                         socket
                             .take(num_msgs as u64)
                             .map_err(|e| panic!("error reading: {}", e))

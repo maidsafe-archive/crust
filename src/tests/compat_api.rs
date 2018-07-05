@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{self, CrustEventSender, Event, Uid};
+use compat::{self, CrustEventSender, Event};
 use config::{DevConfigSettings, PeerInfo};
 use env_logger;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
@@ -25,20 +25,6 @@ use std;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use util;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Rand)]
-pub struct UniqueId(pub [u8; 20]);
-impl Uid for UniqueId {}
-
-impl fmt::Display for UniqueId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let UniqueId(ref id) = *self;
-        for byte in id {
-            write!(f, "{:02x}", byte)?;
-        }
-        Ok(())
-    }
-}
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
@@ -58,7 +44,7 @@ macro_rules! expect_event {
     };
 }
 
-fn event_sender() -> (CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
+fn event_sender() -> (CrustEventSender, Receiver<Event>) {
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 
@@ -68,30 +54,28 @@ fn event_sender() -> (CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
     )
 }
 
-fn service_with_config(
-    config: ConfigFile,
-) -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
+fn service_with_config(config: ConfigFile) -> (compat::Service, Receiver<Event>) {
     let (event_tx, event_rx) = event_sender();
-    let uid: UniqueId = rand::random();
-    let service = unwrap!(compat::Service::with_config(event_tx, config, uid));
+    let sk = SecretId::new();
+    let service = unwrap!(compat::Service::with_config(event_tx, config, sk));
     (service, event_rx)
 }
 
-fn service() -> (compat::Service<UniqueId>, Receiver<Event<UniqueId>>) {
+fn service() -> (compat::Service, Receiver<Event>) {
     let config = unwrap!(ConfigFile::new_temporary());
     unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
     service_with_config(config)
 }
 
-fn exchange_messages<UID: Uid>(
-    service0: &compat::Service<UID>,
-    service1: &compat::Service<UID>,
-    event_rx0: &Receiver<Event<UID>>,
-    event_rx1: &Receiver<Event<UID>>,
+fn exchange_messages(
+    service0: &compat::Service,
+    service1: &compat::Service,
+    event_rx0: &Receiver<Event>,
+    event_rx1: &Receiver<Event>,
     kind1: CrustUser,
 ) {
-    let uid0 = service0.id();
-    let uid1 = service1.id();
+    let uid0 = service0.public_id();
+    let uid1 = service1.public_id();
 
     let msg0 = b"hello from service0";
     let msg1 = b"hello from service1";
@@ -109,15 +93,15 @@ fn exchange_messages<UID: Uid>(
     });
 }
 
-fn bootstrap_and_exchange<UID: Uid>(
-    service0: &compat::Service<UID>,
-    service1: &compat::Service<UID>,
-    event_rx0: &Receiver<Event<UID>>,
-    event_rx1: &Receiver<Event<UID>>,
+fn bootstrap_and_exchange(
+    service0: &compat::Service,
+    service1: &compat::Service,
+    event_rx0: &Receiver<Event>,
+    event_rx1: &Receiver<Event>,
     kind1: CrustUser,
 ) {
-    let uid0 = service0.id();
-    let uid1 = service1.id();
+    let uid0 = service0.public_id();
+    let uid1 = service1.public_id();
 
     unwrap!(service1.start_bootstrap(HashSet::new(), kind1));
 
@@ -158,8 +142,8 @@ fn start_two_services_exchange_data() {
     // other issues.
     const MAX_DATA_SIZE: usize = 512;
 
-    let uid0 = service0.id();
-    let uid1 = service1.id();
+    let uid0 = service0.public_id();
+    let uid1 = service1.public_id();
 
     let data0 = (0..NUM_MESSAGES)
         .map(|_| util::random_vec(MAX_DATA_SIZE))
@@ -277,10 +261,13 @@ fn bootstrap_using_hard_coded_contacts() {
     let (event_tx1, event_rx1) = event_sender();
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts =
-        vec![PeerInfo::new(addr0, service0.public_key())];
-    let uid1: UniqueId = rand::random();
-    let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, uid1));
+    unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(addr0, service0.public_id())];
+    let sk1 = SecretId::new();
+    let service1 = unwrap!(compat::Service::with_config(
+        event_tx1,
+        config1,
+        sk1.clone()
+    ));
 
     bootstrap_and_exchange(
         &service0,
@@ -292,11 +279,11 @@ fn bootstrap_using_hard_coded_contacts() {
 
     drop(service1);
     expect_event!(event_rx0, Event::LostPeer(id) => {
-        assert_eq!(id, uid1);
+        assert_eq!(&id, sk1.public_id());
     });
 
     expect_event!(event_rx1, Event::LostPeer(id) => {
-        assert_eq!(id, service0.id());
+        assert_eq!(id, service0.public_id());
     });
 }
 
@@ -349,7 +336,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
         listeners.push(listener);
     }
 
-    addresses.push(PeerInfo::new(valid_address, service0.public_key()));
+    addresses.push(PeerInfo::new(valid_address, service0.public_id()));
 
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
@@ -375,8 +362,8 @@ fn bootstrap_with_disable_external_reachability() {
     dev_cfg.disable_external_reachability_requirement = true;
     unwrap!(config0.write()).dev = Some(dev_cfg);
     unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
-    let uid0: UniqueId = rand::random();
-    let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, uid0));
+    let sk0 = SecretId::new();
+    let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, sk0));
 
     unwrap!(service0.start_listening());
     let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
@@ -387,7 +374,7 @@ fn bootstrap_with_disable_external_reachability() {
     unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(
         addr0.unspecified_to_localhost(),
-        service0.public_key(),
+        service0.public_id(),
     )];
     let (service1, event_rx1) = service_with_config(config1);
 
@@ -422,13 +409,13 @@ fn bootstrap_with_blacklist() {
     let config1 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::new(valid_addr, service0.public_key()),
+        PeerInfo::new(valid_addr, service0.public_id()),
         PeerInfo::with_rand_key(blacklisted_addr),
     ];
     let (service1, event_rx1) = service_with_config(config1);
 
-    let uid0 = service0.id();
-    let uid1 = service1.id();
+    let uid0 = service0.public_id();
+    let uid1 = service1.public_id();
 
     unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
 

@@ -26,7 +26,6 @@ pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, Stre
 pub use futures::{future, stream, Async, AsyncSink, Future, IntoFuture, Sink, Stream};
 pub use log::LogLevel;
 pub use maidsafe_utilities::serialisation::{self, SerialisationError};
-pub use net::PublicUid;
 pub use net::{
     BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError, ConnectError,
     ConnectHandshakeError, ExternalReachability, P2pConnectionInfo, PaRendezvousConnectError, Peer,

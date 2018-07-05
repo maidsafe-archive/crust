@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use compat::service::{ServiceCommand, ServiceState};
-use compat::{CrustEventSender, Uid};
+use compat::CrustEventSender;
 use error::CrustError;
 use futures::sync::mpsc::{self, UnboundedSender};
 use maidsafe_utilities::thread::{self, Joiner};
@@ -25,26 +25,26 @@ use std;
 use tokio_core::reactor::Core;
 
 /// Event loop that allows you to communicate with *Crust* `Service`.
-pub struct EventLoop<UID: Uid> {
-    tx: UnboundedSender<ServiceCommand<UID>>,
+pub struct EventLoop {
+    tx: UnboundedSender<ServiceCommand>,
     _joiner: Joiner,
 }
 
-impl<UID: Uid> EventLoop<UID> {
+impl EventLoop {
     /// Tell event loop to execute function with `Service` context meaning called function receives
     /// `ServiceState` as an argument.
-    pub fn send(&self, msg: ServiceCommand<UID>) {
+    pub fn send(&self, msg: ServiceCommand) {
         unwrap!(self.tx.unbounded_send(msg));
     }
 }
 
 /// Runs Tokio futures based *Crust* `Service` and event loop to communicate with it.
-pub fn spawn_event_loop<UID: Uid>(
+pub fn spawn_event_loop(
     event_loop_id: Option<&str>,
-    event_tx: CrustEventSender<UID>,
-    our_uid_data: Vec<u8>,
+    event_tx: CrustEventSender,
+    our_sk: SecretId,
     config: ConfigFile,
-) -> Result<EventLoop<UID>, CrustError> {
+) -> Result<EventLoop, CrustError> {
     let mut name = "CRUST-Event-Loop".to_string();
     if let Some(id) = event_loop_id {
         name.push_str(": ");
@@ -52,19 +52,13 @@ pub fn spawn_event_loop<UID: Uid>(
     }
 
     let (result_tx, result_rx) = std::sync::mpsc::channel::<Result<_, CrustError>>();
-    let our_sk = SecretId::new();
 
     let joiner = thread::named(name, move || {
         let try = move || {
             let mut core = Core::new()?;
             let handle = core.handle();
 
-            let service = core.run(::Service::with_config(
-                &handle,
-                config,
-                our_sk,
-                our_uid_data,
-            ))?;
+            let service = core.run(::Service::with_config(&handle, config, our_sk))?;
 
             let service_state = ServiceState::new(service, event_tx);
 
@@ -74,7 +68,7 @@ pub fn spawn_event_loop<UID: Uid>(
         match try() {
             Ok((mut core, mut service_state)) => {
                 let handle = core.handle();
-                let (tx, rx) = mpsc::unbounded::<ServiceCommand<UID>>();
+                let (tx, rx) = mpsc::unbounded::<ServiceCommand>();
                 unwrap!(result_tx.send(Ok(tx)));
                 unwrap!(core.run({
                     rx.for_each(move |cb| {
