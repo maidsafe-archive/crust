@@ -245,247 +245,253 @@ fn start_two_services_exchange_data() {
     drop(service1);
 }
 
-#[test]
-fn bootstrap_using_hard_coded_contacts() {
-    let _ = env_logger::init();
+mod bootstrap {
+    use super::*;
 
-    let (service0, event_rx0) = service();
+    #[test]
+    fn using_hard_coded_contacts() {
+        let _ = env_logger::init();
 
-    unwrap!(service0.start_listening());
-    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-    let addr0 = addr0.unspecified_to_localhost();
+        let (service0, event_rx0) = service();
 
-    unwrap!(service0.set_accept_bootstrap(true));
+        unwrap!(service0.start_listening());
+        let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+        let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+        let addr0 = addr0.unspecified_to_localhost();
 
-    let (event_tx1, event_rx1) = event_sender();
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(addr0, service0.public_id())];
-    let sk1 = SecretId::new();
-    let service1 = unwrap!(compat::Service::with_config(
-        event_tx1,
-        config1,
-        sk1.clone()
-    ));
+        unwrap!(service0.set_accept_bootstrap(true));
 
-    bootstrap_and_exchange(
-        &service0,
-        &service1,
-        &event_rx0,
-        &event_rx1,
-        CrustUser::Client,
-    );
+        let (event_tx1, event_rx1) = event_sender();
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config1.write()).hard_coded_contacts =
+            vec![PeerInfo::new(addr0, service0.public_id())];
+        let sk1 = SecretId::new();
+        let service1 = unwrap!(compat::Service::with_config(
+            event_tx1,
+            config1,
+            sk1.clone()
+        ));
 
-    drop(service1);
-    expect_event!(event_rx0, Event::LostPeer(id) => {
-        assert_eq!(&id, sk1.public_id());
-    });
+        bootstrap_and_exchange(
+            &service0,
+            &service1,
+            &event_rx0,
+            &event_rx1,
+            CrustUser::Client,
+        );
 
-    expect_event!(event_rx1, Event::LostPeer(id) => {
-        assert_eq!(id, service0.public_id());
-    });
-}
+        drop(service1);
+        expect_event!(event_rx0, Event::LostPeer(id) => {
+            assert_eq!(&id, sk1.public_id());
+        });
 
-#[test]
-fn bootstrap_using_service_discovery() {
-    let _ = env_logger::init();
-
-    let (service0, event_rx0) = service();
-
-    unwrap!(service0.start_listening());
-    let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
-    let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
-
-    unwrap!(service0.set_accept_bootstrap(true));
-    service0.start_service_discovery();
-    service0.set_service_discovery_listen(true);
-
-    let (service1, event_rx1) = service();
-    service1.start_service_discovery();
-    bootstrap_and_exchange(
-        &service0,
-        &service1,
-        &event_rx0,
-        &event_rx1,
-        CrustUser::Client,
-    );
-}
-
-#[test]
-fn bootstrap_with_multiple_contact_endpoints() {
-    let _ = env_logger::init();
-
-    let (service0, event_rx0) = service();
-
-    unwrap!(service0.start_listening());
-    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-
-    unwrap!(service0.set_accept_bootstrap(true));
-
-    let valid_address = addr0.unspecified_to_localhost();
-
-    let mut addresses = Vec::new();
-    let mut listeners = Vec::new();
-    for _ in 0..10 {
-        let listener = unwrap!(::std::net::TcpListener::bind(&addr!("127.0.0.1:0")));
-        let addr = unwrap!(listener.local_addr());
-        let addr = PaAddr::Tcp(addr).unspecified_to_localhost();
-        addresses.push(PeerInfo::with_rand_key(addr));
-        listeners.push(listener);
+        expect_event!(event_rx1, Event::LostPeer(id) => {
+            assert_eq!(id, service0.public_id());
+        });
     }
 
-    addresses.push(PeerInfo::new(valid_address, service0.public_id()));
+    #[test]
+    fn using_service_discovery() {
+        let _ = env_logger::init();
 
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts = addresses;
-    let (service1, event_rx1) = service_with_config(config1);
+        let (service0, event_rx0) = service();
 
-    bootstrap_and_exchange(
-        &service0,
-        &service1,
-        &event_rx0,
-        &event_rx1,
-        CrustUser::Client,
-    );
-}
+        unwrap!(service0.start_listening());
+        let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
+        let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
 
-#[test]
-fn bootstrap_with_disable_external_reachability() {
-    let _ = env_logger::init();
+        unwrap!(service0.set_accept_bootstrap(true));
+        service0.start_service_discovery();
+        service0.set_service_discovery_listen(true);
 
-    let (event_tx0, event_rx0) = event_sender();
-    let config0 = unwrap!(ConfigFile::new_temporary());
-    let mut dev_cfg = DevConfigSettings::default();
-    dev_cfg.disable_external_reachability_requirement = true;
-    unwrap!(config0.write()).dev = Some(dev_cfg);
-    unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
-    let sk0 = SecretId::new();
-    let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, sk0));
-
-    unwrap!(service0.start_listening());
-    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-
-    unwrap!(service0.set_accept_bootstrap(true));
-
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(
-        addr0.unspecified_to_localhost(),
-        service0.public_id(),
-    )];
-    let (service1, event_rx1) = service_with_config(config1);
-
-    bootstrap_and_exchange(
-        &service0,
-        &service1,
-        &event_rx0,
-        &event_rx1,
-        CrustUser::Node,
-    );
-}
-
-#[test]
-fn bootstrap_with_blacklist() {
-    let _ = env_logger::init();
-
-    let (service0, event_rx0) = service();
-
-    unwrap!(service0.start_listening());
-    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-
-    unwrap!(service0.set_accept_bootstrap(true));
-
-    let valid_addr = addr0.unspecified_to_localhost();
-
-    let blacklisted_listener = unwrap!(std::net::TcpListener::bind(addr!("0.0.0.0:0")));
-    let blacklisted_addr = unwrap!(blacklisted_listener.local_addr());
-    let blacklisted_addr = PaAddr::Tcp(blacklisted_addr).unspecified_to_localhost();
-    unwrap!(blacklisted_listener.set_nonblocking(true));
-
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts = vec![
-        PeerInfo::new(valid_addr, service0.public_id()),
-        PeerInfo::with_rand_key(blacklisted_addr),
-    ];
-    let (service1, event_rx1) = service_with_config(config1);
-
-    let uid0 = service0.public_id();
-    let uid1 = service1.public_id();
-
-    unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
-
-    expect_event!(event_rx0, Event::BootstrapAccept(id, CrustUser::Client) => {
-        assert_eq!(id, uid1);
-    });
-
-    expect_event!(event_rx1, Event::BootstrapConnect(id, _) => {
-        assert_eq!(id, uid0);
-    });
-
-    exchange_messages(
-        &service0,
-        &service1,
-        &event_rx0,
-        &event_rx1,
-        CrustUser::Client,
-    );
-
-    thread::sleep(Duration::from_secs(1));
-    let res = blacklisted_listener.accept();
-    match res {
-        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => (),
-        _ => panic!("unexpected result: {:?}", res),
+        let (service1, event_rx1) = service();
+        service1.start_service_discovery();
+        bootstrap_and_exchange(
+            &service0,
+            &service1,
+            &event_rx0,
+            &event_rx1,
+            CrustUser::Client,
+        );
     }
-}
 
-#[test]
-fn bootstrap_fails_only_blacklisted_contacts() {
-    let _ = env_logger::init();
+    #[test]
+    fn with_multiple_contact_endpoints() {
+        let _ = env_logger::init();
 
-    let (service0, event_rx0) = service();
+        let (service0, event_rx0) = service();
 
-    unwrap!(service0.start_listening());
-    let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-    let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
-    let blacklisted_addr = addr0.unspecified_to_localhost();
+        unwrap!(service0.start_listening());
+        let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+        let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
 
-    unwrap!(service0.set_accept_bootstrap(true));
+        unwrap!(service0.set_accept_bootstrap(true));
 
-    let config1 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(blacklisted_addr)];
-    let (service1, event_rx1) = service_with_config(config1);
+        let valid_address = addr0.unspecified_to_localhost();
 
-    unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+        let mut addresses = Vec::new();
+        let mut listeners = Vec::new();
+        for _ in 0..10 {
+            let listener = unwrap!(::std::net::TcpListener::bind(&addr!("127.0.0.1:0")));
+            let addr = unwrap!(listener.local_addr());
+            let addr = PaAddr::Tcp(addr).unspecified_to_localhost();
+            addresses.push(PeerInfo::with_rand_key(addr));
+            listeners.push(listener);
+        }
 
-    expect_event!(event_rx1, Event::BootstrapFailed);
-}
+        addresses.push(PeerInfo::new(valid_address, service0.public_id()));
 
-#[test]
-fn bootstrap_fails_if_there_are_no_contacts() {
-    let _ = env_logger::init();
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config1.write()).hard_coded_contacts = addresses;
+        let (service1, event_rx1) = service_with_config(config1);
 
-    let (service0, event_rx0) = service();
-    unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
-    expect_event!(event_rx0, Event::BootstrapFailed);
-}
+        bootstrap_and_exchange(
+            &service0,
+            &service1,
+            &event_rx0,
+            &event_rx1,
+            CrustUser::Client,
+        );
+    }
 
-#[test]
-fn bootstrap_fails_if_there_are_only_invalid_contacts() {
-    let dead_listener = unwrap!(std::net::TcpListener::bind(addr!("0.0.0.0:0")));
-    let dead_addr = unwrap!(dead_listener.local_addr());
-    let dead_addr = PaAddr::Tcp(dead_addr).unspecified_to_localhost();
+    #[test]
+    fn with_disable_external_reachability() {
+        let _ = env_logger::init();
 
-    let config0 = unwrap!(ConfigFile::new_temporary());
-    unwrap!(config0.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-    unwrap!(config0.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(dead_addr)];
-    let (service0, event_rx0) = service_with_config(config0);
+        let (event_tx0, event_rx0) = event_sender();
+        let config0 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_external_reachability_requirement = true;
+        unwrap!(config0.write()).dev = Some(dev_cfg);
+        unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        let sk0 = SecretId::new();
+        let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, sk0));
 
-    unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
-    expect_event!(event_rx0, Event::BootstrapFailed);
+        unwrap!(service0.start_listening());
+        let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+
+        unwrap!(service0.set_accept_bootstrap(true));
+
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(
+            addr0.unspecified_to_localhost(),
+            service0.public_id(),
+        )];
+        let (service1, event_rx1) = service_with_config(config1);
+
+        bootstrap_and_exchange(
+            &service0,
+            &service1,
+            &event_rx0,
+            &event_rx1,
+            CrustUser::Node,
+        );
+    }
+
+    #[test]
+    fn with_blacklist() {
+        let _ = env_logger::init();
+
+        let (service0, event_rx0) = service();
+
+        unwrap!(service0.start_listening());
+        let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+        let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+
+        unwrap!(service0.set_accept_bootstrap(true));
+
+        let valid_addr = addr0.unspecified_to_localhost();
+
+        let blacklisted_listener = unwrap!(std::net::TcpListener::bind(addr!("0.0.0.0:0")));
+        let blacklisted_addr = unwrap!(blacklisted_listener.local_addr());
+        let blacklisted_addr = PaAddr::Tcp(blacklisted_addr).unspecified_to_localhost();
+        unwrap!(blacklisted_listener.set_nonblocking(true));
+
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config1.write()).hard_coded_contacts = vec![
+            PeerInfo::new(valid_addr, service0.public_id()),
+            PeerInfo::with_rand_key(blacklisted_addr),
+        ];
+        let (service1, event_rx1) = service_with_config(config1);
+
+        let uid0 = service0.public_id();
+        let uid1 = service1.public_id();
+
+        unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+
+        expect_event!(event_rx0, Event::BootstrapAccept(id, CrustUser::Client) => {
+            assert_eq!(id, uid1);
+        });
+
+        expect_event!(event_rx1, Event::BootstrapConnect(id, _) => {
+            assert_eq!(id, uid0);
+        });
+
+        exchange_messages(
+            &service0,
+            &service1,
+            &event_rx0,
+            &event_rx1,
+            CrustUser::Client,
+        );
+
+        thread::sleep(Duration::from_secs(1));
+        let res = blacklisted_listener.accept();
+        match res {
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => (),
+            _ => panic!("unexpected result: {:?}", res),
+        }
+    }
+
+    #[test]
+    fn fails_only_blacklisted_contacts() {
+        let _ = env_logger::init();
+
+        let (service0, event_rx0) = service();
+
+        unwrap!(service0.start_listening());
+        let _addr = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+        let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);
+        let blacklisted_addr = addr0.unspecified_to_localhost();
+
+        unwrap!(service0.set_accept_bootstrap(true));
+
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config1.write()).hard_coded_contacts =
+            vec![PeerInfo::with_rand_key(blacklisted_addr)];
+        let (service1, event_rx1) = service_with_config(config1);
+
+        unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+
+        expect_event!(event_rx1, Event::BootstrapFailed);
+    }
+
+    #[test]
+    fn fails_if_there_are_no_contacts() {
+        let _ = env_logger::init();
+
+        let (service0, event_rx0) = service();
+        unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
+        expect_event!(event_rx0, Event::BootstrapFailed);
+    }
+
+    #[test]
+    fn fails_if_there_are_only_invalid_contacts() {
+        let dead_listener = unwrap!(std::net::TcpListener::bind(addr!("0.0.0.0:0")));
+        let dead_addr = unwrap!(dead_listener.local_addr());
+        let dead_addr = PaAddr::Tcp(dead_addr).unspecified_to_localhost();
+
+        let config0 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config0.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config0.write()).hard_coded_contacts = vec![PeerInfo::with_rand_key(dead_addr)];
+        let (service0, event_rx0) = service_with_config(config0);
+
+        unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
+        expect_event!(event_rx0, Event::BootstrapFailed);
+    }
 }
