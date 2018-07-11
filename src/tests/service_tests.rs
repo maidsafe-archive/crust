@@ -517,3 +517,89 @@ mod encryption {
             .void_unwrap()
     }
 }
+
+mod when_no_message_received_within_inactivity_period {
+    use super::*;
+
+    fn connect_and_do_nothing(
+        evloop: &mut Core,
+        listener_addr: PaAddr,
+        heartbeats_enabled: bool,
+    ) -> impl Future<Item = (), Error = PeerError> {
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_rendezvous_connections = true;
+        unwrap!(config1.write()).dev = Some(dev_cfg);
+        unwrap!(config1.write()).listen_addresses = vec![listener_addr];
+        let config2 = config1.clone();
+
+        let service1 = service_with_config(evloop, config1);
+        let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+
+        let service2 = service_with_config(evloop, config2);
+        let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
+
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+        let connect = service1
+            .connect(ci_channel1)
+            .join(service2.connect(ci_channel2));
+        let (mut service1_peer, mut service2_peer) = unwrap!(evloop.run(connect));
+
+        if !heartbeats_enabled {
+            service1_peer.disable_heartbeats();
+            service2_peer.disable_heartbeats();
+        }
+
+        // make sure we poll both peers so both of them exchange heartbeats
+        service1_peer
+            .for_each(|_data| Ok(()))
+            .join(service2_peer.for_each(|_data| Ok(())))
+            .and_then(|(_, _)| Ok(()))
+    }
+
+    #[test]
+    fn when_heartbeats_turned_off_tcp_peer_yields_error() {
+        let mut evloop = unwrap!(Core::new());
+        let connect = connect_and_do_nothing(&mut evloop, tcp_addr!("127.0.0.1:0"), false);
+        match evloop.run(connect) {
+            Err(PeerError::InactivityTimeout) => (),
+            res => panic!("Unexpected result from peer: {:?}", res),
+        }
+    }
+
+    #[test]
+    fn when_heartbeats_turned_off_utp_peer_yields_error() {
+        let mut evloop = unwrap!(Core::new());
+        let connect = connect_and_do_nothing(&mut evloop, utp_addr!("127.0.0.1:0"), false);
+        match evloop.run(connect) {
+            Err(PeerError::InactivityTimeout) => (),
+            res => panic!("Unexpected result from peer: {:?}", res),
+        }
+    }
+
+    #[test]
+    fn when_heartbeats_exchanging_tcp_peer_stays_alive() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let connect = connect_and_do_nothing(&mut evloop, tcp_addr!("127.0.0.1:0"), true)
+            .with_timeout(Duration::from_secs(2), &handle);
+        let res = unwrap!(evloop.run(connect));
+
+        let timedout = res.is_none();
+        assert!(timedout);
+    }
+
+    #[test]
+    fn when_heartbeats_exchanging_utp_peer_stays_alive() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let connect = connect_and_do_nothing(&mut evloop, utp_addr!("127.0.0.1:0"), true)
+            .with_timeout(Duration::from_secs(2), &handle);
+        let res = unwrap!(evloop.run(connect));
+
+        let timedout = res.is_none();
+        assert!(timedout);
+    }
+}

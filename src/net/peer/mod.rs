@@ -193,6 +193,13 @@ impl Peer {
         self.stream
     }
 
+    #[cfg(test)]
+    /// Stop sending heartbeats. This will make `Peer` error eventually.
+    pub fn disable_heartbeats(&mut self) {
+        self.send_heartbeat_timeout
+            .reset(Instant::now() + Duration::from_millis(INACTIVITY_TIMEOUT_MS + 100_000));
+    }
+
     /// Poll heartbeat timer and send heartbeat if required.
     fn poll_heartbeat(&mut self) {
         let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
