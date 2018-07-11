@@ -34,9 +34,9 @@ pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
 
 #[cfg(test)]
-pub const INACTIVITY_TIMEOUT_MS: u64 = 900_000;
+pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
 #[cfg(test)]
-const HEARTBEAT_PERIOD_MS: u64 = 300_000;
+const HEARTBEAT_PERIOD_MS: u64 = 300;
 
 /// A connection to a remote peer.
 ///
