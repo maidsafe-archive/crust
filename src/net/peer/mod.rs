@@ -43,8 +43,9 @@ const HEARTBEAT_PERIOD_MS: u64 = 300_000;
 /// Use `Peer` to send and receive data asynchronously.
 /// It implements [Stream and Sink](https://tokio.rs/docs/getting-started/streams-and-sinks/)
 /// traits from futures crate.
-// This wraps a `Socket` and uses it to send `PeerMessage`s to peers. It also adds a heartbeat to
-// keep the connection alive and detect when peers have disconnected.
+/// In the background `Peer` keeps sending heartbeats to keep the connection alive and detect when
+/// peers have disconnected.
+// This wraps a `PaStream` and uses it to send `PeerMessage`s to peers.
 //
 // TODO: One problem with the implementation is that it takes serialized messages from the upper
 // layer and then re-serialises them for no reason. This behaviour is inherited from the old crust
@@ -136,7 +137,7 @@ quick_error! {
     }
 }
 
-/// Construct a `Peer` from a `Socket` once we have completed the initial handshake.
+/// Construct a `Peer` from a `PaStream` once we have completed the initial handshake.
 pub fn from_handshaken_stream(
     handle: &Handle,
     their_uid: PublicId,
