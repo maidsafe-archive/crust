@@ -192,13 +192,9 @@ impl Peer {
     pub fn into_pa_stream(self) -> PaStream {
         self.stream
     }
-}
 
-impl Stream for Peer {
-    type Item = BytesMut;
-    type Error = PeerError;
-
-    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PeerError> {
+    /// Poll heartbeat timer and send heartbeat if required.
+    fn poll_heartbeat(&mut self) {
         let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
         let now = Instant::now();
         while let Async::Ready(..) = self.send_heartbeat_timeout.poll().void_unwrap() {
@@ -210,7 +206,15 @@ impl Stream for Peer {
                 let _ = self.stream.start_send(msg);
             }
         }
+    }
+}
 
+impl Stream for Peer {
+    type Item = BytesMut;
+    type Error = PeerError;
+
+    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PeerError> {
+        self.poll_heartbeat();
         loop {
             match self.stream.poll() {
                 Err(e) => return Err(PeerError::from(e)),
