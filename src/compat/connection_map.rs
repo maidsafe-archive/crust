@@ -17,8 +17,8 @@
 
 use compat::{CompatPeer, CrustEventSender, Event, Priority};
 use future_utils::bi_channel::UnboundedBiChannel;
-use future_utils::{self, DropNotify};
-use futures::stream::SplitSink;
+use future_utils::{self, DropNotice, DropNotify};
+use futures::stream::{SplitSink, SplitStream};
 use log::LogLevel;
 use priv_prelude::*;
 use std::sync::{Arc, Mutex};
@@ -58,7 +58,6 @@ impl ConnectionMap {
 
     /// Insert new peer into the map and registers peer event handlers.
     pub fn insert_peer(&self, handle: &Handle, peer: CompatPeer, addr: PaAddr) -> bool {
-        let cm = self.clone();
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let uid = peer.public_id();
         let kind = peer.kind();
@@ -69,26 +68,14 @@ impl ConnectionMap {
             return false;
         }
 
-        let event_tx0 = inner.event_tx.clone();
-        let event_tx1 = inner.event_tx.clone();
-        handle.spawn({
-            let uid0 = uid.clone();
-            let uid1 = uid.clone();
-            let uid2 = uid.clone();
-            peer_stream
-                .log_errors(LogLevel::Info, "receiving data from peer")
-                .until(drop_rx)
-                .for_each(move |msg| {
-                    let vec = Vec::from(&msg[..]);
-                    let _ = event_tx0.send(Event::NewMessage(uid1.clone(), kind, vec));
-                    Ok(())
-                })
-                .finally(move || {
-                    let _ = cm.remove(&uid0);
-                    let _ = event_tx1.send(Event::LostPeer(uid2));
-                })
-                .infallible()
-        });
+        handle.spawn(handle_peer_rx(
+            peer_stream,
+            &uid,
+            &inner.event_tx,
+            drop_rx,
+            kind,
+            self.clone(),
+        ));
 
         let pw = PeerWrapper {
             _drop_tx: drop_tx,
@@ -96,7 +83,6 @@ impl ConnectionMap {
             kind,
             peer_sink,
         };
-
         let _ = inner.map.insert(uid, pw);
         true
     }
@@ -177,5 +163,97 @@ impl ConnectionMap {
     ) -> Option<UnboundedBiChannel<PubConnectionInfo>> {
         let mut inner = unwrap!(self.inner.lock());
         inner.ci_channel.remove(&conn_id)
+    }
+}
+
+/// Wait for incoming peer data and transform it to appropriate compatibility layer events.
+fn handle_peer_rx(
+    peer_stream: SplitStream<CompatPeer>,
+    uid: &PublicId,
+    event_tx: &CrustEventSender,
+    drop_rx: DropNotice,
+    kind: CrustUser,
+    cm: ConnectionMap,
+) -> impl Future<Item = (), Error = ()> {
+    let event_tx0 = event_tx.clone();
+    let event_tx1 = event_tx.clone();
+    let uid1 = uid.clone();
+    let uid2 = uid.clone();
+    peer_stream
+        .log_errors(LogLevel::Info, "receiving data from peer")
+        .until(drop_rx)
+        .for_each(move |msg| {
+            let vec = Vec::from(&msg[..]);
+            let _ = event_tx0.send(Event::NewMessage(uid1.clone(), kind, vec));
+            Ok(())
+        })
+        .finally(move || {
+            let _ = cm.remove(&uid2);
+            let _ = event_tx1.send(Event::LostPeer(uid2));
+        })
+        .infallible()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use util::event_sender;
+
+    mod handle_peer_rx {
+        use super::*;
+        use net::peer;
+        use tokio_core::reactor::{Core, Handle};
+        use tokio_io::codec::length_delimited::Framed;
+
+        /// Constructs peer with in-memory stream for testing.
+        fn echo_peer(handle: &Handle) -> CompatPeer {
+            let our_sk = SecretId::new();
+            let peer_uid = SecretId::new().public_id().clone();
+            let shared_secret = our_sk.shared_secret(&peer_uid);
+            let mem_stream = Framed::new(memstream::EchoStream::default());
+            let fake_stream = PaStream::from_framed_mem_stream(mem_stream, shared_secret);
+            let peer = peer::from_handshaken_stream(
+                &handle,
+                peer_uid.clone(),
+                fake_stream,
+                CrustUser::Client,
+            );
+            CompatPeer::wrap_peer(&handle, peer, peer_uid.clone(), tcp_addr!("0.0.0.0:0"))
+        }
+
+        #[test]
+        fn it_emits_message_events_for_received_data() {
+            let mut evloop = unwrap!(Core::new());
+            let handle = evloop.handle();
+
+            let peer = echo_peer(&handle);
+            let peer_uid = peer.public_id();
+            let (peer_sink, peer_stream) = peer.split();
+            let (_rop_tx, drop_rx) = future_utils::drop_notify();
+            let (event_tx, event_rx) = event_sender();
+            let conn_map = ConnectionMap::new(event_tx.clone());
+
+            handle.spawn(handle_peer_rx(
+                peer_stream,
+                &peer_uid,
+                &event_tx,
+                drop_rx,
+                CrustUser::Client,
+                conn_map,
+            ));
+            let send_data = peer_sink.send((1, Bytes::from(&b"data1"[..])));
+            let _ = unwrap!(evloop.run(send_data));
+            // run event loop so that messages would get transfered
+            unwrap!(evloop.run(Timeout::new(Duration::from_secs(2), &handle)));
+
+            let msg = unwrap!(event_rx.recv());
+            match msg {
+                Event::NewMessage(_, _, data) => {
+                    assert_eq!(data.len(), 5);
+                    assert_eq!(&data[..5], &b"data1"[..5]);
+                }
+                event => panic!("Unexpected event: {:?}", event),
+            }
+        }
     }
 }

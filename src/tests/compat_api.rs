@@ -15,16 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{self, CrustEventSender, Event};
+use compat::{self, Event};
 use config::{DevConfigSettings, PeerInfo};
 use env_logger;
-use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use priv_prelude::*;
 use rand;
 use std;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
-use util;
+use util::{self, event_sender};
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
@@ -42,16 +41,6 @@ macro_rules! expect_event {
             e => panic!("unexpected event {:?}", e),
         }
     };
-}
-
-fn event_sender() -> (CrustEventSender, Receiver<Event>) {
-    let (category_tx, _) = mpsc::channel();
-    let (event_tx, event_rx) = mpsc::channel();
-
-    (
-        MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx),
-        event_rx,
-    )
 }
 
 fn service_with_config(config: ConfigFile) -> (compat::Service, Receiver<Event>) {
