@@ -34,17 +34,18 @@ pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
 
 #[cfg(test)]
-pub const INACTIVITY_TIMEOUT_MS: u64 = 900_000;
+pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
 #[cfg(test)]
-const HEARTBEAT_PERIOD_MS: u64 = 300_000;
+const HEARTBEAT_PERIOD_MS: u64 = 300;
 
 /// A connection to a remote peer.
 ///
 /// Use `Peer` to send and receive data asynchronously.
 /// It implements [Stream and Sink](https://tokio.rs/docs/getting-started/streams-and-sinks/)
 /// traits from futures crate.
-// This wraps a `Socket` and uses it to send `PeerMessage`s to peers. It also adds a heartbeat to
-// keep the connection alive and detect when peers have disconnected.
+/// In the background `Peer` keeps sending heartbeats to keep the connection alive and detect when
+/// peers have disconnected.
+// This wraps a `PaStream` and uses it to send `PeerMessage`s to peers.
 //
 // TODO: One problem with the implementation is that it takes serialized messages from the upper
 // layer and then re-serialises them for no reason. This behaviour is inherited from the old crust
@@ -136,7 +137,7 @@ quick_error! {
     }
 }
 
-/// Construct a `Peer` from a `Socket` once we have completed the initial handshake.
+/// Construct a `Peer` from a `PaStream` once we have completed the initial handshake.
 pub fn from_handshaken_stream(
     handle: &Handle,
     their_uid: PublicId,
@@ -191,13 +192,16 @@ impl Peer {
     pub fn into_pa_stream(self) -> PaStream {
         self.stream
     }
-}
 
-impl Stream for Peer {
-    type Item = BytesMut;
-    type Error = PeerError;
+    #[cfg(test)]
+    /// Stop sending heartbeats. This will make `Peer` error eventually.
+    pub fn disable_heartbeats(&mut self) {
+        self.send_heartbeat_timeout
+            .reset(Instant::now() + Duration::from_millis(INACTIVITY_TIMEOUT_MS + 100_000));
+    }
 
-    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PeerError> {
+    /// Poll heartbeat timer and send heartbeat if required.
+    fn poll_heartbeat(&mut self) {
         let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
         let now = Instant::now();
         while let Async::Ready(..) = self.send_heartbeat_timeout.poll().void_unwrap() {
@@ -209,7 +213,15 @@ impl Stream for Peer {
                 let _ = self.stream.start_send(msg);
             }
         }
+    }
+}
 
+impl Stream for Peer {
+    type Item = BytesMut;
+    type Error = PeerError;
+
+    fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PeerError> {
+        self.poll_heartbeat();
         loop {
             match self.stream.poll() {
                 Err(e) => return Err(PeerError::from(e)),
