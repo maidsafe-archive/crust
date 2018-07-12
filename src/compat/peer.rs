@@ -436,7 +436,7 @@ mod test {
                 let listener = unwrap!(PaListener::bind(&addr, &handle, listener_sk));
                 let stream = unwrap!(evloop.run(PaStream::direct_connect(
                     &handle,
-                    &unwrap!(listener.local_addr()),
+                    &unwrap!(listener.local_addr()).unspecified_to_localhost(),
                     listener_pk,
                     &config
                 )));
