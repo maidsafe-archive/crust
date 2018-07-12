@@ -18,10 +18,11 @@
 use compat::{self, Event};
 use config::{DevConfigSettings, PeerInfo};
 use env_logger;
+use net::peer::INACTIVITY_TIMEOUT_MS;
 use priv_prelude::*;
 use rand;
 use std;
-use std::sync::mpsc::{self, Receiver};
+use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread;
 use util::{self, crust_event_channel};
 
@@ -502,5 +503,52 @@ mod bootstrap {
 
         unwrap!(service0.start_bootstrap(HashSet::new(), CrustUser::Client));
         expect_event!(event_rx0, Event::BootstrapFailed);
+    }
+}
+
+mod when_no_message_received_within_inactivity_period {
+    use super::*;
+
+    #[test]
+    fn when_heartbeats_disabled_tcp_peer_emits_lost_peer_event() {
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        let (mut service1, event_rx1) = service_with_config(config);
+        service1.disable_peer_heartbeats();
+
+        unwrap!(service1.start_listening());
+        let service1_addr = expect_event!(event_rx1, Event::ListenerStarted(addr) => addr);
+        unwrap!(service1.set_accept_bootstrap(true));
+
+        let (event_tx2, event_rx2) = crust_event_channel();
+        let config2 = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+        unwrap!(config2.write()).hard_coded_contacts =
+            vec![PeerInfo::new(service1_addr, service1.public_id())];
+        let sk2 = SecretId::new();
+        let mut service2 = unwrap!(compat::Service::with_config(
+            event_tx2,
+            config2,
+            sk2.clone()
+        ));
+        service2.disable_peer_heartbeats();
+
+        unwrap!(service2.start_bootstrap(HashSet::new(), CrustUser::Client));
+        expect_event!(event_rx2, Event::BootstrapConnect(_peer_id, _));
+        expect_event!(event_rx1, Event::BootstrapAccept(_peer_id, _));
+
+        thread::sleep(Duration::from_millis(5 * INACTIVITY_TIMEOUT_MS));
+
+        let peer1_lost = match event_rx1.try_recv() {
+            Ok(Event::LostPeer(..)) => true,
+            Err(TryRecvError::Empty) => false,
+            res => panic!("unexpected event: {:?}", res),
+        };
+        let peer2_lost = match event_rx2.try_recv() {
+            Ok(Event::LostPeer(..)) => true,
+            Err(TryRecvError::Empty) => false,
+            res => panic!("unexpected event: {:?}", res),
+        };
+        assert!(peer1_lost || peer2_lost);
     }
 }

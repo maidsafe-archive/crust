@@ -128,7 +128,7 @@ impl Service {
                         let handle1 = state.service.handle().clone();
                         let (drop_tx, drop_rx) = future_utils::drop_notify();
                         state.bootstrap_acceptor = Some(drop_tx);
-                        let acceptor = state.service.bootstrap_acceptor();
+                        let acceptor = state.bootstrap_acceptor();
                         let cm = state.cm.clone();
                         let event_tx = state.event_tx.clone();
                         handle0.spawn({
@@ -232,7 +232,6 @@ impl Service {
                 let f = {
                     let handle = state.service.handle().clone();
                     state
-                        .service
                         .bootstrap(blacklist, use_service_discovery, crust_user)
                         .map_err(|e| error!("bootstrap failed: {}", e))
                         .and_then(move |peer| {
@@ -453,6 +452,17 @@ impl Service {
             }));
         unwrap!(rx.recv())
     }
+
+    #[cfg(test)]
+    pub fn disable_peer_heartbeats(&mut self) {
+        let (done_tx, done_rx) = std::sync::mpsc::channel();
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState| {
+                state.disable_peer_heartbeats = true;
+                unwrap!(done_tx.send(()));
+            }));
+        unwrap!(done_rx.recv());
+    }
 }
 
 pub struct ServiceState {
@@ -465,6 +475,9 @@ pub struct ServiceState {
     listeners: Option<DropNotify>,
     service_discovery: Option<ServiceDiscovery>,
     service_discovery_enabled: bool,
+
+    #[cfg(test)]
+    disable_peer_heartbeats: bool,
 }
 
 impl ServiceState {
@@ -479,6 +492,8 @@ impl ServiceState {
             listeners: None,
             service_discovery: None,
             service_discovery_enabled: false,
+            #[cfg(test)]
+            disable_peer_heartbeats: false,
         }
     }
 
@@ -522,6 +537,51 @@ impl ServiceState {
                 })
         };
         handle.spawn(f);
+    }
+
+    /// Start bootstrap acceptor which yields `Peer`s.
+    fn bootstrap_acceptor(&mut self) -> BoxStream<Peer, BootstrapAcceptError> {
+        let acceptor = self.service.bootstrap_acceptor();
+        #[cfg(test)]
+        {
+            let disable_heartbeats = self.disable_peer_heartbeats;
+            acceptor
+                .map(move |mut peer| {
+                    if disable_heartbeats {
+                        peer.disable_heartbeats();
+                    }
+                    peer
+                })
+                .into_boxed()
+        }
+        #[cfg(not(test))]
+        acceptor.into_boxed()
+    }
+
+    /// Attempt to bootstrap off known peers or using service discovery on LAN.
+    pub fn bootstrap(
+        &mut self,
+        blacklist: HashSet<PaAddr>,
+        use_service_discovery: bool,
+        crust_user: CrustUser,
+    ) -> BoxFuture<Peer, BootstrapError> {
+        let bootstrap_fut = self
+            .service
+            .bootstrap(blacklist, use_service_discovery, crust_user);
+        #[cfg(test)]
+        {
+            let disable_heartbeats = self.disable_peer_heartbeats;
+            bootstrap_fut
+                .map(move |mut peer| {
+                    if disable_heartbeats {
+                        peer.disable_heartbeats();
+                    }
+                    peer
+                })
+                .into_boxed()
+        }
+        #[cfg(not(test))]
+        bootstrap_fut
     }
 }
 
