@@ -37,6 +37,8 @@ pub struct PaStream {
 enum PaStreamInner {
     Tcp(Framed<TcpStream>),
     Utp(Framed<UtpStream>),
+    #[cfg(test)]
+    Mem(Framed<memstream::EchoStream>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -70,12 +72,29 @@ impl PaStream {
         }
     }
 
+    #[cfg(test)]
+    /// Construct protocol agnostic stream with the in-memory backend stream.
+    /// Convenient for testing.
+    pub fn from_framed_mem_stream(
+        framed: Framed<memstream::EchoStream>,
+        shared_secret: SharedSecretKey,
+    ) -> PaStream {
+        PaStream {
+            inner: PaStreamInner::Mem(framed),
+            shared_secret,
+        }
+    }
+
     pub fn finalize(self) -> IoFuture<()> {
         match self.inner {
             PaStreamInner::Tcp(tcp_stream) => tokio_io::io::shutdown(tcp_stream.into_inner())
                 .map(|_stream| ())
                 .into_boxed(),
             PaStreamInner::Utp(utp_stream) => tokio_io::io::shutdown(utp_stream.into_inner())
+                .map(|_stream| ())
+                .into_boxed(),
+            #[cfg(test)]
+            PaStreamInner::Mem(stream) => tokio_io::io::shutdown(stream.into_inner())
                 .map(|_stream| ())
                 .into_boxed(),
         }
@@ -318,6 +337,8 @@ impl PaStream {
         match self.inner {
             PaStreamInner::Tcp(ref stream) => Ok(PaAddr::Tcp(stream.get_ref().peer_addr()?)),
             PaStreamInner::Utp(ref stream) => Ok(PaAddr::Utp(stream.get_ref().peer_addr())),
+            #[cfg(test)]
+            PaStreamInner::Mem(_) => Ok(tcp_addr!("0.0.0.0:0")),
         }
     }
 
@@ -384,6 +405,8 @@ impl Stream for PaStream {
         let msg_opt_async = match self.inner {
             PaStreamInner::Tcp(ref mut framed) => framed.poll().map_err(PaStreamReadError::Read)?,
             PaStreamInner::Utp(ref mut framed) => framed.poll().map_err(PaStreamReadError::Read)?,
+            #[cfg(test)]
+            PaStreamInner::Mem(ref mut framed) => framed.poll().map_err(PaStreamReadError::Read)?,
         };
         match msg_opt_async {
             Async::Ready(Some(msg)) => {
@@ -417,6 +440,10 @@ impl Sink for PaStream {
             PaStreamInner::Utp(ref mut framed) => framed
                 .start_send(encrypted_msg)
                 .map_err(PaStreamWriteError::Write)?,
+            #[cfg(test)]
+            PaStreamInner::Mem(ref mut framed) => framed
+                .start_send(encrypted_msg)
+                .map_err(PaStreamWriteError::Write)?,
         };
         match res {
             AsyncSink::Ready => Ok(AsyncSink::Ready),
@@ -431,6 +458,10 @@ impl Sink for PaStream {
                 framed.poll_complete().map_err(PaStreamWriteError::Write)
             }
             PaStreamInner::Utp(ref mut framed) => {
+                framed.poll_complete().map_err(PaStreamWriteError::Write)
+            }
+            #[cfg(test)]
+            PaStreamInner::Mem(ref mut framed) => {
                 framed.poll_complete().map_err(PaStreamWriteError::Write)
             }
         }
