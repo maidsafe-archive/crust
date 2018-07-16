@@ -110,6 +110,50 @@ fn bootstrap_and_exchange(
     exchange_messages(service0, service1, event_rx0, event_rx1, kind1);
 }
 
+/// Returns two services - we need to hold them until our test cases are finished.
+fn bootstrap_and_do_nothing(
+    listener_addr: PaAddr,
+    heartbeats_enabled: bool,
+) -> (
+    Receiver<Event>,
+    Receiver<Event>,
+    compat::Service,
+    compat::Service,
+) {
+    let config = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config.write()).listen_addresses = vec![listener_addr];
+    let (mut service1, event_rx1) = service_with_config(config);
+    if !heartbeats_enabled {
+        service1.disable_peer_heartbeats();
+    }
+
+    unwrap!(service1.start_listening());
+    let service1_addr = expect_event!(event_rx1, Event::ListenerStarted(addr) => addr);
+    let service1_addr = service1_addr.unspecified_to_localhost();
+    unwrap!(service1.set_accept_bootstrap(true));
+
+    let (event_tx2, event_rx2) = crust_event_channel();
+    let config2 = unwrap!(ConfigFile::new_temporary());
+    unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
+    unwrap!(config2.write()).hard_coded_contacts =
+        vec![PeerInfo::new(service1_addr, service1.public_id())];
+    let sk2 = SecretId::new();
+    let mut service2 = unwrap!(compat::Service::with_config(
+        event_tx2,
+        config2,
+        sk2.clone()
+    ));
+    if !heartbeats_enabled {
+        service2.disable_peer_heartbeats();
+    }
+
+    unwrap!(service2.start_bootstrap(HashSet::new(), CrustUser::Client));
+    expect_event!(event_rx2, Event::BootstrapConnect(_peer_id, _));
+    expect_event!(event_rx1, Event::BootstrapAccept(_peer_id, _));
+
+    (event_rx1, event_rx2, service1, service2)
+}
+
 #[test]
 fn start_two_services_exchange_data() {
     let _ = env_logger::init();
@@ -509,50 +553,6 @@ mod bootstrap {
 mod when_no_message_received_within_inactivity_period {
     use super::*;
 
-    /// Returns two services - we need to hold them until our test cases are finished.
-    fn bootstrap_and_do_nothing(
-        listener_addr: PaAddr,
-        heartbeats_enabled: bool,
-    ) -> (
-        Receiver<Event>,
-        Receiver<Event>,
-        compat::Service,
-        compat::Service,
-    ) {
-        let config = unwrap!(ConfigFile::new_temporary());
-        unwrap!(config.write()).listen_addresses = vec![listener_addr];
-        let (mut service1, event_rx1) = service_with_config(config);
-        if !heartbeats_enabled {
-            service1.disable_peer_heartbeats();
-        }
-
-        unwrap!(service1.start_listening());
-        let service1_addr = expect_event!(event_rx1, Event::ListenerStarted(addr) => addr);
-        let service1_addr = service1_addr.unspecified_to_localhost();
-        unwrap!(service1.set_accept_bootstrap(true));
-
-        let (event_tx2, event_rx2) = crust_event_channel();
-        let config2 = unwrap!(ConfigFile::new_temporary());
-        unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
-        unwrap!(config2.write()).hard_coded_contacts =
-            vec![PeerInfo::new(service1_addr, service1.public_id())];
-        let sk2 = SecretId::new();
-        let mut service2 = unwrap!(compat::Service::with_config(
-            event_tx2,
-            config2,
-            sk2.clone()
-        ));
-        if !heartbeats_enabled {
-            service2.disable_peer_heartbeats();
-        }
-
-        unwrap!(service2.start_bootstrap(HashSet::new(), CrustUser::Client));
-        expect_event!(event_rx2, Event::BootstrapConnect(_peer_id, _));
-        expect_event!(event_rx1, Event::BootstrapAccept(_peer_id, _));
-
-        (event_rx1, event_rx2, service1, service2)
-    }
-
     #[test]
     fn when_heartbeats_disabled_tcp_peer_emits_lost_peer_event() {
         let (event_rx1, event_rx2, _s1, _s2) =
@@ -616,4 +616,30 @@ mod when_no_message_received_within_inactivity_period {
             res => panic!("unexpected event: {:?}", res),
         };
     }
+}
+
+#[test]
+fn dropping_tcp_service_makes_remote_peer_receive_lost_peer_event() {
+    let (_event_rx1, event_rx2, service1, _service2) =
+        bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), true);
+    let service2_peer_id = service1.public_id();
+
+    drop(service1);
+
+    expect_event!(event_rx2, Event::LostPeer(peer_id) => {
+        assert_eq!(peer_id, service2_peer_id)
+    });
+}
+
+#[test]
+fn dropping_utp_service_makes_remote_peer_receive_lost_peer_event() {
+    let (_event_rx1, event_rx2, service1, _service2) =
+        bootstrap_and_do_nothing(utp_addr!("0.0.0.0:0"), true);
+    let service2_peer_id = service1.public_id();
+
+    drop(service1);
+
+    expect_event!(event_rx2, Event::LostPeer(peer_id) => {
+        assert_eq!(peer_id, service2_peer_id)
+    });
 }

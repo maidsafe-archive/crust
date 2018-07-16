@@ -603,3 +603,39 @@ mod when_no_message_received_within_inactivity_period {
         assert!(timedout);
     }
 }
+
+fn dropping_peer_makes_remote_peer_terminate_too(listener_addr: PaAddr) {
+    let mut evloop = unwrap!(Core::new());
+
+    let config1 = unwrap!(ConfigFile::new_temporary());
+    let mut dev_cfg = DevConfigSettings::default();
+    dev_cfg.disable_rendezvous_connections = true;
+    unwrap!(config1.write()).dev = Some(dev_cfg);
+    unwrap!(config1.write()).listen_addresses = vec![listener_addr];
+    let config2 = config1.clone();
+
+    let service1 = service_with_config(&mut evloop, config1);
+    let _listener1 = unwrap!(evloop.run(service1.start_listening().first_ok()));
+
+    let service2 = service_with_config(&mut evloop, config2);
+    let _listener2 = unwrap!(evloop.run(service2.start_listening().first_ok()));
+
+    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+    let connect = service1
+        .connect(ci_channel1)
+        .join(service2.connect(ci_channel2));
+    let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
+
+    drop(service2_peer);
+    unwrap!(evloop.run(service1_peer.for_each(|_data| Ok(()))));
+}
+
+#[test]
+fn dropping_tcp_peer_makes_remote_peer_terminate_too() {
+    dropping_peer_makes_remote_peer_terminate_too(tcp_addr!("0.0.0.0:0"));
+}
+
+#[test]
+fn dropping_utp_peer_makes_remote_peer_terminate_too() {
+    dropping_peer_makes_remote_peer_terminate_too(utp_addr!("0.0.0.0:0"));
+}
