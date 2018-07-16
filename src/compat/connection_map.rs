@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use compat::{CompatPeer, CrustEventSender, Event, Priority};
+use compat::{CompatPeer, CompatPeerError, CrustEventSender, Event, Priority};
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::{self, DropNotice, DropNotify};
 use futures::stream::{SplitSink, SplitStream};
@@ -173,23 +173,33 @@ fn handle_peer_rx(
     event_tx: &CrustEventSender,
     drop_rx: DropNotice,
     kind: CrustUser,
-    cm: ConnectionMap,
+    cm1: ConnectionMap,
 ) -> impl Future<Item = (), Error = ()> {
-    let event_tx0 = event_tx.clone();
     let event_tx1 = event_tx.clone();
+    let event_tx2 = event_tx.clone();
+    let event_tx3 = event_tx.clone();
     let uid1 = uid.clone();
     let uid2 = uid.clone();
+    let uid3 = uid.clone();
+    let cm2 = cm1.clone();
     peer_stream
+        .map_err(move |e| {
+            if let CompatPeerError::Peer(PeerError::InactivityTimeout) = e {
+                let _ = cm1.remove(&uid1);
+                let _ = event_tx1.send(Event::LostPeer(uid1.clone()));
+            }
+            e
+        })
         .log_errors(LogLevel::Info, "receiving data from peer")
         .until(drop_rx)
         .for_each(move |msg| {
             let vec = Vec::from(&msg[..]);
-            let _ = event_tx0.send(Event::NewMessage(uid1.clone(), kind, vec));
+            let _ = event_tx2.send(Event::NewMessage(uid2.clone(), kind, vec));
             Ok(())
         })
         .finally(move || {
-            let _ = cm.remove(&uid2);
-            let _ = event_tx1.send(Event::LostPeer(uid2));
+            let _ = cm2.remove(&uid3);
+            let _ = event_tx3.send(Event::LostPeer(uid3));
         })
         .infallible()
 }
@@ -206,18 +216,21 @@ mod tests {
         use tokio_io::codec::length_delimited::Framed;
 
         /// Constructs peer with in-memory stream for testing.
-        fn echo_peer(handle: &Handle) -> CompatPeer {
+        fn echo_peer(handle: &Handle, heartbeats_enabled: bool) -> CompatPeer {
             let our_sk = SecretId::new();
             let peer_uid = SecretId::new().public_id().clone();
             let shared_secret = our_sk.shared_secret(&peer_uid);
             let mem_stream = Framed::new(memstream::EchoStream::default());
             let fake_stream = PaStream::from_framed_mem_stream(mem_stream, shared_secret);
-            let peer = peer::from_handshaken_stream(
+            let mut peer = peer::from_handshaken_stream(
                 &handle,
                 peer_uid.clone(),
                 fake_stream,
                 CrustUser::Client,
             );
+            if !heartbeats_enabled {
+                peer.disable_heartbeats();
+            }
             CompatPeer::wrap_peer(&handle, peer, peer_uid.clone(), tcp_addr!("0.0.0.0:0"))
         }
 
@@ -226,10 +239,10 @@ mod tests {
             let mut evloop = unwrap!(Core::new());
             let handle = evloop.handle();
 
-            let peer = echo_peer(&handle);
+            let peer = echo_peer(&handle, true);
             let peer_uid = peer.public_id();
             let (peer_sink, peer_stream) = peer.split();
-            let (_rop_tx, drop_rx) = future_utils::drop_notify();
+            let (_drop_tx, drop_rx) = future_utils::drop_notify();
             let (event_tx, event_rx) = crust_event_channel();
             let conn_map = ConnectionMap::new(event_tx.clone());
 
@@ -253,6 +266,62 @@ mod tests {
                     assert_eq!(&data[..5], &b"data1"[..5]);
                 }
                 event => panic!("Unexpected event: {:?}", event),
+            }
+        }
+
+        mod when_peer_throws_inactivity_timeout {
+            use super::*;
+
+            #[test]
+            fn it_emits_lost_peer_event() {
+                let mut evloop = unwrap!(Core::new());
+                let handle = evloop.handle();
+
+                let peer = echo_peer(&handle, false);
+                let peer_uid = peer.public_id();
+                let (_peer_sink, peer_stream) = peer.split();
+                let (_drop_tx, drop_rx) = future_utils::drop_notify();
+                let (event_tx, event_rx) = crust_event_channel();
+                let conn_map = ConnectionMap::new(event_tx.clone());
+
+                handle.spawn(handle_peer_rx(
+                    peer_stream,
+                    &peer_uid,
+                    &event_tx,
+                    drop_rx,
+                    CrustUser::Client,
+                    conn_map,
+                ));
+                // run event loop so that timeouts would kick in
+                unwrap!(evloop.run(Timeout::new(Duration::from_secs(2), &handle)));
+
+                let msg = unwrap!(event_rx.recv());
+                match msg {
+                    Event::LostPeer(uid) => {
+                        assert_eq!(uid, peer_uid);
+                    }
+                    event => panic!("Unexpected event: {:?}", event),
+                }
+            }
+
+            #[test]
+            fn it_removes_connection_from_map() {
+                let mut evloop = unwrap!(Core::new());
+                let handle = evloop.handle();
+
+                let peer = echo_peer(&handle, false);
+                let peer_uid = peer.public_id();
+                let (event_tx, _event_rx) = crust_event_channel();
+                let conn_map = ConnectionMap::new(event_tx);
+
+                // insert_peer() also spawns handle_peer_rx()
+                assert!(conn_map.insert_peer(&handle, peer, tcp_addr!("0.0.0.0:0")));
+                assert!(conn_map.contains_peer(&peer_uid));
+
+                // run event loop so that timeouts would kick in
+                unwrap!(evloop.run(Timeout::new(Duration::from_secs(2), &handle)));
+
+                assert!(!conn_map.contains_peer(&peer_uid));
             }
         }
     }
