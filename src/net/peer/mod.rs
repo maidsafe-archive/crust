@@ -79,10 +79,6 @@ quick_error! {
     /// Peer related errors.
     #[derive(Debug)]
     pub enum PeerError {
-        /// Peer was destroyed while still trying to do some actions on it.
-        Destroyed {
-            description("Socket has been destroyed")
-        }
         /// Serialisation error
         Serialisation(e: SerialisationError) {
             description("serialisation error")

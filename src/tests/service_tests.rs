@@ -335,7 +335,8 @@ fn exchange_data_between_two_peers() {
 
     let spawn_sending = |data, peer: Peer| {
         let (peer_sink, peer_stream) = peer.split();
-        let data_stream = stream::iter_ok::<_, ()>(data).map_err(|_| PeerError::Destroyed);
+        let data_stream =
+            stream::iter_ok::<_, Void>(data).map_err(|_| PeerError::InactivityTimeout);
         let send_all = peer_sink.send_all(data_stream).then(|_| Ok(()));
         loop_handle.spawn(send_all);
         peer_stream
