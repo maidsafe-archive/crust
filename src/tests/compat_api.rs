@@ -22,7 +22,7 @@ use net::peer::INACTIVITY_TIMEOUT_MS;
 use priv_prelude::*;
 use rand;
 use std;
-use std::sync::mpsc::{self, Receiver, TryRecvError};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
 use util::{self, crust_event_channel};
 
@@ -509,15 +509,26 @@ mod bootstrap {
 mod when_no_message_received_within_inactivity_period {
     use super::*;
 
-    #[test]
-    fn when_heartbeats_disabled_tcp_peer_emits_lost_peer_event() {
+    /// Returns two services - we need to hold them until our test cases are finished.
+    fn bootstrap_and_do_nothing(
+        listener_addr: PaAddr,
+        heartbeats_enabled: bool,
+    ) -> (
+        Receiver<Event>,
+        Receiver<Event>,
+        compat::Service,
+        compat::Service,
+    ) {
         let config = unwrap!(ConfigFile::new_temporary());
-        unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        unwrap!(config.write()).listen_addresses = vec![listener_addr];
         let (mut service1, event_rx1) = service_with_config(config);
-        service1.disable_peer_heartbeats();
+        if !heartbeats_enabled {
+            service1.disable_peer_heartbeats();
+        }
 
         unwrap!(service1.start_listening());
         let service1_addr = expect_event!(event_rx1, Event::ListenerStarted(addr) => addr);
+        let service1_addr = service1_addr.unspecified_to_localhost();
         unwrap!(service1.set_accept_bootstrap(true));
 
         let (event_tx2, event_rx2) = crust_event_channel();
@@ -531,24 +542,78 @@ mod when_no_message_received_within_inactivity_period {
             config2,
             sk2.clone()
         ));
-        service2.disable_peer_heartbeats();
+        if !heartbeats_enabled {
+            service2.disable_peer_heartbeats();
+        }
 
         unwrap!(service2.start_bootstrap(HashSet::new(), CrustUser::Client));
         expect_event!(event_rx2, Event::BootstrapConnect(_peer_id, _));
         expect_event!(event_rx1, Event::BootstrapAccept(_peer_id, _));
 
-        thread::sleep(Duration::from_millis(5 * INACTIVITY_TIMEOUT_MS));
+        (event_rx1, event_rx2, service1, service2)
+    }
 
-        let peer1_lost = match event_rx1.try_recv() {
-            Ok(Event::LostPeer(..)) => true,
-            Err(TryRecvError::Empty) => false,
+    #[test]
+    fn when_heartbeats_disabled_tcp_peer_emits_lost_peer_event() {
+        let (event_rx1, event_rx2, _s1, _s2) =
+            bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), false);
+
+        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        match event_rx1.recv_timeout(timeout) {
+            Ok(Event::LostPeer(..)) => (),
             res => panic!("unexpected event: {:?}", res),
         };
-        let peer2_lost = match event_rx2.try_recv() {
-            Ok(Event::LostPeer(..)) => true,
-            Err(TryRecvError::Empty) => false,
+        match event_rx2.recv_timeout(timeout) {
+            Ok(Event::LostPeer(..)) => (),
             res => panic!("unexpected event: {:?}", res),
         };
-        assert!(peer1_lost || peer2_lost);
+    }
+
+    #[test]
+    fn when_heartbeats_disabled_utp_peer_emits_lost_peer_event() {
+        let (event_rx1, event_rx2, _s1, _s2) =
+            bootstrap_and_do_nothing(utp_addr!("0.0.0.0:0"), false);
+
+        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        match event_rx1.recv_timeout(timeout) {
+            Ok(Event::LostPeer(..)) => (),
+            res => panic!("unexpected event: {:?}", res),
+        };
+        match event_rx2.recv_timeout(timeout) {
+            Ok(Event::LostPeer(..)) => (),
+            res => panic!("unexpected event: {:?}", res),
+        };
+    }
+
+    #[test]
+    fn when_heartbeats_exchanging_tcp_peer_stays_alive() {
+        let (event_rx1, event_rx2, _s1, _s2) =
+            bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), true);
+
+        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        match event_rx1.recv_timeout(timeout) {
+            Err(RecvTimeoutError::Timeout) => (),
+            res => panic!("unexpected event: {:?}", res),
+        };
+        match event_rx2.recv_timeout(timeout) {
+            Err(RecvTimeoutError::Timeout) => (),
+            res => panic!("unexpected event: {:?}", res),
+        };
+    }
+
+    #[test]
+    fn when_heartbeats_exchanging_utp_peer_stays_alive() {
+        let (event_rx1, event_rx2, _s1, _s2) =
+            bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), true);
+
+        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        match event_rx1.recv_timeout(timeout) {
+            Err(RecvTimeoutError::Timeout) => (),
+            res => panic!("unexpected event: {:?}", res),
+        };
+        match event_rx2.recv_timeout(timeout) {
+            Err(RecvTimeoutError::Timeout) => (),
+            res => panic!("unexpected event: {:?}", res),
+        };
     }
 }
