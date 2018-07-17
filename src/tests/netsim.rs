@@ -188,12 +188,13 @@ fn rendezvous_connect_over_poor_connection() {
             let res = core.run(future::lazy(|| {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
-                unwrap!(config.write()).listen_addresses = vec![PaAddr::Utp(addr)];
+                let addr = PaAddr::Utp(addr);
+                unwrap!(config.write()).listen_addresses = vec![addr];
                 Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
-                            addr: PaAddr::Utp(SocketAddr::V4(SocketAddrV4::new(ip, 1234))),
+                            addr,
                             pub_key: service.public_id(),
                         };
 
@@ -228,12 +229,13 @@ fn rendezvous_connect_over_poor_connection() {
             let res = core.run(future::lazy(|| {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
-                unwrap!(config.write()).listen_addresses = vec![PaAddr::Utp(addr)];
+                let addr = PaAddr::Utp(addr);
+                unwrap!(config.write()).listen_addresses = vec![addr];
                 Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
-                            addr: PaAddr::Utp(SocketAddr::V4(SocketAddrV4::new(ip, 1234))),
+                            addr,
                             pub_key: service.public_id(),
                         };
 
