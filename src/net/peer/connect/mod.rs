@@ -391,6 +391,7 @@ where
         while i < self.choose_waiting.len() {
             match self.choose_waiting[i].poll() {
                 Ok(Async::Ready(Some((HandshakeMessage::ChooseConnection, stream, their_uid)))) => {
+                    let _ = self.choose_waiting.swap_remove(i);
                     return Some(peer::from_handshaken_stream(
                         handle,
                         their_uid,
@@ -739,19 +740,19 @@ mod tests {
             SecretId::new().public_id().clone()
         }
 
+        /// Constructs fake connection based on in-memory stream.
+        fn fake_connection() -> (PaStream, PublicId) {
+            let our_sk = SecretId::new();
+            let shared_secret = our_sk.shared_secret(&rand_peer_uid());
+            let mem_stream = Framed::new(memstream::EchoStream::default());
+            (
+                PaStream::from_framed_mem_stream(mem_stream, shared_secret),
+                rand_peer_uid(),
+            )
+        }
+
         mod other_connections {
             use super::*;
-
-            /// Constructs fake connection based on in-memory stream.
-            fn fake_connection() -> (PaStream, PublicId) {
-                let our_sk = SecretId::new();
-                let shared_secret = our_sk.shared_secret(&rand_peer_uid());
-                let mem_stream = Framed::new(memstream::EchoStream::default());
-                (
-                    PaStream::from_framed_mem_stream(mem_stream, shared_secret),
-                    rand_peer_uid(),
-                )
-            }
 
             #[test]
             fn it_returns_stream_of_all_pending_connections() {
@@ -793,6 +794,28 @@ mod tests {
                 assert!(choose_conn.all_connections.is_none());
                 assert!(choose_conn.choose_waiting.is_empty());
                 assert!(choose_conn.choose_sent.is_none());
+            }
+        }
+
+        mod recv_choose {
+            use super::*;
+
+            #[test]
+            fn it_removes_first_connection_that_receives_choose_message_from_the_waiting_list() {
+                let evloop = unwrap!(Core::new());
+                let handle = evloop.handle();
+
+                let conns = stream::empty();
+                let our_uid = rand_peer_uid();
+                let mut choose_conn = ChooseOneConnection::new(&handle, conns, our_uid);
+                let conn = fake_connection();
+                let choose_waiting_conn = (HandshakeMessage::ChooseConnection, conn.0, conn.1);
+                choose_conn.choose_waiting =
+                    vec![future::ok(Some(choose_waiting_conn)).into_boxed()];
+
+                let _ = choose_conn.recv_choose();
+
+                assert!(choose_conn.choose_waiting.is_empty());
             }
         }
     }
