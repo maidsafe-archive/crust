@@ -103,6 +103,8 @@ fn tcp_bootstrap_over_poor_connection() {
                     .map_err(|_e| panic!("addr never got sent"))
                     .and_then(move |server_info| {
                         let config = unwrap!(ConfigFile::new_temporary());
+                        unwrap!(config.write()).bootstrap_cache_name =
+                            Some(util::bootstrap_cache_tmp_file());
                         unwrap!(config.write()).hard_coded_contacts = vec![server_info];
                         Service::with_config(&handle, config, SecretId::new())
                             .map_err(|e| panic!("error starting service: {}", e))
