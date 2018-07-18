@@ -68,17 +68,15 @@ fn tcp_bootstrap_over_poor_connection() {
                             .bootstrap_acceptor()
                             .into_future()
                             .map_err(|(e, _)| panic!("error receiving bootstrap peer: {}", e))
-                            .and_then(|(stream_opt, _bootstrap_acceptor)| {
-                                let stream = unwrap!(stream_opt);
-                                stream
-                                    .into_future()
-                                    .map_err(|(e, _)| panic!("error reading from stream: {}", e))
-                                    .and_then(|(msg_opt, stream)| {
+                            .and_then(|(peer_opt, _bootstrap_acceptor)| {
+                                let peer = unwrap!(peer_opt);
+                                peer.into_future()
+                                    .map_err(|(e, _)| panic!("error reading from peer: {}", e))
+                                    .and_then(|(msg_opt, peer)| {
                                         let msg = unwrap!(msg_opt);
-                                        stream
-                                            .send(msg.freeze())
-                                            .map_err(|e| panic!("error sending on stream: {}", e))
-                                            .and_then(move |_stream| {
+                                        peer.send(msg.freeze())
+                                            .map_err(|e| panic!("error sending to peer: {}", e))
+                                            .and_then(move |_peer| {
                                                 // TODO: find a better way to gracefully close a Service.
                                                 Timeout::new(Duration::from_secs(1), &handle).map(
                                                     |()| {
@@ -112,19 +110,17 @@ fn tcp_bootstrap_over_poor_connection() {
                                 service
                                     .bootstrap(HashSet::new(), false, CrustUser::Client)
                                     .map_err(|e| panic!("bootstrap error: {}", e))
-                                    .and_then(|stream| {
+                                    .and_then(|peer| {
                                         let send_data = util::random_vec(1024);
 
-                                        stream
-                                            .send(Bytes::from(send_data.clone()))
-                                            .map_err(|e| panic!("error writing to stream: {}", e))
-                                            .and_then(move |stream| {
-                                                stream
-                                                    .into_future()
+                                        peer.send(Bytes::from(send_data.clone()))
+                                            .map_err(|e| panic!("error writing to peer: {}", e))
+                                            .and_then(move |peer| {
+                                                peer.into_future()
                                                     .map_err(|(e, _)| {
-                                                        panic!("error reading from stream: {}", e)
+                                                        panic!("error reading from peer: {}", e)
                                                     })
-                                                    .map(move |(recv_data_opt, _stream)| {
+                                                    .map(move |(recv_data_opt, _peer)| {
                                                         let recv_data = unwrap!(recv_data_opt);
                                                         assert_eq!(recv_data, send_data);
                                                         drop(service);
@@ -284,24 +280,22 @@ fn rendezvous_connect_over_poor_connection() {
                                 service
                                     .connect(ci_channel1)
                                     .map_err(|e| panic!("connect error: {}", e))
-                                    .and_then(move |stream| {
-                                        stream
-                                            .send(Bytes::from(send_data_a_clone))
+                                    .and_then(move |peer| {
+                                        peer.send(Bytes::from(send_data_a_clone))
                                             .map_err(|e| panic!("send error: {}", e))
-                                            .and_then(move |stream| {
+                                            .and_then(move |peer| {
                                                 trace!("node_a connected!");
-                                                stream
-                                                    .into_future()
+                                                peer.into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("receive error: {}", e)
                                                     })
-                                                    .and_then(move |(recv_data_b, stream)| {
+                                                    .and_then(move |(recv_data_b, peer)| {
                                                         drop(drop_tx_a0);
                                                         drop(drop_tx_a1);
                                                         drop(drop_tx_ac);
 
                                                         drop_rx_bc.map(move |()| {
-                                                            drop(stream);
+                                                            drop(peer);
                                                             drop(service);
                                                             unwrap!(recv_data_b)
                                                         })
@@ -335,24 +329,22 @@ fn rendezvous_connect_over_poor_connection() {
                                 service
                                     .connect(ci_channel2)
                                     .map_err(|e| panic!("connect error: {}", e))
-                                    .and_then(move |stream| {
-                                        stream
-                                            .send(Bytes::from(send_data_b_clone))
+                                    .and_then(move |peer| {
+                                        peer.send(Bytes::from(send_data_b_clone))
                                             .map_err(|e| panic!("send error: {}", e))
-                                            .and_then(move |stream| {
+                                            .and_then(move |peer| {
                                                 trace!("node_b connected!");
-                                                stream
-                                                    .into_future()
+                                                peer.into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("receive error: {}", e)
                                                     })
-                                                    .and_then(move |(recv_data_a, stream)| {
+                                                    .and_then(move |(recv_data_a, peer)| {
                                                         drop(drop_tx_b0);
                                                         drop(drop_tx_b1);
                                                         drop(drop_tx_bc);
 
                                                         drop_rx_ac.map(move |()| {
-                                                            drop(stream);
+                                                            drop(peer);
                                                             drop(service);
                                                             unwrap!(recv_data_a)
                                                         })
