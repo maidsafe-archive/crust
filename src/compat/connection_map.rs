@@ -197,7 +197,7 @@ fn handle_peer_rx(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::event_sender;
+    use util::crust_event_channel;
 
     mod handle_peer_rx {
         use super::*;
@@ -230,7 +230,7 @@ mod tests {
             let peer_uid = peer.public_id();
             let (peer_sink, peer_stream) = peer.split();
             let (_rop_tx, drop_rx) = future_utils::drop_notify();
-            let (event_tx, event_rx) = event_sender();
+            let (event_tx, event_rx) = crust_event_channel();
             let conn_map = ConnectionMap::new(event_tx.clone());
 
             handle.spawn(handle_peer_rx(

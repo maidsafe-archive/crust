@@ -23,7 +23,7 @@ use rand;
 use std;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
-use util::{self, event_sender};
+use util::{self, crust_event_channel};
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
@@ -44,7 +44,7 @@ macro_rules! expect_event {
 }
 
 fn service_with_config(config: ConfigFile) -> (compat::Service, Receiver<Event>) {
-    let (event_tx, event_rx) = event_sender();
+    let (event_tx, event_rx) = crust_event_channel();
     let sk = SecretId::new();
     let service = unwrap!(compat::Service::with_config(event_tx, config, sk));
     (service, event_rx)
@@ -250,7 +250,7 @@ mod bootstrap {
 
         unwrap!(service0.set_accept_bootstrap(true));
 
-        let (event_tx1, event_rx1) = event_sender();
+        let (event_tx1, event_rx1) = crust_event_channel();
         let config1 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config1.write()).hard_coded_contacts =
@@ -359,7 +359,7 @@ mod bootstrap {
     fn with_disable_external_reachability() {
         let _ = env_logger::init();
 
-        let (event_tx0, event_rx0) = event_sender();
+        let (event_tx0, event_rx0) = crust_event_channel();
         let config0 = unwrap!(ConfigFile::new_temporary());
         let mut dev_cfg = DevConfigSettings::default();
         dev_cfg.disable_external_reachability_requirement = true;

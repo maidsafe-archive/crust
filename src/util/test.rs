@@ -61,7 +61,7 @@ pub fn bootstrap_cache_tmp_file() -> OsString {
 }
 
 /// Constructs event sender/receiver pair.
-pub fn event_sender() -> (CrustEventSender, Receiver<Event>) {
+pub fn crust_event_channel() -> (CrustEventSender, Receiver<Event>) {
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 
