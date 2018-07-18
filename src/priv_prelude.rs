@@ -58,4 +58,6 @@ pub use tokio_core::reactor::Handle;
 pub use tokio_io::codec::length_delimited::Framed;
 pub use tokio_io::{AsyncRead, AsyncWrite};
 pub use tokio_utp::{UtpListener, UtpSocket, UtpStream};
+#[cfg(test)]
+pub use util::memstream;
 pub use void::{ResultVoidExt, Void};

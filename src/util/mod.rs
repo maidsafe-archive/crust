@@ -16,6 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 mod ip_addr;
+#[cfg(test)]
+pub mod memstream;
 mod serde_udp_codec;
 
 pub use self::ip_addr::*;

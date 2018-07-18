@@ -17,12 +17,15 @@
 
 //! Utilities for use in tests. This module is only available when running with cfg(test)
 
+use compat::{CrustEventSender, Event};
 use config_file_handler::current_bin_dir;
+use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use priv_prelude::*;
 use rand::{self, Rng};
 use std::env;
 use std::fs::File;
 use std::io::Write;
+use std::sync::mpsc::{self, Receiver};
 
 #[allow(unsafe_code)]
 pub fn random_vec(size: usize) -> Vec<u8> {
@@ -55,4 +58,15 @@ pub fn bootstrap_cache_tmp_file() -> OsString {
     let mut path = env::temp_dir();
     path.push(file_name);
     path.into()
+}
+
+/// Constructs event sender/receiver pair.
+pub fn crust_event_channel() -> (CrustEventSender, Receiver<Event>) {
+    let (category_tx, _) = mpsc::channel();
+    let (event_tx, event_rx) = mpsc::channel();
+
+    (
+        MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx),
+        event_rx,
+    )
 }

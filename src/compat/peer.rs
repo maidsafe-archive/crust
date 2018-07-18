@@ -96,7 +96,7 @@ impl CompatPeer {
         unwrap!(self.inner.as_ref()).uid.clone()
     }
 
-    /// Wraps a `PaStream` and turns it into a `CompatPeer`.
+    /// Wraps a `Peer` and turns it into a `CompatPeer`.
     pub fn wrap_peer(handle: &Handle, peer: Peer, uid: PublicId, peer_addr: PaAddr) -> CompatPeer {
         let kind = peer.kind();
         let (stream_tx, stream_rx) = peer.split();
@@ -319,7 +319,7 @@ mod test {
     use tokio_core::reactor::Core;
     use util;
 
-    mod socket {
+    mod compat_peer {
         use super::*;
         use rand::{self, Rng};
 
@@ -417,7 +417,7 @@ mod test {
         }
     }
 
-    mod socket_task {
+    mod compat_peer_task {
         use super::*;
 
         mod poll_task {
