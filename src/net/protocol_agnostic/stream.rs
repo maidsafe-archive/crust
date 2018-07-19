@@ -43,7 +43,7 @@ enum PaStreamInner {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaRendezvousMsg {
-    pub enc_pk: PublicId,
+    pub enc_pk: PublicKeys,
     pub tcp: Option<Bytes>,
     pub utp: Option<Bytes>,
 }
@@ -104,7 +104,7 @@ impl PaStream {
     pub fn direct_connect(
         handle: &Handle,
         addr: &PaAddr,
-        their_pk: PublicId,
+        their_pk: PublicKeys,
         config: &ConfigFile,
     ) -> BoxFuture<PaStream, DirectConnectError> {
         let disable_tcp = config.tcp_disabled();
@@ -162,8 +162,8 @@ impl PaStream {
         let (tcp_ch_0, tcp_ch_1) = bi_channel::unbounded();
         let (utp_ch_0, utp_ch_1) = bi_channel::unbounded();
 
-        let our_sk = SecretId::new();
-        let our_pk = our_sk.public_id().clone();
+        let our_sk = SecretKeys::new();
+        let our_pk = our_sk.public_keys().clone();
         let pump_channels = {
             let our_pk = our_pk.clone();
             tcp_ch_0
@@ -362,10 +362,10 @@ impl PaStream {
 
 fn connect_handshake<S: AsyncRead + AsyncWrite + 'static>(
     stream: S,
-    server_pk: &PublicId,
+    server_pk: &PublicKeys,
 ) -> BoxFuture<(Framed<S>, SharedSecretKey), DirectConnectError> {
-    let client_sk = SecretId::new();
-    let client_pk = client_sk.public_id().clone();
+    let client_sk = SecretKeys::new();
+    let client_pk = client_sk.public_keys().clone();
     let req = ListenerMsg {
         client_pk,
         kind: ListenerMsgKind::Connect,
@@ -759,8 +759,8 @@ mod test {
             fn it_fails_to_send_packets_bigger_than_the_size_limit() {
                 let mut evloop = unwrap!(Core::new());
                 let handle = evloop.handle();
-                let listener_sk = SecretId::new();
-                let listener_pk = listener_sk.public_id().clone();
+                let listener_sk = SecretKeys::new();
+                let listener_pk = listener_sk.public_keys().clone();
                 let listener = unwrap!(PaListener::bind_reusable(
                     &tcp_addr!("0.0.0.0:0"),
                     &handle,
@@ -803,8 +803,8 @@ mod test {
             fn when_client_sends_too_big_packet_it_closes_its_connection() {
                 let mut evloop = unwrap!(Core::new());
                 let handle = evloop.handle();
-                let listener_sk = SecretId::new();
-                let listener_pk = listener_sk.public_id().clone();
+                let listener_sk = SecretKeys::new();
+                let listener_pk = listener_sk.public_keys().clone();
                 let listener = unwrap!(PaListener::bind_reusable(
                     &tcp_addr!("0.0.0.0:0"),
                     &handle,

@@ -49,7 +49,7 @@ pub struct Service {
 impl Service {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
-    pub fn new(event_tx: CrustEventSender, our_sk: SecretId) -> Result<Service, CrustError> {
+    pub fn new(event_tx: CrustEventSender, our_sk: SecretKeys) -> Result<Service, CrustError> {
         let config = ConfigFile::open_default()?;
         Service::with_config(event_tx, config, our_sk)
     }
@@ -60,9 +60,9 @@ impl Service {
     pub fn with_config(
         event_tx: CrustEventSender,
         config: ConfigFile,
-        our_sk: SecretId,
+        our_sk: SecretKeys,
     ) -> Result<Service, CrustError> {
-        let event_loop_id = Some(format!("{:?}", our_sk.public_id()));
+        let event_loop_id = Some(format!("{:?}", our_sk.public_keys()));
         let event_loop = event_loop::spawn_event_loop(
             event_loop_id.as_ref().map(|s| s.as_ref()),
             event_tx,
@@ -174,7 +174,7 @@ impl Service {
 
     /// Fetches given peer socket address.
     /// Blocks until address is retrieved.
-    pub fn get_peer_socket_addr(&self, peer_uid: &PublicId) -> Result<PaAddr, CrustError> {
+    pub fn get_peer_socket_addr(&self, peer_uid: &PublicKeys) -> Result<PaAddr, CrustError> {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
         self.event_loop
@@ -185,13 +185,13 @@ impl Service {
     }
 
     /// Same as `get_peer_socket_addr()`, but it returns IP address instead.
-    pub fn get_peer_ip_addr(&self, peer_uid: &PublicId) -> Result<IpAddr, CrustError> {
+    pub fn get_peer_ip_addr(&self, peer_uid: &PublicKeys) -> Result<IpAddr, CrustError> {
         self.get_peer_socket_addr(peer_uid).map(|a| a.ip())
     }
 
     /// Checks if given peer is the one from hard coded contacts list.
     /// Blocks until response is received.
-    pub fn is_peer_hard_coded(&self, peer_uid: &PublicId) -> bool {
+    pub fn is_peer_hard_coded(&self, peer_uid: &PublicKeys) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
@@ -373,7 +373,7 @@ impl Service {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, peer_uid: &PublicId) -> bool {
+    pub fn disconnect(&self, peer_uid: &PublicKeys) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
@@ -386,7 +386,7 @@ impl Service {
     /// Send data to a peer.
     pub fn send(
         &self,
-        peer_uid: &PublicId,
+        peer_uid: &PublicKeys,
         msg: Vec<u8>,
         priority: Priority,
     ) -> Result<(), CrustError> {
@@ -400,7 +400,7 @@ impl Service {
     }
 
     /// Check if we are connected to the given peer
-    pub fn is_connected(&self, peer_uid: &PublicId) -> bool {
+    pub fn is_connected(&self, peer_uid: &PublicKeys) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
@@ -411,7 +411,7 @@ impl Service {
     }
 
     /// Returns our ID.
-    pub fn public_id(&self) -> PublicId {
+    pub fn public_id(&self) -> PublicKeys {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {

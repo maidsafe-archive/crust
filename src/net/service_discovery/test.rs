@@ -45,7 +45,7 @@ fn multiple_server_instances_in_parallel() {
         let mut futures = Vec::new();
         for i in 0..num_servers {
             for j in 0..num_discovers {
-                let our_sk = SecretId::new();
+                let our_sk = SecretKeys::new();
                 let discover = discover::<u16>(&handle, starting_port + i, our_sk)
                     .map_err(|e| panic!("error discovering: {}", e))
                     .flatten_stream()
@@ -92,8 +92,8 @@ fn service_discovery() {
     unwrap!(config.write()).service_discovery_port = Some(0);
     let (tx, rx) = mpsc::unbounded();
 
-    let our_sk = SecretId::new();
-    let our_pk = our_sk.public_id().clone();
+    let our_sk = SecretKeys::new();
+    let our_pk = our_sk.public_keys().clone();
     let sd = unwrap!(ServiceDiscovery::new(
         &handle,
         &config,
@@ -104,7 +104,7 @@ fn service_discovery() {
     let port = sd.port();
 
     let f = {
-        let our_sk = SecretId::new();
+        let our_sk = SecretKeys::new();
         discover::<HashSet<PeerInfo>>(&handle, port, our_sk.clone())
             .map_err(|e| panic!("discover error: {}", e))
             .flatten_stream()

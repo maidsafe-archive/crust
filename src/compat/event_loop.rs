@@ -42,7 +42,7 @@ impl EventLoop {
 pub fn spawn_event_loop(
     event_loop_id: Option<&str>,
     event_tx: CrustEventSender,
-    our_sk: SecretId,
+    our_sk: SecretKeys,
     config: ConfigFile,
 ) -> Result<EventLoop, CrustError> {
     let mut name = "CRUST-Event-Loop".to_string();

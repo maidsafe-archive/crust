@@ -32,12 +32,12 @@ use util::SerdeUdpCodec;
 pub fn discover<T>(
     handle: &Handle,
     port: u16,
-    our_sk: SecretId,
+    our_sk: SecretKeys,
 ) -> IoFuture<BoxStream<(Ipv4Addr, T), Void>>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
-    let our_pk = our_sk.public_id().clone();
+    let our_pk = our_sk.public_keys().clone();
     let bind_addr = addr!("0.0.0.0:0");
     let request = DiscoveryMsg::Request(our_pk);
 
@@ -83,7 +83,7 @@ where
 
 fn handle_response<T: Serialize + DeserializeOwned>(
     response: (SocketAddr, Result<DiscoveryMsg, SerialisationError>),
-    our_sk: &SecretId,
+    our_sk: &SecretKeys,
 ) -> Option<(Ipv4Addr, T)> {
     match response {
         (addr, Ok(DiscoveryMsg::Response(response))) => {

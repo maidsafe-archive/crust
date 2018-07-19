@@ -6,7 +6,7 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug)]
 pub struct PaTcpAddrQuerier {
     addr: SocketAddr,
-    server_pk: PublicId,
+    server_pk: PublicKeys,
 }
 
 impl Hash for PaTcpAddrQuerier {
@@ -19,7 +19,7 @@ impl Hash for PaTcpAddrQuerier {
 }
 
 impl PaTcpAddrQuerier {
-    pub fn new(addr: &SocketAddr, server_pk: PublicId) -> PaTcpAddrQuerier {
+    pub fn new(addr: &SocketAddr, server_pk: PublicKeys) -> PaTcpAddrQuerier {
         PaTcpAddrQuerier {
             addr: *addr,
             server_pk,
@@ -39,8 +39,8 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
                 ConnectReusableError::Connect(e) => QueryError::Connect(e),
             })
             .and_then(move |stream| {
-                let our_sk = SecretId::new();
-                let our_pk = our_sk.public_id().clone();
+                let our_sk = SecretKeys::new();
+                let our_pk = our_sk.public_keys().clone();
                 let msg = ListenerMsg {
                     client_pk: our_pk,
                     kind: ListenerMsgKind::EchoAddr,
@@ -77,7 +77,7 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
 #[derive(Debug)]
 pub struct PaUdpAddrQuerier {
     addr: SocketAddr,
-    server_pk: PublicId,
+    server_pk: PublicKeys,
 }
 
 impl Hash for PaUdpAddrQuerier {
@@ -90,7 +90,7 @@ impl Hash for PaUdpAddrQuerier {
 }
 
 impl PaUdpAddrQuerier {
-    pub fn new(addr: &SocketAddr, server_pk: PublicId) -> PaUdpAddrQuerier {
+    pub fn new(addr: &SocketAddr, server_pk: PublicKeys) -> PaUdpAddrQuerier {
         PaUdpAddrQuerier {
             addr: *addr,
             server_pk,
@@ -115,8 +115,8 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
             .connect(&self.addr)
             .map_err(QueryError::Connect)
             .and_then(move |stream| {
-                let our_sk = SecretId::new();
-                let our_pk = our_sk.public_id().clone();
+                let our_sk = SecretKeys::new();
+                let our_pk = our_sk.public_keys().clone();
                 let msg = ListenerMsg {
                     client_pk: our_pk,
                     kind: ListenerMsgKind::EchoAddr,

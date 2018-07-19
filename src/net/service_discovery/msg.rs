@@ -20,7 +20,7 @@ use priv_prelude::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DiscoveryMsg {
     /// Request has sender's public key which should be used to encrypt response.
-    Request(PublicId),
+    Request(PublicKeys),
     /// Response comes serialized and encrypted.
     Response(BytesMut),
 }

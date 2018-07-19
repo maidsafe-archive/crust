@@ -32,7 +32,7 @@ const LISTENER_MSG_TIMEOUT: u64 = 10;
 pub struct PaListener {
     handle: Handle,
     inner: PaListenerInner,
-    our_sk: SecretId,
+    our_sk: SecretKeys,
 }
 
 #[derive(Debug)]
@@ -44,7 +44,7 @@ pub enum PaListenerInner {
 pub struct PaIncoming {
     handle: Handle,
     inner: PaIncomingInner,
-    our_sk: SecretId,
+    our_sk: SecretKeys,
     processing: FuturesUnordered<BoxFuture<Option<PaStream>, AcceptError>>,
 }
 
@@ -118,7 +118,7 @@ quick_error! {
 
 impl PaListener {
     #[cfg(test)]
-    pub fn bind(addr: &PaAddr, handle: &Handle, our_sk: SecretId) -> io::Result<PaListener> {
+    pub fn bind(addr: &PaAddr, handle: &Handle, our_sk: SecretKeys) -> io::Result<PaListener> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 let listener = TcpListener::bind(tcp_addr, handle)?;
@@ -146,7 +146,7 @@ impl PaListener {
         addr: &PaAddr,
         handle: &Handle,
         p2p: &P2p,
-        our_sk: SecretId,
+        our_sk: SecretKeys,
     ) -> BoxFuture<(PaListener, PaAddr), BindPublicError> {
         let handle = handle.clone();
         match *addr {
@@ -184,7 +184,7 @@ impl PaListener {
     pub fn bind_reusable(
         addr: &PaAddr,
         handle: &Handle,
-        our_sk: SecretId,
+        our_sk: SecretKeys,
     ) -> io::Result<PaListener> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
@@ -296,7 +296,7 @@ fn handle_incoming_tcp(
     handle: &Handle,
     stream: TcpStream,
     addr: SocketAddr,
-    our_sk: &SecretId,
+    our_sk: &SecretKeys,
 ) -> BoxFuture<Option<PaStream>, AcceptError> {
     handle_incoming(handle, stream, addr, our_sk)
         .map(|framed_key_opt| {
@@ -310,7 +310,7 @@ fn handle_incoming_tcp(
 fn handle_incoming_utp(
     handle: &Handle,
     stream: UtpStream,
-    our_sk: &SecretId,
+    our_sk: &SecretKeys,
 ) -> BoxFuture<Option<PaStream>, AcceptError> {
     let addr = stream.peer_addr();
     handle_incoming(handle, stream, addr, our_sk)
@@ -326,7 +326,7 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
     handle: &Handle,
     stream: S,
     addr: SocketAddr,
-    our_sk: &SecretId,
+    our_sk: &SecretKeys,
 ) -> BoxFuture<Option<(Framed<S>, SharedSecretKey)>, AcceptError> {
     let our_sk = our_sk.clone();
     Framed::new(stream)

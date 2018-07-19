@@ -57,7 +57,7 @@ pub fn bootstrap(
     blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
-    our_sk: &SecretId,
+    our_sk: &SecretKeys,
     cache: &Cache,
 ) -> BoxFuture<Peer, BootstrapError> {
     let config = config.clone();
@@ -97,7 +97,7 @@ pub fn bootstrap(
 fn discover_peers_on_lan(
     handle: &Handle,
     config: &ConfigFile,
-    our_sk: &SecretId,
+    our_sk: &SecretKeys,
 ) -> BoxFuture<BoxStream<PeerInfo, (PaAddr, TryPeerError)>, BootstrapError> {
     let handle = handle.clone();
     let our_sk = our_sk.clone();
