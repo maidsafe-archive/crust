@@ -27,8 +27,10 @@ use priv_prelude::*;
 use tokio_core::reactor::Core;
 use {util, Service};
 
-#[test]
-fn tcp_bootstrap_over_poor_connection() {
+fn bootstrap_over_poor_connection<F>(make_addr: F)
+where
+    F: 'static + FnOnce(Ipv4Addr, u16) -> PaAddr + Send + Clone,
+{
     let _ = env_logger::init();
 
     let mut core = unwrap!(Core::new());
@@ -45,13 +47,13 @@ fn tcp_bootstrap_over_poor_connection() {
 
             let res = core.run(future::lazy(|| {
                 let config = unwrap!(ConfigFile::new_temporary());
-                let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
-                unwrap!(config.write()).listen_addresses = vec![PaAddr::Tcp(addr)];
+                let addr = make_addr(ip, 1234);
+                unwrap!(config.write()).listen_addresses = vec![addr];
                 Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |mut service| {
                         let server_info = PeerInfo {
-                            addr: PaAddr::Tcp(SocketAddr::V4(SocketAddrV4::new(ip, 1234))),
+                            addr,
                             pub_key: service.public_id(),
                         };
 
@@ -154,7 +156,25 @@ fn tcp_bootstrap_over_poor_connection() {
 }
 
 #[test]
-fn rendezvous_connect_over_poor_connection() {
+fn tcp_bootstrap_over_poor_connection() {
+    bootstrap_over_poor_connection(|ip, port| {
+        let addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
+        PaAddr::Tcp(addr)
+    });
+}
+
+#[test]
+fn utp_bootstrap_over_poor_connection() {
+    bootstrap_over_poor_connection(|ip, port| {
+        let addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
+        PaAddr::Utp(addr)
+    });
+}
+
+fn rendezvous_connect_over_poor_connection<F>(make_addr1: F)
+where
+    F: 'static + FnOnce(Ipv4Addr, u16) -> PaAddr + Send + Clone,
+{
     let _ = env_logger::init();
 
     let mut core = unwrap!(Core::new());
@@ -166,6 +186,8 @@ fn rendezvous_connect_over_poor_connection() {
     let send_data_a_clone = send_data_a.clone();
     let send_data_b = util::random_vec(1024);
     let send_data_b_clone = send_data_b.clone();
+
+    let make_addr2 = make_addr1.clone();
 
     let (drop_tx_a0, drop_rx_a0) = future_utils::drop_notify();
     let (drop_tx_b0, drop_rx_b0) = future_utils::drop_notify();
@@ -185,8 +207,7 @@ fn rendezvous_connect_over_poor_connection() {
 
             let res = core.run(future::lazy(|| {
                 let config = unwrap!(ConfigFile::new_temporary());
-                let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
-                let addr = PaAddr::Utp(addr);
+                let addr = make_addr1(ip, 1234);
                 unwrap!(config.write()).listen_addresses = vec![addr];
                 Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
@@ -226,8 +247,7 @@ fn rendezvous_connect_over_poor_connection() {
 
             let res = core.run(future::lazy(|| {
                 let config = unwrap!(ConfigFile::new_temporary());
-                let addr = SocketAddr::V4(SocketAddrV4::new(ip, 1234));
-                let addr = PaAddr::Utp(addr);
+                let addr = make_addr2(ip, 1234);
                 unwrap!(config.write()).listen_addresses = vec![addr];
                 Service::with_config(&handle, config, SecretId::new())
                     .map_err(|e| panic!("error creating service: {}", e))
@@ -392,4 +412,20 @@ fn rendezvous_connect_over_poor_connection() {
             })
     }));
     res.void_unwrap()
+}
+
+#[test]
+fn tcp_rendezvous_connect_over_poor_connection() {
+    rendezvous_connect_over_poor_connection(|ip, port| {
+        let addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
+        PaAddr::Tcp(addr)
+    });
+}
+
+#[test]
+fn utp_rendezvous_connect_over_poor_connection() {
+    rendezvous_connect_over_poor_connection(|ip, port| {
+        let addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
+        PaAddr::Utp(addr)
+    });
 }
