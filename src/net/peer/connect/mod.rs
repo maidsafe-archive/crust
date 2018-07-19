@@ -27,19 +27,20 @@ pub use self::handshake_message::{BootstrapDenyReason, BootstrapRequest};
 
 mod bootstrap;
 mod bootstrap_acceptor;
+mod choose;
 mod connection_info;
 mod demux;
 mod ext_reachability;
 mod handshake_message;
 
+use self::choose::ChooseOneConnection;
+use self::demux::ConnectMessage;
+use self::handshake_message::{ConnectRequest, HandshakeMessage};
 use config::PeerInfo;
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::mpsc::UnboundedReceiver;
 use futures::sync::mpsc::SendError;
 use futures::sync::oneshot;
-use net::peer;
-use net::peer::connect::demux::ConnectMessage;
-use net::peer::connect::handshake_message::{ConnectRequest, HandshakeMessage};
 use p2p::P2p;
 use priv_prelude::*;
 
@@ -51,11 +52,6 @@ pub const CONNECTIONS_TIMEOUT: u64 = 60;
 quick_error! {
     #[derive(Debug)]
     pub enum ConnectError {
-        Write(e: PaStreamWriteError) {
-            description("error sending handshake")
-            display("error sending handshake: {}", e)
-            cause(e)
-        }
         AllConnectionsFailed(v: Vec<SingleConnectionError>) {
             description("all attempts to connect to the remote peer failed")
             display("all {} attempts to connect to the remote peer failed: {:?}", v.len(), v)
@@ -172,7 +168,12 @@ where
         .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
 
     let config = config.clone();
-    ChooseOneConnection::new(handle, all_connections, our_info.our_uid)
+    let handle = handle.clone();
+    ChooseOneConnection::new(&handle, all_connections, our_info.our_uid)
+        .map(move |(peer, other_conns)| {
+            finalize_connections(&handle, other_conns);
+            peer
+        })
         .and_then(move |peer| {
             let ip = peer.ip().map_err(ConnectError::Peer)?;
             if config.is_peer_whitelisted(ip, CrustUser::Node) {
@@ -266,182 +267,16 @@ fn attempt_to_connect(
     handshake_outgoing_connections(all_connections, our_connect_request.clone())
 }
 
-/// When "choose connection" message is received, this data is given.
-type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicId)>;
-
-/// Future that ensures that both peers select the same connection.
-/// Takes all pending handshaken connections and chooses the first one successful.
-/// Then this connection is wrapped in a `Peer` structure.
-/// Depending on service id either initiates connection choice message or waits for one.
-struct ChooseOneConnection<S>
-where
-    S: Stream<Item = (PaStream, PublicId), Error = SingleConnectionError> + 'static,
-{
-    handle: Handle,
-    all_connections: S,
-    all_connections_are_done: bool,
-    our_uid: PublicId,
-    choose_sent: Option<BoxFuture<(PaStream, PublicId), ConnectError>>,
-    choose_waiting: Vec<BoxFuture<ChooseConnectionResult, SingleConnectionError>>,
-    errors: Vec<SingleConnectionError>,
-}
-
-impl<S> ChooseOneConnection<S>
-where
-    S: Stream<Item = (PaStream, PublicId), Error = SingleConnectionError> + 'static,
-{
-    fn new(handle: &Handle, connections: S, our_uid: PublicId) -> Self {
-        Self {
-            handle: handle.clone(),
-            all_connections: connections,
-            all_connections_are_done: false,
-            our_uid,
-            choose_sent: None,
-            choose_waiting: Vec::new(),
-            errors: Vec::new(),
-        }
-    }
-
-    /// Polls all potentially ready connections.
-    /// Collects all the errors. If none of connections is ready, returns.
-    fn poll_connections(&mut self) -> Result<(), SerialisationError> {
-        while !self.all_connections_are_done {
-            match self.all_connections.poll() {
-                Ok(Async::Ready(Some((stream, their_uid)))) => {
-                    self.on_conn_ready(stream, their_uid)?
-                }
-                Ok(Async::Ready(None)) => {
-                    self.all_connections_are_done = true;
-                    break;
-                }
-                Ok(Async::NotReady) => break,
-                Err(e) => self.errors.push(e),
-            }
-        }
-        Ok(())
-    }
-
-    fn on_conn_ready(
-        &mut self,
-        stream: PaStream,
-        their_uid: PublicId,
-    ) -> Result<(), SerialisationError> {
-        if self.our_uid > their_uid {
-            self.choose_sent = Some({
-                let msg = Bytes::from(serialisation::serialise(
-                    &HandshakeMessage::ChooseConnection,
-                )?);
-                stream
-                    .send(msg)
-                    .map_err(ConnectError::Write)
-                    .map(move |stream| (stream, their_uid))
-                    .into_boxed()
-            });
-            // we'll take first ready connection
-            self.all_connections_are_done = true;
-        } else {
-            self.choose_waiting.push(
-                stream
-                    .into_future()
-                    .map_err(|(err, _socket)| SingleConnectionError::Read(err))
-                    .and_then(move |(msg_opt, stream)| match msg_opt {
-                        Some(msg) => {
-                            let handshake = {
-                                serialisation::deserialise(&msg)
-                                    .map_err(SingleConnectionError::Deserialise)?
-                            };
-                            Ok(Some((handshake, stream, their_uid)))
-                        }
-                        None => Ok(None),
-                    })
-                    .into_boxed(),
-            );
-        }
-        Ok(())
-    }
-
-    fn send_choose(&mut self) -> Result<Option<Peer>, ConnectError> {
-        let handle = &self.handle;
-        if let Some(mut fut) = self.choose_sent.take() {
-            match fut.poll() {
-                Ok(Async::Ready((stream, their_uid))) => {
-                    return Ok(Some(peer::from_handshaken_stream(
-                        handle,
-                        their_uid,
-                        stream,
-                        CrustUser::Node,
-                    )));
-                }
-                Ok(Async::NotReady) => self.choose_sent = Some(fut),
-                Err(e) => return Err(e),
-            }
-        }
-        Ok(None)
-    }
-
-    /// Wait for the first connection that receives "Choose Connection" message.
-    fn recv_choose(&mut self) -> Option<Peer> {
-        let handle = &self.handle;
-        let mut i = 0;
-        while i < self.choose_waiting.len() {
-            match self.choose_waiting[i].poll() {
-                Ok(Async::Ready(Some((HandshakeMessage::ChooseConnection, stream, their_uid)))) => {
-                    return Some(peer::from_handshaken_stream(
-                        handle,
-                        their_uid,
-                        stream,
-                        CrustUser::Node,
-                    ));
-                }
-                Ok(Async::Ready(Some((_msg, _stream, _their_uid)))) => {
-                    self.errors.push(SingleConnectionError::UnexpectedMessage);
-                    let _ = self.choose_waiting.swap_remove(i);
-                }
-                Ok(Async::Ready(None)) => {
-                    self.errors.push(SingleConnectionError::ConnectionDropped);
-                    let _ = self.choose_waiting.swap_remove(i);
-                }
-                Ok(Async::NotReady) => i += 1,
-                Err(e) => {
-                    self.errors.push(e);
-                    let _ = self.choose_waiting.swap_remove(i);
-                }
-            }
-        }
-        None
-    }
-}
-
-impl<S> Future for ChooseOneConnection<S>
-where
-    S: Stream<Item = (PaStream, PublicId), Error = SingleConnectionError> + 'static,
-{
-    type Item = Peer;
-    type Error = ConnectError;
-
-    /// Yields first successful connection.
-    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        self.poll_connections()?;
-
-        match self.send_choose() {
-            Ok(Some(peer)) => return Ok(Async::Ready(peer)),
-            Err(e) => return Err(e),
-            Ok(None) => (),
-        }
-        if let Some(peer) = self.recv_choose() {
-            return Ok(Async::Ready(peer));
-        }
-
-        if self.all_connections_are_done
-            && self.choose_sent.is_none()
-            && self.choose_waiting.is_empty()
-        {
-            let errors = mem::replace(&mut self.errors, Vec::new());
-            Err(ConnectError::AllConnectionsFailed(errors))
-        } else {
-            Ok(Async::NotReady)
-        }
-    }
+/// Spawns a background task that gracefully shuts down all not chosen connections.
+fn finalize_connections(handle: &Handle, conns: BoxStream<PaStream, SingleConnectionError>) {
+    let task = conns
+        .for_each(|stream| stream.finalize().map_err(SingleConnectionError::Io))
+        .log_error(
+            LogLevel::Info,
+            "Failed to gracefully shutdown unused socket",
+        )
+        .then(|_| Ok(()));
+    handle.spawn(task);
 }
 
 fn connect_directly(

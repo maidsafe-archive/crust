@@ -85,13 +85,14 @@ impl PaStream {
         }
     }
 
+    /// Gracefully terminates connection.
     pub fn finalize(self) -> IoFuture<()> {
         match self.inner {
             PaStreamInner::Tcp(tcp_stream) => tokio_io::io::shutdown(tcp_stream.into_inner())
                 .map(|_stream| ())
                 .into_boxed(),
             PaStreamInner::Utp(utp_stream) => tokio_io::io::shutdown(utp_stream.into_inner())
-                .map(|_stream| ())
+                .and_then(|stream| stream.finalize().infallible())
                 .into_boxed(),
             #[cfg(test)]
             PaStreamInner::Mem(stream) => tokio_io::io::shutdown(stream.into_inner())
