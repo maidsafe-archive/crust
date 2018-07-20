@@ -23,6 +23,10 @@ use tokio_core;
 use tokio_io::codec::length_delimited::Framed;
 use tokio_utp;
 
+/// When `PaListener` accepts incoming connection, the connection must send `ListenerMsg` within
+/// this timeout.
+const LISTENER_MSG_TIMEOUT: u64 = 10;
+
 /// A convenient wrapper around uTP and TCP connection listeners.
 #[derive(Debug)]
 pub struct PaListener {
@@ -333,7 +337,7 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
                 .ok_or(AcceptError::Disconnected)
                 .map(|msg| (msg, framed))
         })
-        .with_timeout(Duration::from_secs(3), handle)
+        .with_timeout(Duration::from_secs(LISTENER_MSG_TIMEOUT), handle)
         .and_then(|pair_opt| pair_opt.ok_or(AcceptError::Timeout))
         .and_then(move |(msg, framed)| {
             let req: ListenerMsg =
