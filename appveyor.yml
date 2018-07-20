@@ -27,4 +27,4 @@ build_script:
   - cargo check --verbose --release --lib --tests --examples
 
 test_script:
-  - cargo test --verbose --release
+  - cargo test --no-default-features --verbose --release
