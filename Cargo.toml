@@ -34,7 +34,7 @@ tokio-utp = { git = "https://github.com/maidsafe/tokio-utp", rev = "master" }
 unwrap = "~1.1"
 url = "~1.5.1"
 void = "~1.0.2"
-safe_crypto = "~0.2.0"
+safe_crypto = { git = "https://github.com/maidsafe/safe_crypto", rev = "f214410" }
 
 [dependencies.bytes]
 features = ["serde"]
