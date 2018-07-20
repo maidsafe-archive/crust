@@ -85,14 +85,14 @@ pub struct BootstrapAcceptor {
     peer_rx: UnboundedReceiver<BootstrapMessage>,
     handshaking: FuturesUnordered<BoxFuture<Peer, BootstrapAcceptError>>,
     config: ConfigFile,
-    our_uid: PublicId,
+    our_uid: PublicKeys,
 }
 
 impl BootstrapAcceptor {
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
-        our_uid: PublicId,
+        our_uid: PublicKeys,
     ) -> (BootstrapAcceptor, UnboundedSender<BootstrapMessage>) {
         let config = config.clone();
         let handle = handle.clone();
@@ -157,7 +157,7 @@ fn bootstrap_accept(
     handle: &Handle,
     stream: PaStream,
     config: &ConfigFile,
-    our_uid: PublicId,
+    our_uid: PublicKeys,
     bootstrap_request: BootstrapRequest,
 ) -> BoxFuture<Peer, BootstrapAcceptError> {
     let handle = handle.clone();
@@ -279,7 +279,7 @@ fn bootstrap_accept(
 fn grant_bootstrap(
     handle: &Handle,
     stream: PaStream,
-    their_uid: PublicId,
+    their_uid: PublicKeys,
     kind: CrustUser,
 ) -> BoxFuture<Peer, PaStreamWriteError> {
     let handle = handle.clone();

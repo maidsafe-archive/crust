@@ -34,7 +34,7 @@ pub struct Acceptor {
     listeners_tx: UnboundedSender<(DropNotice, PaIncoming, HashSet<PaAddr>)>,
     addresses: SharedObservableAddresses,
     p2p: P2p,
-    our_sk: SecretId,
+    our_sk: SecretKeys,
 }
 
 /// Holds a collection of addresses and notifies about changes.
@@ -105,7 +105,7 @@ pub struct SocketIncoming {
 
 impl Acceptor {
     /// Create connection acceptor and a handle to its incoming stream of connections.
-    pub fn new(handle: &Handle, p2p: P2p, our_sk: SecretId) -> (Acceptor, SocketIncoming) {
+    pub fn new(handle: &Handle, p2p: P2p, our_sk: SecretKeys) -> (Acceptor, SocketIncoming) {
         let (tx, rx) = mpsc::unbounded();
         let addresses = ObservableAddresses::shared();
         let acceptor = Acceptor {
@@ -355,7 +355,7 @@ mod test {
             #[test]
             fn it_returns_true_when_theres_at_least_one_public_address() {
                 let core = unwrap!(Core::new());
-                let our_sk = SecretId::new();
+                let our_sk = SecretKeys::new();
                 let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default(), our_sk);
                 unwrap!(acceptor.addresses.lock()).add_public(utp_addr!("1.2.3.4:4000"));
 
@@ -365,7 +365,7 @@ mod test {
             #[test]
             fn it_returns_false_when_none_of_listeners_have_public_address() {
                 let core = unwrap!(Core::new());
-                let our_sk = SecretId::new();
+                let our_sk = SecretKeys::new();
                 let (acceptor, _) = Acceptor::new(&core.handle(), P2p::default(), our_sk);
 
                 assert!(!acceptor.has_public_addrs());
@@ -390,7 +390,7 @@ mod test {
         }
 
         fn palistener(handle: &Handle) -> PaListener {
-            let our_sk = SecretId::new();
+            let our_sk = SecretKeys::new();
             let bind_addr = utp_addr!("0.0.0.0:0");
             unwrap!(PaListener::bind(&bind_addr, handle, our_sk,))
         }
@@ -467,7 +467,7 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
 
-        let our_sk = SecretId::new();
+        let our_sk = SecretKeys::new();
         let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), our_sk);
 
         let future = {
@@ -555,8 +555,8 @@ mod test {
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
 
-        let listener_sk = SecretId::new();
-        let listener_pk = listener_sk.public_id().clone();
+        let listener_sk = SecretKeys::new();
+        let listener_pk = listener_sk.public_keys().clone();
         let (acceptor, socket_incoming) = Acceptor::new(&handle, P2p::default(), listener_sk);
 
         let config = unwrap!(ConfigFile::new_temporary());

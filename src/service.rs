@@ -45,13 +45,13 @@ pub struct Service {
     listeners: Acceptor,
     demux: Demux,
     p2p: P2p,
-    our_sk: SecretId,
+    our_sk: SecretKeys,
     bootstrap_cache: BootstrapCache,
 }
 
 impl Service {
     /// Create a new `Service` with the default config.
-    pub fn new(handle: &Handle, our_sk: SecretId) -> BoxFuture<Service, CrustError> {
+    pub fn new(handle: &Handle, our_sk: SecretKeys) -> BoxFuture<Service, CrustError> {
         let try = || -> Result<_, CrustError> {
             Ok(Service::with_config(
                 handle,
@@ -66,7 +66,7 @@ impl Service {
     pub fn with_config(
         handle: &Handle,
         config: ConfigFile,
-        our_sk: SecretId,
+        our_sk: SecretKeys,
     ) -> BoxFuture<Service, CrustError> {
         let p2p = configure_nat_traversal(&config);
         let handle = handle.clone();
@@ -216,12 +216,12 @@ impl Service {
     }
 
     /// Returns service public key.
-    pub fn public_id(&self) -> PublicId {
-        self.our_sk.public_id().clone()
+    pub fn public_id(&self) -> PublicKeys {
+        self.our_sk.public_keys().clone()
     }
 
     /// Returns service private key.
-    pub fn secret_id(&self) -> SecretId {
+    pub fn secret_id(&self) -> SecretKeys {
         self.our_sk.clone()
     }
 
@@ -334,16 +334,16 @@ mod tests {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
 
-            let listener0_sk = SecretId::new();
-            let listener0_pk = listener0_sk.public_id().clone();
+            let listener0_sk = SecretKeys::new();
+            let listener0_pk = listener0_sk.public_keys().clone();
             let listener0 = unwrap!(TcpListener::bind(&addr!("0.0.0.0:0"), &handle));
             let listener0_info = PeerInfo::new(
                 PaAddr::Tcp(unwrap!(listener0.local_addr()).unspecified_to_localhost()),
                 listener0_pk,
             );
 
-            let listener1_sk = SecretId::new();
-            let listener1_pk = listener1_sk.public_id().clone();
+            let listener1_sk = SecretKeys::new();
+            let listener1_pk = listener1_sk.public_keys().clone();
             let (_socket, listener1) = unwrap!(UtpSocket::bind(&addr!("0.0.0.0:0"), &handle));
             let listener1_info = PeerInfo::new(
                 PaAddr::Utp(unwrap!(listener1.local_addr()).unspecified_to_localhost()),
@@ -417,12 +417,12 @@ mod tests {
         fn it_removes_specified_rendezvous_servers_from_global_list() {
             let p2p = P2p::default();
 
-            let sk = SecretId::new();
-            let pk = sk.public_id().clone();
+            let sk = SecretKeys::new();
+            let pk = sk.public_keys().clone();
             let addr_querier0 = PaTcpAddrQuerier::new(&addr!("1.2.3.4:4000"), pk);
 
-            let sk = SecretId::new();
-            let pk = sk.public_id().clone();
+            let sk = SecretKeys::new();
+            let pk = sk.public_keys().clone();
             let addr_querier1 = PaUdpAddrQuerier::new(&addr!("1.2.3.5:5000"), pk);
 
             p2p.add_tcp_addr_querier(addr_querier0);

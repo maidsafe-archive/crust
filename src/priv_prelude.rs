@@ -42,7 +42,7 @@ pub use p2p::{
     TcpRendezvousConnectError, TcpStreamExt, UdpAddrQuerier, UdpRendezvousConnectError,
     UdpSocketExt,
 };
-pub use safe_crypto::{EncryptionError, PublicId, SecretId, SharedSecretKey};
+pub use safe_crypto::{Error as EncryptionError, PublicKeys, SecretKeys, SharedSecretKey};
 pub use serde::de::DeserializeOwned;
 pub use serde::Serialize;
 pub use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};

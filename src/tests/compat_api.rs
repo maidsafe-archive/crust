@@ -46,7 +46,7 @@ macro_rules! expect_event {
 
 fn service_with_config(config: ConfigFile) -> (compat::Service, Receiver<Event>) {
     let (event_tx, event_rx) = crust_event_channel();
-    let sk = SecretId::new();
+    let sk = SecretKeys::new();
     let service = unwrap!(compat::Service::with_config(event_tx, config, sk));
     (service, event_rx)
 }
@@ -137,7 +137,7 @@ fn bootstrap_and_do_nothing(
     unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config2.write()).hard_coded_contacts =
         vec![PeerInfo::new(service1_addr, service1.public_id())];
-    let sk2 = SecretId::new();
+    let sk2 = SecretKeys::new();
     let mut service2 = unwrap!(compat::Service::with_config(
         event_tx2,
         config2,
@@ -300,7 +300,7 @@ mod bootstrap {
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config1.write()).hard_coded_contacts =
             vec![PeerInfo::new(addr0, service0.public_id())];
-        let sk1 = SecretId::new();
+        let sk1 = SecretKeys::new();
         let service1 = unwrap!(compat::Service::with_config(
             event_tx1,
             config1,
@@ -317,7 +317,7 @@ mod bootstrap {
 
         drop(service1);
         expect_event!(event_rx0, Event::LostPeer(id) => {
-            assert_eq!(&id, sk1.public_id());
+            assert_eq!(&id, sk1.public_keys());
         });
 
         expect_event!(event_rx1, Event::LostPeer(id) => {
@@ -410,7 +410,7 @@ mod bootstrap {
         dev_cfg.disable_external_reachability_requirement = true;
         unwrap!(config0.write()).dev = Some(dev_cfg);
         unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
-        let sk0 = SecretId::new();
+        let sk0 = SecretKeys::new();
         let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, sk0));
 
         unwrap!(service0.start_listening());

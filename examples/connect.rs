@@ -56,7 +56,7 @@ use crust::{ConfigFile, Service};
 use future_utils::bi_channel;
 use futures::future::{empty, Future};
 use futures::Stream;
-use safe_crypto::SecretId;
+use safe_crypto::SecretKeys;
 use tokio_core::reactor::Core;
 
 fn main() {
@@ -71,8 +71,8 @@ fn main() {
 
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
-    let service_sk = SecretId::new();
-    let service_pk = service_sk.public_id().clone();
+    let service_sk = SecretKeys::new();
+    let service_pk = service_sk.public_keys().clone();
     println!("Service public id: {:?}", service_pk);
 
     let config = unwrap!(ConfigFile::new_temporary());

@@ -44,7 +44,7 @@ impl ServiceDiscovery {
         config: &ConfigFile,
         current_addrs: &HashSet<PaAddr>,
         addrs_rx: UnboundedReceiver<HashSet<PaAddr>>,
-        our_pk: PublicId,
+        our_pk: PublicKeys,
     ) -> io::Result<ServiceDiscovery> {
         let port = config
             .read()

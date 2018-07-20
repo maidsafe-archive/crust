@@ -44,11 +44,11 @@ pub struct PrivConnectionInfo {
     #[doc(hidden)]
     pub p2p_conn_info: Option<P2pConnectionInfo>,
     #[doc(hidden)]
-    pub our_uid: PublicId,
+    pub our_uid: PublicKeys,
     #[doc(hidden)]
-    pub our_pk: PublicId,
+    pub our_pk: PublicKeys,
     #[doc(hidden)]
-    pub our_sk: SecretId,
+    pub our_sk: SecretKeys,
 }
 
 /// Contact info used to connect to another peer.
@@ -61,14 +61,14 @@ pub struct PubConnectionInfo {
     #[doc(hidden)]
     pub p2p_conn_info: Option<Vec<u8>>,
     #[doc(hidden)]
-    pub pub_key: PublicId,
+    pub pub_key: PublicKeys,
     #[doc(hidden)]
-    pub uid: PublicId,
+    pub uid: PublicKeys,
 }
 
 impl PubConnectionInfo {
     /// Returns the `UID` of the node that created this connection info.
-    pub fn id(&self) -> PublicId {
+    pub fn id(&self) -> PublicKeys {
         self.pub_key.clone()
     }
 }
@@ -104,8 +104,8 @@ mod tests {
 
             #[test]
             fn when_p2p_conn_info_is_none_it_sets_none_in_public_conn_info_too() {
-                let our_sk = SecretId::new();
-                let our_pk = our_sk.public_id().clone();
+                let our_sk = SecretKeys::new();
+                let our_pk = our_sk.public_keys().clone();
                 let our_uid = our_pk.clone();
                 let priv_conn_info = PrivConnectionInfo {
                     connection_id: 123,
@@ -130,8 +130,8 @@ mod tests {
                     rendezvous_channel,
                     connection_rx,
                 });
-                let our_sk = SecretId::new();
-                let our_pk = our_sk.public_id().clone();
+                let our_sk = SecretKeys::new();
+                let our_pk = our_sk.public_keys().clone();
                 let our_uid = our_pk.clone();
                 let priv_conn_info = PrivConnectionInfo {
                     connection_id: 123,

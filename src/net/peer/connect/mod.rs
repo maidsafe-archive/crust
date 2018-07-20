@@ -192,7 +192,7 @@ fn get_conn_info_and_connect<C>(
     our_connect_request: &ConnectRequest,
     config: &ConfigFile,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(PaStream, PublicId), SingleConnectionError>
+) -> BoxStream<(PaStream, PublicKeys), SingleConnectionError>
 where
     C: Stream<Item = PubConnectionInfo>,
     C: 'static,
@@ -245,7 +245,7 @@ fn attempt_to_connect(
     our_p2p_conn_info: Option<P2pConnectionInfo>,
     their_info: PubConnectionInfo,
     bootstrap_cache: &BootstrapCache,
-) -> BoxStream<(PaStream, PublicId), SingleConnectionError> {
+) -> BoxStream<(PaStream, PublicKeys), SingleConnectionError> {
     let direct_connections = {
         let handle = handle.clone();
         connect_directly(
@@ -282,7 +282,7 @@ fn finalize_connections(handle: &Handle, conns: BoxStream<PaStream, SingleConnec
 fn connect_directly(
     evloop_handle: &Handle,
     addrs: Vec<PaAddr>,
-    their_pk: PublicId,
+    their_pk: PublicKeys,
     config: &ConfigFile,
     bootstrap_cache: &BootstrapCache,
 ) -> BoxStream<PaStream, SingleConnectionError> {
@@ -320,7 +320,7 @@ fn connect_directly(
 fn handshake_incoming_connections(
     mut our_connect_request: ConnectRequest,
     conn_rx: UnboundedReceiver<ConnectMessage>,
-) -> BoxStream<(PaStream, PublicId), SingleConnectionError> {
+) -> BoxStream<(PaStream, PublicKeys), SingleConnectionError> {
     conn_rx
         .infallible::<SingleConnectionError>()
         .and_then(move |(stream, connect_request)| {
@@ -341,7 +341,7 @@ fn handshake_incoming_connections(
 fn handshake_outgoing_connections<S>(
     connections: S,
     our_connect_request: ConnectRequest,
-) -> BoxStream<(PaStream, PublicId), SingleConnectionError>
+) -> BoxStream<(PaStream, PublicKeys), SingleConnectionError>
 where
     S: Stream<Item = PaStream, Error = SingleConnectionError> + 'static,
 {
