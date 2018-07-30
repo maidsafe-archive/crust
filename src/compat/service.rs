@@ -23,6 +23,8 @@ use error::CrustError;
 use future_utils::{self, bi_channel, DropNotify};
 use futures::unsync::mpsc;
 use log::LogLevel;
+#[cfg(test)]
+use net::peer::DEFAULT_INACTIVITY_TIMEOUT;
 use net::{service_discovery, ServiceDiscovery};
 use priv_prelude::*;
 use std;
@@ -463,6 +465,17 @@ impl Service {
             }));
         unwrap!(done_rx.recv());
     }
+
+    #[cfg(test)]
+    pub fn set_peer_inactivity_timeout(&mut self, inactivity_timeout: Duration) {
+        let (done_tx, done_rx) = std::sync::mpsc::channel();
+        self.event_loop
+            .send(Box::new(move |state: &mut ServiceState| {
+                state.inactivity_timeout = inactivity_timeout;
+                unwrap!(done_tx.send(()));
+            }));
+        unwrap!(done_rx.recv());
+    }
 }
 
 pub struct ServiceState {
@@ -478,6 +491,8 @@ pub struct ServiceState {
 
     #[cfg(test)]
     disable_peer_heartbeats: bool,
+    #[cfg(test)]
+    inactivity_timeout: Duration,
 }
 
 impl ServiceState {
@@ -494,6 +509,8 @@ impl ServiceState {
             service_discovery_enabled: false,
             #[cfg(test)]
             disable_peer_heartbeats: false,
+            #[cfg(test)]
+            inactivity_timeout: DEFAULT_INACTIVITY_TIMEOUT,
         }
     }
 
@@ -508,12 +525,10 @@ impl ServiceState {
         let (their_ci_tx, mut their_ci_rx) = mpsc::unbounded();
         let f = {
             let handle = handle.clone();
-            self.service
-                .connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
-                    unwrap!(their_ci_tx.clone().unbounded_send(their_ci.uid.clone()));
-                    Ok(their_ci)
-                }))
-                .map_err(move |e| {
+            self.connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
+                unwrap!(their_ci_tx.clone().unbounded_send(their_ci.uid.clone()));
+                Ok(their_ci)
+            })).map_err(move |e| {
                     error!("connection failed: {}", e);
                 })
                 .and_then(move |peer| {
@@ -539,17 +554,46 @@ impl ServiceState {
         handle.spawn(f);
     }
 
+    fn connect<C>(&self, ci_channel: C) -> BoxFuture<Peer, CrustError>
+    where
+        C: Stream<Item = PubConnectionInfo>,
+        C: Sink<SinkItem = PubConnectionInfo>,
+        <C as Stream>::Error: fmt::Debug,
+        <C as Sink>::SinkError: fmt::Debug,
+        C: 'static,
+    {
+        let connector = self.service.connect(ci_channel);
+        #[cfg(test)]
+        {
+            let disable_heartbeats = self.disable_peer_heartbeats;
+            let inactivity_timeout = self.inactivity_timeout;
+            connector
+                .map(move |mut peer| {
+                    if disable_heartbeats {
+                        peer.disable_heartbeats();
+                    }
+                    peer.set_inactivity_timeout(inactivity_timeout);
+                    peer
+                })
+                .into_boxed()
+        }
+        #[cfg(not(test))]
+        connector
+    }
+
     /// Start bootstrap acceptor which yields `Peer`s.
     fn bootstrap_acceptor(&mut self) -> BoxStream<Peer, BootstrapAcceptError> {
         let acceptor = self.service.bootstrap_acceptor();
         #[cfg(test)]
         {
             let disable_heartbeats = self.disable_peer_heartbeats;
+            let inactivity_timeout = self.inactivity_timeout;
             acceptor
                 .map(move |mut peer| {
                     if disable_heartbeats {
                         peer.disable_heartbeats();
                     }
+                    peer.set_inactivity_timeout(inactivity_timeout);
                     peer
                 })
                 .into_boxed()
@@ -571,11 +615,13 @@ impl ServiceState {
         #[cfg(test)]
         {
             let disable_heartbeats = self.disable_peer_heartbeats;
+            let inactivity_timeout = self.inactivity_timeout;
             bootstrap_fut
                 .map(move |mut peer| {
                     if disable_heartbeats {
                         peer.disable_heartbeats();
                     }
+                    peer.set_inactivity_timeout(inactivity_timeout);
                     peer
                 })
                 .into_boxed()

@@ -26,6 +26,8 @@ use tokio_core::reactor::Core;
 use tokio_io;
 use util;
 
+const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
+
 fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service {
     let loop_handle = event_loop.handle();
     unwrap!(event_loop.run(Service::with_config(
@@ -342,8 +344,8 @@ fn exchange_data_between_two_peers() {
 
     let spawn_sending = |data, peer: Peer| {
         let (peer_sink, peer_stream) = peer.split();
-        let data_stream =
-            stream::iter_ok::<_, Void>(data).map_err(|_| PeerError::InactivityTimeout);
+        let data_stream = stream::iter_ok::<_, Void>(data)
+            .map_err(|_| PeerError::InactivityTimeout(Duration::new(0, 0)));
         let send_all = peer_sink.send_all(data_stream).then(|_| Ok(()));
         loop_handle.spawn(send_all);
         peer_stream
@@ -557,6 +559,8 @@ mod when_no_message_received_within_inactivity_period {
             service1_peer.disable_heartbeats();
             service2_peer.disable_heartbeats();
         }
+        service1_peer.set_inactivity_timeout(TEST_INACTIVITY_TIMEOUT);
+        service2_peer.set_inactivity_timeout(TEST_INACTIVITY_TIMEOUT);
 
         // make sure we poll both peers so both of them exchange heartbeats
         service1_peer
@@ -570,7 +574,7 @@ mod when_no_message_received_within_inactivity_period {
         let mut evloop = unwrap!(Core::new());
         let connect = connect_and_do_nothing(&mut evloop, tcp_addr!("127.0.0.1:0"), false);
         match evloop.run(connect) {
-            Err(PeerError::InactivityTimeout) => (),
+            Err(PeerError::InactivityTimeout(..)) => (),
             res => panic!("Unexpected result from peer: {:?}", res),
         }
     }
@@ -580,7 +584,7 @@ mod when_no_message_received_within_inactivity_period {
         let mut evloop = unwrap!(Core::new());
         let connect = connect_and_do_nothing(&mut evloop, utp_addr!("127.0.0.1:0"), false);
         match evloop.run(connect) {
-            Err(PeerError::InactivityTimeout) => (),
+            Err(PeerError::InactivityTimeout(..)) => (),
             res => panic!("Unexpected result from peer: {:?}", res),
         }
     }
