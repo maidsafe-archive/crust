@@ -189,7 +189,7 @@ fn handle_peer_rx(
     let cm2 = cm1.clone();
     peer_stream
         .map_err(move |e| {
-            if let CompatPeerError::Peer(PeerError::InactivityTimeout) = e {
+            if let CompatPeerError::Peer(PeerError::InactivityTimeout(..)) = e {
                 let _ = cm1.remove(&uid1);
                 let _ = event_tx1.send(Event::LostPeer(uid1.clone()));
             }
@@ -236,6 +236,7 @@ mod tests {
             if !heartbeats_enabled {
                 peer.disable_heartbeats();
             }
+            peer.set_inactivity_timeout(Duration::from_millis(900));
             CompatPeer::wrap_peer(&handle, peer, peer_uid.clone(), tcp_addr!("0.0.0.0:0"))
         }
 

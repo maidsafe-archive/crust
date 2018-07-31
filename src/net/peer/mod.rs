@@ -28,15 +28,8 @@ mod peer_message;
 
 use priv_prelude::*;
 
-#[cfg(any(not(test), feature = "netsim"))]
-pub const INACTIVITY_TIMEOUT_MS: u64 = 120_000;
-#[cfg(any(not(test), feature = "netsim"))]
-const HEARTBEAT_PERIOD_MS: u64 = 20_000;
-
-#[cfg(all(test, not(feature = "netsim")))]
-pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
-#[cfg(all(test, not(feature = "netsim")))]
-const HEARTBEAT_PERIOD_MS: u64 = 300;
+pub const DEFAULT_INACTIVITY_TIMEOUT: Duration = Duration::from_secs(120);
+pub const HEARTBEATS_PER_TIMEOUT: u32 = 5;
 
 /// A connection to a remote peer.
 ///
@@ -58,6 +51,10 @@ pub struct Peer {
     last_send_time: Instant,
     send_heartbeat_timeout: Timeout,
     recv_heartbeat_timeout: Timeout,
+    #[cfg(test)]
+    heartbeat_disabled: bool,
+    #[cfg(test)]
+    inactivity_timeout: Duration,
 }
 
 impl fmt::Debug for Peer {
@@ -108,9 +105,9 @@ quick_error! {
             from()
         }
         /// Peer was irresponsive.
-        InactivityTimeout {
+        InactivityTimeout(inactivity_timeout: Duration) {
             description("connection to peer timed out")
-            display("connection to peer timed out after {}s", INACTIVITY_TIMEOUT_MS / 1000)
+            display("connection to peer timed out after {}s", inactivity_timeout.as_secs())
         }
         /// Failure to encrypt message.
         Encrypt(e: EncryptionError) {
@@ -147,13 +144,14 @@ pub fn from_handshaken_stream(
         kind,
         last_send_time: now,
         send_heartbeat_timeout: Timeout::new_at(
-            now + Duration::from_millis(HEARTBEAT_PERIOD_MS),
+            now + DEFAULT_INACTIVITY_TIMEOUT / HEARTBEATS_PER_TIMEOUT,
             handle,
         ),
-        recv_heartbeat_timeout: Timeout::new_at(
-            now + Duration::from_millis(INACTIVITY_TIMEOUT_MS),
-            handle,
-        ),
+        recv_heartbeat_timeout: Timeout::new_at(now + DEFAULT_INACTIVITY_TIMEOUT, handle),
+        #[cfg(test)]
+        heartbeat_disabled: false,
+        #[cfg(test)]
+        inactivity_timeout: DEFAULT_INACTIVITY_TIMEOUT,
     }
 }
 
@@ -192,13 +190,39 @@ impl Peer {
     #[cfg(test)]
     /// Stop sending heartbeats. This will make `Peer` error eventually.
     pub fn disable_heartbeats(&mut self) {
+        self.heartbeat_disabled = true;
+    }
+
+    #[cfg(test)]
+    pub fn set_inactivity_timeout(&mut self, inactivity_timeout: Duration) {
+        let now = Instant::now();
+        self.inactivity_timeout = inactivity_timeout;
+        self.recv_heartbeat_timeout.reset(now + inactivity_timeout);
         self.send_heartbeat_timeout
-            .reset(Instant::now() + Duration::from_millis(INACTIVITY_TIMEOUT_MS + 100_000));
+            .reset(now + inactivity_timeout / HEARTBEATS_PER_TIMEOUT);
+    }
+
+    fn get_inactivity_timeout(&mut self) -> Duration {
+        #[cfg(test)]
+        let inactivity_timeout = self.inactivity_timeout;
+        #[cfg(not(test))]
+        let inactivity_timeout = DEFAULT_INACTIVITY_TIMEOUT;
+        inactivity_timeout
     }
 
     /// Poll heartbeat timer and send heartbeat if required.
     fn poll_heartbeat(&mut self) {
-        let heartbeat_period = Duration::from_millis(HEARTBEAT_PERIOD_MS);
+        #[cfg(test)]
+        let heartbeat_disabled = self.heartbeat_disabled;
+        #[cfg(not(test))]
+        let heartbeat_disabled = false;
+
+        if heartbeat_disabled {
+            return;
+        }
+
+        let inactivity_timeout = self.get_inactivity_timeout();
+        let heartbeat_period = inactivity_timeout / HEARTBEATS_PER_TIMEOUT;
         let now = Instant::now();
         while let Async::Ready(..) = self.send_heartbeat_timeout.poll().void_unwrap() {
             self.send_heartbeat_timeout
@@ -218,13 +242,14 @@ impl Stream for Peer {
 
     fn poll(&mut self) -> Result<Async<Option<BytesMut>>, PeerError> {
         self.poll_heartbeat();
+        let inactivity_timeout = self.get_inactivity_timeout();
         loop {
             match self.stream.poll() {
                 Err(e) => return Err(PeerError::from(e)),
                 Ok(Async::NotReady) => break,
                 Ok(Async::Ready(None)) => return Ok(Async::Ready(None)),
                 Ok(Async::Ready(Some(msg))) => {
-                    let instant = Instant::now() + Duration::from_millis(INACTIVITY_TIMEOUT_MS);
+                    let instant = Instant::now() + inactivity_timeout;
                     self.recv_heartbeat_timeout.reset(instant);
                     let msg: PeerMsg = match serialisation::deserialise(&msg) {
                         Ok(msg) => msg,
@@ -241,7 +266,7 @@ impl Stream for Peer {
         }
 
         if let Async::Ready(..) = self.recv_heartbeat_timeout.poll().void_unwrap() {
-            return Err(PeerError::InactivityTimeout);
+            return Err(PeerError::InactivityTimeout(inactivity_timeout));
         }
 
         Ok(Async::NotReady)

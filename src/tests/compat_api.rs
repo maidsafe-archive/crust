@@ -18,13 +18,14 @@
 use compat::{self, Event};
 use config::{DevConfigSettings, PeerInfo};
 use env_logger;
-use net::peer::INACTIVITY_TIMEOUT_MS;
 use priv_prelude::*;
 use rand;
 use std;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
 use util::{self, crust_event_channel};
+
+const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
 
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
@@ -126,6 +127,7 @@ fn bootstrap_and_do_nothing(
     if !heartbeats_enabled {
         service1.disable_peer_heartbeats();
     }
+    service1.set_peer_inactivity_timeout(TEST_INACTIVITY_TIMEOUT);
 
     unwrap!(service1.start_listening());
     let service1_addr = expect_event!(event_rx1, Event::ListenerStarted(addr) => addr);
@@ -143,6 +145,7 @@ fn bootstrap_and_do_nothing(
         config2,
         sk2.clone()
     ));
+    service2.set_peer_inactivity_timeout(TEST_INACTIVITY_TIMEOUT);
     if !heartbeats_enabled {
         service2.disable_peer_heartbeats();
     }
@@ -558,7 +561,7 @@ mod when_no_message_received_within_inactivity_period {
         let (event_rx1, event_rx2, _s1, _s2) =
             bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), false);
 
-        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        let timeout = TEST_INACTIVITY_TIMEOUT * 2;
         match event_rx1.recv_timeout(timeout) {
             Ok(Event::LostPeer(..)) => (),
             res => panic!("unexpected event: {:?}", res),
@@ -574,7 +577,7 @@ mod when_no_message_received_within_inactivity_period {
         let (event_rx1, event_rx2, _s1, _s2) =
             bootstrap_and_do_nothing(utp_addr!("0.0.0.0:0"), false);
 
-        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        let timeout = TEST_INACTIVITY_TIMEOUT * 2;
         match event_rx1.recv_timeout(timeout) {
             Ok(Event::LostPeer(..)) => (),
             res => panic!("unexpected event: {:?}", res),
@@ -590,7 +593,7 @@ mod when_no_message_received_within_inactivity_period {
         let (event_rx1, event_rx2, _s1, _s2) =
             bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), true);
 
-        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        let timeout = TEST_INACTIVITY_TIMEOUT * 2;
         match event_rx1.recv_timeout(timeout) {
             Err(RecvTimeoutError::Timeout) => (),
             res => panic!("unexpected event: {:?}", res),
@@ -606,7 +609,7 @@ mod when_no_message_received_within_inactivity_period {
         let (event_rx1, event_rx2, _s1, _s2) =
             bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), true);
 
-        let timeout = Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS);
+        let timeout = TEST_INACTIVITY_TIMEOUT * 2;
         match event_rx1.recv_timeout(timeout) {
             Err(RecvTimeoutError::Timeout) => (),
             res => panic!("unexpected event: {:?}", res),
