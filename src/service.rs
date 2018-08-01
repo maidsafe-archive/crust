@@ -385,7 +385,7 @@ mod tests {
             let l0 = {
                 listener0
                     .incoming()
-                    .with_timeout(Duration::from_secs(1), &handle)
+                    .with_timeout(Duration::from_secs(3), &handle)
                     .first_ok()
                     .map(|_stream| ())
                     .map_err(|e| panic!("didn't get a connection: {:?}", e))
@@ -393,7 +393,7 @@ mod tests {
             let l1 = {
                 listener1
                     .incoming()
-                    .with_timeout(Duration::from_secs(1), &handle)
+                    .with_timeout(Duration::from_secs(3), &handle)
                     .first_ok()
                     .map(|_stream| ())
                     .map_err(|e| panic!("didn't get a connection: {:?}", e))

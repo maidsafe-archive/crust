@@ -384,7 +384,7 @@ where
             netsim::node::ipv4::nat(nat, node_a)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
-            //.packet_loss(0.1, Duration::from_millis(20))
+                .packet_loss(0.1, Duration::from_millis(20))
         };
 
         let node_b = {
@@ -392,7 +392,7 @@ where
             netsim::node::ipv4::nat(nat, node_b)
                 .latency(Duration::from_millis(200), Duration::from_millis(20))
                 .hops(3)
-            //.packet_loss(0.1, Duration::from_millis(20))
+                .packet_loss(0.1, Duration::from_millis(20))
         };
 
         let router = netsim::node::ipv4::router((
