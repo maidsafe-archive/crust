@@ -23,6 +23,8 @@ use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use p2p::P2p;
 use priv_prelude::*;
 use rand::{self, Rng};
+use serde_json;
+use std::fs::File;
 
 pub const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 
@@ -74,6 +76,8 @@ impl Service {
         let bootstrap_cache = try_bfut!(make_bootstrap_cache(&config));
         let (listeners, socket_incoming) = Acceptor::new(&handle, p2p.clone(), our_sk.clone());
         let demux = Demux::new(&handle, socket_incoming, &bootstrap_cache);
+
+        try_bfut!(try_write_encryption_keys(&config, &our_sk.public_keys()));
 
         future::ok(Service {
             handle,
@@ -318,6 +322,19 @@ fn make_bootstrap_cache(config: &ConfigFile) -> Result<BootstrapCache, CrustErro
     let bootstrap_cache = BootstrapCache::new(cache_file).map_err(CrustError::ReadBootstrapCache)?;
     bootstrap_cache.read_file();
     Ok(bootstrap_cache)
+}
+
+/// If configured, output Crust encryption keys to some file.
+/// Then some external software can automatically pick those keys up and connect multiple Crust
+/// peers using hard coded contacts.
+fn try_write_encryption_keys(config: &ConfigFile, enc_keys: &PublicKeys) -> Result<(), CrustError> {
+    let keys_file = config.read().output_encryption_keys.clone();
+    if let Some(fname) = keys_file {
+        let file = File::create(fname.clone())?;
+        serde_json::to_writer(file, enc_keys).unwrap();
+        info!("Encryption keys written to '{:?}'", fname)
+    }
+    Ok(())
 }
 
 #[cfg(test)]
