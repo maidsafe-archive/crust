@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.30.1]
+- crate updated to reflect licence changes from GPL to MIT/BSD 
+
 ## [0.30.0]
 - Use rust 1.22.1 stable / 2017-11-23 nightly
 - rustfmt 0.9.0 and clippy-0.0.174
