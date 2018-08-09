@@ -104,7 +104,7 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
         let handle = handle.clone();
         let handle0 = handle.clone();
         let (socket, _listener) = try_bfut!(
-            UdpSocket::bind_reusable(bind_addr, &handle)
+            UdpSocket::bind_connect_reusable(bind_addr, &self.addr, &handle)
                 .and_then(|socket| UtpSocket::from_socket(socket, &handle))
                 .map_err(QueryError::Bind)
                 .map_err(|e| Box::new(e) as Box<Error>)
