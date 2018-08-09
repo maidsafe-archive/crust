@@ -340,6 +340,8 @@ pub struct ConfigSettings {
     /// This is a mechanism to prevent nodes from different decentralized
     /// networks to connect to each other (issue #209)
     pub network_name: Option<String>,
+    /// If set, write Crust encryption keys to this file. Default is None.
+    pub output_encryption_keys: Option<PathBuf>,
     /// Optional developer configuration
     pub dev: Option<DevConfigSettings>,
 }
@@ -367,6 +369,7 @@ impl Default for ConfigSettings {
             whitelisted_node_ips: None,
             whitelisted_client_ips: None,
             network_name: None,
+            output_encryption_keys: None,
             dev: None,
         }
     }
