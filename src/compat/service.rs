@@ -537,9 +537,9 @@ impl ServiceState {
                         })
                     }?;
                     let their_uid = peer.public_id().clone();
-                    let _ = event_tx1.send(Event::ConnectSuccess(their_uid.clone()));
-                    let peer = CompatPeer::wrap_peer(&handle, peer, their_uid, addr);
+                    let peer = CompatPeer::wrap_peer(&handle, peer, their_uid.clone(), addr);
                     let _ = cm.insert_peer(&handle, peer, addr);
+                    let _ = event_tx1.send(Event::ConnectSuccess(their_uid));
                     Ok(())
                 })
                 .or_else(move |_err| {
