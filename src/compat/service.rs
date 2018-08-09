@@ -21,7 +21,6 @@ use compat::{event_loop, CompatPeer, CrustEventSender};
 use compat::{ConnectionInfoResult, Event, Priority};
 use error::CrustError;
 use future_utils::{self, bi_channel, DropNotify};
-use futures::unsync::mpsc;
 use log::LogLevel;
 #[cfg(test)]
 use net::peer::DEFAULT_INACTIVITY_TIMEOUT;
@@ -522,11 +521,11 @@ impl ServiceState {
         let event_tx2 = event_tx1.clone();
         let cm = self.cm.clone();
         let handle = self.service.handle().clone();
-        let (their_ci_tx, mut their_ci_rx) = mpsc::unbounded();
+        let (their_ci_tx, their_ci_rx) = std::sync::mpsc::channel();
         let f = {
             let handle = handle.clone();
             self.connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
-                unwrap!(their_ci_tx.clone().unbounded_send(their_ci.uid.clone()));
+                unwrap!(their_ci_tx.send(their_ci.uid.clone()));
                 Ok(their_ci)
             })).map_err(move |e| {
                     error!("connection failed: {}", e);
@@ -545,7 +544,7 @@ impl ServiceState {
                 })
                 .or_else(move |_err| {
                     // if we know ID of the peer we were trying to connect with
-                    if let Ok(Async::Ready(Some(peer_uid))) = their_ci_rx.poll() {
+                    if let Ok(peer_uid) = their_ci_rx.try_recv() {
                         let _ = event_tx2.send(Event::ConnectFailure(peer_uid.clone()));
                     }
                     Ok(())
