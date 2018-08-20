@@ -63,7 +63,8 @@ impl<UID: Uid> Connect<UID> {
 
         let state = Rc::new(RefCell::new(Self {
             token,
-            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
+            timeout: core
+                .set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
             cm,
             our_nh,
             our_id: our_ci.id,

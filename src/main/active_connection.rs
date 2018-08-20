@@ -273,8 +273,7 @@ impl Heartbeat {
                 .map(|t| {
                     self.send_timeout = t;
                     HeartbeatAction::Send
-                })
-                .unwrap_or_else(|e| {
+                }).unwrap_or_else(|e| {
                     debug!("Failed to reschedule heartbeat send timer: {:?}", e);
                     HeartbeatAction::Terminate
                 })

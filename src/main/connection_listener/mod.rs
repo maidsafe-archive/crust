@@ -70,8 +70,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                             } else {
                                 None
                             }
-                        })
-                        .collect();
+                        }).collect();
                     mapped_addrs.extend(global_addrs);
                 }
                 if let Err(e) = Self::handle_mapped_socket(

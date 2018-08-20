@@ -12,25 +12,54 @@
 // For explanation of lint checks, run `rustc -W help` or see
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
 #![forbid(
-    exceeding_bitshifts, mutable_transmutes, no_mangle_const_items, unknown_crate_types, warnings
+    exceeding_bitshifts,
+    mutable_transmutes,
+    no_mangle_const_items,
+    unknown_crate_types,
+    warnings
 )]
 #![deny(
-    bad_style, deprecated, improper_ctypes, missing_docs, non_shorthand_field_patterns,
-    overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
-    stable_features, unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
-    unused_attributes, unused_comparisons, unused_features, unused_parens, while_true
+    bad_style,
+    deprecated,
+    improper_ctypes,
+    missing_docs,
+    non_shorthand_field_patterns,
+    overflowing_literals,
+    plugin_as_library,
+    private_no_mangle_fns,
+    private_no_mangle_statics,
+    stable_features,
+    unconditional_recursion,
+    unknown_lints,
+    unsafe_code,
+    unused,
+    unused_allocation,
+    unused_attributes,
+    unused_comparisons,
+    unused_features,
+    unused_parens,
+    while_true
 )]
 #![warn(
-    trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
-    unused_qualifications, unused_results
+    trivial_casts,
+    trivial_numeric_casts,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results
 )]
 #![allow(
-    box_pointers, missing_copy_implementations, missing_debug_implementations,
+    box_pointers,
+    missing_copy_implementations,
+    missing_debug_implementations,
     variant_size_differences
 )]
 // FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
 // on code in the master branch
-#![cfg_attr(feature = "cargo-clippy", allow(clone_on_ref_ptr, needless_pass_by_value))]
+#![cfg_attr(
+    feature = "cargo-clippy",
+    allow(clone_on_ref_ptr, needless_pass_by_value)
+)]
 
 #[macro_use]
 extern crate log;
@@ -205,15 +234,13 @@ fn main() {
         .about(
             "The crust peer will run, using any config file it can find to \
              try and bootstrap off any provided peers.",
-        )
-        .arg(
+        ).arg(
             Arg::with_name("discovery-port")
                 .long("discovery-port")
                 .value_name("PORT")
                 .help("Set the port for local network service discovery")
                 .takes_value(true),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("speed")
                 .short("s")
                 .long("speed")
@@ -221,10 +248,8 @@ fn main() {
                 .help(
                     "Keep sending random data at a maximum speed of RATE bytes/second to the \
                      first connected peer.",
-                )
-                .takes_value(true),
-        )
-        .get_matches();
+                ).takes_value(true),
+        ).get_matches();
 
     // Construct Service and start listening
     let (channel_sender, channel_receiver) = channel();
@@ -289,10 +314,10 @@ fn main() {
                                 println!(
                                     "\nReceived from {:?} message: {}",
                                     peer_id,
-                                    String::from_utf8(bytes)
-                                        .unwrap_or_else(|_| {
-                                            format!("non-UTF-8 message of {} bytes", message_length)
-                                        })
+                                    String::from_utf8(bytes).unwrap_or_else(|_| format!(
+                                        "non-UTF-8 message of {} bytes",
+                                        message_length
+                                    ))
                                 );
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
@@ -525,8 +550,7 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
         .setting(AppSettings::NoBinaryName)
         .subcommand(
             SubCommand::with_name("prepare-connection-info").about("Prepare a connection info"),
-        )
-        .subcommand(
+        ).subcommand(
             SubCommand::with_name("connect")
                 .about("Initiate a connection to the remote peer")
                 .arg(
@@ -534,15 +558,13 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .help("The ID of the connection info we gave to the peer")
                         .required(true)
                         .index(1),
-                )
-                .arg(
+                ).arg(
                     Arg::with_name("their-info")
                         .help("The connection info received from the peer")
                         .required(true)
                         .index(2),
                 ),
-        )
-        .subcommand(
+        ).subcommand(
             SubCommand::with_name("send")
                 .about("Send a string to the given peer")
                 .arg(
@@ -550,15 +572,13 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .help("ID of a connection as listed using the `list` command")
                         .required(true)
                         .index(1),
-                )
-                .arg(
+                ).arg(
                     Arg::with_name("message")
                         .help("The text to send to the peer(s)")
                         .required(true)
                         .index(2),
                 ),
-        )
-        .subcommand(
+        ).subcommand(
             SubCommand::with_name("send-all")
                 .about("Send a string to all connections")
                 .arg(
@@ -567,11 +587,9 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .required(true)
                         .index(1),
                 ),
-        )
-        .subcommand(
+        ).subcommand(
             SubCommand::with_name("list").about("List existing connections and UDP sockets"),
-        )
-        .subcommand(SubCommand::with_name("stop").about("Exit the app"))
+        ).subcommand(SubCommand::with_name("stop").about("Exit the app"))
         .subcommand(SubCommand::with_name("help").about("Print this help"));
     let mut help_message = Vec::new();
     unwrap!(app.write_help(&mut help_message));
