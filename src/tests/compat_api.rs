@@ -65,8 +65,8 @@ fn exchange_messages(
     event_rx1: &Receiver<Event>,
     kind1: CrustUser,
 ) {
-    let uid0 = service0.public_id();
-    let uid1 = service1.public_id();
+    let uid0 = unwrap!(service0.public_id());
+    let uid1 = unwrap!(service1.public_id());
 
     let msg0 = b"hello from service0";
     let msg1 = b"hello from service1";
@@ -91,8 +91,8 @@ fn bootstrap_and_exchange(
     event_rx1: &Receiver<Event>,
     kind1: CrustUser,
 ) {
-    let uid0 = service0.public_id();
-    let uid1 = service1.public_id();
+    let uid0 = unwrap!(service0.public_id());
+    let uid1 = unwrap!(service1.public_id());
 
     unwrap!(service1.start_bootstrap(HashSet::new(), kind1));
 
@@ -138,7 +138,7 @@ fn bootstrap_and_do_nothing(
     let config2 = unwrap!(ConfigFile::new_temporary());
     unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config2.write()).hard_coded_contacts =
-        vec![PeerInfo::new(service1_addr, service1.public_id())];
+        vec![PeerInfo::new(service1_addr, unwrap!(service1.public_id()))];
     let sk2 = SecretKeys::new();
     let mut service2 = unwrap!(compat::Service::with_config(
         event_tx2,
@@ -179,8 +179,8 @@ fn start_two_services_exchange_data() {
     // other issues.
     const MAX_DATA_SIZE: usize = 512;
 
-    let uid0 = service0.public_id();
-    let uid1 = service1.public_id();
+    let uid0 = unwrap!(service0.public_id());
+    let uid1 = unwrap!(service1.public_id());
 
     let data0 = (0..NUM_MESSAGES)
         .map(|_| util::random_vec(MAX_DATA_SIZE))
@@ -197,7 +197,7 @@ fn start_two_services_exchange_data() {
 
     let j0 = thread::spawn(move || {
         let token = rand::random();
-        service0.prepare_connection_info(token);
+        unwrap!(service0.prepare_connection_info(token));
         let ci0 = expect_event!(event_rx0, Event::ConnectionInfoPrepared(res) => {
             assert_eq!(res.result_token, token);
             unwrap!(res.result)
@@ -237,7 +237,7 @@ fn start_two_services_exchange_data() {
     });
     let j1 = thread::spawn(move || {
         let token = rand::random();
-        service1.prepare_connection_info(token);
+        unwrap!(service1.prepare_connection_info(token));
         let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
             assert_eq!(res.result_token, token);
             unwrap!(res.result)
@@ -302,7 +302,7 @@ mod bootstrap {
         let config1 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config1.write()).hard_coded_contacts =
-            vec![PeerInfo::new(addr0, service0.public_id())];
+            vec![PeerInfo::new(addr0, unwrap!(service0.public_id()))];
         let sk1 = SecretKeys::new();
         let service1 = unwrap!(compat::Service::with_config(
             event_tx1,
@@ -324,7 +324,7 @@ mod bootstrap {
         });
 
         expect_event!(event_rx1, Event::LostPeer(id) => {
-            assert_eq!(id, service0.public_id());
+            assert_eq!(id, unwrap!(service0.public_id()));
         });
     }
 
@@ -349,11 +349,11 @@ mod bootstrap {
         let _port0 = expect_event!(event_rx0, Event::ListenerStarted(port0) => port0);
 
         unwrap!(service0.set_accept_bootstrap(true));
-        service0.start_service_discovery();
-        service0.set_service_discovery_listen(true);
+        unwrap!(service0.start_service_discovery());
+        unwrap!(service0.set_service_discovery_listen(true));
 
         let (service1, event_rx1) = service();
-        service1.start_service_discovery();
+        unwrap!(service1.start_service_discovery());
         bootstrap_and_exchange(
             &service0,
             &service1,
@@ -387,7 +387,7 @@ mod bootstrap {
             listeners.push(listener);
         }
 
-        addresses.push(PeerInfo::new(valid_address, service0.public_id()));
+        addresses.push(PeerInfo::new(valid_address, unwrap!(service0.public_id())));
 
         let config1 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
@@ -425,7 +425,7 @@ mod bootstrap {
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config1.write()).hard_coded_contacts = vec![PeerInfo::new(
             addr0.unspecified_to_localhost(),
-            service0.public_id(),
+            unwrap!(service0.public_id()),
         )];
         let (service1, event_rx1) = service_with_config(config1);
 
@@ -460,13 +460,13 @@ mod bootstrap {
         let config1 = unwrap!(ConfigFile::new_temporary());
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config1.write()).hard_coded_contacts = vec![
-            PeerInfo::new(valid_addr, service0.public_id()),
+            PeerInfo::new(valid_addr, unwrap!(service0.public_id())),
             PeerInfo::with_rand_key(blacklisted_addr),
         ];
         let (service1, event_rx1) = service_with_config(config1);
 
-        let uid0 = service0.public_id();
-        let uid1 = service1.public_id();
+        let uid0 = unwrap!(service0.public_id());
+        let uid1 = unwrap!(service1.public_id());
 
         unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
 
@@ -625,7 +625,7 @@ mod when_no_message_received_within_inactivity_period {
 fn dropping_tcp_service_makes_remote_peer_receive_lost_peer_event() {
     let (_event_rx1, event_rx2, service1, _service2) =
         bootstrap_and_do_nothing(tcp_addr!("0.0.0.0:0"), true);
-    let service2_peer_id = service1.public_id();
+    let service2_peer_id = unwrap!(service1.public_id());
 
     drop(service1);
 
@@ -638,7 +638,7 @@ fn dropping_tcp_service_makes_remote_peer_receive_lost_peer_event() {
 fn dropping_utp_service_makes_remote_peer_receive_lost_peer_event() {
     let (_event_rx1, event_rx2, service1, _service2) =
         bootstrap_and_do_nothing(utp_addr!("0.0.0.0:0"), true);
-    let service2_peer_id = service1.public_id();
+    let service2_peer_id = unwrap!(service1.public_id());
 
     drop(service1);
 

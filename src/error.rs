@@ -57,6 +57,10 @@ quick_error! {
             description("error raised on a compat peer")
             display("error raised on a compat peer: {}", s)
         }
+        /// Error receiving data from compatibility layer event loop because it has died.
+        CompatEventLoopDied {
+            display("Crust compatibility layer event loop died/was destroyed.")
+        }
         /// Error starting config file watcher.
         ConfigFileWatcher(e: notify::Error) {
             description("error starting config file watcher")

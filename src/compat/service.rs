@@ -86,21 +86,21 @@ impl Service {
                     Ok(())
                 })
             })
-        }));
+        }))?;
         Ok(Service { event_loop })
     }
 
     /// Enables service discovery during bootstrapping.
-    pub fn start_service_discovery(&self) {
+    pub fn start_service_discovery(&self) -> Result<(), CrustError> {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 state.service_discovery_enabled = true;
-            }));
+            }))
     }
 
     /// Depending on given argument either starts *Crust* peer discovery on LAN (via UDP broadcast)
     /// or stops it.
-    pub fn set_service_discovery_listen(&self, listen: bool) {
+    pub fn set_service_discovery_listen(&self, listen: bool) -> Result<(), CrustError> {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 if !listen {
@@ -116,7 +116,7 @@ impl Service {
                     }
                 };
                 state.service_discovery = Some(sd);
-            }));
+            }))
     }
 
     /// Depending on given argument either starts *Crust* bootstrap acceptor or stops it.
@@ -169,8 +169,7 @@ impl Service {
                 } else {
                     let _ = state.bootstrap_acceptor.take();
                 }
-            }));
-        Ok(())
+            }))
     }
 
     /// Fetches given peer socket address.
@@ -180,9 +179,9 @@ impl Service {
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
-                unwrap!(tx.send(state.cm.peer_addr(&peer_uid)));
-            }));
-        unwrap!(rx.recv())
+                let _ = tx.send(state.cm.peer_addr(&peer_uid));
+            }))?;
+        rx.recv().unwrap_or(Err(CrustError::CompatEventLoopDied))
     }
 
     /// Same as `get_peer_socket_addr()`, but it returns IP address instead.
@@ -195,7 +194,8 @@ impl Service {
     pub fn is_peer_hard_coded(&self, peer_uid: &PublicKeys) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop
+        let cmd_sent = self
+            .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let config = state.service.config();
                 let res = {
@@ -211,9 +211,10 @@ impl Service {
                         })
                         .unwrap_or(false)
                 };
-                unwrap!(tx.send(res));
-            }));
-        unwrap!(rx.recv())
+                let _ = tx.send(res);
+            }))
+            .is_ok();
+        cmd_sent && rx.recv().unwrap_or(false)
     }
 
     /// Asynchronously starts bootstrapping to the network.
@@ -262,8 +263,7 @@ impl Service {
                         .map(|_| ())
                 };
                 state.service.handle().spawn(f);
-            }));
-        Ok(())
+            }))
     }
 
     /// Cancels the bootstrap process.
@@ -271,8 +271,7 @@ impl Service {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let _ = state.bootstrap_connect.take();
-            }));
-        Ok(())
+            }))
     }
 
     /// Asynchronously starts listening for incoming connections.
@@ -303,8 +302,7 @@ impl Service {
                         .map(|_unit_opt| ())
                 };
                 state.service.handle().spawn(f)
-            }));
-        Ok(())
+            }))
     }
 
     /// Stops direct connection listener.
@@ -312,13 +310,12 @@ impl Service {
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let _ = state.listeners.take();
-            }));
-        Ok(())
+            }))
     }
 
     /// Fires event to start connection info preparation.
     /// Another event will be fired to `event_tx` to notify that info is ready.
-    pub fn prepare_connection_info(&self, result_token: u32) {
+    pub fn prepare_connection_info(&self, result_token: u32) -> Result<(), CrustError> {
         let (ci_channel1, ci_channel2) = bi_channel::unbounded();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
@@ -350,7 +347,7 @@ impl Service {
                         Ok(())
                     });
                 state.service.handle().spawn(f);
-            }));
+            }))
     }
 
     /// Connect to a peer. To call this method you must follow these steps:
@@ -369,19 +366,20 @@ impl Service {
                 if let Some(ci_chann) = state.cm.get_ci_channel(our_ci.connection_id) {
                     let _ = ci_chann.unbounded_send(their_ci);
                 }
-            }));
-        Ok(())
+            }))
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_uid: &PublicKeys) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop
+        let cmd_sent = self
+            .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
-                unwrap!(tx.send(state.cm.remove(&peer_uid)));
-            }));
-        unwrap!(rx.recv())
+                let _ = tx.send(state.cm.remove(&peer_uid));
+            }))
+            .is_ok();
+        cmd_sent && rx.recv().unwrap_or(false)
     }
 
     /// Send data to a peer.
@@ -395,37 +393,40 @@ impl Service {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
-                unwrap!(tx.send(state.cm.send(&peer_uid, msg, priority)));
-            }));
-        unwrap!(rx.recv())
+                let _ = tx.send(state.cm.send(&peer_uid, msg, priority));
+            }))?;
+        rx.recv().unwrap_or(Err(CrustError::CompatEventLoopDied))
     }
 
     /// Check if we are connected to the given peer
     pub fn is_connected(&self, peer_uid: &PublicKeys) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop
+        let cmd_sent = self
+            .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
-                unwrap!(tx.send(state.cm.contains_peer(&peer_uid)));
-            }));
-        unwrap!(rx.recv())
+                let _ = tx.send(state.cm.contains_peer(&peer_uid));
+            }))
+            .is_ok();
+        cmd_sent && rx.recv().unwrap_or(false)
     }
 
     /// Returns our ID.
-    pub fn public_id(&self) -> PublicKeys {
+    pub fn public_id(&self) -> Result<PublicKeys, CrustError> {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let our_uid = state.service.public_id();
-                unwrap!(tx.send(our_uid));
-            }));
-        unwrap!(rx.recv())
+                let _ = tx.send(our_uid);
+            }))?;
+        rx.recv().map_err(|_e| CrustError::CompatEventLoopDied)
     }
 
     /// Checks if there are other crust on our LAN.
     pub fn has_peers_on_lan(&self) -> bool {
         let (tx, rx) = std::sync::mpsc::channel();
-        self.event_loop
+        let cmd_sent = self
+            .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let handle = state.service.handle();
                 let config = state.service.config();
@@ -450,29 +451,34 @@ impl Service {
                         })
                 };
                 handle.spawn(f);
-            }));
-        unwrap!(rx.recv())
+            }))
+            .is_ok();
+        cmd_sent && rx.recv().unwrap_or(false)
     }
 
     #[cfg(test)]
     pub fn disable_peer_heartbeats(&mut self) {
         let (done_tx, done_rx) = std::sync::mpsc::channel();
-        self.event_loop
-            .send(Box::new(move |state: &mut ServiceState| {
-                state.disable_peer_heartbeats = true;
-                unwrap!(done_tx.send(()));
-            }));
+        unwrap!(
+            self.event_loop
+                .send(Box::new(move |state: &mut ServiceState| {
+                    state.disable_peer_heartbeats = true;
+                    let _ = done_tx.send(());
+                }))
+        );
         unwrap!(done_rx.recv());
     }
 
     #[cfg(test)]
     pub fn set_peer_inactivity_timeout(&mut self, inactivity_timeout: Duration) {
         let (done_tx, done_rx) = std::sync::mpsc::channel();
-        self.event_loop
-            .send(Box::new(move |state: &mut ServiceState| {
-                state.inactivity_timeout = inactivity_timeout;
-                unwrap!(done_tx.send(()));
-            }));
+        unwrap!(
+            self.event_loop
+                .send(Box::new(move |state: &mut ServiceState| {
+                    state.inactivity_timeout = inactivity_timeout;
+                    let _ = done_tx.send(());
+                }))
+        );
         unwrap!(done_rx.recv());
     }
 }
