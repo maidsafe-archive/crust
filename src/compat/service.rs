@@ -525,7 +525,7 @@ impl ServiceState {
         let f = {
             let handle = handle.clone();
             self.connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
-                unwrap!(their_ci_tx.send(their_ci.uid.clone()));
+                let _ = their_ci_tx.send(their_ci.uid.clone());
                 Ok(their_ci)
             })).map_err(move |e| {
                     error!("connection failed: {}", e);
