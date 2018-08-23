@@ -51,20 +51,22 @@ quick_error! {
 /// Try to bootstrap to the network.
 ///
 /// On success, returns the first peer that we've bootstrapped to.
+#[cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
 pub fn bootstrap(
     handle: &Handle,
     request: BootstrapRequest,
     blacklist: HashSet<PaAddr>,
     use_service_discovery: bool,
     config: &ConfigFile,
-    our_sk: &SecretKeys,
+    our_sk: &SecretEncryptKey,
+    our_pk: &PublicEncryptKey,
     cache: &Cache,
 ) -> BoxFuture<Peer, BootstrapError> {
     let config = config.clone();
     let cache = cache.clone();
 
     let sd_peers = if use_service_discovery {
-        discover_peers_on_lan(handle, &config, &our_sk)
+        discover_peers_on_lan(handle, &config, our_sk, our_pk)
     } else {
         future::ok(stream::empty().into_boxed()).into_boxed()
     };
@@ -95,16 +97,16 @@ pub fn bootstrap(
 fn discover_peers_on_lan(
     handle: &Handle,
     config: &ConfigFile,
-    our_sk: &SecretKeys,
+    our_sk: &SecretEncryptKey,
+    our_pk: &PublicEncryptKey,
 ) -> BoxFuture<BoxStream<PeerInfo, (PaAddr, TryPeerError)>, BootstrapError> {
     let handle = handle.clone();
-    let our_sk = our_sk.clone();
     let sd_port = config
         .read()
         .service_discovery_port
         .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
 
-    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_sk.clone())
+    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_sk.clone(), our_pk.clone())
         .map_err(BootstrapError::ServiceDiscovery)
         .map(move |s| {
             s.map(|(_, v)| stream::iter_ok(v))

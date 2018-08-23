@@ -47,8 +47,10 @@ macro_rules! expect_event {
 
 fn service_with_config(config: ConfigFile) -> (compat::Service, Receiver<Event>) {
     let (event_tx, event_rx) = crust_event_channel();
-    let sk = SecretKeys::new();
-    let service = unwrap!(compat::Service::with_config(event_tx, config, sk));
+    let (our_pk, our_sk) = gen_encrypt_keypair();
+    let service = unwrap!(compat::Service::with_config(
+        event_tx, config, our_sk, our_pk
+    ));
     (service, event_rx)
 }
 
@@ -139,12 +141,8 @@ fn bootstrap_and_do_nothing(
     unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
     unwrap!(config2.write()).hard_coded_contacts =
         vec![PeerInfo::new(service1_addr, unwrap!(service1.public_id()))];
-    let sk2 = SecretKeys::new();
-    let mut service2 = unwrap!(compat::Service::with_config(
-        event_tx2,
-        config2,
-        sk2.clone()
-    ));
+    let (pk2, sk2) = gen_encrypt_keypair();
+    let mut service2 = unwrap!(compat::Service::with_config(event_tx2, config2, sk2, pk2,));
     service2.set_peer_inactivity_timeout(TEST_INACTIVITY_TIMEOUT);
     if !heartbeats_enabled {
         service2.disable_peer_heartbeats();
@@ -301,11 +299,12 @@ mod bootstrap {
         unwrap!(config1.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config1.write()).hard_coded_contacts =
             vec![PeerInfo::new(addr0, unwrap!(service0.public_id()))];
-        let sk1 = SecretKeys::new();
+        let (pk1, sk1) = gen_encrypt_keypair();
         let service1 = unwrap!(compat::Service::with_config(
             event_tx1,
             config1,
-            sk1.clone()
+            sk1,
+            pk1.clone(),
         ));
 
         bootstrap_and_exchange(
@@ -318,7 +317,7 @@ mod bootstrap {
 
         drop(service1);
         expect_event!(event_rx0, Event::LostPeer(id) => {
-            assert_eq!(&id, sk1.public_keys());
+            assert_eq!(&id, &pk1);
         });
 
         expect_event!(event_rx1, Event::LostPeer(id) => {
@@ -411,8 +410,8 @@ mod bootstrap {
         dev_cfg.disable_external_reachability_requirement = true;
         unwrap!(config0.write()).dev = Some(dev_cfg);
         unwrap!(config0.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
-        let sk0 = SecretKeys::new();
-        let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, sk0));
+        let (pk0, sk0) = gen_encrypt_keypair();
+        let service0 = unwrap!(compat::Service::with_config(event_tx0, config0, sk0, pk0));
 
         unwrap!(service0.start_listening());
         let addr0 = expect_event!(event_rx0, Event::ListenerStarted(addr0) => addr0);

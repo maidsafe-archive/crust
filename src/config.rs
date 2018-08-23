@@ -291,20 +291,19 @@ pub struct PeerInfo {
     /// Peer public address.
     pub addr: PaAddr,
     /// Peer public key.
-    pub pub_key: PublicKeys,
+    pub pub_key: PublicEncryptKey,
 }
 
 impl PeerInfo {
     /// Constructs peer info.
-    pub fn new(addr: PaAddr, pub_key: PublicKeys) -> Self {
+    pub fn new(addr: PaAddr, pub_key: PublicEncryptKey) -> Self {
         Self { addr, pub_key }
     }
 
     /// Constructs peer info with random generated public key.
     /// This is temporary method until peer public keys are implemented in all necessary places.
     pub fn with_rand_key(addr: PaAddr) -> Self {
-        let sk = SecretKeys::new();
-        let pk = sk.public_keys().clone();
+        let (pk, _) = gen_encrypt_keypair();
         Self::new(addr, pk)
     }
 }

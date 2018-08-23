@@ -30,7 +30,7 @@ pub struct ConnectionMap {
 }
 
 struct Inner {
-    map: HashMap<PublicKeys, PeerWrapper>,
+    map: HashMap<PublicEncryptKey, PeerWrapper>,
     ci_channel: HashMap<u64, UnboundedBiChannel<PubConnectionInfo>>,
     event_tx: CrustEventSender,
 }
@@ -91,7 +91,7 @@ impl ConnectionMap {
     /// If peer is not found in the hashmap, error is returned.
     pub fn send(
         &self,
-        uid: &PublicKeys,
+        uid: &PublicEncryptKey,
         msg: Vec<u8>,
         priority: Priority,
     ) -> Result<(), CrustError> {
@@ -113,7 +113,7 @@ impl ConnectionMap {
     }
 
     /// Returns peer socket address or error, if peer is not found.
-    pub fn peer_addr(&self, uid: &PublicKeys) -> Result<PaAddr, CrustError> {
+    pub fn peer_addr(&self, uid: &PublicEncryptKey) -> Result<PaAddr, CrustError> {
         let inner = unwrap!(self.inner.lock());
         inner
             .map
@@ -123,13 +123,13 @@ impl ConnectionMap {
     }
 
     /// Remove peer from the hashmap by id.
-    pub fn remove(&self, uid: &PublicKeys) -> bool {
+    pub fn remove(&self, uid: &PublicEncryptKey) -> bool {
         let mut inner = unwrap!(self.inner.lock());
         inner.map.remove(uid).is_some()
     }
 
     /// Checks if peer with given id exists in the hashmap.
-    pub fn contains_peer(&self, uid: &PublicKeys) -> bool {
+    pub fn contains_peer(&self, uid: &PublicEncryptKey) -> bool {
         let inner = unwrap!(self.inner.lock());
         inner.map.contains_key(uid)
     }
@@ -174,7 +174,7 @@ impl ConnectionMap {
 /// Wait for incoming peer data and transform it to appropriate compatibility layer events.
 fn handle_peer_rx(
     peer_stream: SplitStream<CompatPeer>,
-    uid: &PublicKeys,
+    uid: &PublicEncryptKey,
     event_tx: &CrustEventSender,
     drop_rx: DropNotice,
     kind: CrustUser,
@@ -219,8 +219,8 @@ mod tests {
 
         /// Constructs peer with in-memory stream for testing.
         fn echo_peer(handle: &Handle, heartbeats_enabled: bool) -> CompatPeer {
-            let our_sk = SecretKeys::new();
-            let peer_uid = SecretKeys::new().public_keys().clone();
+            let (_, our_sk) = gen_encrypt_keypair();
+            let (peer_uid, _) = gen_encrypt_keypair();
             let shared_secret = our_sk.shared_secret(&peer_uid);
             let mem_stream = Framed::new(memstream::EchoStream::default());
             let fake_stream = PaStream::from_framed_mem_stream(mem_stream, shared_secret);

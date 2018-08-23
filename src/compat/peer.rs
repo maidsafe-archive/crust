@@ -59,7 +59,7 @@ pub struct Inner {
     write_tx: UnboundedSender<TaskMsg>,
     peer_addr: PaAddr,
     kind: CrustUser,
-    uid: PublicKeys,
+    uid: PublicEncryptKey,
 }
 
 enum TaskMsg<T = Peer>
@@ -92,7 +92,7 @@ impl CompatPeer {
     }
 
     /// Get the peer's uid
-    pub fn public_id(&self) -> PublicKeys {
+    pub fn public_id(&self) -> PublicEncryptKey {
         unwrap!(self.inner.as_ref()).uid.clone()
     }
 
@@ -100,7 +100,7 @@ impl CompatPeer {
     pub fn wrap_peer(
         handle: &Handle,
         peer: Peer,
-        uid: PublicKeys,
+        uid: PublicEncryptKey,
         peer_addr: PaAddr,
     ) -> CompatPeer {
         let kind = peer.kind();
@@ -341,12 +341,15 @@ mod test {
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
             let config = unwrap!(ConfigFile::new_temporary());
-            let listener_sk = SecretKeys::new();
-            let listener_pk = listener_sk.public_keys().clone();
-            let client_sk = SecretKeys::new();
-            let client_pk = client_sk.public_keys().clone();
+            let (listener_pk, listener_sk) = gen_encrypt_keypair();
+            let (client_pk, _client_sk) = gen_encrypt_keypair();
 
-            let listener = unwrap!(PaListener::bind(&bind_addr, &handle, listener_sk,));
+            let listener = unwrap!(PaListener::bind(
+                &bind_addr,
+                &handle,
+                listener_sk,
+                listener_pk.clone()
+            ));
             let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
             let num_msgs = 1000;
@@ -433,10 +436,14 @@ mod test {
                 let handle = evloop.handle();
 
                 let config = unwrap!(ConfigFile::new_temporary());
-                let listener_sk = SecretKeys::new();
-                let listener_pk = listener_sk.public_keys().clone();
+                let (listener_pk, listener_sk) = gen_encrypt_keypair();
                 let addr = PaAddr::Tcp(addr!("0.0.0.0:0"));
-                let listener = unwrap!(PaListener::bind(&addr, &handle, listener_sk));
+                let listener = unwrap!(PaListener::bind(
+                    &addr,
+                    &handle,
+                    listener_sk,
+                    listener_pk.clone()
+                ));
                 let stream = unwrap!(evloop.run(PaStream::direct_connect(
                     &handle,
                     &unwrap!(listener.local_addr()).unspecified_to_localhost(),

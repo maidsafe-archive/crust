@@ -32,7 +32,7 @@ mod stream;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ListenerMsg {
-    client_pk: PublicKeys,
+    client_pk: PublicEncryptKey,
     kind: ListenerMsgKind,
 }
 

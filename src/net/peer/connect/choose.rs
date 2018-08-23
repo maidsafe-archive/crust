@@ -17,29 +17,29 @@ use net::peer;
 use priv_prelude::*;
 
 /// When "choose connection" message is received, this data is given.
-type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicKeys)>;
+type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicEncryptKey)>;
 
 /// Future that ensures that both peers select the same connection.
 /// Takes all pending handshaken connections and chooses the first one successful.
 /// Depending on service id either initiates connection choice message or waits for one.
 pub struct ChooseOneConnection<S>
 where
-    S: Stream<Item = (PaStream, PublicKeys), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (PaStream, PublicEncryptKey), Error = SingleConnectionError> + 'static,
 {
     handle: Handle,
     all_connections: Option<S>,
     all_connections_are_done: bool,
-    our_uid: PublicKeys,
-    choose_sent: Option<BoxFuture<(PaStream, PublicKeys), SingleConnectionError>>,
+    our_uid: PublicEncryptKey,
+    choose_sent: Option<BoxFuture<(PaStream, PublicEncryptKey), SingleConnectionError>>,
     choose_waiting: Vec<BoxFuture<ChooseConnectionResult, SingleConnectionError>>,
     errors: Vec<SingleConnectionError>,
 }
 
 impl<S> ChooseOneConnection<S>
 where
-    S: Stream<Item = (PaStream, PublicKeys), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (PaStream, PublicEncryptKey), Error = SingleConnectionError> + 'static,
 {
-    pub fn new(handle: &Handle, connections: S, our_uid: PublicKeys) -> Self {
+    pub fn new(handle: &Handle, connections: S, our_uid: PublicEncryptKey) -> Self {
         Self {
             handle: handle.clone(),
             all_connections: Some(connections),
@@ -79,7 +79,7 @@ where
     fn on_conn_ready(
         &mut self,
         stream: PaStream,
-        their_uid: PublicKeys,
+        their_uid: PublicEncryptKey,
     ) -> Result<(), SerialisationError> {
         if self.our_uid > their_uid {
             self.choose_sent = Some({
@@ -191,7 +191,7 @@ where
 
 impl<S> Future for ChooseOneConnection<S>
 where
-    S: Stream<Item = (PaStream, PublicKeys), Error = SingleConnectionError> + 'static,
+    S: Stream<Item = (PaStream, PublicEncryptKey), Error = SingleConnectionError> + 'static,
 {
     type Item = (Peer, BoxStream<PaStream, SingleConnectionError>);
     type Error = ConnectError;
@@ -229,13 +229,14 @@ mod tests {
     mod choose_one_connection {
         use super::*;
 
-        fn rand_peer_uid() -> PublicKeys {
-            SecretKeys::new().public_keys().clone()
+        fn rand_peer_uid() -> PublicEncryptKey {
+            let (pk, _) = gen_encrypt_keypair();
+            pk
         }
 
         /// Constructs fake connection based on in-memory stream.
-        fn fake_connection() -> (PaStream, PublicKeys) {
-            let our_sk = SecretKeys::new();
+        fn fake_connection() -> (PaStream, PublicEncryptKey) {
+            let (_, our_sk) = gen_encrypt_keypair();
             let shared_secret = our_sk.shared_secret(&rand_peer_uid());
             let mem_stream = Framed::new(memstream::EchoStream::default());
             (

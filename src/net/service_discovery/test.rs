@@ -45,8 +45,8 @@ fn multiple_server_instances_in_parallel() {
         let mut futures = Vec::new();
         for i in 0..num_servers {
             for j in 0..num_discovers {
-                let our_sk = SecretKeys::new();
-                let discover = discover::<u16>(&handle, starting_port + i, our_sk)
+                let (our_pk, our_sk) = gen_encrypt_keypair();
+                let discover = discover::<u16>(&handle, starting_port + i, our_sk, our_pk)
                     .map_err(|e| panic!("error discovering: {}", e))
                     .flatten_stream()
                     .with_timeout(Duration::from_secs(2), &handle)
@@ -92,8 +92,7 @@ fn service_discovery() {
     unwrap!(config.write()).service_discovery_port = Some(0);
     let (tx, rx) = mpsc::unbounded();
 
-    let our_sk = SecretKeys::new();
-    let our_pk = our_sk.public_keys().clone();
+    let (our_pk, _) = gen_encrypt_keypair();
     let sd = unwrap!(ServiceDiscovery::new(
         &handle,
         &config,
@@ -104,8 +103,8 @@ fn service_discovery() {
     let port = sd.port();
 
     let f = {
-        let our_sk = SecretKeys::new();
-        discover::<HashSet<PeerInfo>>(&handle, port, our_sk.clone())
+        let (our_pk, our_sk) = gen_encrypt_keypair();
+        discover::<HashSet<PeerInfo>>(&handle, port, our_sk.clone(), our_pk.clone())
             .map_err(|e| panic!("discover error: {}", e))
             .flatten_stream()
             .with_timeout(Duration::from_secs(2), &handle)
@@ -124,7 +123,7 @@ fn service_discovery() {
                 Timeout::new(Duration::from_millis(100), &handle)
                     .map_err(|e| panic!(e))
                     .and_then(move |()| {
-                        discover::<HashSet<PeerInfo>>(&handle0, port, our_sk)
+                        discover::<HashSet<PeerInfo>>(&handle0, port, our_sk, our_pk)
                             .map_err(|e| panic!("discover error: {}", e))
                     }).flatten_stream()
                     .until({

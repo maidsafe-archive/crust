@@ -93,7 +93,7 @@ pub fn try_peer(
     addr: &PaAddr,
     config: &ConfigFile,
     request: BootstrapRequest,
-    their_pk: PublicKeys,
+    their_pk: PublicEncryptKey,
 ) -> BoxFuture<Peer, TryPeerError> {
     let handle0 = handle.clone();
     let addr = *addr;
@@ -112,7 +112,7 @@ pub fn bootstrap_connect_handshake(
     handle: &Handle,
     stream: PaStream,
     request: BootstrapRequest,
-    their_pk: PublicKeys,
+    their_pk: PublicEncryptKey,
 ) -> BoxFuture<Peer, ConnectHandshakeError> {
     let handle0 = handle.clone();
     stream

@@ -30,11 +30,8 @@ const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
 
 fn service_with_config(event_loop: &mut Core, config: ConfigFile) -> Service {
     let loop_handle = event_loop.handle();
-    unwrap!(event_loop.run(Service::with_config(
-        &loop_handle,
-        config,
-        SecretKeys::new(),
-    )))
+    let (our_pk, our_sk) = gen_encrypt_keypair();
+    unwrap!(event_loop.run(Service::with_config(&loop_handle, config, our_sk, our_pk)))
 }
 
 fn service_with_tmp_config(event_loop: &mut Core) -> Service {
@@ -67,11 +64,9 @@ mod bootstrap {
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr, service1.public_id())];
-        let mut service2 = unwrap!(event_loop.run(Service::with_config(
-            &loop_handle,
-            config2,
-            SecretKeys::new(),
-        )));
+        let (our_pk, our_sk) = gen_encrypt_keypair();
+        let mut service2 =
+            unwrap!(event_loop.run(Service::with_config(&loop_handle, config2, our_sk, our_pk,)));
 
         let service_discovery = false;
         let peer = unwrap!(event_loop.run(service2.bootstrap(
@@ -143,8 +138,9 @@ mod bootstrap {
         unwrap!(config2.write()).bootstrap_cache_name = Some(util::bootstrap_cache_tmp_file());
         unwrap!(config2.write()).hard_coded_contacts =
             vec![PeerInfo::new(service1_addr0, service1.public_id())];
+        let (our_pk, our_sk) = gen_encrypt_keypair();
         let mut service2 =
-            unwrap!(evloop.run(Service::with_config(&handle, config2, SecretKeys::new(),)));
+            unwrap!(evloop.run(Service::with_config(&handle, config2, our_sk, our_pk)));
 
         let service_discovery = false;
         let peer = unwrap!(evloop.run(service2.bootstrap(

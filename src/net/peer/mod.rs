@@ -45,7 +45,7 @@ pub const HEARTBEATS_PER_TIMEOUT: u32 = 5;
 // (where `Peer` and `Socket` were the same type) but should really be fixed. The heartbeat could
 // simply be encoded as a zero-byte message.
 pub struct Peer {
-    their_uid: PublicKeys,
+    their_uid: PublicEncryptKey,
     kind: CrustUser,
     stream: PaStream,
     last_send_time: Instant,
@@ -133,7 +133,7 @@ quick_error! {
 /// Construct a `Peer` from a `PaStream` once we have completed the initial handshake.
 pub fn from_handshaken_stream(
     handle: &Handle,
-    their_uid: PublicKeys,
+    their_uid: PublicEncryptKey,
     stream: PaStream,
     kind: CrustUser,
 ) -> Peer {
@@ -162,7 +162,7 @@ impl Peer {
     }
 
     /// Return peer id.
-    pub fn public_id(&self) -> &PublicKeys {
+    pub fn public_id(&self) -> &PublicEncryptKey {
         &self.their_uid
     }
 
