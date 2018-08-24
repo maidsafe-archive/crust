@@ -213,7 +213,7 @@ fn bootstrap_accept(
                 let connectors = {
                     direct_listeners
                         .into_iter()
-                        .filter(|peer| util::ip_addr_is_global(&peer.addr.ip()))
+                        .filter(|peer| util::ip_addr_is_global(peer.addr.ip()))
                         .map(|peer| {
                             PaStream::direct_connect(&handle, &peer.addr, peer.pub_key, config)
                                 .map_err(ExternalReachabilityError::Connect)

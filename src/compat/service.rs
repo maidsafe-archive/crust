@@ -569,7 +569,7 @@ impl ServiceState {
                 }).into_boxed()
         }
         #[cfg(not(test))]
-        connector
+        connector.into_boxed()
     }
 
     /// Start bootstrap acceptor which yields `Peer`s.
@@ -616,7 +616,7 @@ impl ServiceState {
                 }).into_boxed()
         }
         #[cfg(not(test))]
-        bootstrap_fut
+        bootstrap_fut.into_boxed()
     }
 }
 

@@ -571,7 +571,7 @@ mod test {
                     let (mut addrs, _) = acceptor.addresses();
                     assert!(addrs.len() >= 2);
 
-                    addrs.retain(|addr| !util::ip_addr_is_global(&addr.ip()));
+                    addrs.retain(|addr| !util::ip_addr_is_global(addr.ip()));
 
                     let mut connectors = Vec::new();
                     for addr in &addrs {
