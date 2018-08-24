@@ -57,7 +57,6 @@ pub fn exchange_conn_info(
                 unwrap!(ci_channel2.unbounded_send(their_info));
                 Ok(())
             })
-        })
-        .then(|_| Ok(()));
+        }).then(|_| Ok(()));
     handle.spawn(exchange_ci);
 }

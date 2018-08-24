@@ -69,8 +69,7 @@ impl ServiceDiscovery {
                         .collect();
                     server.set_data(addrs);
                     Ok(())
-                })
-                .until(drop_rx.infallible())
+                }).until(drop_rx.infallible())
                 .map(|_unit_opt| ())
         });
 

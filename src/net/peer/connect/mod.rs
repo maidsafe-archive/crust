@@ -173,16 +173,14 @@ where
         .map(move |(peer, other_conns)| {
             finalize_connections(&handle, other_conns);
             peer
-        })
-        .and_then(move |peer| {
+        }).and_then(move |peer| {
             let ip = peer.ip().map_err(ConnectError::Peer)?;
             if config.is_peer_whitelisted(ip, CrustUser::Node) {
                 Ok(peer)
             } else {
                 Err(ConnectError::NotWhitelisted(ip))
             }
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 fn get_conn_info_and_connect<C>(
@@ -211,8 +209,7 @@ where
         .map_err(|_e| SingleConnectionError::DeadChannel)
         .and_then(|(their_info_opt, _conn_info_rx)| {
             their_info_opt.ok_or(SingleConnectionError::DeadChannel)
-        })
-        .and_then(move |their_info| {
+        }).and_then(move |their_info| {
             if our_uid == their_info.uid {
                 return future::err(SingleConnectionError::RequestedConnectToSelf);
             }
@@ -232,8 +229,7 @@ where
                 their_info,
                 &bootstrap_cache,
             ))
-        })
-        .flatten_stream()
+        }).flatten_stream()
         .into_boxed()
 }
 
@@ -274,8 +270,7 @@ fn finalize_connections(handle: &Handle, conns: BoxStream<PaStream, SingleConnec
         .log_error(
             LogLevel::Info,
             "Failed to gracefully shutdown unused socket",
-        )
-        .then(|_| Ok(()));
+        ).then(|_| Ok(()));
     handle.spawn(task);
 }
 
@@ -302,16 +297,14 @@ fn connect_directly(
                         .commit()
                         .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     conn
-                })
-                .map_err(move |e| {
+                }).map_err(move |e| {
                     bootstrap_cache2.remove(&PeerInfo::new(addr, their_pk2));
                     let _ = bootstrap_cache2
                         .commit()
                         .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     e
                 })
-        })
-        .collect::<Vec<_>>();
+        }).collect::<Vec<_>>();
     stream::futures_unordered(connections)
         .map_err(SingleConnectionError::DirectConnect)
         .into_boxed()
@@ -332,8 +325,7 @@ fn handshake_incoming_connections(
                     .map_err(SingleConnectionError::Write)
                     .map(move |stream| (stream, connect_request.client_uid))
             })
-        })
-        .and_then(|f| f)
+        }).and_then(|f| f)
         .into_boxed()
 }
 
@@ -351,21 +343,18 @@ where
             stream
                 .send_serialized(HandshakeMessage::Connect(our_connect_request.clone()))
                 .map_err(SingleConnectionError::Write)
-        })
-        .and_then(move |stream| {
+        }).and_then(move |stream| {
             stream
                 .recv_serialized()
                 .map_err(SingleConnectionError::Read)
-        })
-        .and_then(move |(msg_opt, stream)| match msg_opt {
+        }).and_then(move |(msg_opt, stream)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
             Some(HandshakeMessage::Connect(connect_request)) => {
                 validate_connect_request(our_name_hash, &connect_request)?;
                 Ok((stream, connect_request.client_uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 /// Sends connection info to "rendezvous connect" task and waits for connection.
@@ -387,8 +376,7 @@ fn connect_p2p(
                     conn_rx
                         .map_err(|_| SingleConnectionError::DeadChannel)
                         .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect))
-                })
-                .into_boxed()
+                }).into_boxed()
         }
         _ => future::empty().into_boxed(),
     }

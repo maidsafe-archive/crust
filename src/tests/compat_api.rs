@@ -228,8 +228,7 @@ fn start_two_services_exchange_data() {
                         }
                         e => panic!("unexpected event: {:?}", e),
                     }
-                })
-                .collect::<Vec<_>>()
+                }).collect::<Vec<_>>()
         };
 
         assert_eq!(data1_recv, data1_compare);
@@ -268,8 +267,7 @@ fn start_two_services_exchange_data() {
                         }
                         e => panic!("unexpected event: {:?}", e),
                     }
-                })
-                .collect::<Vec<_>>()
+                }).collect::<Vec<_>>()
         };
 
         assert_eq!(data0_recv, data0_compare);

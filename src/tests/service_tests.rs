@@ -521,10 +521,8 @@ mod encryption {
                                 PeerError::Read(_e) => Ok(()),
                                 e => panic!("unexpected error: {}", e),
                             })
-                    })
-                    .map(|(_service2_tcp, ())| ())
-            })
-            .void_unwrap()
+                    }).map(|(_service2_tcp, ())| ())
+            }).void_unwrap()
     }
 }
 

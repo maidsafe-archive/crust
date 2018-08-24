@@ -181,13 +181,11 @@ impl Service {
                         our_info,
                         ci_rx,
                         &config,
-                    ))
-                    .map_err(|(e, _connect)| CrustError::ConnectError(e.to_string()))
+                    )).map_err(|(e, _connect)| CrustError::ConnectError(e.to_string()))
                     .and_then(|(_ci_tx, connect)| {
                         connect.map_err(|e| CrustError::ConnectError(e.to_string()))
                     })
-            })
-            .into_boxed()
+            }).into_boxed()
     }
 
     /// The returned `ServiceDiscovery` advertises the existence of this peer to any other peers on
@@ -277,8 +275,7 @@ impl Service {
                     })
                 });
                 Ok(priv_conn_info)
-            })
-            .map_err(|(e, _stream)| e)
+            }).map_err(|(e, _stream)| e)
             .infallible()
             .into_boxed()
     }
@@ -319,7 +316,8 @@ fn remove_rendezvous_servers(p2p: &P2p, addrs: &HashSet<PaAddr>) {
 fn make_bootstrap_cache(config: &ConfigFile) -> Result<BootstrapCache, CrustError> {
     let bootstrap_cache_name = config.read().bootstrap_cache_name.clone();
     let cache_file = bootstrap_cache_name.as_ref().map(|s| s.as_os_str());
-    let bootstrap_cache = BootstrapCache::new(cache_file).map_err(CrustError::ReadBootstrapCache)?;
+    let bootstrap_cache =
+        BootstrapCache::new(cache_file).map_err(CrustError::ReadBootstrapCache)?;
     bootstrap_cache.read_file();
     Ok(bootstrap_cache)
 }
@@ -381,8 +379,7 @@ mod tests {
                     .then(|res| match res {
                         Ok(x) => panic!("unexpected success: {:?}", x),
                         Err(_e) => Ok(()),
-                    })
-                    .for_each(|()| Ok(()))
+                    }).for_each(|()| Ok(()))
                     .into_boxed()
             };
 
@@ -394,8 +391,7 @@ mod tests {
                     .then(|res| match res {
                         Ok(x) => panic!("unexpected success: {:?}", x),
                         Err(_e) => Ok(()),
-                    })
-                    .for_each(|()| Ok(()))
+                    }).for_each(|()| Ok(()))
                     .into_boxed()
             };
 
@@ -454,15 +450,15 @@ mod tests {
 
             let mut core = unwrap!(Core::new());
             let handle = core.handle();
-            let servers =
-                core.run({
+            let servers = core
+                .run({
                     p2p.tcp_addr_queriers()
                         .with_readiness_timeout(Duration::from_secs(1), &handle)
                         .collect()
                 }).void_unwrap();
             assert!(servers.is_empty());
-            let servers =
-                core.run({
+            let servers = core
+                .run({
                     p2p.udp_addr_queriers()
                         .with_readiness_timeout(Duration::from_secs(1), &handle)
                         .collect()

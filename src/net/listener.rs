@@ -152,11 +152,9 @@ impl Acceptor {
             .or_else(move |_| {
                 PaListener::bind_reusable(&listen_addr, &handle, our_sk)
                     .map(|listener| (listener, None))
-            })
-            .and_then(move |(listener, public_addr)| {
+            }).and_then(move |(listener, public_addr)| {
                 make_listener(listener, public_addr, addresses, tx)
-            })
-            .into_boxed()
+            }).into_boxed()
     }
 }
 
@@ -497,8 +495,7 @@ mod test {
                             drop(listener0);
                             (addrs_rx, acceptor, listener1, addrs0, addrs1)
                         })
-                })
-                .and_then(|(addrs_rx, acceptor, listener1, addrs0, addrs1)| {
+                }).and_then(|(addrs_rx, acceptor, listener1, addrs0, addrs1)| {
                     drop(listener1);
 
                     let addrs0_c0 = addrs0.clone();
@@ -516,33 +513,28 @@ mod test {
                             assert!(addrs1_c0.is_subset(&addrs));
 
                             addrs_rx.into_future()
-                        })
-                        .and_then(move |(addrs_opt, addrs_rx)| {
+                        }).and_then(move |(addrs_opt, addrs_rx)| {
                             let addrs = unwrap!(addrs_opt);
                             assert!(!addrs0_c1.is_subset(&addrs));
                             assert!(addrs1_c1.is_subset(&addrs));
 
                             addrs_rx.into_future()
-                        })
-                        .and_then(move |(addrs_opt, addrs_rx)| {
+                        }).and_then(move |(addrs_opt, addrs_rx)| {
                             let addrs = unwrap!(addrs_opt);
                             assert!(!addrs0_c2.is_subset(&addrs));
                             assert!(!addrs1_c2.is_subset(&addrs));
                             drop(acceptor);
 
                             addrs_rx.into_future()
-                        })
-                        .map(|(addrs_opt, _addrs_rx)| assert_eq!(addrs_opt, None))
+                        }).map(|(addrs_opt, _addrs_rx)| assert_eq!(addrs_opt, None))
                         .map_err(|_e| unreachable!())
-                })
-                .join({
+                }).join({
                     socket_incoming
                         .map_err(|e| panic!("incoming error: {}", e))
                         .for_each(|_socket| -> io::Result<()> {
                             panic!("unexpected connection");
                         })
-                })
-                .map(|((), ())| ())
+                }).map(|((), ())| ())
         };
         let res = core.run(future);
         unwrap!(res)
@@ -567,8 +559,7 @@ mod test {
                 .map(move |listener| {
                     mem::forget(listener);
                     acceptor
-                })
-                .and_then(move |acceptor| {
+                }).and_then(move |acceptor| {
                     acceptor
                         .listener(&tcp_addr!("0.0.0.0:0"))
                         .map_err(|e| panic!(e))
@@ -576,8 +567,7 @@ mod test {
                             mem::forget(listener);
                             acceptor
                         })
-                })
-                .map(move |acceptor| {
+                }).map(move |acceptor| {
                     let (mut addrs, _) = acceptor.addresses();
                     assert!(addrs.len() >= 2);
 
@@ -591,8 +581,7 @@ mod test {
                                 .map_err(|e| panic!(e))
                                 .and_then(move |stream| {
                                     stream.send_serialized(addr).map(|_stream| ())
-                                })
-                                .map_err(|e| panic!(e))
+                                }).map_err(|e| panic!(e))
                         };
                         connectors.push(f);
                     }
@@ -608,21 +597,18 @@ mod test {
                     handle.spawn(f);
 
                     addrs
-                })
-                .join({
+                }).join({
                     socket_incoming
                         .map(move |stream| {
                             stream
                                 .recv_serialized()
                                 .map_err(|e| panic!("error receiving: {}", e))
                                 .map(|(msg_opt, _stream_with_addr)| unwrap!(msg_opt))
-                        })
-                        .buffer_unordered(64)
+                        }).buffer_unordered(64)
                         .collect()
                         .map(|v| v.into_iter().collect::<HashSet<_>>())
                         .into_boxed()
-                })
-                .map(|(addrs0, addrs1)| {
+                }).map(|(addrs0, addrs1)| {
                     assert_eq!(addrs0, addrs1);
                 })
         };
