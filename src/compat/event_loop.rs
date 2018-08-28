@@ -38,7 +38,9 @@ impl EventLoop {
     }
 }
 
-/// Runs Tokio futures based *Crust* `Service` and event loop to communicate with it.
+/// Runs Tokio event loop on a separate thread and spawns Crust `Service` on this loop.
+/// Then creates another event loop to communicate with the `Service`. Use `EventLoop::send()`
+/// to access the `Service`.
 pub fn spawn_event_loop(
     event_loop_id: Option<&str>,
     event_tx: CrustEventSender,
@@ -59,9 +61,7 @@ pub fn spawn_event_loop(
             let handle = core.handle();
 
             let service = core.run(::Service::with_config(&handle, config, our_sk))?;
-
             let service_state = ServiceState::new(service, event_tx);
-
             Ok((core, service_state))
         };
 
@@ -86,7 +86,6 @@ pub fn spawn_event_loop(
     });
 
     let tx = unwrap!(result_rx.recv())?;
-
     Ok(EventLoop {
         tx,
         _joiner: joiner,
