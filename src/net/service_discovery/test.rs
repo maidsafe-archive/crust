@@ -126,12 +126,10 @@ fn service_discovery() {
                     .and_then(move |()| {
                         discover::<HashSet<PeerInfo>>(&handle0, port, our_sk)
                             .map_err(|e| panic!("discover error: {}", e))
-                    })
-                    .flatten_stream()
+                    }).flatten_stream()
                     .until({
                         Timeout::new(Duration::from_millis(200), &handle).map_err(|e| panic!(e))
-                    })
-                    .collect()
+                    }).collect()
                     .map(move |v| {
                         assert!(
                             v.into_iter()

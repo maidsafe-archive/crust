@@ -120,8 +120,7 @@ impl PaStream {
                             connect_handshake(stream, &their_pk).map(|(framed, shared_secret)| {
                                 PaStream::from_framed_tcp_stream(framed, shared_secret)
                             })
-                        })
-                        .into_boxed()
+                        }).into_boxed()
                 }
             }
             PaAddr::Utp(utp_addr) => {
@@ -191,8 +190,7 @@ impl PaStream {
                                     channel.into_future().map_err(|(err, _channel)| {
                                         PaRendezvousConnectError::ChannelRead(err)
                                     })
-                                })
-                                .and_then(move |(msg_opt, _channel)| {
+                                }).and_then(move |(msg_opt, _channel)| {
                                     if let Some(msg) = msg_opt {
                                         let msg: PaRendezvousMsg = (
                                             serialisation::deserialise(&msg)
@@ -211,8 +209,7 @@ impl PaStream {
                                     } else {
                                         Err(PaRendezvousConnectError::ChannelClosed)
                                     }
-                                })
-                                .into_boxed()
+                                }).into_boxed()
                         })
                 })
         };
@@ -272,8 +269,7 @@ impl PaStream {
                                 stream
                                     .send_serialized(&ChooseMsg)
                                     .map_err(PaRendezvousConnectError::SendChoose)
-                            })
-                            .into_boxed()
+                            }).into_boxed()
                     } else {
                         let tcp_connect = tcp_connect.map(take_chosen);
                         let utp_connect = {
@@ -288,8 +284,7 @@ impl PaStream {
                                             inner: PaStreamInner::Utp(Framed::new(stream)),
                                             shared_secret,
                                         })
-                                })
-                                .map(take_chosen)
+                                }).map(take_chosen)
                         };
                         let connect = {
                             tcp_connect
@@ -299,8 +294,7 @@ impl PaStream {
                                         tcp: Box::new(tcp_err),
                                         utp: Box::new(utp_err),
                                     }
-                                })
-                                .and_then(|res| res)
+                                }).and_then(|res| res)
                         };
 
                         connect.into_boxed()
@@ -330,8 +324,7 @@ impl PaStream {
                     };
                     Ok((Some(deserialized), stream))
                 }
-            })
-            .into_boxed()
+            }).into_boxed()
     }
 
     pub fn peer_addr(&self) -> io::Result<PaAddr> {
@@ -394,8 +387,7 @@ fn take_chosen<Ei: 'static, Eo: 'static>(
         .and_then(|(msg_opt, stream)| {
             let _: ChooseMsg = msg_opt.ok_or(PaRendezvousConnectError::RemoteDisconnected)?;
             Ok(stream)
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 impl Stream for PaStream {
@@ -786,8 +778,7 @@ mod test {
                             .into_future()
                             .map_err(|(e, _stream)| panic!("Failed to read from client: {}", e))
                             .map(|(_msg_opt, _stream)| ())
-                    })
-                    .join(send_data);
+                    }).join(send_data);
                 let res = evloop.run(task);
 
                 match res {
@@ -839,8 +830,7 @@ mod test {
                             .into_future()
                             .map_err(|(e, _stream)| e)
                             .map(|(_msg_opt, _stream)| ())
-                    })
-                    .join(send_data);
+                    }).join(send_data);
 
                 let res = evloop.run(task);
                 match res {

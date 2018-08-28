@@ -162,8 +162,7 @@ impl Service {
                                         ));
                                     }
                                     Ok(())
-                                })
-                                .infallible()
+                                }).infallible()
                         });
                     }
                 } else {
@@ -208,12 +207,10 @@ impl Service {
                                 .hard_coded_contacts
                                 .iter()
                                 .any(|peer| peer.addr.ip() == peer_addr.ip())
-                        })
-                        .unwrap_or(false)
+                        }).unwrap_or(false)
                 };
                 let _ = tx.send(res);
-            }))
-            .is_ok();
+            })).is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -250,16 +247,14 @@ impl Service {
                                 CompatPeer::wrap_peer(&handle, peer, their_uid.clone(), addr);
                             let _ = cm.insert_peer(&handle, peer, addr);
                             Ok((addr, their_uid))
-                        })
-                        .then(move |res| {
+                        }).then(move |res| {
                             let event = match res {
                                 Ok((addr, uid)) => Event::BootstrapConnect(uid.clone(), addr),
                                 Err(()) => Event::BootstrapFailed,
                             };
                             let _ = event_tx.send(event);
                             Ok(())
-                        })
-                        .until(drop_rx.infallible())
+                        }).until(drop_rx.infallible())
                         .map(|_| ())
                 };
                 state.service.handle().spawn(f);
@@ -295,8 +290,7 @@ impl Service {
                             let addr = listener.addr();
                             let _ = event_tx.send(Event::ListenerStarted(addr));
                             future::empty::<(), ()>().map(move |()| drop(listener))
-                        })
-                        .buffer_unordered(256)
+                        }).buffer_unordered(256)
                         .for_each(|()| Ok(()))
                         .until(drop_rx.infallible())
                         .map(|_unit_opt| ())
@@ -329,8 +323,7 @@ impl Service {
                         our_conn_info_opt
                             .ok_or(CrustError::PrepareConnectionInfo)
                             .map(move |conn_info| (conn_info, ci_channel))
-                    })
-                    .then(move |result| {
+                    }).then(move |result| {
                         let result = match result {
                             Ok((our_conn_info, ci_channel)) => {
                                 cm.insert_ci_channel(our_conn_info.connection_id, ci_channel);
@@ -377,8 +370,7 @@ impl Service {
             .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let _ = tx.send(state.cm.remove(&peer_uid));
-            }))
-            .is_ok();
+            })).is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -406,8 +398,7 @@ impl Service {
             .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let _ = tx.send(state.cm.contains_peer(&peer_uid));
-            }))
-            .is_ok();
+            })).is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -451,8 +442,7 @@ impl Service {
                         })
                 };
                 handle.spawn(f);
-            }))
-            .is_ok();
+            })).is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -534,27 +524,24 @@ impl ServiceState {
                 let _ = their_ci_tx.send(their_ci.uid.clone());
                 Ok(their_ci)
             })).map_err(move |e| {
-                    error!("connection failed: {}", e);
-                })
-                .and_then(move |peer| {
-                    let addr = {
-                        peer.addr().map_err(|e| {
-                            error!("failed to get address of peer we connected to: {}", e)
-                        })
-                    }?;
-                    let their_uid = peer.public_id().clone();
-                    let peer = CompatPeer::wrap_peer(&handle, peer, their_uid.clone(), addr);
-                    let _ = cm.insert_peer(&handle, peer, addr);
-                    let _ = event_tx1.send(Event::ConnectSuccess(their_uid));
-                    Ok(())
-                })
-                .or_else(move |_err| {
-                    // if we know ID of the peer we were trying to connect with
-                    if let Ok(peer_uid) = their_ci_rx.try_recv() {
-                        let _ = event_tx2.send(Event::ConnectFailure(peer_uid.clone()));
-                    }
-                    Ok(())
-                })
+                error!("connection failed: {}", e);
+            }).and_then(move |peer| {
+                let addr = {
+                    peer.addr()
+                        .map_err(|e| error!("failed to get address of peer we connected to: {}", e))
+                }?;
+                let their_uid = peer.public_id().clone();
+                let peer = CompatPeer::wrap_peer(&handle, peer, their_uid.clone(), addr);
+                let _ = cm.insert_peer(&handle, peer, addr);
+                let _ = event_tx1.send(Event::ConnectSuccess(their_uid));
+                Ok(())
+            }).or_else(move |_err| {
+                // if we know ID of the peer we were trying to connect with
+                if let Ok(peer_uid) = their_ci_rx.try_recv() {
+                    let _ = event_tx2.send(Event::ConnectFailure(peer_uid.clone()));
+                }
+                Ok(())
+            })
         };
         handle.spawn(f);
     }
@@ -579,11 +566,10 @@ impl ServiceState {
                     }
                     peer.set_inactivity_timeout(inactivity_timeout);
                     peer
-                })
-                .into_boxed()
+                }).into_boxed()
         }
         #[cfg(not(test))]
-        connector
+        connector.into_boxed()
     }
 
     /// Start bootstrap acceptor which yields `Peer`s.
@@ -600,8 +586,7 @@ impl ServiceState {
                     }
                     peer.set_inactivity_timeout(inactivity_timeout);
                     peer
-                })
-                .into_boxed()
+                }).into_boxed()
         }
         #[cfg(not(test))]
         acceptor.into_boxed()
@@ -628,11 +613,10 @@ impl ServiceState {
                     }
                     peer.set_inactivity_timeout(inactivity_timeout);
                     peer
-                })
-                .into_boxed()
+                }).into_boxed()
         }
         #[cfg(not(test))]
-        bootstrap_fut
+        bootstrap_fut.into_boxed()
     }
 }
 

@@ -104,8 +104,7 @@ pub fn try_peer(
         .and_then(move |socket| {
             bootstrap_connect_handshake(&handle0, socket, request, their_pk)
                 .map_err(TryPeerError::Handshake)
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 /// Construct a `Peer` by performing a bootstrap connection handshake on a socket.
@@ -138,8 +137,7 @@ pub fn bootstrap_connect_handshake(
                         _ => Err(ConnectHandshakeError::InvalidResponse),
                     }
                 })
-        })
-        .with_timeout(Duration::from_secs(9), handle)
+        }).with_timeout(Duration::from_secs(9), handle)
         .and_then(|res| res.ok_or(ConnectHandshakeError::TimedOut))
         .into_boxed()
 }

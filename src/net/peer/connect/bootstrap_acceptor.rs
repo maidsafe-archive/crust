@@ -173,12 +173,10 @@ fn bootstrap_accept(
             return Ok(stream
                 .send_serialized(HandshakeMessage::BootstrapDenied(
                     BootstrapDenyReason::InvalidNameHash,
-                ))
-                .map_err(BootstrapAcceptError::Write)
+                )).map_err(BootstrapAcceptError::Write)
                 .and_then(move |_socket| {
                     Err(BootstrapAcceptError::InvalidNameHash(their_name_hash))
-                })
-                .into_boxed());
+                }).into_boxed());
         }
         // Cache the reachability requirement config option, to make sure that it won't be
         // updated with the rest of the configuration.
@@ -203,8 +201,7 @@ fn bootstrap_accept(
                         .map_err(BootstrapAcceptError::Write)
                         .and_then(move |_socket| {
                             Err(BootstrapAcceptError::NodeNotWhiteListed(their_ip))
-                        })
-                        .into_boxed());
+                        }).into_boxed());
                 }
 
                 if !require_reachability {
@@ -216,15 +213,14 @@ fn bootstrap_accept(
                 let connectors = {
                     direct_listeners
                         .into_iter()
-                        .filter(|peer| util::ip_addr_is_global(&peer.addr.ip()))
+                        .filter(|peer| util::ip_addr_is_global(peer.addr.ip()))
                         .map(|peer| {
                             PaStream::direct_connect(&handle, &peer.addr, peer.pub_key, config)
                                 .map_err(ExternalReachabilityError::Connect)
                                 .with_timeout(Duration::from_secs(3), &handle)
                                 .and_then(|res| res.ok_or(ExternalReachabilityError::TimedOut))
                                 .into_boxed()
-                        })
-                        .collect::<Vec<_>>()
+                        }).collect::<Vec<_>>()
                 };
                 let connectors = stream::futures_unordered(connectors);
 
@@ -243,11 +239,9 @@ fn bootstrap_accept(
                                 .map_err(BootstrapAcceptError::Write)
                                 .and_then(move |_socket| {
                                     Err(BootstrapAcceptError::FailedExternalReachability(v))
-                                })
-                                .into_boxed()
+                                }).into_boxed()
                         }
-                    })
-                    .into_boxed())
+                    }).into_boxed())
             }
             ExternalReachability::NotRequired => {
                 let their_ip = stream
@@ -261,8 +255,7 @@ fn bootstrap_accept(
                         .map_err(BootstrapAcceptError::Write)
                         .and_then(move |_socket| {
                             Err(BootstrapAcceptError::ClientNotWhiteListed(their_ip))
-                        })
-                        .into_boxed());
+                        }).into_boxed());
                 }
 
                 Ok(

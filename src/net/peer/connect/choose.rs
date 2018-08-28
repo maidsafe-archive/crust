@@ -108,8 +108,7 @@ where
                             Ok(Some((handshake, stream, their_uid)))
                         }
                         None => Ok(None),
-                    })
-                    .into_boxed(),
+                    }).into_boxed(),
             );
         }
         Ok(())
@@ -174,9 +173,7 @@ where
             stream::iter_ok::<_, SingleConnectionError>(
                 conns.into_iter().map(|conn_fut| conn_fut.into_stream()),
             ).flatten()
-                .filter_map(|conn_res_opt| {
-                    conn_res_opt.map(|(_handshake_msg, stream, _uid)| stream)
-                })
+            .filter_map(|conn_res_opt| conn_res_opt.map(|(_handshake_msg, stream, _uid)| stream))
         };
         let remaining_conns = unwrap!(self.all_connections.take())
             .map(|(stream, _uid)| stream)

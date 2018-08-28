@@ -160,8 +160,7 @@ impl PaListener {
                     };
                     let public_addr = PaAddr::Tcp(public_addr);
                     (listener, public_addr)
-                })
-                .into_boxed(),
+                }).into_boxed(),
             PaAddr::Utp(utp_addr) => UdpSocket::bind_public(&utp_addr, &handle, p2p)
                 .map_err(BindPublicError::BindUdp)
                 .and_then(move |(socket, public_addr)| {
@@ -176,8 +175,7 @@ impl PaListener {
                     };
                     let public_addr = PaAddr::Utp(public_addr);
                     Ok((listener, public_addr))
-                })
-                .into_boxed(),
+                }).into_boxed(),
         }
     }
 
@@ -303,8 +301,7 @@ fn handle_incoming_tcp(
             framed_key_opt.map(move |(framed, shared_secret)| {
                 PaStream::from_framed_tcp_stream(framed, shared_secret)
             })
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 fn handle_incoming_utp(
@@ -318,8 +315,7 @@ fn handle_incoming_utp(
             framed_key_opt.map(move |(framed, shared_secret)| {
                 PaStream::from_framed_utp_stream(framed, shared_secret)
             })
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
@@ -336,8 +332,7 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
             msg_opt
                 .ok_or(AcceptError::Disconnected)
                 .map(|msg| (msg, framed))
-        })
-        .with_timeout(Duration::from_secs(LISTENER_MSG_TIMEOUT), handle)
+        }).with_timeout(Duration::from_secs(LISTENER_MSG_TIMEOUT), handle)
         .and_then(|pair_opt| pair_opt.ok_or(AcceptError::Timeout))
         .and_then(move |(msg, framed)| {
             let req: ListenerMsg =
@@ -356,6 +351,5 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
                 }
                 ListenerMsgKind::Connect => future::ok(Some((framed, shared_secret))).into_boxed(),
             }
-        })
-        .into_boxed()
+        }).into_boxed()
 }

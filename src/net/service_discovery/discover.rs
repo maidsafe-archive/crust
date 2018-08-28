@@ -46,8 +46,7 @@ where
             socket.set_broadcast(true)?;
             let framed = socket.framed(SerdeUdpCodec::new());
             Ok(framed)
-        })
-        .and_then(move |framed| {
+        }).and_then(move |framed| {
             future::result(get_if_addrs::get_if_addrs())
                 .map(stream::iter_ok)
                 .flatten_stream()
@@ -66,19 +65,16 @@ where
                         }
                     },
                     IfAddr::V6(..) => None,
-                })
-                .fold(framed, move |framed, broadcast_ip| {
+                }).fold(framed, move |framed, broadcast_ip| {
                     let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(broadcast_ip, port));
                     framed.send((broadcast_addr, request.clone()))
-                })
-                .map(move |framed| {
+                }).map(move |framed| {
                     framed
                         .log_errors(LogLevel::Warn, "receiving on service_discovery::discover")
                         .filter_map(move |response| handle_response(response, &our_sk))
                         .into_boxed()
                 })
-        })
-        .into_boxed()
+        }).into_boxed()
 }
 
 fn handle_response<T: Serialize + DeserializeOwned>(

@@ -37,8 +37,7 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
             .map_err(|e| match e {
                 ConnectReusableError::Bind(e) => QueryError::Bind(e),
                 ConnectReusableError::Connect(e) => QueryError::Connect(e),
-            })
-            .and_then(move |stream| {
+            }).and_then(move |stream| {
                 let our_sk = SecretKeys::new();
                 let our_pk = our_sk.public_keys().clone();
                 let msg = ListenerMsg {
@@ -64,10 +63,8 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
                                     shared_secret.decrypt(&msg).map_err(QueryError::Decrypt)?;
                                 Ok(msg)
                             })
-                    })
-                    .into_boxed()
-            })
-            .with_timeout(Duration::from_secs(3), &handle0)
+                    }).into_boxed()
+            }).with_timeout(Duration::from_secs(3), &handle0)
             .and_then(|addr_opt| addr_opt.ok_or(QueryError::TimedOut))
             .map_err(|e| Box::new(e) as Box<Error>)
             .into_boxed()
@@ -140,10 +137,8 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
                                     shared_secret.decrypt(&msg).map_err(QueryError::Decrypt)?;
                                 Ok(msg)
                             })
-                    })
-                    .into_boxed()
-            })
-            .with_timeout(Duration::from_secs(3), &handle0)
+                    }).into_boxed()
+            }).with_timeout(Duration::from_secs(3), &handle0)
             .and_then(|addr_opt| addr_opt.ok_or(QueryError::TimedOut))
             .map_err(|e| Box::new(e) as Box<Error>)
             .into_boxed()
