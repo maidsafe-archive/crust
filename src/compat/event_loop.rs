@@ -33,8 +33,10 @@ pub struct EventLoop {
 impl EventLoop {
     /// Tell event loop to execute function with `Service` context meaning called function receives
     /// `ServiceState` as an argument.
-    pub fn send(&self, msg: ServiceCommand) {
-        unwrap!(self.tx.unbounded_send(msg));
+    pub fn send(&self, msg: ServiceCommand) -> Result<(), CrustError> {
+        self.tx
+            .unbounded_send(msg)
+            .map_err(|_e| CrustError::CompatEventLoopDied)
     }
 }
 
@@ -69,24 +71,26 @@ pub fn spawn_event_loop(
             Ok((mut core, mut service_state)) => {
                 let handle = core.handle();
                 let (tx, rx) = mpsc::unbounded::<ServiceCommand>();
-                unwrap!(result_tx.send(Ok(tx)));
-                unwrap!(core.run({
+                let _ = result_tx.send(Ok(tx));
+                let _ = core.run({
                     rx.for_each(move |cb| {
                         cb.call_box(&mut service_state);
                         Ok(())
                     }).and_then(move |()| {
                         Timeout::new(Duration::from_millis(200), &handle).infallible()
                     })
-                }));
+                });
             }
             Err(e) => {
-                unwrap!(result_tx.send(Err(e)));
+                let _ = result_tx.send(Err(e));
             }
         }
     });
 
-    let tx = unwrap!(result_rx.recv())?;
-    Ok(EventLoop {
+    let tx_res = result_rx
+        .recv()
+        .map_err(|_e| CrustError::CompatEventLoopDied)?;
+    tx_res.map(|tx| EventLoop {
         tx,
         _joiner: joiner,
     })
