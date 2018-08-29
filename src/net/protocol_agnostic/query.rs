@@ -6,7 +6,7 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug)]
 pub struct PaTcpAddrQuerier {
     addr: SocketAddr,
-    server_pk: PublicKeys,
+    server_pk: PublicEncryptKey,
 }
 
 impl Hash for PaTcpAddrQuerier {
@@ -19,7 +19,7 @@ impl Hash for PaTcpAddrQuerier {
 }
 
 impl PaTcpAddrQuerier {
-    pub fn new(addr: &SocketAddr, server_pk: PublicKeys) -> PaTcpAddrQuerier {
+    pub fn new(addr: &SocketAddr, server_pk: PublicEncryptKey) -> PaTcpAddrQuerier {
         PaTcpAddrQuerier {
             addr: *addr,
             server_pk,
@@ -38,15 +38,14 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
                 ConnectReusableError::Bind(e) => QueryError::Bind(e),
                 ConnectReusableError::Connect(e) => QueryError::Connect(e),
             }).and_then(move |stream| {
-                let our_sk = SecretKeys::new();
-                let our_pk = our_sk.public_keys().clone();
+                let (our_pk, our_sk) = gen_encrypt_keypair();
                 let msg = ListenerMsg {
                     client_pk: our_pk,
                     kind: ListenerMsgKind::EchoAddr,
                 };
                 let msg = try_bfut!(
                     server_pk
-                        .encrypt_anonymous(&msg)
+                        .anonymously_encrypt(&msg)
                         .map_err(QueryError::Encrypt)
                 );
                 let shared_secret = our_sk.shared_secret(&server_pk);
@@ -74,7 +73,7 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
 #[derive(Debug)]
 pub struct PaUdpAddrQuerier {
     addr: SocketAddr,
-    server_pk: PublicKeys,
+    server_pk: PublicEncryptKey,
 }
 
 impl Hash for PaUdpAddrQuerier {
@@ -87,7 +86,7 @@ impl Hash for PaUdpAddrQuerier {
 }
 
 impl PaUdpAddrQuerier {
-    pub fn new(addr: &SocketAddr, server_pk: PublicKeys) -> PaUdpAddrQuerier {
+    pub fn new(addr: &SocketAddr, server_pk: PublicEncryptKey) -> PaUdpAddrQuerier {
         PaUdpAddrQuerier {
             addr: *addr,
             server_pk,
@@ -112,15 +111,14 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
             .connect(&self.addr)
             .map_err(QueryError::Connect)
             .and_then(move |stream| {
-                let our_sk = SecretKeys::new();
-                let our_pk = our_sk.public_keys().clone();
+                let (our_pk, our_sk) = gen_encrypt_keypair();
                 let msg = ListenerMsg {
                     client_pk: our_pk,
                     kind: ListenerMsgKind::EchoAddr,
                 };
                 let msg = try_bfut!(
                     server_pk
-                        .encrypt_anonymous(&msg)
+                        .anonymously_encrypt(&msg)
                         .map_err(QueryError::Encrypt)
                 );
                 let shared_secret = our_sk.shared_secret(&server_pk);

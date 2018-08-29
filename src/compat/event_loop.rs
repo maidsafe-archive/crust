@@ -46,7 +46,8 @@ impl EventLoop {
 pub fn spawn_event_loop(
     event_loop_id: Option<&str>,
     event_tx: CrustEventSender,
-    our_sk: SecretKeys,
+    our_sk: SecretEncryptKey,
+    our_pk: PublicEncryptKey,
     config: ConfigFile,
 ) -> Result<EventLoop, CrustError> {
     let mut name = "CRUST-Event-Loop".to_string();
@@ -62,7 +63,7 @@ pub fn spawn_event_loop(
             let mut core = Core::new()?;
             let handle = core.handle();
 
-            let service = core.run(::Service::with_config(&handle, config, our_sk))?;
+            let service = core.run(::Service::with_config(&handle, config, our_sk, our_pk))?;
             let service_state = ServiceState::new(service, event_tx);
             Ok((core, service_state))
         };

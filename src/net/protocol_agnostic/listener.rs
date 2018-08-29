@@ -32,7 +32,8 @@ const LISTENER_MSG_TIMEOUT: u64 = 10;
 pub struct PaListener {
     handle: Handle,
     inner: PaListenerInner,
-    our_sk: SecretKeys,
+    our_sk: SecretEncryptKey,
+    our_pk: PublicEncryptKey,
 }
 
 #[derive(Debug)]
@@ -44,7 +45,8 @@ pub enum PaListenerInner {
 pub struct PaIncoming {
     handle: Handle,
     inner: PaIncomingInner,
-    our_sk: SecretKeys,
+    our_sk: SecretEncryptKey,
+    our_pk: PublicEncryptKey,
     processing: FuturesUnordered<BoxFuture<Option<PaStream>, AcceptError>>,
 }
 
@@ -118,7 +120,12 @@ quick_error! {
 
 impl PaListener {
     #[cfg(test)]
-    pub fn bind(addr: &PaAddr, handle: &Handle, our_sk: SecretKeys) -> io::Result<PaListener> {
+    pub fn bind(
+        addr: &PaAddr,
+        handle: &Handle,
+        our_sk: SecretEncryptKey,
+        our_pk: PublicEncryptKey,
+    ) -> io::Result<PaListener> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
                 let listener = TcpListener::bind(tcp_addr, handle)?;
@@ -127,6 +134,7 @@ impl PaListener {
                     handle: handle.clone(),
                     inner: listener,
                     our_sk,
+                    our_pk,
                 })
             }
             PaAddr::Utp(ref utp_addr) => {
@@ -137,6 +145,7 @@ impl PaListener {
                     handle: handle.clone(),
                     inner: listener,
                     our_sk,
+                    our_pk,
                 })
             }
         }
@@ -146,7 +155,8 @@ impl PaListener {
         addr: &PaAddr,
         handle: &Handle,
         p2p: &P2p,
-        our_sk: SecretKeys,
+        our_sk: SecretEncryptKey,
+        our_pk: PublicEncryptKey,
     ) -> BoxFuture<(PaListener, PaAddr), BindPublicError> {
         let handle = handle.clone();
         match *addr {
@@ -157,6 +167,7 @@ impl PaListener {
                         handle,
                         inner: PaListenerInner::Tcp(listener),
                         our_sk,
+                        our_pk,
                     };
                     let public_addr = PaAddr::Tcp(public_addr);
                     (listener, public_addr)
@@ -172,6 +183,7 @@ impl PaListener {
                         handle,
                         inner: PaListenerInner::Utp(socket, listener),
                         our_sk,
+                        our_pk,
                     };
                     let public_addr = PaAddr::Utp(public_addr);
                     Ok((listener, public_addr))
@@ -182,7 +194,8 @@ impl PaListener {
     pub fn bind_reusable(
         addr: &PaAddr,
         handle: &Handle,
-        our_sk: SecretKeys,
+        our_sk: SecretEncryptKey,
+        our_pk: PublicEncryptKey,
     ) -> io::Result<PaListener> {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => {
@@ -191,6 +204,7 @@ impl PaListener {
                     handle: handle.clone(),
                     inner: PaListenerInner::Tcp(listener),
                     our_sk,
+                    our_pk,
                 };
                 Ok(listener)
             }
@@ -201,6 +215,7 @@ impl PaListener {
                     handle: handle.clone(),
                     inner: PaListenerInner::Utp(socket, listener),
                     our_sk,
+                    our_pk,
                 };
                 Ok(listener)
             }
@@ -244,6 +259,7 @@ impl PaListener {
             inner,
             processing: FuturesUnordered::new(),
             our_sk: self.our_sk,
+            our_pk: self.our_pk,
         }
     }
 }
@@ -262,6 +278,7 @@ impl Stream for PaIncoming {
                             stream,
                             addr,
                             &self.our_sk,
+                            &self.our_pk,
                         ));
                     }
                     Async::Ready(None) | Async::NotReady => break,
@@ -274,6 +291,7 @@ impl Stream for PaIncoming {
                             &self.handle,
                             stream,
                             &self.our_sk,
+                            &self.our_pk,
                         ));
                     }
                     Async::Ready(None) | Async::NotReady => break,
@@ -294,9 +312,10 @@ fn handle_incoming_tcp(
     handle: &Handle,
     stream: TcpStream,
     addr: SocketAddr,
-    our_sk: &SecretKeys,
+    our_sk: &SecretEncryptKey,
+    our_pk: &PublicEncryptKey,
 ) -> BoxFuture<Option<PaStream>, AcceptError> {
-    handle_incoming(handle, stream, addr, our_sk)
+    handle_incoming(handle, stream, addr, our_sk, our_pk)
         .map(|framed_key_opt| {
             framed_key_opt.map(move |(framed, shared_secret)| {
                 PaStream::from_framed_tcp_stream(framed, shared_secret)
@@ -307,10 +326,11 @@ fn handle_incoming_tcp(
 fn handle_incoming_utp(
     handle: &Handle,
     stream: UtpStream,
-    our_sk: &SecretKeys,
+    our_sk: &SecretEncryptKey,
+    our_pk: &PublicEncryptKey,
 ) -> BoxFuture<Option<PaStream>, AcceptError> {
     let addr = stream.peer_addr();
-    handle_incoming(handle, stream, addr, our_sk)
+    handle_incoming(handle, stream, addr, our_sk, our_pk)
         .map(|framed_key_opt| {
             framed_key_opt.map(move |(framed, shared_secret)| {
                 PaStream::from_framed_utp_stream(framed, shared_secret)
@@ -322,9 +342,11 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
     handle: &Handle,
     stream: S,
     addr: SocketAddr,
-    our_sk: &SecretKeys,
+    our_sk: &SecretEncryptKey,
+    our_pk: &PublicEncryptKey,
 ) -> BoxFuture<Option<(Framed<S>, SharedSecretKey)>, AcceptError> {
     let our_sk = our_sk.clone();
+    let our_pk = our_pk.clone();
     Framed::new(stream)
         .into_future()
         .map_err(|(e, _framed)| AcceptError::Read(e))
@@ -335,8 +357,11 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
         }).with_timeout(Duration::from_secs(LISTENER_MSG_TIMEOUT), handle)
         .and_then(|pair_opt| pair_opt.ok_or(AcceptError::Timeout))
         .and_then(move |(msg, framed)| {
-            let req: ListenerMsg =
-                try_bfut!(our_sk.decrypt_anonymous(&msg).map_err(AcceptError::Decrypt));
+            let req: ListenerMsg = try_bfut!(
+                our_sk
+                    .anonymously_decrypt(&msg, &our_pk)
+                    .map_err(AcceptError::Decrypt)
+            );
             let shared_secret = our_sk.shared_secret(&req.client_pk);
             match req.kind {
                 ListenerMsgKind::EchoAddr => {

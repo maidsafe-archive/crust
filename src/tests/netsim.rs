@@ -49,7 +49,8 @@ where
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = make_addr(ip, 1234);
                 unwrap!(config.write()).listen_addresses = vec![addr];
-                Service::with_config(&handle, config, SecretKeys::new())
+                let (our_pk, our_sk) = gen_encrypt_keypair();
+                Service::with_config(&handle, config, our_sk, our_pk)
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |mut service| {
                         let server_info = PeerInfo {
@@ -107,7 +108,8 @@ where
                         unwrap!(config.write()).bootstrap_cache_name =
                             Some(util::bootstrap_cache_tmp_file());
                         unwrap!(config.write()).hard_coded_contacts = vec![server_info];
-                        Service::with_config(&handle, config, SecretKeys::new())
+                        let (our_pk, our_sk) = gen_encrypt_keypair();
+                        Service::with_config(&handle, config, our_sk, our_pk)
                             .map_err(|e| panic!("error starting service: {}", e))
                             .and_then(move |mut service| {
                                 service
@@ -207,7 +209,8 @@ where
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = make_addr1(ip, 1234);
                 unwrap!(config.write()).listen_addresses = vec![addr];
-                Service::with_config(&handle, config, SecretKeys::new())
+                let (our_pk, our_sk) = gen_encrypt_keypair();
+                Service::with_config(&handle, config, our_sk, our_pk)
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
@@ -246,7 +249,8 @@ where
                 let config = unwrap!(ConfigFile::new_temporary());
                 let addr = make_addr2(ip, 1234);
                 unwrap!(config.write()).listen_addresses = vec![addr];
-                Service::with_config(&handle, config, SecretKeys::new())
+                let (our_pk, our_sk) = gen_encrypt_keypair();
+                Service::with_config(&handle, config, our_sk, our_pk)
                     .map_err(|e| panic!("error creating service: {}", e))
                     .and_then(move |service| {
                         let server_info = PeerInfo {
@@ -291,7 +295,8 @@ where
                     }).and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
-                        Service::with_config(&handle, config, SecretKeys::new())
+                        let (our_pk, our_sk) = gen_encrypt_keypair();
+                        Service::with_config(&handle, config, our_sk, our_pk)
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service
@@ -338,7 +343,8 @@ where
                     }).and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
-                        Service::with_config(&handle, config, SecretKeys::new())
+                        let (our_pk, our_sk) = gen_encrypt_keypair();
+                        Service::with_config(&handle, config, our_sk, our_pk)
                             .map_err(|e| panic!("error creating service: {}", e))
                             .and_then(move |service| {
                                 service

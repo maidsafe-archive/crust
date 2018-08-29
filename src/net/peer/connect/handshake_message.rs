@@ -21,13 +21,13 @@ use priv_prelude::*;
 pub struct BootstrapRequest {
     pub name_hash: NameHash,
     pub ext_reachability: ExternalReachability,
-    pub client_uid: PublicKeys,
+    pub client_uid: PublicEncryptKey,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct ConnectRequest {
     pub connection_id: u64,
-    pub client_uid: PublicKeys,
+    pub client_uid: PublicEncryptKey,
     pub name_hash: NameHash,
 }
 

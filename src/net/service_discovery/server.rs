@@ -115,7 +115,7 @@ where
     ) -> ServerTaskState {
         match request {
             (addr, Ok(DiscoveryMsg::Request(their_pk))) => {
-                match their_pk.encrypt_anonymous(&self.data) {
+                match their_pk.anonymously_encrypt(&self.data) {
                     Ok(response) => {
                         let response = DiscoveryMsg::Response(BytesMut::from(response));
                         let writing = framed.send((addr, response));

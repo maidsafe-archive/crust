@@ -50,9 +50,13 @@ pub struct Service {
 impl Service {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
-    pub fn new(event_tx: CrustEventSender, our_sk: SecretKeys) -> Result<Service, CrustError> {
+    pub fn new(
+        event_tx: CrustEventSender,
+        our_sk: SecretEncryptKey,
+        our_pk: PublicEncryptKey,
+    ) -> Result<Service, CrustError> {
         let config = ConfigFile::open_default()?;
-        Service::with_config(event_tx, config, our_sk)
+        Service::with_config(event_tx, config, our_sk, our_pk)
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
@@ -61,13 +65,15 @@ impl Service {
     pub fn with_config(
         event_tx: CrustEventSender,
         config: ConfigFile,
-        our_sk: SecretKeys,
+        our_sk: SecretEncryptKey,
+        our_pk: PublicEncryptKey,
     ) -> Result<Service, CrustError> {
-        let event_loop_id = Some(format!("{:?}", our_sk.public_keys()));
+        let event_loop_id = Some(format!("{:?}", our_pk));
         let event_loop = event_loop::spawn_event_loop(
             event_loop_id.as_ref().map(|s| s.as_ref()),
             event_tx,
             our_sk,
+            our_pk,
             config.clone(),
         )?;
         event_loop.send(Box::new(move |state: &mut ServiceState| {
@@ -173,7 +179,7 @@ impl Service {
 
     /// Fetches given peer socket address.
     /// Blocks until address is retrieved.
-    pub fn get_peer_socket_addr(&self, peer_uid: &PublicKeys) -> Result<PaAddr, CrustError> {
+    pub fn get_peer_socket_addr(&self, peer_uid: &PublicEncryptKey) -> Result<PaAddr, CrustError> {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
         self.event_loop
@@ -184,13 +190,13 @@ impl Service {
     }
 
     /// Same as `get_peer_socket_addr()`, but it returns IP address instead.
-    pub fn get_peer_ip_addr(&self, peer_uid: &PublicKeys) -> Result<IpAddr, CrustError> {
+    pub fn get_peer_ip_addr(&self, peer_uid: &PublicEncryptKey) -> Result<IpAddr, CrustError> {
         self.get_peer_socket_addr(peer_uid).map(|a| a.ip())
     }
 
     /// Checks if given peer is the one from hard coded contacts list.
     /// Blocks until response is received.
-    pub fn is_peer_hard_coded(&self, peer_uid: &PublicKeys) -> bool {
+    pub fn is_peer_hard_coded(&self, peer_uid: &PublicEncryptKey) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         let cmd_sent = self
@@ -363,7 +369,7 @@ impl Service {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, peer_uid: &PublicKeys) -> bool {
+    pub fn disconnect(&self, peer_uid: &PublicEncryptKey) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         let cmd_sent = self
@@ -377,7 +383,7 @@ impl Service {
     /// Send data to a peer.
     pub fn send(
         &self,
-        peer_uid: &PublicKeys,
+        peer_uid: &PublicEncryptKey,
         msg: Vec<u8>,
         priority: Priority,
     ) -> Result<(), CrustError> {
@@ -391,7 +397,7 @@ impl Service {
     }
 
     /// Check if we are connected to the given peer
-    pub fn is_connected(&self, peer_uid: &PublicKeys) -> bool {
+    pub fn is_connected(&self, peer_uid: &PublicEncryptKey) -> bool {
         let peer_uid = peer_uid.clone();
         let (tx, rx) = std::sync::mpsc::channel();
         let cmd_sent = self
@@ -403,7 +409,7 @@ impl Service {
     }
 
     /// Returns our ID.
-    pub fn public_id(&self) -> Result<PublicKeys, CrustError> {
+    pub fn public_id(&self) -> Result<PublicEncryptKey, CrustError> {
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
@@ -426,8 +432,9 @@ impl Service {
                     .service_discovery_port
                     .unwrap_or(::service::SERVICE_DISCOVERY_DEFAULT_PORT);
                 let our_sk = state.service.secret_id();
+                let our_pk = state.service.public_id();
                 let f = {
-                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port, our_sk)
+                    service_discovery::discover::<Vec<SocketAddr>>(handle, sd_port, our_sk, our_pk)
                         .into_future()
                         .map(|s| s.infallible())
                         .flatten_stream()

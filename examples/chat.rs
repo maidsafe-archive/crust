@@ -71,7 +71,7 @@ use futures::future::Either;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::{Async, Future, Sink, Stream};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use safe_crypto::SecretKeys;
+use safe_crypto::gen_encrypt_keypair;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -153,9 +153,9 @@ impl Node {
     /// Constructs Crust `Service` and starts listeners.
     fn run(handle: &Handle, args: Args) -> BoxFuture<Self, Void> {
         let config = args.make_config();
-        let our_sk = SecretKeys::new();
+        let (our_pk, our_sk) = gen_encrypt_keypair();
         let handle = handle.clone();
-        Service::with_config(&handle, config, our_sk)
+        Service::with_config(&handle, config, our_sk, our_pk)
             .map_err(|e| panic!("error starting service: {}", e))
             .map(move |service| {
                 if args.disable_igd {

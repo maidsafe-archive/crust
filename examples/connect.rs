@@ -56,7 +56,7 @@ use crust::{ConfigFile, Service};
 use future_utils::bi_channel;
 use futures::future::{empty, Future};
 use futures::Stream;
-use safe_crypto::SecretKeys;
+use safe_crypto::gen_encrypt_keypair;
 use tokio_core::reactor::Core;
 
 fn main() {
@@ -70,8 +70,7 @@ fn main() {
 
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();
-    let service_sk = SecretKeys::new();
-    let service_pk = service_sk.public_keys().clone();
+    let (service_pk, service_sk) = gen_encrypt_keypair();
     println!("Service public id: {:?}", service_pk);
 
     let config = unwrap!(ConfigFile::new_temporary());
@@ -79,7 +78,7 @@ fn main() {
         unwrap!("tcp://0.0.0.0:0".parse()),
         unwrap!("utp://0.0.0.0:0".parse()),
     ];
-    let make_service = Service::with_config(&event_loop.handle(), config, service_sk);
+    let make_service = Service::with_config(&event_loop.handle(), config, service_sk, service_pk);
     let service = unwrap!(
         event_loop.run(make_service),
         "Failed to create Service object",
