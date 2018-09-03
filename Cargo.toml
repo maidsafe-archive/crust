@@ -10,7 +10,7 @@ repository = "https://github.com/maidsafe/crust"
 version = "0.31.0"
 
 [dependencies]
-byteorder = "~1.1.0"
+byteorder = "~1.2.0"
 config_file_handler = "~0.11.0"
 crossbeam = "~0.2.10"
 igd = "~0.6.0"
