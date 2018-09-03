@@ -162,7 +162,7 @@ impl PaListener {
         match *addr {
             PaAddr::Tcp(ref tcp_addr) => TcpListener::bind_public(tcp_addr, &handle, p2p)
                 .map_err(BindPublicError::BindTcp)
-                .map(|(listener, public_addr)| {
+                .map(move |(listener, public_addr)| {
                     let listener = Self {
                         handle,
                         inner: PaListenerInner::Tcp(listener),
