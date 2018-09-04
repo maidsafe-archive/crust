@@ -54,7 +54,7 @@ impl ServiceDiscovery {
         let (drop_tx, drop_rx) = future_utils::drop_notify();
         let current_addrs = current_addrs
             .iter()
-            .map(|addr| PeerInfo::new(*addr, our_pk.clone()))
+            .map(|addr| PeerInfo::new(*addr, our_pk))
             .collect::<Vec<_>>();
         let mut server = service_discovery::Server::new(handle, port, current_addrs)?;
         let actual_port = server.port();
@@ -65,7 +65,7 @@ impl ServiceDiscovery {
                 .for_each(move |addrs| {
                     let addrs = addrs
                         .iter()
-                        .map(|addr| PeerInfo::new(*addr, our_pk.clone()))
+                        .map(|addr| PeerInfo::new(*addr, our_pk))
                         .collect();
                     server.set_data(addrs);
                     Ok(())

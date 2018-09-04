@@ -143,7 +143,7 @@ impl Service {
                                 .log_errors(LogLevel::Info, "accepting bootstrap connection")
                                 .until(drop_rx)
                                 .for_each(move |peer| {
-                                    let their_uid = peer.public_id().clone();
+                                    let their_uid = *peer.public_id();
                                     let their_kind = peer.kind();
                                     let their_addr = match peer.addr() {
                                         Ok(addr) => addr,
@@ -156,16 +156,11 @@ impl Service {
                                         }
                                     };
                                     let peer = CompatPeer::wrap_peer(
-                                        &handle1,
-                                        peer,
-                                        their_uid.clone(),
-                                        their_addr,
+                                        &handle1, peer, their_uid, their_addr,
                                     );
                                     if cm.insert_peer(&handle1, peer, their_addr) {
-                                        let _ = event_tx.send(Event::BootstrapAccept(
-                                            their_uid.clone(),
-                                            their_kind,
-                                        ));
+                                        let _ = event_tx
+                                            .send(Event::BootstrapAccept(their_uid, their_kind));
                                     }
                                     Ok(())
                                 }).infallible()
@@ -180,7 +175,7 @@ impl Service {
     /// Fetches given peer socket address.
     /// Blocks until address is retrieved.
     pub fn get_peer_socket_addr(&self, peer_uid: &PublicEncryptKey) -> Result<PaAddr, CrustError> {
-        let peer_uid = peer_uid.clone();
+        let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel::<Result<PaAddr, CrustError>>();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
@@ -197,7 +192,7 @@ impl Service {
     /// Checks if given peer is the one from hard coded contacts list.
     /// Blocks until response is received.
     pub fn is_peer_hard_coded(&self, peer_uid: &PublicEncryptKey) -> bool {
-        let peer_uid = peer_uid.clone();
+        let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         let cmd_sent = self
             .event_loop
@@ -248,14 +243,13 @@ impl Service {
                                     )
                                 })
                             }?;
-                            let their_uid = peer.public_id().clone();
-                            let peer =
-                                CompatPeer::wrap_peer(&handle, peer, their_uid.clone(), addr);
+                            let their_uid = *peer.public_id();
+                            let peer = CompatPeer::wrap_peer(&handle, peer, their_uid, addr);
                             let _ = cm.insert_peer(&handle, peer, addr);
                             Ok((addr, their_uid))
                         }).then(move |res| {
                             let event = match res {
-                                Ok((addr, uid)) => Event::BootstrapConnect(uid.clone(), addr),
+                                Ok((addr, uid)) => Event::BootstrapConnect(uid, addr),
                                 Err(()) => Event::BootstrapFailed,
                             };
                             let _ = event_tx.send(event);
@@ -370,7 +364,7 @@ impl Service {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_uid: &PublicEncryptKey) -> bool {
-        let peer_uid = peer_uid.clone();
+        let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         let cmd_sent = self
             .event_loop
@@ -387,7 +381,7 @@ impl Service {
         msg: Vec<u8>,
         priority: Priority,
     ) -> Result<(), CrustError> {
-        let peer_uid = peer_uid.clone();
+        let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         self.event_loop
             .send(Box::new(move |state: &mut ServiceState| {
@@ -398,7 +392,7 @@ impl Service {
 
     /// Check if we are connected to the given peer
     pub fn is_connected(&self, peer_uid: &PublicEncryptKey) -> bool {
-        let peer_uid = peer_uid.clone();
+        let peer_uid = *peer_uid;
         let (tx, rx) = std::sync::mpsc::channel();
         let cmd_sent = self
             .event_loop
@@ -528,7 +522,7 @@ impl ServiceState {
         let f = {
             let handle = handle.clone();
             self.connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
-                let _ = their_ci_tx.send(their_ci.uid.clone());
+                let _ = their_ci_tx.send(their_ci.uid);
                 Ok(their_ci)
             })).map_err(move |e| {
                 error!("connection failed: {}", e);
@@ -537,15 +531,15 @@ impl ServiceState {
                     peer.addr()
                         .map_err(|e| error!("failed to get address of peer we connected to: {}", e))
                 }?;
-                let their_uid = peer.public_id().clone();
-                let peer = CompatPeer::wrap_peer(&handle, peer, their_uid.clone(), addr);
+                let their_uid = *peer.public_id();
+                let peer = CompatPeer::wrap_peer(&handle, peer, their_uid, addr);
                 let _ = cm.insert_peer(&handle, peer, addr);
                 let _ = event_tx1.send(Event::ConnectSuccess(their_uid));
                 Ok(())
             }).or_else(move |_err| {
                 // if we know ID of the peer we were trying to connect with
                 if let Ok(peer_uid) = their_ci_rx.try_recv() {
-                    let _ = event_tx2.send(Event::ConnectFailure(peer_uid.clone()));
+                    let _ = event_tx2.send(Event::ConnectFailure(peer_uid));
                 }
                 Ok(())
             })

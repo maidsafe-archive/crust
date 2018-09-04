@@ -300,12 +300,7 @@ mod bootstrap {
         unwrap!(config1.write()).hard_coded_contacts =
             vec![PeerInfo::new(addr0, unwrap!(service0.public_id()))];
         let (pk1, sk1) = gen_encrypt_keypair();
-        let service1 = unwrap!(compat::Service::with_config(
-            event_tx1,
-            config1,
-            sk1,
-            pk1.clone(),
-        ));
+        let service1 = unwrap!(compat::Service::with_config(event_tx1, config1, sk1, pk1,));
 
         bootstrap_and_exchange(
             &service0,

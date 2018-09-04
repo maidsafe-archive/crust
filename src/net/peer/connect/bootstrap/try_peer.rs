@@ -97,7 +97,7 @@ pub fn try_peer(
 ) -> BoxFuture<Peer, TryPeerError> {
     let handle0 = handle.clone();
     let addr = *addr;
-    PaStream::direct_connect(handle, &addr, their_pk.clone(), config)
+    PaStream::direct_connect(handle, &addr, their_pk, config)
         .map_err(TryPeerError::Connect)
         .with_timeout(Duration::from_secs(10), handle)
         .and_then(|res| res.ok_or(TryPeerError::TimedOut))

@@ -82,7 +82,7 @@ impl Service {
 
         let bootstrap_cache = try_bfut!(make_bootstrap_cache(&config));
         let (listeners, socket_incoming) =
-            Acceptor::new(&handle, p2p.clone(), our_sk.clone(), our_pk.clone());
+            Acceptor::new(&handle, p2p.clone(), our_sk.clone(), our_pk);
         let demux = Demux::new(&handle, socket_incoming, &bootstrap_cache);
 
         try_bfut!(try_write_encryption_keys(&config, &our_pk));
@@ -124,7 +124,7 @@ impl Service {
             CrustUser::Node => ExternalReachability::Required {
                 direct_listeners: current_addrs
                     .into_iter()
-                    .map(|addr| PeerInfo::new(addr, self.public_id().clone()))
+                    .map(|addr| PeerInfo::new(addr, self.public_id()))
                     .collect(),
             },
             CrustUser::Client => ExternalReachability::NotRequired,
@@ -132,7 +132,7 @@ impl Service {
         let request = BootstrapRequest {
             name_hash: self.config.network_name_hash(),
             ext_reachability,
-            client_uid: self.public_id().clone(),
+            client_uid: self.public_id(),
         };
         net::bootstrap(
             &self.handle,
@@ -151,7 +151,7 @@ impl Service {
     /// peers.
     pub fn bootstrap_acceptor(&mut self) -> BootstrapAcceptor {
         self.demux
-            .bootstrap_acceptor(&self.config, self.public_id().clone())
+            .bootstrap_acceptor(&self.config, self.public_id())
     }
 
     /// Start listening for incoming connections. The address/port to listen on is configured
@@ -207,7 +207,7 @@ impl Service {
             &self.config,
             &current_addrs,
             addrs_rx,
-            self.public_id().clone(),
+            self.public_id(),
         )
     }
 
@@ -229,7 +229,7 @@ impl Service {
 
     /// Returns service public key.
     pub fn public_id(&self) -> PublicEncryptKey {
-        self.our_pk.clone()
+        self.our_pk
     }
 
     /// Returns service private key.
@@ -251,10 +251,10 @@ impl Service {
         let (direct_addrs, _) = self.listeners.addresses();
         let priv_conn_info = PrivConnectionInfo {
             connection_id: rand::thread_rng().gen(),
-            our_uid: self.public_id().clone(),
+            our_uid: self.public_id(),
             for_direct: direct_addrs.into_iter().collect(),
             p2p_conn_info: None,
-            our_pk: self.public_id().clone(),
+            our_pk: self.public_id(),
             our_sk: self.our_sk.clone(),
         };
 
@@ -305,10 +305,10 @@ fn set_rendezvous_servers(p2p: &P2p, config: &ConfigFile) {
     for peer in hard_coded_contacts {
         match peer.addr {
             PaAddr::Tcp(ref addr) => {
-                p2p.add_tcp_addr_querier(PaTcpAddrQuerier::new(addr, peer.pub_key.clone()))
+                p2p.add_tcp_addr_querier(PaTcpAddrQuerier::new(addr, peer.pub_key))
             }
             PaAddr::Utp(ref addr) => {
-                p2p.add_udp_addr_querier(PaUdpAddrQuerier::new(addr, peer.pub_key.clone()))
+                p2p.add_udp_addr_querier(PaUdpAddrQuerier::new(addr, peer.pub_key))
             }
         }
     }

@@ -39,7 +39,7 @@ where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
     let bind_addr = addr!("0.0.0.0:0");
-    let request = DiscoveryMsg::Request(our_pk.clone());
+    let request = DiscoveryMsg::Request(our_pk);
 
     future::result(UdpSocket::bind(&bind_addr, handle))
         .and_then(|socket| {

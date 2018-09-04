@@ -153,21 +153,16 @@ impl Acceptor {
         let addresses = Arc::clone(&self.addresses);
         let listen_addr = *listen_addr;
         let our_sk = self.our_sk.clone();
-        let our_pk = self.our_pk.clone();
+        let our_pk = self.our_pk;
 
-        PaListener::bind_public(
-            &listen_addr,
-            &handle,
-            &self.p2p,
-            our_sk.clone(),
-            our_pk.clone(),
-        ).map(|(listener, public_addr)| (listener, Some(public_addr)))
-        .or_else(move |_| {
-            PaListener::bind_reusable(&listen_addr, &handle, our_sk, our_pk)
-                .map(|listener| (listener, None))
-        }).and_then(move |(listener, public_addr)| {
-            make_listener(listener, public_addr, addresses, tx)
-        }).into_boxed()
+        PaListener::bind_public(&listen_addr, &handle, &self.p2p, our_sk.clone(), our_pk)
+            .map(|(listener, public_addr)| (listener, Some(public_addr)))
+            .or_else(move |_| {
+                PaListener::bind_reusable(&listen_addr, &handle, our_sk, our_pk)
+                    .map(|listener| (listener, None))
+            }).and_then(move |(listener, public_addr)| {
+                make_listener(listener, public_addr, addresses, tx)
+            }).into_boxed()
     }
 }
 
@@ -562,7 +557,7 @@ mod test {
 
         let (listener_pk, listener_sk) = gen_encrypt_keypair();
         let (acceptor, socket_incoming) =
-            Acceptor::new(&handle, P2p::default(), listener_sk, listener_pk.clone());
+            Acceptor::new(&handle, P2p::default(), listener_sk, listener_pk);
 
         let config = unwrap!(ConfigFile::new_temporary());
         let future = {
@@ -590,7 +585,7 @@ mod test {
                     for addr in &addrs {
                         let addr = *addr;
                         let f = {
-                            PaStream::direct_connect(&handle, &addr, listener_pk.clone(), &config)
+                            PaStream::direct_connect(&handle, &addr, listener_pk, &config)
                                 .map_err(|e| panic!(e))
                                 .and_then(move |stream| {
                                     stream.send_serialized(addr).map(|_stream| ())

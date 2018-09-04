@@ -163,7 +163,7 @@ impl PaStream {
 
         let (our_pk, our_sk) = gen_encrypt_keypair();
         let pump_channels = {
-            let our_pk = our_pk.clone();
+            let our_pk = our_pk;
             tcp_ch_0
                 .into_future()
                 .map_err(|(v, _)| void::unreachable(v))
@@ -754,7 +754,7 @@ mod test {
                     &tcp_addr!("0.0.0.0:0"),
                     &handle,
                     listener_sk,
-                    listener_pk.clone(),
+                    listener_pk,
                 ));
                 let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
@@ -797,7 +797,7 @@ mod test {
                     &tcp_addr!("0.0.0.0:0"),
                     &handle,
                     listener_sk,
-                    listener_pk.clone(),
+                    listener_pk,
                 ));
                 let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 

@@ -346,7 +346,7 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
     our_pk: &PublicEncryptKey,
 ) -> BoxFuture<Option<(Framed<S>, SharedSecretKey)>, AcceptError> {
     let our_sk = our_sk.clone();
-    let our_pk = our_pk.clone();
+    let our_pk = *our_pk;
     Framed::new(stream)
         .into_future()
         .map_err(|(e, _framed)| AcceptError::Read(e))
