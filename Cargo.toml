@@ -7,7 +7,7 @@ license = "MIT OR BSD-3-Clause"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.31.0"
+version = "0.32.0"
 
 [dependencies]
 byteorder = "~1.1.0"
