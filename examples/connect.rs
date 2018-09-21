@@ -36,6 +36,7 @@
 //! That's it, it means we successfully did a peer-to-peer connection.
 
 extern crate clap;
+extern crate env_logger;
 extern crate future_utils;
 extern crate futures;
 extern crate rand;
@@ -60,6 +61,8 @@ use safe_crypto::gen_encrypt_keypair;
 use tokio_core::reactor::Core;
 
 fn main() {
+    unwrap!(env_logger::init());
+
     let _ = App::new("Crust basic connection example")
         .about(
             "Attempts to connect to remote peer given its connection information. \
