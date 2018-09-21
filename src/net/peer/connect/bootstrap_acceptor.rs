@@ -123,7 +123,7 @@ impl Stream for BootstrapAcceptor {
                         &self.handle,
                         socket,
                         &self.config,
-                        self.our_uid.clone(),
+                        self.our_uid,
                         bootstrap_request,
                     );
                     self.handshaking.push(handshaker);

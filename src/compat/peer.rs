@@ -93,7 +93,7 @@ impl CompatPeer {
 
     /// Get the peer's uid
     pub fn public_id(&self) -> PublicEncryptKey {
-        unwrap!(self.inner.as_ref()).uid.clone()
+        unwrap!(self.inner.as_ref()).uid
     }
 
     /// Wraps a `Peer` and turns it into a `CompatPeer`.
@@ -348,7 +348,7 @@ mod test {
                 &bind_addr,
                 &handle,
                 listener_sk,
-                listener_pk.clone()
+                listener_pk,
             ));
             let addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
@@ -358,13 +358,13 @@ mod test {
             let f0 = {
                 let msgs: Vec<(Priority, _)> = msgs.iter().cloned().map(|m| (1, m)).collect();
                 let handle = handle.clone();
-                PaStream::direct_connect(&handle, &addr, listener_pk.clone(), &config)
+                PaStream::direct_connect(&handle, &addr, listener_pk, &config)
                     .map_err(|e| panic!("error connecting: {}", e))
                     .and_then(move |stream| {
                         let their_uid = listener_pk;
                         let peer = peer::from_handshaken_stream(
                             &handle,
-                            their_uid.clone(),
+                            their_uid,
                             stream,
                             CrustUser::Node,
                         );
@@ -386,7 +386,7 @@ mod test {
                         let stream = unwrap!(stream_opt);
                         let peer = peer::from_handshaken_stream(
                             &handle,
-                            client_pk.clone(),
+                            client_pk,
                             stream,
                             CrustUser::Node,
                         );
@@ -438,12 +438,7 @@ mod test {
                 let config = unwrap!(ConfigFile::new_temporary());
                 let (listener_pk, listener_sk) = gen_encrypt_keypair();
                 let addr = PaAddr::Tcp(addr!("0.0.0.0:0"));
-                let listener = unwrap!(PaListener::bind(
-                    &addr,
-                    &handle,
-                    listener_sk,
-                    listener_pk.clone()
-                ));
+                let listener = unwrap!(PaListener::bind(&addr, &handle, listener_sk, listener_pk,));
                 let stream = unwrap!(evloop.run(PaStream::direct_connect(
                     &handle,
                     &unwrap!(listener.local_addr()).unspecified_to_localhost(),

@@ -106,7 +106,7 @@ fn discover_peers_on_lan(
         .service_discovery_port
         .unwrap_or(service::SERVICE_DISCOVERY_DEFAULT_PORT);
 
-    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_sk.clone(), our_pk.clone())
+    service_discovery::discover::<Vec<PeerInfo>>(&handle, sd_port, our_sk.clone(), *our_pk)
         .map_err(BootstrapError::ServiceDiscovery)
         .map(move |s| {
             s.map(|(_, v)| stream::iter_ok(v))
@@ -141,7 +141,7 @@ fn bootstrap_to_peer(
     delay
         .infallible()
         .and_then(move |()| {
-            try_peer(&handle, &peer.addr, &config, request, peer.pub_key.clone())
+            try_peer(&handle, &peer.addr, &config, request, peer.pub_key)
                 .map(move |peer_conn| {
                     cache.put(&peer);
                     let _ = cache

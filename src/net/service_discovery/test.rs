@@ -104,7 +104,7 @@ fn service_discovery() {
 
     let f = {
         let (our_pk, our_sk) = gen_encrypt_keypair();
-        discover::<HashSet<PeerInfo>>(&handle, port, our_sk.clone(), our_pk.clone())
+        discover::<HashSet<PeerInfo>>(&handle, port, our_sk.clone(), our_pk)
             .map_err(|e| panic!("discover error: {}", e))
             .flatten_stream()
             .with_timeout(Duration::from_secs(2), &handle)

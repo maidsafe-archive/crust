@@ -69,7 +69,7 @@ pub struct PubConnectionInfo {
 impl PubConnectionInfo {
     /// Returns the `UID` of the node that created this connection info.
     pub fn id(&self) -> PublicEncryptKey {
-        self.pub_key.clone()
+        self.pub_key
     }
 }
 
@@ -84,9 +84,9 @@ impl PrivConnectionInfo {
         PubConnectionInfo {
             connection_id: self.connection_id,
             for_direct: self.for_direct.clone(),
-            uid: self.our_uid.clone(),
+            uid: self.our_uid,
             p2p_conn_info,
-            pub_key: self.our_pk.clone(),
+            pub_key: self.our_pk,
         }
     }
 }
@@ -105,7 +105,7 @@ mod tests {
             #[test]
             fn when_p2p_conn_info_is_none_it_sets_none_in_public_conn_info_too() {
                 let (our_pk, our_sk) = gen_encrypt_keypair();
-                let our_uid = our_pk.clone();
+                let our_uid = our_pk;
                 let priv_conn_info = PrivConnectionInfo {
                     connection_id: 123,
                     our_uid,
@@ -130,7 +130,7 @@ mod tests {
                     connection_rx,
                 });
                 let (our_pk, our_sk) = gen_encrypt_keypair();
-                let our_uid = our_pk.clone();
+                let our_uid = our_pk;
                 let priv_conn_info = PrivConnectionInfo {
                     connection_id: 123,
                     our_uid,

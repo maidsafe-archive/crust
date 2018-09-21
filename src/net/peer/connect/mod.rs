@@ -151,7 +151,7 @@ where
 {
     let our_connect_request1 = ConnectRequest {
         connection_id: 0,
-        client_uid: our_info.our_uid.clone(),
+        client_uid: our_info.our_uid,
         name_hash,
     };
     let all_outgoing_connections = get_conn_info_and_connect(
@@ -195,7 +195,7 @@ where
     C: Stream<Item = PubConnectionInfo>,
     C: 'static,
 {
-    let our_uid = our_info.our_uid.clone();
+    let our_uid = our_info.our_uid;
     let our_p2p_conn_info = our_info.p2p_conn_info.take();
     let mut our_connect_request = our_connect_request.clone();
     let config = config.clone();
@@ -287,9 +287,9 @@ fn connect_directly(
         .map(move |addr| {
             let bootstrap_cache1 = bootstrap_cache.clone();
             let bootstrap_cache2 = bootstrap_cache.clone();
-            let their_pk0 = their_pk.clone();
-            let their_pk1 = their_pk.clone();
-            let their_pk2 = their_pk.clone();
+            let their_pk0 = their_pk;
+            let their_pk1 = their_pk;
+            let their_pk2 = their_pk;
             PaStream::direct_connect(evloop_handle, &addr, their_pk0, config)
                 .map(move |conn| {
                     bootstrap_cache1.put(&PeerInfo::new(addr, their_pk1));

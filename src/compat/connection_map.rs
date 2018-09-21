@@ -183,22 +183,22 @@ fn handle_peer_rx(
     let event_tx1 = event_tx.clone();
     let event_tx2 = event_tx.clone();
     let event_tx3 = event_tx.clone();
-    let uid1 = uid.clone();
-    let uid2 = uid.clone();
-    let uid3 = uid.clone();
+    let uid1 = *uid;
+    let uid2 = *uid;
+    let uid3 = *uid;
     let cm2 = cm1.clone();
     peer_stream
         .map_err(move |e| {
             if let CompatPeerError::Peer(PeerError::InactivityTimeout(..)) = e {
                 let _ = cm1.remove(&uid1);
-                let _ = event_tx1.send(Event::LostPeer(uid1.clone()));
+                let _ = event_tx1.send(Event::LostPeer(uid1));
             }
             e
         }).log_errors(LogLevel::Info, "receiving data from peer")
         .until(drop_rx)
         .for_each(move |msg| {
             let vec = Vec::from(&msg[..]);
-            let _ = event_tx2.send(Event::NewMessage(uid2.clone(), kind, vec));
+            let _ = event_tx2.send(Event::NewMessage(uid2, kind, vec));
             Ok(())
         }).finally(move || {
             let _ = cm2.remove(&uid3);
@@ -224,17 +224,13 @@ mod tests {
             let shared_secret = our_sk.shared_secret(&peer_uid);
             let mem_stream = Framed::new(memstream::EchoStream::default());
             let fake_stream = PaStream::from_framed_mem_stream(mem_stream, shared_secret);
-            let mut peer = peer::from_handshaken_stream(
-                &handle,
-                peer_uid.clone(),
-                fake_stream,
-                CrustUser::Client,
-            );
+            let mut peer =
+                peer::from_handshaken_stream(&handle, peer_uid, fake_stream, CrustUser::Client);
             if !heartbeats_enabled {
                 peer.disable_heartbeats();
             }
             peer.set_inactivity_timeout(Duration::from_millis(900));
-            CompatPeer::wrap_peer(&handle, peer, peer_uid.clone(), tcp_addr!("0.0.0.0:0"))
+            CompatPeer::wrap_peer(&handle, peer, peer_uid, tcp_addr!("0.0.0.0:0"))
         }
 
         #[test]

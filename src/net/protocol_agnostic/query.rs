@@ -32,7 +32,7 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
     fn query(&self, bind_addr: &SocketAddr, handle: &Handle) -> BoxFuture<SocketAddr, Box<Error>> {
         let handle = handle.clone();
         let handle0 = handle.clone();
-        let server_pk = self.server_pk.clone();
+        let server_pk = self.server_pk;
         TcpStream::connect_reusable(bind_addr, &self.addr, &handle)
             .map_err(|e| match e {
                 ConnectReusableError::Bind(e) => QueryError::Bind(e),
@@ -106,7 +106,7 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
                 .map_err(|e| Box::new(e) as Box<Error>)
         );
 
-        let server_pk = self.server_pk.clone();
+        let server_pk = self.server_pk;
         socket
             .connect(&self.addr)
             .map_err(QueryError::Connect)
