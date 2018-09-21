@@ -143,6 +143,7 @@ impl PaStream {
         }
     }
 
+    /// Execute both TCP and uTP rendezvous connections.
     pub fn rendezvous_connect<C>(
         channel: C,
         handle: &Handle,
