@@ -20,7 +20,7 @@ use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
 use net::peer::BootstrapRequest;
 use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
-use p2p::P2p;
+use p2p::{self, NatType, P2p};
 use priv_prelude::*;
 use rand::{self, Rng};
 use serde_json;
@@ -240,6 +240,21 @@ impl Service {
     #[cfg(test)]
     pub fn bootstrap_cache(&self) -> BootstrapCache {
         self.bootstrap_cache.clone()
+    }
+
+    /// Start hole punching techniques to identify NAT (Network Address Translation) type.
+    pub fn probe_nat(&self) -> BoxFuture<NatType, CrustError> {
+        let p2p = P2p::default();
+        set_rendezvous_servers(&p2p, &self.config);
+        p2p.disable_igd();
+        p2p.disable_igd_for_rendezvous();
+
+        p2p::rendezvous_addr(p2p::Protocol::Udp, &addr!("0.0.0.0:0"), &self.handle, &p2p)
+            .then(|res| match res {
+                Err(e) => e.unpredictable_ports().ok_or(e),
+                Ok((_public_addr, nat_type)) => Ok(nat_type),
+            }).map_err(CrustError::ProbeNatError)
+            .into_boxed()
     }
 
     /// Prepare a connection info. This is the first step to doing a p2p connection to a peer. Both

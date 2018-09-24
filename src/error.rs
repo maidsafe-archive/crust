@@ -17,6 +17,7 @@
 
 use config_file_handler;
 use notify;
+use p2p;
 use priv_prelude::*;
 
 quick_error! {
@@ -88,6 +89,10 @@ quick_error! {
         /// Failed to prepare our connection information.
         PrepareConnectionInfo {
             description("Failed to prepare our connection info")
+        }
+        /// Failed to probe NAT type.
+        ProbeNatError(e: p2p::RendezvousAddrError) {
+            display("Failed to get NAT type: {}", e)
         }
     }
 }
