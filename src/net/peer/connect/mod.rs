@@ -35,6 +35,8 @@ use futures::sync::mpsc::SendError;
 use futures::sync::oneshot;
 use p2p::P2p;
 use priv_prelude::*;
+#[cfg(feature = "connections_info")]
+use std::time::{Duration, Instant};
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
@@ -71,59 +73,170 @@ quick_error! {
 quick_error! {
     #[derive(Debug)]
     #[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
+    /// When Crust attempts connection it makes multiple attempts in parallel. This error holds
+    /// information of a single attempt failure.
     pub enum SingleConnectionError {
+        /// OS error while doing/accepting connection.
         Io(e: io::Error) {
-            description("io error initiating/accepting connection")
             display("io error initiating/accepting connection: {}", e)
             cause(e)
             from()
         }
+        /// Connection, when remote peer has directly accessible listeners, failed.
         DirectConnect(e: DirectConnectError) {
-            description("direct connection attempt failed")
             display("direct connection attempt failed: {}", e)
             cause(e)
         }
+        /// Failure to send data over the connection socket.
         Write(e: PaStreamWriteError) {
-            description("error writing to underlying stream")
             display("error writing to underlying stream: {}", e)
             cause(e)
         }
+        /// Failure to read data from the connection socket.
         Read(e: PaStreamReadError) {
-            description("error reading from underlying stream")
             display("error reading from underlying stream: {}", e)
             cause(e)
         }
+        /// Failure to deserialize message received from remote peer.
         Deserialise(e: SerialisationError) {
-            description("error deserilising message from remote peer")
             display("error deserilising message from remote peer: {}", e)
             cause(e)
         }
+        /// Connection was dropped by remote peer.
         ConnectionDropped {
-            description("the connection was dropped by the remote peer")
+            display("the connection was dropped by the remote peer")
         }
+        /// Attempted to connect to peer that was on a different networ.
         InvalidNameHash(name_hash: NameHash) {
-            description("Peer is from a different network")
             display("Peer is from a different network. Invalid name hash == {:?}", name_hash)
         }
+        /// Remote peer sent us an unexpected message.
         UnexpectedMessage {
-            description("Peer sent us an unexpected message variant")
+            display("Peer sent us an unexpected message variant")
         }
+        /// Internal in-memory communication channel died.
         DeadChannel {
-            description("Communication channel was cancelled")
+            display("Communication channel was cancelled")
         }
+        /// Hole punched connection failed.
         RendezvousConnect(e: RendezvousConnectError) {
-            description("rendezvous connect failed")
             display("rendezvous connect failed: {}", e)
             cause(e)
         }
+        /// You provided connection info that directs to ourselves.
         RequestedConnectToSelf {
-            description("requested a connection to ourselves")
+            display("requested a connection to ourselves")
         }
+        /// Remote peer we're trying to connect to is no whitelisted.
         NotWhitelisted(ip: IpAddr) {
-            description("peer is not whitelisted")
             display("peer {} is not whitelisted", ip)
         }
+        #[cfg(feature = "connections_info")]
+        /// Connection timed out.
+        Timeout {
+            display("Connection timed out")
+        }
     }
+}
+
+/// Single connection result.
+#[cfg(feature = "connections_info")]
+#[derive(Debug)]
+pub struct ConnectionResult {
+    /// Was connection successful? If `result.is_ok()`, then yes. Otherwise it holds an error
+    /// that happened during connection.
+    pub result: Result<(), SingleConnectionError>,
+    /// True if connection was direct, false if this is a hole punched connection.
+    pub is_direct: bool,
+    /// How long connection took.
+    pub duration: Duration,
+    /// Our public address, if one was detected say during rendezvous connection.
+    pub our_addr: Option<PaAddr>,
+    /// Remote peer's public address.
+    pub their_addr: Option<PaAddr>,
+}
+
+/// Try to connect to a peer using all possible means and return a stream of results.
+#[cfg(feature = "connections_info")]
+pub fn connect_all<C>(
+    handle: &Handle,
+    mut our_conn_info: PrivConnectionInfo,
+    conn_info_rx: C,
+    config: &ConfigFile,
+    peer_rx: UnboundedReceiver<ConnectMessage>,
+    bootstrap_cache: &BootstrapCache,
+) -> BoxStream<ConnectionResult, SingleConnectionError>
+where
+    C: Stream<Item = PubConnectionInfo>,
+    C: 'static,
+{
+    let config = config.clone();
+    let handle1 = handle.clone();
+    let bootstrap_cache = bootstrap_cache.clone();
+
+    let all_outgoing_connections = get_their_info(conn_info_rx, our_conn_info.our_uid, &config)
+        .and_then(move |their_conn_info| {
+            let connection_started = Instant::now();
+            let direct_conns = try_connect_directly(
+                &handle1,
+                their_conn_info.for_direct,
+                their_conn_info.pub_key,
+                &config,
+                &bootstrap_cache,
+            ).map(move |result| match result {
+                Ok(stream) => ConnectionResult {
+                    result: Ok(()),
+                    is_direct: true,
+                    duration: Instant::now().duration_since(connection_started),
+                    our_addr: stream.our_public_addr(),
+                    their_addr: stream.peer_addr().ok(),
+                },
+                Err(e) => ConnectionResult {
+                    result: Err(e),
+                    is_direct: true,
+                    duration: Instant::now().duration_since(connection_started),
+                    our_addr: None, // TODO(povilas): do best to determine our public address
+                    their_addr: None, // TODO(povilas): get their addr
+                },
+            }).infallible::<SingleConnectionError>();
+
+            let our_p2p_conn_info = our_conn_info.p2p_conn_info.take();
+            let rendezvous_conns =
+                try_connect_p2p(&handle1, our_p2p_conn_info, their_conn_info.p2p_conn_info)
+                    .map(move |result| match result {
+                        Ok(stream) => ConnectionResult {
+                            result: Ok(()),
+                            is_direct: false,
+                            duration: Instant::now().duration_since(connection_started),
+                            our_addr: stream.our_public_addr(),
+                            their_addr: stream.peer_addr().ok(),
+                        },
+                        Err(e) => ConnectionResult {
+                            result: Err(e),
+                            is_direct: false,
+                            duration: Instant::now().duration_since(connection_started),
+                            our_addr: None, // TODO(povilas): do best to determine our public address
+                            their_addr: None, // TODO(povilas): get their addr
+                        },
+                    }).into_stream();
+            future::ok(direct_conns.select(rendezvous_conns))
+        }).flatten_stream();
+
+    let connection_started = Instant::now();
+    let direct_incoming =
+        peer_rx
+            .infallible()
+            .map(move |(stream, _connect_request)| ConnectionResult {
+                result: Ok(()),
+                is_direct: true,
+                our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
+                duration: Instant::now().duration_since(connection_started),
+                their_addr: stream.peer_addr().ok(),
+            });
+
+    all_outgoing_connections
+        .select(direct_incoming)
+        .into_boxed()
 }
 
 /// Perform a rendezvous connect to a peer. Both peers call this simultaneously using
@@ -187,7 +300,6 @@ where
     C: Stream<Item = PubConnectionInfo>,
     C: 'static,
 {
-    let our_uid = our_info.our_uid;
     let our_p2p_conn_info = our_info.p2p_conn_info.take();
     let mut our_connect_request = our_connect_request.clone();
     let config = config.clone();
@@ -196,22 +308,8 @@ where
 
     // We'll retain semantics and take only first connection info for now.
     // Also, note that we can't clone our_p2p_conn_info.
-    conn_info_rx
-        .into_future()
-        .map_err(|_e| SingleConnectionError::DeadChannel)
-        .and_then(|(their_info_opt, _conn_info_rx)| {
-            their_info_opt.ok_or(SingleConnectionError::DeadChannel)
-        }).and_then(move |their_info| {
-            if our_uid == their_info.uid {
-                return future::err(SingleConnectionError::RequestedConnectToSelf);
-            }
-
-            for addr in &their_info.for_direct {
-                if !config.is_peer_whitelisted(addr.ip(), CrustUser::Node) {
-                    return future::err(SingleConnectionError::NotWhitelisted(addr.ip()));
-                }
-            }
-
+    get_their_info(conn_info_rx, our_info.our_uid, &config)
+        .and_then(move |their_info| {
             our_connect_request.connection_id = their_info.connection_id;
             future::ok(attempt_to_connect(
                 &handle,
@@ -223,6 +321,45 @@ where
             ))
         }).flatten_stream()
         .into_boxed()
+}
+
+/// Waits for remote peer's connection info on a given channel. Once we receive the info, we
+/// validate it.
+fn get_their_info<C>(
+    conn_info_rx: C,
+    our_uid: PublicEncryptKey,
+    config: &ConfigFile,
+) -> BoxFuture<PubConnectionInfo, SingleConnectionError>
+where
+    C: Stream<Item = PubConnectionInfo>,
+    C: 'static,
+{
+    let config = config.clone();
+    conn_info_rx
+        .into_future()
+        .map_err(|_e| SingleConnectionError::DeadChannel)
+        .and_then(|(their_info_opt, _conn_info_rx)| {
+            their_info_opt.ok_or(SingleConnectionError::DeadChannel)
+        }).and_then(move |their_info| {
+            validate_their_conn_info(&their_info, &our_uid, &config).map(move |()| their_info)
+        }).into_boxed()
+}
+
+fn validate_their_conn_info(
+    their_info: &PubConnectionInfo,
+    our_uid: &PublicEncryptKey,
+    config: &ConfigFile,
+) -> Result<(), SingleConnectionError> {
+    if *our_uid == their_info.uid {
+        return Err(SingleConnectionError::RequestedConnectToSelf);
+    }
+    for addr in &their_info.for_direct {
+        if !config.is_peer_whitelisted(addr.ip(), CrustUser::Node) {
+            return Err(SingleConnectionError::NotWhitelisted(addr.ip()));
+        }
+    }
+
+    Ok(())
 }
 
 /// Initiates both direct and p2p connections.
@@ -302,6 +439,51 @@ fn connect_directly(
         .into_boxed()
 }
 
+// TODO(povilas): make connect_directly() a wrapper of this method where it checks each result
+// and unwraps error if it's present?
+/// Tries multiple direct connections to given addresses.
+/// This function never fails, rather it collects results for all connections.
+#[cfg(feature = "connections_info")]
+fn try_connect_directly(
+    handle: &Handle,
+    addrs: Vec<PaAddr>,
+    their_pk: PublicEncryptKey,
+    config: &ConfigFile,
+    bootstrap_cache: &BootstrapCache,
+) -> BoxStream<Result<PaStream, SingleConnectionError>, Void> {
+    let bootstrap_cache = bootstrap_cache.clone();
+    let connections = addrs
+        .into_iter()
+        .map(move |addr| {
+            let bootstrap_cache1 = bootstrap_cache.clone();
+            let bootstrap_cache2 = bootstrap_cache.clone();
+            let their_pk0 = their_pk;
+            let their_pk1 = their_pk;
+            let their_pk2 = their_pk;
+            PaStream::direct_connect(handle, &addr, their_pk0, config)
+                .map_err(SingleConnectionError::DirectConnect)
+                .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), &handle)
+                .and_then(|res| res.ok_or(SingleConnectionError::Timeout))
+                .then(move |result| match result {
+                    Ok(conn) => {
+                        bootstrap_cache1.put(&PeerInfo::new(addr, their_pk1));
+                        let _ = bootstrap_cache1
+                            .commit()
+                            .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
+                        Ok(Ok(conn))
+                    }
+                    Err(e) => {
+                        bootstrap_cache2.remove(&PeerInfo::new(addr, their_pk2));
+                        let _ = bootstrap_cache2
+                            .commit()
+                            .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
+                        Ok(Err(e))
+                    }
+                })
+        }).collect::<Vec<_>>();
+    stream::futures_unordered(connections).into_boxed()
+}
+
 fn handshake_incoming_connections(
     mut our_connect_request: ConnectRequest,
     conn_rx: UnboundedReceiver<ConnectMessage>,
@@ -368,6 +550,34 @@ fn connect_p2p(
                     conn_rx
                         .map_err(|_| SingleConnectionError::DeadChannel)
                         .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect))
+                }).into_boxed()
+        }
+        _ => future::empty().into_boxed(),
+    }
+}
+
+// TODO(povilas): return Stream of attempted rendezvous connections
+#[cfg(feature = "connections_info")]
+fn try_connect_p2p(
+    handle: &Handle,
+    our_conn_info: Option<P2pConnectionInfo>,
+    their_conn_info: Option<Vec<u8>>,
+) -> BoxFuture<Result<PaStream, SingleConnectionError>, SingleConnectionError> {
+    let handle = handle.clone();
+    match (our_conn_info, their_conn_info) {
+        (Some(our_conn_info), Some(their_conn_info)) => {
+            let conn_rx = our_conn_info.connection_rx;
+            let raw_info = Bytes::from(their_conn_info);
+            our_conn_info
+                .rendezvous_channel
+                .send(raw_info)
+                .map_err(|_| SingleConnectionError::DeadChannel)
+                .and_then(move |_chann| {
+                    conn_rx
+                        .map_err(|_| SingleConnectionError::DeadChannel)
+                        .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), &handle)
+                        .and_then(|res| res.ok_or(SingleConnectionError::Timeout))
+                        .and_then(|res| Ok(res.map_err(SingleConnectionError::RendezvousConnect)))
                 }).into_boxed()
         }
         _ => future::empty().into_boxed(),

@@ -7,6 +7,8 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+#[cfg(feature = "connections_info")]
+pub use self::connect::ConnectionResult;
 pub use self::connect::{
     bootstrap, start_rendezvous_connect, BootstrapAcceptError, BootstrapAcceptor, BootstrapCache,
     BootstrapCacheError, BootstrapError, BootstrapRequest, ConnectError, ConnectHandshakeError,
@@ -166,6 +168,11 @@ impl Peer {
     /// Return peer IP address.
     pub fn ip(&self) -> Result<IpAddr, PeerError> {
         Ok(self.stream.peer_addr().map(|a| a.ip())?)
+    }
+
+    /// Returns our public address, if one was detected.
+    pub fn our_public_addr(&self) -> Option<PaAddr> {
+        self.stream.our_public_addr()
     }
 
     /// Gracefully shutdown the connection to the remote peer

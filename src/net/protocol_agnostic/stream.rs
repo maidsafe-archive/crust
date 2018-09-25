@@ -141,6 +141,8 @@ impl PaStream {
     }
 
     /// Execute both TCP and uTP rendezvous connections.
+    // TODO(povilas): return a stream of all connections: this will allow
+    // us to collect info about all attempted connections.
     pub fn rendezvous_connect<C>(
         channel: C,
         handle: &Handle,
