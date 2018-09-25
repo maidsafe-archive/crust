@@ -23,6 +23,8 @@ use void;
 pub struct PaStream {
     inner: PaStreamInner,
     shared_secret: SharedSecretKey,
+    /// Sometimes we know our public IP address, e.g. when we do rendezvous connections.
+    our_public_addr: Option<SocketAddr>,
 }
 
 #[derive(Debug)]
@@ -51,6 +53,7 @@ impl PaStream {
         PaStream {
             inner: PaStreamInner::Tcp(framed),
             shared_secret,
+            our_public_addr: None,
         }
     }
 
@@ -61,6 +64,7 @@ impl PaStream {
         PaStream {
             inner: PaStreamInner::Utp(framed),
             shared_secret,
+            our_public_addr: None,
         }
     }
 
@@ -74,6 +78,7 @@ impl PaStream {
         PaStream {
             inner: PaStreamInner::Mem(framed),
             shared_secret,
+            our_public_addr: None,
         }
     }
 
@@ -211,14 +216,14 @@ impl PaStream {
         let udp_connect = {
             UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
                 .map_err(UtpRendezvousConnectError::Rendezvous)
-                .and_then(move |(udp_socket, addr, _our_pub_addr)| {
+                .and_then(move |(udp_socket, addr, our_pub_addr)| {
                     trace!("udp rendezvous connect succeeded.");
                     let (utp_socket, utp_listener) = {
                         UtpSocket::from_socket(udp_socket, &handle)
                             .map_err(UtpRendezvousConnectError::IntoUtpSocket)?
                     };
                     trace!("returning utp socket.");
-                    Ok((utp_socket, utp_listener, addr))
+                    Ok((utp_socket, utp_listener, addr, our_pub_addr))
                 })
         };
 
@@ -230,21 +235,25 @@ impl PaStream {
                 .and_then(move |((their_pk, tcp_connect), udp_connect)| {
                     let shared_secret = our_sk.shared_secret(&their_pk);
                     let shared_key0 = shared_secret.clone();
-                    let tcp_connect = tcp_connect.map(|(stream, _our_pub_addr)| PaStream {
+                    let tcp_connect = tcp_connect.map(|(stream, our_public_addr)| PaStream {
                         inner: PaStreamInner::Tcp(Framed::new(stream)),
                         shared_secret: shared_key0,
+                        our_public_addr,
                     });
                     if our_pk > their_pk {
                         let utp_connect = {
-                            udp_connect.and_then(|(utp_socket, _utp_listener, addr)| {
-                                utp_socket
-                                    .connect(&addr)
-                                    .map_err(UtpRendezvousConnectError::UtpConnect)
-                                    .map(|stream| PaStream {
-                                        inner: PaStreamInner::Utp(Framed::new(stream)),
-                                        shared_secret,
-                                    })
-                            })
+                            udp_connect.and_then(
+                                |(utp_socket, _utp_listener, addr, our_public_addr)| {
+                                    utp_socket
+                                        .connect(&addr)
+                                        .map_err(UtpRendezvousConnectError::UtpConnect)
+                                        .map(move |stream| PaStream {
+                                            inner: PaStreamInner::Utp(Framed::new(stream)),
+                                            shared_secret,
+                                            our_public_addr,
+                                        })
+                                },
+                            )
                         };
                         let connect = {
                             tcp_connect
@@ -266,15 +275,16 @@ impl PaStream {
                         let tcp_connect = tcp_connect.map(take_chosen);
                         let utp_connect = {
                             udp_connect
-                                .and_then(|(_utp_socket, utp_listener, addr)| {
+                                .and_then(|(_utp_socket, utp_listener, addr, our_public_addr)| {
                                     utp_listener
                                         .incoming()
                                         .filter(move |stream| stream.peer_addr() == addr)
                                         .first_ok()
                                         .map_err(UtpRendezvousConnectError::UtpAccept)
-                                        .map(|stream| PaStream {
+                                        .map(move |stream| PaStream {
                                             inner: PaStreamInner::Utp(Framed::new(stream)),
                                             shared_secret,
+                                            our_public_addr,
                                         })
                                 }).map(take_chosen)
                         };
@@ -325,6 +335,16 @@ impl PaStream {
             PaStreamInner::Utp(ref stream) => Ok(PaAddr::Utp(stream.get_ref().peer_addr())),
             #[cfg(test)]
             PaStreamInner::Mem(_) => Ok(tcp_addr!("0.0.0.0:0")),
+        }
+    }
+
+    /// Returns our public address, if one was detected.
+    pub fn our_public_addr(&self) -> Option<PaAddr> {
+        match self.inner {
+            PaStreamInner::Tcp(_) => self.our_public_addr.map(PaAddr::Tcp),
+            PaStreamInner::Utp(_) => self.our_public_addr.map(PaAddr::Utp),
+            #[cfg(test)]
+            PaStreamInner::Mem(_) => None,
         }
     }
 
