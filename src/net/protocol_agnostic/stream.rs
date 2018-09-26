@@ -45,6 +45,9 @@ pub struct PaRendezvousMsg {
 #[derive(Debug, Serialize, Deserialize)]
 struct ChooseMsg;
 
+type RendezvousConnectResult<C> =
+    Result<PaStream, PaRendezvousConnectError<<C as Stream>::Error, <C as Sink>::SinkError>>;
+
 impl PaStream {
     pub fn from_framed_tcp_stream(
         framed: Framed<TcpStream>,
@@ -140,15 +143,14 @@ impl PaStream {
         }
     }
 
-    /// Execute both TCP and uTP rendezvous connections.
-    // TODO(povilas): return a stream of all connections: this will allow
-    // us to collect info about all attempted connections.
+    /// Execute both TCP and uTP rendezvous connections. Returns a stream of connection results.
+    // TODO(povilas): add timeout for each connection. Maybe make it optional?
     pub fn rendezvous_connect<C>(
         channel: C,
         handle: &Handle,
         config: &ConfigFile,
         p2p: &P2p,
-    ) -> BoxFuture<PaStream, PaRendezvousConnectError<C::Error, C::SinkError>>
+    ) -> BoxStream<RendezvousConnectResult<C>, PaRendezvousConnectError<C::Error, C::SinkError>>
     where
         C: Stream<Item = Bytes>,
         C: Sink<SinkItem = Bytes>,
@@ -214,7 +216,8 @@ impl PaStream {
         };
 
         let handle = handle.clone();
-        let tcp_connect = { TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p) };
+        let tcp_connect = TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p)
+            .map_err(PaRendezvousConnectError::TcpFailure);
         let udp_connect = {
             UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
                 .map_err(UtpRendezvousConnectError::Rendezvous)
@@ -229,84 +232,80 @@ impl PaStream {
                 })
         };
 
-        let ret = {
-            pump_channels
-                .while_driving(tcp_connect)
-                .while_driving(udp_connect)
-                .map_err(|((e, _tcp_connect), _udp_connect)| e)
-                .and_then(move |((their_pk, tcp_connect), udp_connect)| {
-                    let shared_secret = our_sk.shared_secret(&their_pk);
-                    let shared_key0 = shared_secret.clone();
-                    let tcp_connect = tcp_connect.map(|(stream, our_public_addr)| PaStream {
-                        inner: PaStreamInner::Tcp(Framed::new(stream)),
-                        shared_secret: shared_key0,
-                        our_public_addr,
-                    });
-                    if our_pk > their_pk {
-                        let utp_connect = {
-                            udp_connect.and_then(
-                                |(utp_socket, _utp_listener, addr, our_public_addr)| {
-                                    utp_socket
-                                        .connect(&addr)
-                                        .map_err(UtpRendezvousConnectError::UtpConnect)
-                                        .map(move |stream| PaStream {
-                                            inner: PaStreamInner::Utp(Framed::new(stream)),
-                                            shared_secret,
-                                            our_public_addr,
-                                        })
-                                },
-                            )
-                        };
-                        let connect = {
-                            tcp_connect
-                                .first_ok2(utp_connect)
-                                .map_err(|(tcp_err, utp_err)| {
-                                    PaRendezvousConnectError::AllProtocolsFailed {
-                                        tcp: Box::new(tcp_err),
-                                        utp: Box::new(utp_err),
-                                    }
-                                })
-                        };
-                        connect
+        pump_channels
+            .while_driving(tcp_connect)
+            .while_driving(udp_connect)
+            .map_err(|((e, _tcp_connect), _udp_connect)| e)
+            .and_then(move |((their_pk, tcp_connect), udp_connect)| {
+                let shared_secret = our_sk.shared_secret(&their_pk);
+                let shared_key0 = shared_secret.clone();
+                let tcp_connect = tcp_connect.map(|(stream, our_public_addr)| PaStream {
+                    inner: PaStreamInner::Tcp(Framed::new(stream)),
+                    shared_secret: shared_key0,
+                    our_public_addr,
+                });
+                if our_pk > their_pk {
+                    let utp_connect = {
+                        udp_connect
+                            .and_then(|(utp_socket, _utp_listener, addr, our_public_addr)| {
+                                utp_socket
+                                    .connect(&addr)
+                                    .map_err(UtpRendezvousConnectError::UtpConnect)
+                                    .map(move |stream| PaStream {
+                                        inner: PaStreamInner::Utp(Framed::new(stream)),
+                                        shared_secret,
+                                        our_public_addr,
+                                    })
+                            }).map_err(PaRendezvousConnectError::UtpFailure)
                             .and_then(|stream| {
                                 stream
                                     .send_serialized(&ChooseMsg)
                                     .map_err(PaRendezvousConnectError::SendChoose)
-                            }).into_boxed()
-                    } else {
-                        let tcp_connect = tcp_connect.map(take_chosen);
-                        let utp_connect = {
-                            udp_connect
-                                .and_then(|(_utp_socket, utp_listener, addr, our_public_addr)| {
-                                    utp_listener
-                                        .incoming()
-                                        .filter(move |stream| stream.peer_addr() == addr)
-                                        .first_ok()
-                                        .map_err(UtpRendezvousConnectError::UtpAccept)
-                                        .map(move |stream| PaStream {
-                                            inner: PaStreamInner::Utp(Framed::new(stream)),
-                                            shared_secret,
-                                            our_public_addr,
-                                        })
-                                }).map(take_chosen)
-                        };
-                        let connect = {
-                            tcp_connect
-                                .first_ok2(utp_connect)
-                                .map_err(|(tcp_err, utp_err)| {
-                                    PaRendezvousConnectError::AllProtocolsFailed {
-                                        tcp: Box::new(tcp_err),
-                                        utp: Box::new(utp_err),
-                                    }
-                                }).and_then(|res| res)
-                        };
-
-                        connect.into_boxed()
-                    }
-                })
-        };
-
-        ret.into_boxed()
+                            }).then(Ok)
+                    };
+                    let tcp_connect = tcp_connect
+                        .and_then(|stream| {
+                            stream
+                                .send_serialized(&ChooseMsg)
+                                .map_err(PaRendezvousConnectError::SendChoose)
+                        }).then(Ok);
+                    let connect = {
+                        tcp_connect
+                            .into_stream()
+                            .select(utp_connect.into_stream())
+                            .into_boxed()
+                    };
+                    future::ok(connect).into_boxed()
+                } else {
+                    let tcp_connect = tcp_connect.map(take_chosen).and_then(|res| res).then(Ok);
+                    let utp_connect = {
+                        udp_connect
+                            .and_then(|(_utp_socket, utp_listener, addr, our_public_addr)| {
+                                utp_listener
+                                    .incoming()
+                                    .filter(move |stream| stream.peer_addr() == addr)
+                                    .first_ok()
+                                    .map_err(UtpRendezvousConnectError::UtpAccept)
+                                    .map(move |stream| PaStream {
+                                        inner: PaStreamInner::Utp(Framed::new(stream)),
+                                        shared_secret,
+                                        our_public_addr,
+                                    })
+                            }).map(take_chosen)
+                            .map_err(PaRendezvousConnectError::UtpFailure)
+                            .and_then(|res| res)
+                            .then(Ok)
+                    };
+                    let connect = {
+                        tcp_connect
+                            .into_stream()
+                            .select(utp_connect.into_stream())
+                            .into_boxed()
+                    };
+                    future::ok(connect).into_boxed()
+                }
+            }).flatten_stream()
+            .into_boxed()
     }
 
     pub fn send_serialized<T: Serialize>(self, item: T) -> BoxFuture<PaStream, PaStreamWriteError> {
@@ -616,10 +615,8 @@ pub enum PaRendezvousConnectError<Ei, Eo> {
     SerializeMsg(SerialisationError),
     DeserializeMsg(SerialisationError),
     RemoteDisconnected,
-    AllProtocolsFailed {
-        tcp: Box<TcpRendezvousConnectError<Void, SendError<Bytes>>>,
-        utp: Box<UtpRendezvousConnectError<Void, SendError<Bytes>>>,
-    },
+    UtpFailure(UtpRendezvousConnectError<Void, SendError<Bytes>>),
+    TcpFailure(TcpRendezvousConnectError<Void, SendError<Bytes>>),
     ReadStream(PaStreamReadError),
     ExpectedChoose,
     SendChoose(PaStreamWriteError),
@@ -654,11 +651,12 @@ where
             PaRendezvousConnectError::RemoteDisconnected => {
                 write!(formatter, "remote peer disconnected",)
             }
-            PaRendezvousConnectError::AllProtocolsFailed { ref tcp, ref utp } => write!(
-                formatter,
-                "all rendezvous connect protocols failed. tcp error: {}; utp error: {}",
-                tcp, utp,
-            ),
+            PaRendezvousConnectError::UtpFailure(ref e) => {
+                write!(formatter, "error doing uTP rendezvous connection: {}", e,)
+            }
+            PaRendezvousConnectError::TcpFailure(ref e) => {
+                write!(formatter, "error doing TCP rendezvous connection: {}", e,)
+            }
             PaRendezvousConnectError::ReadStream(ref e) => {
                 write!(formatter, "error reading from connected stream: {}", e,)
             }
@@ -690,9 +688,8 @@ where
                 "error deserializing message from rendezvous channel"
             }
             PaRendezvousConnectError::RemoteDisconnected => "remote peer disconnected",
-            PaRendezvousConnectError::AllProtocolsFailed { .. } => {
-                "all rendezvous connect protocols failed"
-            }
+            PaRendezvousConnectError::UtpFailure(..) => "uTP rendezvous connection failed",
+            PaRendezvousConnectError::TcpFailure(..) => "TCP rendezvous connection failed",
             PaRendezvousConnectError::ReadStream(..) => "error reading from connected stream",
             PaRendezvousConnectError::ExpectedChoose => {
                 "protocol error - peer did not send choose message."
@@ -709,8 +706,9 @@ where
             PaRendezvousConnectError::DeserializeMsg(ref e) => Some(e),
             PaRendezvousConnectError::ReadStream(ref e) => Some(e),
             PaRendezvousConnectError::SendChoose(ref e) => Some(e),
-            PaRendezvousConnectError::AllProtocolsFailed { .. }
-            | PaRendezvousConnectError::ExpectedChoose
+            PaRendezvousConnectError::UtpFailure(ref e) => Some(e),
+            PaRendezvousConnectError::TcpFailure(ref e) => Some(e),
+            PaRendezvousConnectError::ExpectedChoose
             | PaRendezvousConnectError::RemoteDisconnected
             | PaRendezvousConnectError::ChannelClosed => None,
         }
@@ -725,7 +723,7 @@ mod test {
     use tokio_core::reactor::Core;
 
     #[test]
-    fn direct_connect_with_tcp_disabled_connects_but_doesnt_use_tcp() {
+    fn direct_connect_with_tcp_disabled_connects_doesnt_use_tcp() {
         let config = unwrap!(ConfigFile::new_temporary());
         unwrap!(config.write()).dev = Some(DevConfigSettings {
             disable_tcp: true,
@@ -737,20 +735,19 @@ mod test {
         let p2p = P2p::default();
         let mut core = unwrap!(Core::new());
         let handle = core.handle();
-        let r = core.run({
+        let connections = unwrap!(core.run({
             let connect0 = PaStream::rendezvous_connect(ch0, &handle, &config, &p2p);
             let connect1 = PaStream::rendezvous_connect(ch1, &handle, &config, &p2p);
             connect0
-                .join(connect1)
+                .select(connect1)
                 .map_err(|e| panic!("connect failed: {}", e))
-                .map(|(stream0, stream1)| {
-                    let addr0 = unwrap!(stream0.peer_addr());
-                    let addr1 = unwrap!(stream1.peer_addr());
-                    assert!(!addr0.is_tcp());
-                    assert!(!addr1.is_tcp());
-                })
-        });
-        unwrap!(r)
+                .collect()
+        }));
+
+        for stream_res in connections {
+            let addr = unwrap!(unwrap!(stream_res).peer_addr());
+            assert!(!addr.is_tcp());
+        }
     }
 
     mod framed_pastream {

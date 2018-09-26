@@ -31,8 +31,7 @@ use self::handshake_message::{ConnectRequest, HandshakeMessage};
 use config::PeerInfo;
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::mpsc::UnboundedReceiver;
-use futures::sync::mpsc::SendError;
-use futures::sync::oneshot;
+use futures::sync::mpsc::{self, SendError};
 use p2p::P2p;
 use priv_prelude::*;
 #[cfg(feature = "connections_info")]
@@ -201,24 +200,25 @@ where
             }).infallible::<SingleConnectionError>();
 
             let our_p2p_conn_info = our_conn_info.p2p_conn_info.take();
-            let rendezvous_conns =
-                try_connect_p2p(&handle1, our_p2p_conn_info, their_conn_info.p2p_conn_info)
-                    .map(move |result| match result {
-                        Ok(stream) => ConnectionResult {
-                            result: Ok(()),
-                            is_direct: false,
-                            duration: Instant::now().duration_since(connection_started),
-                            our_addr: stream.our_public_addr(),
-                            their_addr: stream.peer_addr().ok(),
-                        },
-                        Err(e) => ConnectionResult {
-                            result: Err(e),
-                            is_direct: false,
-                            duration: Instant::now().duration_since(connection_started),
-                            our_addr: None, // TODO(povilas): do best to determine our public address
-                            their_addr: None, // TODO(povilas): get their addr
-                        },
-                    }).into_stream();
+            let rendezvous_conns = try_connect_p2p(
+                our_p2p_conn_info,
+                their_conn_info.p2p_conn_info,
+            ).map(move |result| match result {
+                Ok(stream) => ConnectionResult {
+                    result: Ok(()),
+                    is_direct: false,
+                    duration: Instant::now().duration_since(connection_started),
+                    our_addr: stream.our_public_addr(),
+                    their_addr: stream.peer_addr().ok(),
+                },
+                Err(e) => ConnectionResult {
+                    result: Err(e),
+                    is_direct: false,
+                    duration: Instant::now().duration_since(connection_started),
+                    our_addr: None, // TODO(povilas): do best to determine our public address
+                    their_addr: None, // TODO(povilas): get their addr
+                },
+            });
             future::ok(direct_conns.select(rendezvous_conns))
         }).flatten_stream();
 
@@ -385,9 +385,7 @@ fn attempt_to_connect(
         direct_connections.into_boxed()
     } else {
         let rendezvous_conn = connect_p2p(our_p2p_conn_info, their_info.p2p_conn_info);
-        direct_connections
-            .select(rendezvous_conn.into_stream())
-            .into_boxed()
+        direct_connections.select(rendezvous_conn).into_boxed()
     };
     handshake_outgoing_connections(all_connections, our_connect_request.clone())
 }
@@ -537,7 +535,7 @@ where
 fn connect_p2p(
     our_conn_info: Option<P2pConnectionInfo>,
     their_conn_info: Option<Vec<u8>>,
-) -> BoxFuture<PaStream, SingleConnectionError> {
+) -> BoxStream<PaStream, SingleConnectionError> {
     match (our_conn_info, their_conn_info) {
         (Some(our_conn_info), Some(their_conn_info)) => {
             let conn_rx = our_conn_info.connection_rx;
@@ -547,23 +545,26 @@ fn connect_p2p(
                 .send(raw_info)
                 .map_err(|_| SingleConnectionError::DeadChannel)
                 .and_then(move |_chann| {
-                    conn_rx
+                    future::ok(
+                        conn_rx
                         .map_err(|_| SingleConnectionError::DeadChannel)
+                        // NOTE: and_then is called twice intentionally because conn_rx receives
+                        // a result that has another result wrapped in it.
                         .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect))
-                }).into_boxed()
+                        .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect)),
+                    )
+                }).flatten_stream()
+                .into_boxed()
         }
-        _ => future::empty().into_boxed(),
+        _ => stream::empty().into_boxed(),
     }
 }
 
-// TODO(povilas): return Stream of attempted rendezvous connections
 #[cfg(feature = "connections_info")]
 fn try_connect_p2p(
-    handle: &Handle,
     our_conn_info: Option<P2pConnectionInfo>,
     their_conn_info: Option<Vec<u8>>,
-) -> BoxFuture<Result<PaStream, SingleConnectionError>, SingleConnectionError> {
-    let handle = handle.clone();
+) -> BoxStream<Result<PaStream, SingleConnectionError>, SingleConnectionError> {
     match (our_conn_info, their_conn_info) {
         (Some(our_conn_info), Some(their_conn_info)) => {
             let conn_rx = our_conn_info.connection_rx;
@@ -573,14 +574,20 @@ fn try_connect_p2p(
                 .send(raw_info)
                 .map_err(|_| SingleConnectionError::DeadChannel)
                 .and_then(move |_chann| {
-                    conn_rx
-                        .map_err(|_| SingleConnectionError::DeadChannel)
-                        .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), &handle)
-                        .and_then(|res| res.ok_or(SingleConnectionError::Timeout))
-                        .and_then(|res| Ok(res.map_err(SingleConnectionError::RendezvousConnect)))
-                }).into_boxed()
+                    future::ok(
+                        conn_rx
+                            .map_err(|_| SingleConnectionError::DeadChannel)
+                            .and_then(|res| {
+                                res.map_err(SingleConnectionError::RendezvousConnect)
+                                    .map(|res| {
+                                        res.map_err(SingleConnectionError::RendezvousConnect)
+                                    })
+                            }),
+                    )
+                }).flatten_stream()
+                .into_boxed()
         }
-        _ => future::empty().into_boxed(),
+        _ => stream::empty().into_boxed(),
     }
 }
 
@@ -611,12 +618,12 @@ pub fn start_rendezvous_connect(
     config: &ConfigFile,
     rendezvous_relay: UnboundedBiChannel<Bytes>,
     p2p: &P2p,
-) -> oneshot::Receiver<Result<PaStream, RendezvousConnectError>> {
-    let (conn_tx, conn_rx) = oneshot::channel();
+) -> mpsc::Receiver<Result<Result<PaStream, RendezvousConnectError>, RendezvousConnectError>> {
+    let (conn_tx, conn_rx) = mpsc::channel(8);
     let connect = {
         PaStream::rendezvous_connect(rendezvous_relay, handle, config, p2p)
-            .then(move |result| conn_tx.send(result))
-            .or_else(|_send_error| Ok(()))
+            .then(move |result| conn_tx.clone().send(result).then(|_| Ok(())))
+            .for_each(|_| Ok(()))
     };
 
     handle.spawn(connect);
@@ -626,44 +633,45 @@ pub fn start_rendezvous_connect(
 #[cfg(test)]
 mod tests {
     use super::*;
-    pub use tokio_core::reactor::Core;
+    use futures::sync::mpsc;
+    use tokio_core::reactor::Core;
 
     mod connect_p2p {
         use super::*;
         use future_utils::bi_channel::unbounded;
 
         #[test]
-        fn it_returns_empty_future_when_our_connection_info_is_none() {
+        fn it_returns_empty_stream_when_our_connection_info_is_none() {
             let their_conn_info = Some(vec![1, 2, 3]);
 
-            let mut fut = connect_p2p(None, their_conn_info);
-            let res = fut.poll();
+            let mut stream = connect_p2p(None, their_conn_info);
+            let res = stream.poll();
 
-            let future_is_ready = match unwrap!(res) {
-                Async::Ready(_) => true,
-                Async::NotReady => false,
+            let stream_is_consumed = match unwrap!(res) {
+                Async::Ready(None) => true,
+                _ => false,
             };
-            assert!(!future_is_ready);
+            assert!(stream_is_consumed);
         }
 
         #[test]
         fn it_returns_empty_future_when_their_connection_info_is_none() {
             let (rendezvous_channel, _) = unbounded();
-            let (_, connection_rx) = oneshot::channel();
+            let (_, connection_rx) = mpsc::channel(8);
             let our_conn_info = Some(P2pConnectionInfo {
                 our_info: Bytes::from(vec![]),
                 rendezvous_channel,
                 connection_rx,
             });
 
-            let mut fut = connect_p2p(our_conn_info, None);
-            let res = fut.poll();
+            let mut stream = connect_p2p(our_conn_info, None);
+            let res = stream.poll();
 
-            let future_is_ready = match unwrap!(res) {
+            let stream_is_consumed = match unwrap!(res) {
                 Async::Ready(_) => true,
-                Async::NotReady => false,
+                _ => false,
             };
-            assert!(!future_is_ready);
+            assert!(stream_is_consumed);
         }
 
         #[test]
@@ -671,7 +679,7 @@ mod tests {
             let mut core = unwrap!(Core::new());
 
             let (rendezvous_channel, info_rx) = unbounded();
-            let (_, connection_rx) = oneshot::channel();
+            let (_, connection_rx) = mpsc::channel(8);
             let our_conn_info = Some(P2pConnectionInfo {
                 our_info: Bytes::from(vec![]),
                 rendezvous_channel,
@@ -679,8 +687,9 @@ mod tests {
             });
             let their_conn_info = Some(vec![1, 2, 3, 4]);
 
-            let fut = connect_p2p(our_conn_info, their_conn_info);
-            core.handle().spawn(fut.then(|_| Ok(())));
+            let stream = connect_p2p(our_conn_info, their_conn_info);
+            core.handle()
+                .spawn(stream.for_each(|_| Ok(())).then(|_| Ok(())));
 
             let received_conn_info =
                 unwrap!(core.run(info_rx.into_future().and_then(|(info, _stream)| Ok(info),)));
@@ -693,7 +702,7 @@ mod tests {
             let mut core = unwrap!(Core::new());
 
             let (rendezvous_channel, _) = unbounded();
-            let (conn_tx, connection_rx) = oneshot::channel();
+            let (conn_tx, connection_rx) = mpsc::channel(8);
             let our_conn_info = Some(P2pConnectionInfo {
                 our_info: Bytes::from(vec![]),
                 rendezvous_channel,
@@ -701,10 +710,10 @@ mod tests {
             });
             let their_conn_info = Some(vec![1, 2, 3, 4]);
 
-            let fut = connect_p2p(our_conn_info, their_conn_info);
+            let stream = connect_p2p(our_conn_info, their_conn_info).for_each(|_| Ok(()));
             drop(conn_tx);
 
-            let result = core.run(fut);
+            let result = core.run(stream);
             let channel_is_dead = match result {
                 Err(e) => match e {
                     SingleConnectionError::DeadChannel => true,
