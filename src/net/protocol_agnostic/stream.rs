@@ -216,8 +216,14 @@ impl PaStream {
         };
 
         let handle = handle.clone();
-        let tcp_connect = TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p)
-            .map_err(PaRendezvousConnectError::TcpFailure);
+        let tcp_connect = if disable_tcp {
+            // this needs to be empty so pump_channels.while_driving(tcp_connect) wouldn't fail
+            future::empty().into_boxed()
+        } else {
+            TcpStream::rendezvous_connect(tcp_ch_1, &handle, p2p)
+                .map_err(PaRendezvousConnectError::TcpFailure)
+                .into_boxed()
+        };
         let udp_connect = {
             UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
                 .map_err(UtpRendezvousConnectError::Rendezvous)
@@ -269,15 +275,18 @@ impl PaStream {
                                 .send_serialized(&ChooseMsg)
                                 .map_err(PaRendezvousConnectError::SendChoose)
                         }).then(Ok);
-                    let connect = {
-                        tcp_connect
-                            .into_stream()
-                            .select(utp_connect.into_stream())
-                            .into_boxed()
+
+                    // TODO(povilas): remove duplicate code with the else branch
+                    let tcp_stream = if disable_tcp {
+                        // TCP connect won't ever yield
+                        stream::empty().into_boxed()
+                    } else {
+                        tcp_connect.into_stream().into_boxed()
                     };
+                    let connect = tcp_stream.select(utp_connect.into_stream()).into_boxed();
                     future::ok(connect).into_boxed()
                 } else {
-                    let tcp_connect = tcp_connect.map(take_chosen).and_then(|res| res).then(Ok);
+                    let tcp_connect = tcp_connect.and_then(take_chosen).then(Ok);
                     let utp_connect = {
                         udp_connect
                             .and_then(|(_utp_socket, utp_listener, addr, our_public_addr)| {
@@ -291,17 +300,16 @@ impl PaStream {
                                         shared_secret,
                                         our_public_addr,
                                     })
-                            }).map(take_chosen)
-                            .map_err(PaRendezvousConnectError::UtpFailure)
-                            .and_then(|res| res)
+                            }).map_err(PaRendezvousConnectError::UtpFailure)
+                            .and_then(take_chosen)
                             .then(Ok)
                     };
-                    let connect = {
-                        tcp_connect
-                            .into_stream()
-                            .select(utp_connect.into_stream())
-                            .into_boxed()
+                    let tcp_stream = if disable_tcp {
+                        stream::empty().into_boxed()
+                    } else {
+                        tcp_connect.into_stream().into_boxed()
                     };
+                    let connect = tcp_stream.select(utp_connect.into_stream()).into_boxed();
                     future::ok(connect).into_boxed()
                 }
             }).flatten_stream()
