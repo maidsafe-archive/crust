@@ -163,14 +163,6 @@ fn tcp_bootstrap_over_poor_connection() {
     });
 }
 
-#[test]
-fn utp_bootstrap_over_poor_connection() {
-    bootstrap_over_poor_connection(|ip, port| {
-        let addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
-        PaAddr::Utp(addr)
-    });
-}
-
 fn rendezvous_connect_over_poor_connection<F>(make_addr1: F)
 where
     F: 'static + FnOnce(Ipv4Addr, u16) -> PaAddr + Send + Clone,

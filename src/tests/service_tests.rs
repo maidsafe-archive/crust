@@ -84,11 +84,6 @@ mod bootstrap {
     }
 
     #[test]
-    fn using_hard_coded_utp_contacts() {
-        bootstrap_using_hard_coded_contacts(utp_addr!("0.0.0.0:0"));
-    }
-
-    #[test]
     fn using_service_discovery() {
         let mut evloop = unwrap!(Core::new());
 
@@ -123,7 +118,9 @@ mod bootstrap {
         let mut evloop = unwrap!(Core::new());
         let handle = evloop.handle();
 
-        let mut service1 = service_with_tmp_config(&mut evloop);
+        let config = unwrap!(ConfigFile::new_temporary());
+        unwrap!(config.write()).listen_addresses = vec![tcp_addr!("0.0.0.0:0")];
+        let mut service1 = service_with_config(&mut evloop, config);
         let listeners = unwrap!(evloop.run(service1.start_listening().collect()));
         let service1_addr0 = listeners[0].addr().unspecified_to_localhost();
 
