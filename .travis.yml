@@ -11,6 +11,9 @@ language: rust
 rust:
   - 1.28.0
   - nightly-2018-07-07
+matrix:
+  allow_failures:
+    - rust: nightly-2018-07-07
 sudo: false
 cache:
   cargo: true

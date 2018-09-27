@@ -326,11 +326,6 @@ mod bootstrap {
     }
 
     #[test]
-    fn using_hard_coded_utp_contacts() {
-        bootstrap_using_hard_coded_contacts(utp_addr!("0.0.0.0:0"));
-    }
-
-    #[test]
     fn using_service_discovery() {
         let _ = env_logger::init();
 
@@ -356,6 +351,7 @@ mod bootstrap {
     }
 
     #[test]
+    #[ignore]
     fn with_multiple_contact_endpoints() {
         let _ = env_logger::init();
 
@@ -492,11 +488,6 @@ mod bootstrap {
     }
 
     #[test]
-    fn with_blacklist_over_utp() {
-        bootstrap_with_blacklist(utp_addr!("0.0.0.0:0"));
-    }
-
-    #[test]
     fn fails_only_blacklisted_contacts() {
         let _ = env_logger::init();
 
@@ -565,7 +556,9 @@ mod when_no_message_received_within_inactivity_period {
     }
 
     #[test]
+    #[ignore]
     fn when_heartbeats_disabled_utp_peer_emits_lost_peer_event() {
+        // TODO(povilas): connect directly rather than bootstrap - bootstrap doesn't allow uTP
         let (event_rx1, event_rx2, _s1, _s2) =
             bootstrap_and_do_nothing(utp_addr!("0.0.0.0:0"), false);
 
@@ -627,7 +620,9 @@ fn dropping_tcp_service_makes_remote_peer_receive_lost_peer_event() {
 }
 
 #[test]
+#[ignore]
 fn dropping_utp_service_makes_remote_peer_receive_lost_peer_event() {
+    // TODO(povilas): connect directly rather than bootstrap - bootstrap doesn't allow uTP
     let (_event_rx1, event_rx2, service1, _service2) =
         bootstrap_and_do_nothing(utp_addr!("0.0.0.0:0"), true);
     let service2_peer_id = unwrap!(service1.public_id());

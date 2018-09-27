@@ -83,6 +83,7 @@ pub fn bootstrap(
                 .chain(stream::iter_ok(cached_peers))
                 .chain(stream::iter_ok(hard_coded_peers))
                 .filter(move |peer| !blacklist.contains(&peer.addr))
+                .filter(move |peer| peer.addr.is_tcp()) // we don't use uTP to bootstrap
                 .map(move |peer| {
                     let fut = bootstrap_to_peer(&handle1, peer, i, &config, &cache, &request);
                     i += 1;
