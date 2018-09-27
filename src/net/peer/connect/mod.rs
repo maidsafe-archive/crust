@@ -32,10 +32,14 @@ use config::PeerInfo;
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::mpsc::UnboundedReceiver;
 use futures::sync::mpsc::{self, SendError};
+#[cfg(feature = "connections_info")]
+use futures::sync::oneshot;
 use p2p::P2p;
 use priv_prelude::*;
 #[cfg(feature = "connections_info")]
 use std::time::{Duration, Instant};
+#[cfg(feature = "connections_info")]
+use util::ConsumedStream;
 
 pub type RendezvousConnectError = PaRendezvousConnectError<Void, SendError<Bytes>>;
 
@@ -173,6 +177,8 @@ where
     let handle1 = handle.clone();
     let bootstrap_cache = bootstrap_cache.clone();
 
+    let (conns_done_tx, conns_done_rx) = oneshot::channel();
+
     let all_outgoing_connections = get_their_info(conn_info_rx, our_conn_info.our_uid, &config)
         .and_then(move |their_conn_info| {
             let connection_started = Instant::now();
@@ -220,19 +226,21 @@ where
                 },
             });
             future::ok(direct_conns.select(rendezvous_conns))
-        }).flatten_stream();
+        }).flatten_stream()
+        .when_consumed(|| {
+            let _ = conns_done_tx.send(());
+        });
 
     let connection_started = Instant::now();
-    let direct_incoming =
-        peer_rx
-            .infallible()
-            .map(move |(stream, _connect_request)| ConnectionResult {
-                result: Ok(()),
-                is_direct: true,
-                our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
-                duration: Instant::now().duration_since(connection_started),
-                their_addr: stream.peer_addr().ok(),
-            });
+    let direct_incoming = peer_rx
+        .infallible()
+        .map(move |(stream, _connect_request)| ConnectionResult {
+            result: Ok(()),
+            is_direct: true,
+            our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
+            duration: Instant::now().duration_since(connection_started),
+            their_addr: stream.peer_addr().ok(),
+        }).until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
 
     all_outgoing_connections
         .select(direct_incoming)
