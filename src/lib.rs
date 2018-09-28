@@ -23,6 +23,7 @@
     html_favicon_url = "https://maidsafe.net/img/favicon.ico",
     html_root_url = "https://docs.rs/crust"
 )]
+#![recursion_limit = "128"]
 #![forbid(
     exceeding_bitshifts,
     mutable_transmutes,
@@ -129,6 +130,7 @@ pub use common::CrustUser;
 pub use config::ConfigFile;
 pub use error::CrustError;
 pub use net::{Listener, PaAddr, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo};
+pub use p2p::NatType;
 pub use service::Service;
 
 /// Crust maximum message size

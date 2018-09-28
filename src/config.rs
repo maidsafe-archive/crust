@@ -37,6 +37,7 @@ pub struct ConfigFile {
 
 impl ConfigFile {
     /// Open a crust config file with the give file name.
+    /// Watches for config file changes and updates every second.
     pub fn open_path(file_name: PathBuf) -> Result<ConfigFile, CrustError> {
         let thread_name = format!("monitor {:?}", file_name);
 

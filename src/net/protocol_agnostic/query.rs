@@ -29,7 +29,11 @@ impl PaTcpAddrQuerier {
 
 impl TcpAddrQuerier for PaTcpAddrQuerier {
     #[allow(trivial_casts)]
-    fn query(&self, bind_addr: &SocketAddr, handle: &Handle) -> BoxFuture<SocketAddr, Box<Error>> {
+    fn query(
+        &self,
+        bind_addr: &SocketAddr,
+        handle: &Handle,
+    ) -> BoxFuture<SocketAddr, Box<Error + Send>> {
         let handle = handle.clone();
         let handle0 = handle.clone();
         let server_pk = self.server_pk;
@@ -65,7 +69,7 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
                     }).into_boxed()
             }).with_timeout(Duration::from_secs(3), &handle0)
             .and_then(|addr_opt| addr_opt.ok_or(QueryError::TimedOut))
-            .map_err(|e| Box::new(e) as Box<Error>)
+            .map_err(|e| Box::new(e) as Box<Error + Send>)
             .into_boxed()
     }
 }
@@ -96,14 +100,18 @@ impl PaUdpAddrQuerier {
 
 impl UdpAddrQuerier for PaUdpAddrQuerier {
     #[allow(trivial_casts)]
-    fn query(&self, bind_addr: &SocketAddr, handle: &Handle) -> BoxFuture<SocketAddr, Box<Error>> {
+    fn query(
+        &self,
+        bind_addr: &SocketAddr,
+        handle: &Handle,
+    ) -> BoxFuture<SocketAddr, Box<Error + Send>> {
         let handle = handle.clone();
         let handle0 = handle.clone();
         let (socket, _listener) = try_bfut!(
             UdpSocket::bind_connect_reusable(bind_addr, &self.addr, &handle)
                 .and_then(|socket| UtpSocket::from_socket(socket, &handle))
                 .map_err(QueryError::Bind)
-                .map_err(|e| Box::new(e) as Box<Error>)
+                .map_err(|e| Box::new(e) as Box<Error + Send>)
         );
 
         let server_pk = self.server_pk;
@@ -138,7 +146,7 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
                     }).into_boxed()
             }).with_timeout(Duration::from_secs(3), &handle0)
             .and_then(|addr_opt| addr_opt.ok_or(QueryError::TimedOut))
-            .map_err(|e| Box::new(e) as Box<Error>)
+            .map_err(|e| Box::new(e) as Box<Error + Send>)
             .into_boxed()
     }
 }

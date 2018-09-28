@@ -143,6 +143,7 @@ impl PaStream {
         }
     }
 
+    /// Execute both TCP and uTP rendezvous connections.
     pub fn rendezvous_connect<C>(
         channel: C,
         handle: &Handle,
@@ -218,7 +219,7 @@ impl PaStream {
         let udp_connect = {
             UdpSocket::rendezvous_connect(utp_ch_1, &handle, p2p)
                 .map_err(UtpRendezvousConnectError::Rendezvous)
-                .and_then(move |(udp_socket, addr)| {
+                .and_then(move |(udp_socket, addr, _our_pub_addr)| {
                     trace!("udp rendezvous connect succeeded.");
                     let (utp_socket, utp_listener) = {
                         UtpSocket::from_socket(udp_socket, &handle)
@@ -237,7 +238,7 @@ impl PaStream {
                 .and_then(move |((their_pk, tcp_connect), udp_connect)| {
                     let shared_secret = our_sk.shared_secret(&their_pk);
                     let shared_key0 = shared_secret.clone();
-                    let tcp_connect = tcp_connect.map(|stream| PaStream {
+                    let tcp_connect = tcp_connect.map(|(stream, _our_pub_addr)| PaStream {
                         inner: PaStreamInner::Tcp(Framed::new(stream)),
                         shared_secret: shared_key0,
                     });

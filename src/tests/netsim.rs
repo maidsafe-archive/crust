@@ -419,3 +419,193 @@ fn utp_rendezvous_connect_over_poor_connection() {
         PaAddr::Utp(addr)
     });
 }
+
+mod probe_nat {
+    use super::*;
+    use p2p::NatType;
+
+    fn utp_addr(ip: Ipv4Addr, port: u16) -> PaAddr {
+        let addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
+        PaAddr::Utp(addr)
+    }
+
+    #[test]
+    fn it_returns_unknown_type_when_only_1_rendezvous_server_is_given() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+        let network = Network::new(&handle);
+
+        let (client_drop_tx, client_drop_rx) = future_utils::drop_notify();
+        let (server_info_tx, server_info_rx) = oneshot::channel();
+
+        let rendezvous_server1 = netsim::node::ipv4::machine(move |ip| {
+            let mut evloop = unwrap!(Core::new());
+
+            let config = unwrap!(ConfigFile::new_temporary());
+            let addr = utp_addr(ip, 1234);
+            unwrap!(config.write()).listen_addresses = vec![addr];
+            let (our_pk, our_sk) = gen_encrypt_keypair();
+
+            let run_service = Service::with_config(&evloop.handle(), config, our_sk, our_pk)
+                .map_err(|e| panic!("error creating service: {}", e))
+                .and_then(move |service| {
+                    let server_info = PeerInfo {
+                        addr,
+                        pub_key: service.public_id(),
+                    };
+                    unwrap!(server_info_tx.send(server_info));
+
+                    let listeners = service
+                        .start_listening()
+                        .map_err(|e| panic!("error starting listeners: {}", e))
+                        .collect();
+
+                    client_drop_rx
+                        .map(|()| drop(service))
+                        .while_driving(listeners)
+                        .map_err(|(e, _)| e)
+                        .map(|((), _listeners)| ())
+                });
+            unwrap!(evloop.run(run_service));
+        });
+
+        let client = netsim::node::ipv4::machine(|_ip| {
+            let mut evloop = unwrap!(Core::new());
+            let handle = evloop.handle();
+
+            let task = server_info_rx
+                .map_err(|e| panic!(e))
+                .and_then(|server_info| {
+                    let config = unwrap!(ConfigFile::new_temporary());
+                    unwrap!(config.write()).hard_coded_contacts = vec![server_info];
+                    let (our_pk, our_sk) = gen_encrypt_keypair();
+
+                    Service::with_config(&handle, config, our_sk, our_pk)
+                        .and_then(|service| service.probe_nat())
+                        .and_then(|nat_type| {
+                            assert_eq!(nat_type, NatType::Unknown);
+                            drop(client_drop_tx);
+                            Ok(())
+                        })
+                });
+            unwrap!(evloop.run(task));
+        });
+        let client = netsim::node::ipv4::nat(Ipv4NatBuilder::default(), client);
+
+        let router = netsim::node::ipv4::router((rendezvous_server1, client));
+        let (spawn_complete, _ipv4_plug) =
+            netsim::spawn::ipv4_tree(&network.handle(), Ipv4Range::global(), router);
+
+        let _ = unwrap!(evloop.run(spawn_complete));
+    }
+
+    #[test]
+    fn it_properly_detects_endpoint_dependent_mapping() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+        let network = Network::new(&handle);
+
+        let (client_drop_tx1, client_drop_rx1) = future_utils::drop_notify();
+        let (client_drop_tx2, client_drop_rx2) = future_utils::drop_notify();
+        let (server1_info_tx, server1_info_rx) = oneshot::channel();
+        let (server2_info_tx, server2_info_rx) = oneshot::channel();
+
+        let rendezvous_server1 = netsim::node::ipv4::machine(move |ip| {
+            let mut evloop = unwrap!(Core::new());
+
+            let config = unwrap!(ConfigFile::new_temporary());
+            let addr = utp_addr(ip, 1234);
+            unwrap!(config.write()).listen_addresses = vec![addr];
+            let (our_pk, our_sk) = gen_encrypt_keypair();
+
+            let run_service = Service::with_config(&evloop.handle(), config, our_sk, our_pk)
+                .map_err(|e| panic!("error creating service: {}", e))
+                .and_then(move |service| {
+                    let server_info = PeerInfo {
+                        addr,
+                        pub_key: service.public_id(),
+                    };
+                    unwrap!(server1_info_tx.send(server_info));
+
+                    let listeners = service
+                        .start_listening()
+                        .map_err(|e| panic!("error starting listeners: {}", e))
+                        .collect();
+
+                    client_drop_rx1
+                        .map(|()| drop(service))
+                        .while_driving(listeners)
+                        .map_err(|(e, _)| e)
+                        .map(|((), _listeners)| ())
+                });
+            unwrap!(evloop.run(run_service));
+        });
+
+        let rendezvous_server2 = netsim::node::ipv4::machine(move |ip| {
+            let mut evloop = unwrap!(Core::new());
+
+            let config = unwrap!(ConfigFile::new_temporary());
+            let addr = utp_addr(ip, 1234);
+            unwrap!(config.write()).listen_addresses = vec![addr];
+            let (our_pk, our_sk) = gen_encrypt_keypair();
+
+            let run_service = Service::with_config(&evloop.handle(), config, our_sk, our_pk)
+                .map_err(|e| panic!("error creating service: {}", e))
+                .and_then(move |service| {
+                    let server_info = PeerInfo {
+                        addr,
+                        pub_key: service.public_id(),
+                    };
+                    unwrap!(server2_info_tx.send(server_info));
+
+                    let listeners = service
+                        .start_listening()
+                        .map_err(|e| panic!("error starting listeners: {}", e))
+                        .collect();
+
+                    client_drop_rx2
+                        .map(|()| drop(service))
+                        .while_driving(listeners)
+                        .map_err(|(e, _)| e)
+                        .map(|((), _listeners)| ())
+                });
+            unwrap!(evloop.run(run_service));
+        });
+
+        let client = netsim::node::ipv4::machine(|_ip| {
+            let mut evloop = unwrap!(Core::new());
+            let handle = evloop.handle();
+
+            let task = server1_info_rx
+                .map_err(|e| panic!(e))
+                .and_then(|server1_info| {
+                    server2_info_rx
+                        .map_err(|e| panic!(e))
+                        .map(move |server2_info| (server1_info, server2_info))
+                }).and_then(|(server1_info, server2_info)| {
+                    let config = unwrap!(ConfigFile::new_temporary());
+                    unwrap!(config.write()).hard_coded_contacts = vec![server1_info, server2_info];
+                    let (our_pk, our_sk) = gen_encrypt_keypair();
+
+                    Service::with_config(&handle, config, our_sk, our_pk)
+                        .and_then(|service| service.probe_nat())
+                        .and_then(|nat_type| {
+                            assert_eq!(nat_type, NatType::EDM);
+                            drop(client_drop_tx1);
+                            drop(client_drop_tx2);
+                            Ok(())
+                        })
+                });
+            unwrap!(evloop.run(task));
+        });
+        let client = netsim::node::ipv4::nat(Ipv4NatBuilder::default(), client);
+
+        let router = netsim::node::ipv4::router((rendezvous_server1, rendezvous_server2, client));
+        let (spawn_complete, _ipv4_plug) =
+            netsim::spawn::ipv4_tree(&network.handle(), Ipv4Range::global(), router);
+
+        let _ = unwrap!(evloop.run(spawn_complete));
+    }
+
+    // TODO(povilas): add test EIM NAT
+}

@@ -41,7 +41,7 @@ version = "~0.4"
 
 [dependencies.p2p]
 git = "https://github.com/ustulation/p2p"
-rev = "bc4ebc4"
+rev = "59aeb8b"
 
 [dependencies.tokio-utp]
 git = "https://github.com/maidsafe/tokio_utp"
