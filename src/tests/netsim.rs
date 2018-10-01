@@ -500,7 +500,7 @@ mod probe_nat {
     }
 
     #[test]
-    fn it_properly_detects_endpoint_dependent_mapping() {
+    fn it_properly_detects_endpoint_independent_mapping() {
         let mut evloop = unwrap!(Core::new());
         let handle = evloop.handle();
         let network = Network::new(&handle);
@@ -590,7 +590,7 @@ mod probe_nat {
                     Service::with_config(&handle, config, our_sk, our_pk)
                         .and_then(|service| service.probe_nat())
                         .and_then(|nat_type| {
-                            assert_eq!(nat_type, NatType::EDM);
+                            assert_eq!(nat_type, NatType::EIM);
                             drop(client_drop_tx1);
                             drop(client_drop_tx2);
                             Ok(())
@@ -607,5 +607,5 @@ mod probe_nat {
         let _ = unwrap!(evloop.run(spawn_complete));
     }
 
-    // TODO(povilas): add test EIM NAT
+    // TODO(povilas): test EDM NAT
 }
