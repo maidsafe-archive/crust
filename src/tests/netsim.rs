@@ -556,5 +556,66 @@ mod probe_nat {
         let _ = unwrap!(evloop.run(spawn_complete));
     }
 
-    // TODO(povilas): test EDM NAT
+    #[test]
+    fn it_properly_detects_endpoint_dependent_mapping() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+        let network = Network::new(&handle);
+
+        let (client_drop_tx1, client_drop_rx1) = future_utils::drop_notify();
+        let (client_drop_tx2, client_drop_rx2) = future_utils::drop_notify();
+        let (client_drop_tx3, client_drop_rx3) = future_utils::drop_notify();
+        let (server1_info_tx, server1_info_rx) = oneshot::channel();
+        let (server2_info_tx, server2_info_rx) = oneshot::channel();
+        let (server3_info_tx, server3_info_rx) = oneshot::channel();
+
+        let rendezvous_server1 = make_stun_server(server1_info_tx, client_drop_rx1);
+        let rendezvous_server2 = make_stun_server(server2_info_tx, client_drop_rx2);
+        let rendezvous_server3 = make_stun_server(server3_info_tx, client_drop_rx3);
+
+        let client = netsim::node::ipv4::machine(|_ip| {
+            let mut evloop = unwrap!(Core::new());
+            let handle = evloop.handle();
+
+            let task = server1_info_rx
+                .map_err(|e| panic!(e))
+                .and_then(|server1_info| {
+                    server2_info_rx
+                        .map_err(|e| panic!(e))
+                        .map(move |server2_info| (server1_info, server2_info))
+                }).and_then(|(server1_info, server2_info)| {
+                    server3_info_rx
+                        .map_err(|e| panic!(e))
+                        .map(move |server3_info| (server1_info, server2_info, server3_info))
+                }).and_then(|(server1_info, server2_info, server3_info)| {
+                    let config = unwrap!(ConfigFile::new_temporary());
+                    unwrap!(config.write()).hard_coded_contacts =
+                        vec![server1_info, server2_info, server3_info];
+                    let (our_pk, our_sk) = gen_encrypt_keypair();
+
+                    Service::with_config(&handle, config, our_sk, our_pk)
+                        .and_then(|service| service.probe_nat())
+                        .and_then(|nat_type| {
+                            assert_eq!(nat_type, NatType::EDM);
+                            drop(client_drop_tx1);
+                            drop(client_drop_tx2);
+                            drop(client_drop_tx3);
+                            Ok(())
+                        })
+                });
+            unwrap!(evloop.run(task));
+        });
+        let client = netsim::node::ipv4::nat(Ipv4NatBuilder::default().symmetric(), client);
+
+        let router = netsim::node::ipv4::router((
+            rendezvous_server1,
+            rendezvous_server2,
+            rendezvous_server3,
+            client,
+        ));
+        let (spawn_complete, _ipv4_plug) =
+            netsim::spawn::ipv4_tree(&network.handle(), Ipv4Range::global(), router);
+
+        let _ = unwrap!(evloop.run(spawn_complete));
+    }
 }
