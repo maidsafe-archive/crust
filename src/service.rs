@@ -249,7 +249,12 @@ impl Service {
         p2p.disable_igd();
         p2p.disable_igd_for_rendezvous();
 
-        p2p::rendezvous_addr(p2p::Protocol::Udp, &addr!("0.0.0.0:0"), &self.handle, &p2p)
+        let bind_addr = try_bfut!(
+            UdpSocket::bind_reusable(&addr!("0.0.0.0:0"), &self.handle)
+                .and_then(|socket| socket.local_addr())
+                .map_err(CrustError::Io)
+        );
+        p2p::rendezvous_addr(p2p::Protocol::Udp, &bind_addr, &self.handle, &p2p)
             .then(|res| match res {
                 Err(e) => e.unpredictable_ports().ok_or(e),
                 Ok((_public_addr, nat_type)) => Ok(nat_type),
