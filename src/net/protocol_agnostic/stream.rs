@@ -248,7 +248,7 @@ impl PaStream {
                 let tcp_connect = tcp_connect.map(|(stream, our_public_addr)| PaStream {
                     inner: PaStreamInner::Tcp(Framed::new(stream)),
                     shared_secret: shared_key0,
-                    our_public_addr,
+                    our_public_addr: Some(our_public_addr),
                 });
                 if our_pk > their_pk {
                     let utp_connect = {
@@ -260,7 +260,7 @@ impl PaStream {
                                     .map(move |stream| PaStream {
                                         inner: PaStreamInner::Utp(Framed::new(stream)),
                                         shared_secret,
-                                        our_public_addr,
+                                        our_public_addr: Some(our_public_addr),
                                     })
                             }).map_err(PaRendezvousConnectError::UtpFailure)
                             .and_then(|stream| {
@@ -298,7 +298,7 @@ impl PaStream {
                                     .map(move |stream| PaStream {
                                         inner: PaStreamInner::Utp(Framed::new(stream)),
                                         shared_secret,
-                                        our_public_addr,
+                                        our_public_addr: Some(our_public_addr),
                                     })
                             }).map_err(PaRendezvousConnectError::UtpFailure)
                             .and_then(take_chosen)
