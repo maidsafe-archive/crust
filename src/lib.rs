@@ -121,6 +121,10 @@ mod tests;
 pub use common::CrustUser;
 pub use config::ConfigFile;
 pub use error::CrustError;
+#[cfg(feature = "connections_info")]
+pub use net::peer::ConnectionResult;
+#[cfg(feature = "connections_info")]
+pub use net::SingleConnectionError;
 pub use net::{Listener, PaAddr, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo};
 pub use p2p::NatType;
 pub use service::Service;

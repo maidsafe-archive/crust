@@ -190,6 +190,37 @@ impl Service {
             }).into_boxed()
     }
 
+    /// Attempt multiple connections in parallel and return info about all of them.
+    #[cfg(feature = "connections_info")]
+    pub fn connect_all<C>(
+        &self,
+        ci_channel: C,
+    ) -> BoxStream<ConnectionResult, SingleConnectionError>
+    where
+        C: Stream<Item = PubConnectionInfo>,
+        C: Sink<SinkItem = PubConnectionInfo>,
+        <C as Stream>::Error: fmt::Debug,
+        <C as Sink>::SinkError: fmt::Debug,
+        C: 'static,
+    {
+        let config = self.config.clone();
+        let demux = self.demux.clone();
+        self.prepare_connection_info()
+            .map_err(|e| panic!(e)) // TODO(povilas): fix me
+            .and_then(move |our_info| {
+                let (ci_tx, ci_rx) = ci_channel.split();
+                ci_tx
+                    .send(our_info.to_pub_connection_info())
+                    .map_err(|_e| SingleConnectionError::DeadChannel)
+                    .while_driving(future::ok(demux.connect_all(
+                        our_info,
+                        ci_rx,
+                        &config,
+                    ))).map_err(|(e, _connect)| e)
+                    .and_then(|(_ci_tx, connect)| connect)
+            }).flatten_stream().into_boxed()
+    }
+
     /// The returned `ServiceDiscovery` advertises the existence of this peer to any other peers on
     /// the local network (via udp broadcast).
     pub fn start_service_discovery(&self) -> io::Result<ServiceDiscovery> {

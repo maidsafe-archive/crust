@@ -13,6 +13,8 @@ use log::LogLevel;
 use lru_time_cache::LruCache;
 use net::listener::SocketIncoming;
 use net::peer::connect::connect;
+#[cfg(feature = "connections_info")]
+use net::peer::connect::connect_all;
 use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
 use net::peer::connect::BootstrapAcceptor;
 use priv_prelude::*;
@@ -94,6 +96,29 @@ impl Demux {
             &self.inner.handle,
             name_hash,
             our_info,
+            conn_info_rx,
+            config,
+            peer_rx,
+            &self.inner.bootstrap_cache,
+        )
+    }
+
+    /// Attempt all possible connection variations and return the results.
+    #[cfg(feature = "connections_info")]
+    pub fn connect_all<C>(
+        &self,
+        our_conn_info: PrivConnectionInfo,
+        conn_info_rx: C,
+        config: &ConfigFile,
+    ) -> BoxStream<ConnectionResult, SingleConnectionError>
+    where
+        C: Stream<Item = PubConnectionInfo>,
+        C: 'static,
+    {
+        let peer_rx = self.direct_conn_receiver(our_conn_info.connection_id);
+        connect_all(
+            &self.inner.handle,
+            our_conn_info,
             conn_info_rx,
             config,
             peer_rx,

@@ -18,6 +18,8 @@ pub use future_utils::{BoxFuture, BoxStream, FutureExt, IoFuture, IoStream, Stre
 pub use futures::{future, stream, Async, AsyncSink, Future, IntoFuture, Sink, Stream};
 pub use log::LogLevel;
 pub use maidsafe_utilities::serialisation::{self, SerialisationError};
+#[cfg(feature = "connections_info")]
+pub use net::peer::ConnectionResult;
 pub use net::{
     BootstrapAcceptError, BootstrapCache, BootstrapCacheError, BootstrapError, ConnectError,
     ConnectHandshakeError, ExternalReachability, P2pConnectionInfo, PaRendezvousConnectError, Peer,
