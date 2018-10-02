@@ -152,9 +152,9 @@ impl PaListener {
     ) -> BoxFuture<(PaListener, PaAddr), BindPublicError> {
         let handle = handle.clone();
         match *addr {
-            PaAddr::Tcp(ref tcp_addr) => TcpListener::bind_public(tcp_addr, &handle, p2p)
+            PaAddr::Tcp(ref tcp_addr) => p2p::tcp_bind_public_with_addr(tcp_addr, &handle, p2p)
                 .map_err(BindPublicError::BindTcp)
-                .map(move |(listener, public_addr)| {
+                .map(move |(listener, _local_addr, public_addr)| {
                     let listener = Self {
                         handle,
                         inner: PaListenerInner::Tcp(listener),
@@ -164,9 +164,9 @@ impl PaListener {
                     let public_addr = PaAddr::Tcp(public_addr);
                     (listener, public_addr)
                 }).into_boxed(),
-            PaAddr::Utp(utp_addr) => UdpSocket::bind_public(&utp_addr, &handle, p2p)
+            PaAddr::Utp(utp_addr) => p2p::udp_bind_public_with_addr(&utp_addr, &handle, p2p)
                 .map_err(BindPublicError::BindUdp)
-                .and_then(move |(socket, public_addr)| {
+                .and_then(move |(socket, _local_addr, public_addr)| {
                     let (socket, listener) = {
                         UtpSocket::from_socket(socket, &handle)
                             .map_err(BindPublicError::MakeUtpSocket)?
