@@ -301,7 +301,7 @@ impl Service {
             our_sk: self.our_sk.clone(),
         };
 
-        if self.listeners.has_public_addrs() {
+        if self.listeners.has_public_addrs() || self.config.rendezvous_connections_disabled() {
             future::ok(priv_conn_info).into_boxed()
         } else {
             self.with_p2p_connection_info(priv_conn_info)
