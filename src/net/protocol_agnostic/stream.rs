@@ -730,8 +730,24 @@ mod test {
     use future_utils::bi_channel;
     use tokio_core::reactor::Core;
 
+    fn spawn_stun_server(handle: &Handle, listen_addr: PaAddr) -> (SocketAddr, PublicEncryptKey) {
+        let (pk, sk) = gen_encrypt_keypair();
+        let listener = unwrap!(PaListener::bind(&listen_addr, &handle, sk, pk));
+        let listener_addr = unwrap!(listener.local_addr());
+
+        let task = listener
+            .incoming()
+            .for_each(|_stream| Ok(()))
+            .then(|_| Ok(()));
+        handle.spawn(task);
+        (listener_addr.inner().unspecified_to_localhost(), pk)
+    }
+
     #[test]
-    fn direct_connect_with_tcp_disabled_connects_doesnt_use_tcp() {
+    fn rendezvous_connect_with_tcp_disabled_connects_doesnt_use_tcp() {
+        let mut core = unwrap!(Core::new());
+        let handle = core.handle();
+
         let config = unwrap!(ConfigFile::new_temporary());
         unwrap!(config.write()).dev = Some(DevConfigSettings {
             disable_tcp: true,
@@ -739,10 +755,17 @@ mod test {
         });
 
         let (ch0, ch1) = bi_channel::unbounded();
-
         let p2p = P2p::default();
-        let mut core = unwrap!(Core::new());
-        let handle = core.handle();
+        p2p.disable_igd_for_rendezvous();
+
+        for _ in 0..3 {
+            let (stun_addr, stun_pk) = spawn_stun_server(&handle, utp_addr!("0.0.0.0:0"));
+            p2p.add_udp_addr_querier(PaUdpAddrQuerier::new(&stun_addr, stun_pk));
+
+            let (stun_addr, stun_pk) = spawn_stun_server(&handle, tcp_addr!("0.0.0.0:0"));
+            p2p.add_tcp_addr_querier(PaTcpAddrQuerier::new(&stun_addr, stun_pk));
+        }
+
         let connections = unwrap!(core.run({
             let connect0 = PaStream::rendezvous_connect(ch0, &handle, &config, &p2p);
             let connect1 = PaStream::rendezvous_connect(ch1, &handle, &config, &p2p);
