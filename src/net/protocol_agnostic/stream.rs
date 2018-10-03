@@ -725,23 +725,11 @@ where
 
 #[cfg(test)]
 mod test {
+    use super::super::listener::spawn_stun_server;
     use super::*;
     use config::DevConfigSettings;
     use future_utils::bi_channel;
     use tokio_core::reactor::Core;
-
-    fn spawn_stun_server(handle: &Handle, listen_addr: PaAddr) -> (SocketAddr, PublicEncryptKey) {
-        let (pk, sk) = gen_encrypt_keypair();
-        let listener = unwrap!(PaListener::bind(&listen_addr, &handle, sk, pk));
-        let listener_addr = unwrap!(listener.local_addr());
-
-        let task = listener
-            .incoming()
-            .for_each(|_stream| Ok(()))
-            .then(|_| Ok(()));
-        handle.spawn(task);
-        (listener_addr.inner().unspecified_to_localhost(), pk)
-    }
 
     #[test]
     fn rendezvous_connect_with_tcp_disabled_connects_doesnt_use_tcp() {

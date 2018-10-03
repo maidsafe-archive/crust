@@ -370,3 +370,19 @@ fn handle_incoming<S: AsyncRead + AsyncWrite + 'static>(
             }
         }).into_boxed()
 }
+
+/// Spawns `PaListener` in a given event loop. Then `PaListener` acts as a STUN server responding
+/// with client IP address.
+#[cfg(test)]
+pub fn spawn_stun_server(handle: &Handle, listen_addr: PaAddr) -> (SocketAddr, PublicEncryptKey) {
+    let (pk, sk) = gen_encrypt_keypair();
+    let listener = unwrap!(PaListener::bind(&listen_addr, &handle, sk, pk));
+    let listener_addr = unwrap!(listener.local_addr());
+
+    let task = listener
+        .incoming()
+        .for_each(|_stream| Ok(()))
+        .then(|_| Ok(()));
+    handle.spawn(task);
+    (listener_addr.inner().unspecified_to_localhost(), pk)
+}

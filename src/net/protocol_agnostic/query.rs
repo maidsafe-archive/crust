@@ -201,3 +201,28 @@ quick_error! {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::super::listener::spawn_stun_server;
+    use super::*;
+    use tokio_core::reactor::Core;
+
+    mod udp_addr_querier {
+        use super::*;
+
+        #[test]
+        fn it_works_on_localhost() {
+            let mut evloop = unwrap!(Core::new());
+            let handle = evloop.handle();
+
+            let (stun_addr, stun_pk) = spawn_stun_server(&handle, utp_addr!("0.0.0.0:0"));
+            let addr_querier = PaUdpAddrQuerier::new(&stun_addr, stun_pk);
+
+            let task = future::lazy(move || addr_querier.query(&addr!("0.0.0.0:0"), &handle));
+            let our_addr = unwrap!(evloop.run(task));
+
+            assert_eq!(our_addr.ip(), ipv4!("127.0.0.1"));
+        }
+    }
+}
