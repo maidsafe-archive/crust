@@ -8,7 +8,6 @@
 // Software.
 
 use config::{DevConfigSettings, PeerInfo};
-use env_logger;
 use future_utils::bi_channel;
 use futures::stream;
 use priv_prelude::*;
@@ -242,31 +241,6 @@ mod direct_connections {
         let service2_peer = PeerInfo::new(unwrap!(service2_peer.addr()), service1.public_id());
         assert!(service2.bootstrap_cache().peers().contains(&service2_peer));
     }
-}
-
-// None of the services in this test has listeners, therefore peer-to-peer connections are made.
-#[test]
-fn p2p_connections_on_localhost() {
-    let _ = env_logger::init();
-
-    let mut event_loop = unwrap!(Core::new());
-
-    let config = unwrap!(ConfigFile::new_temporary());
-    let service1 = service_with_config(&mut event_loop, config);
-
-    let config = unwrap!(ConfigFile::new_temporary());
-    let service2 = service_with_config(&mut event_loop, config);
-
-    let (ci_channel1, ci_channel2) = bi_channel::unbounded();
-    let connect = service1
-        .connect(ci_channel1)
-        .join(service2.connect(ci_channel2))
-        .with_timeout(Duration::from_secs(10), &event_loop.handle())
-        .map(|res_opt| unwrap!(res_opt, "p2p connection timed out"));
-
-    let (service1_peer, service2_peer) = unwrap!(event_loop.run(connect));
-    assert_eq!(service1_peer.public_id(), &service2.public_id());
-    assert_eq!(service2_peer.public_id(), &service1.public_id());
 }
 
 #[test]
