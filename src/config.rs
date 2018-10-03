@@ -174,15 +174,21 @@ impl ConfigFile {
     }
 
     /// Returns all addresses that `Crust` should listen on.
+    /// If no addresses are given, uses the default "tcp://0.0.0.0:0".
     /// If TCP is disabled, filters out TCP addresses.
     pub fn listen_addresses(&self) -> Vec<PaAddr> {
         let disable_tcp = self.tcp_disabled();
-        let addrs = &self.read().listen_addresses;
-        addrs
+        let mut addrs: Vec<_> = self
+            .read()
+            .listen_addresses
             .iter()
             .filter(|addr| if disable_tcp { !addr.is_tcp() } else { true })
             .cloned()
-            .collect()
+            .collect();
+        if addrs.is_empty() && !disable_tcp {
+            addrs.push(PaAddr::Tcp(addr!("0.0.0.0:0")));
+        }
+        addrs
     }
 }
 
@@ -422,6 +428,17 @@ mod tests {
                 let addrs = config.listen_addresses();
 
                 let expected_addrs = vec![utp_addr!("1.2.3.4:5000")];
+                assert_that!(&addrs, contains(expected_addrs).exactly());
+            }
+
+            #[test]
+            fn when_no_addresses_are_configured_it_returns_the_default_tcp_address() {
+                let config = unwrap!(ConfigFile::new_temporary());
+                assert!(config.read().listen_addresses.is_empty());
+
+                let addrs = config.listen_addresses();
+
+                let expected_addrs = vec![tcp_addr!("0.0.0.0:0")];
                 assert_that!(&addrs, contains(expected_addrs).exactly());
             }
         }
