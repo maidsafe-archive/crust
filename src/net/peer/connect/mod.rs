@@ -34,6 +34,8 @@ use future_utils::mpsc::UnboundedReceiver;
 use futures::sync::mpsc::{self, SendError};
 #[cfg(feature = "connections_info")]
 use futures::sync::oneshot;
+#[cfg(feature = "connections_info")]
+use net::peer;
 use p2p::P2p;
 use priv_prelude::*;
 #[cfg(feature = "connections_info")]
@@ -148,7 +150,7 @@ quick_error! {
 pub struct ConnectionResult {
     /// Was connection successful? If `result.is_ok()`, then yes. Otherwise it holds an error
     /// that happened during connection.
-    pub result: Result<(), SingleConnectionError>,
+    pub result: Result<Peer, SingleConnectionError>,
     /// True if connection was direct, false if this is a hole punched connection.
     pub is_direct: bool,
     /// How long connection took.
@@ -175,13 +177,17 @@ where
 {
     let config = config.clone();
     let handle1 = handle.clone();
+    let handle2 = handle.clone();
     let bootstrap_cache = bootstrap_cache.clone();
 
     let (conns_done_tx, conns_done_rx) = oneshot::channel();
 
     let all_outgoing_connections = get_their_info(conn_info_rx, our_conn_info.our_uid, &config)
         .and_then(move |their_conn_info| {
+            let their_uid = their_conn_info.uid;
             let connection_started = Instant::now();
+            let handle2 = handle1.clone();
+
             let direct_conns = try_connect_directly(
                 &handle1,
                 their_conn_info.for_direct,
@@ -190,11 +196,16 @@ where
                 &bootstrap_cache,
             ).map(move |result| match result {
                 Ok(stream) => ConnectionResult {
-                    result: Ok(()),
-                    is_direct: true,
-                    duration: Instant::now().duration_since(connection_started),
                     our_addr: stream.our_public_addr(),
                     their_addr: stream.peer_addr().ok(),
+                    result: Ok(peer::from_handshaken_stream(
+                        &handle1,
+                        their_uid,
+                        stream,
+                        CrustUser::Node,
+                    )),
+                    is_direct: true,
+                    duration: Instant::now().duration_since(connection_started),
                 },
                 Err(e) => ConnectionResult {
                     result: Err(e),
@@ -211,11 +222,16 @@ where
                 their_conn_info.p2p_conn_info,
             ).map(move |result| match result {
                 Ok(stream) => ConnectionResult {
-                    result: Ok(()),
-                    is_direct: false,
-                    duration: Instant::now().duration_since(connection_started),
                     our_addr: stream.our_public_addr(),
                     their_addr: stream.peer_addr().ok(),
+                    result: Ok(peer::from_handshaken_stream(
+                        &handle2,
+                        their_uid,
+                        stream,
+                        CrustUser::Node,
+                    )),
+                    is_direct: false,
+                    duration: Instant::now().duration_since(connection_started),
                 },
                 Err(e) => ConnectionResult {
                     result: Err(e),
@@ -234,12 +250,17 @@ where
     let connection_started = Instant::now();
     let direct_incoming = peer_rx
         .infallible()
-        .map(move |(stream, _connect_request)| ConnectionResult {
-            result: Ok(()),
-            is_direct: true,
+        .map(move |(stream, connect_request)| ConnectionResult {
             our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
-            duration: Instant::now().duration_since(connection_started),
             their_addr: stream.peer_addr().ok(),
+            result: Ok(peer::from_handshaken_stream(
+                &handle2,
+                connect_request.client_uid,
+                stream,
+                CrustUser::Node,
+            )),
+            is_direct: true,
+            duration: Instant::now().duration_since(connection_started),
         }).until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
 
     all_outgoing_connections
