@@ -40,8 +40,8 @@ features = ["serde"]
 version = "~0.4"
 
 [dependencies.p2p]
-git = "https://github.com/ustulation/p2p"
-rev = "595fa57"
+git = "https://github.com/povilasb/p2p"
+rev = "fix/public-addr-detection"
 
 [dependencies.tokio-utp]
 git = "https://github.com/maidsafe/tokio_utp"
