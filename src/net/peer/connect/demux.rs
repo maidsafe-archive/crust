@@ -107,6 +107,7 @@ impl Demux {
     #[cfg(feature = "connections_info")]
     pub fn connect_all<C>(
         &self,
+        name_hash: NameHash,
         our_conn_info: PrivConnectionInfo,
         conn_info_rx: C,
         config: &ConfigFile,
@@ -118,6 +119,7 @@ impl Demux {
         let peer_rx = self.direct_conn_receiver(our_conn_info.connection_id);
         connect_all(
             &self.inner.handle,
+            name_hash,
             our_conn_info,
             conn_info_rx,
             config,

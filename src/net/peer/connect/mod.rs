@@ -165,6 +165,7 @@ pub struct ConnectionResult {
 #[cfg(feature = "connections_info")]
 pub fn connect_all<C>(
     handle: &Handle,
+    name_hash: NameHash,
     mut our_conn_info: PrivConnectionInfo,
     conn_info_rx: C,
     config: &ConfigFile,
@@ -182,11 +183,19 @@ where
 
     let (conns_done_tx, conns_done_rx) = oneshot::channel();
 
+    let mut our_connect_request1 = ConnectRequest {
+        connection_id: 0,
+        client_uid: our_conn_info.our_uid,
+        name_hash,
+    };
+    let our_connect_request2 = our_connect_request1.clone();
+
     let all_outgoing_connections = get_their_info(conn_info_rx, our_conn_info.our_uid, &config)
         .and_then(move |their_conn_info| {
             let their_uid = their_conn_info.uid;
             let connection_started = Instant::now();
             let handle2 = handle1.clone();
+            our_connect_request1.connection_id = their_conn_info.connection_id;
 
             let direct_conns = try_connect_directly(
                 &handle1,
@@ -194,27 +203,29 @@ where
                 their_conn_info.pub_key,
                 &config,
                 &bootstrap_cache,
-            ).map(move |result| match result {
-                Ok(stream) => ConnectionResult {
-                    our_addr: stream.our_public_addr(),
-                    their_addr: stream.peer_addr().ok(),
-                    result: Ok(peer::from_handshaken_stream(
-                        &handle1,
-                        their_uid,
-                        stream,
-                        CrustUser::Node,
-                    )),
-                    is_direct: true,
-                    duration: Instant::now().duration_since(connection_started),
-                },
-                Err(e) => ConnectionResult {
-                    result: Err(e),
-                    is_direct: true,
-                    duration: Instant::now().duration_since(connection_started),
-                    our_addr: None, // TODO(povilas): do best to determine our public address
-                    their_addr: None, // TODO(povilas): get their addr
-                },
-            }).infallible::<SingleConnectionError>();
+            );
+            let direct_conns = handshake_outgoing_conn_attempts(direct_conns, our_connect_request1)
+                .map(move |result| match result {
+                    Ok((stream, their_uid)) => ConnectionResult {
+                        our_addr: stream.our_public_addr(),
+                        their_addr: stream.peer_addr().ok(),
+                        result: Ok(peer::from_handshaken_stream(
+                            &handle1,
+                            their_uid,
+                            stream,
+                            CrustUser::Node,
+                        )),
+                        is_direct: true,
+                        duration: Instant::now().duration_since(connection_started),
+                    },
+                    Err(e) => ConnectionResult {
+                        result: Err(e),
+                        is_direct: true,
+                        duration: Instant::now().duration_since(connection_started),
+                        our_addr: None, // TODO(povilas): do best to determine our public address
+                        their_addr: None, // TODO(povilas): get their addr
+                    },
+                }).infallible::<SingleConnectionError>();
 
             let our_p2p_conn_info = our_conn_info.p2p_conn_info.take();
             let rendezvous_conns = try_connect_p2p(
@@ -248,17 +259,13 @@ where
         });
 
     let connection_started = Instant::now();
-    let direct_incoming = peer_rx
+    let direct_incoming = handshake_incoming_connections(our_connect_request2, peer_rx)
+        .map_err(|e| panic!("Incoming conn failed: {}", e)) // TODO(povilas): just log an error
         .infallible()
-        .map(move |(stream, connect_request)| ConnectionResult {
+        .map(move |(stream, their_uid)| ConnectionResult {
             our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
             their_addr: stream.peer_addr().ok(),
-            result: Ok(peer::from_handshaken_stream(
-                &handle2,
-                connect_request.client_uid,
-                stream,
-                CrustUser::Node,
-            )),
+            result: Ok(peer::from_handshaken_stream(&handle2, their_uid, stream, CrustUser::Node)),
             is_direct: true,
             duration: Instant::now().duration_since(connection_started),
         }).until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
@@ -430,6 +437,8 @@ fn finalize_connections(handle: &Handle, conns: BoxStream<PaStream, SingleConnec
     handle.spawn(task);
 }
 
+// TODO(povilas): replace this with try_connect_directly(), otherwise single
+// error will terminate the connection stream.
 fn connect_directly(
     evloop_handle: &Handle,
     addrs: Vec<PaAddr>,
@@ -511,6 +520,9 @@ fn try_connect_directly(
     stream::futures_unordered(connections).into_boxed()
 }
 
+// TODO(povilas): shouldn't this function be infallible?
+// Say one incoming connection fails, that shouldn't affect other connections.
+// Probably just log an error instead of terminating the stream.
 fn handshake_incoming_connections(
     mut our_connect_request: ConnectRequest,
     conn_rx: UnboundedReceiver<ConnectMessage>,
@@ -555,6 +567,38 @@ where
                 Ok((stream, connect_request.client_uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
+        }).into_boxed()
+}
+
+/// Executes handshake process for the given connections.
+#[cfg(feature = "connections_info")]
+fn handshake_outgoing_conn_attempts<S>(
+    connections: S,
+    our_connect_request: ConnectRequest,
+) -> BoxStream<Result<(PaStream, PublicEncryptKey), SingleConnectionError>, Void>
+where
+    S: Stream<Item = Result<PaStream, SingleConnectionError>, Error = Void> + 'static,
+{
+    let our_name_hash = our_connect_request.name_hash;
+    connections
+        .and_then(move |conn_attempt| match conn_attempt {
+            Err(e) => future::ok(Err(e)).into_boxed(),
+            Ok(stream) => stream
+                .send_serialized(HandshakeMessage::Connect(our_connect_request.clone()))
+                .map_err(SingleConnectionError::Write)
+                .and_then(move |stream| {
+                    stream
+                        .recv_serialized()
+                        .map_err(SingleConnectionError::Read)
+                }).and_then(move |(msg_opt, stream)| match msg_opt {
+                    None => Err(SingleConnectionError::ConnectionDropped),
+                    Some(HandshakeMessage::Connect(connect_request)) => {
+                        validate_connect_request(our_name_hash, &connect_request)?;
+                        Ok((stream, connect_request.client_uid))
+                    }
+                    Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
+                }).then(Ok)
+                .into_boxed(),
         }).into_boxed()
 }
 

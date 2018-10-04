@@ -213,6 +213,7 @@ impl Service {
                     .send(our_info.to_pub_connection_info())
                     .map_err(|_e| SingleConnectionError::DeadChannel)
                     .while_driving(future::ok(demux.connect_all(
+                        config.network_name_hash(),
                         our_info,
                         ci_rx,
                         &config,
