@@ -260,12 +260,16 @@ where
 
     let connection_started = Instant::now();
     let direct_incoming = handshake_incoming_connections(our_connect_request2, peer_rx)
-        .map_err(|e| panic!("Incoming conn failed: {}", e)) // TODO(povilas): just log an error
-        .infallible()
+        .infallible::<SingleConnectionError>()
         .map(move |(stream, their_uid)| ConnectionResult {
             our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
             their_addr: stream.peer_addr().ok(),
-            result: Ok(peer::from_handshaken_stream(&handle2, their_uid, stream, CrustUser::Node)),
+            result: Ok(peer::from_handshaken_stream(
+                &handle2,
+                their_uid,
+                stream,
+                CrustUser::Node,
+            )),
             is_direct: true,
             duration: Instant::now().duration_since(connection_started),
         }).until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
@@ -303,7 +307,8 @@ where
         config,
         bootstrap_cache,
     );
-    let direct_incoming = handshake_incoming_connections(our_connect_request1, peer_rx);
+    let direct_incoming = handshake_incoming_connections(our_connect_request1, peer_rx)
+        .infallible::<SingleConnectionError>();
     let all_connections = all_outgoing_connections
         .select(direct_incoming)
         .with_timeout(Duration::from_secs(CONNECTIONS_TIMEOUT), handle);
@@ -520,13 +525,10 @@ fn try_connect_directly(
     stream::futures_unordered(connections).into_boxed()
 }
 
-// TODO(povilas): shouldn't this function be infallible?
-// Say one incoming connection fails, that shouldn't affect other connections.
-// Probably just log an error instead of terminating the stream.
 fn handshake_incoming_connections(
     mut our_connect_request: ConnectRequest,
     conn_rx: UnboundedReceiver<ConnectMessage>,
-) -> BoxStream<(PaStream, PublicEncryptKey), SingleConnectionError> {
+) -> BoxStream<(PaStream, PublicEncryptKey), Void> {
     conn_rx
         .infallible::<SingleConnectionError>()
         .and_then(move |(stream, connect_request)| {
@@ -539,7 +541,10 @@ fn handshake_incoming_connections(
                     .map(move |stream| (stream, connect_request.client_uid))
             })
         }).and_then(|f| f)
-        .into_boxed()
+        .log_errors(
+            LogLevel::Debug,
+            "Direct incomig connection was terminated prematurely",
+        ).into_boxed()
 }
 
 /// Executes handshake process for the given connections.
