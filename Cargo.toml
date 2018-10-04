@@ -58,3 +58,7 @@ connections_info = []
 [target."cfg(target_os = \"linux\")".dependencies.netsim]
 optional = true
 version = "~0.2.2"
+
+[[example]]
+name = "connect_all"
+required-features = ["connections_info"]
