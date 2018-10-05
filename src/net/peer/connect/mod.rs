@@ -179,6 +179,7 @@ where
     let config = config.clone();
     let handle1 = handle.clone();
     let handle2 = handle.clone();
+    let handle3 = handle.clone();
     let bootstrap_cache = bootstrap_cache.clone();
 
     let (conns_done_tx, conns_done_rx) = oneshot::channel();
@@ -272,7 +273,11 @@ where
             )),
             is_direct: true,
             duration: Instant::now().duration_since(connection_started),
-        }).until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
+        }).until(
+            Timeout::new(Duration::from_secs(CONNECTIONS_TIMEOUT), &handle3)
+                .infallible::<SingleConnectionError>()
+                .and_then(|()| conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel)),
+        );
 
     all_outgoing_connections
         .select(direct_incoming)

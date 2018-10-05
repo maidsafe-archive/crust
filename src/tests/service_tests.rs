@@ -608,3 +608,51 @@ fn dropping_tcp_peer_makes_remote_peer_terminate_too() {
 fn dropping_utp_peer_makes_remote_peer_terminate_too() {
     dropping_peer_makes_remote_peer_terminate_too(utp_addr!("0.0.0.0:0"));
 }
+
+#[cfg(feature = "connections_info")]
+mod connect_all {
+    use super::*;
+
+    #[test]
+    fn it_collects_all_direct_connection_attempts() {
+        let mut evloop = unwrap!(Core::new());
+        let handle = evloop.handle();
+
+        let (ci_channel1, ci_channel2) = bi_channel::unbounded();
+
+        let config1 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_rendezvous_connections = true;
+        unwrap!(config1.write()).dev = Some(dev_cfg);
+        unwrap!(config1.write()).listen_addresses =
+            vec![tcp_addr!("0.0.0.0:0"), utp_addr!("0.0.0.0:0")];
+        let (our_pk, our_sk) = gen_encrypt_keypair();
+        let service1 = unwrap!(evloop.run(Service::with_config(&handle, config1, our_sk, our_pk)));
+        let _listeners1 = unwrap!(evloop.run(service1.start_listening().collect()));
+
+        let task1 = service1
+            .connect_all(ci_channel1)
+            .map_err(|e| panic!(e))
+            .collect()
+            .then(|_| Ok(()));
+        handle.spawn(task1);
+
+        let config2 = unwrap!(ConfigFile::new_temporary());
+        let mut dev_cfg = DevConfigSettings::default();
+        dev_cfg.disable_rendezvous_connections = true;
+        unwrap!(config2.write()).dev = Some(dev_cfg);
+        let (our_pk, our_sk) = gen_encrypt_keypair();
+        let service2 = unwrap!(evloop.run(Service::with_config(&handle, config2, our_sk, our_pk)));
+        let task2 = service2
+            .connect_all(ci_channel2)
+            .map_err(|e| panic!(e))
+            .collect();
+        let conn_results = unwrap!(evloop.run(task2));
+
+        assert!(!conn_results.is_empty());
+        for conn in conn_results {
+            assert!(conn.result.is_ok());
+            assert!(conn.is_direct);
+        }
+    }
+}
