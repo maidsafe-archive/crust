@@ -1,5 +1,14 @@
 # CRUST - Change Log
 
+## [0.31.0]
+- Update to dual license (MIT/BSD)
+- Upgrade unwrap version to 1.2.0
+- Use rust 1.28.0 stable / 2018-07-07 nightly
+- rustfmt 0.99.2 and clippy-0.0.212
+
+## [0.30.1]
+- crate updated to reflect licence changes from GPL to MIT/BSD 
+
 ## [0.30.0]
 - Use rust 1.22.1 stable / 2017-11-23 nightly
 - rustfmt 0.9.0 and clippy-0.0.174

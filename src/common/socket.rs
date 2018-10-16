@@ -46,12 +46,18 @@ impl Socket {
     }
 
     pub fn peer_addr(&self) -> Result<SocketAddr> {
-        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self
+            .inner
+            .as_ref()
+            .ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.peer_addr()?)
     }
 
     pub fn take_error(&self) -> Result<Option<io::Error>> {
-        let inner = self.inner.as_ref().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self
+            .inner
+            .as_ref()
+            .ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.take_error()?)
     }
 
@@ -63,7 +69,10 @@ impl Socket {
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
     pub fn read<T: DeserializeOwned>(&mut self) -> Result<Option<T>> {
-        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self
+            .inner
+            .as_mut()
+            .ok_or(CommonError::UninitialisedSocket)?;
         inner.read()
     }
 
@@ -80,7 +89,10 @@ impl Socket {
         token: Token,
         msg: Option<(T, Priority)>,
     ) -> ::Res<bool> {
-        let inner = self.inner.as_mut().ok_or(CommonError::UninitialisedSocket)?;
+        let inner = self
+            .inner
+            .as_mut()
+            .ok_or(CommonError::UninitialisedSocket)?;
         inner.write(poll, token, msg)
     }
 }
@@ -244,8 +256,7 @@ impl SockInner {
                 queue.front().map_or(true, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
                 })
-            })
-            .map(|(&priority, _)| priority)
+            }).map(|(&priority, _)| priority)
             .collect();
         let dropped_msgs: usize = expired_keys
             .iter()

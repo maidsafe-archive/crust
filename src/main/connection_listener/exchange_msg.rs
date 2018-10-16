@@ -329,8 +329,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             .or_insert(ConnectionId {
                 active_connection: None,
                 currently_handshaking: 0,
-            })
-            .currently_handshaking += 1;
+            }).currently_handshaking += 1;
         trace!(
             "Connection Map inserted: {:?} -> {:?}",
             their_uid,

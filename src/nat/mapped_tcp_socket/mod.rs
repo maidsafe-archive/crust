@@ -106,7 +106,8 @@ where
             igd_children,
             stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
             mapped_addrs,
-            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
+            timeout: core
+                .set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
             finish: Some(finish),
             phantom: PhantomData,
         }));
