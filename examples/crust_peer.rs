@@ -625,6 +625,7 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
         let msg = unwrap!(matches.value_of("message"), "Missing message");
         Some(UserCommand::Send(peer, msg.to_string()))
     } else if matches.is_present("send-all") {
+        let matches = unwrap!(matches.subcommand_matches("send-all"));
         let msg = unwrap!(matches.value_of("message"), "Missing message");
         Some(UserCommand::SendAll(msg.to_string()))
     } else if matches.is_present("prepare-connection-info") {
