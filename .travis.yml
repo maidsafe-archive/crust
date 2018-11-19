@@ -6,10 +6,12 @@ env:
 os:
   - linux
   - osx
+services:
+  - docker
 language: rust
 rust:
   - 1.29.2
-sudo: false
+sudo: required
 branches:
   only:
     - master
