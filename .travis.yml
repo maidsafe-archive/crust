@@ -13,13 +13,35 @@ sudo: false
 branches:
   only:
     - master
+    - docker
 cache:
   cargo: true
 before_script:
-  - curl -sSL https://github.com/maidsafe/QA/raw/master/travis/cargo_install.sh > cargo_install.sh
-  - bash cargo_install.sh cargo-prune;
+  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      (
+        set -x;
+        curl -sSL https://github.com/maidsafe/QA/raw/master/travis/cargo_install.sh > cargo_install.sh
+        bash cargo_install.sh cargo-prune
+      );
+    elif [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      (
+        set x;
+        version=$(cat Cargo.toml | grep "^version" | awk '{ print $3 }' | sed 's/\"//g')
+        docker pull jacderida/crust-ci:$version
+      )
+    fi
 script:
-  - set -x;
-    cargo test --release --verbose
+  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      (
+        set -x;
+        cargo test --release --verbose
+      );
+    elif [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      (
+        set x;
+        version=$(cat Cargo.toml | grep "^version" | awk '{ print $3 }' | sed 's/\"//g')
+        docker run --rm -v "$PWD":/usr/src/crust jacderida/crust-ci:$version
+      )
+    fi
 before_cache:
   - cargo prune
