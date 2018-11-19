@@ -17,23 +17,8 @@ branches:
 cache:
   cargo: true
 before_script:
-  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      set -x;
-      curl -sSL https://github.com/maidsafe/QA/raw/master/travis/cargo_install.sh > cargo_install.sh;
-      bash cargo_install.sh cargo-prune;
-    elif [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      set x;
-      version=$(cat Cargo.toml | grep "^version" | awk '{ print $3 }' | sed 's/\"//g');
-      docker pull jacderida/crust-ci:$version;
-    fi
+  - ./scripts/pre-build.sh
 script:
-  - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      set -x;
-      cargo test --release --verbose;
-    elif [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      set x;
-      version=$(cat Cargo.toml | grep "^version" | awk '{ print $3 }' | sed 's/\"//g');
-      docker run --rm -v "$PWD":/usr/src/crust jacderida/crust-ci:$version;
-    fi
+  - ./scripts/build.sh
 before_cache:
   - cargo prune
