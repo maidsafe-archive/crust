@@ -32,6 +32,35 @@ The network encrypts everything handed to it for transportation automatically. W
 ### Bootstrap cache
 Bootstrap caching enhances the concept of using genesis nodes (hard-coded addresses) for initial vault detection by dynamically creating a list of nodes which are directly reachable without the need to hole-punch. This list is appended and pruned as nodes connect/disconnect to the network so is always kept up-to-date.
 
+<a name="building"></a>
+## Building from Source
+
+### Using Cargo
+As per any standard Rust library, Crust can be built using Cargo. This involves setting up a [Rust installation](https://www.rust-lang.org/en-US/install.html) on the target environment and platform. In addition to this, a GCC environment is also required. Setup of that depends on the platform:
+
+* Linux: install the `build-essentials` package for your distribution
+* OSX: install the 'Command Line Tools for XCode' package from the Apple Developer site or use [Homebrew](https://formulae.brew.sh/formula/gcc)
+* Windows: get an installation of MinGW via [MSYS2](http://www.msys2.org/) or [Git Bash for Windows](https://gitforwindows.org/)
+
+On Windows it is also possible to build with the Microsoft C++ toolchain, but using MinGW is the preferred method. Setting up the Microsoft C++ environment is beyond the scope of this document.
+
+With that environment setup, on Linux or OSX, it should be as simple as cloning this repository then running `cargo build`. On Windows, it's slightly different:
+
+* Use `rustup` to install the GNU target: `rustup target add x86_64-pc-windows-gnu`
+* Specify this target when invoking Cargo: `cargo build --target x86_64-pc-windows-gnu`
+
+### Using Docker
+
+This repository also provides a Dockerfile that defines a container that has the prerequisites necessary for building Crust. To run this, install Docker on your host machine, then either pull the container or build it on the host. If you want to build it, there's a utility Makefile with a `build-container` target. If you're happy to work with the existing container, simply run `make run-container-build`, which will pull in the container then run it; this will build the current code and run the tests.
+
+If you want to debug a build or get access to the artifacts produced, do the following:
+
+* Run `make run-container-build-debug` from your host; this will give you shell access in the container.
+* Run `cargo test --release --verbose` from the shell in the container.
+* With the shell access in the container, you can debug any problems with the build.
+* If you need access to the build artifacts, these will be available in the `target` directory on your host, since the current directory is mounted in as a shared volume.
+* Exit the container to return back to the host shell.
+
 <a name="license"></a>
 ## License
 This Crust library is dual-licensed under the Modified BSD ( [LICENSE-BSD](https://opensource.org/licenses/BSD-3-Clause)) or the MIT license ( [LICENSE-MIT](http://opensource.org/licenses/MIT)) at your option.
