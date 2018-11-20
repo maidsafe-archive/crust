@@ -3,11 +3,17 @@ VERSION := $(shell cat Cargo.toml | grep "^version" | awk '{ print $$3 }' | sed 
 PWD := $(shell echo $$PWD)
 
 build-container:
-	docker rmi jacderida/crust:${VERSION}
-	docker build -t jacderida/crust:${VERSION} .
+	docker rmi -f maidsafe/crust:${VERSION}
+	docker build -t maidsafe/crust:${VERSION} .
 
 push-container: build-container
-	docker push jacderida/crust:${VERSION}
+	docker pull maidsafe/crust:${VERSION}
 
-run-container-build:
-	docker run --rm -v "${PWD}":/usr/src/crust jacderida/crust:${VERSION}
+pull-container:
+	docker push maidsafe/crust:${VERSION}
+
+run-container-build: pull-container
+	docker run --rm -v "${PWD}":/usr/src/crust maidsafe/crust:${VERSION}
+
+run-container-build-debug: pull-container
+	docker run --rm -it -v "${PWD}":/usr/src/crust maidsafe/crust:${VERSION} /bin/bash
