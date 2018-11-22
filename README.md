@@ -51,9 +51,9 @@ With that environment setup, on Linux or OSX, it should be as simple as cloning 
 
 ### Using Docker
 
-This repository also provides a Dockerfile that defines a container that has the prerequisites necessary for building Crust. To run this, install Docker on your host machine, then either pull the container or build it on the host. If you want to build it, there's a utility Makefile with a `build-container` target. If you're happy to work with the existing container, simply run `make run-container-build`, which will pull in the container then run it; this will build the current code and run the tests.
+This repository also provides a Dockerfile that defines a container with the prerequisites necessary for building Crust. To run this, install Docker on your host machine, then build the container on your host; there's a utility Makefile with a `build-container` target. You can also run `make run-container-build` to build and run the container in one step.
 
-If you want to debug a build or get access to the artifacts produced, do the following:
+If you want to debug a build or access the artifacts produced from the build, do the following:
 
 * Run `make run-container-build-debug` from your host; this will give you shell access in the container.
 * Run `cargo test --release --verbose` from the shell in the container.

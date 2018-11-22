@@ -7,13 +7,10 @@ build-container:
 	docker build -t maidsafe/crust:${VERSION} .
 
 push-container: build-container
-	docker pull maidsafe/crust:${VERSION}
-
-pull-container:
 	docker push maidsafe/crust:${VERSION}
 
-run-container-build: pull-container
+run-container-build: build-container
 	docker run --rm -v "${PWD}":/usr/src/crust maidsafe/crust:${VERSION}
 
-run-container-build-debug: pull-container
+run-container-build-debug: build-container
 	docker run --rm -it -v "${PWD}":/usr/src/crust maidsafe/crust:${VERSION} /bin/bash
