@@ -7,5 +7,6 @@ if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
     bash cargo_install.sh cargo-prune
 elif [ "${TRAVIS_OS_NAME}" == "linux" ]; then
     version=$(cat Cargo.toml | grep "^version" | awk '{ print $3 }' | sed 's/\"//g')
+    docker rmi maidsafe/crust:$version
     docker pull maidsafe/crust:$version
 fi
