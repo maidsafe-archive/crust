@@ -253,7 +253,7 @@ impl<UID: Uid> Service<UID> {
         use std::time::Duration;
 
         let (obs, rx) = mpsc::channel();
-        let _ = self.post(move |core, _| {
+        let _ = self.post(move |mut core, _| {
             let state = match core.get_state(SERVICE_DISCOVERY_TOKEN) {
                 Some(state) => state,
                 None => return,
@@ -267,7 +267,7 @@ impl<UID: Uid> Service<UID> {
                 }
             };
             service_discovery.register_observer(obs);
-            let _ = service_discovery.seek_peers();
+            let _ = service_discovery.seek_peers(&mut core);
         });
 
         thread::sleep(Duration::from_secs(1));

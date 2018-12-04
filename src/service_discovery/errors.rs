@@ -7,6 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use common::CommonError;
 use maidsafe_utilities::serialisation::SerialisationError;
 use std::io;
 use std::net::AddrParseError;
@@ -27,6 +28,10 @@ quick_error! {
         Serialisation(e: SerialisationError) {
             description("Serialisation error during service discovery")
             display("Serialisation error during service discovery: {}", e)
+            from()
+        }
+        CommonError(e: CommonError) {
+            display("Common Crust error: {}", e)
             from()
         }
     }

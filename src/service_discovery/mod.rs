@@ -11,7 +11,7 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, State};
+use common::{Core, CoreTimer, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use mio::udp::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
@@ -25,7 +25,13 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use std::u16;
+
+/// If no response is received after this timeout, resend service discovery request.
+const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 100;
+/// Send max requests before giving up.
+const MAX_SERVICE_DISCOVERY_RETRIES: u32 = 3;
 
 #[derive(Serialize, Deserialize, Debug)]
 enum DiscoveryMsg {
@@ -46,6 +52,7 @@ pub struct ServiceDiscovery {
     reply_to: VecDeque<SocketAddr>,
     observers: Vec<Sender<Vec<SocketAddr>>>,
     guid: u64,
+    requests_sent: u32,
 }
 
 impl ServiceDiscovery {
@@ -74,6 +81,7 @@ impl ServiceDiscovery {
             reply_to: VecDeque::new(),
             observers: Vec::new(),
             guid,
+            requests_sent: 0,
         };
 
         poll.register(
@@ -95,10 +103,21 @@ impl ServiceDiscovery {
     }
 
     /// Interrogate the network to find peers.
-    pub fn seek_peers(&mut self) -> Result<(), ServiceDiscoveryError> {
+    /// If no response is received within some time out, the discovery request will be broadcasted
+    /// again.
+    pub fn seek_peers(&mut self, core: &mut Core) -> Result<(), ServiceDiscoveryError> {
         let _ = self
             .socket
             .send_to(&self.seek_peers_req, &self.remote_addr)?;
+
+        self.requests_sent += 1;
+        if self.requests_sent < MAX_SERVICE_DISCOVERY_RETRIES {
+            let _ = core.set_timeout(
+                Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS),
+                CoreTimer::new(self.token, 0),
+            )?;
+        }
+
         Ok(())
     }
 
@@ -202,6 +221,11 @@ impl State for ServiceDiscovery {
     fn as_any(&mut self) -> &mut Any {
         self
     }
+
+    /// Resend service discovery request.
+    fn timeout(&mut self, core: &mut Core, _poll: &Poll, _timer_id: u8) {
+        let _ = self.seek_peers(core);
+    }
 }
 
 fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
@@ -297,11 +321,11 @@ mod tests {
 
             // Seek peers
             unwrap!(
-                el1.send(CoreMessage::new(move |core, _| {
+                el1.send(CoreMessage::new(move |mut core, _| {
                     let state = unwrap!(core.get_state(token_1));
                     let mut inner = state.borrow_mut();
                     let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
-                    unwrap!(sd.seek_peers());
+                    unwrap!(sd.seek_peers(&mut core));
                 })),
                 "Could not send to el1"
             );

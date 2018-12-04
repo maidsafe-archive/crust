@@ -271,7 +271,7 @@ fn seek_peers(
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
-        state.seek_peers()?;
+        state.seek_peers(core)?;
         let timeout = core.set_timeout(
             Duration::from_secs(SERVICE_DISCOVERY_TIMEOUT_SEC),
             CoreTimer::new(token, SERVICE_DISCOVERY_TIMER_ID),
