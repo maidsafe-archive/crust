@@ -27,12 +27,14 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::u16;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 enum DiscoveryMsg {
     Request { guid: u64 },
     Response(Vec<SocketAddr>),
 }
 
+/// Acts both as service discovery server and client.
+/// Service discovery is a method of finding peers on LAN using UDP packet broadcasting.
 pub struct ServiceDiscovery {
     token: Token,
     socket: UdpSocket,
@@ -47,6 +49,7 @@ pub struct ServiceDiscovery {
 }
 
 impl ServiceDiscovery {
+    /// Register `ServiceDiscovery` on the Crust event loop.
     pub fn start(
         core: &mut Core,
         poll: &Poll,
@@ -240,7 +243,7 @@ mod tests {
         let listeners_0 = Arc::new(Mutex::new(vec![addr]));
         let listeners_0_clone = listeners_0.clone();
 
-        // ServiceDiscovery-0
+        // ServiceDiscovery server
         {
             let token_0 = Token(SERVICE_DISCOVERY_TOKEN);
             unwrap!(
@@ -271,7 +274,7 @@ mod tests {
 
         let (tx, rx) = mpsc::channel();
 
-        // ServiceDiscovery-1
+        // ServiceDiscovery client
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);

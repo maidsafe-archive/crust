@@ -50,6 +50,7 @@ impl Drop for EventLoop {
     }
 }
 
+/// Spawns event loop in a separate thread and returns a handle to communicate with it.
 pub fn spawn_event_loop(
     token_counter_start: usize,
     event_loop_id: Option<&str>,
@@ -145,6 +146,7 @@ pub struct CoreTimer {
     pub timer_id: u8,
 }
 
+/// Manages states registered on the event loop.
 pub struct Core {
     tx: Sender<CoreMessage>,
     timer: Timer<CoreTimer>,
@@ -166,6 +168,9 @@ impl Core {
         &self.tx
     }
 
+    /// Schedules a new timer with the given info: timer token and id.
+    /// Multiple timers can be scheduled in parallel which will be invoked according to the timer
+    /// mio token.
     pub fn set_timeout(&mut self, interval: Duration, core_timer: CoreTimer) -> Result<Timeout> {
         Ok(self.timer.set_timeout(interval, core_timer)?)
     }
@@ -174,6 +179,7 @@ impl Core {
         self.timer.cancel_timeout(timeout)
     }
 
+    /// Generates a new unique mio token.
     pub fn get_new_token(&mut self) -> Token {
         let token = Token(self.token_counter);
         self.token_counter += 1;
