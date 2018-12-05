@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, NameHash, Priority, Socket, State, Uid};
+use common::{Core, Message, MioReadyExt, NameHash, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
@@ -44,7 +44,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll.register(
             &socket,
             token,
-            Ready::error() | Ready::hup() | Ready::writable(),
+            Ready::error_and_hup() | Ready::writable(),
             PollOpt::edge(),
         )?;
 
@@ -110,7 +110,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
 impl<UID: Uid> State for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
+        if kind.is_error_or_hup() {
             self.handle_error(core, poll);
         } else {
             if kind.is_writable() {

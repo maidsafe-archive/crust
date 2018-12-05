@@ -9,11 +9,11 @@
 
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use common::{Result, State};
+use common::{MioReadyExt, Result, State};
 use maidsafe_utilities::thread::{self, Joiner};
-use mio::channel::{self, Receiver, Sender};
-use mio::timer::{Timeout, Timer};
 use mio::{Event, Events, Poll, PollOpt, Ready, Token};
+use mio_extras::channel::{self, Receiver, Sender};
+use mio_extras::timer::{Timeout, Timer};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -61,13 +61,13 @@ pub fn spawn_event_loop(
     poll.register(
         &rx,
         Token(token_counter_start + CHANNEL_TOKEN_OFFSET),
-        Ready::readable() | Ready::error() | Ready::hup(),
+        Ready::readable() | Ready::error_and_hup(),
         PollOpt::edge(),
     )?;
     poll.register(
         &timer,
         Token(token_counter_start + TIMER_TOKEN_OFFSET),
-        Ready::readable() | Ready::error() | Ready::hup(),
+        Ready::readable() | Ready::error_and_hup(),
         PollOpt::edge(),
     )?;
 
@@ -106,7 +106,7 @@ fn event_loop_impl(
         for event in events.iter() {
             match event.token() {
                 Token(t) if t == token_counter_start + CHANNEL_TOKEN_OFFSET => {
-                    if !event.kind().is_readable() {
+                    if !event.readiness().is_readable() {
                         warn!(
                             "Communication channel to event loop errored out: {:?}",
                             event
@@ -127,7 +127,7 @@ fn event_loop_impl(
                     }
                 }
                 Token(t) if t == token_counter_start + TIMER_TOKEN_OFFSET => {
-                    core.handle_timer(poll, event.kind())
+                    core.handle_timer(poll, event.readiness())
                 }
                 _ => core.handle_event(poll, event),
             }
@@ -166,8 +166,8 @@ impl Core {
         &self.tx
     }
 
-    pub fn set_timeout(&mut self, interval: Duration, core_timer: CoreTimer) -> Result<Timeout> {
-        Ok(self.timer.set_timeout(interval, core_timer)?)
+    pub fn set_timeout(&mut self, interval: Duration, core_timer: CoreTimer) -> Timeout {
+        self.timer.set_timeout(interval, core_timer)
     }
 
     pub fn cancel_timeout(&mut self, timeout: &Timeout) -> Option<CoreTimer> {
@@ -198,7 +198,7 @@ impl Core {
 
     fn handle_event(&mut self, poll: &Poll, event: Event) {
         if let Some(state) = self.get_state(event.token()) {
-            state.borrow_mut().ready(self, poll, event.kind());
+            state.borrow_mut().ready(self, poll, event.readiness());
         }
     }
 

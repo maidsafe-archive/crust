@@ -8,9 +8,9 @@
 // Software.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use common::{CommonError, Priority, Result, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY};
+use common::{CommonError, MioReadyExt, Priority, Result, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
-use mio::tcp::TcpStream;
+use mio::net::TcpStream;
 use mio::{Evented, Poll, PollOpt, Ready, Token};
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
@@ -322,9 +322,9 @@ impl SockInner {
         let done = self.current_write.is_none() && self.write_queue.is_empty();
 
         let event_set = if done {
-            Ready::error() | Ready::hup() | Ready::readable()
+            Ready::error_and_hup() | Ready::readable()
         } else {
-            Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
+            Ready::error_and_hup() | Ready::readable() | Ready::writable()
         };
 
         poll.reregister(self, token, event_set, PollOpt::edge())?;

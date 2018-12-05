@@ -11,9 +11,9 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, NameHash, Socket, State, Uid};
+use common::{Core, MioReadyExt, NameHash, Socket, State, Uid};
 use main::{ConnectionMap, CrustConfig, Event};
-use mio::tcp::TcpListener;
+use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
 use nat::ip_addr_is_global;
 use nat::{MappedTcpSocket, MappingContext};
@@ -119,11 +119,11 @@ impl<UID: Uid> ConnectionListener<UID> {
         let listener = socket.listen(LISTENER_BACKLOG)?;
         let local_addr = listener.local_addr()?;
 
-        let listener = TcpListener::from_listener(listener, &local_addr)?;
+        let listener = TcpListener::from_std(listener)?;
         poll.register(
             &listener,
             token,
-            Ready::readable() | Ready::error() | Ready::hup(),
+            Ready::readable() | Ready::error_and_hup(),
             PollOpt::edge(),
         )?;
 
@@ -182,7 +182,7 @@ impl<UID: Uid> ConnectionListener<UID> {
 
 impl<UID: Uid> State for ConnectionListener<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
+        if kind.is_error_or_hup() {
             self.terminate(core, poll);
             let _ = self.event_tx.send(Event::ListenerFailed);
         } else if kind.is_readable() {

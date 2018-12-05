@@ -7,8 +7,8 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, Priority, Socket, State, Uid};
-use mio::tcp::TcpStream;
+use common::{Core, Message, MioReadyExt, Priority, Socket, State, Uid};
+use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
 use nat::{util, NatError};
 use std::any::Any;
@@ -50,7 +50,7 @@ impl<UID: Uid> GetExtAddr<UID> {
         poll.register(
             &state.socket,
             token,
-            Ready::error() | Ready::hup() | Ready::writable(),
+            Ready::error_and_hup() | Ready::writable(),
             PollOpt::edge(),
         )?;
 
@@ -86,7 +86,7 @@ impl<UID: Uid> GetExtAddr<UID> {
 
 impl<UID: Uid> State for GetExtAddr<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
+        if kind.is_error_or_hup() {
             self.handle_error(core, poll);
         } else {
             if kind.is_writable() {

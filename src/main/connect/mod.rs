@@ -10,14 +10,14 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, CrustUser, NameHash, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, MioReadyExt, NameHash, Socket, State, Uid};
 use main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo,
 };
-use mio::tcp::{TcpListener, TcpStream};
-use mio::timer::Timeout;
+use mio::net::{TcpListener, TcpStream};
 use mio::{Poll, PollOpt, Ready, Token};
+use mio_extras::timer::Timeout;
 use nat;
 use std::any::Any;
 use std::cell::RefCell;
@@ -63,8 +63,7 @@ impl<UID: Uid> Connect<UID> {
 
         let state = Rc::new(RefCell::new(Self {
             token,
-            timeout: core
-                .set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
+            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0)),
             cm,
             our_nh,
             our_id: our_ci.id,
@@ -89,7 +88,7 @@ impl<UID: Uid> Connect<UID> {
                 poll.register(
                     &listener,
                     token,
-                    Ready::readable() | Ready::error() | Ready::hup(),
+                    Ready::readable() | Ready::error_and_hup(),
                     PollOpt::edge(),
                 )?;
                 state.borrow_mut().listener = Some(listener);
@@ -228,7 +227,7 @@ impl<UID: Uid> Connect<UID> {
 
 impl<UID: Uid> State for Connect<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if !kind.is_error() && !kind.is_hup() && kind.is_readable() {
+        if !kind.is_error_or_hup() && kind.is_readable() {
             self.accept(core, poll);
         }
     }

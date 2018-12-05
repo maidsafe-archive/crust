@@ -9,15 +9,15 @@
 
 use super::check_reachability::CheckReachability;
 use common::{
-    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message, NameHash,
-    Priority, Socket, State, Uid,
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message, MioReadyExt,
+    NameHash, Priority, Socket, State, Uid,
 };
 use main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
     CrustConfig, Event,
 };
-use mio::timer::Timeout;
 use mio::{Poll, PollOpt, Ready, Token};
+use mio_extras::timer::Timeout;
 use nat::ip_addr_is_global;
 use std::any::Any;
 use std::cell::RefCell;
@@ -60,13 +60,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
     ) -> ::Res<()> {
         let token = core.get_new_token();
 
-        let kind = Ready::error() | Ready::hup() | Ready::readable();
+        let kind = Ready::error_and_hup() | Ready::readable();
         poll.register(&socket, token, kind, PollOpt::edge())?;
 
         let timeout = core.set_timeout(
             Duration::from_secs(timeout_sec.unwrap_or(EXCHANGE_MSG_TIMEOUT_SEC)),
             CoreTimer::new(token, 0),
-        )?;
+        );
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
@@ -452,7 +452,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
 impl<UID: Uid> State for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
+        if kind.is_error_or_hup() {
             self.terminate(core, poll);
         } else {
             if kind.is_readable() {

@@ -9,14 +9,21 @@ readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
 version = "0.31.0"
 
+[[example]]
+bench = false
+name = "crust_peer"
+path = "examples/crust_peer.rs"
+
 [dependencies]
 byteorder = "~1.1.0"
 config_file_handler = "~0.11.0"
 crossbeam = "~0.2.10"
+get_if_addrs = "~0.4.1"
 igd = "~0.6.0"
 log = "~0.3.6"
 maidsafe_utilities = "~0.16.0"
 mio = "~0.6.9"
+mio-extras = "~2.0.5"
 net2 = "~0.2.30"
 quick-error = "~1.2.2"
 rand = "~0.3.15"
@@ -26,12 +33,6 @@ serde_derive = "~1.0.25"
 serde_json = "~1.0.8"
 tiny-keccak = "~1.4.0"
 unwrap = "~1.2.0"
-get_if_addrs = "~0.4.1"
 
 [dev-dependencies]
 clap = "~2.25.1"
-
-[[example]]
-bench = false
-name = "crust_peer"
-path = "examples/crust_peer.rs"

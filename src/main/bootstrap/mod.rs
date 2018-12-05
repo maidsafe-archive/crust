@@ -17,8 +17,8 @@ use common::{
     Uid,
 };
 use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
-use mio::timer::Timeout;
 use mio::{Poll, Token};
+use mio_extras::timer::Timeout;
 use rand::{self, Rng};
 use service_discovery::ServiceDiscovery;
 use std::any::Any;
@@ -74,7 +74,7 @@ impl<UID: Uid> Bootstrap<UID> {
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
-        let bs_timeout = core.set_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), bs_timer)?;
+        let bs_timeout = core.set_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), bs_timer);
         let sd_meta = match seek_peers(core, service_discovery_token, token) {
             Ok((rx, timeout)) => Some(ServiceDiscMeta { rx, timeout }),
             Err(CrustError::ServiceDiscNotEnabled) => None,
@@ -275,7 +275,7 @@ fn seek_peers(
         let timeout = core.set_timeout(
             Duration::from_secs(SERVICE_DISCOVERY_TIMEOUT_SEC),
             CoreTimer::new(token, SERVICE_DISCOVERY_TIMER_ID),
-        )?;
+        );
 
         Ok((rx, timeout))
     } else {

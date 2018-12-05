@@ -11,8 +11,8 @@ use self::get_ext_addr::GetExtAddr;
 use common::{Core, CoreMessage, CoreTimer, State, Uid};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
-use mio::timer::Timeout;
 use mio::{Poll, Token};
+use mio_extras::timer::Timeout;
 use nat::{util, MappingContext, NatError};
 use net2::TcpBuilder;
 use std::any::Any;
@@ -106,8 +106,7 @@ where
             igd_children,
             stun_children: HashSet::with_capacity(mc.peer_stuns().len()),
             mapped_addrs,
-            timeout: core
-                .set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0))?,
+            timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0)),
             finish: Some(finish),
             phantom: PhantomData,
         }));

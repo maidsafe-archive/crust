@@ -70,8 +70,6 @@
         too_many_arguments
     )
 )]
-// TODO FIXME Remove this soon
-#![allow(deprecated)]
 
 #[macro_use]
 extern crate log;
@@ -90,6 +88,7 @@ extern crate get_if_addrs;
 extern crate igd;
 extern crate maidsafe_utilities;
 extern crate mio;
+extern crate mio_extras;
 extern crate net2;
 extern crate rand;
 extern crate rust_sodium;

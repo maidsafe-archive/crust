@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, CrustUser, Message, Priority, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, Message, MioReadyExt, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap, Event};
-use mio::timer::Timeout;
 use mio::{Poll, Ready, Token};
+use mio_extras::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -174,7 +174,7 @@ impl<UID: Uid> ActiveConnection<UID> {
 
 impl<UID: Uid> State for ActiveConnection<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
+        if kind.is_error_or_hup() {
             trace!(
                 "{:?} Terminating connection to peer: {:?}. \
                  Event reason: {:?} - Optional Error: {:?}",
@@ -251,11 +251,10 @@ impl Heartbeat {
     fn new(core: &mut Core, state_id: Token) -> ::Res<Self> {
         let recv_timer = CoreTimer::new(state_id, 0);
         let recv_timeout =
-            core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer)?;
+            core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer);
 
         let send_timer = CoreTimer::new(state_id, 1);
-        let send_timeout =
-            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), send_timer)?;
+        let send_timeout = core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), send_timer);
 
         Ok(Heartbeat {
             recv_timeout,
@@ -269,14 +268,9 @@ impl Heartbeat {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
         } else {
-            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)
-                .map(|t| {
-                    self.send_timeout = t;
-                    HeartbeatAction::Send
-                }).unwrap_or_else(|e| {
-                    debug!("Failed to reschedule heartbeat send timer: {:?}", e);
-                    HeartbeatAction::Terminate
-                })
+            self.send_timeout =
+                core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer);
+            HeartbeatAction::Send
         }
     }
 
@@ -285,14 +279,14 @@ impl Heartbeat {
         self.recv_timeout = core.set_timeout(
             Duration::from_millis(INACTIVITY_TIMEOUT_MS),
             self.recv_timer,
-        )?;
+        );
         Ok(())
     }
 
     fn reset_send(&mut self, core: &mut Core) -> ::Res<()> {
         let _ = core.cancel_timeout(&self.send_timeout);
         self.send_timeout =
-            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer)?;
+            core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer);
         Ok(())
     }
 
