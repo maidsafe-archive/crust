@@ -33,8 +33,12 @@ pub struct Config {
     /// can specify this value as true, which will force crust to add the above `tcp_acceptor_port`
     /// to one of our externally reachable endpoint.
     pub force_acceptor_port_in_ext_ep: bool,
-    /// Port for service discovery on local network
+    /// Port for service discovery on local network. This port is used to broadcast messages to.
     pub service_discovery_port: Option<u16>,
+    /// You can configure service discovery server to listen on a separate port. This becomes
+    /// useful when you want to run multiple instances of Crust on the same machine.
+    /// By default it will use the same as `service_discovery_port` value.
+    pub service_discovery_listener_port: Option<u16>,
     /// File for bootstrap cache
     pub bootstrap_cache_name: Option<String>,
     /// Whitelisted nodes who are allowed to bootstrap off us or to connect to us
@@ -64,6 +68,7 @@ impl Default for Config {
             tcp_acceptor_port: None,
             force_acceptor_port_in_ext_ep: false,
             service_discovery_port: None,
+            service_discovery_listener_port: None,
             bootstrap_cache_name: None,
             whitelisted_node_ips: None,
             whitelisted_client_ips: None,
