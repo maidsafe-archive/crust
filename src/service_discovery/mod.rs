@@ -47,18 +47,26 @@ pub struct ServiceDiscovery {
 }
 
 impl ServiceDiscovery {
+    /// Starts service discovery process.
+    ///
+    /// # Args
+    ///
+    /// - listener_port - port we will be litening for incoming service discovery requests.
+    /// - remote_port - port we will broadcasting service discovery requests to.
     pub fn start(
         core: &mut Core,
         poll: &Poll,
         our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
         token: Token,
-        port: u16,
+        listener_port: u16,
+        remote_port: u16,
     ) -> Result<(), ServiceDiscoveryError> {
-        let udp_socket = get_socket(port)?;
+        let bind_addr = SocketAddr::from_str(&format!("0.0.0.0:{}", listener_port))?;
+        let udp_socket = UdpSocket::bind(&bind_addr)?;
         udp_socket.set_broadcast(true)?;
 
         let guid = rand::random();
-        let remote_addr = SocketAddr::from_str(&format!("255.255.255.255:{}", port))?;
+        let remote_addr = SocketAddr::from_str(&format!("255.255.255.255:{}", remote_port))?;
 
         let service_discovery = ServiceDiscovery {
             token,
@@ -201,20 +209,6 @@ impl State for ServiceDiscovery {
     }
 }
 
-fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
-    let mut res;
-    loop {
-        let bind_addr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))?;
-        res = UdpSocket::bind(&bind_addr).map_err(From::from);
-        if res.is_ok() || port == u16::MAX {
-            break;
-        }
-        port += 1;
-    }
-
-    res
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -246,7 +240,14 @@ mod tests {
             unwrap!(
                 el0.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(core, poll, listeners_0_clone, token_0, 65_530),
+                        ServiceDiscovery::start(
+                            core,
+                            poll,
+                            listeners_0_clone,
+                            token_0,
+                            65_530,
+                            65_530
+                        ),
                         "Could not spawn ServiceDiscovery_0"
                     );
                 })),
@@ -278,7 +279,7 @@ mod tests {
             unwrap!(
                 el1.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(core, poll, listeners_1, token_1, 65_530),
+                        ServiceDiscovery::start(core, poll, listeners_1, token_1, 0, 65_530),
                         "Could not spawn ServiceDiscovery_1"
                     );
                 })),

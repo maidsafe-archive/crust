@@ -140,10 +140,14 @@ impl<UID: Uid> Service<UID> {
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
         let our_listeners = self.our_listeners.clone();
-        let port = unwrap!(self.config.lock())
+        let remote_port = unwrap!(self.config.lock())
             .cfg
             .service_discovery_port
             .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+        let listener_port = unwrap!(self.config.lock())
+            .cfg
+            .service_discovery_listener_port
+            .unwrap_or(remote_port);
 
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
@@ -152,7 +156,8 @@ impl<UID: Uid> Service<UID> {
                     poll,
                     our_listeners,
                     SERVICE_DISCOVERY_TOKEN,
-                    port,
+                    listener_port,
+                    remote_port,
                 ) {
                     debug!("Could not start ServiceDiscovery: {:?}", e);
                 }
