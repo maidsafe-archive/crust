@@ -10,7 +10,6 @@
 pub use self::core::{spawn_event_loop, Core, CoreMessage, CoreTimer, EventLoop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
-pub use self::mio_ext::MioReadyExt;
 pub use self::socket::Socket;
 pub use self::state::State;
 use serde::de::DeserializeOwned;
@@ -71,6 +70,5 @@ pub trait Uid:
 mod core;
 mod error;
 mod message;
-mod mio_ext;
 mod socket;
 mod state;

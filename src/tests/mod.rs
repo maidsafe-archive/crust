@@ -311,7 +311,7 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
-    use common::{Core, Message, MioReadyExt, Socket, State};
+    use common::{Core, Message, Socket, State};
     use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
@@ -360,9 +360,6 @@ mod broken_peer {
 
     impl State for Connection {
         fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-            if kind.is_error_or_hup() {
-                return self.terminate(core, poll);
-            }
             if kind.is_readable() {
                 match self.0.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(..))) => {

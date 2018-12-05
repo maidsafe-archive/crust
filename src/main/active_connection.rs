@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, CrustUser, Message, MioReadyExt, Priority, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, Message, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap, Event};
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
@@ -174,23 +174,11 @@ impl<UID: Uid> ActiveConnection<UID> {
 
 impl<UID: Uid> State for ActiveConnection<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error_or_hup() {
-            trace!(
-                "{:?} Terminating connection to peer: {:?}. \
-                 Event reason: {:?} - Optional Error: {:?}",
-                self.our_id,
-                self.their_id,
-                kind,
-                self.socket.take_error()
-            );
-            self.terminate(core, poll);
-        } else {
-            if kind.is_writable() {
-                self.write(core, poll, None);
-            }
-            if kind.is_readable() {
-                self.read(core, poll);
-            }
+        if kind.is_writable() {
+            self.write(core, poll, None);
+        }
+        if kind.is_readable() {
+            self.read(core, poll);
         }
     }
 

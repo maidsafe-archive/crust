@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, MioReadyExt, Socket, State};
+use common::{Core, CoreTimer, Socket, State};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
@@ -42,12 +42,7 @@ where
         let socket = Socket::connect(&their_listener)?;
         let token = core.get_new_token();
 
-        poll.register(
-            &socket,
-            token,
-            Ready::error_and_hup() | Ready::writable(),
-            PollOpt::edge(),
-        )?;
+        poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;
 
         let timeout = core.set_timeout(
             Duration::from_secs(CHECK_REACHABILITY_TIMEOUT_SEC),
@@ -86,7 +81,7 @@ where
     T: 'static + Clone,
 {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error_or_hup() || !kind.is_writable() {
+        if !kind.is_writable() {
             self.handle_error(core, poll);
         } else {
             self.handle_success(core, poll);

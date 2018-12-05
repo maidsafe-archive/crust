@@ -8,7 +8,7 @@
 // Software.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use common::{CommonError, MioReadyExt, Priority, Result, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY};
+use common::{CommonError, Priority, Result, MAX_PAYLOAD_SIZE, MSG_DROP_PRIORITY};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 use mio::net::TcpStream;
 use mio::{Evented, Poll, PollOpt, Ready, Token};
@@ -51,14 +51,6 @@ impl Socket {
             .as_ref()
             .ok_or(CommonError::UninitialisedSocket)?;
         Ok(inner.stream.peer_addr()?)
-    }
-
-    pub fn take_error(&self) -> Result<Option<io::Error>> {
-        let inner = self
-            .inner
-            .as_ref()
-            .ok_or(CommonError::UninitialisedSocket)?;
-        Ok(inner.stream.take_error()?)
     }
 
     // Read message from the socket. Call this from inside the `ready` handler.
@@ -322,9 +314,9 @@ impl SockInner {
         let done = self.current_write.is_none() && self.write_queue.is_empty();
 
         let event_set = if done {
-            Ready::error_and_hup() | Ready::readable()
+            Ready::readable()
         } else {
-            Ready::error_and_hup() | Ready::readable() | Ready::writable()
+            Ready::readable() | Ready::writable()
         };
 
         poll.reregister(self, token, event_set, PollOpt::edge())?;

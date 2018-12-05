@@ -10,7 +10,7 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, CrustUser, MioReadyExt, NameHash, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, NameHash, Socket, State, Uid};
 use main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo,
@@ -85,12 +85,7 @@ impl<UID: Uid> Connect<UID> {
             if let Ok((listener, nat_sockets)) =
                 nat::get_sockets(&hole_punch_sock, their_hole_punch.len())
             {
-                poll.register(
-                    &listener,
-                    token,
-                    Ready::readable() | Ready::error_and_hup(),
-                    PollOpt::edge(),
-                )?;
+                poll.register(&listener, token, Ready::readable(), PollOpt::edge())?;
                 state.borrow_mut().listener = Some(listener);
                 sockets.extend(
                     nat_sockets
@@ -227,7 +222,7 @@ impl<UID: Uid> Connect<UID> {
 
 impl<UID: Uid> State for Connect<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if !kind.is_error_or_hup() && kind.is_readable() {
+        if kind.is_readable() {
             self.accept(core, poll);
         }
     }

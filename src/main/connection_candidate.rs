@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, MioReadyExt, Priority, Socket, State, Uid};
+use common::{Core, Message, Priority, Socket, State, Uid};
 use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
 use std::any::Any;
@@ -54,7 +54,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         if let Err(e) = poll.reregister(
             &state.borrow().socket,
             token,
-            Ready::writable() | Ready::error_and_hup(),
+            Ready::writable(),
             PollOpt::edge(),
         ) {
             state.borrow_mut().terminate(core, poll);
@@ -90,12 +90,9 @@ impl<UID: Uid> ConnectionCandidate<UID> {
                 Ok(false) => (),
                 Err(_) => self.handle_error(core, poll),
             }
-        } else if let Err(e) = poll.reregister(
-            &self.socket,
-            self.token,
-            Ready::readable() | Ready::error_and_hup(),
-            PollOpt::edge(),
-        ) {
+        } else if let Err(e) =
+            poll.reregister(&self.socket, self.token, Ready::readable(), PollOpt::edge())
+        {
             debug!("Error in re-registeration: {:?}", e);
             self.handle_error(core, poll);
         } else {
@@ -120,9 +117,6 @@ impl<UID: Uid> ConnectionCandidate<UID> {
 
 impl<UID: Uid> State for ConnectionCandidate<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error_or_hup() {
-            return self.handle_error(core, poll);
-        }
         if kind.is_readable() {
             self.read(core, poll);
         }

@@ -9,7 +9,7 @@
 
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use common::{MioReadyExt, Result, State};
+use common::{Result, State};
 use maidsafe_utilities::thread::{self, Joiner};
 use mio::{Event, Events, Poll, PollOpt, Ready, Token};
 use mio_extras::channel::{self, Receiver, Sender};
@@ -61,13 +61,13 @@ pub fn spawn_event_loop(
     poll.register(
         &rx,
         Token(token_counter_start + CHANNEL_TOKEN_OFFSET),
-        Ready::readable() | Ready::error_and_hup(),
+        Ready::readable(),
         PollOpt::edge(),
     )?;
     poll.register(
         &timer,
         Token(token_counter_start + TIMER_TOKEN_OFFSET),
-        Ready::readable() | Ready::error_and_hup(),
+        Ready::readable(),
         PollOpt::edge(),
     )?;
 

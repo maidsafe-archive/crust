@@ -11,7 +11,7 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, MioReadyExt, State};
+use common::{Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
@@ -76,7 +76,7 @@ impl ServiceDiscovery {
         poll.register(
             &service_discovery.socket,
             token,
-            Ready::error_and_hup() | Ready::readable(),
+            Ready::readable(),
             PollOpt::edge(),
         )?;
 
@@ -165,9 +165,9 @@ impl ServiceDiscovery {
         }
 
         let kind = if self.reply_to.is_empty() {
-            Ready::error_and_hup() | Ready::readable()
+            Ready::readable()
         } else {
-            Ready::error_and_hup() | Ready::readable() | Ready::writable()
+            Ready::readable() | Ready::writable()
         };
 
         poll.reregister(&self.socket, self.token, kind, PollOpt::edge())?;
@@ -178,15 +178,11 @@ impl ServiceDiscovery {
 
 impl State for ServiceDiscovery {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error_or_hup() {
-            self.terminate(core, poll);
-        } else {
-            if kind.is_readable() {
-                self.read(core, poll);
-            }
-            if kind.is_writable() {
-                self.write(core, poll);
-            }
+        if kind.is_readable() {
+            self.read(core, poll);
+        }
+        if kind.is_writable() {
+            self.write(core, poll);
         }
     }
 

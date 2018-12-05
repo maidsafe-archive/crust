@@ -9,8 +9,8 @@
 
 use super::check_reachability::CheckReachability;
 use common::{
-    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message, MioReadyExt,
-    NameHash, Priority, Socket, State, Uid,
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message, NameHash,
+    Priority, Socket, State, Uid,
 };
 use main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
@@ -60,7 +60,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     ) -> ::Res<()> {
         let token = core.get_new_token();
 
-        let kind = Ready::error_and_hup() | Ready::readable();
+        let kind = Ready::readable();
         poll.register(&socket, token, kind, PollOpt::edge())?;
 
         let timeout = core.set_timeout(
@@ -452,15 +452,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
 impl<UID: Uid> State for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error_or_hup() {
-            self.terminate(core, poll);
-        } else {
-            if kind.is_readable() {
-                self.read(core, poll)
-            }
-            if kind.is_writable() {
-                self.write(core, poll, None)
-            }
+        if kind.is_readable() {
+            self.read(core, poll)
+        }
+        if kind.is_writable() {
+            self.write(core, poll, None)
         }
     }
 
