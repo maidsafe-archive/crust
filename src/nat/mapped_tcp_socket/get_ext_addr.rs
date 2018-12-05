@@ -8,7 +8,7 @@
 // Software.
 
 use common::{Core, Message, Priority, Socket, State, Uid};
-use mio::tcp::TcpStream;
+use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
 use nat::{util, NatError};
 use std::any::Any;
@@ -47,12 +47,7 @@ impl<UID: Uid> GetExtAddr<UID> {
             finish,
         };
 
-        poll.register(
-            &state.socket,
-            token,
-            Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
-        )?;
+        poll.register(&state.socket, token, Ready::writable(), PollOpt::edge())?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 
@@ -86,16 +81,12 @@ impl<UID: Uid> GetExtAddr<UID> {
 
 impl<UID: Uid> State for GetExtAddr<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
-            self.handle_error(core, poll);
-        } else {
-            if kind.is_writable() {
-                let req = self.request.take();
-                self.write(core, poll, req);
-            }
-            if kind.is_readable() {
-                self.receive_response(core, poll)
-            }
+        if kind.is_writable() {
+            let req = self.request.take();
+            self.write(core, poll, req);
+        }
+        if kind.is_readable() {
+            self.receive_response(core, poll)
         }
     }
 

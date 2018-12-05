@@ -13,7 +13,7 @@ mod errors;
 
 use common::{Core, State};
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use mio::udp::UdpSocket;
+use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use rand;
 use std::any::Any;
@@ -76,7 +76,7 @@ impl ServiceDiscovery {
         poll.register(
             &service_discovery.socket,
             token,
-            Ready::error() | Ready::hup() | Ready::readable(),
+            Ready::readable(),
             PollOpt::edge(),
         )?;
 
@@ -106,8 +106,8 @@ impl ServiceDiscovery {
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
         let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
-            Ok(Some((bytes_rxd, peer_addr))) => (bytes_rxd, peer_addr),
-            Ok(None) => return,
+            Ok((bytes_rxd, peer_addr)) => (bytes_rxd, peer_addr),
+            // TODO(povilas): handle WouldBlock as well
             Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
             Err(e) => {
                 debug!("ServiceDiscovery error in read: {:?}", e);
@@ -154,8 +154,7 @@ impl ServiceDiscovery {
         if let Some(peer_addr) = self.reply_to.pop_front() {
             match self.socket.send_to(&serialised_resp[..], &peer_addr) {
                 // UDP is all or none so if anything is written we consider it written
-                Ok(Some(_)) => (),
-                Ok(None) => self.reply_to.push_front(peer_addr),
+                Ok(_bytes_send) => (),
                 Err(ref e)
                     if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock =>
                 {
@@ -166,9 +165,9 @@ impl ServiceDiscovery {
         }
 
         let kind = if self.reply_to.is_empty() {
-            Ready::error() | Ready::hup() | Ready::readable()
+            Ready::readable()
         } else {
-            Ready::error() | Ready::hup() | Ready::readable() | Ready::writable()
+            Ready::readable() | Ready::writable()
         };
 
         poll.reregister(&self.socket, self.token, kind, PollOpt::edge())?;
@@ -179,15 +178,11 @@ impl ServiceDiscovery {
 
 impl State for ServiceDiscovery {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
-            self.terminate(core, poll);
-        } else {
-            if kind.is_readable() {
-                self.read(core, poll);
-            }
-            if kind.is_writable() {
-                self.write(core, poll);
-            }
+        if kind.is_readable() {
+            self.read(core, poll);
+        }
+        if kind.is_writable() {
+            self.write(core, poll);
         }
     }
 

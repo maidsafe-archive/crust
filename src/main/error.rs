@@ -10,7 +10,7 @@
 use common::{self, CoreMessage};
 use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
-use mio;
+use mio_extras;
 use nat;
 use service_discovery;
 use std::io;
@@ -65,7 +65,7 @@ quick_error! {
             from()
         }
         /// CoreMsg send error
-        CoreMsgTx(e: mio::channel::SendError<CoreMessage>) {
+        CoreMsgTx(e: mio_extras::channel::SendError<CoreMessage>) {
             description(e.description())
             display("CoreMessage send error: {}", e)
             cause(e)

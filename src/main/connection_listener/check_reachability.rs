@@ -8,8 +8,8 @@
 // Software.
 
 use common::{Core, CoreTimer, Socket, State};
-use mio::timer::Timeout;
 use mio::{Poll, PollOpt, Ready, Token};
+use mio_extras::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -42,17 +42,12 @@ where
         let socket = Socket::connect(&their_listener)?;
         let token = core.get_new_token();
 
-        poll.register(
-            &socket,
-            token,
-            Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
-        )?;
+        poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;
 
         let timeout = core.set_timeout(
             Duration::from_secs(CHECK_REACHABILITY_TIMEOUT_SEC),
             CoreTimer::new(token, 0),
-        )?;
+        );
 
         let state = CheckReachability {
             token,
@@ -86,7 +81,7 @@ where
     T: 'static + Clone,
 {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() || !kind.is_writable() {
+        if !kind.is_writable() {
             self.handle_error(core, poll);
         } else {
             self.handle_success(core, poll);

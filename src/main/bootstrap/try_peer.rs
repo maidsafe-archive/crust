@@ -48,12 +48,7 @@ impl<UID: Uid> TryPeer<UID> {
         let socket = Socket::connect(&peer)?;
         let token = core.get_new_token();
 
-        poll.register(
-            &socket,
-            token,
-            Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
-        )?;
+        poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;
 
         let state = TryPeer {
             token,
@@ -104,9 +99,7 @@ impl<UID: Uid> TryPeer<UID> {
 
 impl<UID: Uid> State for TryPeer<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() {
-            return self.handle_error(core, poll, None);
-        } else if kind.is_writable() || kind.is_readable() {
+        if kind.is_writable() || kind.is_readable() {
             if kind.is_writable() {
                 let req = self.request.take();
                 self.write(core, poll, req);

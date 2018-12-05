@@ -9,8 +9,8 @@
 
 use common::{Core, CoreTimer, CrustUser, State, Uid};
 use main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig};
-use mio::timer::Timeout;
 use mio::{Poll, Token};
+use mio_extras::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -36,7 +36,7 @@ impl<UID: Uid> ConfigRefresher<UID> {
         trace!("Entered state ConfigRefresher");
 
         let timer = CoreTimer::new(token, 0);
-        let timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), timer)?;
+        let timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), timer);
 
         let state = Rc::new(RefCell::new(ConfigRefresher {
             token,
@@ -58,14 +58,7 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
     }
 
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
-        self.timeout = match core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer)
-        {
-            Ok(t) => t,
-            Err(e) => {
-                debug!("Config Refresher Timer Errored out: {:?}", e);
-                return self.terminate(core, poll);
-            }
-        };
+        self.timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer);
 
         let config = match read_config_file() {
             Ok(cfg) => cfg,

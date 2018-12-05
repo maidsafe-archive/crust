@@ -41,12 +41,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     ) -> ::Res<Token> {
         let token = core.get_new_token();
 
-        poll.register(
-            &socket,
-            token,
-            Ready::error() | Ready::hup() | Ready::writable(),
-            PollOpt::edge(),
-        )?;
+        poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;
 
         {
             let mut guard = unwrap!(cm.lock());
@@ -110,16 +105,12 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
 impl<UID: Uid> State for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_error() || kind.is_hup() {
-            self.handle_error(core, poll);
-        } else {
-            if kind.is_writable() {
-                let req = self.msg.take();
-                self.write(core, poll, req);
-            }
-            if kind.is_readable() {
-                self.receive_response(core, poll)
-            }
+        if kind.is_writable() {
+            let req = self.msg.take();
+            self.write(core, poll, req);
+        }
+        if kind.is_readable() {
+            self.receive_response(core, poll)
         }
     }
 

@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use mio::tcp::TcpListener;
+use mio::net::TcpListener;
 use nat::{util, NatError};
 use net2::TcpBuilder;
 use std::net::TcpStream;
@@ -25,7 +25,7 @@ pub fn get_sockets(
     }
 
     let listener = mapped_socket.listen(100)?;
-    let listener = TcpListener::from_listener(listener, &local_addr)?;
+    let listener = TcpListener::from_std(listener)?;
 
     Ok((listener, unconnected_sockets))
 }

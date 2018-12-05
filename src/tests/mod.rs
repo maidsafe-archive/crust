@@ -220,10 +220,7 @@ fn bootstrap_with_blacklist() {
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id, _) => peer_id);
     assert_eq!(peer_id1, service1.id());
 
-    let blacklisted_listener = unwrap!(mio::tcp::TcpListener::from_listener(
-        blacklisted_listener,
-        &blacklisted_address
-    ));
+    let blacklisted_listener = unwrap!(mio::net::TcpListener::from_std(blacklisted_listener));
     thread::sleep(Duration::from_secs(5));
     // TODO See if these are doing the right thing - wait for Adam to explain as he might have
     // written this test case. Also check the similar one below.
@@ -249,10 +246,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
 
     expect_event!(event_rx, Event::BootstrapFailed);
 
-    let blacklisted_listener = unwrap!(mio::tcp::TcpListener::from_listener(
-        blacklisted_listener,
-        &blacklisted_address
-    ));
+    let blacklisted_listener = unwrap!(mio::net::TcpListener::from_std(blacklisted_listener));
     thread::sleep(Duration::from_secs(5));
     let res = blacklisted_listener.accept();
     assert!(res.is_err())
@@ -318,7 +312,7 @@ fn drop_disconnects() {
 // and handle non-responsive peers correctly.
 mod broken_peer {
     use common::{Core, Message, Socket, State};
-    use mio::tcp::TcpListener;
+    use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
     use std::any::Any;
@@ -366,9 +360,6 @@ mod broken_peer {
 
     impl State for Connection {
         fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-            if kind.is_error() || kind.is_hup() {
-                return self.terminate(core, poll);
-            }
             if kind.is_readable() {
                 match self.0.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(..))) => {
@@ -404,7 +395,7 @@ mod broken_peer {
 fn drop_peer_when_no_message_received_within_inactivity_period() {
     use self::broken_peer;
     use common::{spawn_event_loop, CoreMessage};
-    use mio::tcp::TcpListener;
+    use mio::net::TcpListener;
     use rust_sodium;
 
     let _ = rust_sodium::init();
