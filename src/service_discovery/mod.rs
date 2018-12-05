@@ -105,17 +105,32 @@ impl ServiceDiscovery {
     }
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
-        let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
-            Ok((bytes_rxd, peer_addr)) => (bytes_rxd, peer_addr),
-            // TODO(povilas): handle WouldBlock as well
-            Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
-            Err(e) => {
-                debug!("ServiceDiscovery error in read: {:?}", e);
-                self.terminate(core, poll);
-                return;
-            }
-        };
+        loop {
+            match self.socket.recv_from(&mut self.read_buf) {
+                Ok((bytes_rxd, peer_addr)) => {
+                    self.handle_incoming_msg(bytes_rxd, peer_addr, core, poll);
+                }
+                Err(ref e)
+                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock =>
+                {
+                    return
+                }
+                Err(e) => {
+                    debug!("ServiceDiscovery error in read: {:?}", e);
+                    self.terminate(core, poll);
+                    return;
+                }
+            };
+        }
+    }
 
+    fn handle_incoming_msg(
+        &mut self,
+        bytes_rxd: usize,
+        peer_addr: SocketAddr,
+        core: &mut Core,
+        poll: &Poll,
+    ) {
         let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
             Ok(msg) => msg,
             Err(e) => {
