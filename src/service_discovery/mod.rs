@@ -105,35 +105,40 @@ impl ServiceDiscovery {
     }
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
-        let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
-            Ok((bytes_rxd, peer_addr)) => (bytes_rxd, peer_addr),
-            // TODO(povilas): handle WouldBlock as well
-            Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
-            Err(e) => {
-                debug!("ServiceDiscovery error in read: {:?}", e);
-                self.terminate(core, poll);
-                return;
-            }
-        };
-
-        let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
-            Ok(msg) => msg,
-            Err(e) => {
-                debug!("Bogus message serialisation error: {:?}", e);
-                return;
-            }
-        };
-
-        match msg {
-            DiscoveryMsg::Request { guid } => {
-                if self.listen && self.guid != guid {
-                    self.reply_to.push_back(peer_addr);
-                    self.write(core, poll)
+        loop {
+            let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
+                Ok((bytes_rxd, peer_addr)) => (bytes_rxd, peer_addr),
+                Err(ref e)
+                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock =>
+                {
+                    return
                 }
-            }
-            DiscoveryMsg::Response(peer_listeners) => {
-                self.observers
-                    .retain(|obs| obs.send(peer_listeners.clone()).is_ok());
+                Err(e) => {
+                    debug!("ServiceDiscovery error in read: {:?}", e);
+                    self.terminate(core, poll);
+                    return;
+                }
+            };
+
+            let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
+                Ok(msg) => msg,
+                Err(e) => {
+                    debug!("Bogus message serialisation error: {:?}", e);
+                    return;
+                }
+            };
+
+            match msg {
+                DiscoveryMsg::Request { guid } => {
+                    if self.listen && self.guid != guid {
+                        self.reply_to.push_back(peer_addr);
+                        self.write(core, poll)
+                    }
+                }
+                DiscoveryMsg::Response(peer_listeners) => {
+                    self.observers
+                        .retain(|obs| obs.send(peer_listeners.clone()).is_ok());
+                }
             }
         }
     }
