@@ -105,6 +105,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         let _ = core.remove_state(self.token);
         let token = self.token;
         let socket = mem::replace(&mut self.socket, Default::default());
+        let _ = poll.reregister(&socket, token, Ready::readable(), PollOpt::edge());
 
         (*self.finish)(core, poll, token, Some(socket));
     }

@@ -48,7 +48,12 @@ impl<UID: Uid> GetExtAddr<UID> {
             finish,
         };
 
-        poll.register(&state.socket, token, Ready::writable(), PollOpt::edge())?;
+        poll.register(
+            &state.socket,
+            token,
+            Ready::writable() | Ready::readable(),
+            PollOpt::edge(),
+        )?;
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
 

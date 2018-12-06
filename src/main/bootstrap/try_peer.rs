@@ -46,7 +46,12 @@ impl<UID: Uid> TryPeer<UID> {
         let socket = TcpSock::connect(&peer)?;
         let token = core.get_new_token();
 
-        poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;
+        poll.register(
+            &socket,
+            token,
+            Ready::writable() | Ready::readable(),
+            PollOpt::edge(),
+        )?;
 
         let state = TryPeer {
             token,
