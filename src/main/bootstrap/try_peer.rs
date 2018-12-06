@@ -7,11 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{
-    BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, Socket, State,
-    Uid,
-};
+use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, State, Uid};
 use mio::{Poll, PollOpt, Ready, Token};
+use socket_collection::{Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::mem;
@@ -23,14 +21,14 @@ pub type Finish<UID> = Box<
         &mut Core,
         &Poll,
         Token,
-        Result<(Socket, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+        Result<(TcpSock, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
     ),
 >;
 
 pub struct TryPeer<UID: Uid> {
     token: Token,
     peer: SocketAddr,
-    socket: Socket,
+    socket: TcpSock,
     request: Option<(Message<UID>, Priority)>,
     finish: Finish<UID>,
 }
@@ -45,7 +43,7 @@ impl<UID: Uid> TryPeer<UID> {
         ext_reachability: ExternalReachability,
         finish: Finish<UID>,
     ) -> ::Res<Token> {
-        let socket = Socket::connect(&peer)?;
+        let socket = TcpSock::connect(&peer)?;
         let token = core.get_new_token();
 
         poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;
@@ -67,7 +65,7 @@ impl<UID: Uid> TryPeer<UID> {
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
-        if self.socket.write(poll, self.token, msg).is_err() {
+        if self.socket.write(msg).is_err() {
             self.handle_error(core, poll, None);
         }
     }
@@ -77,7 +75,7 @@ impl<UID: Uid> TryPeer<UID> {
             Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let socket = mem::replace(&mut self.socket, Socket::default());
+                let socket = mem::replace(&mut self.socket, Default::default());
                 let data = (socket, self.peer, peer_uid);
                 (*self.finish)(core, poll, token, Ok(data));
             }

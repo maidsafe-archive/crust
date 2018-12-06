@@ -11,7 +11,7 @@ use common::Core;
 use mio::{Poll, Ready};
 use std::any::Any;
 
-pub type Priority = u8;
+use socket_collection::Priority;
 
 pub trait State {
     fn as_any(&mut self) -> &mut Any;

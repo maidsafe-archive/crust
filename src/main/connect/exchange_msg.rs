@@ -7,22 +7,23 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, NameHash, Priority, Socket, State, Uid};
+use common::{Core, Message, NameHash, State, Uid};
 use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
+use socket_collection::{Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
+pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<TcpSock>)>;
 
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     expected_id: UID,
     expected_nh: NameHash,
-    socket: Socket,
+    socket: TcpSock,
     cm: ConnectionMap<UID>,
     msg: Option<(Message<UID>, Priority)>,
     finish: Finish,
@@ -32,7 +33,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     pub fn start(
         core: &mut Core,
         poll: &Poll,
-        socket: Socket,
+        socket: TcpSock,
         our_id: UID,
         expected_id: UID,
         name_hash: NameHash,
@@ -74,7 +75,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
-        if self.socket.write(poll, self.token, msg).is_err() {
+        if self.socket.write(msg).is_err() {
             self.handle_error(core, poll);
         }
     }
@@ -87,7 +88,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 }
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let socket = mem::replace(&mut self.socket, Socket::default());
+                let socket = mem::replace(&mut self.socket, Default::default());
 
                 (*self.finish)(core, poll, token, Some(socket));
             }
