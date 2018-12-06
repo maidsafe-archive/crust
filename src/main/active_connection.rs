@@ -7,10 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, CrustUser, Message, Priority, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, Message, Priority, State, Uid};
 use main::{ConnectionId, ConnectionMap, Event};
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -30,7 +31,7 @@ const HEARTBEAT_PERIOD_MS: u64 = 300;
 
 pub struct ActiveConnection<UID: Uid> {
     token: Token,
-    socket: Socket,
+    socket: TcpSock,
     cm: ConnectionMap<UID>,
     our_id: UID,
     their_id: UID,
@@ -44,7 +45,7 @@ impl<UID: Uid> ActiveConnection<UID> {
         core: &mut Core,
         poll: &Poll,
         token: Token,
-        socket: Socket,
+        socket: TcpSock,
         cm: ConnectionMap<UID>,
         our_id: UID,
         their_id: UID,
@@ -136,7 +137,7 @@ impl<UID: Uid> ActiveConnection<UID> {
     /// Helper function that returns a socket address of the connection
     pub fn peer_addr(&self) -> ::Res<SocketAddr> {
         use main::CrustError;
-        self.socket.peer_addr().map_err(CrustError::Common)
+        self.socket.peer_addr().map_err(CrustError::SocketError)
     }
 
     #[cfg(test)]
@@ -151,7 +152,7 @@ impl<UID: Uid> ActiveConnection<UID> {
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
-        if let Err(e) = self.socket.write(poll, self.token, msg) {
+        if let Err(e) = self.socket.write(msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }

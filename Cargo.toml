@@ -15,7 +15,6 @@ name = "crust_peer"
 path = "examples/crust_peer.rs"
 
 [dependencies]
-byteorder = "~1.1.0"
 config_file_handler = "~0.11.0"
 crossbeam = "~0.2.10"
 get_if_addrs = "~0.4.1"
@@ -31,8 +30,10 @@ rust_sodium = "~0.10.0"
 serde = "~1.0.25"
 serde_derive = "~1.0.25"
 serde_json = "~1.0.8"
+socket-collection = "~0.4.0"
 tiny-keccak = "~1.4.0"
 unwrap = "~1.2.0"
 
 [dev-dependencies]
 clap = "~2.25.1"
+byteorder = "~1.1.0"

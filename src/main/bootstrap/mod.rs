@@ -13,14 +13,14 @@ mod try_peer;
 use self::cache::Cache;
 use self::try_peer::TryPeer;
 use common::{
-    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, Socket, State,
-    Uid,
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, State, Uid,
 };
 use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand::{self, Rng};
 use service_discovery::ServiceDiscovery;
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -149,7 +149,7 @@ impl<UID: Uid> Bootstrap<UID> {
         core: &mut Core,
         poll: &Poll,
         child: Token,
-        res: Result<(Socket, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+        res: Result<(TcpSock, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
     ) {
         let _ = self.children.remove(&child);
         match res {

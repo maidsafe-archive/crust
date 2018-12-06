@@ -10,7 +10,7 @@
 use super::check_reachability::CheckReachability;
 use common::{
     BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, Message, NameHash,
-    Priority, Socket, State, Uid,
+    Priority, State, Uid,
 };
 use main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
@@ -19,6 +19,7 @@ use main::{
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use nat::ip_addr_is_global;
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -37,7 +38,7 @@ pub struct ExchangeMsg<UID: Uid> {
     name_hash: NameHash,
     next_state: NextState<UID>,
     our_uid: UID,
-    socket: Socket,
+    socket: TcpSock,
     timeout: Timeout,
     reachability_children: HashSet<Token>,
     accept_bootstrap: bool,
@@ -50,7 +51,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         core: &mut Core,
         poll: &Poll,
         timeout_sec: Option<u64>,
-        socket: Socket,
+        socket: TcpSock,
         accept_bootstrap: bool,
         our_uid: UID,
         name_hash: NameHash,
@@ -372,7 +373,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             }
         }
 
-        match self.socket.write(poll, self.token, msg) {
+        match self.socket.write(msg) {
             Ok(true) => self.done(core, poll),
             Ok(false) => (),
             Err(e) => {
@@ -391,7 +392,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         match self.next_state {
             NextState::ActiveConnection(their_uid, peer_kind) => {
-                let socket = mem::replace(&mut self.socket, Socket::default());
+                let socket = mem::replace(&mut self.socket, TcpSock::default());
                 ActiveConnection::start(
                     core,
                     poll,
@@ -426,7 +427,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     }
                 };
 
-                let socket = mem::replace(&mut self.socket, Socket::default());
+                let socket = mem::replace(&mut self.socket, TcpSock::default());
                 let _ = ConnectionCandidate::start(
                     core,
                     poll,

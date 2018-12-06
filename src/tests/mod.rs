@@ -309,10 +309,11 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
-    use common::{Core, Message, Socket, State};
+    use common::{Core, Message, State};
     use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
+    use socket_collection::TcpSock;
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
@@ -336,7 +337,7 @@ mod broken_peer {
             let (socket, _) = unwrap!(self.0.accept());
             unwrap!(poll.deregister(&self.0));
 
-            let socket = Socket::wrap(socket);
+            let socket = TcpSock::wrap(socket);
             Connection::start(core, poll, self.1, socket);
         }
 
@@ -345,10 +346,10 @@ mod broken_peer {
         }
     }
 
-    struct Connection(Socket, Token);
+    struct Connection(TcpSock, Token);
 
     impl Connection {
-        fn start(core: &mut Core, poll: &Poll, token: Token, socket: Socket) {
+        fn start(core: &mut Core, poll: &Poll, token: Token, socket: TcpSock) {
             unwrap!(poll.register(&socket, token, Ready::readable(), PollOpt::edge()));
 
             let state = Connection(socket, token);
@@ -362,11 +363,10 @@ mod broken_peer {
                 match self.0.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(..))) => {
                         let public_id: UniqueId = rand::random();
-                        let _ = unwrap!(self.0.write(
-                            poll,
-                            self.1,
-                            Some((Message::BootstrapGranted(public_id), 0)),
-                        ));
+                        let _ = unwrap!(
+                            self.0
+                                .write(Some((Message::BootstrapGranted(public_id), 0)),)
+                        );
                     }
                     Ok(Some(_)) | Ok(None) => (),
                     Err(_) => self.terminate(core, poll),
@@ -374,7 +374,7 @@ mod broken_peer {
             }
 
             if kind.is_writable() {
-                let _ = unwrap!(self.0.write::<Message<UniqueId>>(poll, self.1, None));
+                let _ = unwrap!(self.0.write::<Message<UniqueId>>(None));
             }
         }
 

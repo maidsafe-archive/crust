@@ -7,10 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, Priority, Socket, State, Uid};
+use common::{Core, Message, Priority, State, Uid};
 use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
 use nat::{util, NatError};
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -20,7 +21,7 @@ pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Result<SocketAddr, ()>)>;
 
 pub struct GetExtAddr<UID: Uid> {
     token: Token,
-    socket: Socket,
+    socket: TcpSock,
     request: Option<(Message<UID>, Priority)>,
     finish: Finish,
 }
@@ -37,7 +38,7 @@ impl<UID: Uid> GetExtAddr<UID> {
         let query_socket = query_socket.to_tcp_stream()?;
         let socket = TcpStream::connect_stream(query_socket, peer_stun)?;
 
-        let socket = Socket::wrap(socket);
+        let socket = TcpSock::wrap(socket);
         let token = core.get_new_token();
 
         let state = Self {
@@ -55,7 +56,7 @@ impl<UID: Uid> GetExtAddr<UID> {
     }
 
     fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
-        if self.socket.write(poll, self.token, msg).is_err() {
+        if self.socket.write(msg).is_err() {
             self.handle_error(core, poll);
         }
     }

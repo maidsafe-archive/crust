@@ -11,13 +11,14 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, NameHash, Socket, State, Uid};
+use common::{Core, NameHash, State, Uid};
 use main::{ConnectionMap, CrustConfig, Event};
 use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
 use nat::ip_addr_is_global;
 use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::io::ErrorKind;
@@ -150,7 +151,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                         core,
                         poll,
                         self.timeout_sec,
-                        Socket::wrap(socket),
+                        TcpSock::wrap(socket),
                         self.accept_bootstrap,
                         self.our_uid,
                         self.name_hash,

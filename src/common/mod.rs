@@ -10,7 +10,6 @@
 pub use self::core::{spawn_event_loop, Core, CoreMessage, CoreTimer, EventLoop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
-pub use self::socket::Socket;
 pub use self::state::State;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
@@ -22,14 +21,10 @@ pub const HASH_SIZE: usize = 32;
 pub type NameHash = [u8; HASH_SIZE];
 /// Priority of a message to be sent by Crust. A lower value means a higher priority, so Priority 0
 /// is the highest one. Low-priority messages will be preempted if need be to allow higher priority
-/// messages through. Messages with a value `>= MSG_DROP_PRIORITY` will even be dropped, if
-/// bandwidth is insufficient.
+/// messages through. Messages with a value `>= socket_collection:: MSG_DROP_PRIORITY` will even be
+/// dropped, if bandwidth is insufficient.
 pub type Priority = u8;
 pub type Result<T> = ::std::result::Result<T, CommonError>;
-
-pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
-/// Minimum priority for droppable messages. Messages with lower values will never be dropped.
-pub const MSG_DROP_PRIORITY: u8 = 2;
 
 /// Specify crust user. Behaviour (for example in bootstrap phase) will be different for different
 /// variants. Node will request the Bootstrapee to connect back to this crust failing which it
@@ -70,5 +65,4 @@ pub trait Uid:
 mod core;
 mod error;
 mod message;
-mod socket;
 mod state;

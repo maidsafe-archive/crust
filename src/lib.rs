@@ -70,6 +70,7 @@
         too_many_arguments
     )
 )]
+#![recursion_limit = "128"]
 
 #[macro_use]
 extern crate log;
@@ -81,6 +82,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
 
+#[cfg(test)]
 extern crate byteorder;
 extern crate config_file_handler;
 extern crate crossbeam;
@@ -93,6 +95,7 @@ extern crate net2;
 extern crate rand;
 extern crate rust_sodium;
 extern crate serde;
+extern crate socket_collection;
 extern crate tiny_keccak;
 
 #[cfg(test)]
@@ -106,7 +109,7 @@ mod main;
 mod nat;
 mod service_discovery;
 
-pub use common::{CrustUser, Priority, Uid, MSG_DROP_PRIORITY};
+pub use common::{CrustUser, Priority, Uid};
 pub use main::{
     read_config_file, Config, ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo, Service,
