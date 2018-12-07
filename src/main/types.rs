@@ -10,7 +10,6 @@
 use common::Uid;
 use main::Config;
 use mio::Token;
-use net2::TcpBuilder;
 use std::net::SocketAddr;
 
 // ========================================================================================
@@ -44,10 +43,6 @@ pub struct PrivConnectionInfo<UID> {
     pub id: UID,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
-    #[doc(hidden)]
-    pub for_hole_punch: Vec<SocketAddr>,
-    #[doc(hidden)]
-    pub hole_punch_socket: Option<TcpBuilder>,
 }
 
 impl<UID: Uid> PrivConnectionInfo<UID> {
@@ -55,7 +50,6 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
     /// peer.
     pub fn to_pub_connection_info(&self) -> PubConnectionInfo<UID> {
         PubConnectionInfo {
-            for_hole_punch: self.for_hole_punch.clone(),
             for_direct: self.for_direct.clone(),
             id: self.id,
         }
@@ -70,8 +64,6 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
 pub struct PubConnectionInfo<UID> {
     #[doc(hidden)]
     pub id: UID,
-    #[doc(hidden)]
-    pub for_hole_punch: Vec<SocketAddr>,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
 }

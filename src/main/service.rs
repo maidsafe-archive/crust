@@ -18,7 +18,6 @@ use main::{
     PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
-use nat;
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
 use service_discovery::ServiceDiscovery;
@@ -408,13 +407,6 @@ impl<UID: Uid> Service<UID> {
                     .filter(|s| whitelisted_node_ips.contains(&s.ip()))
                     .collect();
                 their_ci.for_direct = their_direct;
-
-                let their_hole_punch = their_ci
-                    .for_hole_punch
-                    .drain(..)
-                    .filter(|s| whitelisted_node_ips.contains(&s.ip()))
-                    .collect();
-                their_ci.for_hole_punch = their_hole_punch;
             }
         }
 
@@ -477,8 +469,6 @@ impl<UID: Uid> Service<UID> {
                 result: Ok(PrivConnectionInfo {
                     id: self.our_uid,
                     for_direct: our_listeners,
-                    for_hole_punch: Default::default(),
-                    hole_punch_socket: None,
                 }),
             });
             let _ = self.event_tx.send(event);
@@ -493,19 +483,13 @@ impl<UID: Uid> Service<UID> {
                     poll,
                     0,
                     &mc,
-                    move |_, _, socket, addrs| {
-                        let hole_punch_addrs = addrs
-                            .into_iter()
-                            .filter(|elt| nat::ip_addr_is_global(&elt.ip()))
-                            .collect();
+                    move |_, _, _socket, _addrs| {
                         let event_tx = event_tx_clone;
                         let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                             result_token,
                             result: Ok(PrivConnectionInfo {
                                 id: our_uid,
                                 for_direct: our_listeners,
-                                for_hole_punch: hole_punch_addrs,
-                                hole_punch_socket: Some(socket),
                             }),
                         });
                         let _ = event_tx.send(event);
