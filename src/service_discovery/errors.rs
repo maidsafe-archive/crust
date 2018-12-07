@@ -8,6 +8,7 @@
 // Software.
 
 use maidsafe_utilities::serialisation::SerialisationError;
+use socket_collection::SocketError;
 use std::io;
 use std::net::AddrParseError;
 
@@ -27,6 +28,12 @@ quick_error! {
         Serialisation(e: SerialisationError) {
             description("Serialisation error during service discovery")
             display("Serialisation error during service discovery: {}", e)
+            from()
+        }
+        /// `socket-collection` error
+        SocketError(e: SocketError) {
+            display("Socket error: {}", e)
+            cause(e)
             from()
         }
     }
