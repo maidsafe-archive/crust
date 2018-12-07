@@ -11,10 +11,10 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, State};
+use common::{Core, PeerInfo, State};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
-use rand;
+use safe_crypto::PublicEncryptKey;
 use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
@@ -26,8 +26,11 @@ use std::u16;
 
 #[derive(Serialize, Deserialize)]
 enum DiscoveryMsg {
-    Request { guid: u64 },
-    Response(Vec<SocketAddr>),
+    /// Service discovery request with requestor's public key.
+    Request {
+        our_pk: PublicEncryptKey,
+    },
+    Response(Vec<PeerInfo>),
 }
 
 pub struct ServiceDiscovery {
@@ -35,10 +38,10 @@ pub struct ServiceDiscovery {
     socket: UdpSock,
     remote_addr: SocketAddr,
     listen: bool,
-    our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     seek_peers_req: DiscoveryMsg,
-    observers: Vec<Sender<Vec<SocketAddr>>>,
-    guid: u64,
+    observers: Vec<Sender<Vec<PeerInfo>>>,
+    our_pk: PublicEncryptKey,
 }
 
 impl ServiceDiscovery {
@@ -51,16 +54,16 @@ impl ServiceDiscovery {
     pub fn start(
         core: &mut Core,
         poll: &Poll,
-        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         listener_port: u16,
         remote_port: u16,
+        our_pk: PublicEncryptKey,
     ) -> Result<(), ServiceDiscoveryError> {
         let udp_socket = UdpSocket::bind(&ipv4_addr(0, 0, 0, 0, listener_port))?;
         udp_socket.set_broadcast(true)?;
         let udp_socket = UdpSock::wrap(udp_socket);
 
-        let guid = rand::random();
         let remote_addr = ipv4_addr(255, 255, 255, 255, remote_port);
 
         let service_discovery = ServiceDiscovery {
@@ -69,9 +72,9 @@ impl ServiceDiscovery {
             remote_addr,
             listen: false,
             our_listeners,
-            seek_peers_req: DiscoveryMsg::Request { guid },
+            seek_peers_req: DiscoveryMsg::Request { our_pk },
             observers: Vec::new(),
-            guid,
+            our_pk,
         };
 
         poll.register(
@@ -101,7 +104,7 @@ impl ServiceDiscovery {
     }
 
     /// Register service discovery observer
-    pub fn register_observer(&mut self, obs: Sender<Vec<SocketAddr>>) {
+    pub fn register_observer(&mut self, obs: Sender<Vec<PeerInfo>>) {
         self.observers.push(obs);
     }
 
@@ -135,8 +138,8 @@ impl ServiceDiscovery {
         peer_addr: SocketAddr,
     ) {
         match msg {
-            DiscoveryMsg::Request { guid } => {
-                if self.listen && self.guid != guid {
+            DiscoveryMsg::Request { our_pk: their_pk } => {
+                if self.listen && self.our_pk != their_pk {
                     let our_current_listeners =
                         unwrap!(self.our_listeners.lock()).iter().cloned().collect();
                     let resp = (DiscoveryMsg::Response(our_current_listeners), peer_addr, 0);
@@ -192,6 +195,7 @@ mod tests {
     use super::*;
     use common::{self, CoreMessage};
     use mio::Token;
+    use safe_crypto::gen_encrypt_keypair;
     use std::str::FromStr;
     use std::sync::mpsc;
     use std::sync::{Arc, Mutex};
@@ -208,8 +212,10 @@ mod tests {
             "Could not run el0"
         );
 
+        let (service0_pk, _sk) = gen_encrypt_keypair();
         let addr = unwrap!(net::SocketAddr::from_str("138.139.140.150:54321"));
-        let listeners_0 = Arc::new(Mutex::new(vec![addr]));
+        let conn_info = PeerInfo::new(addr, service0_pk);
+        let listeners_0 = Arc::new(Mutex::new(vec![conn_info]));
         let listeners_0_clone = listeners_0.clone();
 
         // ServiceDiscovery-0
@@ -224,7 +230,8 @@ mod tests {
                             listeners_0_clone,
                             token_0,
                             65_530,
-                            65_530
+                            65_530,
+                            service0_pk,
                         ),
                         "Could not spawn ServiceDiscovery_0"
                     );
@@ -254,10 +261,19 @@ mod tests {
         {
             let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
+            let (our_pk, _our_sk) = gen_encrypt_keypair();
             unwrap!(
                 el1.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(core, poll, listeners_1, token_1, 0, 65_530),
+                        ServiceDiscovery::start(
+                            core,
+                            poll,
+                            listeners_1,
+                            token_1,
+                            0,
+                            65_530,
+                            our_pk
+                        ),
                         "Could not spawn ServiceDiscovery_1"
                     );
                 })),

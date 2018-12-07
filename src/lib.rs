@@ -82,8 +82,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
 
-#[cfg(test)]
-extern crate byteorder;
 extern crate config_file_handler;
 extern crate crossbeam;
 extern crate get_if_addrs;
@@ -93,10 +91,9 @@ extern crate mio;
 extern crate mio_extras;
 extern crate net2;
 extern crate rand;
-extern crate rust_sodium;
+extern crate safe_crypto;
 extern crate serde;
 extern crate socket_collection;
-extern crate tiny_keccak;
 
 #[cfg(test)]
 extern crate serde_json;

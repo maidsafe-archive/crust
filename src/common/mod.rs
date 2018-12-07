@@ -11,6 +11,7 @@ pub use self::core::{spawn_event_loop, Core, CoreMessage, CoreTimer, EventLoop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::state::State;
+use safe_crypto::PublicEncryptKey;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fmt;
@@ -55,6 +56,22 @@ pub trait Uid:
     + Serialize
     + DeserializeOwned
 {
+}
+
+/// Information necessary to connect to peer.
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct PeerInfo {
+    /// Peer public address.
+    pub addr: SocketAddr,
+    /// Peer public key.
+    pub pub_key: PublicEncryptKey,
+}
+
+impl PeerInfo {
+    /// Constructs peer info.
+    pub fn new(addr: SocketAddr, pub_key: PublicEncryptKey) -> Self {
+        Self { addr, pub_key }
+    }
 }
 
 mod core;

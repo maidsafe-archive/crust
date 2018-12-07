@@ -12,10 +12,11 @@ pub mod utils;
 
 pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
-use common::CrustUser;
+use common::{CrustUser, PeerInfo};
 use main::{self, Config, DevConfig, Event};
 use mio;
 use rand;
+use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
@@ -25,13 +26,10 @@ use std::time::Duration;
 
 type Service = main::Service<UniqueId>;
 
-fn localhost(port: u16) -> SocketAddr {
+fn localhost_contact_info(port: u16, pk: PublicEncryptKey) -> PeerInfo {
     use std::net::IpAddr;
-    SocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port)
-}
-
-fn localhost_contact_info(port: u16) -> SocketAddr {
-    localhost(port)
+    let addr = SocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port);
+    PeerInfo::new(addr, pk)
 }
 
 fn gen_service_discovery_port() -> u16 {
@@ -53,7 +51,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
+    config1.hard_coded_contacts = vec![localhost_contact_info(port0, service0.pub_key())];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
@@ -133,10 +131,10 @@ fn bootstrap_with_multiple_contact_endpoints() {
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
-    let valid_address = localhost(port);
+    let valid_address = localhost_contact_info(port, service0.pub_key());
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let invalid_address = unwrap!(deaf_listener.local_addr());
+    let invalid_address = PeerInfo::new(unwrap!(deaf_listener.local_addr()), service0.pub_key());;
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![invalid_address, valid_address];
@@ -169,7 +167,7 @@ fn bootstrap_with_skipped_external_reachability_test() {
     unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![localhost(port)];
+    config1.hard_coded_contacts = vec![localhost_contact_info(port, service0.pub_key())];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
@@ -195,10 +193,13 @@ fn bootstrap_with_blacklist() {
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
-    let valid_address = localhost(port);
+    let valid_address = localhost_contact_info(port, service0.pub_key());
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let blacklisted_address = unwrap!(blacklisted_listener.local_addr());
+    let blacklisted_address = PeerInfo::new(
+        unwrap!(blacklisted_listener.local_addr()),
+        service0.pub_key(),
+    );
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![blacklisted_address, valid_address];
@@ -206,7 +207,7 @@ fn bootstrap_with_blacklist() {
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     let mut blacklist = HashSet::new();
-    let _ = blacklist.insert(blacklisted_address);
+    let _ = blacklist.insert(blacklisted_address.addr);
     unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
@@ -231,7 +232,8 @@ fn bootstrap_fails_only_blacklisted_contact() {
     use std::net::TcpListener;
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let blacklisted_address = unwrap!(blacklisted_listener.local_addr());
+    let (pk, _sk) = gen_encrypt_keypair();
+    let blacklisted_address = PeerInfo::new(unwrap!(blacklisted_listener.local_addr()), pk);
 
     let mut config = gen_config();
     config.hard_coded_contacts = vec![blacklisted_address];
@@ -239,7 +241,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
     let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     let mut blacklist = HashSet::new();
-    let _ = blacklist.insert(blacklisted_address);
+    let _ = blacklist.insert(blacklisted_address.addr);
     unwrap!(service.start_bootstrap(blacklist, CrustUser::Client));
 
     expect_event!(event_rx, Event::BootstrapFailed);
@@ -265,7 +267,8 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     use std::net::TcpListener;
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let address = unwrap!(deaf_listener.local_addr());
+    let (pk, _sk) = gen_encrypt_keypair();
+    let address = PeerInfo::new(unwrap!(deaf_listener.local_addr()), pk);
 
     let mut config = gen_config();
     config.hard_coded_contacts = vec![address];
@@ -288,7 +291,7 @@ fn drop_disconnects() {
     unwrap!(service_0.set_accept_bootstrap(true));
 
     let mut config_1 = gen_config();
-    config_1.hard_coded_contacts = vec![localhost_contact_info(port)];
+    config_1.hard_coded_contacts = vec![localhost_contact_info(port, service_0.pub_key())];
 
     let (event_tx_1, event_rx_1) = get_event_sender();
     let mut service_1 = unwrap!(Service::with_config(event_tx_1, config_1, rand::random()));
@@ -313,32 +316,53 @@ mod broken_peer {
     use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
-    use socket_collection::TcpSock;
+    use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
+    use socket_collection::{DecryptContext, EncryptContext, TcpSock};
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
     use tests::UniqueId;
 
-    pub struct Listen(TcpListener, Token);
+    pub struct Listen {
+        listener: TcpListener,
+        token: Token,
+        our_pk: PublicEncryptKey,
+        our_sk: SecretEncryptKey,
+    }
 
     impl Listen {
-        pub fn start(core: &mut Core, poll: &Poll, listener: TcpListener) {
+        pub fn start(
+            core: &mut Core,
+            poll: &Poll,
+            listener: TcpListener,
+            our_pk: PublicEncryptKey,
+            our_sk: SecretEncryptKey,
+        ) {
             let token = core.get_new_token();
 
             unwrap!(poll.register(&listener, token, Ready::readable(), PollOpt::edge()));
 
-            let state = Listen(listener, token);
+            let state = Listen {
+                listener,
+                token,
+                our_pk,
+                our_sk,
+            };
             let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
         }
     }
 
     impl State for Listen {
         fn ready(&mut self, core: &mut Core, poll: &Poll, _: Ready) {
-            let (socket, _) = unwrap!(self.0.accept());
-            unwrap!(poll.deregister(&self.0));
+            let (socket, _) = unwrap!(self.listener.accept());
+            unwrap!(poll.deregister(&self.listener));
 
-            let socket = TcpSock::wrap(socket);
-            Connection::start(core, poll, self.1, socket);
+            let mut socket = TcpSock::wrap(socket);
+            unwrap!(socket.set_decrypt_ctx(DecryptContext::anonymous_decrypt(
+                self.our_pk,
+                self.our_sk.clone()
+            )));
+            Connection::start(core, poll, self.token, socket, &self.our_sk);
         }
 
         fn as_any(&mut self) -> &mut Any {
@@ -346,13 +370,27 @@ mod broken_peer {
         }
     }
 
-    struct Connection(TcpSock, Token);
+    struct Connection {
+        socket: TcpSock,
+        token: Token,
+        our_sk: SecretEncryptKey,
+    }
 
     impl Connection {
-        fn start(core: &mut Core, poll: &Poll, token: Token, socket: TcpSock) {
+        fn start(
+            core: &mut Core,
+            poll: &Poll,
+            token: Token,
+            socket: TcpSock,
+            our_sk: &SecretEncryptKey,
+        ) {
             unwrap!(poll.register(&socket, token, Ready::readable(), PollOpt::edge()));
 
-            let state = Connection(socket, token);
+            let state = Connection {
+                socket,
+                token,
+                our_sk: our_sk.clone(),
+            };
             let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
         }
     }
@@ -360,12 +398,17 @@ mod broken_peer {
     impl State for Connection {
         fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
             if kind.is_readable() {
-                match self.0.read::<Message<UniqueId>>() {
-                    Ok(Some(Message::BootstrapRequest(..))) => {
+                match self.socket.read::<Message<UniqueId>>() {
+                    Ok(Some(Message::BootstrapRequest(_, _, _, their_pk))) => {
+                        let shared_key = self.our_sk.shared_secret(&their_pk);
+                        unwrap!(
+                            self.socket
+                                .set_encrypt_ctx(EncryptContext::authenticated(shared_key))
+                        );
                         let public_id: UniqueId = rand::random();
                         let _ = unwrap!(
-                            self.0
-                                .write(Some((Message::BootstrapGranted(public_id), 0)),)
+                            self.socket
+                                .write(Some((Message::BootstrapGranted(public_id), 0)))
                         );
                     }
                     Ok(Some(_)) | Ok(None) => (),
@@ -374,13 +417,13 @@ mod broken_peer {
             }
 
             if kind.is_writable() {
-                let _ = unwrap!(self.0.write::<Message<UniqueId>>(None));
+                let _ = unwrap!(self.socket.write::<Message<UniqueId>>(None));
             }
         }
 
         fn terminate(&mut self, core: &mut Core, poll: &Poll) {
-            let _ = core.remove_state(self.1);
-            unwrap!(poll.deregister(&self.0));
+            let _ = core.remove_state(self.token);
+            unwrap!(poll.deregister(&self.socket));
         }
 
         fn as_any(&mut self) -> &mut Any {
@@ -394,22 +437,18 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use self::broken_peer;
     use common::{spawn_event_loop, CoreMessage};
     use mio::net::TcpListener;
-    use rust_sodium;
-
-    let _ = rust_sodium::init();
 
     // Spin up the non-responsive peer.
     let el = unwrap!(spawn_event_loop(0, None));
 
     let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
-    let address = unwrap!(listener.local_addr());
+    let (listener_pk, listener_sk) = gen_encrypt_keypair();
+    let address = PeerInfo::new(unwrap!(listener.local_addr()), listener_pk);
 
-    unwrap!(
-        el.send(CoreMessage::new(|core, poll| broken_peer::Listen::start(
-            core, poll, listener
-        )))
-    );
+    unwrap!(el.send(CoreMessage::new(move |core, poll| {
+        broken_peer::Listen::start(core, poll, listener, listener_pk, listener_sk)
+    })));
 
     // Spin up normal service that will connect to the above guy.
     let mut config = gen_config();
@@ -442,7 +481,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
+    config1.hard_coded_contacts = vec![localhost_contact_info(port0, service0.pub_key())];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));

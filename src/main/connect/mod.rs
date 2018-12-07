@@ -17,7 +17,8 @@ use main::{
 };
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
-use socket_collection::TcpSock;
+use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
+use socket_collection::{DecryptContext, EncryptContext, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -36,6 +37,7 @@ pub struct Connect<UID: Uid> {
     self_weak: Weak<RefCell<Connect<UID>>>,
     children: HashSet<Token>,
     event_tx: ::CrustEventSender<UID>,
+    our_pk: PublicEncryptKey,
 }
 
 impl<UID: Uid> Connect<UID> {
@@ -47,6 +49,8 @@ impl<UID: Uid> Connect<UID> {
         cm: ConnectionMap<UID>,
         our_nh: NameHash,
         event_tx: ::CrustEventSender<UID>,
+        our_pk: PublicEncryptKey,
+        our_sk: &SecretEncryptKey,
     ) -> ::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
@@ -68,17 +72,31 @@ impl<UID: Uid> Connect<UID> {
             self_weak: Weak::new(),
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
+            our_pk,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
         let sockets = their_direct
             .into_iter()
-            .filter_map(|elt| TcpSock::connect(&elt).ok())
+            .filter_map(|addr| TcpSock::connect(&addr).ok())
             .collect::<Vec<_>>();
 
-        for socket in sockets {
-            state.borrow_mut().exchange_msg(core, poll, socket);
+        for mut socket in sockets {
+            let shared_key = our_sk.shared_secret(&their_ci.our_pk);
+            if socket
+                .set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone()))
+                .is_ok()
+                && socket
+                    .set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_ci.our_pk))
+                    .is_ok()
+            {
+                state
+                    .borrow_mut()
+                    .exchange_msg(core, poll, socket, shared_key);
+            } else {
+                error!("Failed to set encrypt/decrypt context");
+            }
         }
 
         let _ = core.insert_state(token, state);
@@ -86,7 +104,13 @@ impl<UID: Uid> Connect<UID> {
         Ok(())
     }
 
-    fn exchange_msg(&mut self, core: &mut Core, poll: &Poll, socket: TcpSock) {
+    fn exchange_msg(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        socket: TcpSock,
+        shared_key: SharedSecretKey,
+    ) {
         let self_weak = self.self_weak.clone();
         let handler = move |core: &mut Core, poll: &Poll, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
@@ -104,6 +128,8 @@ impl<UID: Uid> Connect<UID> {
             self.their_id,
             self.our_nh,
             self.cm.clone(),
+            self.our_pk,
+            shared_key,
             Box::new(handler),
         ) {
             let _ = self.children.insert(child);

@@ -15,6 +15,7 @@ use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use nat::{util, MappingContext, NatError};
 use net2::TcpBuilder;
+use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -50,6 +51,8 @@ where
         poll: &Poll,
         port: u16,
         mc: &MappingContext,
+        our_pk: PublicEncryptKey,
+        our_sk: &SecretEncryptKey,
         finish: F,
     ) -> Result<(), NatError> {
         let token = core.get_new_token();
@@ -122,7 +125,9 @@ where
                 }
             };
 
-            if let Ok(child) = GetExtAddr::<UID>::start(core, poll, addr, stun, Box::new(handler)) {
+            if let Ok(child) =
+                GetExtAddr::<UID>::start(core, poll, addr, stun, our_pk, our_sk, Box::new(handler))
+            {
                 let _ = state.borrow_mut().stun_children.insert(child);
             }
         }

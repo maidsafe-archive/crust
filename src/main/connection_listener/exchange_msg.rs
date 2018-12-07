@@ -19,7 +19,8 @@ use main::{
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use nat::ip_addr_is_global;
-use socket_collection::{Priority, TcpSock};
+use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
+use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -44,6 +45,8 @@ pub struct ExchangeMsg<UID: Uid> {
     accept_bootstrap: bool,
     require_reachability: bool,
     self_weak: Weak<RefCell<ExchangeMsg<UID>>>,
+    our_pk: PublicEncryptKey,
+    our_sk: SecretEncryptKey,
 }
 
 impl<UID: Uid> ExchangeMsg<UID> {
@@ -58,6 +61,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
         cm: ConnectionMap<UID>,
         config: CrustConfig,
         event_tx: ::CrustEventSender<UID>,
+        our_pk: PublicEncryptKey,
+        our_sk: &SecretEncryptKey,
     ) -> ::Res<()> {
         let token = core.get_new_token();
 
@@ -93,6 +98,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
             accept_bootstrap,
             require_reachability,
             self_weak: Default::default(),
+            our_pk,
+            our_sk: our_sk.clone(),
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -104,7 +111,12 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
-            Ok(Some(Message::BootstrapRequest(their_uid, name_hash, ext_reachability))) => {
+            Ok(Some(Message::BootstrapRequest(
+                their_uid,
+                name_hash,
+                ext_reachability,
+                their_pk,
+            ))) => {
                 if !self.accept_bootstrap {
                     trace!("Bootstrapping off us is not allowed");
                     return self.terminate(core, poll);
@@ -117,17 +129,20 @@ impl<UID: Uid> ExchangeMsg<UID> {
                         their_uid,
                         name_hash,
                         ext_reachability,
+                        their_pk,
                     ),
                     Err(()) => self.terminate(core, poll),
                 }
             }
-            Ok(Some(Message::Connect(their_uid, name_hash))) => {
-                match self.validate_peer_uid(their_uid) {
-                    Ok(their_uid) => self.handle_connect(core, poll, their_uid, name_hash),
-                    Err(()) => self.terminate(core, poll),
-                }
+            Ok(Some(Message::Connect(their_uid, name_hash, their_pk))) => match self
+                .validate_peer_uid(their_uid)
+            {
+                Ok(their_uid) => self.handle_connect(core, poll, their_uid, name_hash, their_pk),
+                Err(()) => self.terminate(core, poll),
+            },
+            Ok(Some(Message::EchoAddrReq(their_pk))) => {
+                self.handle_echo_addr_req(core, poll, their_pk)
             }
-            Ok(Some(Message::EchoAddrReq)) => self.handle_echo_addr_req(core, poll),
             Ok(Some(message)) => {
                 trace!("Unexpected message in direct connect: {:?}", message);
                 self.terminate(core, poll)
@@ -147,6 +162,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         their_uid: UID,
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
+        their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
             trace!("Rejecting Bootstrapper with an invalid name hash.");
@@ -158,6 +174,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     0,
                 )),
             );
+        }
+
+        if !self.use_authed_encryption(their_pk) {
+            trace!("Failed to set authenticated encryption context.");
+            return self.terminate(core, poll);
         }
 
         self.try_update_crust_config();
@@ -293,6 +314,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll: &Poll,
         their_uid: UID,
         name_hash: NameHash,
+        their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
             trace!("Invalid name hash given. Denying connection.");
@@ -306,21 +328,42 @@ impl<UID: Uid> ExchangeMsg<UID> {
             return self.terminate(core, poll);
         }
 
+        if !self.use_authed_encryption(their_pk) {
+            trace!("Failed to set authenticated encryption context.");
+            return self.terminate(core, poll);
+        }
+
         self.enter_handshaking_mode(their_uid);
 
-        let our_uid = self.our_uid;
-        let name_hash = self.name_hash;
+        let msg = Message::Connect(self.our_uid, self.name_hash, self.our_pk);
         self.next_state = NextState::ConnectionCandidate(their_uid);
-        self.write(core, poll, Some((Message::Connect(our_uid, name_hash), 0)));
+        self.write(core, poll, Some((msg, 0)));
     }
 
-    fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_echo_addr_req(&mut self, core: &mut Core, poll: &Poll, their_pk: PublicEncryptKey) {
         self.next_state = NextState::None;
-        if let Ok(peer_addr) = self.socket.peer_addr() {
-            self.write(core, poll, Some((Message::EchoAddrResp(peer_addr), 0)));
-        } else {
-            self.terminate(core, poll);
+        match (
+            self.use_authed_encryption(their_pk),
+            self.socket.peer_addr(),
+        ) {
+            (true, Ok(peer_addr)) => {
+                self.write(core, poll, Some((Message::EchoAddrResp(peer_addr), 0)));
+            }
+            _ => self.terminate(core, poll),
         }
+    }
+
+    /// Set socket encrypt context to authenticated encryption.
+    /// Returns false on failure.
+    fn use_authed_encryption(&mut self, their_pk: PublicEncryptKey) -> bool {
+        let shared_key = self.our_sk.shared_secret(&their_pk);
+        let res1 = self
+            .socket
+            .set_encrypt_ctx(EncryptContext::authenticated(shared_key.clone()));
+        let res2 = self
+            .socket
+            .set_decrypt_ctx(DecryptContext::authenticated(shared_key));
+        res1.is_ok() && res2.is_ok()
     }
 
     fn enter_handshaking_mode(&self, their_uid: UID) {
