@@ -394,9 +394,6 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use self::broken_peer;
     use common::{spawn_event_loop, CoreMessage};
     use mio::net::TcpListener;
-    use rust_sodium;
-
-    let _ = rust_sodium::init();
 
     // Spin up the non-responsive peer.
     let el = unwrap!(spawn_event_loop(0, None));

@@ -93,7 +93,7 @@ extern crate mio;
 extern crate mio_extras;
 extern crate net2;
 extern crate rand;
-extern crate rust_sodium;
+extern crate safe_crypto;
 extern crate serde;
 extern crate socket_collection;
 extern crate tiny_keccak;

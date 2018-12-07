@@ -12,6 +12,7 @@ use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
 use mio_extras;
 use nat;
+use safe_crypto;
 use service_discovery;
 use socket_collection::SocketError;
 use std::io;
@@ -96,6 +97,12 @@ quick_error! {
         /// `socket-collection` error
         SocketError(e: SocketError) {
             display("Socket error: {}", e)
+            cause(e)
+            from()
+        }
+        /// Crypto error.
+        Crypto(e: safe_crypto::Error) {
+            display("Crypto error: {}", e)
             cause(e)
             from()
         }

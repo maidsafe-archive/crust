@@ -19,12 +19,13 @@ use main::{
 };
 use mio::{Poll, Token};
 use nat::{MappedTcpSocket, MappingContext};
-use rust_sodium;
+use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use service_discovery::ServiceDiscovery;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc, Mutex};
+// TODO(povilas): rm tiny_keccak
 use tiny_keccak::sha3_256;
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
@@ -47,6 +48,9 @@ pub struct Service<UID: Uid> {
     name_hash: NameHash,
     our_uid: UID,
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    our_pk: PublicEncryptKey,
+    #[allow(unused)]
+    our_sk: SecretEncryptKey,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -64,7 +68,7 @@ impl<UID: Uid> Service<UID> {
         config: Config,
         our_uid: UID,
     ) -> ::Res<Self> {
-        let _ = rust_sodium::init();
+        safe_crypto::init()?;
 
         let name_hash = name_hash(&config.network_name);
 
@@ -76,6 +80,8 @@ impl<UID: Uid> Service<UID> {
         let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)))?;
         trace!("Event loop started");
 
+        // TODO(povilas): get from constructor params
+        let (our_pk, our_sk) = gen_encrypt_keypair();
         let service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
@@ -85,6 +91,8 @@ impl<UID: Uid> Service<UID> {
             name_hash,
             our_uid,
             our_listeners,
+            our_pk,
+            our_sk,
         };
 
         service.start_config_refresher()?;
@@ -149,6 +157,7 @@ impl<UID: Uid> Service<UID> {
             .service_discovery_listener_port
             .unwrap_or(remote_port);
 
+        let our_pk = *&self.our_pk;
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
                 if let Err(e) = ServiceDiscovery::start(
@@ -158,6 +167,7 @@ impl<UID: Uid> Service<UID> {
                     SERVICE_DISCOVERY_TOKEN,
                     listener_port,
                     remote_port,
+                    our_pk,
                 ) {
                     debug!("Could not start ServiceDiscovery: {:?}", e);
                 }
