@@ -12,10 +12,11 @@ pub mod utils;
 
 pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
-use common::CrustUser;
+use common::{CrustUser, PeerInfo};
 use main::{self, Config, DevConfig, Event};
 use mio;
 use rand;
+use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
@@ -25,13 +26,10 @@ use std::time::Duration;
 
 type Service = main::Service<UniqueId>;
 
-fn localhost(port: u16) -> SocketAddr {
+fn localhost_contact_info(port: u16, pk: PublicEncryptKey) -> PeerInfo {
     use std::net::IpAddr;
-    SocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port)
-}
-
-fn localhost_contact_info(port: u16) -> SocketAddr {
-    localhost(port)
+    let addr = SocketAddr::new(unwrap!(IpAddr::from_str("127.0.0.1")), port);
+    PeerInfo::new(addr, pk)
 }
 
 fn gen_service_discovery_port() -> u16 {
@@ -53,7 +51,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
+    config1.hard_coded_contacts = vec![localhost_contact_info(port0, service0.pub_key())];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
@@ -133,10 +131,10 @@ fn bootstrap_with_multiple_contact_endpoints() {
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
-    let valid_address = localhost(port);
+    let valid_address = localhost_contact_info(port, service0.pub_key());
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let invalid_address = unwrap!(deaf_listener.local_addr());
+    let invalid_address = PeerInfo::new(unwrap!(deaf_listener.local_addr()), service0.pub_key());;
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![invalid_address, valid_address];
@@ -169,7 +167,7 @@ fn bootstrap_with_skipped_external_reachability_test() {
     unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![localhost(port)];
+    config1.hard_coded_contacts = vec![localhost_contact_info(port, service0.pub_key())];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
@@ -195,18 +193,21 @@ fn bootstrap_with_blacklist() {
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
-    let valid_address = localhost(port);
+    let valid_address = localhost_contact_info(port, service0.pub_key());
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let blacklisted_address = unwrap!(blacklisted_listener.local_addr());
+    let blacklisted_address = PeerInfo::new(
+        unwrap!(blacklisted_listener.local_addr()),
+        service0.pub_key(),
+    );
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![blacklisted_address, valid_address];
+    config1.hard_coded_contacts = vec![blacklisted_address.clone(), valid_address];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     let mut blacklist = HashSet::new();
-    let _ = blacklist.insert(blacklisted_address);
+    let _ = blacklist.insert(blacklisted_address.addr);
     unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
 
     unwrap!(service1.start_listening_tcp());
@@ -231,15 +232,16 @@ fn bootstrap_fails_only_blacklisted_contact() {
     use std::net::TcpListener;
 
     let blacklisted_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let blacklisted_address = unwrap!(blacklisted_listener.local_addr());
+    let (pk, _sk) = gen_encrypt_keypair();
+    let blacklisted_address = PeerInfo::new(unwrap!(blacklisted_listener.local_addr()), pk);
 
     let mut config = gen_config();
-    config.hard_coded_contacts = vec![blacklisted_address];
+    config.hard_coded_contacts = vec![blacklisted_address.clone()];
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
     let mut blacklist = HashSet::new();
-    let _ = blacklist.insert(blacklisted_address);
+    let _ = blacklist.insert(blacklisted_address.addr);
     unwrap!(service.start_bootstrap(blacklist, CrustUser::Client));
 
     expect_event!(event_rx, Event::BootstrapFailed);
@@ -265,7 +267,8 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     use std::net::TcpListener;
 
     let deaf_listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-    let address = unwrap!(deaf_listener.local_addr());
+    let (pk, _sk) = gen_encrypt_keypair();
+    let address = PeerInfo::new(unwrap!(deaf_listener.local_addr()), pk);
 
     let mut config = gen_config();
     config.hard_coded_contacts = vec![address];
@@ -288,7 +291,7 @@ fn drop_disconnects() {
     unwrap!(service_0.set_accept_bootstrap(true));
 
     let mut config_1 = gen_config();
-    config_1.hard_coded_contacts = vec![localhost_contact_info(port)];
+    config_1.hard_coded_contacts = vec![localhost_contact_info(port, service_0.pub_key())];
 
     let (event_tx_1, event_rx_1) = get_event_sender();
     let mut service_1 = unwrap!(Service::with_config(event_tx_1, config_1, rand::random()));
@@ -400,7 +403,8 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 
     let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
-    let address = unwrap!(listener.local_addr());
+    let (pk, _sk) = gen_encrypt_keypair();
+    let address = PeerInfo::new(unwrap!(listener.local_addr()), pk);
 
     unwrap!(
         el.send(CoreMessage::new(|core, poll| broken_peer::Listen::start(
@@ -439,7 +443,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     unwrap!(service0.set_accept_bootstrap(true));
 
     let mut config1 = gen_config();
-    config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
+    config1.hard_coded_contacts = vec![localhost_contact_info(port0, service0.pub_key())];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));

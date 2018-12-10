@@ -8,14 +8,14 @@
 // Software.
 
 use common::{
-    BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, Priority, State, Uid,
+    BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, PeerInfo, Priority, State,
+    Uid,
 };
 use mio::{Poll, PollOpt, Ready, Token};
 use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::mem;
-use std::net::SocketAddr;
 use std::rc::Rc;
 
 pub type Finish<UID> = Box<
@@ -23,13 +23,13 @@ pub type Finish<UID> = Box<
         &mut Core,
         &Poll,
         Token,
-        Result<(TcpSock, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+        Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
     ),
 >;
 
 pub struct TryPeer<UID: Uid> {
     token: Token,
-    peer: SocketAddr,
+    peer: PeerInfo,
     socket: TcpSock,
     request: Option<(Message<UID>, Priority)>,
     finish: Finish<UID>,
@@ -39,13 +39,14 @@ impl<UID: Uid> TryPeer<UID> {
     pub fn start(
         core: &mut Core,
         poll: &Poll,
-        peer: SocketAddr,
+        peer: PeerInfo,
         our_uid: UID,
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
         finish: Finish<UID>,
     ) -> ::Res<Token> {
-        let socket = TcpSock::connect(&peer)?;
+        let socket = TcpSock::connect(&peer.addr)?;
+        // TODO(povilas): use anon encryption
         let token = core.get_new_token();
 
         poll.register(
@@ -83,7 +84,7 @@ impl<UID: Uid> TryPeer<UID> {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
                 let socket = mem::replace(&mut self.socket, TcpSock::default());
-                let data = (socket, self.peer, peer_uid);
+                let data = (socket, self.peer.clone(), peer_uid);
                 (*self.finish)(core, poll, token, Ok(data));
             }
             Ok(Some(Message::BootstrapDenied(reason))) => {
@@ -97,7 +98,7 @@ impl<UID: Uid> TryPeer<UID> {
     fn handle_error(&mut self, core: &mut Core, poll: &Poll, reason: Option<BootstrapDenyReason>) {
         self.terminate(core, poll);
         let token = self.token;
-        let peer = self.peer;
+        let peer = self.peer.clone();
         (*self.finish)(core, poll, token, Err((peer, reason)));
     }
 }

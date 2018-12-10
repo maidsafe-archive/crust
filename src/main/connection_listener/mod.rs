@@ -11,7 +11,7 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, NameHash, State, Uid};
+use common::{Core, NameHash, PeerInfo, State, Uid};
 use main::{ConnectionMap, CrustConfig, Event};
 use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
@@ -56,7 +56,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         cm: ConnectionMap<UID>,
         config: CrustConfig,
         mc: Arc<MappingContext>,
-        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         event_tx: ::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -121,7 +121,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
-        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         event_tx: ::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -133,7 +133,10 @@ impl<UID: Uid> ConnectionListener<UID> {
         let listener = TcpListener::from_std(listener)?;
         poll.register(&listener, token, Ready::readable(), PollOpt::edge())?;
 
-        *unwrap!(our_listeners.lock()) = mapped_addrs.into_iter().collect();
+        *unwrap!(our_listeners.lock()) = mapped_addrs
+            .into_iter()
+            .map(|addr| PeerInfo::new(addr, our_pk))
+            .collect();
 
         let state = Self {
             token,
@@ -323,12 +326,11 @@ mod tests {
         );
         unwrap!(rx.recv());
 
-        let addr = unwrap!(listeners.lock())[0];
-
+        let listen_info = &unwrap!(listeners.lock())[0];
         Listener {
             _el: el,
             uid,
-            addr,
+            addr: listen_info.addr,
             event_rx,
         }
     }

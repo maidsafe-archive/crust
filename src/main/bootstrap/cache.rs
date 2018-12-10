@@ -7,15 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use common::PeerInfo;
 use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
-use std::net::SocketAddr;
 
 const _ENABLE_BOOTSTRAP_CACHE: bool = false;
 const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
 
 pub struct Cache {
-    file_handler: FileHandler<Vec<SocketAddr>>,
+    file_handler: FileHandler<Vec<PeerInfo>>,
 }
 
 impl Cache {
@@ -58,11 +58,11 @@ impl Cache {
     //     Ok(())
     // }
 
-    pub fn read_file(&mut self) -> Vec<SocketAddr> {
+    pub fn read_file(&mut self) -> Vec<PeerInfo> {
         self.file_handler.read_file().ok().unwrap_or_else(|| vec![])
     }
 
-    pub fn remove_peer_acceptor(&mut self, _peer: SocketAddr) {}
+    pub fn remove_peer_acceptor(&mut self, _peer: PeerInfo) {}
 
     // fn duration_between_updates() -> Duration {
     //     Duration::from_secs(4 * 60 * 60)

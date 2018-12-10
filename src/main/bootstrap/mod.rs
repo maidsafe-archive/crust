@@ -13,7 +13,8 @@ mod try_peer;
 use self::cache::Cache;
 use self::try_peer::TryPeer;
 use common::{
-    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, State, Uid,
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo,
+    State, Uid,
 };
 use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
 use mio::{Poll, Token};
@@ -39,7 +40,7 @@ const MAX_CONTACTS_EXPECTED: usize = 1500;
 pub struct Bootstrap<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    peers: Vec<SocketAddr>,
+    peers: Vec<PeerInfo>,
     blacklist: HashSet<SocketAddr>,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
@@ -114,7 +115,7 @@ impl<UID: Uid> Bootstrap<UID> {
 
     fn begin_bootstrap(&mut self, core: &mut Core, poll: &Poll) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
-        peers.retain(|addr| !self.blacklist.contains(addr));
+        peers.retain(|peer| !self.blacklist.contains(&peer.addr));
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -149,7 +150,7 @@ impl<UID: Uid> Bootstrap<UID> {
         core: &mut Core,
         poll: &Poll,
         child: Token,
-        res: Result<(TcpSock, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+        res: Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
     ) {
         let _ = self.children.remove(&child);
         match res {
@@ -165,12 +166,12 @@ impl<UID: Uid> Bootstrap<UID> {
                     peer_id,
                     // Note; We bootstrap only to Nodes
                     CrustUser::Node,
-                    Event::BootstrapConnect(peer_id, peer_addr),
+                    Event::BootstrapConnect(peer_id, peer_addr.addr),
                     self.event_tx.clone(),
                 );
             }
             Err((bad_peer, opt_reason)) => {
-                self.cache.remove_peer_acceptor(bad_peer);
+                self.cache.remove_peer_acceptor(bad_peer.clone());
                 if let Some(reason) = opt_reason {
                     let mut is_err_fatal = true;
                     let err_msg = match reason {
@@ -195,7 +196,7 @@ impl<UID: Uid> Bootstrap<UID> {
                         return;
                     } else {
                         info!(
-                            "Failed to Bootstrap with {}: ({:?}) {}",
+                            "Failed to Bootstrap with {:?}: ({:?}) {}",
                             bad_peer, reason, err_msg
                         );
                     }
@@ -256,7 +257,7 @@ impl<UID: Uid> State for Bootstrap<UID> {
 }
 
 struct ServiceDiscMeta {
-    rx: Receiver<Vec<SocketAddr>>,
+    rx: Receiver<Vec<PeerInfo>>,
     timeout: Timeout,
 }
 
@@ -264,7 +265,7 @@ fn seek_peers(
     core: &mut Core,
     service_discovery_token: Token,
     token: Token,
-) -> ::Res<(Receiver<Vec<SocketAddr>>, Timeout)> {
+) -> ::Res<(Receiver<Vec<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
         let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());

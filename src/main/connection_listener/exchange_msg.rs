@@ -373,6 +373,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             }
         }
 
+        // TODO(povilas): use authed encryption
         match self.socket.write(msg) {
             Ok(true) => self.done(core, poll),
             Ok(false) => (),

@@ -8,8 +8,8 @@
 // Software.
 
 use common::{
-    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Priority, Uid,
-    HASH_SIZE,
+    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, PeerInfo,
+    Priority, Uid, HASH_SIZE,
 };
 use main::config_handler::{self, Config};
 use main::{
@@ -47,7 +47,7 @@ pub struct Service<UID: Uid> {
     el: EventLoop,
     name_hash: NameHash,
     our_uid: UID,
-    our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     our_pk: PublicEncryptKey,
     #[allow(unused)]
     our_sk: SecretEncryptKey,
@@ -251,7 +251,7 @@ impl<UID: Uid> Service<UID> {
                     .cfg
                     .hard_coded_contacts
                     .iter()
-                    .any(|addr| addr.ip() == s.ip())
+                    .any(|peer| peer.addr.ip() == s.ip())
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -302,7 +302,10 @@ impl<UID: Uid> Service<UID> {
         let event_tx = self.event_tx.clone();
         let ext_reachability = match crust_user {
             CrustUser::Node => ExternalReachability::Required {
-                direct_listeners: unwrap!(self.our_listeners.lock()).iter().cloned().collect(),
+                direct_listeners: unwrap!(self.our_listeners.lock())
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect(),
             },
             CrustUser::Client => ExternalReachability::NotRequired,
         };
@@ -481,13 +484,19 @@ impl<UID: Uid> Service<UID> {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
+        let our_listeners = unwrap!(self.our_listeners.lock())
+            .iter()
+            .map(|peer| peer.addr)
+            .collect();
+        let our_pk = self.our_pk;
+
         if DISABLE_NAT {
             let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token,
                 result: Ok(PrivConnectionInfo {
                     id: self.our_uid,
                     for_direct: our_listeners,
+                    our_pk,
                 }),
             });
             let _ = self.event_tx.send(event);
@@ -509,6 +518,7 @@ impl<UID: Uid> Service<UID> {
                             result: Ok(PrivConnectionInfo {
                                 id: our_uid,
                                 for_direct: our_listeners,
+                                our_pk,
                             }),
                         });
                         let _ = event_tx.send(event);
@@ -549,6 +559,11 @@ impl<UID: Uid> Service<UID> {
     /// Returns our ID.
     pub fn id(&self) -> UID {
         self.our_uid
+    }
+
+    /// Returns service public key used to encrypt traffic.
+    pub fn pub_key(&self) -> PublicEncryptKey {
+        self.our_pk
     }
 
     fn post<F>(&self, f: F) -> ::Res<()>

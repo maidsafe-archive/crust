@@ -7,10 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, Priority, State, Uid};
+use common::{Core, Message, PeerInfo, Priority, State, Uid};
 use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
 use nat::{util, NatError};
+use socket_collection::EncryptContext;
 use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
@@ -31,16 +32,17 @@ impl<UID: Uid> GetExtAddr<UID> {
         core: &mut Core,
         poll: &Poll,
         local_addr: SocketAddr,
-        peer_stun: &SocketAddr,
+        peer_stun: &PeerInfo,
         finish: Finish,
     ) -> Result<Token, NatError> {
         let query_socket = util::new_reusably_bound_tcp_socket(&local_addr)?;
         let query_socket = query_socket.to_tcp_stream()?;
-        let socket = TcpStream::connect_stream(query_socket, peer_stun)?;
 
-        let socket = TcpSock::wrap(socket);
+        let socket = TcpStream::connect_stream(query_socket, &peer_stun.addr)?;
+        let mut socket = TcpSock::wrap(socket);
+        let _ = socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(peer_stun.pub_key));
+
         let token = core.get_new_token();
-
         let state = Self {
             token,
             socket,
@@ -67,6 +69,7 @@ impl<UID: Uid> GetExtAddr<UID> {
     }
 
     fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
+        // TODO(povilas): authenticated decrypt
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);

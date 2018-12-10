@@ -11,7 +11,7 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, State};
+use common::{Core, PeerInfo, State};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::PublicEncryptKey;
@@ -32,7 +32,7 @@ enum DiscoveryMsg {
     Request {
         our_pk: PublicEncryptKey,
     },
-    Response(Vec<SocketAddr>),
+    Response(Vec<PeerInfo>),
 }
 
 pub struct ServiceDiscovery {
@@ -40,10 +40,10 @@ pub struct ServiceDiscovery {
     socket: UdpSock,
     remote_addr: SocketAddr,
     listen: bool,
-    our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     seek_peers_req: DiscoveryMsg,
     reply_to: VecDeque<SocketAddr>,
-    observers: Vec<Sender<Vec<SocketAddr>>>,
+    observers: Vec<Sender<Vec<PeerInfo>>>,
     our_pk: PublicEncryptKey,
 }
 
@@ -57,7 +57,7 @@ impl ServiceDiscovery {
     pub fn start(
         core: &mut Core,
         poll: &Poll,
-        our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         listener_port: u16,
         remote_port: u16,
@@ -109,7 +109,7 @@ impl ServiceDiscovery {
     }
 
     /// Register service discovery observer
-    pub fn register_observer(&mut self, obs: Sender<Vec<SocketAddr>>) {
+    pub fn register_observer(&mut self, obs: Sender<Vec<PeerInfo>>) {
         self.observers.push(obs);
     }
 
@@ -214,14 +214,15 @@ mod tests {
             "Could not run el0"
         );
 
+        let (service0_pk, _sk) = gen_encrypt_keypair();
         let addr = unwrap!(net::SocketAddr::from_str("138.139.140.150:54321"));
-        let listeners_0 = Arc::new(Mutex::new(vec![addr]));
+        let conn_info = PeerInfo::new(addr, service0_pk);
+        let listeners_0 = Arc::new(Mutex::new(vec![conn_info]));
         let listeners_0_clone = listeners_0.clone();
 
         // ServiceDiscovery-0
         {
             let token_0 = Token(SERVICE_DISCOVERY_TOKEN);
-            let (our_pk, _our_sk) = gen_encrypt_keypair();
             unwrap!(
                 el0.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
@@ -232,7 +233,7 @@ mod tests {
                             token_0,
                             65_530,
                             65_530,
-                            our_pk,
+                            service0_pk,
                         ),
                         "Could not spawn ServiceDiscovery_0"
                     );
