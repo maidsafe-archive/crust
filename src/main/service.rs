@@ -356,6 +356,8 @@ impl<UID: Uid> Service<UID> {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
+        let our_pk = *&self.our_pk;
+        let our_sk = self.our_sk.clone();
         self.post(move |core, poll| {
             if core.get_state(LISTENER_TOKEN).is_none() {
                 ConnectionListener::start(
@@ -372,6 +374,8 @@ impl<UID: Uid> Service<UID> {
                     our_listeners,
                     LISTENER_TOKEN,
                     event_tx,
+                    our_pk,
+                    our_sk,
                 );
             }
         })

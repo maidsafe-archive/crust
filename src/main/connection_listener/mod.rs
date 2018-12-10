@@ -18,7 +18,8 @@ use mio::{Poll, PollOpt, Ready, Token};
 use nat::ip_addr_is_global;
 use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
-use socket_collection::TcpSock;
+use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
+use socket_collection::{DecryptContext, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::io::ErrorKind;
@@ -28,6 +29,7 @@ use std::sync::{Arc, Mutex};
 
 const LISTENER_BACKLOG: i32 = 100;
 
+/// Accepts connections and transitions each connection into `ExchangeMsg` state.
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
@@ -38,6 +40,8 @@ pub struct ConnectionListener<UID: Uid> {
     our_uid: UID,
     timeout_sec: Option<u64>,
     accept_bootstrap: bool,
+    our_pk: PublicEncryptKey,
+    our_sk: SecretEncryptKey,
 }
 
 impl<UID: Uid> ConnectionListener<UID> {
@@ -55,6 +59,8 @@ impl<UID: Uid> ConnectionListener<UID> {
         our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
         token: Token,
         event_tx: ::CrustEventSender<UID>,
+        our_pk: PublicEncryptKey,
+        our_sk: SecretEncryptKey,
     ) {
         let event_tx_0 = event_tx.clone();
         let finish =
@@ -87,6 +93,8 @@ impl<UID: Uid> ConnectionListener<UID> {
                     our_listeners,
                     token,
                     event_tx.clone(),
+                    our_pk,
+                    our_sk,
                 ) {
                     error!("TCP Listener failed to handle mapped socket: {:?}", e);
                     let _ = event_tx.send(Event::ListenerFailed);
@@ -116,6 +124,8 @@ impl<UID: Uid> ConnectionListener<UID> {
         our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
         token: Token,
         event_tx: ::CrustEventSender<UID>,
+        our_pk: PublicEncryptKey,
+        our_sk: SecretEncryptKey,
     ) -> ::Res<()> {
         let listener = socket.listen(LISTENER_BACKLOG)?;
         let local_addr = listener.local_addr()?;
@@ -135,6 +145,8 @@ impl<UID: Uid> ConnectionListener<UID> {
             our_uid,
             timeout_sec,
             accept_bootstrap: false,
+            our_pk,
+            our_sk,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -147,11 +159,19 @@ impl<UID: Uid> ConnectionListener<UID> {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
+                    let mut socket = TcpSock::wrap(socket);
+                    if let Err(e) = socket.set_decrypt_ctx(DecryptContext::anonymous_decrypt(
+                        self.our_pk,
+                        self.our_sk.clone(),
+                    )) {
+                        error!("Failed to set decryption context: {}", e);
+                        continue;
+                    }
                     if let Err(e) = ExchangeMsg::start(
                         core,
                         poll,
                         self.timeout_sec,
-                        TcpSock::wrap(socket),
+                        socket,
                         self.accept_bootstrap,
                         self.our_uid,
                         self.name_hash,
@@ -207,6 +227,7 @@ mod tests {
     use mio::Token;
     use nat::MappingContext;
     use rand;
+    use safe_crypto::gen_encrypt_keypair;
     use serde::de::DeserializeOwned;
     use serde::ser::Serialize;
     use std::collections::HashMap;
@@ -249,6 +270,7 @@ mod tests {
         let mc = Arc::new(unwrap!(MappingContext::new(), "Could not get MC"));
         let config = Arc::new(Mutex::new(Default::default()));
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
+        let (our_pk, our_sk) = gen_encrypt_keypair();
 
         let listeners_clone = listeners.clone();
         let uid = rand::random();
@@ -268,6 +290,8 @@ mod tests {
                     listeners_clone,
                     Token(LISTENER_TOKEN),
                     crust_sender,
+                    our_pk,
+                    our_sk,
                 );
             })),
             "Could not send to tx"
