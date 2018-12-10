@@ -18,7 +18,7 @@ use main::{
 use mio::net::TcpListener;
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
-use socket_collection::TcpSock;
+use socket_collection::{EncryptContext, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -77,10 +77,11 @@ impl<UID: Uid> Connect<UID> {
 
         let sockets = their_direct
             .into_iter()
-            .filter_map(|elt| TcpSock::connect(&elt).ok())
+            .filter_map(|addr| TcpSock::connect(&addr).ok())
             .collect::<Vec<_>>();
 
-        for socket in sockets {
+        for mut socket in sockets {
+            let _ = socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_ci.our_pk));
             state.borrow_mut().exchange_msg(core, poll, socket);
         }
 

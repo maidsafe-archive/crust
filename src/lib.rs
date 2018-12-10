@@ -82,8 +82,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
 
-#[cfg(test)]
-extern crate byteorder;
 extern crate config_file_handler;
 extern crate crossbeam;
 extern crate get_if_addrs;

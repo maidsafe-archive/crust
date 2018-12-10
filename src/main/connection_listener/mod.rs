@@ -220,22 +220,19 @@ impl<UID: Uid> State for ConnectionListener<UID> {
 mod tests {
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use super::*;
-    use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
     use common::{
         self, CoreMessage, CrustUser, EventLoop, ExternalReachability, Message, NameHash, HASH_SIZE,
     };
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use maidsafe_utilities::serialisation::{deserialise, serialise};
     use main::Event;
+    use mio::Events;
     use mio::Token;
     use nat::MappingContext;
     use rand;
     use safe_crypto::gen_encrypt_keypair;
-    use serde::de::DeserializeOwned;
-    use serde::ser::Serialize;
+    use socket_collection::{EncryptContext, SocketError};
     use std::collections::HashMap;
-    use std::io::{Cursor, Read, Write};
-    use std::mem;
+    use std::io::Read;
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
     use std::sync::mpsc;
@@ -257,6 +254,7 @@ mod tests {
         uid: UniqueId,
         addr: SocketAddr,
         event_rx: mpsc::Receiver<Event<UniqueId>>,
+        pub_key: PublicEncryptKey,
     }
 
     fn start_listener(accept_bootstrap: bool) -> Listener {
@@ -332,6 +330,7 @@ mod tests {
             uid,
             addr: listen_info.addr,
             event_rx,
+            pub_key: our_pk,
         }
     }
 
@@ -349,54 +348,53 @@ mod tests {
         stream
     }
 
-    fn write(stream: &mut TcpStream, message: &[u8]) -> ::Res<()> {
-        let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
-        unwrap!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
-
-        stream.write_all(&size_vec)?;
-        stream.write_all(message)?;
-
-        Ok(())
-    }
-
-    #[allow(unsafe_code)]
-    fn read<T: DeserializeOwned + Serialize>(stream: &mut TcpStream) -> ::Res<T> {
-        let mut payload_size_buffer = [0; 4];
-        stream.read_exact(&mut payload_size_buffer)?;
-
-        let payload_size =
-            Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()? as usize;
-
-        let mut payload = Vec::with_capacity(payload_size);
-        unsafe {
-            payload.set_len(payload_size);
-        }
-        stream.read_exact(&mut payload)?;
-
-        Ok(unwrap!(deserialise(&payload), "Could not deserialise."))
-    }
-
     fn bootstrap(
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
         our_uid: UniqueId,
         listener: &Listener,
     ) {
-        let mut us = connect_to_listener(listener);
+        const SOCKET_TOKEN: Token = Token(0);
+        let el = unwrap!(Poll::new());
+
+        let mut sock = unwrap!(TcpSock::connect(&listener.addr));
+        let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
+        unwrap!(sock.set_encrypt_ctx(enc_ctx));
+        unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
         let expected_kind = match ext_reachability {
             ExternalReachability::NotRequired => CrustUser::Client,
             ExternalReachability::Required { .. } => CrustUser::Node,
         };
+        let message = Message::BootstrapRequest(our_uid, name_hash, ext_reachability);
 
-        let message = unwrap!(serialise(&Message::BootstrapRequest(
-            our_uid,
-            name_hash,
-            ext_reachability,
-        )));
-        unwrap!(write(&mut us, &message), "Could not write.");
+        let mut events = Events::with_capacity(16);
+        let msg = 'event_loop: loop {
+            unwrap!(el.poll(&mut events, None));
+            for ev in events.iter() {
+                match ev.token() {
+                    SOCKET_TOKEN => {
+                        if ev.readiness().is_writable() {
+                            let sent = unwrap!(sock.write(Some((message.clone(), 0))));
+                            assert!(sent);
+                            unwrap!(el.reregister(
+                                &sock,
+                                SOCKET_TOKEN,
+                                Ready::readable(),
+                                PollOpt::edge(),
+                            ));
+                        }
+                        if ev.readiness().is_readable() {
+                            let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
+                            break 'event_loop msg;
+                        }
+                    }
+                    _ => panic!("Unexpected event"),
+                }
+            }
+        };
 
-        match unwrap!(read::<Message<UniqueId>>(&mut us), "Could not read.") {
+        match msg {
             Message::BootstrapGranted(peer_uid) => assert_eq!(peer_uid, listener.uid),
             msg => panic!("Unexpected message: {:?}", msg),
         }
@@ -411,23 +409,52 @@ mod tests {
     }
 
     fn connect(name_hash: NameHash, our_uid: UniqueId, listener: &Listener) {
-        let mut us = connect_to_listener(listener);
+        const SOCKET_TOKEN: Token = Token(0);
+        let el = unwrap!(Poll::new());
 
-        let message = unwrap!(serialise(&Message::Connect(our_uid, name_hash)));
-        unwrap!(write(&mut us, &message), "Could not write.");
+        let mut sock = unwrap!(TcpSock::connect(&listener.addr));
+        let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
+        unwrap!(sock.set_encrypt_ctx(enc_ctx));
+        unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge()));
+        let message = Message::Connect(our_uid, name_hash);
 
-        let their_uid = match unwrap!(read(&mut us), "Could not read.") {
-            Message::Connect(peer_uid, peer_hash) => {
-                assert_eq!(peer_uid, listener.uid);
-                assert_eq!(peer_hash, NAME_HASH);
-                peer_uid
+        let mut events = Events::with_capacity(16);
+        'event_loop: loop {
+            unwrap!(el.poll(&mut events, None));
+            for ev in events.iter() {
+                match ev.token() {
+                    SOCKET_TOKEN => {
+                        if ev.readiness().is_writable() {
+                            let sent = unwrap!(sock.write(Some((message.clone(), 0))));
+                            assert!(sent);
+                            unwrap!(el.reregister(
+                                &sock,
+                                SOCKET_TOKEN,
+                                Ready::readable(),
+                                PollOpt::edge(),
+                            ));
+                        }
+                        if ev.readiness().is_readable() {
+                            let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
+                            let their_uid = match msg {
+                                Message::Connect(peer_uid, peer_hash) => {
+                                    assert_eq!(peer_uid, listener.uid);
+                                    assert_eq!(peer_hash, NAME_HASH);
+                                    peer_uid
+                                }
+                                msg => panic!("Unexpected message: {:?}", msg),
+                            };
+                            if our_uid > their_uid {
+                                let message = Message::ChooseConnection::<UniqueId>;
+                                let sent = unwrap!(sock.write(Some((message, 0))));
+                                assert!(sent);
+                            }
+                            break 'event_loop;
+                        }
+                    }
+                    _ => panic!("Unexpected event"),
+                }
             }
-            msg => panic!("Unexpected message: {:?}", msg),
-        };
-
-        if our_uid > their_uid {
-            let message = unwrap!(serialise(&Message::ChooseConnection::<UniqueId>));
-            unwrap!(write(&mut us, &message), "Could not write.");
         }
 
         match unwrap!(listener.event_rx.recv(), "Could not read event channel") {
@@ -506,18 +533,47 @@ mod tests {
     }
 
     #[test]
-    fn invalid_msg_exchange() {
+    fn invalid_msg_terminates_connection() {
         let listener = start_listener(true);
-        let mut us = connect_to_listener(&listener);
+        const SOCKET_TOKEN: Token = Token(0);
+        let el = unwrap!(Poll::new());
 
-        let message = unwrap!(serialise(&Message::Heartbeat::<UniqueId>));
-        unwrap!(write(&mut us, &message), "Could not write.");
+        let mut sock = unwrap!(TcpSock::connect(&listener.addr));
+        let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
+        unwrap!(sock.set_encrypt_ctx(enc_ctx));
+        unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
+        let message = Message::Heartbeat::<UniqueId>;
 
-        let mut buf = [0; 512];
-        assert_eq!(
-            0,
-            unwrap!(us.read(&mut buf), "read should have returned EOF (0)")
-        );
+        let mut events = Events::with_capacity(16);
+        let read_res = 'event_loop: loop {
+            unwrap!(el.poll(&mut events, None));
+            for ev in events.iter() {
+                match ev.token() {
+                    SOCKET_TOKEN => {
+                        if ev.readiness().is_writable() {
+                            let sent = unwrap!(sock.write(Some((message.clone(), 0))));
+                            assert!(sent);
+                            unwrap!(el.reregister(
+                                &sock,
+                                SOCKET_TOKEN,
+                                Ready::readable(),
+                                PollOpt::edge(),
+                            ));
+                        }
+                        if ev.readiness().is_readable() {
+                            let res = sock.read::<Message<UniqueId>>();
+                            break 'event_loop res;
+                        }
+                    }
+                    _ => panic!("Unexpected event"),
+                }
+            }
+        };
+
+        match read_res {
+            Err(SocketError::ZeroByteRead) => (),
+            r => panic!("Unexpected result: {:?}", r),
+        }
     }
 
     #[test]
@@ -534,12 +590,43 @@ mod tests {
     #[test]
     fn stun_service() {
         let listener = start_listener(true);
-        let mut us = connect_to_listener(&listener);
+        const SOCKET_TOKEN: Token = Token(0);
+        let el = unwrap!(Poll::new());
 
-        let message = unwrap!(serialise(&Message::EchoAddrReq::<UniqueId>));
-        unwrap!(write(&mut us, &message), "Could not write.");
+        let mut sock = unwrap!(TcpSock::connect(&listener.addr));
+        let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
+        unwrap!(sock.set_encrypt_ctx(enc_ctx));
+        unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
-        let our_addr = match unwrap!(read::<Message<UniqueId>>(&mut us), "Could not read.") {
+        let message = Message::EchoAddrReq::<UniqueId>;
+
+        let mut events = Events::with_capacity(16);
+        let msg = 'event_loop: loop {
+            unwrap!(el.poll(&mut events, None));
+            for ev in events.iter() {
+                match ev.token() {
+                    SOCKET_TOKEN => {
+                        if ev.readiness().is_writable() {
+                            let sent = unwrap!(sock.write(Some((message.clone(), 0))));
+                            assert!(sent);
+                            unwrap!(el.reregister(
+                                &sock,
+                                SOCKET_TOKEN,
+                                Ready::readable(),
+                                PollOpt::edge(),
+                            ));
+                        }
+                        if ev.readiness().is_readable() {
+                            let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
+                            break 'event_loop msg;
+                        }
+                    }
+                    _ => panic!("Unexpected event"),
+                }
+            }
+        };
+
+        let our_addr = match msg {
             Message::EchoAddrResp(addr) => addr,
             msg => panic!("Unexpected message: {:?}", msg),
         };
@@ -549,13 +636,11 @@ mod tests {
         // this testing for conformity on local host.
         assert_eq!(
             our_addr,
-            unwrap!(us.local_addr(), "Could not obtain local addr")
+            unwrap!(sock.local_addr(), "Could not obtain local addr")
         );
-
-        let mut buf = [0; 512];
-        assert_eq!(
-            0,
-            unwrap!(us.read(&mut buf), "read should have returned EOF (0)")
-        );
+        match sock.read::<Option<Message<UniqueId>>>() {
+            Err(SocketError::ZeroByteRead) => (),
+            r => panic!("Unexpected result: {:?}", r),
+        }
     }
 }

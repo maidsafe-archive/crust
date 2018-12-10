@@ -316,32 +316,53 @@ mod broken_peer {
     use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
-    use socket_collection::TcpSock;
+    use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
+    use socket_collection::{DecryptContext, TcpSock};
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
     use tests::UniqueId;
 
-    pub struct Listen(TcpListener, Token);
+    pub struct Listen {
+        listener: TcpListener,
+        token: Token,
+        our_pk: PublicEncryptKey,
+        our_sk: SecretEncryptKey,
+    }
 
     impl Listen {
-        pub fn start(core: &mut Core, poll: &Poll, listener: TcpListener) {
+        pub fn start(
+            core: &mut Core,
+            poll: &Poll,
+            listener: TcpListener,
+            our_pk: PublicEncryptKey,
+            our_sk: SecretEncryptKey,
+        ) {
             let token = core.get_new_token();
 
             unwrap!(poll.register(&listener, token, Ready::readable(), PollOpt::edge()));
 
-            let state = Listen(listener, token);
+            let state = Listen {
+                listener,
+                token,
+                our_pk,
+                our_sk,
+            };
             let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
         }
     }
 
     impl State for Listen {
         fn ready(&mut self, core: &mut Core, poll: &Poll, _: Ready) {
-            let (socket, _) = unwrap!(self.0.accept());
-            unwrap!(poll.deregister(&self.0));
+            let (socket, _) = unwrap!(self.listener.accept());
+            unwrap!(poll.deregister(&self.listener));
 
-            let socket = TcpSock::wrap(socket);
-            Connection::start(core, poll, self.1, socket);
+            let mut socket = TcpSock::wrap(socket);
+            unwrap!(socket.set_decrypt_ctx(DecryptContext::anonymous_decrypt(
+                self.our_pk,
+                self.our_sk.clone()
+            )));
+            Connection::start(core, poll, self.token, socket);
         }
 
         fn as_any(&mut self) -> &mut Any {
@@ -403,14 +424,12 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 
     let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
-    let (pk, _sk) = gen_encrypt_keypair();
-    let address = PeerInfo::new(unwrap!(listener.local_addr()), pk);
+    let (listener_pk, listener_sk) = gen_encrypt_keypair();
+    let address = PeerInfo::new(unwrap!(listener.local_addr()), listener_pk);
 
-    unwrap!(
-        el.send(CoreMessage::new(|core, poll| broken_peer::Listen::start(
-            core, poll, listener
-        )))
-    );
+    unwrap!(el.send(CoreMessage::new(move |core, poll| {
+        broken_peer::Listen::start(core, poll, listener, listener_pk, listener_sk)
+    })));
 
     // Spin up normal service that will connect to the above guy.
     let mut config = gen_config();

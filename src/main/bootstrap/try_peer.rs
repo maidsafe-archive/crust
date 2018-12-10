@@ -12,7 +12,7 @@ use common::{
     Uid,
 };
 use mio::{Poll, PollOpt, Ready, Token};
-use socket_collection::TcpSock;
+use socket_collection::{EncryptContext, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::mem;
@@ -45,8 +45,8 @@ impl<UID: Uid> TryPeer<UID> {
         ext_reachability: ExternalReachability,
         finish: Finish<UID>,
     ) -> ::Res<Token> {
-        let socket = TcpSock::connect(&peer.addr)?;
-        // TODO(povilas): use anon encryption
+        let mut socket = TcpSock::connect(&peer.addr)?;
+        socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(peer.pub_key))?;
         let token = core.get_new_token();
 
         poll.register(
@@ -79,6 +79,7 @@ impl<UID: Uid> TryPeer<UID> {
     }
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
+        // TODO(povilas): use authed decryption
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
