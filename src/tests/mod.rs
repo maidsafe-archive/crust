@@ -87,20 +87,18 @@ fn bootstrap_two_services_and_exchange_messages() {
 // Note: if this test fails, make sure that a firewall on your system allows UDP broadcasts
 #[test]
 fn bootstrap_two_services_using_service_discovery() {
-    let service_discovery_port = gen_service_discovery_port();
-
-    let mut config = gen_config();
-    config.service_discovery_port = Some(service_discovery_port);
+    let mut config0 = gen_config();
+    let service0_discovery_port = gen_service_discovery_port();
+    config0.service_discovery_listener_port = Some(service0_discovery_port);
 
     let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(
-        event_tx0,
-        config.clone(),
-        rand::random()
-    ));
+    let mut service0 = unwrap!(Service::with_config(event_tx0, config0, rand::random()));
 
     let (event_tx1, event_rx1) = get_event_sender();
-    let mut service1 = unwrap!(Service::with_config(event_tx1, config, rand::random()));
+    let mut config1 = gen_config();
+    config1.service_discovery_listener_port = Some(gen_service_discovery_port());
+    config1.service_discovery_port = Some(service0_discovery_port);
+    let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
