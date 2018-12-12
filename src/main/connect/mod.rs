@@ -15,10 +15,9 @@ use main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo,
 };
-use mio::net::{TcpListener, TcpStream};
-use mio::{Poll, PollOpt, Ready, Token};
+use mio::net::TcpListener;
+use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
-use nat;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -52,9 +51,8 @@ impl<UID: Uid> Connect<UID> {
     ) -> ::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
-        let their_hole_punch = their_ci.for_hole_punch;
 
-        if their_direct.is_empty() && their_hole_punch.is_empty() {
+        if their_direct.is_empty() {
             let _ = event_tx.send(Event::ConnectFailure(their_id));
             return Err(CrustError::InsufficientConnectionInfo);
         }
@@ -70,33 +68,16 @@ impl<UID: Uid> Connect<UID> {
             their_id,
             self_weak: Weak::new(),
             listener: None,
-            children: HashSet::with_capacity(their_direct.len() + their_hole_punch.len()),
+            children: HashSet::with_capacity(their_direct.len()),
             event_tx,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
-        let mut sockets = their_direct
+        let sockets = their_direct
             .into_iter()
             .filter_map(|elt| Socket::connect(&elt).ok())
             .collect::<Vec<_>>();
-
-        if let Some(hole_punch_sock) = our_ci.hole_punch_socket {
-            if let Ok((listener, nat_sockets)) =
-                nat::get_sockets(&hole_punch_sock, their_hole_punch.len())
-            {
-                poll.register(&listener, token, Ready::readable(), PollOpt::edge())?;
-                state.borrow_mut().listener = Some(listener);
-                sockets.extend(
-                    nat_sockets
-                        .into_iter()
-                        .zip(their_hole_punch.into_iter().map(|elt| elt))
-                        .filter_map(|elt| TcpStream::connect_stream(elt.0, &elt.1).ok())
-                        .map(Socket::wrap)
-                        .collect::<Vec<_>>(),
-                );
-            }
-        }
 
         for socket in sockets {
             state.borrow_mut().exchange_msg(core, poll, socket);
