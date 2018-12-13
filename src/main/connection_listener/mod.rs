@@ -378,7 +378,7 @@ mod tests {
 
         let mut events = Events::with_capacity(16);
         let msg = 'event_loop: loop {
-            unwrap!(el.poll(&mut events, None));
+            let _ = unwrap!(el.poll(&mut events, None));
             for ev in events.iter() {
                 match ev.token() {
                     SOCKET_TOKEN => {
@@ -431,7 +431,7 @@ mod tests {
 
         let mut events = Events::with_capacity(16);
         'event_loop: loop {
-            unwrap!(el.poll(&mut events, None));
+            let _ = unwrap!(el.poll(&mut events, None));
             for ev in events.iter() {
                 match ev.token() {
                     SOCKET_TOKEN => {
@@ -562,7 +562,7 @@ mod tests {
 
         let mut events = Events::with_capacity(16);
         let read_res = 'event_loop: loop {
-            unwrap!(el.poll(&mut events, None));
+            let _ = unwrap!(el.poll(&mut events, None));
             for ev in events.iter() {
                 match ev.token() {
                     SOCKET_TOKEN => {
@@ -624,7 +624,7 @@ mod tests {
 
         let mut events = Events::with_capacity(16);
         let msg = 'event_loop: loop {
-            unwrap!(el.poll(&mut events, None));
+            let _ = unwrap!(el.poll(&mut events, None));
             for ev in events.iter() {
                 match ev.token() {
                     SOCKET_TOKEN => {
