@@ -15,7 +15,7 @@ use common::{Core, State};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use rand;
-use socket_collection::UdpSock;
+use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
@@ -109,23 +109,38 @@ impl ServiceDiscovery {
         loop {
             match self.socket.read_frm() {
                 Ok(Some((msg, peer_addr))) => {
-                    self.handle_incoming_msg(msg, peer_addr);
+                    self.handle_incoming_msg(core, poll, msg, peer_addr);
                 }
                 Ok(None) => return,
                 Err(e) => {
                     debug!("ServiceDiscovery error in read: {:?}", e);
-                    self.terminate(core, poll);
-                    return;
+                    match e {
+                        // don't terminate service discovery server, if one message is invalid
+                        SocketError::Serialisation(_) | SocketError::Crypto(_) => (),
+                        _ => {
+                            self.terminate(core, poll);
+                            return;
+                        }
+                    }
                 }
             };
         }
     }
 
-    fn handle_incoming_msg(&mut self, msg: DiscoveryMsg, peer_addr: SocketAddr) {
+    fn handle_incoming_msg(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        msg: DiscoveryMsg,
+        peer_addr: SocketAddr,
+    ) {
         match msg {
             DiscoveryMsg::Request { guid } => {
                 if self.listen && self.guid != guid {
-                    self.respond_with_their_addr(peer_addr);
+                    let our_current_listeners =
+                        unwrap!(self.our_listeners.lock()).iter().cloned().collect();
+                    let resp = (DiscoveryMsg::Response(our_current_listeners), peer_addr, 0);
+                    self.write(core, poll, Some(resp));
                 }
             }
             DiscoveryMsg::Response(peer_listeners) => {
@@ -135,22 +150,15 @@ impl ServiceDiscovery {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll) {
-        match self.socket.write_to::<DiscoveryMsg>(None) {
-            Ok(_) => (),
-            Err(e) => {
-                debug!("Failed to send response: {:?}", e);
-                self.terminate(core, poll);
-            }
-        }
-    }
-
-    fn respond_with_their_addr(&mut self, peer_addr: SocketAddr) {
-        let our_current_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
-        let resp = DiscoveryMsg::Response(our_current_listeners);
-        match self.socket.write_to(Some((resp, peer_addr, 0))) {
-            Ok(_) => (),
-            Err(e) => debug!("Failed to send response: {:?}", e),
+    fn write(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        msg: Option<(DiscoveryMsg, SocketAddr, Priority)>,
+    ) {
+        if let Err(e) = self.socket.write_to(msg) {
+            debug!("Failed to send response: {:?}", e);
+            self.terminate(core, poll);
         }
     }
 }
@@ -161,7 +169,7 @@ impl State for ServiceDiscovery {
             self.read(core, poll);
         }
         if kind.is_writable() {
-            self.write(core, poll);
+            self.write(core, poll, None);
         }
     }
 
