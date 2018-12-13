@@ -12,14 +12,12 @@ pub use self::errors::ServiceDiscoveryError;
 mod errors;
 
 use common::{Core, State};
-use maidsafe_utilities::serialisation::{deserialise, serialise};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use rand;
+use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
-use std::collections::VecDeque;
-use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
@@ -34,13 +32,11 @@ enum DiscoveryMsg {
 
 pub struct ServiceDiscovery {
     token: Token,
-    socket: UdpSocket,
+    socket: UdpSock,
     remote_addr: SocketAddr,
     listen: bool,
-    read_buf: [u8; 1024],
     our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
-    seek_peers_req: Vec<u8>,
-    reply_to: VecDeque<SocketAddr>,
+    seek_peers_req: DiscoveryMsg,
     observers: Vec<Sender<Vec<SocketAddr>>>,
     guid: u64,
 }
@@ -62,6 +58,7 @@ impl ServiceDiscovery {
     ) -> Result<(), ServiceDiscoveryError> {
         let udp_socket = UdpSocket::bind(&ipv4_addr(0, 0, 0, 0, listener_port))?;
         udp_socket.set_broadcast(true)?;
+        let udp_socket = UdpSock::wrap(udp_socket);
 
         let guid = rand::random();
         let remote_addr = ipv4_addr(255, 255, 255, 255, remote_port);
@@ -71,10 +68,8 @@ impl ServiceDiscovery {
             socket: udp_socket,
             remote_addr,
             listen: false,
-            read_buf: [0; 1024],
             our_listeners,
-            seek_peers_req: serialise(&DiscoveryMsg::Request { guid })?,
-            reply_to: VecDeque::new(),
+            seek_peers_req: DiscoveryMsg::Request { guid },
             observers: Vec::new(),
             guid,
         };
@@ -82,7 +77,7 @@ impl ServiceDiscovery {
         poll.register(
             &service_discovery.socket,
             token,
-            Ready::readable(),
+            Ready::readable() | Ready::writable(),
             PollOpt::edge(),
         )?;
 
@@ -101,7 +96,7 @@ impl ServiceDiscovery {
     pub fn seek_peers(&mut self) -> Result<(), ServiceDiscoveryError> {
         let _ = self
             .socket
-            .send_to(&self.seek_peers_req, &self.remote_addr)?;
+            .write_to(Some((&self.seek_peers_req, self.remote_addr, 0)))?;
         Ok(())
     }
 
@@ -112,19 +107,21 @@ impl ServiceDiscovery {
 
     fn read(&mut self, core: &mut Core, poll: &Poll) {
         loop {
-            match self.socket.recv_from(&mut self.read_buf) {
-                Ok((bytes_rxd, peer_addr)) => {
-                    self.handle_incoming_msg(bytes_rxd, peer_addr, core, poll);
+            match self.socket.read_frm() {
+                Ok(Some((msg, peer_addr))) => {
+                    self.handle_incoming_msg(core, poll, msg, peer_addr);
                 }
-                Err(ref e)
-                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock =>
-                {
-                    return
-                }
+                Ok(None) => return,
                 Err(e) => {
                     debug!("ServiceDiscovery error in read: {:?}", e);
-                    self.terminate(core, poll);
-                    return;
+                    match e {
+                        // don't terminate service discovery server, if one message is invalid
+                        SocketError::Serialisation(_) | SocketError::Crypto(_) => (),
+                        _ => {
+                            self.terminate(core, poll);
+                            return;
+                        }
+                    }
                 }
             };
         }
@@ -132,24 +129,18 @@ impl ServiceDiscovery {
 
     fn handle_incoming_msg(
         &mut self,
-        bytes_rxd: usize,
-        peer_addr: SocketAddr,
         core: &mut Core,
         poll: &Poll,
+        msg: DiscoveryMsg,
+        peer_addr: SocketAddr,
     ) {
-        let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
-            Ok(msg) => msg,
-            Err(e) => {
-                debug!("Bogus message serialisation error: {:?}", e);
-                return;
-            }
-        };
-
         match msg {
             DiscoveryMsg::Request { guid } => {
                 if self.listen && self.guid != guid {
-                    self.reply_to.push_back(peer_addr);
-                    self.write(core, poll)
+                    let our_current_listeners =
+                        unwrap!(self.our_listeners.lock()).iter().cloned().collect();
+                    let resp = (DiscoveryMsg::Response(our_current_listeners), peer_addr, 0);
+                    self.write(core, poll, Some(resp));
                 }
             }
             DiscoveryMsg::Response(peer_listeners) => {
@@ -159,41 +150,16 @@ impl ServiceDiscovery {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll) {
-        if let Err(e) = self.write_impl(poll) {
-            debug!("Error in ServiceDiscovery write: {:?}", e);
+    fn write(
+        &mut self,
+        core: &mut Core,
+        poll: &Poll,
+        msg: Option<(DiscoveryMsg, SocketAddr, Priority)>,
+    ) {
+        if let Err(e) = self.socket.write_to(msg) {
+            debug!("Failed to send response: {:?}", e);
             self.terminate(core, poll);
         }
-    }
-
-    fn write_impl(&mut self, poll: &Poll) -> Result<(), ServiceDiscoveryError> {
-        let our_current_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
-        let resp = DiscoveryMsg::Response(our_current_listeners);
-
-        let serialised_resp = serialise(&resp)?;
-
-        if let Some(peer_addr) = self.reply_to.pop_front() {
-            match self.socket.send_to(&serialised_resp[..], &peer_addr) {
-                // UDP is all or none so if anything is written we consider it written
-                Ok(_bytes_send) => (),
-                Err(ref e)
-                    if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock =>
-                {
-                    self.reply_to.push_front(peer_addr)
-                }
-                Err(e) => return Err(From::from(e)),
-            }
-        }
-
-        let kind = if self.reply_to.is_empty() {
-            Ready::readable()
-        } else {
-            Ready::readable() | Ready::writable()
-        };
-
-        poll.reregister(&self.socket, self.token, kind, PollOpt::edge())?;
-
-        Ok(())
     }
 }
 
@@ -203,7 +169,7 @@ impl State for ServiceDiscovery {
             self.read(core, poll);
         }
         if kind.is_writable() {
-            self.write(core, poll);
+            self.write(core, poll, None);
         }
     }
 

@@ -13,6 +13,7 @@ use maidsafe_utilities::serialisation::SerialisationError;
 use mio_extras;
 use nat;
 use service_discovery;
+use socket_collection::SocketError;
 use std::io;
 use std::sync::mpsc;
 
@@ -91,6 +92,12 @@ quick_error! {
         ListenerNotIntialised {
             description("Listener is not initialised yet")
             display("Listener is not initialised yet")
+        }
+        /// `socket-collection` error
+        SocketError(e: SocketError) {
+            display("Socket error: {}", e)
+            cause(e)
+            from()
         }
     }
 }

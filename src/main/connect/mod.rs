@@ -10,14 +10,14 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, CrustUser, NameHash, Socket, State, Uid};
+use common::{Core, CoreTimer, CrustUser, NameHash, State, Uid};
 use main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo,
 };
-use mio::net::TcpListener;
-use mio::{Poll, Ready, Token};
+use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -34,7 +34,6 @@ pub struct Connect<UID: Uid> {
     our_id: UID,
     their_id: UID,
     self_weak: Weak<RefCell<Connect<UID>>>,
-    listener: Option<TcpListener>,
     children: HashSet<Token>,
     event_tx: ::CrustEventSender<UID>,
 }
@@ -67,7 +66,6 @@ impl<UID: Uid> Connect<UID> {
             our_id: our_ci.id,
             their_id,
             self_weak: Weak::new(),
-            listener: None,
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
         }));
@@ -76,7 +74,7 @@ impl<UID: Uid> Connect<UID> {
 
         let sockets = their_direct
             .into_iter()
-            .filter_map(|elt| Socket::connect(&elt).ok())
+            .filter_map(|elt| TcpSock::connect(&elt).ok())
             .collect::<Vec<_>>();
 
         for socket in sockets {
@@ -88,7 +86,7 @@ impl<UID: Uid> Connect<UID> {
         Ok(())
     }
 
-    fn exchange_msg(&mut self, core: &mut Core, poll: &Poll, socket: Socket) {
+    fn exchange_msg(&mut self, core: &mut Core, poll: &Poll, socket: TcpSock) {
         let self_weak = self.self_weak.clone();
         let handler = move |core: &mut Core, poll: &Poll, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
@@ -118,7 +116,7 @@ impl<UID: Uid> Connect<UID> {
         core: &mut Core,
         poll: &Poll,
         child: Token,
-        res: Option<Socket>,
+        res: Option<TcpSock>,
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
@@ -152,7 +150,7 @@ impl<UID: Uid> Connect<UID> {
         core: &mut Core,
         poll: &Poll,
         child: Token,
-        res: Option<Socket>,
+        res: Option<TcpSock>,
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
@@ -180,15 +178,6 @@ impl<UID: Uid> Connect<UID> {
         }
     }
 
-    fn accept(&mut self, core: &mut Core, poll: &Poll) {
-        loop {
-            match unwrap!(self.listener.as_ref()).accept() {
-                Ok((socket, _)) => self.exchange_msg(core, poll, Socket::wrap(socket)),
-                Err(_) => return,
-            }
-        }
-    }
-
     fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
@@ -202,12 +191,6 @@ impl<UID: Uid> Connect<UID> {
 }
 
 impl<UID: Uid> State for Connect<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
-        if kind.is_readable() {
-            self.accept(core, poll);
-        }
-    }
-
     fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, poll);
@@ -216,9 +199,6 @@ impl<UID: Uid> State for Connect<UID> {
     fn terminate(&mut self, core: &mut Core, poll: &Poll) {
         self.terminate_children(core, poll);
 
-        if let Some(listener) = self.listener.take() {
-            let _ = poll.deregister(&listener);
-        }
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
 

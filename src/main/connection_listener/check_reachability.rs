@@ -7,9 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, Socket, State};
+use common::{Core, CoreTimer, State};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
+use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
@@ -22,7 +23,7 @@ pub type Finish<T> = Box<FnMut(&mut Core, &Poll, Token, Result<T, ()>)>;
 
 pub struct CheckReachability<T> {
     token: Token,
-    socket: Socket,
+    socket: TcpSock,
     timeout: Timeout,
     finish: Finish<T>,
     t: T,
@@ -39,7 +40,7 @@ where
         t: T,
         finish: Finish<T>,
     ) -> ::Res<Token> {
-        let socket = Socket::connect(&their_listener)?;
+        let socket = TcpSock::connect(&their_listener)?;
         let token = core.get_new_token();
 
         poll.register(&socket, token, Ready::writable(), PollOpt::edge())?;

@@ -8,8 +8,7 @@
 // Software.
 
 use common::{
-    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Priority, Uid,
-    HASH_SIZE,
+    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Uid, HASH_SIZE,
 };
 use main::config_handler::{self, Config};
 use main::{
@@ -21,6 +20,7 @@ use mio::{Poll, Token};
 use nat::{MappedTcpSocket, MappingContext};
 use rust_sodium;
 use service_discovery::ServiceDiscovery;
+use socket_collection::Priority;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr};

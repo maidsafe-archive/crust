@@ -7,21 +7,22 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, Priority, Socket, State, Uid};
+use common::{Core, Message, State, Uid};
 use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
+use socket_collection::{Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<Socket>)>;
+pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<TcpSock>)>;
 
 pub struct ConnectionCandidate<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    socket: Socket,
+    socket: TcpSock,
     our_id: UID,
     their_id: UID,
     msg: Option<(Message<UID>, Priority)>,
@@ -33,7 +34,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         core: &mut Core,
         poll: &Poll,
         token: Token,
-        socket: Socket,
+        socket: TcpSock,
         cm: ConnectionMap<UID>,
         our_id: UID,
         their_id: UID,
@@ -85,7 +86,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
 
         if self.our_id > self.their_id {
-            match self.socket.write(poll, self.token, msg) {
+            match self.socket.write(msg) {
                 Ok(true) => self.done(core, poll),
                 Ok(false) => (),
                 Err(_) => self.handle_error(core, poll),
@@ -103,7 +104,8 @@ impl<UID: Uid> ConnectionCandidate<UID> {
     fn done(&mut self, core: &mut Core, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let token = self.token;
-        let socket = mem::replace(&mut self.socket, Socket::default());
+        let socket = mem::replace(&mut self.socket, Default::default());
+        let _ = poll.reregister(&socket, token, Ready::readable(), PollOpt::edge());
 
         (*self.finish)(core, poll, token, Some(socket));
     }
