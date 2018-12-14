@@ -11,14 +11,14 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, PeerInfo, State};
+use common::{ipv4_addr, Core, PeerInfo, State};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::PublicEncryptKey;
 use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
@@ -184,10 +184,6 @@ impl State for ServiceDiscovery {
     fn as_any(&mut self) -> &mut Any {
         self
     }
-}
-
-fn ipv4_addr(a: u8, b: u8, c: u8, d: u8, port: u16) -> SocketAddr {
-    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), port))
 }
 
 #[cfg(test)]

@@ -75,8 +75,9 @@ impl<UID: Uid> Bootstrap<UID> {
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let mut cache = Cache::new(&unwrap!(config.lock()).cfg.bootstrap_cache_name)?;
-        peers.extend(cache.read_file());
+        let cache = Cache::new(unwrap!(config.lock()).cfg.bootstrap_cache_name.as_ref())?;
+        cache.read_file();
+        peers.extend(cache.peers_vec());
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
@@ -180,7 +181,11 @@ impl<UID: Uid> Bootstrap<UID> {
                 );
             }
             Err((bad_peer, opt_reason)) => {
-                self.cache.remove_peer_acceptor(bad_peer);
+                self.cache.remove(&bad_peer);
+                if let Err(e) = self.cache.commit() {
+                    warn!("Failed to write bootstrap cache to disk: {}", e);
+                }
+
                 if let Some(reason) = opt_reason {
                     let mut is_err_fatal = true;
                     let err_msg = match reason {

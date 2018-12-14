@@ -11,12 +11,14 @@ pub use self::core::{spawn_event_loop, Core, CoreMessage, CoreTimer, EventLoop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::state::State;
+#[cfg(test)]
+use safe_crypto::gen_encrypt_keypair;
 use safe_crypto::PublicEncryptKey;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fmt;
 use std::hash::Hash;
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 pub const HASH_SIZE: usize = 32;
 pub type NameHash = [u8; HASH_SIZE];
@@ -72,6 +74,18 @@ impl PeerInfo {
     pub fn new(addr: SocketAddr, pub_key: PublicEncryptKey) -> Self {
         Self { addr, pub_key }
     }
+
+    /// Constructs peer info with random generated public key.
+    #[cfg(test)]
+    pub fn with_rand_key(addr: SocketAddr) -> Self {
+        let (pk, _) = gen_encrypt_keypair();
+        Self::new(addr, pk)
+    }
+}
+
+/// A convevience method to build IPv4 address with a port number.
+pub fn ipv4_addr(a: u8, b: u8, c: u8, d: u8, port: u16) -> SocketAddr {
+    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), port))
 }
 
 mod core;

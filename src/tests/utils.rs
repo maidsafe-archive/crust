@@ -11,6 +11,7 @@ use common::Uid;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::{Config, Event};
+use std::ffi::OsString;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
@@ -78,10 +79,10 @@ where
 }
 
 // Generate unique name for the bootstrap cache.
-fn gen_bootstrap_cache_name() -> String {
+fn gen_bootstrap_cache_name() -> OsString {
     static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
     format!(
         "test{}.bootstrap.cache",
         COUNTER.fetch_add(1, Ordering::Relaxed)
-    )
+    ).into()
 }

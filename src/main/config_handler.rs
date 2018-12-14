@@ -41,7 +41,7 @@ pub struct Config {
     /// By default it will use the same as `service_discovery_port` value.
     pub service_discovery_listener_port: Option<u16>,
     /// File for bootstrap cache
-    pub bootstrap_cache_name: Option<String>,
+    pub bootstrap_cache_name: Option<OsString>,
     /// Whitelisted nodes who are allowed to bootstrap off us or to connect to us
     pub whitelisted_node_ips: Option<HashSet<IpAddr>>,
     /// Whitelisted clients who are allowed to bootstrap off us
