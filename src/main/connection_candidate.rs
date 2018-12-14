@@ -20,6 +20,7 @@ use std::rc::Rc;
 
 pub type Finish = Box<FnMut(&mut EventLoopCore, &Poll, Token, Option<TcpSock>)>;
 
+/// Exchanges `ConnectionChoose` message with remote peer and transitions to next state.
 pub struct ConnectionCandidate<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,

@@ -10,7 +10,7 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{CoreTimer, CrustUser, NameHash, State, Uid};
+use common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
 use main::bootstrap::Cache as BootstrapCache;
 use main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, EventLoopCore,
@@ -28,6 +28,7 @@ use std::time::Duration;
 
 const TIMEOUT_SEC: u64 = 60;
 
+/// Atempts multiple connections to remote peer, but yields the first successful one.
 pub struct Connect<UID: Uid> {
     token: Token,
     timeout: Timeout,
@@ -35,6 +36,7 @@ pub struct Connect<UID: Uid> {
     our_nh: NameHash,
     our_id: UID,
     their_id: UID,
+    their_pk: PublicEncryptKey,
     self_weak: Weak<RefCell<Connect<UID>>>,
     children: HashSet<Token>,
     event_tx: ::CrustEventSender<UID>,
@@ -55,6 +57,7 @@ impl<UID: Uid> Connect<UID> {
     ) -> ::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
+        let their_pk = their_ci.our_pk;
 
         if their_direct.is_empty() {
             let _ = event_tx.send(Event::ConnectFailure(their_id));
@@ -70,6 +73,7 @@ impl<UID: Uid> Connect<UID> {
             our_nh,
             our_id: our_ci.id,
             their_id,
+            their_pk,
             self_weak: Weak::new(),
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
@@ -80,10 +84,12 @@ impl<UID: Uid> Connect<UID> {
 
         let sockets = their_direct
             .into_iter()
-            .filter_map(|addr| TcpSock::connect(&addr).ok())
-            .collect::<Vec<_>>();
+            .filter_map(|addr| {
+                let info = PeerInfo::new(addr, their_pk);
+                TcpSock::connect(&addr).map(|sock| (sock, info)).ok()
+            }).collect::<Vec<_>>();
 
-        for mut socket in sockets {
+        for (mut socket, peer_info) in sockets {
             let shared_key = our_sk.shared_secret(&their_ci.our_pk);
             match (
                 socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_ci.our_pk)),
@@ -91,7 +97,7 @@ impl<UID: Uid> Connect<UID> {
             ) {
                 (Ok(_), Ok(_)) => state
                     .borrow_mut()
-                    .exchange_msg(core, poll, socket, shared_key),
+                    .exchange_msg(core, poll, socket, peer_info, shared_key),
                 res => warn!("Failed to set encrypt/decrypt context: {:?}", res),
             }
         }
@@ -106,6 +112,7 @@ impl<UID: Uid> Connect<UID> {
         core: &mut EventLoopCore,
         poll: &Poll,
         socket: TcpSock,
+        peer_info: PeerInfo,
         shared_key: SharedSecretKey,
     ) {
         let self_weak = self.self_weak.clone();
@@ -113,7 +120,7 @@ impl<UID: Uid> Connect<UID> {
             if let Some(self_rc) = self_weak.upgrade() {
                 self_rc
                     .borrow_mut()
-                    .handle_exchange_msg(core, poll, child, res);
+                    .handle_exchange_msg(core, poll, child, res, peer_info);
             }
         };
 
@@ -140,6 +147,7 @@ impl<UID: Uid> Connect<UID> {
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
+        peer_info: PeerInfo,
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
@@ -148,7 +156,7 @@ impl<UID: Uid> Connect<UID> {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc
                         .borrow_mut()
-                        .handle_connection_candidate(core, poll, child, res);
+                        .handle_connection_candidate(core, poll, child, res, peer_info);
                 }
             };
 
@@ -164,6 +172,8 @@ impl<UID: Uid> Connect<UID> {
             ) {
                 let _ = self.children.insert(child);
             }
+        } else {
+            self.remove_peer_from_cache(core, &peer_info);
         }
         self.maybe_terminate(core, poll);
     }
@@ -174,9 +184,11 @@ impl<UID: Uid> Connect<UID> {
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
+        peer_info: PeerInfo,
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
+            self.cache_peer_info(core, &socket);
             self.terminate(core, poll);
             return ActiveConnection::start(
                 core,
@@ -191,8 +203,32 @@ impl<UID: Uid> Connect<UID> {
                 Event::ConnectSuccess(self.their_id),
                 self.event_tx.clone(),
             );
+        } else {
+            self.remove_peer_from_cache(core, &peer_info);
         }
         self.maybe_terminate(core, poll);
+    }
+
+    fn cache_peer_info(&self, core: &mut EventLoopCore, socket: &TcpSock) {
+        match socket.peer_addr() {
+            Ok(peer_addr) => {
+                let peer_info = PeerInfo::new(peer_addr, self.their_pk);
+                let bootstrap_cache = core.user_data_mut();
+                bootstrap_cache.put(&peer_info);
+                if let Err(e) = bootstrap_cache.commit() {
+                    warn!("Failed to write bootstrap cache to disk: {}", e);
+                }
+            }
+            Err(e) => warn!("Failed to get remote peer address: {}", e),
+        }
+    }
+
+    fn remove_peer_from_cache(&self, core: &mut EventLoopCore, peer_info: &PeerInfo) {
+        let bootstrap_cache = core.user_data_mut();
+        bootstrap_cache.remove(peer_info);
+        if let Err(e) = bootstrap_cache.commit() {
+            warn!("Failed to write bootstrap cache to disk: {}", e);
+        }
     }
 
     fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {

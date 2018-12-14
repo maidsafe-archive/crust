@@ -27,6 +27,7 @@ pub type Finish<UID> = Box<
     ),
 >;
 
+/// Sends bootstrap request to a one specific address and waits for response.
 pub struct TryPeer<UID: Uid> {
     token: Token,
     peer: PeerInfo,

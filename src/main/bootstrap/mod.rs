@@ -50,7 +50,6 @@ pub struct Bootstrap<UID: Uid> {
     sd_meta: Option<ServiceDiscMeta>,
     bs_timer: CoreTimer,
     bs_timeout: Timeout,
-    cache: Cache,
     children: HashSet<Token>,
     self_weak: Weak<RefCell<Bootstrap<UID>>>,
     our_pk: PublicEncryptKey,
@@ -75,9 +74,7 @@ impl<UID: Uid> Bootstrap<UID> {
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
-        let cache = Cache::new(unwrap!(config.lock()).cfg.bootstrap_cache_name.as_ref())?;
-        cache.read_file();
-        peers.extend(cache.peers_vec());
+        peers.extend(core.user_data().peers_vec());
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
@@ -103,7 +100,6 @@ impl<UID: Uid> Bootstrap<UID> {
             sd_meta,
             bs_timer,
             bs_timeout,
-            cache,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
             self_weak: Weak::new(),
             our_pk,
@@ -164,7 +160,15 @@ impl<UID: Uid> Bootstrap<UID> {
     ) {
         let _ = self.children.remove(&child);
         match res {
-            Ok((socket, peer_addr, peer_id)) => {
+            Ok((socket, peer_info, peer_id)) => {
+                {
+                    let bootstrap_cache = core.user_data_mut();
+                    bootstrap_cache.put(&peer_info);
+                    if let Err(e) = bootstrap_cache.commit() {
+                        warn!("Failed to write bootstrap cache to disk: {}", e);
+                    }
+                }
+
                 self.terminate(core, poll);
                 return ActiveConnection::start(
                     core,
@@ -176,14 +180,17 @@ impl<UID: Uid> Bootstrap<UID> {
                     peer_id,
                     // Note; We bootstrap only to Nodes
                     CrustUser::Node,
-                    Event::BootstrapConnect(peer_id, peer_addr.addr),
+                    Event::BootstrapConnect(peer_id, peer_info.addr),
                     self.event_tx.clone(),
                 );
             }
             Err((bad_peer, opt_reason)) => {
-                self.cache.remove(&bad_peer);
-                if let Err(e) = self.cache.commit() {
-                    warn!("Failed to write bootstrap cache to disk: {}", e);
+                {
+                    let bootstrap_cache = core.user_data_mut();
+                    bootstrap_cache.remove(&bad_peer);
+                    if let Err(e) = bootstrap_cache.commit() {
+                        warn!("Failed to write bootstrap cache to disk: {}", e);
+                    }
                 }
 
                 if let Some(reason) = opt_reason {
