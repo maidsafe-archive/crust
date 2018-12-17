@@ -26,6 +26,7 @@ const CHANNEL_TOKEN_OFFSET: usize = 0;
 const TIMER_TOKEN_OFFSET: usize = CHANNEL_TOKEN_OFFSET + 1;
 const USER_TOKEN_OFFSET: usize = TIMER_TOKEN_OFFSET + 1;
 
+/// A handle to the main Crust event loop running on a separate thread.
 pub struct EventLoop {
     tx: Sender<CoreMessage>,
     _joiner: Joiner,
@@ -50,6 +51,7 @@ impl Drop for EventLoop {
     }
 }
 
+/// Spawns event loop in a separate thread and returns a handle to communicate with it.
 pub fn spawn_event_loop(
     token_counter_start: usize,
     event_loop_id: Option<&str>,
@@ -92,6 +94,7 @@ pub fn spawn_event_loop(
     })
 }
 
+/// Spins mio event loop until the special exit message is received.
 fn event_loop_impl(
     token_counter_start: usize,
     poll: &Poll,
@@ -145,6 +148,7 @@ pub struct CoreTimer {
     pub timer_id: u8,
 }
 
+/// Manages states registered on the event loop.
 pub struct Core {
     tx: Sender<CoreMessage>,
     timer: Timer<CoreTimer>,
