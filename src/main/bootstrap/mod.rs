@@ -10,13 +10,13 @@
 mod cache;
 mod try_peer;
 
-use self::cache::Cache;
+pub use self::cache::Cache;
 use self::try_peer::TryPeer;
 use common::{
-    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo,
-    State, Uid,
+    BootstrapDenyReason, CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo, State, Uid,
 };
-use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
+use main::bootstrap::Cache as BootstrapCache;
+use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event, EventLoopCore};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand::{self, Rng};
@@ -59,7 +59,7 @@ pub struct Bootstrap<UID: Uid> {
 
 impl<UID: Uid> Bootstrap<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
@@ -121,7 +121,7 @@ impl<UID: Uid> Bootstrap<UID> {
         Ok(())
     }
 
-    fn begin_bootstrap(&mut self, core: &mut Core, poll: &Poll) {
+    fn begin_bootstrap(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
         peers.retain(|peer| !self.blacklist.contains(&peer.addr));
         if peers.is_empty() {
@@ -132,7 +132,7 @@ impl<UID: Uid> Bootstrap<UID> {
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
-            let finish = move |core: &mut Core, poll: &Poll, child, res| {
+            let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_result(core, poll, child, res)
                 }
@@ -157,7 +157,7 @@ impl<UID: Uid> Bootstrap<UID> {
 
     fn handle_result(
         &mut self,
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         child: Token,
         res: Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
@@ -220,7 +220,7 @@ impl<UID: Uid> Bootstrap<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if self.children.is_empty() {
             error!("Bootstrapper has no active children left - bootstrap has failed");
             self.terminate(core, poll);
@@ -228,7 +228,7 @@ impl<UID: Uid> Bootstrap<UID> {
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -240,8 +240,8 @@ impl<UID: Uid> Bootstrap<UID> {
     }
 }
 
-impl<UID: Uid> State for Bootstrap<UID> {
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
+impl<UID: Uid> State<BootstrapCache> for Bootstrap<UID> {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -256,7 +256,7 @@ impl<UID: Uid> State for Bootstrap<UID> {
         self.begin_bootstrap(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate_children(core, poll);
         if let Some(sd_meta) = self.sd_meta.take() {
             let _ = core.cancel_timeout(&sd_meta.timeout);
@@ -276,13 +276,17 @@ struct ServiceDiscMeta {
 }
 
 fn seek_peers(
-    core: &mut Core,
+    core: &mut EventLoopCore,
     service_discovery_token: Token,
     token: Token,
 ) -> ::Res<(Receiver<Vec<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());
+        let state = unwrap!(
+            state
+                .as_any()
+                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
+        );
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);

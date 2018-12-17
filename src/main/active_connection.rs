@@ -7,8 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, CrustUser, Message, State, Uid};
-use main::{ConnectionId, ConnectionMap, Event};
+use common::{CoreTimer, CrustUser, Message, State, Uid};
+use main::bootstrap::Cache as BootstrapCache;
+use main::{ConnectionId, ConnectionMap, Event, EventLoopCore};
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
 use socket_collection::{Priority, TcpSock};
@@ -42,7 +43,7 @@ pub struct ActiveConnection<UID: Uid> {
 
 impl<UID: Uid> ActiveConnection<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         token: Token,
         socket: TcpSock,
@@ -108,7 +109,7 @@ impl<UID: Uid> ActiveConnection<UID> {
         state_mut.read(core, poll);
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         loop {
             match self.socket.read::<Message<UID>>() {
                 Ok(Some(Message::Data(data))) => {
@@ -151,21 +152,26 @@ impl<UID: Uid> ActiveConnection<UID> {
         self.their_role
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        msg: Option<(Message<UID>, Priority)>,
+    ) {
         if let Err(e) = self.socket.write(msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_receive_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
+    fn reset_receive_heartbeat(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if let Err(e) = self.heartbeat.reset_receive(core) {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_send_heartbeat(&mut self, core: &mut Core, poll: &Poll) {
+    fn reset_send_heartbeat(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if let Err(e) = self.heartbeat.reset_send(core) {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
@@ -173,8 +179,8 @@ impl<UID: Uid> ActiveConnection<UID> {
     }
 }
 
-impl<UID: Uid> State for ActiveConnection<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<BootstrapCache> for ActiveConnection<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             self.write(core, poll, None);
         }
@@ -183,12 +189,12 @@ impl<UID: Uid> State for ActiveConnection<UID> {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, data: Vec<u8>, priority: Priority) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, data: Vec<u8>, priority: Priority) {
         self.write(core, poll, Some((Message::Data(data), priority)));
         self.reset_send_heartbeat(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.heartbeat.terminate(core);
         let _ = poll.deregister(&self.socket);
         let _ = core.remove_state(self.token);
@@ -211,7 +217,7 @@ impl<UID: Uid> State for ActiveConnection<UID> {
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, timer_id: u8) {
         match self.heartbeat.timeout(core, timer_id) {
             HeartbeatAction::Send => self.write(core, poll, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {
@@ -237,7 +243,7 @@ struct Heartbeat {
 }
 
 impl Heartbeat {
-    fn new(core: &mut Core, state_id: Token) -> ::Res<Self> {
+    fn new(core: &mut EventLoopCore, state_id: Token) -> ::Res<Self> {
         let recv_timer = CoreTimer::new(state_id, 0);
         let recv_timeout =
             core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer);
@@ -253,7 +259,7 @@ impl Heartbeat {
         })
     }
 
-    fn timeout(&mut self, core: &mut Core, timer_id: u8) -> HeartbeatAction {
+    fn timeout(&mut self, core: &mut EventLoopCore, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
         } else {
@@ -263,7 +269,7 @@ impl Heartbeat {
         }
     }
 
-    fn reset_receive(&mut self, core: &mut Core) -> ::Res<()> {
+    fn reset_receive(&mut self, core: &mut EventLoopCore) -> ::Res<()> {
         let _ = core.cancel_timeout(&self.recv_timeout);
         self.recv_timeout = core.set_timeout(
             Duration::from_millis(INACTIVITY_TIMEOUT_MS),
@@ -272,14 +278,14 @@ impl Heartbeat {
         Ok(())
     }
 
-    fn reset_send(&mut self, core: &mut Core) -> ::Res<()> {
+    fn reset_send(&mut self, core: &mut EventLoopCore) -> ::Res<()> {
         let _ = core.cancel_timeout(&self.send_timeout);
         self.send_timeout =
             core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer);
         Ok(())
     }
 
-    fn terminate(&mut self, core: &mut Core) {
+    fn terminate(&mut self, core: &mut EventLoopCore) {
         let _ = core.cancel_timeout(&self.recv_timeout);
         let _ = core.cancel_timeout(&self.send_timeout);
     }

@@ -8,14 +8,14 @@
 // Software.
 
 use common::{
-    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, PeerInfo, Uid,
-    HASH_SIZE,
+    self, CoreMessage, CrustUser, ExternalReachability, NameHash, PeerInfo, Uid, HASH_SIZE,
 };
+use main::bootstrap::Cache as BootstrapCache;
 use main::config_handler::{self, Config};
 use main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
     ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError, Event,
-    PrivConnectionInfo, PubConnectionInfo,
+    EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
 use nat::{MappedTcpSocket, MappingContext};
@@ -75,7 +75,19 @@ impl<UID: Uid> Service<UID> {
         let mut mc = MappingContext::new()?;
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
-        let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)))?;
+        let bootstrap_cache_file = config.bootstrap_cache_name.clone();
+        let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)), move || {
+            match BootstrapCache::new(bootstrap_cache_file.as_ref()) {
+                Ok(cache) => {
+                    cache.read_file();
+                    Some(cache)
+                }
+                Err(e) => {
+                    error!("Failed to initialize bootstrap cache: {}", e);
+                    None
+                }
+            }
+        })?;
         trace!("Event loop started");
 
         // TODO(povilas): get from constructor params
@@ -183,7 +195,10 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+            let service_discovery = match state
+                .as_any()
+                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
+            {
                 Some(sd) => sd,
                 None => {
                     warn!("Token reserved for ServiceDiscovery has something else.");
@@ -271,7 +286,10 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+            let service_discovery = match state
+                .as_any()
+                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
+            {
                 Some(sd) => sd,
                 None => {
                     warn!("Token reserved for ServiceDiscovery has something else.");
@@ -513,7 +531,7 @@ impl<UID: Uid> Service<UID> {
             let mc = self.mc.clone();
             if let Err(e) = self.post(move |core, poll| {
                 let event_tx_clone = event_tx.clone();
-                match MappedTcpSocket::<_, UID>::start(
+                match MappedTcpSocket::<_, UID, _>::start(
                     core,
                     poll,
                     0,
@@ -577,7 +595,7 @@ impl<UID: Uid> Service<UID> {
 
     fn post<F>(&self, f: F) -> ::Res<()>
     where
-        F: FnOnce(&mut Core, &Poll) + Send + 'static,
+        F: FnOnce(&mut EventLoopCore, &Poll) + Send + 'static,
     {
         self.el.send(CoreMessage::new(f))?;
         Ok(())

@@ -332,7 +332,7 @@ mod broken_peer {
 
     impl Listen {
         pub fn start(
-            core: &mut Core,
+            core: &mut Core<()>,
             poll: &Poll,
             listener: TcpListener,
             our_pk: PublicEncryptKey,
@@ -352,8 +352,8 @@ mod broken_peer {
         }
     }
 
-    impl State for Listen {
-        fn ready(&mut self, core: &mut Core, poll: &Poll, _: Ready) {
+    impl State<()> for Listen {
+        fn ready(&mut self, core: &mut Core<()>, poll: &Poll, _: Ready) {
             let (socket, _) = unwrap!(self.listener.accept());
             unwrap!(poll.deregister(&self.listener));
 
@@ -378,7 +378,7 @@ mod broken_peer {
 
     impl Connection {
         fn start(
-            core: &mut Core,
+            core: &mut Core<()>,
             poll: &Poll,
             token: Token,
             socket: TcpSock,
@@ -395,8 +395,8 @@ mod broken_peer {
         }
     }
 
-    impl State for Connection {
-        fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    impl State<()> for Connection {
+        fn ready(&mut self, core: &mut Core<()>, poll: &Poll, kind: Ready) {
             if kind.is_readable() {
                 match self.socket.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(_, _, _, their_pk))) => {
@@ -421,7 +421,7 @@ mod broken_peer {
             }
         }
 
-        fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+        fn terminate(&mut self, core: &mut Core<()>, poll: &Poll) {
             let _ = core.remove_state(self.token);
             unwrap!(poll.deregister(&self.socket));
         }
@@ -439,7 +439,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use mio::net::TcpListener;
 
     // Spin up the non-responsive peer.
-    let el = unwrap!(spawn_event_loop(0, None));
+    let el = unwrap!(spawn_event_loop(0, None, || Some(())));
 
     let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");

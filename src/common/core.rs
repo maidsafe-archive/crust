@@ -9,7 +9,7 @@
 
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use common::{Result, State};
+use common::{CommonError, Result, State};
 use maidsafe_utilities::thread::{self, Joiner};
 use mio::{Event, Events, Poll, PollOpt, Ready, Token};
 use mio_extras::channel::{self, Receiver, Sender};
@@ -27,19 +27,18 @@ const TIMER_TOKEN_OFFSET: usize = CHANNEL_TOKEN_OFFSET + 1;
 const USER_TOKEN_OFFSET: usize = TIMER_TOKEN_OFFSET + 1;
 
 /// A handle to the main Crust event loop running on a separate thread.
-pub struct EventLoop {
-    tx: Sender<CoreMessage>,
+pub struct EventLoop<T> {
+    tx: Sender<CoreMessage<T>>,
     _joiner: Joiner,
 }
 
-impl EventLoop {
-    pub fn send(&self, msg: CoreMessage) -> Result<()> {
-        self.tx.send(msg)?;
-        Ok(())
+impl<T> EventLoop<T> {
+    pub fn send(&self, msg: CoreMessage<T>) -> Result<()> {
+        self.tx.send(msg).map_err(|_e| CommonError::CoreMsgTx)
     }
 }
 
-impl Drop for EventLoop {
+impl<T> Drop for EventLoop<T> {
     fn drop(&mut self) {
         if let Err(e) = self.tx.send(CoreMessage(None)) {
             warn!(
@@ -52,10 +51,14 @@ impl Drop for EventLoop {
 }
 
 /// Spawns event loop in a separate thread and returns a handle to communicate with it.
-pub fn spawn_event_loop(
+pub fn spawn_event_loop<T: 'static, F>(
     token_counter_start: usize,
     event_loop_id: Option<&str>,
-) -> Result<EventLoop> {
+    init_user_data: F,
+) -> Result<EventLoop<T>>
+where
+    F: 'static + FnOnce() -> Option<T> + Send,
+{
     let poll = Poll::new()?;
     let (tx, rx) = channel::channel();
     let timer = Timer::default();
@@ -81,7 +84,19 @@ pub fn spawn_event_loop(
 
     let tx_clone = tx.clone();
     let joiner = thread::named(name, move || {
-        let core = Core::new(token_counter_start + USER_TOKEN_OFFSET, tx_clone, timer);
+        let user_data = if let Some(user_data) = init_user_data() {
+            user_data
+        } else {
+            error!("Failed to initialize user data.");
+            return;
+        };
+
+        let core = Core::new(
+            token_counter_start + USER_TOKEN_OFFSET,
+            tx_clone,
+            timer,
+            user_data,
+        );
         match event_loop_impl(token_counter_start, &poll, &rx, core) {
             Ok(()) => trace!("Graceful event loop exit."),
             Err(e) => error!("Event loop killed due to {:?}", e),
@@ -95,11 +110,11 @@ pub fn spawn_event_loop(
 }
 
 /// Spins mio event loop until the special exit message is received.
-fn event_loop_impl(
+fn event_loop_impl<T>(
     token_counter_start: usize,
     poll: &Poll,
-    rx: &Receiver<CoreMessage>,
-    mut core: Core,
+    rx: &Receiver<CoreMessage<T>>,
+    mut core: Core<T>,
 ) -> Result<()> {
     let mut events = Events::with_capacity(EVENT_CAPACITY);
 
@@ -140,7 +155,8 @@ fn event_loop_impl(
     Ok(())
 }
 
-pub struct CoreMessage(Option<Box<FnMut(&mut Core, &Poll) + Send>>);
+type CoreMessageHandler<T> = Box<FnMut(&mut Core<T>, &Poll) + Send>;
+pub struct CoreMessage<T>(Option<CoreMessageHandler<T>>);
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
 pub struct CoreTimer {
@@ -149,24 +165,31 @@ pub struct CoreTimer {
 }
 
 /// Manages states registered on the event loop.
-pub struct Core {
-    tx: Sender<CoreMessage>,
+pub struct Core<T> {
+    tx: Sender<CoreMessage<T>>,
     timer: Timer<CoreTimer>,
     token_counter: usize,
-    states: HashMap<Token, Rc<RefCell<State>>>,
+    states: HashMap<Token, Rc<RefCell<State<T>>>>,
+    user_data: T,
 }
 
-impl Core {
-    fn new(token_counter_start: usize, tx: Sender<CoreMessage>, timer: Timer<CoreTimer>) -> Self {
+impl<T> Core<T> {
+    fn new(
+        token_counter_start: usize,
+        tx: Sender<CoreMessage<T>>,
+        timer: Timer<CoreTimer>,
+        user_data: T,
+    ) -> Self {
         Core {
             tx,
             timer,
             token_counter: token_counter_start,
             states: HashMap::new(),
+            user_data,
         }
     }
 
-    pub fn sender(&self) -> &Sender<CoreMessage> {
+    pub fn sender(&self) -> &Sender<CoreMessage<T>> {
         &self.tx
     }
 
@@ -187,17 +210,27 @@ impl Core {
     pub fn insert_state(
         &mut self,
         token: Token,
-        state: Rc<RefCell<State>>,
-    ) -> Option<Rc<RefCell<State>>> {
+        state: Rc<RefCell<State<T>>>,
+    ) -> Option<Rc<RefCell<State<T>>>> {
         self.states.insert(token, state)
     }
 
-    pub fn remove_state(&mut self, token: Token) -> Option<Rc<RefCell<State>>> {
+    pub fn remove_state(&mut self, token: Token) -> Option<Rc<RefCell<State<T>>>> {
         self.states.remove(&token)
     }
 
-    pub fn get_state(&self, key: Token) -> Option<Rc<RefCell<State>>> {
+    pub fn get_state(&self, key: Token) -> Option<Rc<RefCell<State<T>>>> {
         self.states.get(&key).cloned()
+    }
+
+    /// Returns an immutable reference to user data stored in `Core`.
+    pub fn user_data(&self) -> &T {
+        &self.user_data
+    }
+
+    /// Returns a mutable reference to user data stored in `Core`.
+    pub fn user_data_mut(&mut self) -> &mut T {
+        &mut self.user_data
     }
 
     fn handle_event(&mut self, poll: &Poll, event: Event) {
@@ -219,10 +252,10 @@ impl Core {
     }
 }
 
-impl CoreMessage {
-    pub fn new<F: FnOnce(&mut Core, &Poll) + Send + 'static>(f: F) -> Self {
+impl<T> CoreMessage<T> {
+    pub fn new<F: FnOnce(&mut Core<T>, &Poll) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
-        CoreMessage(Some(Box::new(move |core: &mut Core, poll: &Poll| {
+        CoreMessage(Some(Box::new(move |core: &mut Core<T>, poll: &Poll| {
             if let Some(f) = f.take() {
                 f(core, poll)
             }

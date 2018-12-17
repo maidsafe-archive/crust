@@ -7,7 +7,8 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::Uid;
+use common::{self, Core, Uid};
+use main::bootstrap::Cache as BootstrapCache;
 use main::Config;
 use mio::Token;
 use safe_crypto::PublicEncryptKey;
@@ -89,7 +90,6 @@ pub struct ConfigWrapper {
     pub cfg: Config,
     pub is_modified_for_next_refresh: bool,
 }
-
 impl ConfigWrapper {
     pub fn new(cfg: Config) -> Self {
         Self {
@@ -118,3 +118,10 @@ impl ConfigWrapper {
         should_refresh
     }
 }
+
+/// Crust event loop state object. It is owned by the same thread event loop is running on,
+/// it holds bootstrap cache and manages Crust states like `Connect`, `ConnectionCandidate`, etc.
+pub type EventLoopCore = Core<BootstrapCache>;
+
+/// Handle to Crust event loop that owns `EventLoopCore`.
+pub type EventLoop = common::EventLoop<BootstrapCache>;

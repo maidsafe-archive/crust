@@ -10,10 +10,11 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, CoreTimer, CrustUser, NameHash, State, Uid};
+use common::{CoreTimer, CrustUser, NameHash, State, Uid};
+use main::bootstrap::Cache as BootstrapCache;
 use main::{
-    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, PrivConnectionInfo,
-    PubConnectionInfo,
+    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, EventLoopCore,
+    PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
@@ -42,7 +43,7 @@ pub struct Connect<UID: Uid> {
 
 impl<UID: Uid> Connect<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         our_ci: PrivConnectionInfo<UID>,
         their_ci: PubConnectionInfo<UID>,
@@ -102,13 +103,13 @@ impl<UID: Uid> Connect<UID> {
 
     fn exchange_msg(
         &mut self,
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         socket: TcpSock,
         shared_key: SharedSecretKey,
     ) {
         let self_weak = self.self_weak.clone();
-        let handler = move |core: &mut Core, poll: &Poll, child, res| {
+        let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
                 self_rc
                     .borrow_mut()
@@ -135,7 +136,7 @@ impl<UID: Uid> Connect<UID> {
 
     fn handle_exchange_msg(
         &mut self,
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
@@ -143,7 +144,7 @@ impl<UID: Uid> Connect<UID> {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
             let self_weak = self.self_weak.clone();
-            let handler = move |core: &mut Core, poll: &Poll, child, res| {
+            let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc
                         .borrow_mut()
@@ -169,7 +170,7 @@ impl<UID: Uid> Connect<UID> {
 
     fn handle_connection_candidate(
         &mut self,
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
@@ -194,13 +195,13 @@ impl<UID: Uid> Connect<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn maybe_terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if self.children.is_empty() {
             self.terminate(core, poll);
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -212,13 +213,13 @@ impl<UID: Uid> Connect<UID> {
     }
 }
 
-impl<UID: Uid> State for Connect<UID> {
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
+impl<UID: Uid> State<BootstrapCache> for Connect<UID> {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate_children(core, poll);
 
         let _ = core.cancel_timeout(&self.timeout);

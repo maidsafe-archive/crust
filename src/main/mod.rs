@@ -18,7 +18,8 @@ pub use self::error::CrustError;
 pub use self::event::Event;
 pub use self::service::Service;
 pub use self::types::{
-    ConfigWrapper, ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo,
+    ConfigWrapper, ConnectionId, ConnectionInfoResult, EventLoop, EventLoopCore,
+    PrivConnectionInfo, PubConnectionInfo,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

@@ -7,8 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, State, Uid};
-use main::{ConnectionId, ConnectionMap};
+use common::{Message, State, Uid};
+use main::bootstrap::Cache as BootstrapCache;
+use main::{ConnectionId, ConnectionMap, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use socket_collection::{Priority, TcpSock};
 use std::any::Any;
@@ -17,7 +18,7 @@ use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Option<TcpSock>)>;
+pub type Finish = Box<FnMut(&mut EventLoopCore, &Poll, Token, Option<TcpSock>)>;
 
 pub struct ConnectionCandidate<UID: Uid> {
     token: Token,
@@ -31,7 +32,7 @@ pub struct ConnectionCandidate<UID: Uid> {
 
 impl<UID: Uid> ConnectionCandidate<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         token: Token,
         socket: TcpSock,
@@ -65,7 +66,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         Ok(token)
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, poll),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
@@ -73,7 +74,12 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        msg: Option<(Message<UID>, Priority)>,
+    ) {
         let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
             Some(&ConnectionId {
                 active_connection: Some(_),
@@ -101,7 +107,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
     }
 
-    fn done(&mut self, core: &mut Core, poll: &Poll) {
+    fn done(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let token = self.token;
         let socket = mem::replace(&mut self.socket, Default::default());
@@ -110,15 +116,15 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         (*self.finish)(core, poll, token, Some(socket));
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
     }
 }
 
-impl<UID: Uid> State for ConnectionCandidate<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<BootstrapCache> for ConnectionCandidate<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll);
         }
@@ -128,7 +134,7 @@ impl<UID: Uid> State for ConnectionCandidate<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
 
