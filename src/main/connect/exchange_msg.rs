@@ -103,13 +103,13 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 let token = self.token;
 
                 let mut socket = mem::replace(&mut self.socket, Default::default());
-                if socket
-                    .set_encrypt_ctx(EncryptContext::authenticated(self.shared_key.clone()))
-                    .is_ok()
+                match socket.set_encrypt_ctx(EncryptContext::authenticated(self.shared_key.clone()))
                 {
-                    (*self.finish)(core, poll, token, Some(socket));
-                } else {
-                    self.handle_error(core, poll);
+                    Ok(_) => (*self.finish)(core, poll, token, Some(socket)),
+                    Err(e) => {
+                        warn!("Failed to set socket encrypt context: {}", e);
+                        self.handle_error(core, poll);
+                    }
                 }
             }
             Ok(None) => (),

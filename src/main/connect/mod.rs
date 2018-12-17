@@ -84,18 +84,14 @@ impl<UID: Uid> Connect<UID> {
 
         for mut socket in sockets {
             let shared_key = our_sk.shared_secret(&their_ci.our_pk);
-            if socket
-                .set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone()))
-                .is_ok()
-                && socket
-                    .set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_ci.our_pk))
-                    .is_ok()
-            {
-                state
+            match (
+                socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_ci.our_pk)),
+                socket.set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone())),
+            ) {
+                (Ok(_), Ok(_)) => state
                     .borrow_mut()
-                    .exchange_msg(core, poll, socket, shared_key);
-            } else {
-                error!("Failed to set encrypt/decrypt context");
+                    .exchange_msg(core, poll, socket, shared_key),
+                res => warn!("Failed to set encrypt/decrypt context: {:?}", res),
             }
         }
 

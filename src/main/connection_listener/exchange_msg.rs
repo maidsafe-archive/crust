@@ -357,13 +357,18 @@ impl<UID: Uid> ExchangeMsg<UID> {
     /// Returns false on failure.
     fn use_authed_encryption(&mut self, their_pk: PublicEncryptKey) -> bool {
         let shared_key = self.our_sk.shared_secret(&their_pk);
-        let res1 = self
-            .socket
-            .set_encrypt_ctx(EncryptContext::authenticated(shared_key.clone()));
-        let res2 = self
-            .socket
-            .set_decrypt_ctx(DecryptContext::authenticated(shared_key));
-        res1.is_ok() && res2.is_ok()
+        match (
+            self.socket
+                .set_encrypt_ctx(EncryptContext::authenticated(shared_key.clone())),
+            self.socket
+                .set_decrypt_ctx(DecryptContext::authenticated(shared_key)),
+        ) {
+            (Ok(_), Ok(_)) => true,
+            res => {
+                warn!("Failed to set decrypt/encrypt context: {:?}", res);
+                false
+            }
+        }
     }
 
     fn enter_handshaking_mode(&self, their_uid: UID) {

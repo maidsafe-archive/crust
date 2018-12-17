@@ -91,14 +91,16 @@ impl<UID: Uid> TryPeer<UID> {
                 let token = self.token;
 
                 let mut socket = mem::replace(&mut self.socket, Default::default());
-                if socket
-                    .set_encrypt_ctx(EncryptContext::authenticated(self.shared_key.clone()))
-                    .is_ok()
+                match socket.set_encrypt_ctx(EncryptContext::authenticated(self.shared_key.clone()))
                 {
-                    let data = (socket, self.peer, peer_uid);
-                    (*self.finish)(core, poll, token, Ok(data));
-                } else {
-                    self.handle_error(core, poll, None);
+                    Ok(_) => {
+                        let data = (socket, self.peer, peer_uid);
+                        (*self.finish)(core, poll, token, Ok(data));
+                    }
+                    Err(e) => {
+                        warn!("Failed to set socket encrypt context: {}", e);
+                        self.handle_error(core, poll, None);
+                    }
                 }
             }
             Ok(Some(Message::BootstrapDenied(reason))) => {

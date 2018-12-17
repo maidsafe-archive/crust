@@ -171,7 +171,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.our_pk,
                         self.our_sk.clone(),
                     )) {
-                        error!("Failed to set decryption context: {}", e);
+                        warn!("Failed to set decryption context: {}", e);
                         continue;
                     }
                     if let Err(e) = ExchangeMsg::start(
