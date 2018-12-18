@@ -9,11 +9,6 @@ readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
 version = "0.31.0"
 
-[[example]]
-bench = false
-name = "crust_peer"
-path = "examples/crust_peer.rs"
-
 [dependencies]
 config_file_handler = "~0.11.0"
 crossbeam = "~0.2.10"
@@ -26,14 +21,18 @@ mio-extras = "~2.0.5"
 net2 = "~0.2.30"
 quick-error = "~1.2.2"
 rand = "~0.3.15"
-rust_sodium = "~0.10.0"
+safe_crypto = "~0.5.0"
 serde = "~1.0.25"
 serde_derive = "~1.0.25"
 serde_json = "~1.0.8"
-socket-collection = "~0.4.0"
-tiny-keccak = "~1.4.0"
+# TODO(povilas): use new version, when released
+socket-collection = { git = "https://github.com/maidsafe/socket-collection", rev = "e1ba943" }
 unwrap = "~1.2.0"
 
 [dev-dependencies]
 clap = "~2.25.1"
-byteorder = "~1.1.0"
+
+[[example]]
+bench = false
+name = "crust_peer"
+path = "examples/crust_peer.rs"

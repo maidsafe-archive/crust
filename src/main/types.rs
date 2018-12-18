@@ -10,6 +10,7 @@
 use common::Uid;
 use main::Config;
 use mio::Token;
+use safe_crypto::PublicEncryptKey;
 use std::net::SocketAddr;
 
 // ========================================================================================
@@ -43,6 +44,8 @@ pub struct PrivConnectionInfo<UID> {
     pub id: UID,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
+    #[doc(hidden)]
+    pub our_pk: PublicEncryptKey,
 }
 
 impl<UID: Uid> PrivConnectionInfo<UID> {
@@ -52,6 +55,7 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
         PubConnectionInfo {
             for_direct: self.for_direct.clone(),
             id: self.id,
+            our_pk: self.our_pk,
         }
     }
 }
@@ -66,6 +70,8 @@ pub struct PubConnectionInfo<UID> {
     pub id: UID,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
+    #[doc(hidden)]
+    pub our_pk: PublicEncryptKey,
 }
 
 impl<UID: Uid> PubConnectionInfo<UID> {

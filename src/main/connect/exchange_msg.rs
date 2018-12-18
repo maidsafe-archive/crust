@@ -10,7 +10,8 @@
 use common::{Core, Message, NameHash, State, Uid};
 use main::{ConnectionId, ConnectionMap};
 use mio::{Poll, PollOpt, Ready, Token};
-use socket_collection::{Priority, TcpSock};
+use safe_crypto::{PublicEncryptKey, SharedSecretKey};
+use socket_collection::{EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -29,6 +30,7 @@ pub struct ExchangeMsg<UID: Uid> {
     socket: TcpSock,
     cm: ConnectionMap<UID>,
     msg: Option<(Message<UID>, Priority)>,
+    shared_key: SharedSecretKey,
     finish: Finish,
 }
 
@@ -41,6 +43,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
         expected_id: UID,
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
+        our_pk: PublicEncryptKey,
+        shared_key: SharedSecretKey,
         finish: Finish,
     ) -> ::Res<Token> {
         let token = core.get_new_token();
@@ -73,7 +77,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
             expected_nh: name_hash,
             socket,
             cm,
-            msg: Some((Message::Connect(our_id, name_hash), 0)),
+            msg: Some((Message::Connect(our_id, name_hash, our_pk), 0)),
+            shared_key,
             finish,
         };
 
@@ -90,15 +95,22 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
-            Ok(Some(Message::Connect(their_uid, name_hash))) => {
+            Ok(Some(Message::Connect(their_uid, name_hash, _their_pk))) => {
                 if their_uid != self.expected_id || name_hash != self.expected_nh {
                     return self.handle_error(core, poll);
                 }
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let socket = mem::replace(&mut self.socket, Default::default());
 
-                (*self.finish)(core, poll, token, Some(socket));
+                let mut socket = mem::replace(&mut self.socket, Default::default());
+                match socket.set_encrypt_ctx(EncryptContext::authenticated(self.shared_key.clone()))
+                {
+                    Ok(_) => (*self.finish)(core, poll, token, Some(socket)),
+                    Err(e) => {
+                        warn!("Failed to set socket encrypt context: {}", e);
+                        self.handle_error(core, poll);
+                    }
+                }
             }
             Ok(None) => (),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),

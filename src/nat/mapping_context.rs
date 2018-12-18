@@ -10,11 +10,12 @@
 //! Defines the `MappingContext` type
 
 use super::NatError;
+use common::PeerInfo;
 use crossbeam;
 use get_if_addrs::{self, IfAddr};
 use igd::{self, Gateway};
 use nat;
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::net::{Ipv4Addr, Ipv6Addr};
 use std::time::Duration;
 
 /// Keeps track of information about external mapping servers
@@ -22,7 +23,7 @@ use std::time::Duration;
 pub struct MappingContext {
     our_ifv4s: Vec<(Ipv4Addr, Option<Gateway>)>,
     our_ifv6s: Vec<Ipv6Addr>,
-    peer_stuns: Vec<SocketAddr>,
+    peer_stuns: Vec<PeerInfo>,
 }
 
 impl MappingContext {
@@ -58,10 +59,10 @@ impl MappingContext {
 
     /// Inform the context about external "STUN" servers. Note that crust does not actually use
     /// STUN but a custom STUN-like protocol.
-    pub fn add_peer_stuns<A: IntoIterator<Item = SocketAddr>>(&mut self, stun_addrs: A) {
+    pub fn add_peer_stuns<A: IntoIterator<Item = PeerInfo>>(&mut self, stun_addrs: A) {
         let listeners = stun_addrs
             .into_iter()
-            .filter(|elt| nat::ip_addr_is_global(&elt.ip()));
+            .filter(|peer| nat::ip_addr_is_global(&peer.addr.ip()));
         self.peer_stuns.extend(listeners);
     }
 
@@ -71,7 +72,7 @@ impl MappingContext {
     }
 
     /// Iterate over the known servers
-    pub fn peer_stuns(&self) -> &Vec<SocketAddr> {
+    pub fn peer_stuns(&self) -> &Vec<PeerInfo> {
         &self.peer_stuns
     }
 }

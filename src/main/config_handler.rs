@@ -7,10 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use common::PeerInfo;
 use config_file_handler::{self, FileHandler};
 use std::collections::HashSet;
 use std::ffi::OsString;
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
 
 #[cfg(test)]
 use std::path::PathBuf;
@@ -19,7 +20,7 @@ use std::path::PathBuf;
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     /// Direct contacts one should connect to
-    pub hard_coded_contacts: Vec<SocketAddr>,
+    pub hard_coded_contacts: Vec<PeerInfo>,
     /// Port for TCP acceptor
     pub tcp_acceptor_port: Option<u16>,
     /// Force usage of `tcp_acceptor_port` as our router mapped port. Normally if there is a port
@@ -94,7 +95,7 @@ pub fn read_config_file() -> ::Res<Config> {
 /// this file should be created by the installer for the dependent application.
 #[cfg(test)]
 #[allow(dead_code)]
-pub fn write_config_file(hard_coded_contacts: Option<Vec<SocketAddr>>) -> ::Res<PathBuf> {
+pub fn write_config_file(hard_coded_contacts: Option<Vec<PeerInfo>>) -> ::Res<PathBuf> {
     use serde_json;
     use std::io::Write;
 

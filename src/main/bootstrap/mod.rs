@@ -13,12 +13,14 @@ mod try_peer;
 use self::cache::Cache;
 use self::try_peer::TryPeer;
 use common::{
-    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, State, Uid,
+    BootstrapDenyReason, Core, CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo,
+    State, Uid,
 };
 use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand::{self, Rng};
+use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use service_discovery::ServiceDiscovery;
 use socket_collection::TcpSock;
 use std::any::Any;
@@ -39,7 +41,7 @@ const MAX_CONTACTS_EXPECTED: usize = 1500;
 pub struct Bootstrap<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    peers: Vec<SocketAddr>,
+    peers: Vec<PeerInfo>,
     blacklist: HashSet<SocketAddr>,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
@@ -51,6 +53,8 @@ pub struct Bootstrap<UID: Uid> {
     cache: Cache,
     children: HashSet<Token>,
     self_weak: Weak<RefCell<Bootstrap<UID>>>,
+    our_pk: PublicEncryptKey,
+    our_sk: SecretEncryptKey,
 }
 
 impl<UID: Uid> Bootstrap<UID> {
@@ -66,6 +70,8 @@ impl<UID: Uid> Bootstrap<UID> {
         token: Token,
         service_discovery_token: Token,
         event_tx: ::CrustEventSender<UID>,
+        our_pk: PublicEncryptKey,
+        our_sk: &SecretEncryptKey,
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
@@ -99,6 +105,8 @@ impl<UID: Uid> Bootstrap<UID> {
             cache,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
             self_weak: Weak::new(),
+            our_pk,
+            our_sk: our_sk.clone(),
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -114,7 +122,7 @@ impl<UID: Uid> Bootstrap<UID> {
 
     fn begin_bootstrap(&mut self, core: &mut Core, poll: &Poll) {
         let mut peers = mem::replace(&mut self.peers, Vec::new());
-        peers.retain(|addr| !self.blacklist.contains(addr));
+        peers.retain(|peer| !self.blacklist.contains(&peer.addr));
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -136,6 +144,8 @@ impl<UID: Uid> Bootstrap<UID> {
                 self.our_uid,
                 self.name_hash,
                 self.ext_reachability.clone(),
+                self.our_pk,
+                &self.our_sk,
                 Box::new(finish),
             ) {
                 let _ = self.children.insert(child);
@@ -149,7 +159,7 @@ impl<UID: Uid> Bootstrap<UID> {
         core: &mut Core,
         poll: &Poll,
         child: Token,
-        res: Result<(TcpSock, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+        res: Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
     ) {
         let _ = self.children.remove(&child);
         match res {
@@ -165,7 +175,7 @@ impl<UID: Uid> Bootstrap<UID> {
                     peer_id,
                     // Note; We bootstrap only to Nodes
                     CrustUser::Node,
-                    Event::BootstrapConnect(peer_id, peer_addr),
+                    Event::BootstrapConnect(peer_id, peer_addr.addr),
                     self.event_tx.clone(),
                 );
             }
@@ -195,7 +205,7 @@ impl<UID: Uid> Bootstrap<UID> {
                         return;
                     } else {
                         info!(
-                            "Failed to Bootstrap with {}: ({:?}) {}",
+                            "Failed to Bootstrap with {:?}: ({:?}) {}",
                             bad_peer, reason, err_msg
                         );
                     }
@@ -256,7 +266,7 @@ impl<UID: Uid> State for Bootstrap<UID> {
 }
 
 struct ServiceDiscMeta {
-    rx: Receiver<Vec<SocketAddr>>,
+    rx: Receiver<Vec<PeerInfo>>,
     timeout: Timeout,
 }
 
@@ -264,7 +274,7 @@ fn seek_peers(
     core: &mut Core,
     service_discovery_token: Token,
     token: Token,
-) -> ::Res<(Receiver<Vec<SocketAddr>>, Timeout)> {
+) -> ::Res<(Receiver<Vec<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
         let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery>());

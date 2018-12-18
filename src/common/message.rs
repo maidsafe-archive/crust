@@ -8,17 +8,18 @@
 // Software.
 
 use common::{self, ExternalReachability, NameHash};
+use safe_crypto::PublicEncryptKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Message<UID> {
     Heartbeat,
-    BootstrapRequest(UID, NameHash, ExternalReachability),
+    BootstrapRequest(UID, NameHash, ExternalReachability, PublicEncryptKey),
     BootstrapGranted(UID),
     BootstrapDenied(BootstrapDenyReason),
-    EchoAddrReq,
+    EchoAddrReq(PublicEncryptKey),
     EchoAddrResp(common::SocketAddr),
     ChooseConnection,
-    Connect(UID, NameHash),
+    Connect(UID, NameHash, PublicEncryptKey),
     Data(Vec<u8>),
 }
 

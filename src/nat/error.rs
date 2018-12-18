@@ -8,6 +8,7 @@
 // Software.
 
 use common::CommonError;
+use socket_collection::SocketError;
 use std::io;
 
 quick_error! {
@@ -25,6 +26,12 @@ quick_error! {
         CommonError(e: CommonError) {
             description(e.description())
             display("NatError: {}", e)
+            cause(e)
+            from()
+        }
+        /// `socket-collection` error
+        SocketError(e: SocketError) {
+            display("Socket error: {}", e)
             cause(e)
             from()
         }

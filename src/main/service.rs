@@ -8,7 +8,8 @@
 // Software.
 
 use common::{
-    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, Uid, HASH_SIZE,
+    self, Core, CoreMessage, CrustUser, EventLoop, ExternalReachability, NameHash, PeerInfo, Uid,
+    HASH_SIZE,
 };
 use main::config_handler::{self, Config};
 use main::{
@@ -18,14 +19,13 @@ use main::{
 };
 use mio::{Poll, Token};
 use nat::{MappedTcpSocket, MappingContext};
-use rust_sodium;
+use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use service_discovery::ServiceDiscovery;
 use socket_collection::Priority;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc, Mutex};
-use tiny_keccak::sha3_256;
 
 const BOOTSTRAP_TOKEN: Token = Token(0);
 const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
@@ -46,7 +46,9 @@ pub struct Service<UID: Uid> {
     el: EventLoop,
     name_hash: NameHash,
     our_uid: UID,
-    our_listeners: Arc<Mutex<Vec<SocketAddr>>>,
+    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
+    our_pk: PublicEncryptKey,
+    our_sk: SecretEncryptKey,
 }
 
 impl<UID: Uid> Service<UID> {
@@ -64,7 +66,7 @@ impl<UID: Uid> Service<UID> {
         config: Config,
         our_uid: UID,
     ) -> ::Res<Self> {
-        let _ = rust_sodium::init();
+        safe_crypto::init()?;
 
         let name_hash = name_hash(&config.network_name);
 
@@ -76,6 +78,8 @@ impl<UID: Uid> Service<UID> {
         let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)))?;
         trace!("Event loop started");
 
+        // TODO(povilas): get from constructor params
+        let (our_pk, our_sk) = gen_encrypt_keypair();
         let service = Service {
             cm: Arc::new(Mutex::new(HashMap::new())),
             config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
@@ -85,6 +89,8 @@ impl<UID: Uid> Service<UID> {
             name_hash,
             our_uid,
             our_listeners,
+            our_pk,
+            our_sk,
         };
 
         service.start_config_refresher()?;
@@ -149,6 +155,7 @@ impl<UID: Uid> Service<UID> {
             .service_discovery_listener_port
             .unwrap_or(remote_port);
 
+        let our_pk = self.our_pk;
         let _ = self.post(move |core, poll| {
             if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
                 if let Err(e) = ServiceDiscovery::start(
@@ -158,6 +165,7 @@ impl<UID: Uid> Service<UID> {
                     SERVICE_DISCOVERY_TOKEN,
                     listener_port,
                     remote_port,
+                    our_pk,
                 ) {
                     debug!("Could not start ServiceDiscovery: {:?}", e);
                 }
@@ -241,7 +249,7 @@ impl<UID: Uid> Service<UID> {
                     .cfg
                     .hard_coded_contacts
                     .iter()
-                    .any(|addr| addr.ip() == s.ip())
+                    .any(|peer| peer.addr.ip() == s.ip())
             }
             Err(e) => {
                 debug!("{}", e.description());
@@ -288,11 +296,16 @@ impl<UID: Uid> Service<UID> {
         let config = self.config.clone();
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
+        let our_pk = self.our_pk;
+        let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
         let ext_reachability = match crust_user {
             CrustUser::Node => ExternalReachability::Required {
-                direct_listeners: unwrap!(self.our_listeners.lock()).iter().cloned().collect(),
+                direct_listeners: unwrap!(self.our_listeners.lock())
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect(),
             },
             CrustUser::Client => ExternalReachability::NotRequired,
         };
@@ -311,6 +324,8 @@ impl<UID: Uid> Service<UID> {
                     BOOTSTRAP_TOKEN,
                     SERVICE_DISCOVERY_TOKEN,
                     event_tx.clone(),
+                    our_pk,
+                    &our_sk,
                 ) {
                     error!("Could not bootstrap: {:?}", e);
                     let _ = event_tx.send(Event::BootstrapFailed);
@@ -346,6 +361,8 @@ impl<UID: Uid> Service<UID> {
         let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
+        let our_pk = self.our_pk;
+        let our_sk = self.our_sk.clone();
         self.post(move |core, poll| {
             if core.get_state(LISTENER_TOKEN).is_none() {
                 ConnectionListener::start(
@@ -362,6 +379,8 @@ impl<UID: Uid> Service<UID> {
                     our_listeners,
                     LISTENER_TOKEN,
                     event_tx,
+                    our_pk,
+                    our_sk,
                 );
             }
         })
@@ -418,9 +437,13 @@ impl<UID: Uid> Service<UID> {
         let event_tx = self.event_tx.clone();
         let cm = self.cm.clone();
         let our_nh = self.name_hash;
+        let our_pk = self.our_pk;
+        let our_sk = self.our_sk.clone();
 
         self.post(move |core, poll| {
-            let _ = Connect::start(core, poll, our_ci, their_ci, cm, our_nh, event_tx);
+            let _ = Connect::start(
+                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk,
+            );
         })?;
 
         Ok(())
@@ -467,13 +490,20 @@ impl<UID: Uid> Service<UID> {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_listeners = unwrap!(self.our_listeners.lock()).iter().cloned().collect();
+        let our_listeners = unwrap!(self.our_listeners.lock())
+            .iter()
+            .map(|peer| peer.addr)
+            .collect();
+        let our_pk = self.our_pk;
+        let our_sk = self.our_sk.clone();
+
         if DISABLE_NAT {
             let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token,
                 result: Ok(PrivConnectionInfo {
                     id: self.our_uid,
                     for_direct: our_listeners,
+                    our_pk,
                 }),
             });
             let _ = self.event_tx.send(event);
@@ -488,6 +518,8 @@ impl<UID: Uid> Service<UID> {
                     poll,
                     0,
                     &mc,
+                    our_pk,
+                    &our_sk,
                     move |_, _, _socket, _addrs| {
                         let event_tx = event_tx_clone;
                         let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
@@ -495,6 +527,7 @@ impl<UID: Uid> Service<UID> {
                             result: Ok(PrivConnectionInfo {
                                 id: our_uid,
                                 for_direct: our_listeners,
+                                our_pk,
                             }),
                         });
                         let _ = event_tx.send(event);
@@ -537,6 +570,11 @@ impl<UID: Uid> Service<UID> {
         self.our_uid
     }
 
+    /// Returns service public key used to encrypt traffic.
+    pub fn pub_key(&self) -> PublicEncryptKey {
+        self.our_pk
+    }
+
     fn post<F>(&self, f: F) -> ::Res<()>
     where
         F: FnOnce(&mut Core, &Poll) + Send + 'static,
@@ -550,7 +588,7 @@ impl<UID: Uid> Service<UID> {
 fn name_hash(network_name: &Option<String>) -> NameHash {
     trace!("Network name: {:?}", network_name);
     match *network_name {
-        Some(ref name) => sha3_256(name.as_bytes()),
+        Some(ref name) => safe_crypto::hash(name.as_bytes()),
         None => [0; HASH_SIZE],
     }
 }

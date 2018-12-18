@@ -7,13 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, State, Uid};
+use common::{
+    BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, PeerInfo, State, Uid,
+};
 use mio::{Poll, PollOpt, Ready, Token};
-use socket_collection::{Priority, TcpSock};
+use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
+use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::mem;
-use std::net::SocketAddr;
 use std::rc::Rc;
 
 pub type Finish<UID> = Box<
@@ -21,29 +23,35 @@ pub type Finish<UID> = Box<
         &mut Core,
         &Poll,
         Token,
-        Result<(TcpSock, SocketAddr, UID), (SocketAddr, Option<BootstrapDenyReason>)>,
+        Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
     ),
 >;
 
 pub struct TryPeer<UID: Uid> {
     token: Token,
-    peer: SocketAddr,
+    peer: PeerInfo,
     socket: TcpSock,
     request: Option<(Message<UID>, Priority)>,
     finish: Finish<UID>,
+    shared_key: SharedSecretKey,
 }
 
 impl<UID: Uid> TryPeer<UID> {
     pub fn start(
         core: &mut Core,
         poll: &Poll,
-        peer: SocketAddr,
+        peer: PeerInfo,
         our_uid: UID,
         name_hash: NameHash,
         ext_reachability: ExternalReachability,
+        our_pk: PublicEncryptKey,
+        our_sk: &SecretEncryptKey,
         finish: Finish<UID>,
     ) -> ::Res<Token> {
-        let socket = TcpSock::connect(&peer)?;
+        let mut socket = TcpSock::connect(&peer.addr)?;
+        socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(peer.pub_key))?;
+        let shared_key = our_sk.shared_secret(&peer.pub_key);
+        socket.set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone()))?;
         let token = core.get_new_token();
 
         poll.register(
@@ -58,10 +66,11 @@ impl<UID: Uid> TryPeer<UID> {
             peer,
             socket,
             request: Some((
-                Message::BootstrapRequest(our_uid, name_hash, ext_reachability),
+                Message::BootstrapRequest(our_uid, name_hash, ext_reachability, our_pk),
                 0,
             )),
             finish,
+            shared_key,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -80,9 +89,19 @@ impl<UID: Uid> TryPeer<UID> {
             Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
-                let socket = mem::replace(&mut self.socket, Default::default());
-                let data = (socket, self.peer, peer_uid);
-                (*self.finish)(core, poll, token, Ok(data));
+
+                let mut socket = mem::replace(&mut self.socket, Default::default());
+                match socket.set_encrypt_ctx(EncryptContext::authenticated(self.shared_key.clone()))
+                {
+                    Ok(_) => {
+                        let data = (socket, self.peer, peer_uid);
+                        (*self.finish)(core, poll, token, Ok(data));
+                    }
+                    Err(e) => {
+                        warn!("Failed to set socket encrypt context: {}", e);
+                        self.handle_error(core, poll, None);
+                    }
+                }
             }
             Ok(Some(Message::BootstrapDenied(reason))) => {
                 self.handle_error(core, poll, Some(reason))
@@ -94,9 +113,7 @@ impl<UID: Uid> TryPeer<UID> {
 
     fn handle_error(&mut self, core: &mut Core, poll: &Poll, reason: Option<BootstrapDenyReason>) {
         self.terminate(core, poll);
-        let token = self.token;
-        let peer = self.peer;
-        (*self.finish)(core, poll, token, Err((peer, reason)));
+        (*self.finish)(core, poll, self.token, Err((self.peer, reason)));
     }
 }
 
