@@ -25,7 +25,8 @@ safe_crypto = "~0.5.0"
 serde = "~1.0.25"
 serde_derive = "~1.0.25"
 serde_json = "~1.0.8"
-socket-collection = "~0.4.0"
+# TODO(povilas): use new version, when released
+socket-collection = { git = "https://github.com/maidsafe/socket-collection", rev = "e1ba943" }
 unwrap = "~1.2.0"
 
 [dev-dependencies]
