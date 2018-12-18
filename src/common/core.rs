@@ -189,6 +189,17 @@ impl<T> Core<T> {
         }
     }
 
+    /// Exposes constructor which is useful for unit tests.
+    #[cfg(test)]
+    pub fn new_for_tests(
+        token_counter_start: usize,
+        tx: Sender<CoreMessage<T>>,
+        timer: Timer<CoreTimer>,
+        user_data: T,
+    ) -> Self {
+        Self::new(token_counter_start, tx, timer, user_data)
+    }
+
     pub fn sender(&self) -> &Sender<CoreMessage<T>> {
         &self.tx
     }

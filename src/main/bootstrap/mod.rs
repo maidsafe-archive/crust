@@ -73,7 +73,6 @@ impl<UID: Uid> Bootstrap<UID> {
         our_sk: &SecretEncryptKey,
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
-
         peers.extend(core.user_data().peers_vec());
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
@@ -306,5 +305,136 @@ fn seek_peers(
         Ok((rx, timeout))
     } else {
         Err(CrustError::ServiceDiscNotEnabled)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tests::utils::{test_bootstrap_cache, test_core};
+
+    mod seek_pers {
+        use super::*;
+
+        #[test]
+        fn it_returns_error_when_service_discovery_token_is_not_registered() {
+            let dummy_token = Token(99999);
+            let bootstrap_cache = test_bootstrap_cache();
+            let mut core = test_core(bootstrap_cache);
+
+            let res = seek_peers(&mut core, dummy_token, dummy_token);
+
+            match res {
+                Err(CrustError::ServiceDiscNotEnabled) => (),
+                res => panic!("Unexpected result: {:?}", res),
+            }
+        }
+    }
+
+    mod bootstrap {
+        use super::*;
+
+        mod handle_result {
+            use super::*;
+            use common::ipv4_addr;
+            use main::ConfigWrapper;
+            use safe_crypto::gen_encrypt_keypair;
+            use std::collections::HashMap;
+            use std::sync::{Arc, Mutex};
+            use tests::utils::{get_event_sender, rand_uid, UniqueId};
+            use Config;
+
+            #[test]
+            fn when_result_is_success_it_puts_peer_info_into_bootstrap_cache() {
+                let bootstrap_cache = test_bootstrap_cache();
+                let mut core = test_core(bootstrap_cache);
+                let poll = unwrap!(Poll::new());
+
+                let peer1 = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                let mut config = Config::default();
+                config.hard_coded_contacts = vec![peer1];
+                let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
+                let dummy_service_discovery_token = Token(9999);
+
+                let (our_pk, our_sk) = gen_encrypt_keypair();
+                let (event_tx, _event_rx) = get_event_sender();
+                let token = Token(1);
+                let conn_map = Arc::new(Mutex::new(HashMap::new()));
+
+                unwrap!(Bootstrap::start(
+                    &mut core,
+                    &poll,
+                    [1; 32],
+                    ExternalReachability::NotRequired,
+                    rand_uid(),
+                    conn_map,
+                    config,
+                    HashSet::new(),
+                    token,
+                    dummy_service_discovery_token,
+                    event_tx,
+                    our_pk,
+                    &our_sk
+                ));
+                let peer_info = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                let peer_uid = [2; 20];
+                let peer_socket = Default::default();
+
+                let state = unwrap!(core.get_state(token));
+                let mut state = state.borrow_mut();
+                let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
+                bootstrap_state.handle_result(
+                    &mut core,
+                    &poll,
+                    Token(2),
+                    Ok((peer_socket, peer_info, peer_uid)),
+                );
+
+                let cached_peers = core.user_data().peers_vec();
+                assert_eq!(cached_peers[0], peer_info);
+            }
+
+            #[test]
+            fn when_result_is_error_it_removes_peer_info_from_bootstrap_cache() {
+                let bootstrap_cache = test_bootstrap_cache();
+                let peer_info = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                bootstrap_cache.put(&peer_info);
+                let mut core = test_core(bootstrap_cache);
+                let poll = unwrap!(Poll::new());
+
+                let config = Config::default();
+                let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
+                let dummy_service_discovery_token = Token(9999);
+
+                let (our_pk, our_sk) = gen_encrypt_keypair();
+                let (event_tx, _event_rx) = get_event_sender();
+                let token = Token(1);
+                let conn_map = Arc::new(Mutex::new(HashMap::new()));
+
+                unwrap!(Bootstrap::start(
+                    &mut core,
+                    &poll,
+                    [1; 32],
+                    ExternalReachability::NotRequired,
+                    rand_uid(),
+                    conn_map,
+                    config,
+                    HashSet::new(),
+                    token,
+                    dummy_service_discovery_token,
+                    event_tx,
+                    our_pk,
+                    &our_sk
+                ));
+
+                let state = unwrap!(core.get_state(token));
+                let mut state = state.borrow_mut();
+                let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
+                bootstrap_state.handle_result(&mut core, &poll, Token(2), Err((peer_info, None)));
+
+                let cached_peers = core.user_data().peers_vec();
+                assert!(cached_peers.is_empty());
+            }
+        }
     }
 }

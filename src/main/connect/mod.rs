@@ -270,3 +270,133 @@ impl<UID: Uid> State<BootstrapCache> for Connect<UID> {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod connect {
+        use super::*;
+        use common::ipv4_addr;
+        use safe_crypto::gen_encrypt_keypair;
+        use std::collections::HashMap;
+        use std::net::TcpListener;
+        use std::sync::{Arc, Mutex};
+        use tests::utils::{get_event_sender, rand_uid, test_bootstrap_cache, test_core, UniqueId};
+
+        fn test_priv_conn_info() -> (PrivConnectionInfo<UniqueId>, SecretEncryptKey) {
+            let (pk, sk) = gen_encrypt_keypair();
+            let conn_info = PrivConnectionInfo {
+                id: rand_uid(),
+                for_direct: vec![ipv4_addr(1, 2, 3, 4, 4000)],
+                our_pk: pk,
+            };
+            (conn_info, sk)
+        }
+
+        /// Connects socket to localhost listener so that `socket.peer_addr()` would have smth
+        /// to return.
+        /// NOTE: this can be eliminated, if we start using `socket_collection::Socket` enum and it
+        /// would have in-memory socket implementation for testing.
+        /// `TcpListener` is always returned so that connection wouldn't be closed.
+        fn connected_socket() -> (TcpSock, TcpListener) {
+            use mio::{Events, Poll, PollOpt, Ready, Token};
+
+            let poll = unwrap!(Poll::new());
+            const SOCKET_TOKEN: Token = Token(0);
+
+            let listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
+            let listener_addr = unwrap!(listener.local_addr());
+
+            let sock = unwrap!(TcpSock::connect(&listener_addr));
+            unwrap!(poll.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
+
+            let mut events = Events::with_capacity(1024);
+            loop {
+                let _ = unwrap!(poll.poll(&mut events, None));
+                for event in events.iter() {
+                    match event.token() {
+                        SOCKET_TOKEN => return (sock, listener),
+                        _ => panic!("Unexpected event"),
+                    }
+                }
+            }
+        }
+
+        #[test]
+        fn cache_peer_info_puts_peer_contacts_into_bootstrap_cache() {
+            let mut core = test_core(test_bootstrap_cache());
+            let poll = unwrap!(Poll::new());
+
+            let (our_ci, our_sk) = test_priv_conn_info();
+            let our_pk = our_ci.our_pk;
+            let (their_ci, _) = test_priv_conn_info();
+            let their_ci = their_ci.to_pub_connection_info();
+
+            let conn_map = Arc::new(Mutex::new(HashMap::new()));
+            let (event_tx, _event_rx) = get_event_sender();
+            unwrap!(Connect::start(
+                &mut core,
+                &poll,
+                our_ci,
+                their_ci.clone(),
+                conn_map,
+                [1; 32],
+                event_tx,
+                our_pk,
+                &our_sk
+            ));
+
+            let connect_state_token = Token(0);
+            let state = unwrap!(core.get_state(connect_state_token));
+            let mut state = state.borrow_mut();
+            let connect_state = unwrap!(state.as_any().downcast_mut::<Connect<UniqueId>>());
+            let (sock, _listener) = connected_socket();
+
+            connect_state.cache_peer_info(&mut core, &sock);
+
+            let exp_info = PeerInfo::new(unwrap!(sock.peer_addr()), their_ci.our_pk);
+            let cached_peers = core.user_data().peers_vec();
+            assert_eq!(cached_peers.len(), 1);
+            assert_eq!(cached_peers[0], exp_info);
+        }
+
+        #[test]
+        fn remove_peer_from_cache_does_what_it_says() {
+            let cached_peer = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+            let bootstrap_cache = test_bootstrap_cache();
+            bootstrap_cache.put(&cached_peer);
+            let mut core = test_core(bootstrap_cache);
+            let poll = unwrap!(Poll::new());
+
+            let (our_ci, our_sk) = test_priv_conn_info();
+            let our_pk = our_ci.our_pk;
+            let (their_ci, _) = test_priv_conn_info();
+            let their_ci = their_ci.to_pub_connection_info();
+
+            let conn_map = Arc::new(Mutex::new(HashMap::new()));
+            let (event_tx, _event_rx) = get_event_sender();
+            unwrap!(Connect::start(
+                &mut core,
+                &poll,
+                our_ci,
+                their_ci.clone(),
+                conn_map,
+                [1; 32],
+                event_tx,
+                our_pk,
+                &our_sk
+            ));
+
+            let connect_state_token = Token(0);
+            let state = unwrap!(core.get_state(connect_state_token));
+            let mut state = state.borrow_mut();
+            let connect_state = unwrap!(state.as_any().downcast_mut::<Connect<UniqueId>>());
+
+            connect_state.remove_peer_from_cache(&mut core, &cached_peer);
+
+            let cached_peers = core.user_data().peers_vec();
+            assert!(cached_peers.is_empty());
+        }
+    }
+}

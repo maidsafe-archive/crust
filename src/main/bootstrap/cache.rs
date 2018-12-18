@@ -90,20 +90,10 @@ mod tests {
     mod cache {
         use super::*;
         use common::ipv4_addr;
-        use rand;
-        use std::env;
         use std::fs::File;
         use std::io::Write;
         use std::net::SocketAddr;
-        use std::path::PathBuf;
-
-        /// Constructs random bootstrap cache file name.
-        fn bootstrap_cache_tmp_file() -> PathBuf {
-            let fname = format!("{:016x}.bootstrap.cache", rand::random::<u64>());
-            let mut path = env::temp_dir();
-            path.push(fname);
-            path
-        }
+        use tests::utils::bootstrap_cache_tmp_file;
 
         /// # Arguments
         ///
