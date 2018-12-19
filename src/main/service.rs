@@ -27,10 +27,24 @@ use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc, Mutex};
 
-const BOOTSTRAP_TOKEN: Token = Token(0);
-const SERVICE_DISCOVERY_TOKEN: Token = Token(1);
-const LISTENER_TOKEN: Token = Token(2);
-const CONFIG_REFRESHER_TOKEN: Token = Token(3);
+/// Reserved mio `Token` values for Crust speficic events.
+#[derive(Debug, PartialEq)]
+#[repr(usize)]
+#[allow(unused)]
+enum EventToken {
+    Bootstrap,
+    ServiceDiscovery,
+    Listener,
+    ConfigRefresher,
+    Unreserved,
+}
+
+impl From<EventToken> for Token {
+    fn from(token: EventToken) -> Token {
+        Token(token as usize)
+    }
+}
+
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -76,18 +90,15 @@ impl<UID: Uid> Service<UID> {
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
         let bootstrap_cache_file = config.bootstrap_cache_name.clone();
-        let el = common::spawn_event_loop(4, Some(&format!("{:?}", our_uid)), move || {
-            match BootstrapCache::new(bootstrap_cache_file.as_ref()) {
-                Ok(cache) => {
-                    cache.read_file();
-                    Some(cache)
-                }
-                Err(e) => {
-                    error!("Failed to initialize bootstrap cache: {}", e);
-                    None
-                }
+        let el = common::spawn_event_loop(
+            EventToken::Unreserved as usize,
+            Some(&format!("{:?}", our_uid)),
+            move || {
+                let cache = BootstrapCache::new(bootstrap_cache_file.as_ref());
+                cache.read_file();
+                cache
             }
-        })?;
+        )?;
         trace!("Event loop started");
 
         // TODO(povilas): get from constructor params
@@ -115,10 +126,10 @@ impl<UID: Uid> Service<UID> {
         let config = self.config.clone();
         let cm = self.cm.clone();
         self.post(move |core, _| {
-            if core.get_state(CONFIG_REFRESHER_TOKEN).is_none() {
+            if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
                 let _ = tx.send(ConfigRefresher::start(
                     core,
-                    CONFIG_REFRESHER_TOKEN,
+                    EventToken::ConfigRefresher.into(),
                     cm,
                     config,
                 ));
@@ -132,7 +143,7 @@ impl<UID: Uid> Service<UID> {
     pub fn set_accept_bootstrap(&self, accept: bool) -> ::Res<()> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let state = match core.get_state(LISTENER_TOKEN) {
+            let state = match core.get_state(EventToken::Listener.into()) {
                 Some(state) => state,
                 None => {
                     let _ = tx.send(Err(CrustError::ListenerNotIntialised));
@@ -169,12 +180,12 @@ impl<UID: Uid> Service<UID> {
 
         let our_pk = self.our_pk;
         let _ = self.post(move |core, poll| {
-            if core.get_state(SERVICE_DISCOVERY_TOKEN).is_none() {
+            if core.get_state(EventToken::ServiceDiscovery.into()).is_none() {
                 if let Err(e) = ServiceDiscovery::start(
                     core,
                     poll,
                     our_listeners,
-                    SERVICE_DISCOVERY_TOKEN,
+                    EventToken::ServiceDiscovery.into(),
                     listener_port,
                     remote_port,
                     our_pk,
@@ -190,7 +201,7 @@ impl<UID: Uid> Service<UID> {
     /// allow others to discover us on the local network.
     pub fn set_service_discovery_listen(&self, listen: bool) {
         let _ = self.post(move |core, _| {
-            let state = match core.get_state(SERVICE_DISCOVERY_TOKEN) {
+            let state = match core.get_state(EventToken::ServiceDiscovery.into()) {
                 Some(state) => state,
                 None => return,
             };
@@ -281,7 +292,7 @@ impl<UID: Uid> Service<UID> {
 
         let (obs, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let state = match core.get_state(SERVICE_DISCOVERY_TOKEN) {
+            let state = match core.get_state(EventToken::ServiceDiscovery.into()) {
                 Some(state) => state,
                 None => return,
             };
@@ -329,7 +340,7 @@ impl<UID: Uid> Service<UID> {
         };
 
         self.post(move |core, poll| {
-            if core.get_state(BOOTSTRAP_TOKEN).is_none() {
+            if core.get_state(EventToken::Bootstrap.into()).is_none() {
                 if let Err(e) = Bootstrap::start(
                     core,
                     poll,
@@ -339,8 +350,8 @@ impl<UID: Uid> Service<UID> {
                     cm,
                     config,
                     blacklist,
-                    BOOTSTRAP_TOKEN,
-                    SERVICE_DISCOVERY_TOKEN,
+                    EventToken::Bootstrap.into(),
+                    EventToken::ServiceDiscovery.into(),
                     event_tx.clone(),
                     our_pk,
                     &our_sk,
@@ -355,7 +366,7 @@ impl<UID: Uid> Service<UID> {
     /// Stop the bootstraping procedure explicitly
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
         self.post(move |core, poll| {
-            if let Some(state) = core.get_state(BOOTSTRAP_TOKEN) {
+            if let Some(state) = core.get_state(EventToken::Bootstrap.into()) {
                 state.borrow_mut().terminate(core, poll);
             }
         })
@@ -382,7 +393,7 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         self.post(move |core, poll| {
-            if core.get_state(LISTENER_TOKEN).is_none() {
+            if core.get_state(EventToken::Listener.into()).is_none() {
                 ConnectionListener::start(
                     core,
                     poll,
@@ -395,7 +406,7 @@ impl<UID: Uid> Service<UID> {
                     config,
                     mc,
                     our_listeners,
-                    LISTENER_TOKEN,
+                    EventToken::Listener.into(),
                     event_tx,
                     our_pk,
                     our_sk,
@@ -407,7 +418,7 @@ impl<UID: Uid> Service<UID> {
     /// Stops Listener explicitly and stops accepting TCP connections.
     pub fn stop_tcp_listener(&mut self) -> ::Res<()> {
         self.post(move |core, poll| {
-            if let Some(state) = core.get_state(LISTENER_TOKEN) {
+            if let Some(state) = core.get_state(EventToken::Listener.into()) {
                 state.borrow_mut().terminate(core, poll);
             }
         })
@@ -613,6 +624,7 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use common::CrustUser;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
@@ -922,6 +934,19 @@ mod tests {
         timebomb(Duration::from_millis(timeout_ms), move || {
             drop(threads);
         });
+    }
+
+    mod event_token {
+        use super::*;
+
+        #[test]
+        fn tokens_start_with_number_0_and_increment_by_1() {
+            let token = EventToken::Bootstrap;
+            assert_eq!(Token::from(token), Token(0));
+
+            let token = EventToken::ServiceDiscovery;
+            assert_eq!(Token::from(token), Token(1));
+        }
     }
 
     // TODO See how to now do this test

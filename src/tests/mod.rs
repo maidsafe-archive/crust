@@ -439,7 +439,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     use mio::net::TcpListener;
 
     // Spin up the non-responsive peer.
-    let el = unwrap!(spawn_event_loop(0, None, || Some(())));
+    let el = unwrap!(spawn_event_loop(0, None, || ()));
 
     let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");

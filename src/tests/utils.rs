@@ -7,14 +7,16 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::Uid;
+use common::{PeerInfo, Uid};
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use main::{BootstrapCache, Config, Event, EventLoopCore};
 use mio_extras::channel::channel;
 use mio_extras::timer;
 use rand::{self, Rng};
+use safe_crypto::gen_encrypt_keypair;
 use std::env;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
@@ -104,5 +106,11 @@ pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore {
 /// Bootstrap cache on tmp directory with unique file name.
 pub fn test_bootstrap_cache() -> BootstrapCache {
     let cache_file = bootstrap_cache_tmp_file().into();
-    unwrap!(BootstrapCache::new(Some(&cache_file)))
+    BootstrapCache::new(Some(&cache_file))
+}
+
+/// Constructs peer info with random generated public key.
+pub fn peer_info_with_rand_key(addr: SocketAddr) -> PeerInfo {
+    let (pk, _) = gen_encrypt_keypair();
+    PeerInfo::new(addr, pk)
 }

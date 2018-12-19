@@ -21,24 +21,22 @@ pub struct Cache {
 }
 
 struct Inner {
-    file_handler: FileHandler<HashSet<PeerInfo>>,
+    file_name: Option<OsString>,
     peers: HashSet<PeerInfo>,
 }
 
 impl Cache {
-    /// Constructs new bootstrap cache backed by a given file. If no file name is give,
-    /// the default path is used, see `#get_default_file_name()`.
-    pub fn new(name: Option<&OsString>) -> ::Res<Self> {
+    /// Constructs new bootstrap cache. You can optionally specify the file name which will
+    /// be used to read/write the cache to. If no file name is give, the default path is used, see
+    /// `#get_default_file_name()`.
+    pub fn new(file_name: Option<&OsString>) -> Self {
         let inner = Inner {
-            file_handler: FileHandler::new(
-                name.unwrap_or(&(Self::get_default_file_name()?)),
-                true,
-            )?,
-            peers: HashSet::new(),
+            file_name: file_name.map(|s| s.clone()),
+            peers: Default::default(),
         };
-        Ok(Cache {
+        Cache {
             inner: Rc::new(RefCell::new(inner)),
-        })
+        }
     }
 
     /// Default bootstrap cache file name is executable file + '.bootstrap.cache' suffix.
@@ -50,18 +48,22 @@ impl Cache {
 
     /// Updates cache by reading it from file and returns the current snapshot of peers.
     pub fn read_file(&self) {
-        let mut inner = self.inner.borrow_mut();
-        inner.peers = inner.file_handler.read_file().unwrap_or_else(|e| {
-            error!("error reading cache file: {}", e);
-            HashSet::new()
-        })
+        match self.open_file() {
+            Ok(file_handler) => {
+                let mut inner = self.inner.borrow_mut();
+                inner.peers = file_handler.read_file().unwrap_or_else(|e| {
+                    info!("Failed to read bootstrap cache file: {}", e);
+                    HashSet::new()
+                })
+            }
+            Err(e) => info!("Failed to open bootstrap cache file: {}", e),
+        }
     }
 
     /// Inserts given peer to the cache.
-    #[allow(unused)]
-    pub fn put(&self, peer: &PeerInfo) {
+    pub fn put(&self, peer: PeerInfo) {
         let mut inner = self.inner.borrow_mut();
-        let _ = inner.peers.insert(peer.clone());
+        let _ = inner.peers.insert(peer);
     }
 
     /// Removes given peer from the cache.
@@ -72,14 +74,21 @@ impl Cache {
 
     /// Writes bootstrap cache to disk.
     pub fn commit(&self) -> ::Res<()> {
+        let file_handler = self.open_file()?;
         let inner = self.inner.borrow();
-        inner.file_handler.write_file(&inner.peers)?;
+        file_handler.write_file(&inner.peers)?;
         Ok(())
     }
 
     /// Returns current snapshot of peers in the cache.
-    pub fn peers_vec(&self) -> Vec<PeerInfo> {
-        self.inner.borrow().peers.iter().cloned().collect()
+    pub fn peers(&self) -> HashSet<PeerInfo> {
+        self.inner.borrow().peers.clone()
+    }
+
+    fn open_file(&self) -> ::Res<FileHandler<HashSet<PeerInfo>>> {
+        let inner = self.inner.borrow_mut();
+        let fname = inner.file_name.as_ref().cloned().unwrap_or(Self::get_default_file_name()?);
+        Ok(FileHandler::new(&fname, true)?)
     }
 }
 
@@ -93,7 +102,7 @@ mod tests {
         use std::fs::File;
         use std::io::Write;
         use std::net::SocketAddr;
-        use tests::utils::bootstrap_cache_tmp_file;
+        use tests::utils::{bootstrap_cache_tmp_file, peer_info_with_rand_key};
 
         /// # Arguments
         ///
@@ -142,12 +151,12 @@ mod tests {
                     ]
                 "#,
                 );
-                let cache = unwrap!(Cache::new(Some(&fname)));
+                let cache = Cache::new(Some(&fname));
 
                 cache.read_file();
 
                 let addrs: Vec<SocketAddr> =
-                    cache.peers_vec().iter().map(|peer| peer.addr).collect();
+                    cache.peers().iter().map(|peer| peer.addr).collect();
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
             }
@@ -155,12 +164,12 @@ mod tests {
 
         #[test]
         fn put() {
-            let cache = unwrap!(Cache::new(Some(&bootstrap_cache_tmp_file().into())));
+            let cache = Cache::new(None);
 
-            cache.put(&PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
-            cache.put(&PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+            cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+            cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
 
-            let addrs: Vec<SocketAddr> = cache.peers_vec().iter().map(|peer| peer.addr).collect();
+            let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
             assert_eq!(addrs.len(), 2);
             assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
             assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
@@ -168,13 +177,13 @@ mod tests {
 
         #[test]
         fn remove() {
-            let cache = unwrap!(Cache::new(Some(&bootstrap_cache_tmp_file().into())));
-            let peer = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-            cache.put(&peer);
+            let cache = Cache::new(None);
+            let peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+            cache.put(peer);
 
             cache.remove(&peer);
 
-            assert!(cache.peers_vec().is_empty());
+            assert!(cache.peers().is_empty());
         }
 
         mod commit {
@@ -183,16 +192,16 @@ mod tests {
             #[test]
             fn it_writes_cache_to_file() {
                 let tmp_fname = bootstrap_cache_tmp_file().into();
-                let cache = unwrap!(Cache::new(Some(&tmp_fname)));
-                cache.put(&PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
-                cache.put(&PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+                let cache = Cache::new(Some(&tmp_fname));
+                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
 
                 unwrap!(cache.commit());
 
-                let cache = unwrap!(Cache::new(Some(&tmp_fname)));
+                let cache = Cache::new(Some(&tmp_fname));
                 cache.read_file();
                 let addrs: Vec<SocketAddr> =
-                    cache.peers_vec().iter().map(|peer| peer.addr).collect();
+                    cache.peers().iter().map(|peer| peer.addr).collect();
                 assert_eq!(addrs.len(), 2);
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));

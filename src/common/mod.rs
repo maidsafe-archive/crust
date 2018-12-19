@@ -11,8 +11,6 @@ pub use self::core::{spawn_event_loop, Core, CoreMessage, CoreTimer, EventLoop};
 pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::state::State;
-#[cfg(test)]
-use safe_crypto::gen_encrypt_keypair;
 use safe_crypto::PublicEncryptKey;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
@@ -73,13 +71,6 @@ impl PeerInfo {
     /// Constructs peer info.
     pub fn new(addr: SocketAddr, pub_key: PublicEncryptKey) -> Self {
         Self { addr, pub_key }
-    }
-
-    /// Constructs peer info with random generated public key.
-    #[cfg(test)]
-    pub fn with_rand_key(addr: SocketAddr) -> Self {
-        let (pk, _) = gen_encrypt_keypair();
-        Self::new(addr, pk)
     }
 }
 

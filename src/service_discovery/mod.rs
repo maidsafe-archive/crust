@@ -207,7 +207,7 @@ mod tests {
 
         // Poll-0
         let el0 = unwrap!(
-            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0"), || Some(())),
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0"), || ()),
             "Could not run el0"
         );
 
@@ -250,7 +250,7 @@ mod tests {
 
         // Poll-1
         let el1 = unwrap!(
-            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1"), || Some(())),
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1"), || ()),
             "Could not run el1"
         );
 

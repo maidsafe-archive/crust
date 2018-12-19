@@ -36,7 +36,6 @@ pub struct Connect<UID: Uid> {
     our_nh: NameHash,
     our_id: UID,
     their_id: UID,
-    their_pk: PublicEncryptKey,
     self_weak: Weak<RefCell<Connect<UID>>>,
     children: HashSet<Token>,
     event_tx: ::CrustEventSender<UID>,
@@ -57,7 +56,6 @@ impl<UID: Uid> Connect<UID> {
     ) -> ::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
-        let their_pk = their_ci.our_pk;
 
         if their_direct.is_empty() {
             let _ = event_tx.send(Event::ConnectFailure(their_id));
@@ -73,7 +71,6 @@ impl<UID: Uid> Connect<UID> {
             our_nh,
             our_id: our_ci.id,
             their_id,
-            their_pk,
             self_weak: Weak::new(),
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
@@ -82,12 +79,14 @@ impl<UID: Uid> Connect<UID> {
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
+        let their_pk = their_ci.our_pk;
         let sockets = their_direct
             .into_iter()
             .filter_map(|addr| {
                 let info = PeerInfo::new(addr, their_pk);
                 TcpSock::connect(&addr).map(|sock| (sock, info)).ok()
-            }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
 
         for (mut socket, peer_info) in sockets {
             let shared_key = our_sk.shared_secret(&their_ci.our_pk);
@@ -151,12 +150,13 @@ impl<UID: Uid> Connect<UID> {
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
+            self.cache_peer_info(core, peer_info);
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc
                         .borrow_mut()
-                        .handle_connection_candidate(core, poll, child, res, peer_info);
+                        .handle_connection_candidate(core, poll, child, res);
                 }
             };
 
@@ -184,11 +184,9 @@ impl<UID: Uid> Connect<UID> {
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
-        peer_info: PeerInfo,
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            self.cache_peer_info(core, &socket);
             self.terminate(core, poll);
             return ActiveConnection::start(
                 core,
@@ -203,23 +201,15 @@ impl<UID: Uid> Connect<UID> {
                 Event::ConnectSuccess(self.their_id),
                 self.event_tx.clone(),
             );
-        } else {
-            self.remove_peer_from_cache(core, &peer_info);
         }
         self.maybe_terminate(core, poll);
     }
 
-    fn cache_peer_info(&self, core: &mut EventLoopCore, socket: &TcpSock) {
-        match socket.peer_addr() {
-            Ok(peer_addr) => {
-                let peer_info = PeerInfo::new(peer_addr, self.their_pk);
-                let bootstrap_cache = core.user_data_mut();
-                bootstrap_cache.put(&peer_info);
-                if let Err(e) = bootstrap_cache.commit() {
-                    warn!("Failed to write bootstrap cache to disk: {}", e);
-                }
-            }
-            Err(e) => warn!("Failed to get remote peer address: {}", e),
+    fn cache_peer_info(&self, core: &mut EventLoopCore, peer_info: PeerInfo) {
+        let bootstrap_cache = core.user_data_mut();
+        bootstrap_cache.put(peer_info);
+        if let Err(e) = bootstrap_cache.commit() {
+            info!("Failed to write bootstrap cache to disk: {}", e);
         }
     }
 
@@ -227,7 +217,7 @@ impl<UID: Uid> Connect<UID> {
         let bootstrap_cache = core.user_data_mut();
         bootstrap_cache.remove(peer_info);
         if let Err(e) = bootstrap_cache.commit() {
-            warn!("Failed to write bootstrap cache to disk: {}", e);
+            info!("Failed to write bootstrap cache to disk: {}", e);
         }
     }
 
@@ -280,9 +270,11 @@ mod tests {
         use common::ipv4_addr;
         use safe_crypto::gen_encrypt_keypair;
         use std::collections::HashMap;
-        use std::net::TcpListener;
         use std::sync::{Arc, Mutex};
-        use tests::utils::{get_event_sender, rand_uid, test_bootstrap_cache, test_core, UniqueId};
+        use tests::utils::{
+            get_event_sender, peer_info_with_rand_key, rand_uid, test_bootstrap_cache, test_core,
+            UniqueId,
+        };
 
         fn test_priv_conn_info() -> (PrivConnectionInfo<UniqueId>, SecretEncryptKey) {
             let (pk, sk) = gen_encrypt_keypair();
@@ -292,35 +284,6 @@ mod tests {
                 our_pk: pk,
             };
             (conn_info, sk)
-        }
-
-        /// Connects socket to localhost listener so that `socket.peer_addr()` would have smth
-        /// to return.
-        /// NOTE: this can be eliminated, if we start using `socket_collection::Socket` enum and it
-        /// would have in-memory socket implementation for testing.
-        /// `TcpListener` is always returned so that connection wouldn't be closed.
-        fn connected_socket() -> (TcpSock, TcpListener) {
-            use mio::{Events, Poll, PollOpt, Ready, Token};
-
-            let poll = unwrap!(Poll::new());
-            const SOCKET_TOKEN: Token = Token(0);
-
-            let listener = unwrap!(TcpListener::bind("127.0.0.1:0"));
-            let listener_addr = unwrap!(listener.local_addr());
-
-            let sock = unwrap!(TcpSock::connect(&listener_addr));
-            unwrap!(poll.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
-
-            let mut events = Events::with_capacity(1024);
-            loop {
-                let _ = unwrap!(poll.poll(&mut events, None));
-                for event in events.iter() {
-                    match event.token() {
-                        SOCKET_TOKEN => return (sock, listener),
-                        _ => panic!("Unexpected event"),
-                    }
-                }
-            }
         }
 
         #[test]
@@ -351,21 +314,20 @@ mod tests {
             let state = unwrap!(core.get_state(connect_state_token));
             let mut state = state.borrow_mut();
             let connect_state = unwrap!(state.as_any().downcast_mut::<Connect<UniqueId>>());
-            let (sock, _listener) = connected_socket();
+            let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
 
-            connect_state.cache_peer_info(&mut core, &sock);
+            connect_state.cache_peer_info(&mut core, peer_info);
 
-            let exp_info = PeerInfo::new(unwrap!(sock.peer_addr()), their_ci.our_pk);
-            let cached_peers = core.user_data().peers_vec();
+            let cached_peers = core.user_data().peers();
             assert_eq!(cached_peers.len(), 1);
-            assert_eq!(cached_peers[0], exp_info);
+            assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
         }
 
         #[test]
         fn remove_peer_from_cache_does_what_it_says() {
-            let cached_peer = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+            let cached_peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
             let bootstrap_cache = test_bootstrap_cache();
-            bootstrap_cache.put(&cached_peer);
+            bootstrap_cache.put(cached_peer);
             let mut core = test_core(bootstrap_cache);
             let poll = unwrap!(Poll::new());
 
@@ -395,7 +357,7 @@ mod tests {
 
             connect_state.remove_peer_from_cache(&mut core, &cached_peer);
 
-            let cached_peers = core.user_data().peers_vec();
+            let cached_peers = core.user_data().peers();
             assert!(cached_peers.is_empty());
         }
     }

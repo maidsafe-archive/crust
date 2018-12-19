@@ -73,7 +73,7 @@ impl<UID: Uid> Bootstrap<UID> {
         our_sk: &SecretEncryptKey,
     ) -> ::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
-        peers.extend(core.user_data().peers_vec());
+        peers.extend(core.user_data().peers());
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
 
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
@@ -162,9 +162,9 @@ impl<UID: Uid> Bootstrap<UID> {
             Ok((socket, peer_info, peer_id)) => {
                 {
                     let bootstrap_cache = core.user_data_mut();
-                    bootstrap_cache.put(&peer_info);
+                    bootstrap_cache.put(peer_info);
                     if let Err(e) = bootstrap_cache.commit() {
-                        warn!("Failed to write bootstrap cache to disk: {}", e);
+                        info!("Failed to write bootstrap cache to disk: {}", e);
                     }
                 }
 
@@ -188,7 +188,7 @@ impl<UID: Uid> Bootstrap<UID> {
                     let bootstrap_cache = core.user_data_mut();
                     bootstrap_cache.remove(&bad_peer);
                     if let Err(e) = bootstrap_cache.commit() {
-                        warn!("Failed to write bootstrap cache to disk: {}", e);
+                        info!("Failed to write bootstrap cache to disk: {}", e);
                     }
                 }
 
@@ -311,7 +311,7 @@ fn seek_peers(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tests::utils::{test_bootstrap_cache, test_core};
+    use tests::utils::{peer_info_with_rand_key, test_bootstrap_cache, test_core};
 
     mod seek_pers {
         use super::*;
@@ -350,7 +350,7 @@ mod tests {
                 let mut core = test_core(bootstrap_cache);
                 let poll = unwrap!(Poll::new());
 
-                let peer1 = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                let peer1 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                 let mut config = Config::default();
                 config.hard_coded_contacts = vec![peer1];
                 let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
@@ -376,7 +376,7 @@ mod tests {
                     our_pk,
                     &our_sk
                 ));
-                let peer_info = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                 let peer_uid = [2; 20];
                 let peer_socket = Default::default();
 
@@ -390,15 +390,15 @@ mod tests {
                     Ok((peer_socket, peer_info, peer_uid)),
                 );
 
-                let cached_peers = core.user_data().peers_vec();
-                assert_eq!(cached_peers[0], peer_info);
+                let cached_peers = core.user_data().peers();
+                assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
             }
 
             #[test]
             fn when_result_is_error_it_removes_peer_info_from_bootstrap_cache() {
                 let bootstrap_cache = test_bootstrap_cache();
-                let peer_info = PeerInfo::with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-                bootstrap_cache.put(&peer_info);
+                let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                bootstrap_cache.put(peer_info);
                 let mut core = test_core(bootstrap_cache);
                 let poll = unwrap!(Poll::new());
 
@@ -432,7 +432,7 @@ mod tests {
                 let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
                 bootstrap_state.handle_result(&mut core, &poll, Token(2), Err((peer_info, None)));
 
-                let cached_peers = core.user_data().peers_vec();
+                let cached_peers = core.user_data().peers();
                 assert!(cached_peers.is_empty());
             }
         }

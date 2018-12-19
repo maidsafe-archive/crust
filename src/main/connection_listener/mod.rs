@@ -271,7 +271,7 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
-            || Some(unwrap!(BootstrapCache::new(None))),
+            || BootstrapCache::new(None),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();
