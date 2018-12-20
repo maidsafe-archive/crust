@@ -21,6 +21,7 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::Duration;
 
@@ -39,12 +40,62 @@ fn gen_service_discovery_port() -> u16 {
     BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
 }
 
+fn test_service() -> (Service, Receiver<Event<UniqueId>>) {
+    let config = gen_config();
+    let (event_tx, event_rx) = get_event_sender();
+    let service = unwrap!(Service::with_config(event_tx, config, rand::random()));
+    (service, event_rx)
+}
+
+mod connect {
+    use super::*;
+
+    #[test]
+    fn successfully_connected_peer_contacts_are_cached() {
+        let (mut service1, event_rx1) = test_service();
+        let (service2, event_rx2) = test_service();
+
+        unwrap!(service1.start_listening_tcp());
+        expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        let uid1 = service1.id();
+
+        let (ci_tx1, ci_rx1) = mpsc::channel();
+
+        let token = rand::random();
+        service1.prepare_connection_info(token);
+        let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+
+        let token = rand::random();
+        service2.prepare_connection_info(token);
+        let ci2 = expect_event!(event_rx2, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        let pub_ci1 = unwrap!(ci_rx1.recv());
+        let pub_key1 = pub_ci1.our_pk;
+        let expected_conns: HashSet<PeerInfo> = pub_ci1
+            .for_direct
+            .iter()
+            .map(|addr| PeerInfo::new(*addr, pub_key1))
+            .collect();
+
+        unwrap!(service2.connect(ci2, pub_ci1));
+        expect_event!(event_rx2, Event::ConnectSuccess(id) => {
+            assert_eq!(id, uid1);
+        });
+
+        let cached_peers = unwrap!(service2.bootstrap_cached_peers());
+        assert!(cached_peers.is_subset(&expected_conns));
+    }
+}
+
 #[test]
 fn bootstrap_two_services_and_exchange_messages() {
-    let config0 = gen_config();
-    let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, config0, rand::random()));
-
+    let (mut service0, event_rx0) = test_service();
     unwrap!(service0.start_listening_tcp());
 
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);

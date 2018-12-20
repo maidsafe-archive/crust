@@ -605,6 +605,16 @@ impl<UID: Uid> Service<UID> {
         self.our_pk
     }
 
+    /// Returns a list of peers stored in bootstrap cache.
+    pub fn bootstrap_cached_peers(&self) -> crate::Res<HashSet<PeerInfo>> {
+        let (tx, rx) = mpsc::channel();
+        let _ = self.post(move |core, _| {
+            let cache = core.user_data();
+            let _ = tx.send(cache.peers());
+        });
+        rx.recv().map_err(CrustError::ChannelRecv)
+    }
+
     fn post<F>(&self, f: F) -> crate::Res<()>
     where
         F: FnOnce(&mut EventLoopCore, &Poll) + Send + 'static,

@@ -100,7 +100,7 @@ mod main;
 mod nat;
 mod service_discovery;
 
-pub use crate::common::{CrustUser, Uid};
+pub use crate::common::{CrustUser, PeerInfo, Uid};
 pub use crate::main::{
     read_config_file, Config, ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo, Service,
