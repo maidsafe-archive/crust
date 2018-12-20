@@ -2,13 +2,10 @@ env:
   global:
     - RUST_BACKTRACE=1
     - PATH=$PATH:$HOME/.cargo/bin
-    - RUST_STABLE=1.29.2
 os:
   - linux
   - osx
 language: rust
-rust:
-  - 1.29.2
 sudo: false
 branches:
   only:

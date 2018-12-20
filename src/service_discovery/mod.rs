@@ -11,7 +11,7 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{ipv4_addr, Core, PeerInfo, State};
+use crate::common::{ipv4_addr, Core, PeerInfo, State};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::PublicEncryptKey;
@@ -192,7 +192,7 @@ impl<T: 'static> State<T> for ServiceDiscovery<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use common::{self, CoreMessage};
+    use crate::common::{self, CoreMessage};
     use mio::Token;
     use safe_crypto::gen_encrypt_keypair;
     use std::str::FromStr;

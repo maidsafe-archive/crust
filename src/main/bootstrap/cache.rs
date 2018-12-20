@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::PeerInfo;
+use crate::common::PeerInfo;
 use config_file_handler::{self, FileHandler};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -31,7 +31,7 @@ impl Cache {
     /// `#get_default_file_name()`.
     pub fn new(file_name: Option<&OsString>) -> Self {
         let inner = Inner {
-            file_name: file_name.map(|s| s.clone()),
+            file_name: file_name.cloned(),
             peers: Default::default(),
         };
         Cache {
@@ -40,7 +40,7 @@ impl Cache {
     }
 
     /// Default bootstrap cache file name is executable file + '.bootstrap.cache' suffix.
-    pub fn get_default_file_name() -> ::Res<OsString> {
+    pub fn get_default_file_name() -> crate::Res<OsString> {
         let mut name = config_file_handler::exe_file_stem()?;
         name.push(".bootstrap.cache");
         Ok(name)
@@ -73,7 +73,7 @@ impl Cache {
     }
 
     /// Writes bootstrap cache to disk.
-    pub fn commit(&self) -> ::Res<()> {
+    pub fn commit(&self) -> crate::Res<()> {
         let file_handler = self.open_file()?;
         let inner = self.inner.borrow();
         file_handler.write_file(&inner.peers)?;
@@ -85,9 +85,13 @@ impl Cache {
         self.inner.borrow().peers.clone()
     }
 
-    fn open_file(&self) -> ::Res<FileHandler<HashSet<PeerInfo>>> {
+    fn open_file(&self) -> crate::Res<FileHandler<HashSet<PeerInfo>>> {
         let inner = self.inner.borrow_mut();
-        let fname = inner.file_name.as_ref().cloned().unwrap_or(Self::get_default_file_name()?);
+        let fname = inner
+            .file_name
+            .as_ref()
+            .cloned()
+            .unwrap_or(Self::get_default_file_name()?);
         Ok(FileHandler::new(&fname, true)?)
     }
 }
@@ -98,11 +102,11 @@ mod tests {
 
     mod cache {
         use super::*;
-        use common::ipv4_addr;
+        use crate::common::ipv4_addr;
+        use crate::tests::utils::{bootstrap_cache_tmp_file, peer_info_with_rand_key};
         use std::fs::File;
         use std::io::Write;
         use std::net::SocketAddr;
-        use tests::utils::{bootstrap_cache_tmp_file, peer_info_with_rand_key};
 
         /// # Arguments
         ///
@@ -155,8 +159,7 @@ mod tests {
 
                 cache.read_file();
 
-                let addrs: Vec<SocketAddr> =
-                    cache.peers().iter().map(|peer| peer.addr).collect();
+                let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
             }
@@ -200,8 +203,7 @@ mod tests {
 
                 let cache = Cache::new(Some(&tmp_fname));
                 cache.read_file();
-                let addrs: Vec<SocketAddr> =
-                    cache.peers().iter().map(|peer| peer.addr).collect();
+                let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
                 assert_eq!(addrs.len(), 2);
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));

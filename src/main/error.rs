@@ -7,12 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common;
+use crate::common;
+use crate::nat;
+use crate::service_discovery;
 use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
-use nat;
 use safe_crypto;
-use service_discovery;
 use socket_collection::SocketError;
 use std::io;
 use std::sync::mpsc;

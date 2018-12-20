@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{CoreTimer, CrustUser, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig, EventLoopCore};
+use crate::common::{CoreTimer, CrustUser, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig, EventLoopCore};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
@@ -33,7 +33,7 @@ impl<UID: Uid> ConfigRefresher<UID> {
         token: Token,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         trace!("Entered state ConfigRefresher");
 
         let timer = CoreTimer::new(token, 0);
@@ -128,7 +128,8 @@ impl<UID: Uid> State<BootstrapCache> for ConfigRefresher<UID> {
                             None
                         }
                     })
-            }).collect();
+            })
+            .collect();
 
         for peer in peers_to_terminate {
             peer.borrow_mut().terminate(core, poll);

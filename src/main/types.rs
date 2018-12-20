@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{self, Core, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::Config;
+use crate::common::{self, Core, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::Config;
 use mio::Token;
 use safe_crypto::PublicEncryptKey;
 use std::net::SocketAddr;
@@ -32,7 +32,7 @@ pub struct ConnectionInfoResult<UID> {
     /// The token that was passed to `prepare_connection_info`.
     pub result_token: u32,
     /// The new contact info, if successful.
-    pub result: ::Res<PrivConnectionInfo<UID>>,
+    pub result: crate::Res<PrivConnectionInfo<UID>>,
 }
 
 // ========================================================================================

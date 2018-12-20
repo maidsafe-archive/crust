@@ -10,9 +10,9 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::{
+use crate::common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, EventLoopCore,
     PrivConnectionInfo, PubConnectionInfo,
 };
@@ -38,7 +38,7 @@ pub struct Connect<UID: Uid> {
     their_id: UID,
     self_weak: Weak<RefCell<Connect<UID>>>,
     children: HashSet<Token>,
-    event_tx: ::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender<UID>,
     our_pk: PublicEncryptKey,
 }
 
@@ -50,10 +50,10 @@ impl<UID: Uid> Connect<UID> {
         their_ci: PubConnectionInfo<UID>,
         cm: ConnectionMap<UID>,
         our_nh: NameHash,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
 
@@ -267,14 +267,14 @@ mod tests {
 
     mod connect {
         use super::*;
-        use common::ipv4_addr;
-        use safe_crypto::gen_encrypt_keypair;
-        use std::collections::HashMap;
-        use std::sync::{Arc, Mutex};
-        use tests::utils::{
+        use crate::common::ipv4_addr;
+        use crate::tests::utils::{
             get_event_sender, peer_info_with_rand_key, rand_uid, test_bootstrap_cache, test_core,
             UniqueId,
         };
+        use safe_crypto::gen_encrypt_keypair;
+        use std::collections::HashMap;
+        use std::sync::{Arc, Mutex};
 
         fn test_priv_conn_info() -> (PrivConnectionInfo<UniqueId>, SecretEncryptKey) {
             let (pk, sk) = gen_encrypt_keypair();

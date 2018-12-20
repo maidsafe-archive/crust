@@ -12,16 +12,16 @@ mod try_peer;
 
 pub use self::cache::Cache;
 use self::try_peer::TryPeer;
-use common::{
+use crate::common::{
     BootstrapDenyReason, CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo, State, Uid,
 };
-use main::bootstrap::Cache as BootstrapCache;
-use main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event, EventLoopCore};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event, EventLoopCore};
+use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand::{self, Rng};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
-use service_discovery::ServiceDiscovery;
 use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
@@ -46,7 +46,7 @@ pub struct Bootstrap<UID: Uid> {
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
     our_uid: UID,
-    event_tx: ::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender<UID>,
     sd_meta: Option<ServiceDiscMeta>,
     bs_timer: CoreTimer,
     bs_timeout: Timeout,
@@ -68,10 +68,10 @@ impl<UID: Uid> Bootstrap<UID> {
         blacklist: HashSet<SocketAddr>,
         token: Token,
         service_discovery_token: Token,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
         peers.extend(core.user_data().peers());
         peers.extend(unwrap!(config.lock()).cfg.hard_coded_contacts.clone());
@@ -196,10 +196,9 @@ impl<UID: Uid> Bootstrap<UID> {
                     let mut is_err_fatal = true;
                     let err_msg = match reason {
                         BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
-                        #[cfg_attr(rustfmt, rustfmt_skip)]
                         BootstrapDenyReason::FailedExternalReachability => {
                             "Bootstrappee node could not establish connection to us."
-                        },
+                        }
                         BootstrapDenyReason::NodeNotWhitelisted => {
                             is_err_fatal = false;
                             "Our Node is not whitelisted"
@@ -285,14 +284,12 @@ fn seek_peers(
     core: &mut EventLoopCore,
     service_discovery_token: Token,
     token: Token,
-) -> ::Res<(Receiver<Vec<PeerInfo>>, Timeout)> {
+) -> crate::Res<(Receiver<Vec<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let state = unwrap!(
-            state
-                .as_any()
-                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
-        );
+        let state = unwrap!(state
+            .as_any()
+            .downcast_mut::<ServiceDiscovery<BootstrapCache>>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
@@ -311,7 +308,7 @@ fn seek_peers(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tests::utils::{peer_info_with_rand_key, test_bootstrap_cache, test_core};
+    use crate::tests::utils::{peer_info_with_rand_key, test_bootstrap_cache, test_core};
 
     mod seek_pers {
         use super::*;
@@ -336,13 +333,13 @@ mod tests {
 
         mod handle_result {
             use super::*;
-            use common::ipv4_addr;
-            use main::ConfigWrapper;
+            use crate::common::ipv4_addr;
+            use crate::main::ConfigWrapper;
+            use crate::tests::utils::{get_event_sender, rand_uid, UniqueId};
+            use crate::Config;
             use safe_crypto::gen_encrypt_keypair;
             use std::collections::HashMap;
             use std::sync::{Arc, Mutex};
-            use tests::utils::{get_event_sender, rand_uid, UniqueId};
-            use Config;
 
             #[test]
             fn when_result_is_success_it_puts_peer_info_into_bootstrap_cache() {

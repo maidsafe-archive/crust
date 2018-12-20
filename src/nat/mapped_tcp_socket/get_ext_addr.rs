@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, PeerInfo, State, Uid};
+use crate::common::{Core, Message, PeerInfo, State, Uid};
+use crate::nat::{util, NatError};
 use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
-use nat::{util, NatError};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;

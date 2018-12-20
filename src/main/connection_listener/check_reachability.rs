@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{CoreTimer, State};
-use main::bootstrap::Cache as BootstrapCache;
-use main::EventLoopCore;
+use crate::common::{CoreTimer, State};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::EventLoopCore;
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use socket_collection::TcpSock;
@@ -41,7 +41,7 @@ where
         their_listener: SocketAddr,
         t: T,
         finish: Finish<T>,
-    ) -> ::Res<Token> {
+    ) -> crate::Res<Token> {
         let socket = TcpSock::connect(&their_listener)?;
         let token = core.get_new_token();
 

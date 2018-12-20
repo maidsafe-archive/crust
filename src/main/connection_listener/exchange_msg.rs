@@ -8,17 +8,17 @@
 // Software.
 
 use super::check_reachability::CheckReachability;
-use common::{
+use crate::common::{
     BootstrapDenyReason, CoreTimer, CrustUser, ExternalReachability, Message, NameHash, State, Uid,
 };
-use main::bootstrap::Cache as BootstrapCache;
-use main::{
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
     CrustConfig, Event, EventLoopCore,
 };
+use crate::nat::ip_addr_is_global;
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
-use nat::ip_addr_is_global;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
@@ -35,7 +35,7 @@ pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
     config: CrustConfig,
-    event_tx: ::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender<UID>,
     name_hash: NameHash,
     next_state: NextState<UID>,
     our_uid: UID,
@@ -60,10 +60,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         let token = core.get_new_token();
 
         let kind = Ready::readable();
@@ -383,7 +383,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
             .or_insert(ConnectionId {
                 active_connection: None,
                 currently_handshaking: 0,
-            }).currently_handshaking += 1;
+            })
+            .currently_handshaking += 1;
         trace!(
             "Connection Map inserted: {:?} -> {:?}",
             their_uid,

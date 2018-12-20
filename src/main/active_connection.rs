@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{CoreTimer, CrustUser, Message, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::{ConnectionId, ConnectionMap, Event, EventLoopCore};
+use crate::common::{CoreTimer, CrustUser, Message, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{ConnectionId, ConnectionMap, Event, EventLoopCore};
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
 use socket_collection::{Priority, TcpSock};
@@ -37,7 +37,7 @@ pub struct ActiveConnection<UID: Uid> {
     our_id: UID,
     their_id: UID,
     their_role: CrustUser,
-    event_tx: ::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender<UID>,
     heartbeat: Heartbeat,
 }
 
@@ -52,7 +52,7 @@ impl<UID: Uid> ActiveConnection<UID> {
         their_id: UID,
         their_role: CrustUser,
         event: Event<UID>,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
     ) {
         trace!(
             "Entered state ActiveConnection: {:?} -> {:?}",
@@ -60,7 +60,7 @@ impl<UID: Uid> ActiveConnection<UID> {
             their_id
         );
 
-        let heartbeat = match Heartbeat::new(core, token) {
+        let heartbeat = match Heartbeat::try_new(core, token) {
             Ok(heartbeat) => heartbeat,
             Err(e) => {
                 debug!(
@@ -136,14 +136,14 @@ impl<UID: Uid> ActiveConnection<UID> {
 
     #[cfg(not(test))]
     /// Helper function that returns a socket address of the connection
-    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
-        use main::CrustError;
+    pub fn peer_addr(&self) -> crate::Res<SocketAddr> {
+        use crate::main::CrustError;
         self.socket.peer_addr().map_err(CrustError::SocketError)
     }
 
     #[cfg(test)]
     // TODO(nbaksalyar) find a better way to mock connection IPs
-    pub fn peer_addr(&self) -> ::Res<SocketAddr> {
+    pub fn peer_addr(&self) -> crate::Res<SocketAddr> {
         use std::str::FromStr;
         Ok(unwrap!(FromStr::from_str("192.168.0.1:0")))
     }
@@ -243,7 +243,7 @@ struct Heartbeat {
 }
 
 impl Heartbeat {
-    fn new(core: &mut EventLoopCore, state_id: Token) -> ::Res<Self> {
+    fn try_new(core: &mut EventLoopCore, state_id: Token) -> crate::Res<Self> {
         let recv_timer = CoreTimer::new(state_id, 0);
         let recv_timeout =
             core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer);
@@ -269,7 +269,7 @@ impl Heartbeat {
         }
     }
 
-    fn reset_receive(&mut self, core: &mut EventLoopCore) -> ::Res<()> {
+    fn reset_receive(&mut self, core: &mut EventLoopCore) -> crate::Res<()> {
         let _ = core.cancel_timeout(&self.recv_timeout);
         self.recv_timeout = core.set_timeout(
             Duration::from_millis(INACTIVITY_TIMEOUT_MS),
@@ -278,7 +278,7 @@ impl Heartbeat {
         Ok(())
     }
 
-    fn reset_send(&mut self, core: &mut EventLoopCore) -> ::Res<()> {
+    fn reset_send(&mut self, core: &mut EventLoopCore) -> crate::Res<()> {
         let _ = core.cancel_timeout(&self.send_timeout);
         self.send_timeout =
             core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer);

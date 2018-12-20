@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::PeerInfo;
+use crate::common::PeerInfo;
 use config_file_handler::{self, FileHandler};
 use std::collections::HashSet;
 use std::ffi::OsString;
@@ -80,7 +80,7 @@ impl Default for Config {
 }
 
 /// Reads the default crust config file.
-pub fn read_config_file() -> ::Res<Config> {
+pub fn read_config_file() -> crate::Res<Config> {
     let file_handler = FileHandler::new(&get_file_name()?, false)?;
     let cfg = file_handler.read_file()?;
     Ok(cfg)
@@ -95,7 +95,7 @@ pub fn read_config_file() -> ::Res<Config> {
 /// this file should be created by the installer for the dependent application.
 #[cfg(test)]
 #[allow(dead_code)]
-pub fn write_config_file(hard_coded_contacts: Option<Vec<PeerInfo>>) -> ::Res<PathBuf> {
+pub fn write_config_file(hard_coded_contacts: Option<Vec<PeerInfo>>) -> crate::Res<PathBuf> {
     use serde_json;
     use std::io::Write;
 
@@ -117,7 +117,7 @@ pub fn write_config_file(hard_coded_contacts: Option<Vec<PeerInfo>>) -> ::Res<Pa
     Ok(config_path)
 }
 
-fn get_file_name() -> ::Res<OsString> {
+fn get_file_name() -> crate::Res<OsString> {
     let mut name = config_file_handler::exe_file_stem()?;
     name.push(".crust.config");
     Ok(name)

@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::Core;
+use crate::common::Core;
 use mio::{Poll, Ready};
 use std::any::Any;
 

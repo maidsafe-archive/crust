@@ -10,11 +10,11 @@
 //! Defines the `MappingContext` type
 
 use super::NatError;
-use common::PeerInfo;
+use crate::common::PeerInfo;
+use crate::nat;
 use crossbeam;
 use get_if_addrs::{self, IfAddr};
 use igd::{self, Gateway};
-use nat;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::time::Duration;
 
@@ -28,7 +28,7 @@ pub struct MappingContext {
 
 impl MappingContext {
     /// Create a new `MappingContext`
-    pub fn new() -> Result<MappingContext, NatError> {
+    pub fn try_new() -> Result<Self, NatError> {
         let ifs = get_if_addrs::get_if_addrs()?;
         let (mut ifv4s, mut ifv6s) = (Vec::with_capacity(5), Vec::with_capacity(5));
         for interface in ifs {
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     #[ignore]
     fn igd_gateway_available() {
-        let mc = unwrap!(MappingContext::new(), "Could not instantiate MC");
+        let mc = unwrap!(MappingContext::try_new(), "Could not instantiate MC");
         assert!(!mc.our_ifv4s.is_empty());
 
         let mut loopback_found = false;

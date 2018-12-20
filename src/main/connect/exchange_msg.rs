@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Message, NameHash, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::{ConnectionId, ConnectionMap, EventLoopCore};
+use crate::common::{Message, NameHash, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{ConnectionId, ConnectionMap, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SharedSecretKey};
 use socket_collection::{EncryptContext, Priority, TcpSock};
@@ -47,7 +47,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         our_pk: PublicEncryptKey,
         shared_key: SharedSecretKey,
         finish: Finish,
-    ) -> ::Res<Token> {
+    ) -> crate::Res<Token> {
         let token = core.get_new_token();
 
         poll.register(
@@ -64,7 +64,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 .or_insert(ConnectionId {
                     active_connection: None,
                     currently_handshaking: 0,
-                }).currently_handshaking += 1;
+                })
+                .currently_handshaking += 1;
             trace!(
                 "Connection Map inserted: {:?} -> {:?}",
                 expected_id,

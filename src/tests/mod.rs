@@ -12,8 +12,8 @@ pub mod utils;
 
 pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
-use common::{CrustUser, PeerInfo};
-use main::{self, Config, DevConfig, Event};
+use crate::common::{CrustUser, PeerInfo};
+use crate::main::{self, Config, DevConfig, Event};
 use mio;
 use rand;
 use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
@@ -312,7 +312,8 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
-    use common::{Core, Message, State};
+    use crate::common::{Core, Message, State};
+    use crate::tests::UniqueId;
     use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
@@ -321,7 +322,6 @@ mod broken_peer {
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
-    use tests::UniqueId;
 
     pub struct Listen {
         listener: TcpListener,
@@ -401,15 +401,13 @@ mod broken_peer {
                 match self.socket.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(_, _, _, their_pk))) => {
                         let shared_key = self.our_sk.shared_secret(&their_pk);
-                        unwrap!(
-                            self.socket
-                                .set_encrypt_ctx(EncryptContext::authenticated(shared_key))
-                        );
+                        unwrap!(self
+                            .socket
+                            .set_encrypt_ctx(EncryptContext::authenticated(shared_key)));
                         let public_id: UniqueId = rand::random();
-                        let _ = unwrap!(
-                            self.socket
-                                .write(Some((Message::BootstrapGranted(public_id), 0)))
-                        );
+                        let _ = unwrap!(self
+                            .socket
+                            .write(Some((Message::BootstrapGranted(public_id), 0))));
                     }
                     Ok(Some(_)) | Ok(None) => (),
                     Err(_) => self.terminate(core, poll),
@@ -435,7 +433,7 @@ mod broken_peer {
 #[test]
 fn drop_peer_when_no_message_received_within_inactivity_period() {
     use self::broken_peer;
-    use common::{spawn_event_loop, CoreMessage};
+    use crate::common::{spawn_event_loop, CoreMessage};
     use mio::net::TcpListener;
 
     // Spin up the non-responsive peer.
@@ -468,7 +466,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 
 #[test]
 fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_period() {
-    use main::INACTIVITY_TIMEOUT_MS;
+    use crate::main::INACTIVITY_TIMEOUT_MS;
     use std::thread;
     use std::time::Duration;
 

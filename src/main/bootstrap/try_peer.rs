@@ -7,9 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{BootstrapDenyReason, ExternalReachability, Message, NameHash, PeerInfo, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::EventLoopCore;
+use crate::common::{
+    BootstrapDenyReason, ExternalReachability, Message, NameHash, PeerInfo, State, Uid,
+};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::EventLoopCore;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
@@ -48,7 +50,7 @@ impl<UID: Uid> TryPeer<UID> {
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         finish: Finish<UID>,
-    ) -> ::Res<Token> {
+    ) -> crate::Res<Token> {
         let mut socket = TcpSock::connect(&peer.addr)?;
         socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(peer.pub_key))?;
         let shared_key = our_sk.shared_secret(&peer.pub_key);

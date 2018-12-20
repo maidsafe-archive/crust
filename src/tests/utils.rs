@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{PeerInfo, Uid};
+use crate::common::{PeerInfo, Uid};
+use crate::main::{BootstrapCache, Config, Event, EventLoopCore};
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use main::{BootstrapCache, Config, Event, EventLoopCore};
 use mio_extras::channel::channel;
 use mio_extras::timer;
 use rand::{self, Rng};
@@ -48,7 +48,7 @@ pub fn rand_uid() -> UniqueId {
     rand::thread_rng().gen()
 }
 
-pub fn get_event_sender() -> (::CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
+pub fn get_event_sender() -> (crate::CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 

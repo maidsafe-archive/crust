@@ -65,11 +65,11 @@ extern crate log;
 extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
-extern crate clap;
-extern crate crust;
-extern crate maidsafe_utilities;
-extern crate rand;
-extern crate serde_json;
+use clap;
+use crust;
+use maidsafe_utilities;
+use rand;
+use serde_json;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
@@ -232,13 +232,15 @@ fn main() {
         .about(
             "The crust peer will run, using any config file it can find to \
              try and bootstrap off any provided peers.",
-        ).arg(
+        )
+        .arg(
             Arg::with_name("discovery-port")
                 .long("discovery-port")
                 .value_name("PORT")
                 .help("Set the port for local network service discovery")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("speed")
                 .short("s")
                 .long("speed")
@@ -246,8 +248,10 @@ fn main() {
                 .help(
                     "Keep sending random data at a maximum speed of RATE bytes/second to the \
                      first connected peer.",
-                ).takes_value(true),
-        ).get_matches();
+                )
+                .takes_value(true),
+        )
+        .get_matches();
 
     // Construct Service and start listening
     let (channel_sender, channel_receiver) = channel();
@@ -430,7 +434,8 @@ fn main() {
             unwrap!(
                 matches.value_of("speed"),
                 "Safe due to `running_speed_test` == true"
-            ).parse(),
+            )
+            .parse(),
             "Expected number for <speed>"
         );
         let mut rng = rand::thread_rng();
@@ -548,7 +553,8 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
         .setting(AppSettings::NoBinaryName)
         .subcommand(
             SubCommand::with_name("prepare-connection-info").about("Prepare a connection info"),
-        ).subcommand(
+        )
+        .subcommand(
             SubCommand::with_name("connect")
                 .about("Initiate a connection to the remote peer")
                 .arg(
@@ -556,13 +562,15 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .help("The ID of the connection info we gave to the peer")
                         .required(true)
                         .index(1),
-                ).arg(
+                )
+                .arg(
                     Arg::with_name("their-info")
                         .help("The connection info received from the peer")
                         .required(true)
                         .index(2),
                 ),
-        ).subcommand(
+        )
+        .subcommand(
             SubCommand::with_name("send")
                 .about("Send a string to the given peer")
                 .arg(
@@ -570,13 +578,15 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .help("ID of a connection as listed using the `list` command")
                         .required(true)
                         .index(1),
-                ).arg(
+                )
+                .arg(
                     Arg::with_name("message")
                         .help("The text to send to the peer(s)")
                         .required(true)
                         .index(2),
                 ),
-        ).subcommand(
+        )
+        .subcommand(
             SubCommand::with_name("send-all")
                 .about("Send a string to all connections")
                 .arg(
@@ -585,9 +595,11 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
                         .required(true)
                         .index(1),
                 ),
-        ).subcommand(
+        )
+        .subcommand(
             SubCommand::with_name("list").about("List existing connections and UDP sockets"),
-        ).subcommand(SubCommand::with_name("stop").about("Exit the app"))
+        )
+        .subcommand(SubCommand::with_name("stop").about("Exit the app"))
         .subcommand(SubCommand::with_name("help").about("Print this help"));
     let mut help_message = Vec::new();
     unwrap!(app.write_help(&mut help_message));

@@ -8,12 +8,12 @@
 // Software.
 
 use self::get_ext_addr::GetExtAddr;
-use common::{Core, CoreMessage, CoreTimer, State, Uid};
+use crate::common::{Core, CoreMessage, CoreTimer, State, Uid};
+use crate::nat::{util, MappingContext, NatError};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
-use nat::{util, MappingContext, NatError};
 use net2::TcpBuilder;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use std::any::Any;

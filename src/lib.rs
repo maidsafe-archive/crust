@@ -59,20 +59,17 @@
 )]
 // FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
 // on code in the master branch
-#![cfg_attr(
-    feature = "cargo-clippy",
-    allow(
-        clone_on_ref_ptr,
-        decimal_literal_representation,
-        needless_pass_by_value,
-        too_many_arguments
-    )
+#![allow(
+    clippy::clone_on_ref_ptr,
+    clippy::decimal_literal_representation,
+    clippy::needless_pass_by_value,
+    clippy::too_many_arguments
 )]
 #![recursion_limit = "128"]
 
 #[macro_use]
 extern crate log;
-#[cfg_attr(feature = "cargo-clippy", allow(useless_attribute))]
+#[allow(clippy::useless_attribute)]
 #[macro_use]
 extern crate quick_error;
 #[macro_use]
@@ -80,18 +77,17 @@ extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
 
-extern crate config_file_handler;
-extern crate crossbeam;
-extern crate get_if_addrs;
-extern crate igd;
-extern crate maidsafe_utilities;
-extern crate mio;
-extern crate mio_extras;
-extern crate net2;
-extern crate rand;
-extern crate safe_crypto;
-extern crate serde;
-extern crate socket_collection;
+use config_file_handler;
+use crossbeam;
+use get_if_addrs;
+use igd;
+use maidsafe_utilities;
+use mio;
+use mio_extras;
+use net2;
+use rand;
+use safe_crypto;
+use socket_collection;
 
 #[cfg(test)]
 extern crate serde_json;
@@ -104,8 +100,8 @@ mod main;
 mod nat;
 mod service_discovery;
 
-pub use common::{CrustUser, Uid};
-pub use main::{
+pub use crate::common::{CrustUser, Uid};
+pub use crate::main::{
     read_config_file, Config, ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
     PubConnectionInfo, Service,
 };

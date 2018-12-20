@@ -8,6 +8,7 @@ name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
 version = "0.31.0"
+edition = "2018"
 
 [dependencies]
 config_file_handler = "~0.11.0"

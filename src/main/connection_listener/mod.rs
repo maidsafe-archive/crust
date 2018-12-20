@@ -11,13 +11,13 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{NameHash, PeerInfo, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::{ConnectionMap, CrustConfig, Event, EventLoopCore};
+use crate::common::{NameHash, PeerInfo, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{ConnectionMap, CrustConfig, Event, EventLoopCore};
+use crate::nat::ip_addr_is_global;
+use crate::nat::{MappedTcpSocket, MappingContext};
 use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
-use nat::ip_addr_is_global;
-use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, TcpSock};
@@ -35,7 +35,7 @@ pub struct ConnectionListener<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
     config: CrustConfig,
-    event_tx: ::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender<UID>,
     listener: TcpListener,
     name_hash: NameHash,
     our_uid: UID,
@@ -59,7 +59,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         mc: Arc<MappingContext>,
         our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) {
@@ -82,7 +82,8 @@ impl<UID: Uid> ConnectionListener<UID> {
                         } else {
                             None
                         }
-                    }).collect();
+                    })
+                    .collect();
                 mapped_addrs.extend(global_addrs);
             }
             if let Err(e) = Self::handle_mapped_socket(
@@ -130,10 +131,10 @@ impl<UID: Uid> ConnectionListener<UID> {
         config: CrustConfig,
         our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         let listener = socket.listen(LISTENER_BACKLOG)?;
         let local_addr = listener.local_addr()?;
 
@@ -229,15 +230,16 @@ impl<UID: Uid> State<BootstrapCache> for ConnectionListener<UID> {
 mod tests {
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use super::*;
-    use common::{
+    use crate::common::{
         self, CoreMessage, CrustUser, ExternalReachability, Message, NameHash, HASH_SIZE,
     };
+    use crate::main::bootstrap::Cache as BootstrapCache;
+    use crate::main::{Event, EventLoop};
+    use crate::nat::MappingContext;
+    use crate::tests::UniqueId;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use main::bootstrap::Cache as BootstrapCache;
-    use main::{Event, EventLoop};
     use mio::Events;
     use mio::Token;
-    use nat::MappingContext;
     use rand;
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
@@ -248,7 +250,6 @@ mod tests {
     use std::sync::mpsc;
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
-    use tests::UniqueId;
 
     type ConnectionListener = super::ConnectionListener<UniqueId>;
 
@@ -276,10 +277,10 @@ mod tests {
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
-            ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
+            crate::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
-        let mc = Arc::new(unwrap!(MappingContext::new(), "Could not get MC"));
+        let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
         let config = Arc::new(Mutex::new(Default::default()));
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let (our_pk, our_sk) = gen_encrypt_keypair();

@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Message, State, Uid};
-use main::bootstrap::Cache as BootstrapCache;
-use main::{ConnectionId, ConnectionMap, EventLoopCore};
+use crate::common::{Message, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{ConnectionId, ConnectionMap, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use socket_collection::{Priority, TcpSock};
 use std::any::Any;
@@ -41,7 +41,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         our_id: UID,
         their_id: UID,
         finish: Finish,
-    ) -> ::Res<Token> {
+    ) -> crate::Res<Token> {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
             token,
             cm,

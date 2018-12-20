@@ -9,7 +9,7 @@
 
 // Defines `Core`, the mio handler and the core of the event loop.
 
-use common::{CommonError, Result, State};
+use crate::common::{CommonError, Result, State};
 use maidsafe_utilities::thread::{self, Joiner};
 use mio::{Event, Events, Poll, PollOpt, Ready, Token};
 use mio_extras::channel::{self, Receiver, Sender};
