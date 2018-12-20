@@ -11,12 +11,13 @@ mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use common::{Core, NameHash, PeerInfo, State, Uid};
-use main::{ConnectionMap, CrustConfig, Event};
+use crate::common::{NameHash, PeerInfo, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{ConnectionMap, CrustConfig, Event, EventLoopCore};
+use crate::nat::ip_addr_is_global;
+use crate::nat::{MappedTcpSocket, MappingContext};
 use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
-use nat::ip_addr_is_global;
-use nat::{MappedTcpSocket, MappingContext};
 use net2::TcpBuilder;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, TcpSock};
@@ -34,7 +35,7 @@ pub struct ConnectionListener<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
     config: CrustConfig,
-    event_tx: ::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender<UID>,
     listener: TcpListener,
     name_hash: NameHash,
     our_uid: UID,
@@ -46,7 +47,7 @@ pub struct ConnectionListener<UID: Uid> {
 
 impl<UID: Uid> ConnectionListener<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         handshake_timeout_sec: Option<u64>,
         port: u16,
@@ -58,53 +59,56 @@ impl<UID: Uid> ConnectionListener<UID> {
         mc: Arc<MappingContext>,
         our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) {
         let event_tx_0 = event_tx.clone();
         let our_sk2 = our_sk.clone();
 
-        let finish =
-            move |core: &mut Core, poll: &Poll, socket, mut mapped_addrs: Vec<SocketAddr>| {
-                let checker = |s: &SocketAddr| ip_addr_is_global(&s.ip()) && s.port() == port;
-                if force_include_port && port != 0 && !mapped_addrs.iter().any(checker) {
-                    let global_addrs: Vec<_> = mapped_addrs
-                        .iter()
-                        .filter_map(|s| {
-                            if ip_addr_is_global(&s.ip()) {
-                                let mut s = *s;
-                                s.set_port(port);
-                                Some(s)
-                            } else {
-                                None
-                            }
-                        }).collect();
-                    mapped_addrs.extend(global_addrs);
-                }
-                if let Err(e) = Self::handle_mapped_socket(
-                    core,
-                    poll,
-                    handshake_timeout_sec,
-                    socket,
-                    mapped_addrs,
-                    our_uid,
-                    name_hash,
-                    cm,
-                    config,
-                    our_listeners,
-                    token,
-                    event_tx.clone(),
-                    our_pk,
-                    our_sk,
-                ) {
-                    error!("TCP Listener failed to handle mapped socket: {:?}", e);
-                    let _ = event_tx.send(Event::ListenerFailed);
-                }
-            };
+        let finish = move |core: &mut EventLoopCore,
+                           poll: &Poll,
+                           socket,
+                           mut mapped_addrs: Vec<SocketAddr>| {
+            let checker = |s: &SocketAddr| ip_addr_is_global(&s.ip()) && s.port() == port;
+            if force_include_port && port != 0 && !mapped_addrs.iter().any(checker) {
+                let global_addrs: Vec<_> = mapped_addrs
+                    .iter()
+                    .filter_map(|s| {
+                        if ip_addr_is_global(&s.ip()) {
+                            let mut s = *s;
+                            s.set_port(port);
+                            Some(s)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                mapped_addrs.extend(global_addrs);
+            }
+            if let Err(e) = Self::handle_mapped_socket(
+                core,
+                poll,
+                handshake_timeout_sec,
+                socket,
+                mapped_addrs,
+                our_uid,
+                name_hash,
+                cm,
+                config,
+                our_listeners,
+                token,
+                event_tx.clone(),
+                our_pk,
+                our_sk,
+            ) {
+                error!("TCP Listener failed to handle mapped socket: {:?}", e);
+                let _ = event_tx.send(Event::ListenerFailed);
+            }
+        };
 
         if let Err(e) =
-            MappedTcpSocket::<_, UID>::start(core, poll, port, &mc, our_pk, &our_sk2, finish)
+            MappedTcpSocket::<_, UID, _>::start(core, poll, port, &mc, our_pk, &our_sk2, finish)
         {
             error!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
@@ -116,7 +120,7 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 
     fn handle_mapped_socket(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         timeout_sec: Option<u64>,
         socket: TcpBuilder,
@@ -127,10 +131,10 @@ impl<UID: Uid> ConnectionListener<UID> {
         config: CrustConfig,
         our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
-        event_tx: ::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         let listener = socket.listen(LISTENER_BACKLOG)?;
         let local_addr = listener.local_addr()?;
 
@@ -162,7 +166,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         Ok(())
     }
 
-    fn accept(&self, core: &mut Core, poll: &Poll) {
+    fn accept(&self, core: &mut EventLoopCore, poll: &Poll) {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
@@ -205,14 +209,14 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 }
 
-impl<UID: Uid> State for ConnectionListener<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<BootstrapCache> for ConnectionListener<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.accept(core, poll);
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = poll.deregister(&self.listener);
         let _ = core.remove_state(self.token);
     }
@@ -226,14 +230,16 @@ impl<UID: Uid> State for ConnectionListener<UID> {
 mod tests {
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use super::*;
-    use common::{
-        self, CoreMessage, CrustUser, EventLoop, ExternalReachability, Message, NameHash, HASH_SIZE,
+    use crate::common::{
+        self, CoreMessage, CrustUser, ExternalReachability, Message, NameHash, HASH_SIZE,
     };
+    use crate::main::bootstrap::Cache as BootstrapCache;
+    use crate::main::{Event, EventLoop};
+    use crate::nat::MappingContext;
+    use crate::tests::UniqueId;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use main::Event;
     use mio::Events;
     use mio::Token;
-    use nat::MappingContext;
     use rand;
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
@@ -244,7 +250,6 @@ mod tests {
     use std::sync::mpsc;
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
-    use tests::UniqueId;
 
     type ConnectionListener = super::ConnectionListener<UniqueId>;
 
@@ -267,14 +272,15 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
+            || BootstrapCache::new(None),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
-            ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
+            crate::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
-        let mc = Arc::new(unwrap!(MappingContext::new(), "Could not get MC"));
+        let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
         let config = Arc::new(Mutex::new(Default::default()));
         let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let (our_pk, our_sk) = gen_encrypt_keypair();

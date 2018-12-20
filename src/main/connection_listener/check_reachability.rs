@@ -7,7 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, State};
+use crate::common::{CoreTimer, State};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::EventLoopCore;
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use socket_collection::TcpSock;
@@ -19,7 +21,7 @@ use std::time::Duration;
 
 const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 
-pub type Finish<T> = Box<FnMut(&mut Core, &Poll, Token, Result<T, ()>)>;
+pub type Finish<T> = Box<FnMut(&mut EventLoopCore, &Poll, Token, Result<T, ()>)>;
 
 pub struct CheckReachability<T> {
     token: Token,
@@ -34,12 +36,12 @@ where
     T: 'static + Clone,
 {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         their_listener: SocketAddr,
         t: T,
         finish: Finish<T>,
-    ) -> ::Res<Token> {
+    ) -> crate::Res<Token> {
         let socket = TcpSock::connect(&their_listener)?;
         let token = core.get_new_token();
 
@@ -63,25 +65,25 @@ where
         Ok(token)
     }
 
-    fn handle_success(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_success(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         let t = self.t.clone();
         (*self.finish)(core, poll, token, Ok(t));
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, Err(()));
     }
 }
 
-impl<T> State for CheckReachability<T>
+impl<T> State<BootstrapCache> for CheckReachability<T>
 where
     T: 'static + Clone,
 {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if !kind.is_writable() {
             self.handle_error(core, poll);
         } else {
@@ -89,13 +91,13 @@ where
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         trace!(
             "Bootstrapper's external reachability check timed out to one of its given IP's. \
              Erroring out for this remote endpoint."

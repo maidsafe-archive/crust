@@ -7,20 +7,20 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::Core;
+use crate::common::Core;
 use mio::{Poll, Ready};
 use std::any::Any;
 
 use socket_collection::Priority;
 
-pub trait State {
+pub trait State<T> {
     fn as_any(&mut self) -> &mut Any;
 
-    fn ready(&mut self, _core: &mut Core, _poll: &Poll, _kind: Ready) {}
+    fn ready(&mut self, _core: &mut Core<T>, _poll: &Poll, _kind: Ready) {}
 
-    fn terminate(&mut self, _core: &mut Core, _poll: &Poll) {}
+    fn terminate(&mut self, _core: &mut Core<T>, _poll: &Poll) {}
 
-    fn timeout(&mut self, _core: &mut Core, _poll: &Poll, _timer_id: u8) {}
+    fn timeout(&mut self, _core: &mut Core<T>, _poll: &Poll, _timer_id: u8) {}
 
-    fn write(&mut self, _core: &mut Core, _poll: &Poll, _data: Vec<u8>, _priority: Priority) {}
+    fn write(&mut self, _core: &mut Core<T>, _poll: &Poll, _data: Vec<u8>, _priority: Priority) {}
 }

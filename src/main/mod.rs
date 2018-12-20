@@ -9,6 +9,8 @@
 
 pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
 pub use self::bootstrap::Bootstrap;
+#[cfg(test)]
+pub use self::bootstrap::Cache as BootstrapCache;
 pub use self::config_handler::{Config, DevConfig};
 pub use self::config_refresher::ConfigRefresher;
 pub use self::connect::Connect;
@@ -18,7 +20,8 @@ pub use self::error::CrustError;
 pub use self::event::Event;
 pub use self::service::Service;
 pub use self::types::{
-    ConfigWrapper, ConnectionId, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo,
+    ConfigWrapper, ConnectionId, ConnectionInfoResult, EventLoop, EventLoopCore,
+    PrivConnectionInfo, PubConnectionInfo,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

@@ -8,12 +8,12 @@
 // Software.
 
 use self::get_ext_addr::GetExtAddr;
-use common::{Core, CoreMessage, CoreTimer, State, Uid};
+use crate::common::{Core, CoreMessage, CoreTimer, State, Uid};
+use crate::nat::{util, MappingContext, NatError};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
-use nat::{util, MappingContext, NatError};
 use net2::TcpBuilder;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use std::any::Any;
@@ -29,7 +29,7 @@ mod get_ext_addr;
 const TIMEOUT_SEC: u64 = 3;
 
 /// A state which represents the in-progress mapping of a tcp socket.
-pub struct MappedTcpSocket<F, UID> {
+pub struct MappedTcpSocket<F, UID, T> {
     token: Token,
     socket: Option<TcpBuilder>,
     igd_children: usize,
@@ -37,17 +37,17 @@ pub struct MappedTcpSocket<F, UID> {
     mapped_addrs: Vec<SocketAddr>,
     timeout: Timeout,
     finish: Option<F>,
-    phantom: PhantomData<UID>,
+    phantom: PhantomData<(UID, T)>,
 }
 
-impl<F, UID> MappedTcpSocket<F, UID>
+impl<F, UID, T: 'static> MappedTcpSocket<F, UID, T>
 where
-    F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
+    F: FnOnce(&mut Core<T>, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
     UID: Uid,
 {
     /// Start mapping a tcp socket
     pub fn start(
-        core: &mut Core,
+        core: &mut Core<T>,
         poll: &Poll,
         port: u16,
         mc: &MappingContext,
@@ -87,7 +87,7 @@ where
 
                     let mut state = state.borrow_mut();
                     let mapping_tcp_sock =
-                        match state.as_any().downcast_mut::<MappedTcpSocket<F, UID>>() {
+                        match state.as_any().downcast_mut::<MappedTcpSocket<F, UID, T>>() {
                             Some(mapping_sock) => mapping_sock,
                             None => return,
                         };
@@ -117,7 +117,7 @@ where
         // Ask Stuns
         for stun in mc.peer_stuns() {
             let self_weak = Rc::downgrade(&state);
-            let handler = move |core: &mut Core, poll: &Poll, child_token, res| {
+            let handler = move |core: &mut Core<T>, poll: &Poll, child_token, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc
                         .borrow_mut()
@@ -125,9 +125,15 @@ where
                 }
             };
 
-            if let Ok(child) =
-                GetExtAddr::<UID>::start(core, poll, addr, stun, our_pk, our_sk, Box::new(handler))
-            {
+            if let Ok(child) = GetExtAddr::<UID, _>::start(
+                core,
+                poll,
+                addr,
+                stun,
+                our_pk,
+                our_sk,
+                Box::new(handler),
+            ) {
                 let _ = state.borrow_mut().stun_children.insert(child);
             }
         }
@@ -144,7 +150,7 @@ where
 
     fn handle_stun_resp(
         &mut self,
-        core: &mut Core,
+        core: &mut Core<T>,
         poll: &Poll,
         child: Token,
         res: Result<SocketAddr, ()>,
@@ -158,7 +164,7 @@ where
         }
     }
 
-    fn handle_igd_resp(&mut self, core: &mut Core, poll: &Poll, our_ext_addr: SocketAddr) {
+    fn handle_igd_resp(&mut self, core: &mut Core<T>, poll: &Poll, our_ext_addr: SocketAddr) {
         self.igd_children -= 1;
         self.mapped_addrs.push(our_ext_addr);
         if self.stun_children.is_empty() && self.igd_children == 0 {
@@ -166,7 +172,7 @@ where
         }
     }
 
-    fn terminate_children(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut Core<T>, poll: &Poll) {
         for token in self.stun_children.drain() {
             let child = match core.get_state(token) {
                 Some(state) => state,
@@ -178,16 +184,16 @@ where
     }
 }
 
-impl<F, UID> State for MappedTcpSocket<F, UID>
+impl<F, UID, T: 'static> State<T> for MappedTcpSocket<F, UID, T>
 where
-    F: FnOnce(&mut Core, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
+    F: FnOnce(&mut Core<T>, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
     UID: Uid,
 {
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _: u8) {
+    fn timeout(&mut self, core: &mut Core<T>, poll: &Poll, _: u8) {
         self.terminate(core, poll)
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core<T>, poll: &Poll) {
         self.terminate_children(core, poll);
         let _ = core.remove_state(self.token);
         let _ = core.cancel_timeout(&self.timeout);

@@ -7,13 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{self, CoreMessage};
+use crate::common;
+use crate::nat;
+use crate::service_discovery;
 use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
-use mio_extras;
-use nat;
 use safe_crypto;
-use service_discovery;
 use socket_collection::SocketError;
 use std::io;
 use std::sync::mpsc;
@@ -66,12 +65,9 @@ quick_error! {
             description("Common module error")
             from()
         }
-        /// CoreMsg send error
-        CoreMsgTx(e: mio_extras::channel::SendError<CoreMessage>) {
-            description(e.description())
-            display("CoreMessage send error: {}", e)
-            cause(e)
-            from()
+        /// CoreMessage send error
+        CoreMsgTx {
+            display("CoreMessage channel was destroyed")
         }
         /// Peer not found
         PeerNotFound {

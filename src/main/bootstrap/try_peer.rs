@@ -7,9 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{
-    BootstrapDenyReason, Core, ExternalReachability, Message, NameHash, PeerInfo, State, Uid,
+use crate::common::{
+    BootstrapDenyReason, ExternalReachability, Message, NameHash, PeerInfo, State, Uid,
 };
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::EventLoopCore;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
@@ -20,13 +22,14 @@ use std::rc::Rc;
 
 pub type Finish<UID> = Box<
     FnMut(
-        &mut Core,
+        &mut EventLoopCore,
         &Poll,
         Token,
         Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
     ),
 >;
 
+/// Sends bootstrap request to a one specific address and waits for response.
 pub struct TryPeer<UID: Uid> {
     token: Token,
     peer: PeerInfo,
@@ -38,7 +41,7 @@ pub struct TryPeer<UID: Uid> {
 
 impl<UID: Uid> TryPeer<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         poll: &Poll,
         peer: PeerInfo,
         our_uid: UID,
@@ -47,7 +50,7 @@ impl<UID: Uid> TryPeer<UID> {
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         finish: Finish<UID>,
-    ) -> ::Res<Token> {
+    ) -> crate::Res<Token> {
         let mut socket = TcpSock::connect(&peer.addr)?;
         socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(peer.pub_key))?;
         let shared_key = our_sk.shared_secret(&peer.pub_key);
@@ -78,13 +81,18 @@ impl<UID: Uid> TryPeer<UID> {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        msg: Option<(Message<UID>, Priority)>,
+    ) {
         if self.socket.write(msg).is_err() {
             self.handle_error(core, poll, None);
         }
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
@@ -111,14 +119,19 @@ impl<UID: Uid> TryPeer<UID> {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll, reason: Option<BootstrapDenyReason>) {
+    fn handle_error(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        reason: Option<BootstrapDenyReason>,
+    ) {
         self.terminate(core, poll);
         (*self.finish)(core, poll, self.token, Err((self.peer, reason)));
     }
 }
 
-impl<UID: Uid> State for TryPeer<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<BootstrapCache> for TryPeer<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() || kind.is_readable() {
             if kind.is_writable() {
                 let req = self.request.take();
@@ -137,7 +150,7 @@ impl<UID: Uid> State for TryPeer<UID> {
         self.handle_error(core, poll, None);
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
     }

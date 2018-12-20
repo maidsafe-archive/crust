@@ -12,8 +12,8 @@ pub mod utils;
 
 pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
-use common::{CrustUser, PeerInfo};
-use main::{self, Config, DevConfig, Event};
+use crate::common::{CrustUser, PeerInfo};
+use crate::main::{self, Config, DevConfig, Event};
 use mio;
 use rand;
 use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
@@ -21,6 +21,7 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::Duration;
 
@@ -39,12 +40,62 @@ fn gen_service_discovery_port() -> u16 {
     BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
 }
 
+fn test_service() -> (Service, Receiver<Event<UniqueId>>) {
+    let config = gen_config();
+    let (event_tx, event_rx) = get_event_sender();
+    let service = unwrap!(Service::with_config(event_tx, config, rand::random()));
+    (service, event_rx)
+}
+
+mod connect {
+    use super::*;
+
+    #[test]
+    fn successfully_connected_peer_contacts_are_cached() {
+        let (mut service1, event_rx1) = test_service();
+        let (service2, event_rx2) = test_service();
+
+        unwrap!(service1.start_listening_tcp());
+        expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        let uid1 = service1.id();
+
+        let (ci_tx1, ci_rx1) = mpsc::channel();
+
+        let token = rand::random();
+        service1.prepare_connection_info(token);
+        let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+
+        let token = rand::random();
+        service2.prepare_connection_info(token);
+        let ci2 = expect_event!(event_rx2, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        let pub_ci1 = unwrap!(ci_rx1.recv());
+        let pub_key1 = pub_ci1.our_pk;
+        let expected_conns: HashSet<PeerInfo> = pub_ci1
+            .for_direct
+            .iter()
+            .map(|addr| PeerInfo::new(*addr, pub_key1))
+            .collect();
+
+        unwrap!(service2.connect(ci2, pub_ci1));
+        expect_event!(event_rx2, Event::ConnectSuccess(id) => {
+            assert_eq!(id, uid1);
+        });
+
+        let cached_peers = unwrap!(service2.bootstrap_cached_peers());
+        assert!(cached_peers.is_subset(&expected_conns));
+    }
+}
+
 #[test]
 fn bootstrap_two_services_and_exchange_messages() {
-    let config0 = gen_config();
-    let (event_tx0, event_rx0) = get_event_sender();
-    let mut service0 = unwrap!(Service::with_config(event_tx0, config0, rand::random()));
-
+    let (mut service0, event_rx0) = test_service();
     unwrap!(service0.start_listening_tcp());
 
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
@@ -312,7 +363,8 @@ fn drop_disconnects() {
 // connections but then does nothing. It's purpose is to test that we detect
 // and handle non-responsive peers correctly.
 mod broken_peer {
-    use common::{Core, Message, State};
+    use crate::common::{Core, Message, State};
+    use crate::tests::UniqueId;
     use mio::net::TcpListener;
     use mio::{Poll, PollOpt, Ready, Token};
     use rand;
@@ -321,7 +373,6 @@ mod broken_peer {
     use std::any::Any;
     use std::cell::RefCell;
     use std::rc::Rc;
-    use tests::UniqueId;
 
     pub struct Listen {
         listener: TcpListener,
@@ -332,7 +383,7 @@ mod broken_peer {
 
     impl Listen {
         pub fn start(
-            core: &mut Core,
+            core: &mut Core<()>,
             poll: &Poll,
             listener: TcpListener,
             our_pk: PublicEncryptKey,
@@ -352,8 +403,8 @@ mod broken_peer {
         }
     }
 
-    impl State for Listen {
-        fn ready(&mut self, core: &mut Core, poll: &Poll, _: Ready) {
+    impl State<()> for Listen {
+        fn ready(&mut self, core: &mut Core<()>, poll: &Poll, _: Ready) {
             let (socket, _) = unwrap!(self.listener.accept());
             unwrap!(poll.deregister(&self.listener));
 
@@ -378,7 +429,7 @@ mod broken_peer {
 
     impl Connection {
         fn start(
-            core: &mut Core,
+            core: &mut Core<()>,
             poll: &Poll,
             token: Token,
             socket: TcpSock,
@@ -395,21 +446,19 @@ mod broken_peer {
         }
     }
 
-    impl State for Connection {
-        fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+    impl State<()> for Connection {
+        fn ready(&mut self, core: &mut Core<()>, poll: &Poll, kind: Ready) {
             if kind.is_readable() {
                 match self.socket.read::<Message<UniqueId>>() {
                     Ok(Some(Message::BootstrapRequest(_, _, _, their_pk))) => {
                         let shared_key = self.our_sk.shared_secret(&their_pk);
-                        unwrap!(
-                            self.socket
-                                .set_encrypt_ctx(EncryptContext::authenticated(shared_key))
-                        );
+                        unwrap!(self
+                            .socket
+                            .set_encrypt_ctx(EncryptContext::authenticated(shared_key)));
                         let public_id: UniqueId = rand::random();
-                        let _ = unwrap!(
-                            self.socket
-                                .write(Some((Message::BootstrapGranted(public_id), 0)))
-                        );
+                        let _ = unwrap!(self
+                            .socket
+                            .write(Some((Message::BootstrapGranted(public_id), 0))));
                     }
                     Ok(Some(_)) | Ok(None) => (),
                     Err(_) => self.terminate(core, poll),
@@ -421,7 +470,7 @@ mod broken_peer {
             }
         }
 
-        fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+        fn terminate(&mut self, core: &mut Core<()>, poll: &Poll) {
             let _ = core.remove_state(self.token);
             unwrap!(poll.deregister(&self.socket));
         }
@@ -435,11 +484,11 @@ mod broken_peer {
 #[test]
 fn drop_peer_when_no_message_received_within_inactivity_period() {
     use self::broken_peer;
-    use common::{spawn_event_loop, CoreMessage};
+    use crate::common::{spawn_event_loop, CoreMessage};
     use mio::net::TcpListener;
 
     // Spin up the non-responsive peer.
-    let el = unwrap!(spawn_event_loop(0, None));
+    let el = unwrap!(spawn_event_loop(0, None, || ()));
 
     let bind_addr = unwrap!(SocketAddr::from_str("127.0.0.1:0"), "Could not parse addr");
     let listener = unwrap!(TcpListener::bind(&bind_addr), "Could not bind listener");
@@ -468,7 +517,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
 
 #[test]
 fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_period() {
-    use main::INACTIVITY_TIMEOUT_MS;
+    use crate::main::INACTIVITY_TIMEOUT_MS;
     use std::thread;
     use std::time::Duration;
 

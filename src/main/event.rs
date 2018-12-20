@@ -9,7 +9,7 @@
 
 use super::ConnectionInfoResult;
 
-use common::{CrustUser, Uid};
+use crate::common::{CrustUser, Uid};
 use std::net::SocketAddr;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user

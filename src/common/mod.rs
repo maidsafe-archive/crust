@@ -16,7 +16,7 @@ use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
 use std::fmt;
 use std::hash::Hash;
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 pub const HASH_SIZE: usize = 32;
 pub type NameHash = [u8; HASH_SIZE];
@@ -72,6 +72,11 @@ impl PeerInfo {
     pub fn new(addr: SocketAddr, pub_key: PublicEncryptKey) -> Self {
         Self { addr, pub_key }
     }
+}
+
+/// A convevience method to build IPv4 address with a port number.
+pub fn ipv4_addr(a: u8, b: u8, c: u8, d: u8, port: u16) -> SocketAddr {
+    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), port))
 }
 
 mod core;

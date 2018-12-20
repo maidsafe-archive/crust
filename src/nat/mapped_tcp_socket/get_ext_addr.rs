@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, Message, PeerInfo, State, Uid};
+use crate::common::{Core, Message, PeerInfo, State, Uid};
+use crate::nat::{util, NatError};
 use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
-use nat::{util, NatError};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
@@ -18,24 +18,24 @@ use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut Core, &Poll, Token, Result<SocketAddr, ()>)>;
+pub type Finish<T> = Box<FnMut(&mut Core<T>, &Poll, Token, Result<SocketAddr, ()>)>;
 
-pub struct GetExtAddr<UID: Uid> {
+pub struct GetExtAddr<UID: Uid, T> {
     token: Token,
     socket: TcpSock,
     request: Option<(Message<UID>, Priority)>,
-    finish: Finish,
+    finish: Finish<T>,
 }
 
-impl<UID: Uid> GetExtAddr<UID> {
+impl<UID: Uid, T: 'static> GetExtAddr<UID, T> {
     pub fn start(
-        core: &mut Core,
+        core: &mut Core<T>,
         poll: &Poll,
         local_addr: SocketAddr,
         peer_stun: &PeerInfo,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
-        finish: Finish,
+        finish: Finish<T>,
     ) -> Result<Token, NatError> {
         let query_socket = util::new_reusably_bound_tcp_socket(&local_addr)?;
         let query_socket = query_socket.to_tcp_stream()?;
@@ -66,13 +66,13 @@ impl<UID: Uid> GetExtAddr<UID> {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core<T>, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
         if self.socket.write(msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut Core, poll: &Poll) {
+    fn receive_response(&mut self, core: &mut Core<T>, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);
@@ -84,15 +84,15 @@ impl<UID: Uid> GetExtAddr<UID> {
         }
     }
 
-    fn handle_error(&mut self, core: &mut Core, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut Core<T>, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, Err(()));
     }
 }
 
-impl<UID: Uid> State for GetExtAddr<UID> {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+impl<UID: Uid, T: 'static> State<T> for GetExtAddr<UID, T> {
+    fn ready(&mut self, core: &mut Core<T>, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             let req = self.request.take();
             self.write(core, poll, req);
@@ -102,7 +102,7 @@ impl<UID: Uid> State for GetExtAddr<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core<T>, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
     }

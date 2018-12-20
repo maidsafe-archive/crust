@@ -7,9 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::CoreMessage;
 use maidsafe_utilities::serialisation::SerialisationError;
-use mio_extras;
 use std::io;
 
 quick_error! {
@@ -44,11 +42,8 @@ quick_error! {
             description("Read zero bytes from the socket - indicates EOF")
         }
         /// CoreMessage send error
-        CoreMsgTx(e: mio_extras::channel::SendError<CoreMessage>) {
-            description(e.description())
-            display("CoreMessage send error: {}", e)
-            cause(e)
-            from()
+        CoreMsgTx {
+            display("CoreMessage channel was destroyed")
         }
     }
 }

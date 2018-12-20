@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::CommonError;
+use crate::common::CommonError;
 use socket_collection::SocketError;
 use std::io;
 

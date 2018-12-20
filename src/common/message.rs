@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{self, ExternalReachability, NameHash};
+use crate::common::{self, ExternalReachability, NameHash};
 use safe_crypto::PublicEncryptKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

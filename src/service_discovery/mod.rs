@@ -11,14 +11,15 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
-use common::{Core, PeerInfo, State};
+use crate::common::{ipv4_addr, Core, PeerInfo, State};
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::PublicEncryptKey;
 use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::marker::PhantomData;
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
@@ -33,7 +34,7 @@ enum DiscoveryMsg {
     Response(Vec<PeerInfo>),
 }
 
-pub struct ServiceDiscovery {
+pub struct ServiceDiscovery<T> {
     token: Token,
     socket: UdpSock,
     remote_addr: SocketAddr,
@@ -42,9 +43,10 @@ pub struct ServiceDiscovery {
     seek_peers_req: DiscoveryMsg,
     observers: Vec<Sender<Vec<PeerInfo>>>,
     our_pk: PublicEncryptKey,
+    phantom: PhantomData<T>,
 }
 
-impl ServiceDiscovery {
+impl<T: 'static> ServiceDiscovery<T> {
     /// Starts service discovery process.
     ///
     /// # Args
@@ -52,7 +54,7 @@ impl ServiceDiscovery {
     /// - listener_port - port we will be litening for incoming service discovery requests.
     /// - remote_port - port we will broadcasting service discovery requests to.
     pub fn start(
-        core: &mut Core,
+        core: &mut Core<T>,
         poll: &Poll,
         our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
@@ -75,6 +77,7 @@ impl ServiceDiscovery {
             seek_peers_req: DiscoveryMsg::Request { our_pk },
             observers: Vec::new(),
             our_pk,
+            phantom: PhantomData,
         };
 
         poll.register(
@@ -108,7 +111,7 @@ impl ServiceDiscovery {
         self.observers.push(obs);
     }
 
-    fn read(&mut self, core: &mut Core, poll: &Poll) {
+    fn read(&mut self, core: &mut Core<T>, poll: &Poll) {
         loop {
             match self.socket.read_frm() {
                 Ok(Some((msg, peer_addr))) => {
@@ -132,7 +135,7 @@ impl ServiceDiscovery {
 
     fn handle_incoming_msg(
         &mut self,
-        core: &mut Core,
+        core: &mut Core<T>,
         poll: &Poll,
         msg: DiscoveryMsg,
         peer_addr: SocketAddr,
@@ -155,7 +158,7 @@ impl ServiceDiscovery {
 
     fn write(
         &mut self,
-        core: &mut Core,
+        core: &mut Core<T>,
         poll: &Poll,
         msg: Option<(DiscoveryMsg, SocketAddr, Priority)>,
     ) {
@@ -166,8 +169,8 @@ impl ServiceDiscovery {
     }
 }
 
-impl State for ServiceDiscovery {
-    fn ready(&mut self, core: &mut Core, poll: &Poll, kind: Ready) {
+impl<T: 'static> State<T> for ServiceDiscovery<T> {
+    fn ready(&mut self, core: &mut Core<T>, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll);
         }
@@ -176,7 +179,7 @@ impl State for ServiceDiscovery {
         }
     }
 
-    fn terminate(&mut self, core: &mut Core, poll: &Poll) {
+    fn terminate(&mut self, core: &mut Core<T>, poll: &Poll) {
         let _ = poll.deregister(&self.socket);
         let _ = core.remove_state(self.token);
     }
@@ -186,14 +189,10 @@ impl State for ServiceDiscovery {
     }
 }
 
-fn ipv4_addr(a: u8, b: u8, c: u8, d: u8, port: u16) -> SocketAddr {
-    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), port))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use common::{self, CoreMessage};
+    use crate::common::{self, CoreMessage};
     use mio::Token;
     use safe_crypto::gen_encrypt_keypair;
     use std::str::FromStr;
@@ -208,7 +207,7 @@ mod tests {
 
         // Poll-0
         let el0 = unwrap!(
-            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0")),
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0"), || ()),
             "Could not run el0"
         );
 
@@ -243,7 +242,7 @@ mod tests {
             unwrap!(el0.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_0));
                 let mut inner = state.borrow_mut();
-                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>()).set_listen(true);
+                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery<()>>()).set_listen(true);
             })));
         }
 
@@ -251,7 +250,7 @@ mod tests {
 
         // Poll-1
         let el1 = unwrap!(
-            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1")),
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1"), || ()),
             "Could not run el1"
         );
 
@@ -284,7 +283,8 @@ mod tests {
             unwrap!(el1.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_1));
                 let mut inner = state.borrow_mut();
-                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>()).register_observer(tx);
+                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery<()>>())
+                    .register_observer(tx);
             })));
 
             // Seek peers
@@ -292,7 +292,7 @@ mod tests {
                 el1.send(CoreMessage::new(move |core, _| {
                     let state = unwrap!(core.get_state(token_1));
                     let mut inner = state.borrow_mut();
-                    let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery>());
+                    let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery<()>>());
                     unwrap!(sd.seek_peers());
                 })),
                 "Could not send to el1"

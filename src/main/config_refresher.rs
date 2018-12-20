@@ -7,8 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::{Core, CoreTimer, CrustUser, State, Uid};
-use main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig};
+use crate::common::{CoreTimer, CrustUser, State, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig, EventLoopCore};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
@@ -28,11 +29,11 @@ pub struct ConfigRefresher<UID: Uid> {
 
 impl<UID: Uid> ConfigRefresher<UID> {
     pub fn start(
-        core: &mut Core,
+        core: &mut EventLoopCore,
         token: Token,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
-    ) -> ::Res<()> {
+    ) -> crate::Res<()> {
         trace!("Entered state ConfigRefresher");
 
         let timer = CoreTimer::new(token, 0);
@@ -51,13 +52,13 @@ impl<UID: Uid> ConfigRefresher<UID> {
     }
 }
 
-impl<UID: Uid> State for ConfigRefresher<UID> {
-    fn terminate(&mut self, core: &mut Core, _poll: &Poll) {
+impl<UID: Uid> State<BootstrapCache> for ConfigRefresher<UID> {
+    fn terminate(&mut self, core: &mut EventLoopCore, _poll: &Poll) {
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
     }
 
-    fn timeout(&mut self, core: &mut Core, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         self.timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer);
 
         let config = match read_config_file() {
@@ -127,7 +128,8 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
                             None
                         }
                     })
-            }).collect();
+            })
+            .collect();
 
         for peer in peers_to_terminate {
             peer.borrow_mut().terminate(core, poll);

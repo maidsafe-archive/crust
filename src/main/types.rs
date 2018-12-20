@@ -7,8 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use common::Uid;
-use main::Config;
+use crate::common::{self, Core, Uid};
+use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::Config;
 use mio::Token;
 use safe_crypto::PublicEncryptKey;
 use std::net::SocketAddr;
@@ -31,7 +32,7 @@ pub struct ConnectionInfoResult<UID> {
     /// The token that was passed to `prepare_connection_info`.
     pub result_token: u32,
     /// The new contact info, if successful.
-    pub result: ::Res<PrivConnectionInfo<UID>>,
+    pub result: crate::Res<PrivConnectionInfo<UID>>,
 }
 
 // ========================================================================================
@@ -64,7 +65,7 @@ impl<UID: Uid> PrivConnectionInfo<UID> {
 //                                     PubConnectionInfo
 // ========================================================================================
 /// Contact info used to connect to another peer.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PubConnectionInfo<UID> {
     #[doc(hidden)]
     pub id: UID,
@@ -89,7 +90,6 @@ pub struct ConfigWrapper {
     pub cfg: Config,
     pub is_modified_for_next_refresh: bool,
 }
-
 impl ConfigWrapper {
     pub fn new(cfg: Config) -> Self {
         Self {
@@ -118,3 +118,10 @@ impl ConfigWrapper {
         should_refresh
     }
 }
+
+/// Crust event loop state object. It is owned by the same thread event loop is running on,
+/// it holds bootstrap cache and manages Crust states like `Connect`, `ConnectionCandidate`, etc.
+pub type EventLoopCore = Core<BootstrapCache>;
+
+/// Handle to Crust event loop that owns `EventLoopCore`.
+pub type EventLoop = common::EventLoop<BootstrapCache>;
