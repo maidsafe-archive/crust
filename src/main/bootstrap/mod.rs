@@ -20,7 +20,8 @@ use crate::main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Even
 use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
-use rand::{self, Rng};
+use rand;
+use rand::seq::SliceRandom;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::TcpSock;
 use std::any::Any;
@@ -123,7 +124,7 @@ impl<UID: Uid> Bootstrap<UID> {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
         }
-        rand::thread_rng().shuffle(&mut peers);
+        peers.shuffle(&mut rand::thread_rng());
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
