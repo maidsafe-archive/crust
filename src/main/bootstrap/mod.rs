@@ -159,14 +159,7 @@ impl<UID: Uid> Bootstrap<UID> {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_info, peer_id)) => {
-                {
-                    let bootstrap_cache = core.user_data_mut();
-                    bootstrap_cache.put(peer_info);
-                    if let Err(e) = bootstrap_cache.commit() {
-                        info!("Failed to write bootstrap cache to disk: {}", e);
-                    }
-                }
-
+                cache_peer_info(core, peer_info);
                 self.terminate(core, poll);
                 return ActiveConnection::start(
                     core,
@@ -274,6 +267,15 @@ impl<UID: Uid> State<BootstrapCache> for Bootstrap<UID> {
     }
 }
 
+/// Puts given peer contacts into bootstrap cache which is then written to disk.
+pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
+    let bootstrap_cache = core.user_data_mut();
+    bootstrap_cache.put(peer_info);
+    if let Err(e) = bootstrap_cache.commit() {
+        info!("Failed to write bootstrap cache to disk: {}", e);
+    }
+}
+
 struct ServiceDiscMeta {
     rx: Receiver<Vec<PeerInfo>>,
     timeout: Timeout,
@@ -335,6 +337,18 @@ mod tests {
     use crate::tests::utils::{peer_info_with_rand_key, test_bootstrap_cache, test_core};
     use crate::Config;
     use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn cache_peer_info_puts_peer_contacts_into_bootstrap_cache() {
+        let mut core = test_core(test_bootstrap_cache());
+        let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+
+        cache_peer_info(&mut core, peer_info);
+
+        let cached_peers = core.user_data().peers();
+        assert_eq!(cached_peers.len(), 1);
+        assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
+    }
 
     mod seek_pers {
         use super::*;
