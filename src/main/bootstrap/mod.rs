@@ -59,6 +59,7 @@ pub struct Bootstrap<UID: Uid> {
     self_weak: Weak<RefCell<Bootstrap<UID>>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
+    config: CrustConfig,
 }
 
 impl<UID: Uid> Bootstrap<UID> {
@@ -88,7 +89,7 @@ impl<UID: Uid> Bootstrap<UID> {
             }
         };
 
-        let peers = shuffled_bootstrap_peers(core.user_data().peers(), config, blacklist);
+        let peers = shuffled_bootstrap_peers(core.user_data().peers(), config.clone(), blacklist);
         let state = Rc::new(RefCell::new(Self {
             token,
             cm,
@@ -104,6 +105,7 @@ impl<UID: Uid> Bootstrap<UID> {
             self_weak: Weak::new(),
             our_pk,
             our_sk: our_sk.clone(),
+            config,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -159,7 +161,7 @@ impl<UID: Uid> Bootstrap<UID> {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_info, peer_id)) => {
-                cache_peer_info(core, peer_info);
+                cache_peer_info(core, peer_info, &self.config);
                 self.terminate(core, poll);
                 return ActiveConnection::start(
                     core,
@@ -268,7 +270,13 @@ impl<UID: Uid> State<BootstrapCache> for Bootstrap<UID> {
 }
 
 /// Puts given peer contacts into bootstrap cache which is then written to disk.
-pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
+pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo, config: &CrustConfig) {
+    let hard_coded_peers = &unwrap!(config.lock()).cfg.hard_coded_contacts;
+    if hard_coded_peers.contains(&peer_info) {
+        debug!("Connecting to hard coded peer - it won't be cached.");
+        return;
+    }
+
     let bootstrap_cache = core.user_data_mut();
     bootstrap_cache.put(peer_info);
     if let Err(e) = bootstrap_cache.commit() {
@@ -338,16 +346,36 @@ mod tests {
     use crate::Config;
     use std::sync::{Arc, Mutex};
 
-    #[test]
-    fn cache_peer_info_puts_peer_contacts_into_bootstrap_cache() {
-        let mut core = test_core(test_bootstrap_cache());
-        let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+    mod cache_peer_info {
+        use super::*;
 
-        cache_peer_info(&mut core, peer_info);
+        #[test]
+        fn it_puts_peer_contacts_into_bootstrap_cache() {
+            let mut core = test_core(test_bootstrap_cache());
+            let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+            let config = Config::default();
+            let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
 
-        let cached_peers = core.user_data().peers();
-        assert_eq!(cached_peers.len(), 1);
-        assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
+            cache_peer_info(&mut core, peer_info, &config);
+
+            let cached_peers = core.user_data().peers();
+            assert_eq!(cached_peers.len(), 1);
+            assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
+        }
+
+        #[test]
+        fn it_wont_cache_hard_coded_peer() {
+            let mut core = test_core(test_bootstrap_cache());
+            let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+            let mut config = Config::default();
+            config.hard_coded_contacts = vec![peer_info];
+            let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
+
+            cache_peer_info(&mut core, peer_info, &config);
+
+            let cached_peers = core.user_data().peers();
+            assert!(cached_peers.is_empty());
+        }
     }
 
     mod seek_pers {

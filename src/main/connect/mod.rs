@@ -13,8 +13,8 @@ use self::exchange_msg::ExchangeMsg;
 use crate::common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
 use crate::main::bootstrap;
 use crate::main::{
-    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, EventLoopCore,
-    PrivConnectionInfo, PubConnectionInfo,
+    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustConfig, CrustError, Event,
+    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
@@ -40,6 +40,7 @@ pub struct Connect<UID: Uid> {
     children: HashSet<Token>,
     event_tx: crate::CrustEventSender<UID>,
     our_pk: PublicEncryptKey,
+    config: CrustConfig,
 }
 
 impl<UID: Uid> Connect<UID> {
@@ -53,6 +54,7 @@ impl<UID: Uid> Connect<UID> {
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
+        config: CrustConfig,
     ) -> crate::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
@@ -75,6 +77,7 @@ impl<UID: Uid> Connect<UID> {
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
             our_pk,
+            config,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -150,7 +153,7 @@ impl<UID: Uid> Connect<UID> {
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            bootstrap::cache_peer_info(core, peer_info);
+            bootstrap::cache_peer_info(core, peer_info, &self.config);
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -260,10 +263,12 @@ mod tests {
     mod connect {
         use super::*;
         use crate::common::ipv4_addr;
+        use crate::main::ConfigWrapper;
         use crate::tests::utils::{
             get_event_sender, peer_info_with_rand_key, rand_uid, test_bootstrap_cache, test_core,
             UniqueId,
         };
+        use crate::Config;
         use safe_crypto::gen_encrypt_keypair;
         use std::collections::HashMap;
         use std::sync::{Arc, Mutex};
@@ -290,6 +295,8 @@ mod tests {
             let our_pk = our_ci.our_pk;
             let (their_ci, _) = test_priv_conn_info();
             let their_ci = their_ci.to_pub_connection_info();
+            let config = Config::default();
+            let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
 
             let conn_map = Arc::new(Mutex::new(HashMap::new()));
             let (event_tx, _event_rx) = get_event_sender();
@@ -302,7 +309,8 @@ mod tests {
                 [1; 32],
                 event_tx,
                 our_pk,
-                &our_sk
+                &our_sk,
+                config,
             ));
 
             let connect_state_token = Token(0);
