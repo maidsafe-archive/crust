@@ -29,9 +29,9 @@ impl Cache {
     /// Constructs new bootstrap cache. You can optionally specify the file name which will
     /// be used to read/write the cache to. If no file name is give, the default path is used, see
     /// `#get_default_file_name()`.
-    pub fn new(file_name: Option<&OsString>) -> Self {
+    pub fn new(file_name: Option<OsString>) -> Self {
         let inner = Inner {
-            file_name: file_name.cloned(),
+            file_name,
             peers: Default::default(),
         };
         Cache {
@@ -155,7 +155,7 @@ mod tests {
                     ]
                 "#,
                 );
-                let cache = Cache::new(Some(&fname));
+                let cache = Cache::new(Some(fname));
 
                 cache.read_file();
 
@@ -194,14 +194,14 @@ mod tests {
 
             #[test]
             fn it_writes_cache_to_file() {
-                let tmp_fname = bootstrap_cache_tmp_file().into();
-                let cache = Cache::new(Some(&tmp_fname));
+                let tmp_fname: OsString = bootstrap_cache_tmp_file().into();
+                let cache = Cache::new(Some(tmp_fname.clone()));
                 cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
                 cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
 
                 unwrap!(cache.commit());
 
-                let cache = Cache::new(Some(&tmp_fname));
+                let cache = Cache::new(Some(tmp_fname));
                 cache.read_file();
                 let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
                 assert_eq!(addrs.len(), 2);

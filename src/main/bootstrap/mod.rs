@@ -59,7 +59,6 @@ pub struct Bootstrap<UID: Uid> {
     self_weak: Weak<RefCell<Bootstrap<UID>>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
-    config: CrustConfig,
 }
 
 impl<UID: Uid> Bootstrap<UID> {
@@ -105,7 +104,6 @@ impl<UID: Uid> Bootstrap<UID> {
             self_weak: Weak::new(),
             our_pk,
             our_sk: our_sk.clone(),
-            config,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -161,7 +159,6 @@ impl<UID: Uid> Bootstrap<UID> {
         let _ = self.children.remove(&child);
         match res {
             Ok((socket, peer_info, peer_id)) => {
-                cache_peer_info(core, peer_info, &self.config);
                 self.terminate(core, poll);
                 return ActiveConnection::start(
                     core,
@@ -445,6 +442,10 @@ mod tests {
             use std::collections::HashMap;
 
             #[test]
+            // FIXME: (for povilas to check)
+            //        This test has been ignored for the reason mentioned inline below as another
+            //        FIXME.
+            #[ignore]
             fn when_result_is_success_it_puts_peer_info_into_bootstrap_cache() {
                 let bootstrap_cache = test_bootstrap_cache();
                 let mut core = test_core(bootstrap_cache);
@@ -476,6 +477,13 @@ mod tests {
                     our_pk,
                     &our_sk
                 ));
+                // FIXME: (for povilas to check)
+                //        The peer-info can only come from hard-coded-contacts, ServDisc or
+                //        bootstrap-cache itself. In none of those cases would you cache the info.
+                //        Besides, this info seems to come from nowhere and is expected to land
+                //        into the bootstrap-cache. This doesn't seem valid and hence ignoring this
+                //        test just now for povilas to investigate later (and delete this test if
+                //        no longer necessary).
                 let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                 let peer_uid = [2; 20];
                 let peer_socket = Default::default();

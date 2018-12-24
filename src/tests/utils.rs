@@ -106,7 +106,7 @@ pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore {
 /// Bootstrap cache on tmp directory with unique file name.
 pub fn test_bootstrap_cache() -> BootstrapCache {
     let cache_file = bootstrap_cache_tmp_file().into();
-    BootstrapCache::new(Some(&cache_file))
+    BootstrapCache::new(Some(cache_file))
 }
 
 /// Constructs peer info with random generated public key.
