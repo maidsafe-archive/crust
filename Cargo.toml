@@ -13,25 +13,25 @@ edition = "2018"
 [dependencies]
 config_file_handler = "~0.11.0"
 crossbeam = "~0.2.10"
-get_if_addrs = "~0.4.1"
-igd = "~0.6.0"
-log = "~0.3.6"
-maidsafe_utilities = "~0.16.0"
+get_if_addrs = "~0.5.3"
+igd = "~0.7.0"
+log = "~0.4.6"
+maidsafe_utilities = "~0.17.0"
 mio = "~0.6.9"
 mio-extras = "~2.0.5"
-net2 = "~0.2.30"
+net2 = "~0.2.33"
 quick-error = "~1.2.2"
-rand = "~0.3.15"
+rand = "~0.6.1"
 safe_crypto = "~0.5.0"
-serde = "~1.0.25"
-serde_derive = "~1.0.25"
-serde_json = "~1.0.8"
+serde = "~1.0.82"
+serde_derive = "~1.0.82"
+serde_json = "~1.0.33"
 # TODO(povilas): use new version, when released
 socket-collection = { git = "https://github.com/maidsafe/socket-collection", rev = "e1ba943" }
-unwrap = "~1.2.0"
+unwrap = "~1.2.1"
 
 [dev-dependencies]
-clap = "~2.25.1"
+clap = "~2.32.0"
 
 [[example]]
 bench = false
