@@ -74,7 +74,8 @@ use serde_json;
 use clap::{App, AppSettings, Arg, SubCommand};
 
 use crust::{Config, ConnectionInfoResult, Uid};
-use rand::{Rand, Rng};
+use rand::distributions::{Distribution, Standard};
+use rand::Rng;
 use std::cmp;
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -87,11 +88,10 @@ use std::time::{Duration, Instant};
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd, Hash)]
 struct UniqueId([u8; 20]);
 impl Uid for UniqueId {}
-impl Rand for UniqueId {
-    fn rand<R: Rng>(rng: &mut R) -> Self {
-        let mut inner = [0; 20];
-        rng.fill_bytes(&mut inner);
-        UniqueId(inner)
+
+impl Distribution<UniqueId> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> UniqueId {
+        rng.gen()
     }
 }
 

@@ -11,10 +11,10 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use crate::common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::bootstrap;
 use crate::main::{
-    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustError, Event, EventLoopCore,
-    PrivConnectionInfo, PubConnectionInfo,
+    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustConfig, CrustError, Event,
+    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
@@ -40,6 +40,7 @@ pub struct Connect<UID: Uid> {
     children: HashSet<Token>,
     event_tx: crate::CrustEventSender<UID>,
     our_pk: PublicEncryptKey,
+    config: CrustConfig,
 }
 
 impl<UID: Uid> Connect<UID> {
@@ -53,6 +54,7 @@ impl<UID: Uid> Connect<UID> {
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
+        config: CrustConfig,
     ) -> crate::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
@@ -75,6 +77,7 @@ impl<UID: Uid> Connect<UID> {
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
             our_pk,
+            config,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -150,7 +153,7 @@ impl<UID: Uid> Connect<UID> {
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            self.cache_peer_info(core, peer_info);
+            bootstrap::cache_peer_info(core, peer_info, &self.config);
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -205,14 +208,6 @@ impl<UID: Uid> Connect<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn cache_peer_info(&self, core: &mut EventLoopCore, peer_info: PeerInfo) {
-        let bootstrap_cache = core.user_data_mut();
-        bootstrap_cache.put(peer_info);
-        if let Err(e) = bootstrap_cache.commit() {
-            info!("Failed to write bootstrap cache to disk: {}", e);
-        }
-    }
-
     fn remove_peer_from_cache(&self, core: &mut EventLoopCore, peer_info: &PeerInfo) {
         let bootstrap_cache = core.user_data_mut();
         bootstrap_cache.remove(peer_info);
@@ -239,7 +234,7 @@ impl<UID: Uid> Connect<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for Connect<UID> {
+impl<UID: Uid> State<bootstrap::Cache> for Connect<UID> {
     fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, poll);
@@ -268,10 +263,12 @@ mod tests {
     mod connect {
         use super::*;
         use crate::common::ipv4_addr;
+        use crate::main::ConfigWrapper;
         use crate::tests::utils::{
             get_event_sender, peer_info_with_rand_key, rand_uid, test_bootstrap_cache, test_core,
             UniqueId,
         };
+        use crate::Config;
         use safe_crypto::gen_encrypt_keypair;
         use std::collections::HashMap;
         use std::sync::{Arc, Mutex};
@@ -287,43 +284,6 @@ mod tests {
         }
 
         #[test]
-        fn cache_peer_info_puts_peer_contacts_into_bootstrap_cache() {
-            let mut core = test_core(test_bootstrap_cache());
-            let poll = unwrap!(Poll::new());
-
-            let (our_ci, our_sk) = test_priv_conn_info();
-            let our_pk = our_ci.our_pk;
-            let (their_ci, _) = test_priv_conn_info();
-            let their_ci = their_ci.to_pub_connection_info();
-
-            let conn_map = Arc::new(Mutex::new(HashMap::new()));
-            let (event_tx, _event_rx) = get_event_sender();
-            unwrap!(Connect::start(
-                &mut core,
-                &poll,
-                our_ci,
-                their_ci.clone(),
-                conn_map,
-                [1; 32],
-                event_tx,
-                our_pk,
-                &our_sk
-            ));
-
-            let connect_state_token = Token(0);
-            let state = unwrap!(core.get_state(connect_state_token));
-            let mut state = state.borrow_mut();
-            let connect_state = unwrap!(state.as_any().downcast_mut::<Connect<UniqueId>>());
-            let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-
-            connect_state.cache_peer_info(&mut core, peer_info);
-
-            let cached_peers = core.user_data().peers();
-            assert_eq!(cached_peers.len(), 1);
-            assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
-        }
-
-        #[test]
         fn remove_peer_from_cache_does_what_it_says() {
             let cached_peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
             let bootstrap_cache = test_bootstrap_cache();
@@ -335,6 +295,8 @@ mod tests {
             let our_pk = our_ci.our_pk;
             let (their_ci, _) = test_priv_conn_info();
             let their_ci = their_ci.to_pub_connection_info();
+            let config = Config::default();
+            let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
 
             let conn_map = Arc::new(Mutex::new(HashMap::new()));
             let (event_tx, _event_rx) = get_event_sender();
@@ -347,7 +309,8 @@ mod tests {
                 [1; 32],
                 event_tx,
                 our_pk,
-                &our_sk
+                &our_sk,
+                config,
             ));
 
             let connect_state_token = Token(0);

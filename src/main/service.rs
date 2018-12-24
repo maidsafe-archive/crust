@@ -469,10 +469,11 @@ impl<UID: Uid> Service<UID> {
         let our_nh = self.name_hash;
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
+        let config = self.config.clone();
 
         self.post(move |core, poll| {
             let _ = Connect::start(
-                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk,
+                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk, config,
             );
         })?;
 
