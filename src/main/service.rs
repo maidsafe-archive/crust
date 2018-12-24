@@ -93,7 +93,7 @@ impl<UID: Uid> Service<UID> {
             EventToken::Unreserved as usize,
             Some(&format!("{:?}", our_uid)),
             move || {
-                let cache = BootstrapCache::new(bootstrap_cache_file.as_ref());
+                let cache = BootstrapCache::new(bootstrap_cache_file);
                 cache.read_file();
                 cache
             },
