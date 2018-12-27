@@ -7,13 +7,13 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::net::peer::BootstrapRequest;
+use crate::net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
+use crate::priv_prelude::*;
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
-use net::peer::BootstrapRequest;
-use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use p2p::{self, NatType, P2p};
-use priv_prelude::*;
 use rand::{self, Rng};
 use serde_json;
 use std::fs::File;
@@ -52,7 +52,7 @@ impl Service {
         our_sk: SecretEncryptKey,
         our_pk: PublicEncryptKey,
     ) -> BoxFuture<Service, CrustError> {
-        let try = || -> Result<_, CrustError> {
+        let r#try = || -> Result<_, CrustError> {
             Ok(Service::with_config(
                 handle,
                 ConfigFile::open_default()?,
@@ -60,7 +60,7 @@ impl Service {
                 our_pk,
             ))
         };
-        future::result(try()).flatten().into_boxed()
+        future::result(r#try()).flatten().into_boxed()
     }
 
     /// Create a new `Service` with the given configuration.
@@ -402,7 +402,7 @@ mod tests {
 
     mod set_rendezvous_servers {
         use super::*;
-        use config::PeerInfo;
+        use crate::config::PeerInfo;
 
         #[test]
         fn it_sets_hard_coded_contacts_as_rendezvous_servers() {

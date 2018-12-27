@@ -7,21 +7,21 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::service_discovery::msg::DiscoveryMsg;
+use crate::priv_prelude::*;
+use crate::util::SerdeUdpCodec;
 use future_utils::FutureExt;
 use futures::sink;
 use futures::stream::StreamFuture;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::{Async, Future, Sink, Stream};
 use maidsafe_utilities::serialisation::SerialisationError;
-use net::service_discovery::msg::DiscoveryMsg;
-use priv_prelude::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::{io, mem};
 use tokio_core::net::{UdpFramed, UdpSocket};
 use tokio_core::reactor::Handle;
-use util::SerdeUdpCodec;
 use void::Void;
 
 pub struct Server<T>

@@ -7,11 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use net::peer;
-use net::peer::connect::handshake_message::{
+use crate::net::peer;
+use crate::net::peer::connect::handshake_message::{
     BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
 };
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 quick_error! {
     /// Error returned when we fail to connect to some specific peer.

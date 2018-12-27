@@ -7,7 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::priv_prelude::*;
+use crate::{util, Service};
 use env_logger;
 use future_utils;
 use future_utils::bi_channel;
@@ -15,9 +17,7 @@ use futures::sync::oneshot;
 use netsim::device::ipv4::Ipv4NatBuilder;
 use netsim::node::Ipv4Node;
 use netsim::{self, Ipv4Range, Network};
-use priv_prelude::*;
 use tokio_core::reactor::Core;
-use {util, Service};
 
 fn bootstrap_over_poor_connection<F>(make_addr: F)
 where

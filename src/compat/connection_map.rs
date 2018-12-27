@@ -7,12 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::{CompatPeer, CompatPeerError, CrustEventSender, Event, Priority};
+use crate::compat::{CompatPeer, CompatPeerError, CrustEventSender, Event, Priority};
+use crate::priv_prelude::*;
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::{self, DropNotice, DropNotify};
 use futures::stream::{SplitSink, SplitStream};
 use log::LogLevel;
-use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
 /// Reference counted connection hashmap.
@@ -204,11 +204,11 @@ fn handle_peer_rx(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::crust_event_channel;
+    use crate::util::crust_event_channel;
 
     mod handle_peer_rx {
         use super::*;
-        use net::peer;
+        use crate::net::peer;
         use tokio_core::reactor::{Core, Handle};
         use tokio_io::codec::length_delimited::Framed;
 

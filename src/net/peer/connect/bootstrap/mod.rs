@@ -11,14 +11,14 @@ mod cache;
 mod try_peer;
 
 pub use self::try_peer::{ConnectHandshakeError, TryPeerError};
-use config::PeerInfo;
-pub use net::peer::connect::bootstrap::cache::{Cache, CacheError};
-use net::peer::connect::bootstrap::try_peer::try_peer;
-use net::peer::connect::handshake_message::BootstrapRequest;
-use net::service_discovery;
-use priv_prelude::*;
+use crate::config::PeerInfo;
+pub use crate::net::peer::connect::bootstrap::cache::{Cache, CacheError};
+use crate::net::peer::connect::bootstrap::try_peer::try_peer;
+use crate::net::peer::connect::handshake_message::BootstrapRequest;
+use crate::net::service_discovery;
+use crate::priv_prelude::*;
+use crate::service;
 use rand::{thread_rng, Rng};
-use service;
 
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 200;
 const BOOTSTRAP_TIMEOUT_SEC: u64 = 10;

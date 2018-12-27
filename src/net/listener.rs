@@ -7,11 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::protocol_agnostic::AcceptError;
+use crate::priv_prelude::*;
 use future_utils::{self, DropNotice, DropNotify};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use net::protocol_agnostic::AcceptError;
 use p2p::P2p;
-use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
 /// A handle for a single listening address. Drop this object to stop listening on this address.
@@ -235,10 +235,10 @@ impl Listener {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::util;
     use env_logger;
     use hamcrest::prelude::*;
     use tokio_core::reactor::Core;
-    use util;
 
     mod observable_addresses {
         use super::*;

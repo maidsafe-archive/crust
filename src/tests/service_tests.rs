@@ -7,16 +7,16 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use config::{DevConfigSettings, PeerInfo};
+use crate::config::{DevConfigSettings, PeerInfo};
+use crate::priv_prelude::*;
+use crate::service::Service;
+use crate::util;
 use env_logger;
 use future_utils::bi_channel;
 use futures::stream;
-use priv_prelude::*;
-use service::Service;
 use std::time::Duration;
 use tokio_core::reactor::Core;
 use tokio_io;
-use util;
 
 const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
 
@@ -380,7 +380,7 @@ fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
         .join(service2.connect(ci_channel2));
     let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
 
-    let data_len = ::MAX_PAYLOAD_SIZE + 10;
+    let data_len = crate::MAX_PAYLOAD_SIZE + 10;
     let mut data = vec![1u8; data_len];
     data[0] = ((data_len >> 24) & 0xff) as u8;
     data[1] = ((data_len >> 16) & 0xff) as u8;

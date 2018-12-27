@@ -7,17 +7,17 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::connection_map::ConnectionMap;
-use compat::event_loop::EventLoop;
-use compat::{event_loop, CompatPeer, CrustEventSender};
-use compat::{ConnectionInfoResult, Event, Priority};
-use error::CrustError;
+use crate::compat::connection_map::ConnectionMap;
+use crate::compat::event_loop::EventLoop;
+use crate::compat::{event_loop, CompatPeer, CrustEventSender};
+use crate::compat::{ConnectionInfoResult, Event, Priority};
+use crate::error::CrustError;
+#[cfg(test)]
+use crate::net::peer::DEFAULT_INACTIVITY_TIMEOUT;
+use crate::net::{service_discovery, ServiceDiscovery};
+use crate::priv_prelude::*;
 use future_utils::{self, bi_channel, DropNotify};
 use log::LogLevel;
-#[cfg(test)]
-use net::peer::DEFAULT_INACTIVITY_TIMEOUT;
-use net::{service_discovery, ServiceDiscovery};
-use priv_prelude::*;
 use std;
 
 pub trait FnBox {
@@ -426,7 +426,7 @@ impl Service {
                 let sd_port = config
                     .read()
                     .service_discovery_port
-                    .unwrap_or(::service::SERVICE_DISCOVERY_DEFAULT_PORT);
+                    .unwrap_or(crate::service::SERVICE_DISCOVERY_DEFAULT_PORT);
                 let our_sk = state.service.secret_id();
                 let our_pk = state.service.public_id();
                 let f = {
@@ -476,7 +476,7 @@ impl Service {
 }
 
 pub struct ServiceState {
-    service: ::Service,
+    service: crate::Service,
     event_tx: CrustEventSender,
     cm: ConnectionMap,
 
@@ -493,7 +493,7 @@ pub struct ServiceState {
 }
 
 impl ServiceState {
-    pub fn new(service: ::Service, event_tx: CrustEventSender) -> ServiceState {
+    pub fn new(service: crate::Service, event_tx: CrustEventSender) -> ServiceState {
         let cm = ConnectionMap::new(event_tx.clone());
         ServiceState {
             service,

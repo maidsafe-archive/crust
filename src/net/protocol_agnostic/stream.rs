@@ -7,12 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
+use crate::priv_prelude::*;
 use future_utils::bi_channel;
 use futures::sync::mpsc::SendError;
 use maidsafe_utilities::serialisation;
-use net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
 use p2p::P2p;
-use priv_prelude::*;
 use std::error::Error;
 use tokio_io;
 use tokio_io::codec::length_delimited::Framed;
@@ -731,7 +731,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use config::DevConfigSettings;
+    use crate::config::DevConfigSettings;
     use future_utils::bi_channel;
     use tokio_core::reactor::Core;
 
@@ -784,7 +784,7 @@ mod test {
                 let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
                 let config = unwrap!(ConfigFile::new_temporary());
-                let data = vec![1; ::MAX_PAYLOAD_SIZE + 1];
+                let data = vec![1; crate::MAX_PAYLOAD_SIZE + 1];
                 let send_data =
                     PaStream::direct_connect(&handle, &listener_addr, listener_pk, &config)
                         .map_err(|e| panic!("failed to connect: {}", e))
@@ -828,7 +828,7 @@ mod test {
                 let listener_addr = unwrap!(listener.local_addr()).unspecified_to_localhost();
 
                 let config = unwrap!(ConfigFile::new_temporary());
-                let data = vec![1; ::MAX_PAYLOAD_SIZE + 1];
+                let data = vec![1; crate::MAX_PAYLOAD_SIZE + 1];
                 let send_data = {
                     PaStream::direct_connect(&handle, &listener_addr, listener_pk, &config)
                         .map_err(|e| panic!("error connecting: {}", e))

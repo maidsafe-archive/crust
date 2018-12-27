@@ -116,16 +116,16 @@ mod priv_prelude;
 #[cfg(test)]
 mod tests;
 
-pub use common::CrustUser;
-pub use config::ConfigFile;
-pub use error::CrustError;
+pub use crate::common::CrustUser;
+pub use crate::config::ConfigFile;
+pub use crate::error::CrustError;
+pub use crate::net::{Listener, PaAddr, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo};
+pub use crate::service::Service;
 #[cfg(feature = "connections_info")]
 pub use net::peer::ConnectionResult;
 #[cfg(feature = "connections_info")]
 pub use net::SingleConnectionError;
-pub use net::{Listener, PaAddr, Peer, PeerError, PrivConnectionInfo, PubConnectionInfo};
 pub use p2p::NatType;
-pub use service::Service;
 
 /// Crust maximum message size
 pub const MAX_PAYLOAD_SIZE: usize = 8 * 1024 * 1024;

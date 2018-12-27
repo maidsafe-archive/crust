@@ -7,8 +7,8 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
-use priv_prelude::*;
+use crate::net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
+use crate::priv_prelude::*;
 use std::error::Error;
 use std::hash::{Hash, Hasher};
 

@@ -20,7 +20,7 @@ use std::fmt;
 mod connect;
 mod peer_message;
 
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 pub const DEFAULT_INACTIVITY_TIMEOUT: Duration = Duration::from_secs(120);
 pub const HEARTBEATS_PER_TIMEOUT: u32 = 5;

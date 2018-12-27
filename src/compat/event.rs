@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]

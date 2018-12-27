@@ -16,12 +16,12 @@ mod test;
 
 pub use self::discover::discover;
 pub use self::server::Server;
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::net::service_discovery;
+use crate::priv_prelude::*;
+use crate::service;
 use future_utils::{self, DropNotify};
 use futures::sync::mpsc::UnboundedReceiver;
-use net::service_discovery;
-use priv_prelude::*;
-use service;
 
 /// Advertises our current set of connectable listening addresses on the local network.
 pub struct ServiceDiscovery {

@@ -28,14 +28,14 @@ mod handshake_message;
 use self::choose::ChooseOneConnection;
 use self::demux::ConnectMessage;
 use self::handshake_message::{ConnectRequest, HandshakeMessage};
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::priv_prelude::*;
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::mpsc::UnboundedReceiver;
 use futures::sync::mpsc::{self, SendError};
 #[cfg(feature = "connections_info")]
 use futures::sync::oneshot;
 use p2p::P2p;
-use priv_prelude::*;
 #[cfg(feature = "connections_info")]
 use std::time::{Duration, Instant};
 #[cfg(feature = "connections_info")]

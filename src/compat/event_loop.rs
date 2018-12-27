@@ -7,12 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::service::{ServiceCommand, ServiceState};
-use compat::CrustEventSender;
-use error::CrustError;
+use crate::compat::service::{ServiceCommand, ServiceState};
+use crate::compat::CrustEventSender;
+use crate::error::CrustError;
+use crate::priv_prelude::*;
 use futures::sync::mpsc::{self, UnboundedSender};
 use maidsafe_utilities::thread::{self, Joiner};
-use priv_prelude::*;
 use std;
 use tokio_core::reactor::Core;
 
@@ -51,16 +51,16 @@ pub fn spawn_event_loop(
     let (result_tx, result_rx) = std::sync::mpsc::channel::<Result<_, CrustError>>();
 
     let joiner = thread::named(name, move || {
-        let try = move || {
+        let r#try = move || {
             let mut core = Core::new()?;
             let handle = core.handle();
 
-            let service = core.run(::Service::with_config(&handle, config, our_sk, our_pk))?;
+            let service = core.run(crate::Service::with_config(&handle, config, our_sk, our_pk))?;
             let service_state = ServiceState::new(service, event_tx);
             Ok((core, service_state))
         };
 
-        match try() {
+        match r#try() {
             Ok((mut core, mut service_state)) => {
                 let handle = core.handle();
                 let (tx, rx) = mpsc::unbounded::<ServiceCommand>();

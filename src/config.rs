@@ -9,11 +9,11 @@
 
 //! `Crust` config facilities. The main structure to use is `ConfigFile`.
 
+use crate::priv_prelude::*;
 use config_file_handler::{self, FileHandler};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use maidsafe_utilities::thread;
 use notify::{self, Watcher};
-use priv_prelude::*;
 use rand;
 use std;
 use std::env;

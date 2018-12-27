@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
+use crate::priv_prelude::*;
 use futures::stream::FuturesUnordered;
-use net::protocol_agnostic::{ListenerMsg, ListenerMsgKind};
 use p2p::{self, P2p};
-use priv_prelude::*;
 use tokio_core;
 use tokio_io::codec::length_delimited::Framed;
 use tokio_utp;

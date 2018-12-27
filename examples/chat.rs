@@ -61,6 +61,7 @@ extern crate crust;
 
 mod utils;
 
+use crate::utils::read_line;
 use bytes::Bytes;
 use chrono::Local;
 use clap::{App, Arg};
@@ -78,7 +79,6 @@ use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
-use utils::read_line;
 use void::Void;
 
 /// Leave some room for our metadata.

@@ -8,13 +8,13 @@
 // Software.
 
 use super::*;
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::net::service_discovery::server::Server;
+use crate::priv_prelude::*;
 use env_logger;
 use future_utils::StreamExt;
 use futures::sync::mpsc;
 use futures::{future, stream, Future, Stream};
-use net::service_discovery::server::Server;
-use priv_prelude::*;
 use std::time::Duration;
 use tokio_core::reactor::Core;
 

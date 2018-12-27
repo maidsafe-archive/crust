@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::priv_prelude::*;
 use future_utils::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::stream::{SplitSink, SplitStream};
 use futures::sync::oneshot;
-use priv_prelude::*;
 
 /// The maximum size of packets sent by `CompatPeer` in bytes.
 pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
@@ -329,9 +329,9 @@ impl Future for CompatPeerTask<Peer> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use net::peer;
+    use crate::net::peer;
+    use crate::util;
     use tokio_core::reactor::Core;
-    use util;
 
     mod compat_peer {
         use super::*;
@@ -439,7 +439,7 @@ mod test {
 
         mod poll_task {
             use super::*;
-            use config::ConfigFile;
+            use crate::config::ConfigFile;
 
             #[test]
             fn when_task_is_get_inner_stream_it_returns_true() {

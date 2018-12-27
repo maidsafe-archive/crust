@@ -13,8 +13,8 @@
 
 use self::ConnectError;
 use super::handshake_message::HandshakeMessage;
-use net::peer;
-use priv_prelude::*;
+use crate::net::peer;
+use crate::priv_prelude::*;
 
 /// When "choose connection" message is received, this data is given.
 type ChooseConnectionResult = Option<(HandshakeMessage, PaStream, PublicEncryptKey)>;

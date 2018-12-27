@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::priv_prelude::*;
 use config_file_handler;
 use notify;
 use p2p;
-use priv_prelude::*;
 
 quick_error! {
     /// Crust's universal error type.

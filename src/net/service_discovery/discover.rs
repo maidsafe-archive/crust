@@ -7,17 +7,17 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::service_discovery::msg::DiscoveryMsg;
+use crate::priv_prelude::*;
+use crate::util::SerdeUdpCodec;
 use futures::{Future, Sink, Stream};
 use get_if_addrs::{self, IfAddr};
 use maidsafe_utilities::serialisation::SerialisationError;
-use net::service_discovery::msg::DiscoveryMsg;
-use priv_prelude::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::net::Ipv4Addr;
 use tokio_core::net::UdpSocket;
 use tokio_core::reactor::Handle;
-use util::SerdeUdpCodec;
 
 /// Returns IP address and listener addresses of a first node to respond to service discovery
 /// request.

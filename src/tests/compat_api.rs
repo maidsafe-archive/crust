@@ -7,15 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::{self, Event};
-use config::{DevConfigSettings, PeerInfo};
+use crate::compat::{self, Event};
+use crate::config::{DevConfigSettings, PeerInfo};
+use crate::priv_prelude::*;
+use crate::util::{self, crust_event_channel};
 use env_logger;
-use priv_prelude::*;
 use rand;
 use std;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
-use util::{self, crust_event_channel};
 
 const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
 
