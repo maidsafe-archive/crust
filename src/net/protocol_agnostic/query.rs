@@ -50,17 +50,16 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
             .map_err(|e| match e {
                 ConnectReusableError::Bind(e) => QueryError::Bind(e),
                 ConnectReusableError::Connect(e) => QueryError::Connect(e),
-            }).and_then(move |stream| {
+            })
+            .and_then(move |stream| {
                 let (our_pk, our_sk) = gen_encrypt_keypair();
                 let msg = ListenerMsg {
                     client_pk: our_pk,
                     kind: ListenerMsgKind::EchoAddr,
                 };
-                let msg = try_bfut!(
-                    server_pk
-                        .anonymously_encrypt(&msg)
-                        .map_err(QueryError::Encrypt)
-                );
+                let msg = try_bfut!(server_pk
+                    .anonymously_encrypt(&msg)
+                    .map_err(QueryError::Encrypt));
                 let shared_secret = our_sk.shared_secret(&server_pk);
                 Framed::new(stream)
                     .send(msg)
@@ -75,8 +74,10 @@ impl TcpAddrQuerier for PaTcpAddrQuerier {
                                     shared_secret.decrypt(&msg).map_err(QueryError::Decrypt)?;
                                 Ok(msg)
                             })
-                    }).into_boxed()
-            }).with_timeout(Duration::from_secs(3), &handle0)
+                    })
+                    .into_boxed()
+            })
+            .with_timeout(Duration::from_secs(3), &handle0)
             .and_then(|addr_opt| addr_opt.ok_or(QueryError::TimedOut))
             .map_err(|e| Box::new(e) as Box<Error + Send>)
             .into_boxed()
@@ -116,12 +117,12 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
     ) -> BoxFuture<SocketAddr, Box<Error + Send>> {
         let handle = handle.clone();
         let handle0 = handle.clone();
-        let (socket, _listener) = try_bfut!(
-            UdpSocket::bind_connect_reusable(bind_addr, &self.addr, &handle)
-                .and_then(|socket| UtpSocket::from_socket(socket, &handle))
-                .map_err(QueryError::Bind)
-                .map_err(|e| Box::new(e) as Box<Error + Send>)
-        );
+        let (socket, _listener) = try_bfut!(UdpSocket::bind_connect_reusable(
+            bind_addr, &self.addr, &handle
+        )
+        .and_then(|socket| UtpSocket::from_socket(socket, &handle))
+        .map_err(QueryError::Bind)
+        .map_err(|e| Box::new(e) as Box<Error + Send>));
 
         let server_pk = self.server_pk;
         socket
@@ -133,11 +134,9 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
                     client_pk: our_pk,
                     kind: ListenerMsgKind::EchoAddr,
                 };
-                let msg = try_bfut!(
-                    server_pk
-                        .anonymously_encrypt(&msg)
-                        .map_err(QueryError::Encrypt)
-                );
+                let msg = try_bfut!(server_pk
+                    .anonymously_encrypt(&msg)
+                    .map_err(QueryError::Encrypt));
                 let shared_secret = our_sk.shared_secret(&server_pk);
                 Framed::new(stream)
                     .send(msg)
@@ -152,8 +151,10 @@ impl UdpAddrQuerier for PaUdpAddrQuerier {
                                     shared_secret.decrypt(&msg).map_err(QueryError::Decrypt)?;
                                 Ok(msg)
                             })
-                    }).into_boxed()
-            }).with_timeout(Duration::from_secs(3), &handle0)
+                    })
+                    .into_boxed()
+            })
+            .with_timeout(Duration::from_secs(3), &handle0)
             .and_then(|addr_opt| addr_opt.ok_or(QueryError::TimedOut))
             .map_err(|e| Box::new(e) as Box<Error + Send>)
             .into_boxed()

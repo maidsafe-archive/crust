@@ -188,7 +188,8 @@ where
                 their_conn_info.pub_key,
                 &config,
                 &bootstrap_cache,
-            ).map(move |result| match result {
+            )
+            .map(move |result| match result {
                 Ok(stream) => ConnectionResult {
                     result: Ok(()),
                     is_direct: true,
@@ -203,30 +204,32 @@ where
                     our_addr: None, // TODO(povilas): do best to determine our public address
                     their_addr: None, // TODO(povilas): get their addr
                 },
-            }).infallible::<SingleConnectionError>();
+            })
+            .infallible::<SingleConnectionError>();
 
             let our_p2p_conn_info = our_conn_info.p2p_conn_info.take();
-            let rendezvous_conns = try_connect_p2p(
-                our_p2p_conn_info,
-                their_conn_info.p2p_conn_info,
-            ).map(move |result| match result {
-                Ok(stream) => ConnectionResult {
-                    result: Ok(()),
-                    is_direct: false,
-                    duration: Instant::now().duration_since(connection_started),
-                    our_addr: stream.our_public_addr(),
-                    their_addr: stream.peer_addr().ok(),
-                },
-                Err(e) => ConnectionResult {
-                    result: Err(e),
-                    is_direct: false,
-                    duration: Instant::now().duration_since(connection_started),
-                    our_addr: None, // TODO(povilas): do best to determine our public address
-                    their_addr: None, // TODO(povilas): get their addr
-                },
-            });
+            let rendezvous_conns =
+                try_connect_p2p(our_p2p_conn_info, their_conn_info.p2p_conn_info).map(
+                    move |result| match result {
+                        Ok(stream) => ConnectionResult {
+                            result: Ok(()),
+                            is_direct: false,
+                            duration: Instant::now().duration_since(connection_started),
+                            our_addr: stream.our_public_addr(),
+                            their_addr: stream.peer_addr().ok(),
+                        },
+                        Err(e) => ConnectionResult {
+                            result: Err(e),
+                            is_direct: false,
+                            duration: Instant::now().duration_since(connection_started),
+                            our_addr: None, // TODO(povilas): do best to determine our public address
+                            their_addr: None, // TODO(povilas): get their addr
+                        },
+                    },
+                );
             future::ok(direct_conns.select(rendezvous_conns))
-        }).flatten_stream()
+        })
+        .flatten_stream()
         .when_consumed(|| {
             let _ = conns_done_tx.send(());
         });
@@ -240,7 +243,8 @@ where
             our_addr: None, // TODO(povilas): how can we determine public address remote peer connected to us?
             duration: Instant::now().duration_since(connection_started),
             their_addr: stream.peer_addr().ok(),
-        }).until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
+        })
+        .until(conns_done_rx.map_err(|_e| SingleConnectionError::DeadChannel));
 
     all_outgoing_connections
         .select(direct_incoming)
@@ -286,14 +290,16 @@ where
         .map(move |(peer, other_conns)| {
             finalize_connections(&handle, other_conns);
             peer
-        }).and_then(move |peer| {
+        })
+        .and_then(move |peer| {
             let ip = peer.ip().map_err(ConnectError::Peer)?;
             if config.is_peer_whitelisted(ip, CrustUser::Node) {
                 Ok(peer)
             } else {
                 Err(ConnectError::NotWhitelisted(ip))
             }
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 fn get_conn_info_and_connect<C>(
@@ -327,7 +333,8 @@ where
                 their_info,
                 &bootstrap_cache,
             ))
-        }).flatten_stream()
+        })
+        .flatten_stream()
         .into_boxed()
 }
 
@@ -348,9 +355,11 @@ where
         .map_err(|_e| SingleConnectionError::DeadChannel)
         .and_then(|(their_info_opt, _conn_info_rx)| {
             their_info_opt.ok_or(SingleConnectionError::DeadChannel)
-        }).and_then(move |their_info| {
+        })
+        .and_then(move |their_info| {
             validate_their_conn_info(&their_info, &our_uid, &config).map(move |()| their_info)
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 fn validate_their_conn_info(
@@ -405,7 +414,8 @@ fn finalize_connections(handle: &Handle, conns: BoxStream<PaStream, SingleConnec
         .log_error(
             LogLevel::Info,
             "Failed to gracefully shutdown unused socket",
-        ).then(|_| Ok(()));
+        )
+        .then(|_| Ok(()));
     handle.spawn(task);
 }
 
@@ -432,14 +442,16 @@ fn connect_directly(
                         .commit()
                         .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     conn
-                }).map_err(move |e| {
+                })
+                .map_err(move |e| {
                     bootstrap_cache2.remove(&PeerInfo::new(addr, their_pk2));
                     let _ = bootstrap_cache2
                         .commit()
                         .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     e
                 })
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     stream::futures_unordered(connections)
         .map_err(SingleConnectionError::DirectConnect)
         .into_boxed()
@@ -486,7 +498,8 @@ fn try_connect_directly(
                         Ok(Err(e))
                     }
                 })
-        }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     stream::futures_unordered(connections).into_boxed()
 }
 
@@ -505,7 +518,8 @@ fn handshake_incoming_connections(
                     .map_err(SingleConnectionError::Write)
                     .map(move |stream| (stream, connect_request.client_uid))
             })
-        }).and_then(|f| f)
+        })
+        .and_then(|f| f)
         .into_boxed()
 }
 
@@ -523,18 +537,21 @@ where
             stream
                 .send_serialized(HandshakeMessage::Connect(our_connect_request.clone()))
                 .map_err(SingleConnectionError::Write)
-        }).and_then(move |stream| {
+        })
+        .and_then(move |stream| {
             stream
                 .recv_serialized()
                 .map_err(SingleConnectionError::Read)
-        }).and_then(move |(msg_opt, stream)| match msg_opt {
+        })
+        .and_then(move |(msg_opt, stream)| match msg_opt {
             None => Err(SingleConnectionError::ConnectionDropped),
             Some(HandshakeMessage::Connect(connect_request)) => {
                 validate_connect_request(our_name_hash, &connect_request)?;
                 Ok((stream, connect_request.client_uid))
             }
             Some(_msg) => Err(SingleConnectionError::UnexpectedMessage),
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 /// Sends connection info to "rendezvous connect" task and waits for connection.
@@ -561,7 +578,8 @@ fn connect_p2p(
                         .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect))
                         .and_then(|res| res.map_err(SingleConnectionError::RendezvousConnect)),
                     )
-                }).flatten_stream()
+                })
+                .flatten_stream()
                 .into_boxed()
         }
         _ => stream::empty().into_boxed(),
@@ -592,7 +610,8 @@ fn try_connect_p2p(
                                     })
                             }),
                     )
-                }).flatten_stream()
+                })
+                .flatten_stream()
                 .into_boxed()
         }
         _ => stream::empty().into_boxed(),

@@ -88,7 +88,7 @@ fn service_discovery() {
     let sd = unwrap!(ServiceDiscovery::new(
         &handle,
         &config,
-        &hashset!{},
+        &hashset! {},
         rx,
         our_pk,
     ));
@@ -102,9 +102,9 @@ fn service_discovery() {
             .with_timeout(Duration::from_secs(2), &handle)
             .collect()
             .and_then(move |v| {
-                assert!(v.into_iter().any(|(_, addrs)| addrs == hashset!{}));
+                assert!(v.into_iter().any(|(_, addrs)| addrs == hashset! {}));
 
-                let some_addrs = hashset!{
+                let some_addrs = hashset! {
                     tcp_addr!("1.2.3.4:555"),
                     tcp_addr!("5.4.3.2:111"),
                 };
@@ -117,15 +117,16 @@ fn service_discovery() {
                     .and_then(move |()| {
                         discover::<HashSet<PeerInfo>>(&handle0, port, our_sk, our_pk)
                             .map_err(|e| panic!("discover error: {}", e))
-                    }).flatten_stream()
+                    })
+                    .flatten_stream()
                     .until({
                         Timeout::new(Duration::from_millis(200), &handle).map_err(|e| panic!(e))
-                    }).collect()
+                    })
+                    .collect()
                     .map(move |v| {
-                        assert!(
-                            v.into_iter()
-                                .any(|(_, peers)| peer_addrs(&peers) == some_addrs)
-                        );
+                        assert!(v
+                            .into_iter()
+                            .any(|(_, peers)| peer_addrs(&peers) == some_addrs));
                         drop(sd);
                     })
             })

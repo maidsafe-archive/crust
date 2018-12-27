@@ -120,14 +120,13 @@ impl PaStream {
                             connect_handshake(stream, &their_pk).map(|(framed, shared_secret)| {
                                 PaStream::from_framed_tcp_stream(framed, shared_secret)
                             })
-                        }).into_boxed()
+                        })
+                        .into_boxed()
                 }
             }
             PaAddr::Utp(utp_addr) => {
-                let (socket, _listener) = try_bfut!(
-                    UtpSocket::bind(&addr!("0.0.0.0:0"), handle)
-                        .map_err(DirectConnectError::UtpBind)
-                );
+                let (socket, _listener) = try_bfut!(UtpSocket::bind(&addr!("0.0.0.0:0"), handle)
+                    .map_err(DirectConnectError::UtpBind));
 
                 future::lazy(move || {
                     socket
@@ -138,7 +137,8 @@ impl PaStream {
                                 PaStream::from_framed_utp_stream(framed, shared_secret)
                             })
                         })
-                }).into_boxed()
+                })
+                .into_boxed()
             }
         }
     }
@@ -179,10 +179,8 @@ impl PaStream {
                                 tcp: if disable_tcp { None } else { tcp_msg_opt },
                                 utp: utp_msg_opt,
                             };
-                            let msg = try_bfut!(
-                                serialisation::serialise(&msg)
-                                    .map_err(PaRendezvousConnectError::SerializeMsg)
-                            );
+                            let msg = try_bfut!(serialisation::serialise(&msg)
+                                .map_err(PaRendezvousConnectError::SerializeMsg));
                             let msg = Bytes::from(msg);
                             channel
                                 .send(msg)
@@ -191,12 +189,13 @@ impl PaStream {
                                     channel.into_future().map_err(|(err, _channel)| {
                                         PaRendezvousConnectError::ChannelRead(err)
                                     })
-                                }).and_then(move |(msg_opt, _channel)| {
+                                })
+                                .and_then(move |(msg_opt, _channel)| {
                                     if let Some(msg) = msg_opt {
-                                        let msg: PaRendezvousMsg = (
-                                            serialisation::deserialise(&msg)
-                                                .map_err(PaRendezvousConnectError::DeserializeMsg)
-                                        )?;
+                                        let msg: PaRendezvousMsg = (serialisation::deserialise(
+                                            &msg,
+                                        )
+                                        .map_err(PaRendezvousConnectError::DeserializeMsg))?;
                                         if let Some(tcp) = msg.tcp {
                                             if !disable_tcp {
                                                 let _ = tcp_ch_0.unbounded_send(tcp);
@@ -210,7 +209,8 @@ impl PaStream {
                                     } else {
                                         Err(PaRendezvousConnectError::ChannelClosed)
                                     }
-                                }).into_boxed()
+                                })
+                                .into_boxed()
                         })
                 })
         };
@@ -262,19 +262,22 @@ impl PaStream {
                                         shared_secret,
                                         our_public_addr,
                                     })
-                            }).map_err(PaRendezvousConnectError::UtpFailure)
+                            })
+                            .map_err(PaRendezvousConnectError::UtpFailure)
                             .and_then(|stream| {
                                 stream
                                     .send_serialized(&ChooseMsg)
                                     .map_err(PaRendezvousConnectError::SendChoose)
-                            }).then(Ok)
+                            })
+                            .then(Ok)
                     };
                     let tcp_connect = tcp_connect
                         .and_then(|stream| {
                             stream
                                 .send_serialized(&ChooseMsg)
                                 .map_err(PaRendezvousConnectError::SendChoose)
-                        }).then(Ok);
+                        })
+                        .then(Ok);
 
                     // TODO(povilas): remove duplicate code with the else branch
                     let tcp_stream = if disable_tcp {
@@ -300,7 +303,8 @@ impl PaStream {
                                         shared_secret,
                                         our_public_addr,
                                     })
-                            }).map_err(PaRendezvousConnectError::UtpFailure)
+                            })
+                            .map_err(PaRendezvousConnectError::UtpFailure)
                             .and_then(take_chosen)
                             .then(Ok)
                     };
@@ -312,7 +316,8 @@ impl PaStream {
                     let connect = tcp_stream.select(utp_connect.into_stream()).into_boxed();
                     future::ok(connect).into_boxed()
                 }
-            }).flatten_stream()
+            })
+            .flatten_stream()
             .into_boxed()
     }
 
@@ -335,7 +340,8 @@ impl PaStream {
                     };
                     Ok((Some(deserialized), stream))
                 }
-            }).into_boxed()
+            })
+            .into_boxed()
     }
 
     pub fn peer_addr(&self) -> io::Result<PaAddr> {
@@ -383,11 +389,9 @@ fn connect_handshake<S: AsyncRead + AsyncWrite + 'static>(
         client_pk,
         kind: ListenerMsgKind::Connect,
     };
-    let msg = try_bfut!(
-        server_pk
-            .anonymously_encrypt(&req)
-            .map_err(DirectConnectError::Encrypt)
-    );
+    let msg = try_bfut!(server_pk
+        .anonymously_encrypt(&req)
+        .map_err(DirectConnectError::Encrypt));
     let msg = BytesMut::from(msg);
 
     let shared_secret = client_sk.shared_secret(server_pk);
@@ -407,7 +411,8 @@ fn take_chosen<Ei: 'static, Eo: 'static>(
         .and_then(|(msg_opt, stream)| {
             let _: ChooseMsg = msg_opt.ok_or(PaRendezvousConnectError::RemoteDisconnected)?;
             Ok(stream)
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 impl Stream for PaStream {
@@ -796,7 +801,8 @@ mod test {
                             .into_future()
                             .map_err(|(e, _stream)| panic!("Failed to read from client: {}", e))
                             .map(|(_msg_opt, _stream)| ())
-                    }).join(send_data);
+                    })
+                    .join(send_data);
                 let res = evloop.run(task);
 
                 match res {
@@ -848,7 +854,8 @@ mod test {
                             .into_future()
                             .map_err(|(e, _stream)| e)
                             .map(|(_msg_opt, _stream)| ())
-                    }).join(send_data);
+                    })
+                    .join(send_data);
 
                 let res = evloop.run(task);
                 match res {

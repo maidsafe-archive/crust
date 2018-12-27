@@ -201,15 +201,13 @@ mod direct_connections {
         let service2 = service_with_config(&mut evloop, config2);
 
         let (ci_channel1, ci_channel2) = bi_channel::unbounded();
-        let (service2_peer, service1_peer) = unwrap!(
-            evloop.run(
-                service2
-                    .connect(ci_channel2)
-                    .join(service1.connect(ci_channel1))
-                    .with_timeout(Duration::from_secs(5), &handle)
-                    .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
-            )
-        );
+        let (service2_peer, service1_peer) = unwrap!(evloop.run(
+            service2
+                .connect(ci_channel2)
+                .join(service1.connect(ci_channel1))
+                .with_timeout(Duration::from_secs(5), &handle)
+                .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
+        ));
         assert_eq!(service1_peer.public_id(), &service2.public_id());
         assert_eq!(service2_peer.public_id(), &service1.public_id());
     }
@@ -288,15 +286,13 @@ fn peer_shutdown_closes_remote_peer_too() {
 
     drop(service1_peer);
 
-    unwrap!(
-        event_loop.run(
-            service2_peer
-                .for_each(|_| Ok(()))
-                .map_err(|e| panic!("peer error: {}", e))
-                .with_timeout(Duration::from_secs(10), &loop_handle)
-                .and_then(|res| res.ok_or_else(|| panic!("timed out"))),
-        )
-    );
+    unwrap!(event_loop.run(
+        service2_peer
+            .for_each(|_| Ok(()))
+            .map_err(|e| panic!("peer error: {}", e))
+            .with_timeout(Duration::from_secs(10), &loop_handle)
+            .and_then(|res| res.ok_or_else(|| panic!("timed out"))),
+    ));
 }
 
 #[test]
@@ -506,8 +502,10 @@ mod encryption {
                                 PeerError::Read(_e) => Ok(()),
                                 e => panic!("unexpected error: {}", e),
                             })
-                    }).map(|(_service2_tcp, ())| ())
-            }).void_unwrap()
+                    })
+                    .map(|(_service2_tcp, ())| ())
+            })
+            .void_unwrap()
     }
 }
 

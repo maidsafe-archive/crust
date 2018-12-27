@@ -80,7 +80,8 @@ where
                                                 )
                                             })
                                     })
-                            }).while_driving(listening)
+                            })
+                            .while_driving(listening)
                             .map_err(|(e, _)| e)
                             .map(|((), _listening)| ())
                     })
@@ -116,7 +117,8 @@ where
                                                 peer.into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("error reading from peer: {}", e)
-                                                    }).map(move |(recv_data_opt, _peer)| {
+                                                    })
+                                                    .map(move |(recv_data_opt, _peer)| {
                                                         let recv_data = unwrap!(recv_data_opt);
                                                         assert_eq!(recv_data, send_data);
                                                         drop(service);
@@ -217,7 +219,8 @@ where
                                 drop_rx_b0.map(|()| {
                                     drop(service);
                                 })
-                            }).while_driving(listening)
+                            })
+                            .while_driving(listening)
                             .map_err(|(e, _)| e)
                             .map(|((), _listening)| ())
                     })
@@ -257,7 +260,8 @@ where
                                 drop_rx_b1.map(|()| {
                                     drop(service);
                                 })
-                            }).while_driving(listening)
+                            })
+                            .while_driving(listening)
                             .map_err(|(e, _)| e)
                             .map(|((), _listening)| ())
                     })
@@ -276,7 +280,8 @@ where
                         addr_rx_a1
                             .map_err(|_e| panic!("never received rendezvous server info"))
                             .map(|server_info_1| vec![server_info_0, server_info_1])
-                    }).and_then(|server_infos| {
+                    })
+                    .and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
                         let (our_pk, our_sk) = gen_encrypt_keypair();
@@ -294,7 +299,8 @@ where
                                                 peer.into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("receive error: {}", e)
-                                                    }).and_then(move |(recv_data_b, peer)| {
+                                                    })
+                                                    .and_then(move |(recv_data_b, peer)| {
                                                         drop(drop_tx_a0);
                                                         drop(drop_tx_a1);
                                                         drop(drop_tx_ac);
@@ -324,7 +330,8 @@ where
                         addr_rx_b1
                             .map_err(|_e| panic!("never received rendezvous server info"))
                             .map(|server_info_1| vec![server_info_0, server_info_1])
-                    }).and_then(|server_infos| {
+                    })
+                    .and_then(|server_infos| {
                         let config = unwrap!(ConfigFile::new_temporary());
                         unwrap!(config.write()).hard_coded_contacts = server_infos;
                         let (our_pk, our_sk) = gen_encrypt_keypair();
@@ -342,7 +349,8 @@ where
                                                 peer.into_future()
                                                     .map_err(|(e, _)| {
                                                         panic!("receive error: {}", e)
-                                                    }).and_then(move |(recv_data_a, peer)| {
+                                                    })
+                                                    .and_then(move |(recv_data_a, peer)| {
                                                         drop(drop_tx_b0);
                                                         drop(drop_tx_b1);
                                                         drop(drop_tx_bc);
@@ -523,7 +531,8 @@ mod probe_nat {
                     server2_info_rx
                         .map_err(|e| panic!(e))
                         .map(move |server2_info| (server1_info, server2_info))
-                }).and_then(|(server1_info, server2_info)| {
+                })
+                .and_then(|(server1_info, server2_info)| {
                     let config = unwrap!(ConfigFile::new_temporary());
                     unwrap!(config.write()).hard_coded_contacts = vec![server1_info, server2_info];
                     let (our_pk, our_sk) = gen_encrypt_keypair();
@@ -575,11 +584,13 @@ mod probe_nat {
                     server2_info_rx
                         .map_err(|e| panic!(e))
                         .map(move |server2_info| (server1_info, server2_info))
-                }).and_then(|(server1_info, server2_info)| {
+                })
+                .and_then(|(server1_info, server2_info)| {
                     server3_info_rx
                         .map_err(|e| panic!(e))
                         .map(move |server3_info| (server1_info, server2_info, server3_info))
-                }).and_then(|(server1_info, server2_info, server3_info)| {
+                })
+                .and_then(|(server1_info, server2_info, server3_info)| {
                     let config = unwrap!(ConfigFile::new_temporary());
                     unwrap!(config.write()).hard_coded_contacts =
                         vec![server1_info, server2_info, server3_info];

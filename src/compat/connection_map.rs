@@ -186,16 +186,19 @@ fn handle_peer_rx(
                 let _ = event_tx1.send(Event::LostPeer(uid1));
             }
             e
-        }).log_errors(LogLevel::Info, "receiving data from peer")
+        })
+        .log_errors(LogLevel::Info, "receiving data from peer")
         .until(drop_rx)
         .for_each(move |msg| {
             let vec = Vec::from(&msg[..]);
             let _ = event_tx2.send(Event::NewMessage(uid2, kind, vec));
             Ok(())
-        }).finally(move || {
+        })
+        .finally(move || {
             let _ = cm2.remove(&uid3);
             let _ = event_tx3.send(Event::LostPeer(uid3));
-        }).infallible()
+        })
+        .infallible()
 }
 
 #[cfg(test)]

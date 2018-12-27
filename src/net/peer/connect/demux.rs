@@ -177,7 +177,8 @@ fn handle_incoming_connections(
         .map(move |stream| {
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, stream)
-        }).buffer_unordered(MAX_INCOMING_CONNECTIONS_BACKLOG)
+        })
+        .buffer_unordered(MAX_INCOMING_CONNECTIONS_BACKLOG)
         .for_each(|()| Ok(()))
         .infallible()
         .into_boxed()
@@ -212,7 +213,8 @@ fn handle_incoming_socket(
                 }
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
             }
-        }).log_error(LogLevel::Error, "Failed to accept incoming connection")
+        })
+        .log_error(LogLevel::Error, "Failed to accept incoming connection")
         .into_boxed()
 }
 

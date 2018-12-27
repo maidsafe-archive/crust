@@ -69,7 +69,8 @@ pub fn spawn_event_loop(
                     rx.for_each(move |cb| {
                         cb.call_box(&mut service_state);
                         Ok(())
-                    }).and_then(move |()| {
+                    })
+                    .and_then(move |()| {
                         Timeout::new(Duration::from_millis(200), &handle).infallible()
                     })
                 });

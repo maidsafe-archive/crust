@@ -39,6 +39,7 @@ struct Inner {
 }
 
 impl Cache {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(name: Option<&OsStr>) -> Result<Self, CacheError> {
         let inner = Inner {
             file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,

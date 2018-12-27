@@ -33,7 +33,8 @@ pub fn read_line() -> BoxFuture<String, Void> {
         let mut line = String::new();
         unwrap!(stdin.read_line(&mut line));
         line
-    }).into_boxed()
+    })
+    .into_boxed()
 }
 
 /// Spawns background task that prints our connection info and waits for us to input theirs.
@@ -57,6 +58,7 @@ pub fn exchange_conn_info(
                 unwrap!(ci_channel2.unbounded_send(their_info));
                 Ok(())
             })
-        }).then(|_| Ok(()));
+        })
+        .then(|_| Ok(()));
     handle.spawn(exchange_ci);
 }

@@ -21,7 +21,7 @@ pub struct ConnectionInfoResult {
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
 #[derive(Debug)]
-#[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
+#[allow(clippy::large_enum_variant)]
 pub enum Event {
     /// Invoked when a bootstrap peer connects to us
     BootstrapAccept(PublicEncryptKey, CrustUser),

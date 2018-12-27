@@ -31,6 +31,7 @@ pub struct ServiceDiscovery {
 
 impl ServiceDiscovery {
     /// Runs service discovery server in the backround.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
@@ -61,7 +62,8 @@ impl ServiceDiscovery {
                         .collect();
                     server.set_data(addrs);
                     Ok(())
-                }).until(drop_rx.infallible())
+                })
+                .until(drop_rx.infallible())
                 .map(|_unit_opt| ())
         });
 

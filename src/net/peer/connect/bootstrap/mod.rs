@@ -43,7 +43,7 @@ quick_error! {
 /// Try to bootstrap to the network.
 ///
 /// On success, returns the first peer that we've bootstrapped to.
-#[cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
+#[allow(clippy::too_many_arguments)]
 pub fn bootstrap(
     handle: &Handle,
     request: BootstrapRequest,
@@ -84,7 +84,8 @@ pub fn bootstrap(
                 .with_timeout(Duration::from_secs(BOOTSTRAP_TIMEOUT_SEC), &handle2)
                 .first_ok()
                 .map_err(|errs| BootstrapError::AllPeersFailed(errs.into_iter().collect()))
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 fn discover_peers_on_lan(
@@ -107,7 +108,8 @@ fn discover_peers_on_lan(
                 .with_timeout(Duration::from_millis(SERVICE_DISCOVERY_TIMEOUT_MS), &handle)
                 .infallible()
                 .into_boxed()
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 /// Attempts to bootstrap to single given peer.
@@ -141,14 +143,16 @@ fn bootstrap_to_peer(
                         .commit()
                         .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     peer_conn
-                }).map_err(move |e| {
+                })
+                .map_err(move |e| {
                     cache2.remove(&peer2);
                     let _ = cache2
                         .commit()
                         .map_err(|e| error!("Failed to commit bootstrap cache: {}", e));
                     (peer2.addr, e)
                 })
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 /// Randomly shuffle vector items and return the vector.
