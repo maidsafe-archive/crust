@@ -442,67 +442,6 @@ mod tests {
             use std::collections::HashMap;
 
             #[test]
-            // FIXME: (for povilas to check)
-            //        This test has been ignored for the reason mentioned inline below as another
-            //        FIXME.
-            #[ignore]
-            fn when_result_is_success_it_puts_peer_info_into_bootstrap_cache() {
-                let bootstrap_cache = test_bootstrap_cache();
-                let mut core = test_core(bootstrap_cache);
-                let poll = unwrap!(Poll::new());
-
-                let peer1 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-                let mut config = Config::default();
-                config.hard_coded_contacts = vec![peer1];
-                let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
-                let dummy_service_discovery_token = Token(9999);
-
-                let (our_pk, our_sk) = gen_encrypt_keypair();
-                let (event_tx, _event_rx) = get_event_sender();
-                let token = Token(1);
-                let conn_map = Arc::new(Mutex::new(HashMap::new()));
-
-                unwrap!(Bootstrap::start(
-                    &mut core,
-                    &poll,
-                    [1; 32],
-                    ExternalReachability::NotRequired,
-                    rand_uid(),
-                    conn_map,
-                    config,
-                    HashSet::new(),
-                    token,
-                    dummy_service_discovery_token,
-                    event_tx,
-                    our_pk,
-                    &our_sk
-                ));
-                // FIXME: (for povilas to check)
-                //        The peer-info can only come from hard-coded-contacts, ServDisc or
-                //        bootstrap-cache itself. In none of those cases would you cache the info.
-                //        Besides, this info seems to come from nowhere and is expected to land
-                //        into the bootstrap-cache. This doesn't seem valid and hence ignoring this
-                //        test just now for povilas to investigate later (and delete this test if
-                //        no longer necessary).
-                let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-                let peer_uid = [2; 20];
-                let peer_socket = Default::default();
-
-                let state = unwrap!(core.get_state(token));
-                let mut state = state.borrow_mut();
-                let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
-                bootstrap_state.handle_result(
-                    &mut core,
-                    &poll,
-                    Token(2),
-                    Ok((peer_socket, peer_info, peer_uid)),
-                );
-
-                let cached_peers = core.user_data().peers();
-                assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
-            }
-
-            #[test]
             fn when_result_is_error_it_removes_peer_info_from_bootstrap_cache() {
                 let bootstrap_cache = test_bootstrap_cache();
                 let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
