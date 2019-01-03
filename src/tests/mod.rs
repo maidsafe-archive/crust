@@ -107,7 +107,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
 
-    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service1.start_bootstrap(HashSet::new(), false));
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
@@ -160,7 +160,7 @@ fn bootstrap_two_services_using_service_discovery() {
     unwrap!(service0.set_accept_bootstrap(true));
 
     service1.start_service_discovery();
-    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service1.start_bootstrap(HashSet::new(), false));
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
@@ -192,7 +192,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
-    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service1.start_bootstrap(HashSet::new(), false));
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
@@ -222,7 +222,7 @@ fn bootstrap_with_skipped_external_reachability_test() {
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
-    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Node));
+    unwrap!(service1.start_bootstrap(HashSet::new(), true));
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id, _) => peer_id);
     assert_eq!(peer_id0, service0.id());
@@ -259,7 +259,7 @@ fn bootstrap_with_blacklist() {
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
     let mut blacklist = HashSet::new();
     let _ = blacklist.insert(blacklisted_address.addr);
-    unwrap!(service1.start_bootstrap(blacklist, CrustUser::Client));
+    unwrap!(service1.start_bootstrap(blacklist, false));
 
     unwrap!(service1.start_listening_tcp());
     let _ = expect_event!(event_rx1, Event::ListenerStarted(port) => port);
@@ -293,7 +293,7 @@ fn bootstrap_fails_only_blacklisted_contact() {
 
     let mut blacklist = HashSet::new();
     let _ = blacklist.insert(blacklisted_address.addr);
-    unwrap!(service.start_bootstrap(blacklist, CrustUser::Client));
+    unwrap!(service.start_bootstrap(blacklist, false));
 
     expect_event!(event_rx, Event::BootstrapFailed);
 
@@ -309,7 +309,7 @@ fn bootstrap_fails_if_there_are_no_contacts() {
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
-    unwrap!(service.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service.start_bootstrap(HashSet::new(), false));
     expect_event!(event_rx, Event::BootstrapFailed);
 }
 
@@ -327,7 +327,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
-    unwrap!(service.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service.start_bootstrap(HashSet::new(), false));
     expect_event!(event_rx, Event::BootstrapFailed);
 }
 
@@ -347,7 +347,7 @@ fn drop_disconnects() {
     let (event_tx_1, event_rx_1) = get_event_sender();
     let mut service_1 = unwrap!(Service::with_config(event_tx_1, config_1, rand::random()));
 
-    unwrap!(service_1.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service_1.start_bootstrap(HashSet::new(), false));
 
     let peer_id_0 = expect_event!(event_rx_1, Event::BootstrapConnect(peer_id, _) => peer_id);
     expect_event!(event_rx_0, Event::BootstrapAccept(_peer_id, _));
@@ -506,7 +506,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap!(Service::with_config(event_tx, config, rand::random()));
 
-    unwrap!(service.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service.start_bootstrap(HashSet::new(), false));
     let peer_id = expect_event!(event_rx, Event::BootstrapConnect(peer_id, _) => peer_id);
 
     // The peer should drop after inactivity.
@@ -535,7 +535,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap!(Service::with_config(event_tx1, config1, rand::random()));
 
-    unwrap!(service1.start_bootstrap(HashSet::new(), CrustUser::Client));
+    unwrap!(service1.start_bootstrap(HashSet::new(), false));
     expect_event!(event_rx1, Event::BootstrapConnect(_peer_id, _));
     expect_event!(event_rx0, Event::BootstrapAccept(_peer_id, _));
 

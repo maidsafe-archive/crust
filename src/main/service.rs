@@ -7,9 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{
-    self, CoreMessage, CrustUser, ExternalReachability, NameHash, PeerInfo, Uid, HASH_SIZE,
-};
+use crate::common::{self, CoreMessage, ExternalReachability, NameHash, PeerInfo, Uid, HASH_SIZE};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
@@ -318,10 +316,15 @@ impl<UID: Uid> Service<UID> {
 
     /// Start the bootstrapping procedure. It will auto terminate after indicating success or
     /// failure via the event channel.
+    ///
+    /// # Args
+    ///
+    /// - test_ext_reachability: if true, peer A, that is bootstrapping, will ask the remote peer
+    ///   B to check, if it can connect to peer A.
     pub fn start_bootstrap(
         &mut self,
         blacklist: HashSet<SocketAddr>,
-        crust_user: CrustUser,
+        test_ext_reachability: bool,
     ) -> crate::Res<()> {
         let config = self.config.clone();
         let our_uid = self.our_uid;
@@ -330,14 +333,15 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let ext_reachability = match crust_user {
-            CrustUser::Node => ExternalReachability::Required {
+        let ext_reachability = if test_ext_reachability {
+            ExternalReachability::Required {
                 direct_listeners: unwrap!(self.our_listeners.lock())
                     .iter()
                     .map(|peer| peer.addr)
                     .collect(),
-            },
-            CrustUser::Client => ExternalReachability::NotRequired,
+            }
+        } else {
+            ExternalReachability::NotRequired
         };
 
         self.post(move |core, poll| {
