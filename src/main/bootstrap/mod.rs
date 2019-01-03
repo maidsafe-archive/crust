@@ -184,19 +184,17 @@ impl<UID: Uid> Bootstrap<UID> {
                 }
 
                 if let Some(reason) = opt_reason {
-                    let mut is_err_fatal = true;
-                    let err_msg = match reason {
-                        BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
-                        BootstrapDenyReason::FailedExternalReachability => {
-                            "Bootstrappee node could not establish connection to us."
-                        }
+                    let (err_msg, is_err_fatal) = match reason {
+                        BootstrapDenyReason::InvalidNameHash => ("Network name mismatch.", false),
+                        BootstrapDenyReason::FailedExternalReachability => (
+                            "Bootstrappee node could not establish connection to us.",
+                            true,
+                        ),
                         BootstrapDenyReason::NodeNotWhitelisted => {
-                            is_err_fatal = false;
-                            "Our Node is not whitelisted"
+                            ("Our Node is not whitelisted", false)
                         }
                         BootstrapDenyReason::ClientNotWhitelisted => {
-                            is_err_fatal = false;
-                            "Our Client is not whitelisted"
+                            ("Our Client is not whitelisted", false)
                         }
                     };
                     if is_err_fatal {
@@ -441,46 +439,106 @@ mod tests {
             use safe_crypto::gen_encrypt_keypair;
             use std::collections::HashMap;
 
-            #[test]
-            fn when_result_is_error_it_removes_peer_info_from_bootstrap_cache() {
-                let bootstrap_cache = test_bootstrap_cache();
-                let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-                bootstrap_cache.put(peer_info);
-                let mut core = test_core(bootstrap_cache);
-                let poll = unwrap!(Poll::new());
+            mod when_result_is_error {
+                use super::*;
 
-                let config = Config::default();
-                let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
-                let dummy_service_discovery_token = Token(9999);
+                #[test]
+                fn it_removes_peer_info_from_bootstrap_cache() {
+                    let bootstrap_cache = test_bootstrap_cache();
+                    let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                    bootstrap_cache.put(peer_info);
+                    let mut core = test_core(bootstrap_cache);
+                    let poll = unwrap!(Poll::new());
 
-                let (our_pk, our_sk) = gen_encrypt_keypair();
-                let (event_tx, _event_rx) = get_event_sender();
-                let token = Token(1);
-                let conn_map = Arc::new(Mutex::new(HashMap::new()));
+                    let config = Config::default();
+                    let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
+                    let dummy_service_discovery_token = Token(9999);
 
-                unwrap!(Bootstrap::start(
-                    &mut core,
-                    &poll,
-                    [1; 32],
-                    ExternalReachability::NotRequired,
-                    rand_uid(),
-                    conn_map,
-                    config,
-                    HashSet::new(),
-                    token,
-                    dummy_service_discovery_token,
-                    event_tx,
-                    our_pk,
-                    &our_sk
-                ));
+                    let (our_pk, our_sk) = gen_encrypt_keypair();
+                    let (event_tx, _event_rx) = get_event_sender();
+                    let token = Token(1);
+                    let conn_map = Arc::new(Mutex::new(HashMap::new()));
 
-                let state = unwrap!(core.get_state(token));
-                let mut state = state.borrow_mut();
-                let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
-                bootstrap_state.handle_result(&mut core, &poll, Token(2), Err((peer_info, None)));
+                    unwrap!(Bootstrap::start(
+                        &mut core,
+                        &poll,
+                        [1; 32],
+                        ExternalReachability::NotRequired,
+                        rand_uid(),
+                        conn_map,
+                        config,
+                        HashSet::new(),
+                        token,
+                        dummy_service_discovery_token,
+                        event_tx,
+                        our_pk,
+                        &our_sk
+                    ));
 
-                let cached_peers = core.user_data().peers();
-                assert!(cached_peers.is_empty());
+                    let state = unwrap!(core.get_state(token));
+                    let mut state = state.borrow_mut();
+                    let bootstrap_state =
+                        unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
+                    bootstrap_state.handle_result(
+                        &mut core,
+                        &poll,
+                        Token(2),
+                        Err((peer_info, None)),
+                    );
+
+                    let cached_peers = core.user_data().peers();
+                    assert!(cached_peers.is_empty());
+                }
+
+                #[test]
+                fn when_reason_is_invalid_hash_bootstrap_is_not_terminated() {
+                    let bootstrap_cache = test_bootstrap_cache();
+                    let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                    // there must be at least one bootstrap peer, otherwise Bootstrap state
+                    // will be terminated too soon.
+                    bootstrap_cache.put(peer_info);
+                    let mut core = test_core(bootstrap_cache);
+                    let poll = unwrap!(Poll::new());
+
+                    let config = Config::default();
+                    let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
+                    let dummy_service_discovery_token = Token(9999);
+
+                    let (our_pk, our_sk) = gen_encrypt_keypair();
+                    let (event_tx, _event_rx) = get_event_sender();
+                    let token = Token(1);
+                    let conn_map = Arc::new(Mutex::new(HashMap::new()));
+
+                    unwrap!(Bootstrap::start(
+                        &mut core,
+                        &poll,
+                        [1; 32],
+                        ExternalReachability::NotRequired,
+                        rand_uid(),
+                        conn_map,
+                        config,
+                        HashSet::new(),
+                        token,
+                        dummy_service_discovery_token,
+                        event_tx,
+                        our_pk,
+                        &our_sk
+                    ));
+
+                    let state = unwrap!(core.get_state(token));
+                    let mut state = state.borrow_mut();
+                    let bootstrap_state =
+                        unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
+                    bootstrap_state.handle_result(
+                        &mut core,
+                        &poll,
+                        Token(2),
+                        Err((peer_info, Some(BootstrapDenyReason::InvalidNameHash))),
+                    );
+
+                    let state = core.get_state(token);
+                    assert!(state.is_some());
+                }
             }
         }
     }
