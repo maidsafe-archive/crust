@@ -184,22 +184,17 @@ impl<UID: Uid> Bootstrap<UID> {
                 }
 
                 if let Some(reason) = opt_reason {
-                    let mut is_err_fatal = true;
-                    let err_msg = match reason {
-                        BootstrapDenyReason::InvalidNameHash => {
-                            is_err_fatal = false;
-                            "Network name mismatch."
-                        }
-                        BootstrapDenyReason::FailedExternalReachability => {
-                            "Bootstrappee node could not establish connection to us."
-                        }
+                    let (err_msg, is_err_fatal) = match reason {
+                        BootstrapDenyReason::InvalidNameHash => ("Network name mismatch.", false),
+                        BootstrapDenyReason::FailedExternalReachability => (
+                            "Bootstrappee node could not establish connection to us.",
+                            true,
+                        ),
                         BootstrapDenyReason::NodeNotWhitelisted => {
-                            is_err_fatal = false;
-                            "Our Node is not whitelisted"
+                            ("Our Node is not whitelisted", false)
                         }
                         BootstrapDenyReason::ClientNotWhitelisted => {
-                            is_err_fatal = false;
-                            "Our Client is not whitelisted"
+                            ("Our Client is not whitelisted", false)
                         }
                     };
                     if is_err_fatal {
