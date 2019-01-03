@@ -8,16 +8,18 @@
 // Software.
 
 use super::CONNECTIONS_TIMEOUT;
+use crate::net::listener::SocketIncoming;
+use crate::net::peer::connect::connect;
+use crate::net::peer::connect::handshake_message::{
+    BootstrapRequest, ConnectRequest, HandshakeMessage,
+};
+use crate::net::peer::connect::BootstrapAcceptor;
+use crate::priv_prelude::*;
 use future_utils::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use log::LogLevel;
 use lru_time_cache::LruCache;
-use net::listener::SocketIncoming;
-use net::peer::connect::connect;
 #[cfg(feature = "connections_info")]
 use net::peer::connect::connect_all;
-use net::peer::connect::handshake_message::{BootstrapRequest, ConnectRequest, HandshakeMessage};
-use net::peer::connect::BootstrapAcceptor;
-use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
 /// Don't keep incoming connections much longer than the attempted connection timeout.
@@ -177,7 +179,8 @@ fn handle_incoming_connections(
         .map(move |stream| {
             let inner = Arc::clone(&inner);
             handle_incoming_socket(&handle, inner, stream)
-        }).buffer_unordered(MAX_INCOMING_CONNECTIONS_BACKLOG)
+        })
+        .buffer_unordered(MAX_INCOMING_CONNECTIONS_BACKLOG)
         .for_each(|()| Ok(()))
         .infallible()
         .into_boxed()
@@ -212,7 +215,8 @@ fn handle_incoming_socket(
                 }
                 _ => future::err(IncomingError::UnexpectedMessage).into_boxed(),
             }
-        }).log_error(LogLevel::Error, "Failed to accept incoming connection")
+        })
+        .log_error(LogLevel::Error, "Failed to accept incoming connection")
         .into_boxed()
 }
 

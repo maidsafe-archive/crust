@@ -16,12 +16,12 @@ mod test;
 
 pub use self::discover::discover;
 pub use self::server::Server;
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::net::service_discovery;
+use crate::priv_prelude::*;
+use crate::service;
 use future_utils::{self, DropNotify};
 use futures::sync::mpsc::UnboundedReceiver;
-use net::service_discovery;
-use priv_prelude::*;
-use service;
 
 /// Advertises our current set of connectable listening addresses on the local network.
 pub struct ServiceDiscovery {
@@ -31,6 +31,7 @@ pub struct ServiceDiscovery {
 
 impl ServiceDiscovery {
     /// Runs service discovery server in the backround.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
@@ -61,7 +62,8 @@ impl ServiceDiscovery {
                         .collect();
                     server.set_data(addrs);
                     Ok(())
-                }).until(drop_rx.infallible())
+                })
+                .until(drop_rx.infallible())
                 .map(|_unit_opt| ())
         });
 

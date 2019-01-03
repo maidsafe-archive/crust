@@ -9,10 +9,10 @@
 
 //! Utilities for use in tests. This module is only available when running with cfg(test)
 
-use compat::{CrustEventSender, Event};
+use crate::compat::{CrustEventSender, Event};
+use crate::priv_prelude::*;
 use config_file_handler::current_bin_dir;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use priv_prelude::*;
 use rand::{self, Rng};
 use std::env;
 use std::fs::File;

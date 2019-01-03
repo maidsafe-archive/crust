@@ -11,7 +11,7 @@
 
 // TODO(povilas): move to future_utils crate - this module is generic and highly reusable.
 
-use priv_prelude::*;
+use crate::priv_prelude::*;
 use std::cmp;
 use std::io::{self, Read, Write};
 

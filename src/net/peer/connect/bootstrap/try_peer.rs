@@ -7,11 +7,11 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use net::peer;
-use net::peer::connect::handshake_message::{
+use crate::net::peer;
+use crate::net::peer::connect::handshake_message::{
     BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
 };
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 quick_error! {
     /// Error returned when we fail to connect to some specific peer.
@@ -96,7 +96,8 @@ pub fn try_peer(
         .and_then(move |socket| {
             bootstrap_connect_handshake(&handle0, socket, request, their_pk)
                 .map_err(TryPeerError::Handshake)
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 /// Construct a `Peer` by performing a bootstrap connection handshake on a socket.
@@ -129,7 +130,8 @@ pub fn bootstrap_connect_handshake(
                         _ => Err(ConnectHandshakeError::InvalidResponse),
                     }
                 })
-        }).with_timeout(Duration::from_secs(9), handle)
+        })
+        .with_timeout(Duration::from_secs(9), handle)
         .and_then(|res| res.ok_or(ConnectHandshakeError::TimedOut))
         .into_boxed()
 }

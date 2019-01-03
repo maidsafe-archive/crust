@@ -61,6 +61,7 @@ extern crate crust;
 
 mod utils;
 
+use crate::utils::read_line;
 use bytes::Bytes;
 use chrono::Local;
 use clap::{App, Arg};
@@ -78,7 +79,6 @@ use std::path::Path;
 use std::process;
 use std::str::FromStr;
 use tokio_core::reactor::{Core, Handle};
-use utils::read_line;
 use void::Void;
 
 /// Leave some room for our metadata.
@@ -162,7 +162,8 @@ impl Node {
                     service.p2p_config().disable_igd();
                 }
                 service
-            }).and_then(|service| {
+            })
+            .and_then(|service| {
                 out!("Our ID: {:?}", service.public_id());
                 service
                     .start_listening()
@@ -173,7 +174,8 @@ impl Node {
                         listeners,
                         handle,
                     })
-            }).into_boxed()
+            })
+            .into_boxed()
     }
 
     /// Get peer info from stdin and attempt to connect to it.
@@ -196,7 +198,8 @@ impl Node {
                     unwrap!(ci_channel2.unbounded_send(their_info));
                     Ok(())
                 })
-            }).then(|_| Ok(()));
+            })
+            .then(|_| Ok(()));
         self.handle.spawn(exchange_ci);
 
         self.service
@@ -225,7 +228,8 @@ impl Node {
             .for_each(move |msg| {
                 handle_peer_msg(&msg, &input_state_tx, &format!("{:?}", peer_display_name0));
                 Ok(())
-            }).map(move |()| {
+            })
+            .map(move |()| {
                 out!("Peer <{:?}> disconnected", peer_display_name1);
             });
 
@@ -234,10 +238,12 @@ impl Node {
             .map(move |either| match either {
                 Either::A((_, _next)) => (),
                 Either::B(((), _next)) => drop(self.service),
-            }).map_err(|either| match either {
+            })
+            .map_err(|either| match either {
                 Either::A((v, _next)) => v,
                 Either::B((v, _next)) => v,
-            }).into_boxed()
+            })
+            .into_boxed()
     }
 }
 
@@ -419,37 +425,44 @@ fn parse_cli_args() -> Result<Args, clap::Error> {
         .about(
             "This chat app connects two machines directly without intermediate servers and allows \
              to exchange messages securely. All the messages are end to end encrypted.",
-        ).arg(
+        )
+        .arg(
             Arg::with_name("rendezvous-peer")
                 .long("rendezvous-peer")
                 .value_name("ADDR")
                 .help("Address of peer to use as a rendezvous server.")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("rendezvous-peer-key")
                 .long("rendezvous-peer-key")
                 .value_name("KEY")
                 .help("Rendezvous peer public key.")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("disable-tcp")
                 .long("disable-tcp")
                 .help("Connect using uTP only.")
                 .takes_value(false),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("disable-igd")
                 .long("disable-igd")
                 .help("Disable IGD/UPnP.")
                 .takes_value(false),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("disable-direct-connections")
                 .long("disable-direct-connections")
                 .help(
                     "By default chat will try to connect to the peer in all possible methods: \
                      directly or via hole punching. This flag disables direct connections leaving \
                      only rendezvous connections to try.",
-                ).takes_value(false),
-        ).get_matches();
+                )
+                .takes_value(false),
+        )
+        .get_matches();
 
     let rendezvous_peer = match matches.value_of("rendezvous-peer") {
         Some(addr) => {
@@ -520,22 +533,18 @@ fn append_to_file(fname: &str, content: &[u8]) {
 }
 
 fn truncate_file(fname: &str) {
-    let _ = unwrap!(
-        OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(fname)
-    );
+    let _ = unwrap!(OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(fname));
 }
 
 /// Since we support cross-platforms, it would be best, if we stick to UTF-8 for filenames.
 fn file_name(path: &str) -> String {
-    unwrap!(
-        Path::new(path)
-            .file_name()
-            .map(|s| unwrap!(s.to_str()).to_owned())
-    )
+    unwrap!(Path::new(path)
+        .file_name()
+        .map(|s| unwrap!(s.to_str()).to_owned()))
 }
 
 /// Reads file in a separate thread, hence doesn't block current thread.
@@ -552,5 +561,6 @@ fn async_read_file(mut file: File) -> BoxFuture<FileContentResult, Void> {
         } else {
             None
         }
-    }).into_boxed()
+    })
+    .into_boxed()
 }

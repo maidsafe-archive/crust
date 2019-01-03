@@ -64,7 +64,8 @@ fn main() {
              messages. Start two instances of this example. Each instance generates and prints its \
              connection information to stdout in JSON format. You have to manually copy/paste this \
              info from one instance to the other and hit ENTER to start connection.",
-        ).get_matches();
+        )
+        .get_matches();
 
     let mut event_loop = unwrap!(Core::new());
     let handle = event_loop.handle();

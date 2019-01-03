@@ -7,13 +7,13 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::net::peer::BootstrapRequest;
+use crate::net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
+use crate::priv_prelude::*;
 use future_utils::bi_channel;
 use futures::sync::mpsc::UnboundedReceiver;
-use net::peer::BootstrapRequest;
-use net::{self, Acceptor, BootstrapAcceptor, Demux, Listener, ServiceDiscovery};
 use p2p::{self, NatType, P2p};
-use priv_prelude::*;
 use rand::{self, Rng};
 use serde_json;
 use std::fs::File;
@@ -46,12 +46,13 @@ pub struct Service {
 
 impl Service {
     /// Create a new `Service` with the default config.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         handle: &Handle,
         our_sk: SecretEncryptKey,
         our_pk: PublicEncryptKey,
     ) -> BoxFuture<Service, CrustError> {
-        let try = || -> Result<_, CrustError> {
+        let r#try = || -> Result<_, CrustError> {
             Ok(Service::with_config(
                 handle,
                 ConfigFile::open_default()?,
@@ -59,7 +60,7 @@ impl Service {
                 our_pk,
             ))
         };
-        future::result(try()).flatten().into_boxed()
+        future::result(r#try()).flatten().into_boxed()
     }
 
     /// Create a new `Service` with the given configuration.
@@ -88,7 +89,8 @@ impl Service {
             our_sk,
             our_pk,
             bootstrap_cache,
-        }).into_boxed()
+        })
+        .into_boxed()
     }
 
     /// Get a handle to the service's config file.
@@ -183,11 +185,13 @@ impl Service {
                         our_info,
                         ci_rx,
                         &config,
-                    )).map_err(|(e, _connect)| CrustError::ConnectError(e.to_string()))
+                    ))
+                    .map_err(|(e, _connect)| CrustError::ConnectError(e.to_string()))
                     .and_then(|(_ci_tx, connect)| {
                         connect.map_err(|e| CrustError::ConnectError(e.to_string()))
                     })
-            }).into_boxed()
+            })
+            .into_boxed()
     }
 
     /// Attempt multiple connections in parallel and return info about all of them.
@@ -272,16 +276,15 @@ impl Service {
         p2p.disable_igd();
         p2p.disable_igd_for_rendezvous();
 
-        let bind_addr = try_bfut!(
-            UdpSocket::bind_reusable(&addr!("0.0.0.0:0"), &self.handle)
-                .and_then(|socket| socket.local_addr())
-                .map_err(CrustError::Io)
-        );
+        let bind_addr = try_bfut!(UdpSocket::bind_reusable(&addr!("0.0.0.0:0"), &self.handle)
+            .and_then(|socket| socket.local_addr())
+            .map_err(CrustError::Io));
         p2p::rendezvous_addr(p2p::Protocol::Udp, &bind_addr, &self.handle, &p2p)
             .then(|res| match res {
                 Err(e) => e.unpredictable_ports().ok_or(e),
                 Ok((_public_addr, nat_type)) => Ok(nat_type),
-            }).map_err(CrustError::ProbeNatError)
+            })
+            .map_err(CrustError::ProbeNatError)
             .into_boxed()
     }
 
@@ -328,7 +331,8 @@ impl Service {
                     })
                 });
                 Ok(priv_conn_info)
-            }).map_err(|(e, _stream)| e)
+            })
+            .map_err(|(e, _stream)| e)
             .infallible()
             .into_boxed()
     }
@@ -398,7 +402,7 @@ mod tests {
 
     mod set_rendezvous_servers {
         use super::*;
-        use config::PeerInfo;
+        use crate::config::PeerInfo;
 
         #[test]
         fn it_sets_hard_coded_contacts_as_rendezvous_servers() {
@@ -433,7 +437,8 @@ mod tests {
                     .then(|res| match res {
                         Ok(x) => panic!("unexpected success: {:?}", x),
                         Err(_e) => Ok(()),
-                    }).for_each(|()| Ok(()))
+                    })
+                    .for_each(|()| Ok(()))
                     .into_boxed()
             };
 
@@ -445,7 +450,8 @@ mod tests {
                     .then(|res| match res {
                         Ok(x) => panic!("unexpected success: {:?}", x),
                         Err(_e) => Ok(()),
-                    }).for_each(|()| Ok(()))
+                    })
+                    .for_each(|()| Ok(()))
                     .into_boxed()
             };
 
@@ -473,7 +479,8 @@ mod tests {
                     .while_driving(query_udp)
                     .map_err(|(v, _)| v)
                     .map(|((((), ()), _query_tcp), _query_udp)| ()),
-            ).void_unwrap()
+            )
+            .void_unwrap()
         }
     }
 
@@ -507,14 +514,16 @@ mod tests {
                     p2p.tcp_addr_queriers()
                         .with_readiness_timeout(Duration::from_secs(1), &handle)
                         .collect()
-                }).void_unwrap();
+                })
+                .void_unwrap();
             assert!(servers.is_empty());
             let servers = core
                 .run({
                     p2p.udp_addr_queriers()
                         .with_readiness_timeout(Duration::from_secs(1), &handle)
                         .collect()
-                }).void_unwrap();
+                })
+                .void_unwrap();
             assert!(servers.is_empty());
         }
     }

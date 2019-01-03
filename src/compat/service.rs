@@ -7,17 +7,17 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::connection_map::ConnectionMap;
-use compat::event_loop::EventLoop;
-use compat::{event_loop, CompatPeer, CrustEventSender};
-use compat::{ConnectionInfoResult, Event, Priority};
-use error::CrustError;
+use crate::compat::connection_map::ConnectionMap;
+use crate::compat::event_loop::EventLoop;
+use crate::compat::{event_loop, CompatPeer, CrustEventSender};
+use crate::compat::{ConnectionInfoResult, Event, Priority};
+use crate::error::CrustError;
+#[cfg(test)]
+use crate::net::peer::DEFAULT_INACTIVITY_TIMEOUT;
+use crate::net::{service_discovery, ServiceDiscovery};
+use crate::priv_prelude::*;
 use future_utils::{self, bi_channel, DropNotify};
 use log::LogLevel;
-#[cfg(test)]
-use net::peer::DEFAULT_INACTIVITY_TIMEOUT;
-use net::{service_discovery, ServiceDiscovery};
-use priv_prelude::*;
 use std;
 
 pub trait FnBox {
@@ -25,7 +25,7 @@ pub trait FnBox {
 }
 
 impl<F: FnOnce(&mut ServiceState)> FnBox for F {
-    #[cfg_attr(feature = "cargo-clippy", allow(boxed_local))]
+    #[allow(clippy::boxed_local)]
     fn call_box(self: Box<Self>, state: &mut ServiceState) {
         (*self)(state)
     }
@@ -42,6 +42,7 @@ pub struct Service {
 impl Service {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         event_tx: CrustEventSender,
         our_sk: SecretEncryptKey,
@@ -155,7 +156,8 @@ impl Service {
                                             .send(Event::BootstrapAccept(their_uid, their_kind));
                                     }
                                     Ok(())
-                                }).infallible()
+                                })
+                                .infallible()
                         });
                     }
                 } else {
@@ -200,10 +202,12 @@ impl Service {
                                 .hard_coded_contacts
                                 .iter()
                                 .any(|peer| peer.addr.ip() == peer_addr.ip())
-                        }).unwrap_or(false)
+                        })
+                        .unwrap_or(false)
                 };
                 let _ = tx.send(res);
-            })).is_ok();
+            }))
+            .is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -239,14 +243,16 @@ impl Service {
                             let peer = CompatPeer::wrap_peer(&handle, peer, their_uid, addr);
                             let _ = cm.insert_peer(&handle, peer, addr);
                             Ok((addr, their_uid))
-                        }).then(move |res| {
+                        })
+                        .then(move |res| {
                             let event = match res {
                                 Ok((addr, uid)) => Event::BootstrapConnect(uid, addr),
                                 Err(()) => Event::BootstrapFailed,
                             };
                             let _ = event_tx.send(event);
                             Ok(())
-                        }).until(drop_rx.infallible())
+                        })
+                        .until(drop_rx.infallible())
                         .map(|_| ())
                 };
                 state.service.handle().spawn(f);
@@ -282,7 +288,8 @@ impl Service {
                             let addr = listener.addr();
                             let _ = event_tx.send(Event::ListenerStarted(addr));
                             future::empty::<(), ()>().map(move |()| drop(listener))
-                        }).buffer_unordered(256)
+                        })
+                        .buffer_unordered(256)
                         .for_each(|()| Ok(()))
                         .until(drop_rx.infallible())
                         .map(|_unit_opt| ())
@@ -315,7 +322,8 @@ impl Service {
                         our_conn_info_opt
                             .ok_or(CrustError::PrepareConnectionInfo)
                             .map(move |conn_info| (conn_info, ci_channel))
-                    }).then(move |result| {
+                    })
+                    .then(move |result| {
                         let result = match result {
                             Ok((our_conn_info, ci_channel)) => {
                                 cm.insert_ci_channel(our_conn_info.connection_id, ci_channel);
@@ -362,7 +370,8 @@ impl Service {
             .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let _ = tx.send(state.cm.remove(&peer_uid));
-            })).is_ok();
+            }))
+            .is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -390,7 +399,8 @@ impl Service {
             .event_loop
             .send(Box::new(move |state: &mut ServiceState| {
                 let _ = tx.send(state.cm.contains_peer(&peer_uid));
-            })).is_ok();
+            }))
+            .is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
@@ -416,7 +426,7 @@ impl Service {
                 let sd_port = config
                     .read()
                     .service_discovery_port
-                    .unwrap_or(::service::SERVICE_DISCOVERY_DEFAULT_PORT);
+                    .unwrap_or(crate::service::SERVICE_DISCOVERY_DEFAULT_PORT);
                 let our_sk = state.service.secret_id();
                 let our_pk = state.service.public_id();
                 let f = {
@@ -435,39 +445,38 @@ impl Service {
                         })
                 };
                 handle.spawn(f);
-            })).is_ok();
+            }))
+            .is_ok();
         cmd_sent && rx.recv().unwrap_or(false)
     }
 
     #[cfg(test)]
     pub fn disable_peer_heartbeats(&mut self) {
         let (done_tx, done_rx) = std::sync::mpsc::channel();
-        unwrap!(
-            self.event_loop
-                .send(Box::new(move |state: &mut ServiceState| {
-                    state.disable_peer_heartbeats = true;
-                    let _ = done_tx.send(());
-                }))
-        );
+        unwrap!(self
+            .event_loop
+            .send(Box::new(move |state: &mut ServiceState| {
+                state.disable_peer_heartbeats = true;
+                let _ = done_tx.send(());
+            })));
         unwrap!(done_rx.recv());
     }
 
     #[cfg(test)]
     pub fn set_peer_inactivity_timeout(&mut self, inactivity_timeout: Duration) {
         let (done_tx, done_rx) = std::sync::mpsc::channel();
-        unwrap!(
-            self.event_loop
-                .send(Box::new(move |state: &mut ServiceState| {
-                    state.inactivity_timeout = inactivity_timeout;
-                    let _ = done_tx.send(());
-                }))
-        );
+        unwrap!(self
+            .event_loop
+            .send(Box::new(move |state: &mut ServiceState| {
+                state.inactivity_timeout = inactivity_timeout;
+                let _ = done_tx.send(());
+            })));
         unwrap!(done_rx.recv());
     }
 }
 
 pub struct ServiceState {
-    service: ::Service,
+    service: crate::Service,
     event_tx: CrustEventSender,
     cm: ConnectionMap,
 
@@ -484,7 +493,7 @@ pub struct ServiceState {
 }
 
 impl ServiceState {
-    pub fn new(service: ::Service, event_tx: CrustEventSender) -> ServiceState {
+    pub fn new(service: crate::Service, event_tx: CrustEventSender) -> ServiceState {
         let cm = ConnectionMap::new(event_tx.clone());
         ServiceState {
             service,
@@ -516,9 +525,11 @@ impl ServiceState {
             self.connect(ci_channel1.and_then(move |their_ci: PubConnectionInfo| {
                 let _ = their_ci_tx.send(their_ci.uid);
                 Ok(their_ci)
-            })).map_err(move |e| {
+            }))
+            .map_err(move |e| {
                 error!("connection failed: {}", e);
-            }).and_then(move |peer| {
+            })
+            .and_then(move |peer| {
                 let addr = {
                     peer.addr()
                         .map_err(|e| error!("failed to get address of peer we connected to: {}", e))
@@ -528,7 +539,8 @@ impl ServiceState {
                 let _ = cm.insert_peer(&handle, peer, addr);
                 let _ = event_tx1.send(Event::ConnectSuccess(their_uid));
                 Ok(())
-            }).or_else(move |_err| {
+            })
+            .or_else(move |_err| {
                 // if we know ID of the peer we were trying to connect with
                 if let Ok(peer_uid) = their_ci_rx.try_recv() {
                     let _ = event_tx2.send(Event::ConnectFailure(peer_uid));
@@ -559,7 +571,8 @@ impl ServiceState {
                     }
                     peer.set_inactivity_timeout(inactivity_timeout);
                     peer
-                }).into_boxed()
+                })
+                .into_boxed()
         }
         #[cfg(not(test))]
         connector.into_boxed()
@@ -579,7 +592,8 @@ impl ServiceState {
                     }
                     peer.set_inactivity_timeout(inactivity_timeout);
                     peer
-                }).into_boxed()
+                })
+                .into_boxed()
         }
         #[cfg(not(test))]
         acceptor.into_boxed()
@@ -606,7 +620,8 @@ impl ServiceState {
                     }
                     peer.set_inactivity_timeout(inactivity_timeout);
                     peer
-                }).into_boxed()
+                })
+                .into_boxed()
         }
         #[cfg(not(test))]
         bootstrap_fut.into_boxed()

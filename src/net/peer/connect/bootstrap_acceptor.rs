@@ -7,15 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use futures::stream::FuturesUnordered;
-use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use net::peer;
-use net::peer::connect::demux::BootstrapMessage;
-use net::peer::connect::handshake_message::{
+use crate::net::peer;
+use crate::net::peer::connect::demux::BootstrapMessage;
+use crate::net::peer::connect::handshake_message::{
     BootstrapDenyReason, BootstrapRequest, HandshakeMessage,
 };
-use priv_prelude::*;
-use util;
+use crate::priv_prelude::*;
+use crate::util;
+use futures::stream::FuturesUnordered;
+use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 quick_error! {
     #[derive(Debug)]
@@ -81,6 +81,7 @@ pub struct BootstrapAcceptor {
 }
 
 impl BootstrapAcceptor {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(
         handle: &Handle,
         config: &ConfigFile,
@@ -157,7 +158,7 @@ fn bootstrap_accept(
     let their_name_hash = bootstrap_request.name_hash;
     let their_ext_reachability = bootstrap_request.ext_reachability;
 
-    let try = move || {
+    let r#try = move || {
         if our_uid == their_uid {
             return Err(BootstrapAcceptError::ConnectionFromOurself);
         }
@@ -165,10 +166,12 @@ fn bootstrap_accept(
             return Ok(stream
                 .send_serialized(HandshakeMessage::BootstrapDenied(
                     BootstrapDenyReason::InvalidNameHash,
-                )).map_err(BootstrapAcceptError::Write)
+                ))
+                .map_err(BootstrapAcceptError::Write)
                 .and_then(move |_socket| {
                     Err(BootstrapAcceptError::InvalidNameHash(their_name_hash))
-                }).into_boxed());
+                })
+                .into_boxed());
         }
         // Cache the reachability requirement config option, to make sure that it won't be
         // updated with the rest of the configuration.
@@ -193,7 +196,8 @@ fn bootstrap_accept(
                         .map_err(BootstrapAcceptError::Write)
                         .and_then(move |_socket| {
                             Err(BootstrapAcceptError::NodeNotWhiteListed(their_ip))
-                        }).into_boxed());
+                        })
+                        .into_boxed());
                 }
 
                 if !require_reachability {
@@ -212,7 +216,8 @@ fn bootstrap_accept(
                                 .with_timeout(Duration::from_secs(3), &handle)
                                 .and_then(|res| res.ok_or(ExternalReachabilityError::TimedOut))
                                 .into_boxed()
-                        }).collect::<Vec<_>>()
+                        })
+                        .collect::<Vec<_>>()
                 };
                 let connectors = stream::futures_unordered(connectors);
 
@@ -231,9 +236,11 @@ fn bootstrap_accept(
                                 .map_err(BootstrapAcceptError::Write)
                                 .and_then(move |_socket| {
                                     Err(BootstrapAcceptError::FailedExternalReachability(v))
-                                }).into_boxed()
+                                })
+                                .into_boxed()
                         }
-                    }).into_boxed())
+                    })
+                    .into_boxed())
             }
             ExternalReachability::NotRequired => {
                 let their_ip = stream
@@ -247,7 +254,8 @@ fn bootstrap_accept(
                         .map_err(BootstrapAcceptError::Write)
                         .and_then(move |_socket| {
                             Err(BootstrapAcceptError::ClientNotWhiteListed(their_ip))
-                        }).into_boxed());
+                        })
+                        .into_boxed());
                 }
 
                 Ok(
@@ -258,7 +266,7 @@ fn bootstrap_accept(
             }
         }
     };
-    future::result(try()).flatten().into_boxed()
+    future::result(r#try()).flatten().into_boxed()
 }
 
 fn grant_bootstrap(

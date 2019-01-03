@@ -7,16 +7,16 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use config::{DevConfigSettings, PeerInfo};
+use crate::config::{DevConfigSettings, PeerInfo};
+use crate::priv_prelude::*;
+use crate::service::Service;
+use crate::util;
 use env_logger;
 use future_utils::bi_channel;
 use futures::stream;
-use priv_prelude::*;
-use service::Service;
 use std::time::Duration;
 use tokio_core::reactor::Core;
 use tokio_io;
-use util;
 
 const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
 
@@ -201,15 +201,13 @@ mod direct_connections {
         let service2 = service_with_config(&mut evloop, config2);
 
         let (ci_channel1, ci_channel2) = bi_channel::unbounded();
-        let (service2_peer, service1_peer) = unwrap!(
-            evloop.run(
-                service2
-                    .connect(ci_channel2)
-                    .join(service1.connect(ci_channel1))
-                    .with_timeout(Duration::from_secs(5), &handle)
-                    .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
-            )
-        );
+        let (service2_peer, service1_peer) = unwrap!(evloop.run(
+            service2
+                .connect(ci_channel2)
+                .join(service1.connect(ci_channel1))
+                .with_timeout(Duration::from_secs(5), &handle)
+                .map(|res_opt| unwrap!(res_opt, "Failed to connect within reasonable time")),
+        ));
         assert_eq!(service1_peer.public_id(), &service2.public_id());
         assert_eq!(service2_peer.public_id(), &service1.public_id());
     }
@@ -288,15 +286,13 @@ fn peer_shutdown_closes_remote_peer_too() {
 
     drop(service1_peer);
 
-    unwrap!(
-        event_loop.run(
-            service2_peer
-                .for_each(|_| Ok(()))
-                .map_err(|e| panic!("peer error: {}", e))
-                .with_timeout(Duration::from_secs(10), &loop_handle)
-                .and_then(|res| res.ok_or_else(|| panic!("timed out"))),
-        )
-    );
+    unwrap!(event_loop.run(
+        service2_peer
+            .for_each(|_| Ok(()))
+            .map_err(|e| panic!("peer error: {}", e))
+            .with_timeout(Duration::from_secs(10), &loop_handle)
+            .and_then(|res| res.ok_or_else(|| panic!("timed out"))),
+    ));
 }
 
 #[test]
@@ -384,7 +380,7 @@ fn when_peer_sends_too_big_tcp_packet_other_peer_closes_connection() {
         .join(service2.connect(ci_channel2));
     let (service1_peer, service2_peer) = unwrap!(evloop.run(connect));
 
-    let data_len = ::MAX_PAYLOAD_SIZE + 10;
+    let data_len = crate::MAX_PAYLOAD_SIZE + 10;
     let mut data = vec![1u8; data_len];
     data[0] = ((data_len >> 24) & 0xff) as u8;
     data[1] = ((data_len >> 16) & 0xff) as u8;
@@ -506,8 +502,10 @@ mod encryption {
                                 PeerError::Read(_e) => Ok(()),
                                 e => panic!("unexpected error: {}", e),
                             })
-                    }).map(|(_service2_tcp, ())| ())
-            }).void_unwrap()
+                    })
+                    .map(|(_service2_tcp, ())| ())
+            })
+            .void_unwrap()
     }
 }
 

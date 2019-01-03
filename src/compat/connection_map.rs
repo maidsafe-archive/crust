@@ -7,12 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::{CompatPeer, CompatPeerError, CrustEventSender, Event, Priority};
+use crate::compat::{CompatPeer, CompatPeerError, CrustEventSender, Event, Priority};
+use crate::priv_prelude::*;
 use future_utils::bi_channel::UnboundedBiChannel;
 use future_utils::{self, DropNotice, DropNotify};
 use futures::stream::{SplitSink, SplitStream};
 use log::LogLevel;
-use priv_prelude::*;
 use std::sync::{Arc, Mutex};
 
 /// Reference counted connection hashmap.
@@ -186,26 +186,29 @@ fn handle_peer_rx(
                 let _ = event_tx1.send(Event::LostPeer(uid1));
             }
             e
-        }).log_errors(LogLevel::Info, "receiving data from peer")
+        })
+        .log_errors(LogLevel::Info, "receiving data from peer")
         .until(drop_rx)
         .for_each(move |msg| {
             let vec = Vec::from(&msg[..]);
             let _ = event_tx2.send(Event::NewMessage(uid2, kind, vec));
             Ok(())
-        }).finally(move || {
+        })
+        .finally(move || {
             let _ = cm2.remove(&uid3);
             let _ = event_tx3.send(Event::LostPeer(uid3));
-        }).infallible()
+        })
+        .infallible()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::crust_event_channel;
+    use crate::util::crust_event_channel;
 
     mod handle_peer_rx {
         use super::*;
-        use net::peer;
+        use crate::net::peer;
         use tokio_core::reactor::{Core, Handle};
         use tokio_io::codec::length_delimited::Framed;
 

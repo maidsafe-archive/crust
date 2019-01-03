@@ -7,9 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use config::PeerInfo;
+use crate::config::PeerInfo;
+use crate::priv_prelude::*;
 use config_file_handler::{self, FileHandler};
-use priv_prelude::*;
 use std::rc::Rc;
 use std::sync::Mutex;
 
@@ -39,6 +39,7 @@ struct Inner {
 }
 
 impl Cache {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(name: Option<&OsStr>) -> Result<Self, CacheError> {
         let inner = Inner {
             file_handler: FileHandler::new(name.unwrap_or(&Self::default_file_name()?), true)?,
@@ -106,12 +107,12 @@ mod tests {
 
     mod cache {
         use super::*;
+        use crate::util::bootstrap_cache_tmp_file;
         use hamcrest::prelude::*;
-        use util::bootstrap_cache_tmp_file;
 
         mod read_file {
             use super::*;
-            use util::write_bootstrap_cache_to_tmp_file;
+            use crate::util::write_bootstrap_cache_to_tmp_file;
 
             #[test]
             fn it_reads_peer_info_from_json_formatted_file() {

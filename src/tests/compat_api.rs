@@ -7,15 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use compat::{self, Event};
-use config::{DevConfigSettings, PeerInfo};
+use crate::compat::{self, Event};
+use crate::config::{DevConfigSettings, PeerInfo};
+use crate::priv_prelude::*;
+use crate::util::{self, crust_event_channel};
 use env_logger;
-use priv_prelude::*;
 use rand;
 use std;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
 use std::thread;
-use util::{self, crust_event_channel};
 
 const TEST_INACTIVITY_TIMEOUT: Duration = Duration::from_millis(900);
 
@@ -218,7 +218,8 @@ fn start_two_services_exchange_data() {
                         }
                         e => panic!("unexpected event: {:?}", e),
                     }
-                }).collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
         };
 
         assert_eq!(data1_recv, data1_compare);
@@ -257,7 +258,8 @@ fn start_two_services_exchange_data() {
                         }
                         e => panic!("unexpected event: {:?}", e),
                     }
-                }).collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
         };
 
         assert_eq!(data0_recv, data0_compare);
@@ -448,7 +450,7 @@ mod bootstrap {
         let uid0 = unwrap!(service0.public_id());
         let uid1 = unwrap!(service1.public_id());
 
-        unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+        unwrap!(service1.start_bootstrap(hashset! {blacklisted_addr}, CrustUser::Client));
 
         expect_event!(event_rx0, Event::BootstrapAccept(id, CrustUser::Client) => {
             assert_eq!(id, uid1);
@@ -498,7 +500,7 @@ mod bootstrap {
             vec![PeerInfo::with_rand_key(blacklisted_addr)];
         let (service1, event_rx1) = service_with_config(config1);
 
-        unwrap!(service1.start_bootstrap(hashset!{blacklisted_addr}, CrustUser::Client));
+        unwrap!(service1.start_bootstrap(hashset! {blacklisted_addr}, CrustUser::Client));
 
         expect_event!(event_rx1, Event::BootstrapFailed);
     }

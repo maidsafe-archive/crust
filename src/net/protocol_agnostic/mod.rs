@@ -14,7 +14,7 @@ pub use self::stream::{
     DirectConnectError, PaRendezvousConnectError, PaRendezvousMsg, PaStream, PaStreamReadError,
     PaStreamWriteError, UtpRendezvousConnectError,
 };
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 #[macro_use]
 mod addr;

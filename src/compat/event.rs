@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub struct ConnectionInfoResult {
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
 #[derive(Debug)]
-#[cfg_attr(feature = "cargo-clippy", allow(large_enum_variant))]
+#[allow(clippy::large_enum_variant)]
 pub enum Event {
     /// Invoked when a bootstrap peer connects to us
     BootstrapAccept(PublicEncryptKey, CrustUser),

@@ -7,17 +7,17 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::service_discovery::msg::DiscoveryMsg;
+use crate::priv_prelude::*;
+use crate::util::SerdeUdpCodec;
 use futures::{Future, Sink, Stream};
 use get_if_addrs::{self, IfAddr};
 use maidsafe_utilities::serialisation::SerialisationError;
-use net::service_discovery::msg::DiscoveryMsg;
-use priv_prelude::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::net::Ipv4Addr;
 use tokio_core::net::UdpSocket;
 use tokio_core::reactor::Handle;
-use util::SerdeUdpCodec;
 
 /// Returns IP address and listener addresses of a first node to respond to service discovery
 /// request.
@@ -38,7 +38,8 @@ where
             socket.set_broadcast(true)?;
             let framed = socket.framed(SerdeUdpCodec::new());
             Ok(framed)
-        }).and_then(move |framed| {
+        })
+        .and_then(move |framed| {
             future::result(get_if_addrs::get_if_addrs())
                 .map(stream::iter_ok)
                 .flatten_stream()
@@ -57,16 +58,19 @@ where
                         }
                     },
                     IfAddr::V6(..) => None,
-                }).fold(framed, move |framed, broadcast_ip| {
+                })
+                .fold(framed, move |framed, broadcast_ip| {
                     let broadcast_addr = SocketAddr::V4(SocketAddrV4::new(broadcast_ip, port));
                     framed.send((broadcast_addr, request.clone()))
-                }).map(move |framed| {
+                })
+                .map(move |framed| {
                     framed
                         .log_errors(LogLevel::Warn, "receiving on service_discovery::discover")
                         .filter_map(move |response| handle_response(response, &our_sk, &our_pk))
                         .into_boxed()
                 })
-        }).into_boxed()
+        })
+        .into_boxed()
 }
 
 fn handle_response<T: Serialize + DeserializeOwned>(

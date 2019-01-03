@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use priv_prelude::*;
+use crate::priv_prelude::*;
 use serde;
 use std::fmt;
 use std::net;
@@ -215,7 +215,7 @@ fn addr_from_url(url: &Url) -> Result<SocketAddr, ParseError> {
 
 #[cfg(test)]
 mod test {
-    use priv_prelude::*;
+    use crate::priv_prelude::*;
     use std::str::FromStr;
 
     #[test]

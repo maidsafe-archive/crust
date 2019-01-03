@@ -7,21 +7,21 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::net::service_discovery::msg::DiscoveryMsg;
+use crate::priv_prelude::*;
+use crate::util::SerdeUdpCodec;
 use future_utils::FutureExt;
 use futures::sink;
 use futures::stream::StreamFuture;
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use futures::{Async, Future, Sink, Stream};
 use maidsafe_utilities::serialisation::SerialisationError;
-use net::service_discovery::msg::DiscoveryMsg;
-use priv_prelude::*;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::{io, mem};
 use tokio_core::net::{UdpFramed, UdpSocket};
 use tokio_core::reactor::Handle;
-use util::SerdeUdpCodec;
 use void::Void;
 
 pub struct Server<T>
@@ -44,7 +44,7 @@ where
 // The only large size difference between variance is because of `Invalid` variant.
 // This variant is not really used, hence it makes sense to disable this lint.
 #[allow(unknown_lints)]
-#[allow(large_enum_variant)]
+#[allow(clippy::large_enum_variant)]
 enum ServerTaskState {
     Reading {
         reading: StreamFuture<UdpFramed<SerdeUdpCodec<DiscoveryMsg>>>,
@@ -59,6 +59,7 @@ impl<T> Server<T>
 where
     T: Serialize + DeserializeOwned + Clone + 'static,
 {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(handle: &Handle, port: u16, data: T) -> io::Result<Server<T>> {
         let bind_addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
         let socket = UdpSocket::bind(&bind_addr, handle)?;
@@ -190,7 +191,7 @@ mod tests {
             let mut evloop = unwrap!(Core::new());
             let handle = evloop.handle();
 
-            let current_addrs = hashset!{
+            let current_addrs = hashset! {
                 tcp_addr!("1.2.3.4:4000"),
                 tcp_addr!("1.2.3.5:5000"),
             };

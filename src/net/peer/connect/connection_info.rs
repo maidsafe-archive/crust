@@ -7,10 +7,10 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
+use crate::priv_prelude::*;
 use bytes::Bytes;
 use future_utils::bi_channel::UnboundedBiChannel;
 use futures::sync::mpsc;
-use priv_prelude::*;
 
 #[derive(Debug)]
 /// Connection information specifically used for rendezvous connections carried by `p2p` crate.

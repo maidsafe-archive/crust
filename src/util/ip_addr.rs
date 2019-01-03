@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use priv_prelude::*;
+use crate::priv_prelude::*;
 
 /// A replacement for `IpAddr::is_global` while we wait for that to enter stable.
 pub fn ip_addr_is_global(ip: IpAddr) -> bool {
