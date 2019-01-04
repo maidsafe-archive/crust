@@ -333,16 +333,7 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let ext_reachability = if test_ext_reachability {
-            ExternalReachability::Required {
-                direct_listeners: unwrap!(self.our_listeners.lock())
-                    .iter()
-                    .map(|peer| peer.addr)
-                    .collect(),
-            }
-        } else {
-            ExternalReachability::NotRequired
-        };
+        let ext_reachability = self.ext_reachability(test_ext_reachability);
 
         self.post(move |core, poll| {
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
@@ -435,10 +426,16 @@ impl<UID: Uid> Service<UID> {
     ///  * Swap `PubConnectionInfo`s out-of-band with the peer you are connecting to.
     ///  * Call `Service::connect` using your `PrivConnectionInfo` and the `PubConnectionInfo`
     ///    obtained from the peer
+    ///
+    /// # Args
+    ///
+    /// - test_ext_reachability: if true, peer A, that is bootstrapping, will ask the remote peer
+    ///   B to check, if it can connect to peer A.
     pub fn connect(
         &self,
         our_ci: PrivConnectionInfo<UID>,
         mut their_ci: PubConnectionInfo<UID>,
+        test_ext_reachability: bool,
     ) -> crate::Res<()> {
         if their_ci.id == self.our_uid {
             debug!(
@@ -474,10 +471,21 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let config = self.config.clone();
+        let ext_reachability = self.ext_reachability(test_ext_reachability);
 
         self.post(move |core, poll| {
             let _ = Connect::start(
-                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk, config,
+                core,
+                poll,
+                our_ci,
+                their_ci,
+                cm,
+                our_nh,
+                event_tx,
+                our_pk,
+                &our_sk,
+                config,
+                ext_reachability,
             );
         })?;
 
@@ -627,6 +635,19 @@ impl<UID: Uid> Service<UID> {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
+
+    fn ext_reachability(&self, test_ext_reachability: bool) -> ExternalReachability {
+        if test_ext_reachability {
+            ExternalReachability::Required {
+                direct_listeners: unwrap!(self.our_listeners.lock())
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect(),
+            }
+        } else {
+            ExternalReachability::NotRequired
+        }
+    }
 }
 
 /// Returns a hash of the network name.
@@ -676,7 +697,7 @@ mod tests {
             let priv_info = unwrap!(conn_info_result.result);
             let pub_info = priv_info.to_pub_connection_info();
 
-            match service.connect(priv_info, pub_info) {
+            match service.connect(priv_info, pub_info, false) {
                 Err(CrustError::RequestedConnectToSelf) => (),
                 Ok(()) | Err(..) => panic!("Expected CrustError::RequestedConnectedToSelf"),
             }
@@ -740,8 +761,8 @@ mod tests {
         let pub_info_0 = priv_info_0.to_pub_connection_info();
         let pub_info_1 = priv_info_1.to_pub_connection_info();
 
-        unwrap!(service_0.connect(priv_info_0, pub_info_1));
-        unwrap!(service_1.connect(priv_info_1, pub_info_0));
+        unwrap!(service_0.connect(priv_info_0, pub_info_1, false));
+        unwrap!(service_1.connect(priv_info_1, pub_info_0, false));
 
         expect_event!(event_rx_0, Event::ConnectSuccess(id) => assert_eq!(id, service_1.id()));
         expect_event!(event_rx_1, Event::ConnectSuccess(id) => assert_eq!(id, service_0.id()));
@@ -859,7 +880,7 @@ mod tests {
                         .into_iter()
                         .zip(self.connection_id_rx.into_iter())
                     {
-                        let _ = self.service.connect(our_ci, their_ci);
+                        let _ = self.service.connect(our_ci, their_ci, false);
                     }
                     let mut their_ids = HashMap::new();
                     for _ in 0..NUM_SERVICES - 1 {

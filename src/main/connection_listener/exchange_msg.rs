@@ -31,6 +31,7 @@ use std::time::Duration;
 
 pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
 
+/// Handles incoming socket according to the first received request.
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
@@ -134,12 +135,19 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     Err(()) => self.terminate(core, poll),
                 }
             }
-            Ok(Some(Message::Connect(their_uid, name_hash, their_pk))) => match self
-                .validate_peer_uid(their_uid)
-            {
-                Ok(their_uid) => self.handle_connect(core, poll, their_uid, name_hash, their_pk),
-                Err(()) => self.terminate(core, poll),
-            },
+            Ok(Some(Message::Connect(their_uid, name_hash, ext_reachability, their_pk))) => {
+                match self.validate_peer_uid(their_uid) {
+                    Ok(their_uid) => self.handle_connect(
+                        core,
+                        poll,
+                        their_uid,
+                        name_hash,
+                        their_pk,
+                        ext_reachability,
+                    ),
+                    Err(()) => self.terminate(core, poll),
+                }
+            }
             Ok(Some(Message::EchoAddrReq(their_pk))) => {
                 self.handle_echo_addr_req(core, poll, their_pk)
             }
@@ -222,7 +230,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 if self.reachability_children.is_empty() {
                     trace!(
                         "Bootstrapper failed to pass requisite condition of external \
-                         recheability. Denying bootstrap."
+                         reachability. Denying bootstrap."
                     );
                     let reason = BootstrapDenyReason::FailedExternalReachability;
                     self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
@@ -315,6 +323,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         their_uid: UID,
         name_hash: NameHash,
         their_pk: PublicEncryptKey,
+        ext_reachability: ExternalReachability,
     ) {
         if !self.is_valid_name_hash(name_hash) {
             trace!("Invalid name hash given. Denying connection.");
@@ -333,10 +342,74 @@ impl<UID: Uid> ExchangeMsg<UID> {
             return self.terminate(core, poll);
         }
 
-        self.enter_handshaking_mode(their_uid);
+        match ext_reachability {
+            ExternalReachability::Required { direct_listeners } => {
+                if !self.require_reachability {
+                    return self.allow_connection(core, poll, their_uid);
+                }
+                // TODO(povilas): extract duplicate code from handle_bootstrap_req() and V
+                for their_listener in direct_listeners
+                    .into_iter()
+                    .filter(|addr| ip_addr_is_global(&addr.ip()))
+                {
+                    let self_weak = self.self_weak.clone();
+                    let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
+                        if let Some(self_rc) = self_weak.upgrade() {
+                            self_rc
+                                .borrow_mut()
+                                .handle_check_reachability_on_connect(core, poll, child, res)
+                        }
+                    };
 
-        let msg = Message::Connect(self.our_uid, self.name_hash, self.our_pk);
+                    if let Ok(child) = CheckReachability::<UID>::start(
+                        core,
+                        poll,
+                        their_listener,
+                        their_uid,
+                        Box::new(finish),
+                    ) {
+                        let _ = self.reachability_children.insert(child);
+                    }
+                }
+                if self.reachability_children.is_empty() {
+                    trace!(
+                        "External reachability test failed: remote peer has no public addresses"
+                    );
+                    self.terminate(core, poll);
+                }
+            }
+            ExternalReachability::NotRequired => self.allow_connection(core, poll, their_uid),
+        }
+    }
+
+    fn handle_check_reachability_on_connect(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        child: Token,
+        res: Result<UID, ()>,
+    ) {
+        let _ = self.reachability_children.remove(&child);
+        if let Ok(their_uid) = res {
+            self.terminate_childern(core, poll);
+            return self.allow_connection(core, poll, their_uid);
+        }
+        if self.reachability_children.is_empty() {
+            trace!("External reachability test failed, terminating connection.");
+            self.terminate(core, poll);
+        }
+    }
+
+    /// Sends response to incoming connection.
+    fn allow_connection(&mut self, core: &mut EventLoopCore, poll: &Poll, their_uid: UID) {
+        self.enter_handshaking_mode(their_uid);
         self.next_state = NextState::ConnectionCandidate(their_uid);
+        let msg = Message::Connect(
+            self.our_uid,
+            self.name_hash,
+            ExternalReachability::NotRequired,
+            self.our_pk,
+        );
         self.write(core, poll, Some((msg, 0)));
     }
 

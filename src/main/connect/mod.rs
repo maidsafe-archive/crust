@@ -10,7 +10,7 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use crate::common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
+use crate::common::{CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo, State, Uid};
 use crate::main::bootstrap;
 use crate::main::{
     ActiveConnection, ConnectionCandidate, ConnectionMap, CrustConfig, CrustError, Event,
@@ -41,6 +41,7 @@ pub struct Connect<UID: Uid> {
     event_tx: crate::CrustEventSender<UID>,
     our_pk: PublicEncryptKey,
     config: CrustConfig,
+    ext_reachability: ExternalReachability,
 }
 
 impl<UID: Uid> Connect<UID> {
@@ -55,6 +56,7 @@ impl<UID: Uid> Connect<UID> {
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         config: CrustConfig,
+        ext_reachability: ExternalReachability,
     ) -> crate::Res<()> {
         let their_id = their_ci.id;
         let their_direct = their_ci.for_direct;
@@ -78,6 +80,7 @@ impl<UID: Uid> Connect<UID> {
             event_tx,
             our_pk,
             config,
+            ext_reachability,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
@@ -136,6 +139,7 @@ impl<UID: Uid> Connect<UID> {
             self.cm.clone(),
             self.our_pk,
             shared_key,
+            self.ext_reachability.clone(),
             Box::new(handler),
         ) {
             let _ = self.children.insert(child);
@@ -311,6 +315,7 @@ mod tests {
                 our_pk,
                 &our_sk,
                 config,
+                ExternalReachability::NotRequired,
             ));
 
             let connect_state_token = Token(0);

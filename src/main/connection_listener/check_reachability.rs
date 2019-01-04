@@ -23,6 +23,8 @@ const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 
 pub type Finish<T> = Box<FnMut(&mut EventLoopCore, &Poll, Token, Result<T, ()>)>;
 
+/// Does a simple TCP connect to the given address to check, if it's publicly reachable.
+/// This state will transit arbitrary user data to the finish callback.
 pub struct CheckReachability<T> {
     token: Token,
     socket: TcpSock,

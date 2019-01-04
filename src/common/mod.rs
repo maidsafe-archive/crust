@@ -35,6 +35,8 @@ pub enum CrustUser {
     Client,
 }
 
+/// Crust might optionally test, if peers are reachable directly. This struct carries information
+/// required to execute the test.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ExternalReachability {
     NotRequired,

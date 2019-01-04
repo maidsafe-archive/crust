@@ -19,7 +19,7 @@ pub enum Message<UID> {
     EchoAddrReq(PublicEncryptKey),
     EchoAddrResp(common::SocketAddr),
     ChooseConnection,
-    Connect(UID, NameHash, PublicEncryptKey),
+    Connect(UID, NameHash, ExternalReachability, PublicEncryptKey),
     Data(Vec<u8>),
 }
 

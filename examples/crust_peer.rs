@@ -501,7 +501,7 @@ fn main() {
                             continue;
                         }
                     };
-                    unwrap!(unwrap!(service.lock()).connect(our_info, their_info));
+                    unwrap!(unwrap!(service.lock()).connect(our_info, their_info, false));
                 }
                 UserCommand::Send(peer_index, message) => {
                     let network = unwrap!(network.lock());
