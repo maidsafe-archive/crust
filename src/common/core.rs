@@ -207,6 +207,8 @@ impl<T> Core<T> {
         &self.tx
     }
 
+    /// Schedules a new timer with the given info: timer token and id.
+    /// Multiple timers can be scheduled in parallel which will be invoked according to mio token.
     pub fn set_timeout(&mut self, interval: Duration, core_timer: CoreTimer) -> Timeout {
         self.timer.set_timeout(interval, core_timer)
     }
@@ -215,6 +217,7 @@ impl<T> Core<T> {
         self.timer.cancel_timeout(timeout)
     }
 
+    /// Generates a new unique mio token.
     pub fn get_new_token(&mut self) -> Token {
         let token = Token(self.token_counter);
         self.token_counter += 1;

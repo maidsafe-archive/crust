@@ -51,6 +51,35 @@ const DISABLE_NAT: bool = true;
 
 /// A structure representing all the Crust services. This is the main object through which crust is
 /// used.
+///
+/// You can construct `Service` using [`try_new`] which searches for config file in default location
+/// or [`with_config`], if you want to provide an in memory config.
+///
+/// In the terms of networking `Service` exposes both server and client functionality. Meaning
+/// it will listen for incoming connections and establish ones itself.
+///
+/// You can use `Service` to connect with remote peers. There's two ways to do this:
+///
+/// 1. [`bootstrap`] to some known peers or the ones discovered on LAN,
+/// 2. [`connect`] to the peer whose contacts you already have.
+///
+/// [`bootstrap`] and [`connect`] will optionally check, if you are able to connect to peer via
+/// it's public IP. This is called external reachability test. You can ask to only connect to peers
+/// that are reachable on the Internet directly.
+///
+/// You also have to explicilty enable connection listening:
+///
+/// 1. to accept bootstrapping peers, call [`set_accept_bootstrap`],
+/// 2. to accept incoming connections via [`connect`], call [`start_listening_tcp`],
+/// 2. to accept incoming peers via service discovery on LAN, call [`set_service_discovery_listen`].
+///
+/// [`try_new`]: struct.Service.html#method.try_new
+/// [`with_config`]: struct.Service.html#method.with_config
+/// [`connect`]: struct.Service.html#method.connect
+/// [`bootstrap`]: struct.Service.html#method.start_bootstrap
+/// [`set_accept_bootstrap`]: struct.Service.html#method.set_accept_bootstrap
+/// [`start_listening_tcp`]: struct.Service.html#method.set_listening_tcp
+/// [`set_service_discovery_listen`]: struct.Service.html#method.set_service_discovery_listen
 pub struct Service<UID: Uid> {
     config: CrustConfig,
     cm: ConnectionMap<UID>,
@@ -66,7 +95,7 @@ pub struct Service<UID: Uid> {
 
 impl<UID: Uid> Service<UID> {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
-    /// notifications on.
+    /// notifications on. Can fail, if can't read config file successfully.
     pub fn try_new(event_tx: crate::CrustEventSender<UID>, our_uid: UID) -> crate::Res<Self> {
         Service::with_config(event_tx, config_handler::read_config_file()?, our_uid)
     }
