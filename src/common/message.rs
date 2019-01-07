@@ -7,17 +7,27 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{self, ExternalReachability, NameHash};
+use crate::common::{CrustUser, NameHash};
 use safe_crypto::PublicEncryptKey;
+use std::collections::HashSet;
+use std::net::SocketAddr;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Message<UID> {
     Heartbeat,
-    BootstrapRequest(UID, NameHash, ExternalReachability, PublicEncryptKey),
+    /// Carries a list of our listener addresses in case remote peer wants to check our
+    /// external reachability.
+    BootstrapRequest(
+        UID,
+        NameHash,
+        HashSet<SocketAddr>,
+        CrustUser,
+        PublicEncryptKey,
+    ),
     BootstrapGranted(UID),
     BootstrapDenied(BootstrapDenyReason),
     EchoAddrReq(PublicEncryptKey),
-    EchoAddrResp(common::SocketAddr),
+    EchoAddrResp(SocketAddr),
     ChooseConnection,
     Connect(UID, NameHash, PublicEncryptKey),
     Data(Vec<u8>),

@@ -58,6 +58,8 @@ pub struct Config {
 /// Developer options
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DevConfig {
+    // TODO(povilas): remove this field since there is a formal way to disable ext reachability
+    // test
     /// If `true`, then the mandatory external reachability test is disabled.
     pub disable_external_reachability_requirement: bool,
 }

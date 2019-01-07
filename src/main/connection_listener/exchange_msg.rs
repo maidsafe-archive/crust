@@ -8,9 +8,7 @@
 // Software.
 
 use super::check_reachability::CheckReachability;
-use crate::common::{
-    BootstrapDenyReason, CoreTimer, CrustUser, ExternalReachability, Message, NameHash, State, Uid,
-};
+use crate::common::{BootstrapDenyReason, CoreTimer, CrustUser, Message, NameHash, State, Uid};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
@@ -26,6 +24,7 @@ use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::HashSet;
 use std::mem;
+use std::net::SocketAddr;
 use std::rc::{Rc, Weak};
 use std::time::Duration;
 
@@ -43,13 +42,17 @@ pub struct ExchangeMsg<UID: Uid> {
     timeout: Timeout,
     reachability_children: HashSet<Token>,
     accept_bootstrap: bool,
-    require_reachability: bool,
+    test_ext_reachability: bool,
     self_weak: Weak<RefCell<ExchangeMsg<UID>>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
 impl<UID: Uid> ExchangeMsg<UID> {
+    /// # Args
+    ///
+    /// `test_ext_reachability` - if true, we will check if remote peer has public IP and we can
+    ///     reach it directly.
     pub fn start(
         core: &mut EventLoopCore,
         poll: &Poll,
@@ -63,6 +66,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
+        test_ext_reachability: bool,
     ) -> crate::Res<()> {
         let token = core.get_new_token();
 
@@ -76,11 +80,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         // Cache the reachability requirement config option, to make sure that it won't be updated
         // with the rest of the configuration.
-        let require_reachability = unwrap!(config.lock())
+        let test_ext_reachability = unwrap!(config.lock())
             .cfg
             .dev
             .as_ref()
-            .map_or(true, |dev_cfg| {
+            .map_or(test_ext_reachability, |dev_cfg| {
                 !dev_cfg.disable_external_reachability_requirement
             });
 
@@ -96,7 +100,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             timeout,
             reachability_children: HashSet::with_capacity(4),
             accept_bootstrap,
-            require_reachability,
+            test_ext_reachability,
             self_weak: Default::default(),
             our_pk,
             our_sk: our_sk.clone(),
@@ -114,7 +118,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
             Ok(Some(Message::BootstrapRequest(
                 their_uid,
                 name_hash,
-                ext_reachability,
+                their_addrs,
+                their_role,
                 their_pk,
             ))) => {
                 if !self.accept_bootstrap {
@@ -128,7 +133,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
                         poll,
                         their_uid,
                         name_hash,
-                        ext_reachability,
+                        their_addrs,
+                        their_role,
                         their_pk,
                     ),
                     Err(()) => self.terminate(core, poll),
@@ -161,7 +167,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll: &Poll,
         their_uid: UID,
         name_hash: NameHash,
-        ext_reachability: ExternalReachability,
+        their_addrs: HashSet<SocketAddr>,
+        their_role: CrustUser,
         their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
@@ -183,60 +190,49 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         self.try_update_crust_config();
 
-        match ext_reachability {
-            ExternalReachability::Required { direct_listeners } => {
-                if !self.is_peer_whitelisted(CrustUser::Node) {
-                    trace!("Bootstrapper Node is not whitelisted. Denying bootstrap.");
-                    let reason = BootstrapDenyReason::NodeNotWhitelisted;
-                    return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
-                }
+        if !self.is_peer_whitelisted(their_role) {
+            trace!("Bootstrapper is not whitelisted. Denying bootstrap.");
+            let reason = match their_role {
+                CrustUser::Node => BootstrapDenyReason::NodeNotWhitelisted,
+                CrustUser::Client => BootstrapDenyReason::ClientNotWhitelisted,
+            };
+            return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+        }
 
-                if !self.require_reachability {
-                    // Skip external reachability checks and allow bootstrap
-                    return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
-                }
-
-                for their_listener in direct_listeners
-                    .into_iter()
-                    .filter(|addr| ip_addr_is_global(&addr.ip()))
-                {
-                    let self_weak = self.self_weak.clone();
-                    let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
-                        if let Some(self_rc) = self_weak.upgrade() {
-                            self_rc
-                                .borrow_mut()
-                                .handle_check_reachability(core, poll, child, res)
-                        }
-                    };
-
-                    if let Ok(child) = CheckReachability::<UID>::start(
-                        core,
-                        poll,
-                        their_listener,
-                        their_uid,
-                        Box::new(finish),
-                    ) {
-                        let _ = self.reachability_children.insert(child);
+        if their_role == CrustUser::Node && self.test_ext_reachability {
+            for their_listener in their_addrs
+                .into_iter()
+                .filter(|addr| ip_addr_is_global(&addr.ip()))
+            {
+                let self_weak = self.self_weak.clone();
+                let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
+                    if let Some(self_rc) = self_weak.upgrade() {
+                        self_rc
+                            .borrow_mut()
+                            .handle_check_reachability(core, poll, child, res)
                     }
-                }
-                if self.reachability_children.is_empty() {
-                    trace!(
-                        "Bootstrapper failed to pass requisite condition of external \
-                         recheability. Denying bootstrap."
-                    );
-                    let reason = BootstrapDenyReason::FailedExternalReachability;
-                    self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
-                }
-            }
-            ExternalReachability::NotRequired => {
-                if !self.is_peer_whitelisted(CrustUser::Client) {
-                    trace!("Bootstrapper Client is not whitelisted. Denying bootstrap.");
-                    let reason = BootstrapDenyReason::ClientNotWhitelisted;
-                    return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
-                }
+                };
 
-                self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Client)
+                if let Ok(child) = CheckReachability::<UID>::start(
+                    core,
+                    poll,
+                    their_listener,
+                    their_uid,
+                    Box::new(finish),
+                ) {
+                    let _ = self.reachability_children.insert(child);
+                }
             }
+            if self.reachability_children.is_empty() {
+                trace!(
+                    "Bootstrapper failed to pass requisite condition of external \
+                     recheability. Denying bootstrap."
+                );
+                let reason = BootstrapDenyReason::FailedExternalReachability;
+                self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+            }
+        } else {
+            self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Client)
         }
     }
 

@@ -7,9 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{
-    BootstrapDenyReason, ExternalReachability, Message, NameHash, PeerInfo, State, Uid,
-};
+use crate::common::{BootstrapDenyReason, CrustUser, Message, NameHash, PeerInfo, State, Uid};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::EventLoopCore;
 use mio::{Poll, PollOpt, Ready, Token};
@@ -17,7 +15,9 @@ use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::mem;
+use std::net::SocketAddr;
 use std::rc::Rc;
 
 pub type Finish<UID> = Box<
@@ -46,7 +46,8 @@ impl<UID: Uid> TryPeer<UID> {
         peer: PeerInfo,
         our_uid: UID,
         name_hash: NameHash,
-        ext_reachability: ExternalReachability,
+        our_addrs: HashSet<SocketAddr>,
+        our_role: CrustUser,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         finish: Finish<UID>,
@@ -69,7 +70,7 @@ impl<UID: Uid> TryPeer<UID> {
             peer,
             socket,
             request: Some((
-                Message::BootstrapRequest(our_uid, name_hash, ext_reachability, our_pk),
+                Message::BootstrapRequest(our_uid, name_hash, our_addrs, our_role, our_pk),
                 0,
             )),
             finish,

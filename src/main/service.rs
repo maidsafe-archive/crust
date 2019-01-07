@@ -7,9 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{
-    self, CoreMessage, CrustUser, ExternalReachability, NameHash, PeerInfo, Uid, HASH_SIZE,
-};
+use crate::common::{self, CoreMessage, CrustUser, NameHash, PeerInfo, Uid, HASH_SIZE};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
@@ -30,7 +28,6 @@ use std::sync::{mpsc, Arc, Mutex};
 /// Reserved mio `Token` values for Crust speficic events.
 #[derive(Debug, PartialEq)]
 #[repr(usize)]
-#[allow(unused)]
 enum EventToken {
     Bootstrap,
     ServiceDiscovery,
@@ -63,9 +60,9 @@ const DISABLE_NAT: bool = true;
 /// 1. [`bootstrap`] to some known peers or the ones discovered on LAN,
 /// 2. [`connect`] to the peer whose contacts you already have.
 ///
-/// [`bootstrap`] and [`connect`] will optionally check, if you are able to connect to peer via
-/// it's public IP. This is called external reachability test. You can ask to only connect to peers
-/// that are reachable on the Internet directly.
+/// You can also configure `Service` listener to only accept peers that have public IP address
+/// and are reachable directly. This is called external reachability test which is configured
+/// with [`set_ext_reachability_test`].
 ///
 /// You also have to explicilty enable connection listening:
 ///
@@ -80,6 +77,7 @@ const DISABLE_NAT: bool = true;
 /// [`set_accept_bootstrap`]: struct.Service.html#method.set_accept_bootstrap
 /// [`start_listening_tcp`]: struct.Service.html#method.set_listening_tcp
 /// [`set_service_discovery_listen`]: struct.Service.html#method.set_service_discovery_listen
+/// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
 pub struct Service<UID: Uid> {
     config: CrustConfig,
     cm: ConnectionMap<UID>,
@@ -187,6 +185,35 @@ impl<UID: Uid> Service<UID> {
                 }
             };
             listener.set_accept_bootstrap(accept);
+            let _ = tx.send(Ok(()));
+        });
+
+        rx.recv()?
+    }
+
+    /// Enables/disables peer external reachability test.
+    /// When a new peer connects to us, `Service` listener can be configured to test if this
+    /// peer is reachable directly over it's public IP. If external reachability test is enabled,
+    /// and peer is not reachable, then we discard such connection.
+    pub fn set_ext_reachability_test(&self, accept: bool) -> crate::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        let _ = self.post(move |core, _| {
+            let state = match core.get_state(EventToken::Listener.into()) {
+                Some(state) => state,
+                None => {
+                    let _ = tx.send(Err(CrustError::ListenerNotIntialised));
+                    return;
+                }
+            };
+            let mut state = state.borrow_mut();
+            let listener = match state.as_any().downcast_mut::<ConnectionListener<UID>>() {
+                Some(l) => l,
+                None => {
+                    warn!("Token reserved for ConnectionListener has something else.");
+                    return;
+                }
+            };
+            listener.set_ext_reachability_test(accept);
             let _ = tx.send(Ok(()));
         });
 
@@ -359,15 +386,10 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let ext_reachability = match crust_user {
-            CrustUser::Node => ExternalReachability::Required {
-                direct_listeners: unwrap!(self.our_listeners.lock())
-                    .iter()
-                    .map(|peer| peer.addr)
-                    .collect(),
-            },
-            CrustUser::Client => ExternalReachability::NotRequired,
-        };
+        let our_addrs = unwrap!(self.our_listeners.lock())
+            .iter()
+            .map(|peer| peer.addr)
+            .collect();
 
         self.post(move |core, poll| {
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
@@ -375,8 +397,9 @@ impl<UID: Uid> Service<UID> {
                     core,
                     poll,
                     name_hash,
-                    ext_reachability,
+                    our_addrs,
                     our_uid,
+                    crust_user,
                     cm,
                     config,
                     blacklist,

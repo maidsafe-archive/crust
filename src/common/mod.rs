@@ -25,7 +25,7 @@ pub type Result<T> = ::std::result::Result<T, CommonError>;
 /// Specify crust user. Behaviour (for example in bootstrap phase) will be different for different
 /// variants. Node will request the Bootstrapee to connect back to this crust failing which it
 /// would mean it's not reachable from outside and hence should be rejected bootstrap attempts.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub enum CrustUser {
     /// Crust user is a Node and should not be allowed to bootstrap if it's not reachable from
     /// outside.
@@ -33,12 +33,6 @@ pub enum CrustUser {
     /// Crust user is a Client and should be allowed to bootstrap even if it's not reachable from
     /// outside.
     Client,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum ExternalReachability {
-    NotRequired,
-    Required { direct_listeners: Vec<SocketAddr> },
 }
 
 /// Trait for specifying a unique identifier for a Crust peer

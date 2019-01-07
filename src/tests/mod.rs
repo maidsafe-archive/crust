@@ -450,7 +450,7 @@ mod broken_peer {
         fn ready(&mut self, core: &mut Core<()>, poll: &Poll, kind: Ready) {
             if kind.is_readable() {
                 match self.socket.read::<Message<UniqueId>>() {
-                    Ok(Some(Message::BootstrapRequest(_, _, _, their_pk))) => {
+                    Ok(Some(Message::BootstrapRequest(_, _, _, _, their_pk))) => {
                         let shared_key = self.our_sk.shared_secret(&their_pk);
                         unwrap!(self
                             .socket
