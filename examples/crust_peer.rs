@@ -91,7 +91,7 @@ impl Uid for UniqueId {}
 
 impl Distribution<UniqueId> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> UniqueId {
-        rng.gen()
+        UniqueId(rng.gen())
     }
 }
 
