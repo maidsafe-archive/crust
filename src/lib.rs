@@ -7,8 +7,12 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-//! #crust
+//! # crust
+//!
 //! Reliable peer-to-peer network connections in Rust with NAT traversal.
+//! See [`Service`] documentation which is the main structure to use crust services.
+//!
+//! [`Service`]: struct.Service.html
 
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png",
