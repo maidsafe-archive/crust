@@ -435,10 +435,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             + FnMut(RefMut<ExchangeMsg<UID>>, &mut EventLoopCore, &Poll, Token, Result<UID, ()>)
             + Clone,
     {
-        for their_listener in their_addrs
-            .into_iter()
-            .filter(|addr| ip_addr_is_global(&addr.ip()))
-        {
+        for their_listener in self.addrs_for_ext_reachability_test(their_addrs) {
             let self_weak = self.self_weak.clone();
             let mut on_result = on_result.clone();
             let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
@@ -457,6 +454,24 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 let _ = self.reachability_children.insert(child);
             }
         }
+    }
+
+    /// Filters out addresses that are not public IPs and don't belong to the sender socket.
+    fn addrs_for_ext_reachability_test(
+        &self,
+        their_addrs: HashSet<SocketAddr>,
+    ) -> HashSet<SocketAddr> {
+        their_addrs
+            .into_iter()
+            .filter(|addr| ip_addr_is_global(&addr.ip()))
+            .filter(|addr| match self.socket.peer_addr() {
+                Ok(peer_addr) => addr.ip() == peer_addr.ip(),
+                Err(e) => {
+                    debug!("Could not obtain IP Address of peer: {:?}.", e);
+                    false
+                }
+            })
+            .collect()
     }
 
     fn enter_handshaking_mode(&self, their_uid: UID) {
