@@ -29,7 +29,14 @@ pub enum Message<UID> {
     EchoAddrReq(PublicEncryptKey),
     EchoAddrResp(SocketAddr),
     ChooseConnection,
-    Connect(UID, NameHash, PublicEncryptKey),
+    /// First connect handshake message which goes both ways: peer that initiates connection
+    /// sends this message to remote peer, which then responds with the same message, but its own
+    /// information.
+    /// When `Connect` is used as response message address list is ignored and can be empty. When
+    /// it is a request message, it should contain all the addresses we are listening on. Those
+    /// addresses will be used for external reachability test.
+    // TODO(povilas): consider splitting Connect into ConnectRequest and ConnectResponse
+    Connect(UID, NameHash, HashSet<SocketAddr>, PublicEncryptKey),
     Data(Vec<u8>),
 }
 

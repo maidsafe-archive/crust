@@ -20,7 +20,7 @@ use mio_extras::timer::Timeout;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::collections::hash_map::Entry;
 use std::collections::HashSet;
 use std::mem;
@@ -30,6 +30,7 @@ use std::time::Duration;
 
 pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
 
+/// Handles incoming socket according to the first received request.
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
@@ -140,12 +141,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     Err(()) => self.terminate(core, poll),
                 }
             }
-            Ok(Some(Message::Connect(their_uid, name_hash, their_pk))) => match self
-                .validate_peer_uid(their_uid)
-            {
-                Ok(their_uid) => self.handle_connect(core, poll, their_uid, name_hash, their_pk),
-                Err(()) => self.terminate(core, poll),
-            },
+            Ok(Some(Message::Connect(their_uid, name_hash, their_addrs, their_pk))) => {
+                match self.validate_peer_uid(their_uid) {
+                    Ok(their_uid) => {
+                        self.handle_connect(core, poll, their_uid, name_hash, their_addrs, their_pk)
+                    }
+                    Err(()) => self.terminate(core, poll),
+                }
+            }
             Ok(Some(Message::EchoAddrReq(their_pk))) => {
                 self.handle_echo_addr_req(core, poll, their_pk)
             }
@@ -200,29 +203,21 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
 
         if their_role == CrustUser::Node && self.test_ext_reachability {
-            for their_listener in their_addrs
-                .into_iter()
-                .filter(|addr| ip_addr_is_global(&addr.ip()))
-            {
-                let self_weak = self.self_weak.clone();
-                let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
-                    if let Some(self_rc) = self_weak.upgrade() {
-                        self_rc
-                            .borrow_mut()
-                            .handle_check_reachability(core, poll, child, res)
-                    }
+            let on_check_reachability_result =
+                |mut state: RefMut<ExchangeMsg<UID>>,
+                 core: &mut EventLoopCore,
+                 poll: &Poll,
+                 child,
+                 res| {
+                    state.handle_check_reachability(core, poll, child, res);
                 };
-
-                if let Ok(child) = CheckReachability::<UID>::start(
-                    core,
-                    poll,
-                    their_listener,
-                    their_uid,
-                    Box::new(finish),
-                ) {
-                    let _ = self.reachability_children.insert(child);
-                }
-            }
+            self.spawn_ext_reachability_tests(
+                core,
+                poll,
+                their_uid,
+                their_addrs,
+                on_check_reachability_result,
+            );
             if self.reachability_children.is_empty() {
                 trace!(
                     "Bootstrapper failed to pass requisite condition of external \
@@ -310,6 +305,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll: &Poll,
         their_uid: UID,
         name_hash: NameHash,
+        their_addrs: HashSet<SocketAddr>,
         their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
@@ -329,10 +325,64 @@ impl<UID: Uid> ExchangeMsg<UID> {
             return self.terminate(core, poll);
         }
 
-        self.enter_handshaking_mode(their_uid);
+        if self.test_ext_reachability {
+            let on_check_reachability_result =
+                |mut state: RefMut<ExchangeMsg<UID>>,
+                 core: &mut EventLoopCore,
+                 poll: &Poll,
+                 child,
+                 res| {
+                    state.handle_check_reachability_on_connect(core, poll, child, res);
+                };
+            self.spawn_ext_reachability_tests(
+                core,
+                poll,
+                their_uid,
+                their_addrs,
+                on_check_reachability_result,
+            );
+            if self.reachability_children.is_empty() {
+                trace!(
+                    "Bootstrapper failed to pass requisite condition of external \
+                     recheability. Denying bootstrap."
+                );
+                let reason = BootstrapDenyReason::FailedExternalReachability;
+                self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+            }
+        } else {
+            self.send_connect_grant(core, poll, their_uid);
+        }
+    }
 
-        let msg = Message::Connect(self.our_uid, self.name_hash, self.our_pk);
+    /// Called when external reachability test passed.
+    fn handle_check_reachability_on_connect(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        child: Token,
+        res: Result<UID, ()>,
+    ) {
+        let _ = self.reachability_children.remove(&child);
+        if let Ok(their_uid) = res {
+            self.terminate_childern(core, poll);
+            return self.send_connect_grant(core, poll, their_uid);
+        }
+        if self.reachability_children.is_empty() {
+            trace!("External reachability test failed, terminating connection.");
+            self.terminate(core, poll);
+        }
+    }
+
+    /// Sends response to incoming connection.
+    fn send_connect_grant(&mut self, core: &mut EventLoopCore, poll: &Poll, their_uid: UID) {
+        self.enter_handshaking_mode(their_uid);
         self.next_state = NextState::ConnectionCandidate(their_uid);
+        let msg = Message::Connect(
+            self.our_uid,
+            self.name_hash,
+            Default::default(),
+            self.our_pk,
+        );
         self.write(core, poll, Some((msg, 0)));
     }
 
@@ -368,6 +418,43 @@ impl<UID: Uid> ExchangeMsg<UID> {
             res => {
                 warn!("Failed to set decrypt/encrypt context: {:?}", res);
                 false
+            }
+        }
+    }
+
+    /// Spawns multiple children states that check which of given addresses are publicly reachable.
+    fn spawn_ext_reachability_tests<F>(
+        &mut self,
+        core: &mut EventLoopCore,
+        poll: &Poll,
+        their_uid: UID,
+        their_addrs: HashSet<SocketAddr>,
+        on_result: F,
+    ) where
+        F: 'static
+            + FnMut(RefMut<ExchangeMsg<UID>>, &mut EventLoopCore, &Poll, Token, Result<UID, ()>)
+            + Clone,
+    {
+        for their_listener in their_addrs
+            .into_iter()
+            .filter(|addr| ip_addr_is_global(&addr.ip()))
+        {
+            let self_weak = self.self_weak.clone();
+            let mut on_result = on_result.clone();
+            let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
+                if let Some(self_rc) = self_weak.upgrade() {
+                    on_result(self_rc.borrow_mut(), core, poll, child, res);
+                }
+            };
+
+            if let Ok(child) = CheckReachability::<UID>::start(
+                core,
+                poll,
+                their_listener,
+                their_uid,
+                Box::new(finish),
+            ) {
+                let _ = self.reachability_children.insert(child);
             }
         }
     }

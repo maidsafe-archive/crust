@@ -57,6 +57,7 @@ mod connect {
 
         unwrap!(service1.start_listening_tcp());
         expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        unwrap!(service1.set_ext_reachability_test(false));
         let uid1 = service1.id();
 
         let (ci_tx1, ci_rx1) = mpsc::channel();
@@ -90,6 +91,74 @@ mod connect {
 
         let cached_peers = unwrap!(service2.bootstrap_cached_peers());
         assert!(cached_peers.is_subset(&expected_conns));
+    }
+
+    #[test]
+    fn when_external_reachability_is_disabled_successfully_connects_on_localhost() {
+        let (mut service1, event_rx1) = test_service();
+        let (service2, event_rx2) = test_service();
+
+        unwrap!(service1.start_listening_tcp());
+        expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        unwrap!(service1.set_ext_reachability_test(false));
+        let uid1 = service1.id();
+
+        let (ci_tx1, ci_rx1) = mpsc::channel();
+
+        let token = rand::random();
+        service1.prepare_connection_info(token);
+        let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+
+        let token = rand::random();
+        service2.prepare_connection_info(token);
+        let ci2 = expect_event!(event_rx2, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        let pub_ci1 = unwrap!(ci_rx1.recv());
+
+        unwrap!(service2.connect(ci2, pub_ci1));
+        expect_event!(event_rx2, Event::ConnectSuccess(id) => {
+            assert_eq!(id, uid1);
+        });
+    }
+
+    #[test]
+    fn when_external_reachability_is_enabled_fails_to_connect_on_localhost() {
+        let (mut service1, event_rx1) = test_service();
+        let (service2, event_rx2) = test_service();
+
+        unwrap!(service1.start_listening_tcp());
+        expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        unwrap!(service1.set_ext_reachability_test(true));
+        let uid1 = service1.id();
+
+        let (ci_tx1, ci_rx1) = mpsc::channel();
+
+        let token = rand::random();
+        service1.prepare_connection_info(token);
+        let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+
+        let token = rand::random();
+        service2.prepare_connection_info(token);
+        let ci2 = expect_event!(event_rx2, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        let pub_ci1 = unwrap!(ci_rx1.recv());
+
+        unwrap!(service2.connect(ci2, pub_ci1));
+        expect_event!(event_rx2, Event::ConnectFailure(id) => {
+            assert_eq!(id, uid1);
+        });
     }
 }
 

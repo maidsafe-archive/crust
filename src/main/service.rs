@@ -386,10 +386,7 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let our_addrs = unwrap!(self.our_listeners.lock())
-            .iter()
-            .map(|peer| peer.addr)
-            .collect();
+        let our_addrs = self.our_listener_addrs();
 
         self.post(move |core, poll| {
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
@@ -522,10 +519,12 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let config = self.config.clone();
+        let our_addrs = self.our_listener_addrs();
 
         self.post(move |core, poll| {
             let _ = Connect::start(
-                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk, config,
+                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk, our_addrs,
+                config,
             );
         })?;
 
@@ -675,6 +674,13 @@ impl<UID: Uid> Service<UID> {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
+
+    fn our_listener_addrs(&self) -> HashSet<SocketAddr> {
+        unwrap!(self.our_listeners.lock())
+            .iter()
+            .map(|peer| peer.addr)
+            .collect()
+    }
 }
 
 /// Returns a hash of the network name.
@@ -739,12 +745,14 @@ mod tests {
 
             unwrap!(service_0.start_listening_tcp());
             expect_event!(event_rx_0, Event::ListenerStarted(_));
+            unwrap!(service_0.set_ext_reachability_test(false));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
             let mut service_1 = unwrap!(Service::try_new(event_tx_1, rand::random()));
 
             unwrap!(service_1.start_listening_tcp());
             expect_event!(event_rx_1, Event::ListenerStarted(_));
+            unwrap!(service_1.set_ext_reachability_test(false));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
             exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);

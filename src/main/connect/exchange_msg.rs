@@ -16,7 +16,9 @@ use socket_collection::{EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
+use std::collections::HashSet;
 use std::mem;
+use std::net::SocketAddr;
 use std::rc::Rc;
 
 /// When connection messages are exchanged a callback is called with these parameters.
@@ -46,6 +48,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         cm: ConnectionMap<UID>,
         our_pk: PublicEncryptKey,
         shared_key: SharedSecretKey,
+        our_addrs: HashSet<SocketAddr>,
         finish: Finish,
     ) -> crate::Res<Token> {
         let token = core.get_new_token();
@@ -79,7 +82,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             expected_nh: name_hash,
             socket,
             cm,
-            msg: Some((Message::Connect(our_id, name_hash, our_pk), 0)),
+            msg: Some((Message::Connect(our_id, name_hash, our_addrs, our_pk), 0)),
             shared_key,
             finish,
         };
@@ -102,7 +105,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn receive_response(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
-            Ok(Some(Message::Connect(their_uid, name_hash, _their_pk))) => {
+            Ok(Some(Message::Connect(their_uid, name_hash, _, _their_pk))) => {
                 if their_uid != self.expected_id || name_hash != self.expected_nh {
                     return self.handle_error(core, poll);
                 }
