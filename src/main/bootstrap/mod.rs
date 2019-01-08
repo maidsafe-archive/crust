@@ -47,7 +47,7 @@ const MAX_CONTACTS_EXPECTED: usize = 1500;
 pub struct Bootstrap<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
-    peers: Vec<PeerInfo>,
+    peers: HashSet<PeerInfo>,
     name_hash: NameHash,
     ext_reachability: ExternalReachability,
     our_uid: UID,
@@ -118,7 +118,7 @@ impl<UID: Uid> Bootstrap<UID> {
     }
 
     fn begin_bootstrap(&mut self, core: &mut EventLoopCore, poll: &Poll) {
-        let peers = mem::replace(&mut self.peers, Vec::new());
+        let peers = mem::replace(&mut self.peers, HashSet::new());
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -316,8 +316,8 @@ fn shuffled_bootstrap_peers(
     cached_peers: HashSet<PeerInfo>,
     config: CrustConfig,
     blacklist: HashSet<SocketAddr>,
-) -> Vec<PeerInfo> {
-    let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
+) -> HashSet<PeerInfo> {
+    let mut peers = HashSet::with_capacity(MAX_CONTACTS_EXPECTED);
     let mut rng = rand::thread_rng();
 
     let mut cached: Vec<_> = cached_peers.iter().cloned().collect();
