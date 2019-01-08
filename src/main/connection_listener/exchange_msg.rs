@@ -79,16 +79,6 @@ impl<UID: Uid> ExchangeMsg<UID> {
             CoreTimer::new(token, 0),
         );
 
-        // Cache the reachability requirement config option, to make sure that it won't be updated
-        // with the rest of the configuration.
-        let test_ext_reachability = unwrap!(config.lock())
-            .cfg
-            .dev
-            .as_ref()
-            .map_or(test_ext_reachability, |dev_cfg| {
-                !dev_cfg.disable_external_reachability_requirement
-            });
-
         let state = Rc::new(RefCell::new(Self {
             token,
             cm,

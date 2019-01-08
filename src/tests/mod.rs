@@ -13,7 +13,7 @@ pub mod utils;
 pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
 use crate::common::{CrustUser, PeerInfo};
-use crate::main::{self, Config, DevConfig, Event};
+use crate::main::{self, Config, Event};
 use mio;
 use rand;
 use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
@@ -275,16 +275,13 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
 #[test]
 fn bootstrap_with_skipped_external_reachability_test() {
-    let mut config = Config::default();
-    config.dev = Some(DevConfig {
-        disable_external_reachability_requirement: true,
-    });
-
+    let config = Config::default();
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap!(Service::with_config(event_tx0, config, rand::random()));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
+    unwrap!(service0.set_ext_reachability_test(false));
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![localhost_contact_info(port, service0.pub_key())];
