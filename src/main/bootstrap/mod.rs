@@ -47,7 +47,7 @@ pub struct Bootstrap<UID: Uid> {
     cm: ConnectionMap<UID>,
     peers: Vec<PeerInfo>,
     name_hash: NameHash,
-    our_addrs: HashSet<SocketAddr>,
+    our_global_direct_listeners: HashSet<SocketAddr>,
     our_uid: UID,
     our_role: CrustUser,
     event_tx: crate::CrustEventSender<UID>,
@@ -63,14 +63,14 @@ pub struct Bootstrap<UID: Uid> {
 impl<UID: Uid> Bootstrap<UID> {
     /// # Args
     ///
-    /// `our_addrs` - addresses sent to remote peer to check external reachablity with us.
+    /// `our_global_direct_listeners` - addresses sent to remote peer to check external reachablity with us.
     /// `our_role` - Crust role: client or node. Clients are never checked for external
     ///     reachability.
     pub fn start(
         core: &mut EventLoopCore,
         poll: &Poll,
         name_hash: NameHash,
-        our_addrs: HashSet<SocketAddr>,
+        our_global_direct_listeners: HashSet<SocketAddr>,
         our_uid: UID,
         our_role: CrustUser,
         cm: ConnectionMap<UID>,
@@ -99,7 +99,7 @@ impl<UID: Uid> Bootstrap<UID> {
             cm,
             peers,
             name_hash,
-            our_addrs,
+            our_global_direct_listeners,
             our_uid,
             our_role,
             event_tx,
@@ -144,7 +144,7 @@ impl<UID: Uid> Bootstrap<UID> {
                 peer,
                 self.our_uid,
                 self.name_hash,
-                self.our_addrs.clone(),
+                self.our_global_direct_listeners.clone(),
                 self.our_role,
                 self.our_pk,
                 &self.our_sk,

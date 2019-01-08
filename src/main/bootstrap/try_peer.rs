@@ -46,7 +46,7 @@ impl<UID: Uid> TryPeer<UID> {
         peer: PeerInfo,
         our_uid: UID,
         name_hash: NameHash,
-        our_addrs: HashSet<SocketAddr>,
+        our_global_direct_listeners: HashSet<SocketAddr>,
         our_role: CrustUser,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
@@ -70,7 +70,13 @@ impl<UID: Uid> TryPeer<UID> {
             peer,
             socket,
             request: Some((
-                Message::BootstrapRequest(our_uid, name_hash, our_addrs, our_role, our_pk),
+                Message::BootstrapRequest(
+                    our_uid,
+                    name_hash,
+                    our_global_direct_listeners,
+                    our_role,
+                    our_pk,
+                ),
                 0,
             )),
             finish,

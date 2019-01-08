@@ -371,7 +371,7 @@ mod tests {
 
     fn bootstrap(
         name_hash: NameHash,
-        our_addrs: HashSet<SocketAddr>,
+        our_global_direct_listeners: HashSet<SocketAddr>,
         our_uid: UniqueId,
         listener: &Listener,
     ) {
@@ -385,8 +385,13 @@ mod tests {
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key)));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
-        let message =
-            Message::BootstrapRequest(our_uid, name_hash, our_addrs, CrustUser::Client, our_pk);
+        let message = Message::BootstrapRequest(
+            our_uid,
+            name_hash,
+            our_global_direct_listeners,
+            CrustUser::Client,
+            our_pk,
+        );
 
         let mut events = Events::with_capacity(16);
         let msg = 'event_loop: loop {

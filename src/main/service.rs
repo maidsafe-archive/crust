@@ -15,7 +15,7 @@ use crate::main::{
     ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError, Event,
     EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
-use crate::nat::{MappedTcpSocket, MappingContext};
+use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
@@ -386,7 +386,7 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let our_addrs = self.our_listener_addrs();
+        let our_global_direct_listeners = self.our_global_listener_addrs();
 
         self.post(move |core, poll| {
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
@@ -394,7 +394,7 @@ impl<UID: Uid> Service<UID> {
                     core,
                     poll,
                     name_hash,
-                    our_addrs,
+                    our_global_direct_listeners,
                     our_uid,
                     crust_user,
                     cm,
@@ -519,11 +519,20 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let config = self.config.clone();
-        let our_addrs = self.our_listener_addrs();
+        let our_global_direct_listeners = self.our_global_listener_addrs();
 
         self.post(move |core, poll| {
             let _ = Connect::start(
-                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk, our_addrs,
+                core,
+                poll,
+                our_ci,
+                their_ci,
+                cm,
+                our_nh,
+                event_tx,
+                our_pk,
+                &our_sk,
+                our_global_direct_listeners,
                 config,
             );
         })?;
@@ -675,10 +684,11 @@ impl<UID: Uid> Service<UID> {
         Ok(())
     }
 
-    fn our_listener_addrs(&self) -> HashSet<SocketAddr> {
+    fn our_global_listener_addrs(&self) -> HashSet<SocketAddr> {
         unwrap!(self.our_listeners.lock())
             .iter()
             .map(|peer| peer.addr)
+            .filter(|addr| ip_addr_is_global(&addr.ip()))
             .collect()
     }
 }

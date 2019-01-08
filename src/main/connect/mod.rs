@@ -42,7 +42,7 @@ pub struct Connect<UID: Uid> {
     event_tx: crate::CrustEventSender<UID>,
     our_pk: PublicEncryptKey,
     config: CrustConfig,
-    our_addrs: HashSet<SocketAddr>,
+    our_global_direct_listeners: HashSet<SocketAddr>,
 }
 
 impl<UID: Uid> Connect<UID> {
@@ -56,7 +56,7 @@ impl<UID: Uid> Connect<UID> {
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
-        our_addrs: HashSet<SocketAddr>,
+        our_global_direct_listeners: HashSet<SocketAddr>,
         config: CrustConfig,
     ) -> crate::Res<()> {
         let their_id = their_ci.id;
@@ -80,7 +80,7 @@ impl<UID: Uid> Connect<UID> {
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
             our_pk,
-            our_addrs,
+            our_global_direct_listeners,
             config,
         }));
 
@@ -140,7 +140,7 @@ impl<UID: Uid> Connect<UID> {
             self.cm.clone(),
             self.our_pk,
             shared_key,
-            self.our_addrs.clone(),
+            self.our_global_direct_listeners.clone(),
             Box::new(handler),
         ) {
             let _ = self.children.insert(child);

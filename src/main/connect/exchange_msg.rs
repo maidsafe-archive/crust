@@ -48,7 +48,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         cm: ConnectionMap<UID>,
         our_pk: PublicEncryptKey,
         shared_key: SharedSecretKey,
-        our_addrs: HashSet<SocketAddr>,
+        our_global_direct_listeners: HashSet<SocketAddr>,
         finish: Finish,
     ) -> crate::Res<Token> {
         let token = core.get_new_token();
@@ -82,7 +82,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
             expected_nh: name_hash,
             socket,
             cm,
-            msg: Some((Message::Connect(our_id, name_hash, our_addrs, our_pk), 0)),
+            msg: Some((
+                Message::Connect(our_id, name_hash, our_global_direct_listeners, our_pk),
+                0,
+            )),
             shared_key,
             finish,
         };
