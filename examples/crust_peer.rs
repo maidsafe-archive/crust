@@ -8,6 +8,39 @@
 // Software.
 
 //! Example which runs a Crust node.
+//! You can connect with nodes directly and exchange messages with them.
+//!
+//! ## Use
+//!
+//! 1. `cargo run --example crust_peer`
+//! 2. Type `prepare-connection-info` command and press ENTER. Crust will generate your
+//!    connection information and print it in JSON format.
+//! 3. Repeat the steps 1 and 2 on a remote machine or on localhost but in a different terminal.
+//! 4. Now you should be running Node1 and Node2 instances.
+//! 5. Copy connection information from Node2 and type into Node1, e.g.
+//!
+//!    > connect 0 {"id":[69,179,26,91,30,37,129,181,210,61,9,134,181,74,170,154,33,63,253,237],
+//!    "for_direct":["127.0.0.1:56419","192.168.1.122:56419","172.17.42.1:56419","10.0.0.1:56419",
+//!    "86.100.204.140:43795"],"our_pk":{"encrypt":[240,160,65,141,35,248,81,3,221,127,142,130,113,
+//!    81,191,59,223,134,106,52,250,136,111,244,158,79,18,148,32,125,87,21]}}
+//!
+//!    The second parameter `0` of connect command is our connection information number. Note, we
+//!    can execute `prepare-connection-info` and Crust will create many instances. So this
+//!    parameter specifies which one we're using. We must use a single instance per connection.
+//!
+//!    After you press ENTER you should be presented with a message declaring successful
+//!    connection:
+//!
+//!    > Connected to peer UniqueId([255, 1, 11, 129, 240, 47, 25, 225, 183, 51, 93, 187, 205, 123,
+//!      124, 62, 242, 136, 190, 60]) Node count: 1
+//!
+//! 6. Then you can exchange messages with connected peers:
+//!
+//!    > send 0 hello
+//!
+//!    The second parameter of a `send` message `0` is the connection index.
+//!
+//! 7. Type `stop` to exit.
 
 // For explanation of lint checks, run `rustc -W help` or see
 // https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
