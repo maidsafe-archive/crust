@@ -32,6 +32,13 @@ use std::time::Duration;
 pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
 const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 
+/// Remote peer might send a huge list of external addresses to test for reachability. That
+/// would result in a lot of requests being made.
+/// Under normal circumstances that wouldn't happen, unless some malicious peer was trying to do
+/// denial of service attack. Hence, limit the number of addresses we use for external reachability
+/// test.
+const MAX_EXT_REACHABILITY_TEST_ADDRS: usize = 3;
+
 /// Handles incoming socket according to the first received request.
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
@@ -468,6 +475,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     false
                 }
             })
+            .take(MAX_EXT_REACHABILITY_TEST_ADDRS)
             .collect()
     }
 
