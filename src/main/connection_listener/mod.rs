@@ -435,7 +435,7 @@ mod tests {
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone())));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge()));
 
-        let message = Message::Connect(our_uid, name_hash, Default::default(), our_pk);
+        let message = Message::ConnectRequest(our_uid, name_hash, Default::default(), our_pk);
 
         let mut events = Events::with_capacity(16);
         'event_loop: loop {
@@ -456,10 +456,9 @@ mod tests {
                         if ev.readiness().is_readable() {
                             let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
                             let their_uid = match msg {
-                                Message::Connect(peer_uid, peer_hash, _, their_pk) => {
+                                Message::ConnectResponse(peer_uid, peer_hash) => {
                                     assert_eq!(peer_uid, listener.uid);
                                     assert_eq!(peer_hash, NAME_HASH);
-                                    assert_eq!(their_pk, listener.pub_key);
 
                                     unwrap!(sock.set_encrypt_ctx(EncryptContext::authenticated(
                                         shared_key
