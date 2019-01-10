@@ -8,7 +8,7 @@
 // Software.
 
 pub use self::error::NatError;
-pub use self::mapped_tcp_socket::MappedTcpSocket;
+pub use self::mapped_tcp_socket::{GetExtAddr, MappedTcpSocket};
 pub use self::mapping_context::MappingContext;
 pub use self::util::ip_addr_is_global;
 

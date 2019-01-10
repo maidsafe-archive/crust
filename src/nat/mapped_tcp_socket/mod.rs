@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use self::get_ext_addr::GetExtAddr;
+pub use self::get_ext_addr::GetExtAddr;
 use crate::common::{Core, CoreMessage, CoreTimer, State, Uid};
 use crate::nat::{util, MappingContext, NatError};
 use igd::PortMappingProtocol;
@@ -132,6 +132,7 @@ where
                 stun,
                 our_pk,
                 our_sk,
+                None,
                 Box::new(handler),
             ) {
                 let _ = state.borrow_mut().stun_children.insert(child);

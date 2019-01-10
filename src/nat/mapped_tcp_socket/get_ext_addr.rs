@@ -7,23 +7,28 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{Core, Message, PeerInfo, State, Uid};
+use crate::common::{Core, CoreTimer, Message, PeerInfo, State, Uid};
 use crate::nat::{util, NatError};
 use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
+use mio_extras::timer::Timeout;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::rc::Rc;
+use std::time::Duration;
 
 pub type Finish<T> = Box<FnMut(&mut Core<T>, &Poll, Token, Result<SocketAddr, ()>)>;
 
+/// Does a STUN like request to retrieve my own public endpoint, except the request is fully
+/// encrypted.
 pub struct GetExtAddr<UID: Uid, T> {
     token: Token,
     socket: TcpSock,
     request: Option<(Message<UID>, Priority)>,
+    timeout: Option<Timeout>,
     finish: Finish<T>,
 }
 
@@ -35,6 +40,7 @@ impl<UID: Uid, T: 'static> GetExtAddr<UID, T> {
         peer_stun: &PeerInfo,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
+        timeout_secs: Option<u64>,
         finish: Finish<T>,
     ) -> Result<Token, NatError> {
         let query_socket = util::new_reusably_bound_tcp_socket(&local_addr)?;
@@ -47,10 +53,13 @@ impl<UID: Uid, T: 'static> GetExtAddr<UID, T> {
         socket.set_decrypt_ctx(DecryptContext::authenticated(shared_key))?;
 
         let token = core.get_new_token();
+        let timeout = timeout_secs
+            .map(|secs| core.set_timeout(Duration::from_secs(secs), CoreTimer::new(token, 0)));
         let state = Self {
             token,
             socket,
             request: Some((Message::EchoAddrReq(our_pk), 0)),
+            timeout,
             finish,
         };
 
@@ -103,8 +112,16 @@ impl<UID: Uid, T: 'static> State<T> for GetExtAddr<UID, T> {
     }
 
     fn terminate(&mut self, core: &mut Core<T>, poll: &Poll) {
+        if let Some(timeout) = self.timeout.take() {
+            let _ = core.cancel_timeout(&timeout);
+        }
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
+    }
+
+    fn timeout(&mut self, core: &mut Core<T>, poll: &Poll, _timer_id: u8) {
+        trace!("GetExtAddr timed out. Erroring out for this remote endpoint.");
+        self.handle_error(core, poll)
     }
 
     fn as_any(&mut self) -> &mut Any {

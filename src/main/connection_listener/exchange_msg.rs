@@ -7,14 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use super::check_reachability::CheckReachability;
-use crate::common::{BootstrapDenyReason, CoreTimer, CrustUser, Message, NameHash, State, Uid};
+use crate::common::{
+    ipv4_addr, BootstrapDenyReason, CoreTimer, CrustUser, Message, NameHash, PeerInfo, State, Uid,
+};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
     CrustConfig, Event, EventLoopCore,
 };
-use crate::nat::ip_addr_is_global;
+use crate::nat::{ip_addr_is_global, GetExtAddr};
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
@@ -29,6 +30,7 @@ use std::rc::{Rc, Weak};
 use std::time::Duration;
 
 pub const EXCHANGE_MSG_TIMEOUT_SEC: u64 = 10 * 60;
+const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 
 /// Handles incoming socket according to the first received request.
 pub struct ExchangeMsg<UID: Uid> {
@@ -206,6 +208,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 poll,
                 their_uid,
                 their_addrs,
+                their_pk,
                 on_check_reachability_result,
             );
             if self.reachability_children.is_empty() {
@@ -329,13 +332,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 poll,
                 their_uid,
                 their_addrs,
+                their_pk,
                 on_check_reachability_result,
             );
             if self.reachability_children.is_empty() {
-                trace!(
-                    "Bootstrapper failed to pass requisite condition of external \
-                     recheability. Denying bootstrap."
-                );
+                trace!("External reachability test failed. Denying connect request.");
                 let reason = BootstrapDenyReason::FailedExternalReachability;
                 self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
             }
@@ -419,6 +420,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll: &Poll,
         their_uid: UID,
         their_addrs: HashSet<SocketAddr>,
+        their_pk: PublicEncryptKey,
         on_result: F,
     ) where
         F: 'static
@@ -428,17 +430,22 @@ impl<UID: Uid> ExchangeMsg<UID> {
         for their_listener in self.addrs_for_ext_reachability_test(their_addrs) {
             let self_weak = self.self_weak.clone();
             let mut on_result = on_result.clone();
-            let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
-                if let Some(self_rc) = self_weak.upgrade() {
-                    on_result(self_rc.borrow_mut(), core, poll, child, res);
-                }
-            };
+            let finish =
+                move |core: &mut EventLoopCore, poll: &Poll, child, res: Result<SocketAddr, ()>| {
+                    if let Some(self_rc) = self_weak.upgrade() {
+                        let res = res.map(|_| their_uid);
+                        on_result(self_rc.borrow_mut(), core, poll, child, res);
+                    }
+                };
 
-            if let Ok(child) = CheckReachability::<UID>::start(
+            if let Ok(child) = GetExtAddr::<UID, BootstrapCache>::start(
                 core,
                 poll,
-                their_listener,
-                their_uid,
+                ipv4_addr(0, 0, 0, 0, 0),
+                &PeerInfo::new(their_listener, their_pk),
+                self.our_pk,
+                &self.our_sk,
+                Some(CHECK_REACHABILITY_TIMEOUT_SEC),
                 Box::new(finish),
             ) {
                 let _ = self.reachability_children.insert(child);

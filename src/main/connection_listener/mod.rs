@@ -7,7 +7,6 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
