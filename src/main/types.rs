@@ -12,7 +12,9 @@ use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::Config;
 use mio::Token;
 use safe_crypto::PublicEncryptKey;
+use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 
 // ========================================================================================
 //                                     ConnectionId
@@ -125,3 +127,6 @@ pub type EventLoopCore = Core<BootstrapCache>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
 pub type EventLoop = common::EventLoop<BootstrapCache>;
+
+pub type ConnectionMap<UID> = Arc<Mutex<HashMap<UID, ConnectionId>>>;
+pub type CrustConfig = Arc<Mutex<ConfigWrapper>>;
