@@ -27,6 +27,7 @@ use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::mem;
 use std::net::SocketAddr;
 use std::rc::{Rc, Weak};
@@ -246,10 +247,7 @@ impl<UID: Uid> State<BootstrapCache> for Bootstrap<UID> {
         }
 
         let rx = unwrap!(self.sd_meta.take()).rx;
-
-        while let Ok(listeners) = rx.try_recv() {
-            self.peers.extend(listeners);
-        }
+        receive_peers_into(&mut self.peers, rx);
 
         self.begin_bootstrap(core, poll);
     }
@@ -284,7 +282,7 @@ pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo, config: &C
 }
 
 struct ServiceDiscMeta {
-    rx: Receiver<Vec<PeerInfo>>,
+    rx: Receiver<HashSet<PeerInfo>>,
     timeout: Timeout,
 }
 
@@ -294,7 +292,7 @@ fn seek_peers(
     core: &mut EventLoopCore,
     service_discovery_token: Token,
     token: Token,
-) -> crate::Res<(Receiver<Vec<PeerInfo>>, Timeout)> {
+) -> crate::Res<(Receiver<HashSet<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
         let state = unwrap!(state
@@ -334,6 +332,19 @@ fn shuffled_bootstrap_peers(
 
     peers.retain(|peer| !blacklist.contains(&peer.addr));
     peers
+}
+
+/// Appends peers received from `ServiceDiscMeta` to the peers list
+fn receive_peers_into(peers: &mut Vec<PeerInfo>, rx: Receiver<HashSet<PeerInfo>>) {
+    let our_peers: HashSet<&PeerInfo> = HashSet::from_iter(peers.iter());
+
+    let discovered_peers: HashSet<PeerInfo> = rx
+        .try_iter()
+        .flatten()
+        .filter(|peer| !our_peers.contains(peer))
+        .collect();
+
+    peers.extend(discovered_peers);
 }
 
 #[cfg(test)]
@@ -377,7 +388,7 @@ mod tests {
         }
     }
 
-    mod seek_pers {
+    mod seek_peers {
         use super::*;
 
         #[test]
@@ -431,6 +442,70 @@ mod tests {
 
             assert_eq!(peers.len(), 1);
             assert!(peers.contains(&peer2));
+        }
+    }
+
+    mod receive_peers_into {
+        use super::*;
+
+        #[test]
+        fn it_appends_received_peers() {
+            let mut peers: Vec<PeerInfo> = (0..5)
+                .map(|i| peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, i)))
+                .collect();
+            let old_len = peers.len();
+
+            let new_peers: HashSet<PeerInfo> = (0..5)
+                .map(|i| peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, i + 5)))
+                .collect();
+            let n_new_peers = new_peers.len();
+
+            let (tx, rx) = mpsc::channel();
+            tx.send(new_peers).unwrap();
+
+            receive_peers_into(&mut peers, rx);
+
+            assert_eq!(peers.len(), old_len + n_new_peers);
+        }
+
+        #[test]
+        fn it_filters_out_duplicates() {
+            let mut peers: Vec<PeerInfo> = (0..10)
+                .map(|i| peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, i)))
+                .collect();
+
+            let (tx, rx) = mpsc::channel();
+
+            let duplicates: HashSet<PeerInfo> =
+                peers.iter().take(5).map(|peer| peer.clone()).collect();
+            tx.send(duplicates).unwrap();
+
+            receive_peers_into(&mut peers, rx);
+
+            let peers_set: HashSet<PeerInfo> = peers.iter().cloned().collect();
+
+            assert_eq!(peers.len(), peers_set.len());
+        }
+
+        #[test]
+        fn it_preserves_order_of_old_peers() {
+            let mut peers: Vec<PeerInfo> = (0..10)
+                .map(|i| peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, i)))
+                .collect();
+            let first_peers = peers.clone();
+
+            let (tx, rx) = mpsc::channel();
+            let new_peers: HashSet<PeerInfo> = (0..10)
+                .map(|i| peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, i + 10)))
+                .collect();
+            tx.send(new_peers).unwrap();
+
+            receive_peers_into(&mut peers, rx);
+
+            assert!(peers
+                .iter()
+                .zip(first_peers.iter())
+                .all(|(p1, p2)| p1 == p2))
         }
     }
 
