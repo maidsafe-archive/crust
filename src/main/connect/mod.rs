@@ -13,8 +13,8 @@ use self::exchange_msg::ExchangeMsg;
 use crate::common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
 use crate::main::bootstrap;
 use crate::main::{
-    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustConfig, CrustError, Event,
-    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustConfig, CrustData, CrustError,
+    Event, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
@@ -214,7 +214,7 @@ impl<UID: Uid> Connect<UID> {
     }
 
     fn remove_peer_from_cache(&self, core: &mut EventLoopCore, peer_info: &PeerInfo) {
-        let bootstrap_cache = core.user_data_mut();
+        let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
         bootstrap_cache.remove(peer_info);
         if let Err(e) = bootstrap_cache.commit() {
             info!("Failed to write bootstrap cache to disk: {}", e);
@@ -239,7 +239,7 @@ impl<UID: Uid> Connect<UID> {
     }
 }
 
-impl<UID: Uid> State<bootstrap::Cache> for Connect<UID> {
+impl<UID: Uid> State<CrustData> for Connect<UID> {
     fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, poll);
@@ -326,7 +326,7 @@ mod tests {
 
             connect_state.remove_peer_from_cache(&mut core, &cached_peer);
 
-            let cached_peers = core.user_data().peers();
+            let cached_peers = core.user_data().bootstrap_cache.peers();
             assert!(cached_peers.is_empty());
         }
     }

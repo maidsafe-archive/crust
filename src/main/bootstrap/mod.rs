@@ -15,8 +15,9 @@ use self::try_peer::TryPeer;
 use crate::common::{
     BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid,
 };
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event, EventLoopCore};
+use crate::main::{
+    ActiveConnection, ConnectionMap, CrustConfig, CrustData, CrustError, Event, EventLoopCore,
+};
 use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
@@ -93,7 +94,11 @@ impl<UID: Uid> Bootstrap<UID> {
             }
         };
 
-        let peers = shuffled_bootstrap_peers(core.user_data().peers(), config.clone(), blacklist);
+        let peers = shuffled_bootstrap_peers(
+            core.user_data().bootstrap_cache.peers(),
+            config.clone(),
+            blacklist,
+        );
         let state = Rc::new(RefCell::new(Self {
             token,
             cm,
@@ -181,7 +186,7 @@ impl<UID: Uid> Bootstrap<UID> {
             }
             Err((bad_peer, opt_reason)) => {
                 {
-                    let bootstrap_cache = core.user_data_mut();
+                    let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
                     bootstrap_cache.remove(&bad_peer);
                     if let Err(e) = bootstrap_cache.commit() {
                         info!("Failed to write bootstrap cache to disk: {}", e);
@@ -239,7 +244,7 @@ impl<UID: Uid> Bootstrap<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for Bootstrap<UID> {
+impl<UID: Uid> State<CrustData> for Bootstrap<UID> {
     fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
@@ -274,7 +279,7 @@ pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo, config: &C
         return;
     }
 
-    let bootstrap_cache = core.user_data_mut();
+    let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
     bootstrap_cache.put(peer_info);
     if let Err(e) = bootstrap_cache.commit() {
         info!("Failed to write bootstrap cache to disk: {}", e);
@@ -295,9 +300,7 @@ fn seek_peers(
 ) -> crate::Res<(Receiver<HashSet<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let state = unwrap!(state
-            .as_any()
-            .downcast_mut::<ServiceDiscovery<BootstrapCache>>());
+        let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
@@ -368,7 +371,7 @@ mod tests {
 
             cache_peer_info(&mut core, peer_info, &config);
 
-            let cached_peers = core.user_data().peers();
+            let cached_peers = core.user_data().bootstrap_cache.peers();
             assert_eq!(cached_peers.len(), 1);
             assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
         }
@@ -383,7 +386,7 @@ mod tests {
 
             cache_peer_info(&mut core, peer_info, &config);
 
-            let cached_peers = core.user_data().peers();
+            let cached_peers = core.user_data().bootstrap_cache.peers();
             assert!(cached_peers.is_empty());
         }
     }
@@ -565,7 +568,7 @@ mod tests {
                         Err((peer_info, None)),
                     );
 
-                    let cached_peers = core.user_data().peers();
+                    let cached_peers = core.user_data().bootstrap_cache.peers();
                     assert!(cached_peers.is_empty());
                 }
 

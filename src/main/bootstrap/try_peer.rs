@@ -10,8 +10,7 @@
 use crate::common::{
     BootstrapDenyReason, BootstrapperRole, Message, NameHash, PeerInfo, State, Uid,
 };
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::EventLoopCore;
+use crate::main::{CrustData, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
@@ -130,7 +129,7 @@ impl<UID: Uid> TryPeer<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for TryPeer<UID> {
+impl<UID: Uid> State<CrustData> for TryPeer<UID> {
     fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() || kind.is_readable() {
             if kind.is_writable() {

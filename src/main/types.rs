@@ -21,7 +21,10 @@ use std::sync::{Arc, Mutex};
 // ========================================================================================
 #[derive(Debug, Clone, Copy)]
 pub struct ConnectionId {
+    /// mio token of the socket associated with this connection. Only set when connections
+    /// transitions to `ActiveConnection` state.
     pub active_connection: Option<Token>,
+    /// Number of currently ongoing connection attempts to some specific peer.
     pub currently_handshaking: usize,
 }
 
@@ -121,12 +124,24 @@ impl ConfigWrapper {
     }
 }
 
-/// Crust event loop state object. It is owned by the same thread event loop is running on,
-/// it holds bootstrap cache and manages Crust states like `Connect`, `ConnectionCandidate`, etc.
-pub type EventLoopCore = Core<BootstrapCache>;
+/// Crust specific data stored in event loop `Core`.
+/// This data can be accessed when interfacing with event loop.
+pub struct CrustData {
+    pub bootstrap_cache: BootstrapCache,
+}
+
+impl CrustData {
+    pub fn new(bootstrap_cache: BootstrapCache) -> Self {
+        Self { bootstrap_cache }
+    }
+}
+
+/// Crust event loop state object. It is owned by the same thread event loop is running on.
+/// `EventLoopCore` manages Crust states like `Connect`, `ConnectionCandidate`, etc.
+pub type EventLoopCore = Core<CrustData>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
-pub type EventLoop = common::EventLoop<BootstrapCache>;
+pub type EventLoop = common::EventLoop<CrustData>;
 
 pub type ConnectionMap<UID> = Arc<Mutex<HashMap<UID, ConnectionId>>>;
 pub type CrustConfig = Arc<Mutex<ConfigWrapper>>;

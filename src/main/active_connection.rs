@@ -8,8 +8,7 @@
 // Software.
 
 use crate::common::{CoreTimer, CrustUser, Message, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{ConnectionId, ConnectionMap, Event, EventLoopCore};
+use crate::main::{ConnectionId, ConnectionMap, CrustData, Event, EventLoopCore};
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
 use socket_collection::{Priority, TcpSock};
@@ -179,7 +178,7 @@ impl<UID: Uid> ActiveConnection<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ActiveConnection<UID> {
+impl<UID: Uid> State<CrustData> for ActiveConnection<UID> {
     fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             self.write(core, poll, None);

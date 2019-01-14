@@ -8,8 +8,7 @@
 // Software.
 
 use crate::common::{Message, NameHash, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{ConnectionId, ConnectionMap, EventLoopCore};
+use crate::main::{ConnectionId, ConnectionMap, CrustData, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SharedSecretKey};
 use socket_collection::{EncryptContext, Priority, TcpSock};
@@ -137,7 +136,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ExchangeMsg<UID> {
+impl<UID: Uid> State<CrustData> for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             let req = self.msg.take();

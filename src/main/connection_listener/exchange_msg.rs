@@ -11,10 +11,9 @@ use crate::common::{
     ipv4_addr, BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, Message, NameHash,
     PeerInfo, State, Uid,
 };
-use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::{
     read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, ConnectionMap,
-    CrustConfig, Event, EventLoopCore,
+    CrustConfig, CrustData, Event, EventLoopCore,
 };
 use crate::nat::{ip_addr_is_global, GetExtAddr};
 use mio::{Poll, PollOpt, Ready, Token};
@@ -432,7 +431,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     }
                 };
 
-            if let Ok(child) = GetExtAddr::<UID, BootstrapCache>::start(
+            if let Ok(child) = GetExtAddr::<UID, CrustData>::start(
                 core,
                 poll,
                 ipv4_addr(0, 0, 0, 0, 0),
@@ -600,7 +599,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ExchangeMsg<UID> {
+impl<UID: Uid> State<CrustData> for ExchangeMsg<UID> {
     fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll)

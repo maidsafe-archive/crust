@@ -14,8 +14,8 @@ use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
-    ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError, Event,
-    EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustData, CrustError,
+    Event, EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
@@ -124,7 +124,7 @@ impl<UID: Uid> Service<UID> {
             move || {
                 let cache = BootstrapCache::new(bootstrap_cache_file);
                 cache.read_file();
-                cache
+                CrustData::new(cache)
             },
         )?;
         trace!("Event loop started");
@@ -265,16 +265,14 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state
-                .as_any()
-                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
-            {
-                Some(sd) => sd,
-                None => {
-                    warn!("Token reserved for ServiceDiscovery has something else.");
-                    return;
-                }
-            };
+            let service_discovery =
+                match state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>() {
+                    Some(sd) => sd,
+                    None => {
+                        warn!("Token reserved for ServiceDiscovery has something else.");
+                        return;
+                    }
+                };
             service_discovery.set_listen(listen);
         });
     }
@@ -356,16 +354,14 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state
-                .as_any()
-                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
-            {
-                Some(sd) => sd,
-                None => {
-                    warn!("Token reserved for ServiceDiscovery has something else.");
-                    return;
-                }
-            };
+            let service_discovery =
+                match state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>() {
+                    Some(sd) => sd,
+                    None => {
+                        warn!("Token reserved for ServiceDiscovery has something else.");
+                        return;
+                    }
+                };
             service_discovery.register_observer(obs);
             let _ = service_discovery.seek_peers();
         });
@@ -674,8 +670,8 @@ impl<UID: Uid> Service<UID> {
     pub fn bootstrap_cached_peers(&self) -> crate::Res<HashSet<PeerInfo>> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let cache = core.user_data();
-            let _ = tx.send(cache.peers());
+            let cached_peers = core.user_data().bootstrap_cache.peers();
+            let _ = tx.send(cached_peers);
         });
         rx.recv().map_err(CrustError::ChannelRecv)
     }

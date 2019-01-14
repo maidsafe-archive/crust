@@ -8,8 +8,9 @@
 // Software.
 
 use crate::common::{CoreTimer, CrustUser, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{read_config_file, ActiveConnection, ConnectionMap, CrustConfig, EventLoopCore};
+use crate::main::{
+    read_config_file, ActiveConnection, ConnectionMap, CrustConfig, CrustData, EventLoopCore,
+};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
@@ -52,7 +53,7 @@ impl<UID: Uid> ConfigRefresher<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ConfigRefresher<UID> {
+impl<UID: Uid> State<CrustData> for ConfigRefresher<UID> {
     fn terminate(&mut self, core: &mut EventLoopCore, _poll: &Poll) {
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);

@@ -11,8 +11,7 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use crate::common::{NameHash, PeerInfo, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{ConnectionMap, CrustConfig, Event, EventLoopCore};
+use crate::main::{ConnectionMap, CrustConfig, CrustData, Event, EventLoopCore};
 use crate::nat::ip_addr_is_global;
 use crate::nat::{MappedTcpSocket, MappingContext};
 use mio::net::TcpListener;
@@ -218,7 +217,7 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ConnectionListener<UID> {
+impl<UID: Uid> State<CrustData> for ConnectionListener<UID> {
     fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.accept(core, poll);
@@ -281,7 +280,7 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
-            || BootstrapCache::new(None),
+            || CrustData::new(BootstrapCache::new(None)),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();

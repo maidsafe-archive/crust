@@ -8,8 +8,7 @@
 // Software.
 
 use crate::common::{Message, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{ConnectionId, ConnectionMap, EventLoopCore};
+use crate::main::{ConnectionId, ConnectionMap, CrustData, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use socket_collection::{Priority, TcpSock};
 use std::any::Any;
@@ -124,7 +123,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ConnectionCandidate<UID> {
+impl<UID: Uid> State<CrustData> for ConnectionCandidate<UID> {
     fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll);
