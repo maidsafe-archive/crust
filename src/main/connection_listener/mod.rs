@@ -24,7 +24,7 @@ use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -58,7 +58,6 @@ impl<UID: Uid> ConnectionListener<UID> {
         cm: ConnectionMap<UID>,
         config: CrustConfig,
         mc: Arc<MappingContext>,
-        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -97,7 +96,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                 name_hash,
                 cm,
                 config,
-                our_listeners,
                 token,
                 event_tx.clone(),
                 our_pk,
@@ -135,7 +133,6 @@ impl<UID: Uid> ConnectionListener<UID> {
         name_hash: NameHash,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
-        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -147,10 +144,11 @@ impl<UID: Uid> ConnectionListener<UID> {
         let listener = TcpListener::from_std(listener)?;
         poll.register(&listener, token, Ready::readable(), PollOpt::edge())?;
 
-        *unwrap!(our_listeners.lock()) = mapped_addrs
-            .into_iter()
-            .map(|addr| PeerInfo::new(addr, our_pk))
-            .collect();
+        core.user_data_mut().our_listeners.extend(
+            mapped_addrs
+                .into_iter()
+                .map(|addr| PeerInfo::new(addr, our_pk)),
+        );
 
         let state = Self {
             token,
@@ -290,10 +288,8 @@ mod tests {
         let cm = Arc::new(Mutex::new(HashMap::new()));
         let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
         let config = Arc::new(Mutex::new(Default::default()));
-        let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let (our_pk, our_sk) = gen_encrypt_keypair();
 
-        let listeners_clone = listeners.clone();
         let uid = rand::random();
         unwrap!(
             el.send(CoreMessage::new(move |core, poll| {
@@ -308,7 +304,6 @@ mod tests {
                     cm,
                     config,
                     mc,
-                    listeners_clone,
                     Token(LISTENER_TOKEN),
                     crust_sender,
                     our_pk,
@@ -327,7 +322,7 @@ mod tests {
 
         let (tx, rx) = mpsc::channel();
         unwrap!(
-            el.send(CoreMessage::new(move |core, _| {
+            el.send(CoreMessage::new(move |core: &mut EventLoopCore, _| {
                 let state = match core.get_state(Token(LISTENER_TOKEN)) {
                     Some(state) => state,
                     None => panic!("Listener not initialised"),
@@ -339,17 +334,18 @@ mod tests {
                 };
                 listener.set_accept_bootstrap(accept_bootstrap);
                 listener.set_ext_reachability_test(false);
-                unwrap!(tx.send(()));
+
+                let listener_info = core.user_data_mut().our_listeners[0];
+                unwrap!(tx.send(listener_info));
             })),
             "Could not send to tx"
         );
-        unwrap!(rx.recv());
+        let listener_info = unwrap!(rx.recv());
 
-        let listen_info = &unwrap!(listeners.lock())[0];
         Listener {
             _el: el,
             uid,
-            addr: listen_info.addr,
+            addr: listener_info.addr,
             event_rx,
             pub_key: our_pk,
         }

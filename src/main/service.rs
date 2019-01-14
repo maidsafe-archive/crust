@@ -12,13 +12,13 @@ use crate::common::{
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
+use crate::main::service_discovery::ServiceDiscovery;
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
     ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustData, CrustError,
     Event, EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
-use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
@@ -88,7 +88,6 @@ pub struct Service<UID: Uid> {
     el: EventLoop,
     name_hash: NameHash,
     our_uid: UID,
-    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
@@ -112,8 +111,6 @@ impl<UID: Uid> Service<UID> {
 
         let name_hash = name_hash(&config.network_name);
 
-        // Form our initial contact info
-        let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let mut mc = MappingContext::try_new()?;
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
@@ -139,7 +136,6 @@ impl<UID: Uid> Service<UID> {
             el,
             name_hash,
             our_uid,
-            our_listeners,
             our_pk,
             our_sk,
         };
@@ -225,7 +221,6 @@ impl<UID: Uid> Service<UID> {
     /// Initialises Service Discovery module and starts listening for responses to our beacon
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
-        let our_listeners = self.our_listeners.clone();
         let remote_port = unwrap!(self.config.lock())
             .cfg
             .service_discovery_port
@@ -244,7 +239,6 @@ impl<UID: Uid> Service<UID> {
                 if let Err(e) = ServiceDiscovery::start(
                     core,
                     poll,
-                    our_listeners,
                     EventToken::ServiceDiscovery.into(),
                     listener_port,
                     remote_port,
@@ -265,14 +259,13 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery =
-                match state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>() {
-                    Some(sd) => sd,
-                    None => {
-                        warn!("Token reserved for ServiceDiscovery has something else.");
-                        return;
-                    }
-                };
+            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+                Some(sd) => sd,
+                None => {
+                    warn!("Token reserved for ServiceDiscovery has something else.");
+                    return;
+                }
+            };
             service_discovery.set_listen(listen);
         });
     }
@@ -354,14 +347,13 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery =
-                match state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>() {
-                    Some(sd) => sd,
-                    None => {
-                        warn!("Token reserved for ServiceDiscovery has something else.");
-                        return;
-                    }
-                };
+            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+                Some(sd) => sd,
+                None => {
+                    warn!("Token reserved for ServiceDiscovery has something else.");
+                    return;
+                }
+            };
             service_discovery.register_observer(obs);
             let _ = service_discovery.seek_peers();
         });
@@ -384,12 +376,12 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let bootstrapper_role = match crust_user {
-            CrustUser::Node => BootstrapperRole::Node(self.our_global_listener_addrs()),
-            CrustUser::Client => BootstrapperRole::Client,
-        };
 
         self.post(move |core, poll| {
+            let bootstrapper_role = match crust_user {
+                CrustUser::Node => BootstrapperRole::Node(our_global_listener_addrs(core)),
+                CrustUser::Client => BootstrapperRole::Client,
+            };
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
                 if let Err(e) = Bootstrap::start(
                     core,
@@ -437,7 +429,6 @@ impl<UID: Uid> Service<UID> {
             .force_acceptor_port_in_ext_ep;
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
-        let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
         let our_pk = self.our_pk;
@@ -455,7 +446,6 @@ impl<UID: Uid> Service<UID> {
                     cm,
                     config,
                     mc,
-                    our_listeners,
                     EventToken::Listener.into(),
                     event_tx,
                     our_pk,
@@ -519,7 +509,6 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let config = self.config.clone();
-        let our_global_direct_listeners = self.our_global_listener_addrs();
 
         self.post(move |core, poll| {
             let _ = Connect::start(
@@ -532,7 +521,7 @@ impl<UID: Uid> Service<UID> {
                 event_tx,
                 our_pk,
                 &our_sk,
-                our_global_direct_listeners,
+                our_global_listener_addrs(core),
                 config,
             );
         })?;
@@ -581,28 +570,38 @@ impl<UID: Uid> Service<UID> {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_listeners = unwrap!(self.our_listeners.lock())
-            .iter()
-            .map(|peer| peer.addr)
-            .collect();
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
+        let our_uid = self.our_uid;
+        let event_tx = self.event_tx.clone();
 
-        if DISABLE_NAT {
-            let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token,
-                result: Ok(PrivConnectionInfo {
-                    id: self.our_uid,
-                    for_direct: our_listeners,
-                    our_pk,
-                }),
-            });
-            let _ = self.event_tx.send(event);
+        let post_res = if DISABLE_NAT {
+            self.post(move |core, _poll| {
+                let our_listeners = core
+                    .user_data()
+                    .our_listeners
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect();
+                let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                    result_token,
+                    result: Ok(PrivConnectionInfo {
+                        id: our_uid,
+                        for_direct: our_listeners,
+                        our_pk,
+                    }),
+                });
+                let _ = event_tx.send(event);
+            })
         } else {
-            let event_tx = self.event_tx.clone();
-            let our_uid = self.our_uid;
             let mc = self.mc.clone();
-            if let Err(e) = self.post(move |core, poll| {
+            self.post(move |core, poll| {
+                let our_listeners = core
+                    .user_data()
+                    .our_listeners
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect();
                 let event_tx_clone = event_tx.clone();
                 match MappedTcpSocket::<_, UID, _>::start(
                     core,
@@ -634,14 +633,15 @@ impl<UID: Uid> Service<UID> {
                             }));
                     }
                 };
-            }) {
-                let _ = self
-                    .event_tx
-                    .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token,
-                        result: Err(e),
-                    }));
-            }
+            })
+        };
+        if let Err(e) = post_res {
+            let _ = self
+                .event_tx
+                .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                    result_token,
+                    result: Err(e),
+                }));
         }
     }
 
@@ -683,14 +683,15 @@ impl<UID: Uid> Service<UID> {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
+}
 
-    fn our_global_listener_addrs(&self) -> HashSet<SocketAddr> {
-        unwrap!(self.our_listeners.lock())
-            .iter()
-            .map(|peer| peer.addr)
-            .filter(|addr| ip_addr_is_global(&addr.ip()))
-            .collect()
-    }
+fn our_global_listener_addrs(core: &EventLoopCore) -> HashSet<SocketAddr> {
+    core.user_data()
+        .our_listeners
+        .iter()
+        .map(|peer| peer.addr)
+        .filter(|addr| ip_addr_is_global(&addr.ip()))
+        .collect()
 }
 
 /// Returns a hash of the network name.

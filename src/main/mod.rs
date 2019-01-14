@@ -34,6 +34,7 @@ mod connection_listener;
 mod error;
 mod event;
 mod service;
+mod service_discovery;
 mod types;
 
 pub use self::config_handler::read_config_file;

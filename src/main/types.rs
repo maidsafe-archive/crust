@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{self, Core, Uid};
+use crate::common::{self, Core, PeerInfo, Uid};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::Config;
 use mio::Token;
@@ -128,11 +128,16 @@ impl ConfigWrapper {
 /// This data can be accessed when interfacing with event loop.
 pub struct CrustData {
     pub bootstrap_cache: BootstrapCache,
+    // TODO(povilas): use HashSet instead
+    pub our_listeners: Vec<PeerInfo>,
 }
 
 impl CrustData {
     pub fn new(bootstrap_cache: BootstrapCache) -> Self {
-        Self { bootstrap_cache }
+        Self {
+            bootstrap_cache,
+            our_listeners: Default::default(),
+        }
     }
 }
 
