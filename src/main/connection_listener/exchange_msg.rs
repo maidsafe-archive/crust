@@ -129,7 +129,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                     Err(()) => self.terminate(core, poll),
                 }
             }
-            Ok(Some(Message::Connect(their_uid, name_hash, their_addrs, their_pk))) => {
+            Ok(Some(Message::ConnectRequest(their_uid, name_hash, their_addrs, their_pk))) => {
                 match self.validate_peer_uid(their_uid) {
                     Ok(their_uid) => {
                         self.handle_connect(core, poll, their_uid, name_hash, their_addrs, their_pk)
@@ -367,12 +367,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     fn send_connect_grant(&mut self, core: &mut EventLoopCore, poll: &Poll, their_uid: UID) {
         self.enter_handshaking_mode(their_uid);
         self.next_state = NextState::ConnectionCandidate(their_uid);
-        let msg = Message::Connect(
-            self.our_uid,
-            self.name_hash,
-            Default::default(),
-            self.our_pk,
-        );
+        let msg = Message::ConnectResponse(self.our_uid, self.name_hash);
         self.write(core, poll, Some((msg, 0)));
     }
 

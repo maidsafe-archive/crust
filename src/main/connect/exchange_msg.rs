@@ -83,7 +83,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             socket,
             cm,
             msg: Some((
-                Message::Connect(our_id, name_hash, our_global_direct_listeners, our_pk),
+                Message::ConnectRequest(our_id, name_hash, our_global_direct_listeners, our_pk),
                 0,
             )),
             shared_key,
@@ -108,7 +108,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn receive_response(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
-            Ok(Some(Message::Connect(their_uid, name_hash, _, _their_pk))) => {
+            Ok(Some(Message::ConnectResponse(their_uid, name_hash))) => {
                 if their_uid != self.expected_id || name_hash != self.expected_nh {
                     return self.handle_error(core, poll);
                 }
