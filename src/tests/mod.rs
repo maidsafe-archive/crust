@@ -13,7 +13,7 @@ pub mod utils;
 pub use self::utils::{gen_config, get_event_sender, timebomb, UniqueId};
 
 use crate::common::{CrustUser, PeerInfo};
-use crate::main::{self, Config, DevConfig, Event};
+use crate::main::{self, Config, Event};
 use mio;
 use rand;
 use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
@@ -57,6 +57,7 @@ mod connect {
 
         unwrap!(service1.start_listening_tcp());
         expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        unwrap!(service1.set_ext_reachability_test(false));
         let uid1 = service1.id();
 
         let (ci_tx1, ci_rx1) = mpsc::channel();
@@ -90,6 +91,74 @@ mod connect {
 
         let cached_peers = unwrap!(service2.bootstrap_cached_peers());
         assert!(cached_peers.is_subset(&expected_conns));
+    }
+
+    #[test]
+    fn when_external_reachability_is_disabled_successfully_connects_on_localhost() {
+        let (mut service1, event_rx1) = test_service();
+        let (service2, event_rx2) = test_service();
+
+        unwrap!(service1.start_listening_tcp());
+        expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        unwrap!(service1.set_ext_reachability_test(false));
+        let uid1 = service1.id();
+
+        let (ci_tx1, ci_rx1) = mpsc::channel();
+
+        let token = rand::random();
+        service1.prepare_connection_info(token);
+        let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+
+        let token = rand::random();
+        service2.prepare_connection_info(token);
+        let ci2 = expect_event!(event_rx2, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        let pub_ci1 = unwrap!(ci_rx1.recv());
+
+        unwrap!(service2.connect(ci2, pub_ci1));
+        expect_event!(event_rx2, Event::ConnectSuccess(id) => {
+            assert_eq!(id, uid1);
+        });
+    }
+
+    #[test]
+    fn when_external_reachability_is_enabled_fails_to_connect_on_localhost() {
+        let (mut service1, event_rx1) = test_service();
+        let (service2, event_rx2) = test_service();
+
+        unwrap!(service1.start_listening_tcp());
+        expect_event!(event_rx1, Event::ListenerStarted(_port) => ());
+        unwrap!(service1.set_ext_reachability_test(true));
+        let uid1 = service1.id();
+
+        let (ci_tx1, ci_rx1) = mpsc::channel();
+
+        let token = rand::random();
+        service1.prepare_connection_info(token);
+        let ci1 = expect_event!(event_rx1, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        unwrap!(ci_tx1.send(ci1.to_pub_connection_info()));
+
+        let token = rand::random();
+        service2.prepare_connection_info(token);
+        let ci2 = expect_event!(event_rx2, Event::ConnectionInfoPrepared(res) => {
+            assert_eq!(res.result_token, token);
+            unwrap!(res.result)
+        });
+        let pub_ci1 = unwrap!(ci_rx1.recv());
+
+        unwrap!(service2.connect(ci2, pub_ci1));
+        expect_event!(event_rx2, Event::ConnectFailure(id) => {
+            assert_eq!(id, uid1);
+        });
     }
 }
 
@@ -206,16 +275,13 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
 #[test]
 fn bootstrap_with_skipped_external_reachability_test() {
-    let mut config = Config::default();
-    config.dev = Some(DevConfig {
-        disable_external_reachability_requirement: true,
-    });
-
+    let config = Config::default();
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap!(Service::with_config(event_tx0, config, rand::random()));
     unwrap!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     unwrap!(service0.set_accept_bootstrap(true));
+    unwrap!(service0.set_ext_reachability_test(false));
 
     let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![localhost_contact_info(port, service0.pub_key())];

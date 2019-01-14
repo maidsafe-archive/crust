@@ -8,7 +8,7 @@
 // Software.
 
 use crate::common::{
-    self, CoreMessage, CrustUser, ExternalReachability, NameHash, PeerInfo, Uid, HASH_SIZE,
+    self, BootstrapperRole, CoreMessage, CrustUser, NameHash, PeerInfo, Uid, HASH_SIZE,
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
@@ -17,7 +17,7 @@ use crate::main::{
     ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError, Event,
     EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
-use crate::nat::{MappedTcpSocket, MappingContext};
+use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
@@ -30,7 +30,6 @@ use std::sync::{mpsc, Arc, Mutex};
 /// Reserved mio `Token` values for Crust speficic events.
 #[derive(Debug, PartialEq)]
 #[repr(usize)]
-#[allow(unused)]
 enum EventToken {
     Bootstrap,
     ServiceDiscovery,
@@ -51,6 +50,36 @@ const DISABLE_NAT: bool = true;
 
 /// A structure representing all the Crust services. This is the main object through which crust is
 /// used.
+///
+/// You can construct `Service` using [`try_new`] which searches for config file in default location
+/// or [`with_config`], if you want to provide an in memory config.
+///
+/// In the terms of networking `Service` exposes both server and client functionality. Meaning
+/// it will listen for incoming connections and establish ones itself.
+///
+/// You can use `Service` to connect with remote peers. There's two ways to do this:
+///
+/// 1. [`bootstrap`] to some known peers or the ones discovered on LAN,
+/// 2. [`connect`] to the peer whose contacts you already have.
+///
+/// You can also configure `Service` listener to only accept peers that have public IP address
+/// and are reachable directly. This is called external reachability test which is configured
+/// with [`set_ext_reachability_test`].
+///
+/// You also have to explicilty enable connection listening:
+///
+/// 1. to accept bootstrapping peers, call [`set_accept_bootstrap`],
+/// 2. to accept incoming connections via [`connect`], call [`start_listening_tcp`],
+/// 2. to accept incoming peers via service discovery on LAN, call [`set_service_discovery_listen`].
+///
+/// [`try_new`]: struct.Service.html#method.try_new
+/// [`with_config`]: struct.Service.html#method.with_config
+/// [`connect`]: struct.Service.html#method.connect
+/// [`bootstrap`]: struct.Service.html#method.start_bootstrap
+/// [`set_accept_bootstrap`]: struct.Service.html#method.set_accept_bootstrap
+/// [`start_listening_tcp`]: struct.Service.html#method.set_listening_tcp
+/// [`set_service_discovery_listen`]: struct.Service.html#method.set_service_discovery_listen
+/// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
 pub struct Service<UID: Uid> {
     config: CrustConfig,
     cm: ConnectionMap<UID>,
@@ -66,7 +95,7 @@ pub struct Service<UID: Uid> {
 
 impl<UID: Uid> Service<UID> {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
-    /// notifications on.
+    /// notifications on. Can fail, if can't read config file successfully.
     pub fn try_new(event_tx: crate::CrustEventSender<UID>, our_uid: UID) -> crate::Res<Self> {
         Service::with_config(event_tx, config_handler::read_config_file()?, our_uid)
     }
@@ -158,6 +187,35 @@ impl<UID: Uid> Service<UID> {
                 }
             };
             listener.set_accept_bootstrap(accept);
+            let _ = tx.send(Ok(()));
+        });
+
+        rx.recv()?
+    }
+
+    /// Enables/disables peer external reachability test.
+    /// When a new peer connects to us, `Service` listener can be configured to test if this
+    /// peer is reachable directly over it's public IP. If external reachability test is enabled,
+    /// and peer is not reachable, then we discard such connection.
+    pub fn set_ext_reachability_test(&self, accept: bool) -> crate::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        let _ = self.post(move |core, _| {
+            let state = match core.get_state(EventToken::Listener.into()) {
+                Some(state) => state,
+                None => {
+                    let _ = tx.send(Err(CrustError::ListenerNotIntialised));
+                    return;
+                }
+            };
+            let mut state = state.borrow_mut();
+            let listener = match state.as_any().downcast_mut::<ConnectionListener<UID>>() {
+                Some(l) => l,
+                None => {
+                    warn!("Token reserved for ConnectionListener has something else.");
+                    return;
+                }
+            };
+            listener.set_ext_reachability_test(accept);
             let _ = tx.send(Ok(()));
         });
 
@@ -330,14 +388,9 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let ext_reachability = match crust_user {
-            CrustUser::Node => ExternalReachability::Required {
-                direct_listeners: unwrap!(self.our_listeners.lock())
-                    .iter()
-                    .map(|peer| peer.addr)
-                    .collect(),
-            },
-            CrustUser::Client => ExternalReachability::NotRequired,
+        let bootstrapper_role = match crust_user {
+            CrustUser::Node => BootstrapperRole::Node(self.our_global_listener_addrs()),
+            CrustUser::Client => BootstrapperRole::Client,
         };
 
         self.post(move |core, poll| {
@@ -346,8 +399,8 @@ impl<UID: Uid> Service<UID> {
                     core,
                     poll,
                     name_hash,
-                    ext_reachability,
                     our_uid,
+                    bootstrapper_role,
                     cm,
                     config,
                     blacklist,
@@ -470,10 +523,21 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let config = self.config.clone();
+        let our_global_direct_listeners = self.our_global_listener_addrs();
 
         self.post(move |core, poll| {
             let _ = Connect::start(
-                core, poll, our_ci, their_ci, cm, our_nh, event_tx, our_pk, &our_sk, config,
+                core,
+                poll,
+                our_ci,
+                their_ci,
+                cm,
+                our_nh,
+                event_tx,
+                our_pk,
+                &our_sk,
+                our_global_direct_listeners,
+                config,
             );
         })?;
 
@@ -623,6 +687,14 @@ impl<UID: Uid> Service<UID> {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
+
+    fn our_global_listener_addrs(&self) -> HashSet<SocketAddr> {
+        unwrap!(self.our_listeners.lock())
+            .iter()
+            .map(|peer| peer.addr)
+            .filter(|addr| ip_addr_is_global(&addr.ip()))
+            .collect()
+    }
 }
 
 /// Returns a hash of the network name.
@@ -687,12 +759,14 @@ mod tests {
 
             unwrap!(service_0.start_listening_tcp());
             expect_event!(event_rx_0, Event::ListenerStarted(_));
+            unwrap!(service_0.set_ext_reachability_test(false));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
             let mut service_1 = unwrap!(Service::try_new(event_tx_1, rand::random()));
 
             unwrap!(service_1.start_listening_tcp());
             expect_event!(event_rx_1, Event::ListenerStarted(_));
+            unwrap!(service_1.set_ext_reachability_test(false));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
             exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);

@@ -14,6 +14,7 @@ pub use self::state::State;
 use safe_crypto::PublicEncryptKey;
 use serde::de::DeserializeOwned;
 use serde::ser::Serialize;
+use std::collections::HashSet;
 use std::fmt;
 use std::hash::Hash;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
@@ -25,7 +26,7 @@ pub type Result<T> = ::std::result::Result<T, CommonError>;
 /// Specify crust user. Behaviour (for example in bootstrap phase) will be different for different
 /// variants. Node will request the Bootstrapee to connect back to this crust failing which it
 /// would mean it's not reachable from outside and hence should be rejected bootstrap attempts.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub enum CrustUser {
     /// Crust user is a Node and should not be allowed to bootstrap if it's not reachable from
     /// outside.
@@ -35,10 +36,26 @@ pub enum CrustUser {
     Client,
 }
 
+/// Corresponds to `CrustUser` roles and additionally include public endpoints to test for
+/// external reachability.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum ExternalReachability {
-    NotRequired,
-    Required { direct_listeners: Vec<SocketAddr> },
+pub enum BootstrapperRole {
+    /// `Node` peers are usually requested to be externally reachable, hence include their
+    /// public endpoints.
+    Node(HashSet<SocketAddr>),
+    /// `Client` peers don't include any addresses, because they are never tested for external
+    /// reachability.
+    Client,
+}
+
+impl BootstrapperRole {
+    /// Converts into `CrustUser`.
+    pub fn as_crust_role(&self) -> CrustUser {
+        match self {
+            BootstrapperRole::Node(_) => CrustUser::Node,
+            BootstrapperRole::Client => CrustUser::Client,
+        }
+    }
 }
 
 /// Trait for specifying a unique identifier for a Crust peer

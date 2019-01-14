@@ -7,7 +7,6 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-mod check_reachability;
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
@@ -31,6 +30,8 @@ use std::sync::{Arc, Mutex};
 const LISTENER_BACKLOG: i32 = 100;
 
 /// Accepts connections and transitions each connection into `ExchangeMsg` state.
+/// Optionally will make `ExchangeMsg` to test for peer external reachability. This behavior
+/// is enabled by default.
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
     cm: ConnectionMap<UID>,
@@ -43,6 +44,7 @@ pub struct ConnectionListener<UID: Uid> {
     accept_bootstrap: bool,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
+    test_ext_reachability: bool,
 }
 
 impl<UID: Uid> ConnectionListener<UID> {
@@ -119,6 +121,11 @@ impl<UID: Uid> ConnectionListener<UID> {
         self.accept_bootstrap = accept;
     }
 
+    /// Enables/disables peer external reachability test.
+    pub fn set_ext_reachability_test(&mut self, test: bool) {
+        self.test_ext_reachability = test;
+    }
+
     fn handle_mapped_socket(
         core: &mut EventLoopCore,
         poll: &Poll,
@@ -158,6 +165,7 @@ impl<UID: Uid> ConnectionListener<UID> {
             accept_bootstrap: false,
             our_pk,
             our_sk,
+            test_ext_reachability: true,
         };
 
         let _ = core.insert_state(token, Rc::new(RefCell::new(state)));
@@ -191,6 +199,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.event_tx.clone(),
                         self.our_pk,
                         &self.our_sk,
+                        self.test_ext_reachability,
                     ) {
                         debug!("Error accepting direct connection: {:?}", e);
                     }
@@ -231,7 +240,7 @@ mod tests {
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use super::*;
     use crate::common::{
-        self, CoreMessage, CrustUser, ExternalReachability, Message, NameHash, HASH_SIZE,
+        self, BootstrapperRole, CoreMessage, CrustUser, Message, NameHash, HASH_SIZE,
     };
     use crate::main::bootstrap::Cache as BootstrapCache;
     use crate::main::{Event, EventLoop};
@@ -330,6 +339,7 @@ mod tests {
                     None => panic!("Token reserved for ConnectionListener has something else."),
                 };
                 listener.set_accept_bootstrap(accept_bootstrap);
+                listener.set_ext_reachability_test(false);
                 unwrap!(tx.send(()));
             })),
             "Could not send to tx"
@@ -360,12 +370,7 @@ mod tests {
         stream
     }
 
-    fn bootstrap(
-        name_hash: NameHash,
-        ext_reachability: ExternalReachability,
-        our_uid: UniqueId,
-        listener: &Listener,
-    ) {
+    fn bootstrap(name_hash: NameHash, our_uid: UniqueId, listener: &Listener) {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
@@ -376,11 +381,8 @@ mod tests {
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key)));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
-        let expected_kind = match ext_reachability {
-            ExternalReachability::NotRequired => CrustUser::Client,
-            ExternalReachability::Required { .. } => CrustUser::Node,
-        };
-        let message = Message::BootstrapRequest(our_uid, name_hash, ext_reachability, our_pk);
+        let message =
+            Message::BootstrapRequest(our_uid, name_hash, BootstrapperRole::Client, our_pk);
 
         let mut events = Events::with_capacity(16);
         let msg = 'event_loop: loop {
@@ -416,7 +418,7 @@ mod tests {
         match unwrap!(listener.event_rx.recv(), "Could not read event channel") {
             Event::BootstrapAccept(peer_id, peer_kind) => {
                 assert_eq!(peer_id, our_uid);
-                assert_eq!(peer_kind, expected_kind);
+                assert_eq!(peer_kind, CrustUser::Client);
             }
             event => panic!("Unexpected event notification: {:?}", event),
         }
@@ -433,7 +435,7 @@ mod tests {
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone())));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge()));
 
-        let message = Message::Connect(our_uid, name_hash, our_pk);
+        let message = Message::Connect(our_uid, name_hash, Default::default(), our_pk);
 
         let mut events = Events::with_capacity(16);
         'event_loop: loop {
@@ -454,7 +456,7 @@ mod tests {
                         if ev.readiness().is_readable() {
                             let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
                             let their_uid = match msg {
-                                Message::Connect(peer_uid, peer_hash, their_pk) => {
+                                Message::Connect(peer_uid, peer_hash, _, their_pk) => {
                                     assert_eq!(peer_uid, listener.uid);
                                     assert_eq!(peer_hash, NAME_HASH);
                                     assert_eq!(their_pk, listener.pub_key);
@@ -489,7 +491,7 @@ mod tests {
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener(true);
         let uid = rand::random();
-        bootstrap(NAME_HASH, ExternalReachability::NotRequired, uid, &listener);
+        bootstrap(NAME_HASH, uid, &listener);
     }
 
     #[test]
@@ -497,7 +499,7 @@ mod tests {
     fn bootstrap_when_bootstrapping_is_disabled() {
         let listener = start_listener(false);
         let uid = rand::random();
-        bootstrap(NAME_HASH, ExternalReachability::NotRequired, uid, &listener);
+        bootstrap(NAME_HASH, uid, &listener);
     }
 
     #[test]
@@ -519,12 +521,7 @@ mod tests {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener(true);
         let uid = rand::random();
-        bootstrap(
-            NAME_HASH_2,
-            ExternalReachability::NotRequired,
-            uid,
-            &listener,
-        );
+        bootstrap(NAME_HASH_2, uid, &listener);
     }
 
     #[test]
@@ -539,12 +536,7 @@ mod tests {
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener(true);
-        bootstrap(
-            NAME_HASH,
-            ExternalReachability::NotRequired,
-            listener.uid,
-            &listener,
-        );
+        bootstrap(NAME_HASH, listener.uid, &listener);
     }
 
     #[test]

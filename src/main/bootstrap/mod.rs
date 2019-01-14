@@ -13,7 +13,7 @@ mod try_peer;
 pub use self::cache::Cache;
 use self::try_peer::TryPeer;
 use crate::common::{
-    BootstrapDenyReason, CoreTimer, CrustUser, ExternalReachability, NameHash, PeerInfo, State, Uid,
+    BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid,
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event, EventLoopCore};
@@ -49,8 +49,8 @@ pub struct Bootstrap<UID: Uid> {
     cm: ConnectionMap<UID>,
     peers: Vec<PeerInfo>,
     name_hash: NameHash,
-    ext_reachability: ExternalReachability,
     our_uid: UID,
+    our_role: BootstrapperRole,
     event_tx: crate::CrustEventSender<UID>,
     sd_meta: Option<ServiceDiscMeta>,
     bs_timer: CoreTimer,
@@ -62,12 +62,16 @@ pub struct Bootstrap<UID: Uid> {
 }
 
 impl<UID: Uid> Bootstrap<UID> {
+    /// # Args
+    ///
+    /// `our_role` - Crust role during  bootstrap: client or node. Clients are never checked for
+    ///     external reachability.
     pub fn start(
         core: &mut EventLoopCore,
         poll: &Poll,
         name_hash: NameHash,
-        ext_reachability: ExternalReachability,
         our_uid: UID,
+        our_role: BootstrapperRole,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
         blacklist: HashSet<SocketAddr>,
@@ -94,8 +98,8 @@ impl<UID: Uid> Bootstrap<UID> {
             cm,
             peers,
             name_hash,
-            ext_reachability,
             our_uid,
+            our_role,
             event_tx,
             sd_meta,
             bs_timer,
@@ -138,7 +142,7 @@ impl<UID: Uid> Bootstrap<UID> {
                 peer,
                 self.our_uid,
                 self.name_hash,
-                self.ext_reachability.clone(),
+                self.our_role.clone(),
                 self.our_pk,
                 &self.our_sk,
                 Box::new(finish),
@@ -463,8 +467,8 @@ mod tests {
                         &mut core,
                         &poll,
                         [1; 32],
-                        ExternalReachability::NotRequired,
                         rand_uid(),
+                        BootstrapperRole::Client,
                         conn_map,
                         config,
                         HashSet::new(),
@@ -513,8 +517,8 @@ mod tests {
                         &mut core,
                         &poll,
                         [1; 32],
-                        ExternalReachability::NotRequired,
                         rand_uid(),
+                        BootstrapperRole::Client,
                         conn_map,
                         config,
                         HashSet::new(),

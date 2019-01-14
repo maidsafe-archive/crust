@@ -34,6 +34,8 @@ enum DiscoveryMsg {
     Response(Vec<PeerInfo>),
 }
 
+/// Acts both as service discovery server and client.
+/// Service discovery is a method of finding peers on LAN using UDP packet broadcasting.
 pub struct ServiceDiscovery<T> {
     token: Token,
     socket: UdpSock,

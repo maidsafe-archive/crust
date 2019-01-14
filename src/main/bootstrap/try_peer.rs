@@ -8,7 +8,7 @@
 // Software.
 
 use crate::common::{
-    BootstrapDenyReason, ExternalReachability, Message, NameHash, PeerInfo, State, Uid,
+    BootstrapDenyReason, BootstrapperRole, Message, NameHash, PeerInfo, State, Uid,
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::EventLoopCore;
@@ -46,7 +46,7 @@ impl<UID: Uid> TryPeer<UID> {
         peer: PeerInfo,
         our_uid: UID,
         name_hash: NameHash,
-        ext_reachability: ExternalReachability,
+        our_role: BootstrapperRole,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         finish: Finish<UID>,
@@ -69,7 +69,7 @@ impl<UID: Uid> TryPeer<UID> {
             peer,
             socket,
             request: Some((
-                Message::BootstrapRequest(our_uid, name_hash, ext_reachability, our_pk),
+                Message::BootstrapRequest(our_uid, name_hash, our_role, our_pk),
                 0,
             )),
             finish,
