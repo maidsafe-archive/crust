@@ -219,9 +219,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 on_check_reachability_result,
             );
             if self.reachability_children.is_empty() {
-                trace!(
+                debug!(
                     "Bootstrapper failed to pass requisite condition of external \
-                     recheability. Denying bootstrap."
+                     reachability. Denying bootstrap."
                 );
                 let reason = BootstrapDenyReason::FailedExternalReachability;
                 self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
@@ -343,7 +343,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 on_check_reachability_result,
             );
             if self.reachability_children.is_empty() {
-                trace!("External reachability test failed. Denying connect request.");
+                debug!("External reachability test failed. Denying connect request.");
                 let reason = BootstrapDenyReason::FailedExternalReachability;
                 self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
             }
