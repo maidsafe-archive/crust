@@ -239,7 +239,9 @@ impl<UID: Uid> State<BootstrapCache> for ConnectionListener<UID> {
 mod tests {
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use super::*;
-    use crate::common::{self, CoreMessage, CrustUser, Message, NameHash, HASH_SIZE};
+    use crate::common::{
+        self, BootstrapperRole, CoreMessage, CrustUser, Message, NameHash, HASH_SIZE,
+    };
     use crate::main::bootstrap::Cache as BootstrapCache;
     use crate::main::{Event, EventLoop};
     use crate::nat::MappingContext;
@@ -250,7 +252,7 @@ mod tests {
     use rand;
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
     use std::io::Read;
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
@@ -368,12 +370,7 @@ mod tests {
         stream
     }
 
-    fn bootstrap(
-        name_hash: NameHash,
-        our_global_direct_listeners: HashSet<SocketAddr>,
-        our_uid: UniqueId,
-        listener: &Listener,
-    ) {
+    fn bootstrap(name_hash: NameHash, our_uid: UniqueId, listener: &Listener) {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
@@ -384,13 +381,8 @@ mod tests {
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key)));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
-        let message = Message::BootstrapRequest(
-            our_uid,
-            name_hash,
-            our_global_direct_listeners,
-            CrustUser::Client,
-            our_pk,
-        );
+        let message =
+            Message::BootstrapRequest(our_uid, name_hash, BootstrapperRole::Client, our_pk);
 
         let mut events = Events::with_capacity(16);
         let msg = 'event_loop: loop {
@@ -499,7 +491,7 @@ mod tests {
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener(true);
         let uid = rand::random();
-        bootstrap(NAME_HASH, Default::default(), uid, &listener);
+        bootstrap(NAME_HASH, uid, &listener);
     }
 
     #[test]
@@ -507,7 +499,7 @@ mod tests {
     fn bootstrap_when_bootstrapping_is_disabled() {
         let listener = start_listener(false);
         let uid = rand::random();
-        bootstrap(NAME_HASH, Default::default(), uid, &listener);
+        bootstrap(NAME_HASH, uid, &listener);
     }
 
     #[test]
@@ -529,7 +521,7 @@ mod tests {
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener(true);
         let uid = rand::random();
-        bootstrap(NAME_HASH_2, Default::default(), uid, &listener);
+        bootstrap(NAME_HASH_2, uid, &listener);
     }
 
     #[test]
@@ -544,7 +536,7 @@ mod tests {
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener(true);
-        bootstrap(NAME_HASH, Default::default(), listener.uid, &listener);
+        bootstrap(NAME_HASH, listener.uid, &listener);
     }
 
     #[test]

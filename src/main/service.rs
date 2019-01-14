@@ -7,7 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{self, CoreMessage, CrustUser, NameHash, PeerInfo, Uid, HASH_SIZE};
+use crate::common::{
+    self, BootstrapperRole, CoreMessage, CrustUser, NameHash, PeerInfo, Uid, HASH_SIZE,
+};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
@@ -386,7 +388,10 @@ impl<UID: Uid> Service<UID> {
         let our_sk = self.our_sk.clone();
         let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let our_global_direct_listeners = self.our_global_listener_addrs();
+        let bootstrapper_role = match crust_user {
+            CrustUser::Node => BootstrapperRole::Node(self.our_global_listener_addrs()),
+            CrustUser::Client => BootstrapperRole::Client,
+        };
 
         self.post(move |core, poll| {
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
@@ -394,9 +399,8 @@ impl<UID: Uid> Service<UID> {
                     core,
                     poll,
                     name_hash,
-                    our_global_direct_listeners,
                     our_uid,
-                    crust_user,
+                    bootstrapper_role,
                     cm,
                     config,
                     blacklist,

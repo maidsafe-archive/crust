@@ -8,7 +8,8 @@
 // Software.
 
 use crate::common::{
-    ipv4_addr, BootstrapDenyReason, CoreTimer, CrustUser, Message, NameHash, PeerInfo, State, Uid,
+    ipv4_addr, BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, Message, NameHash,
+    PeerInfo, State, Uid,
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::{
@@ -115,13 +116,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
-            Ok(Some(Message::BootstrapRequest(
-                their_uid,
-                name_hash,
-                their_addrs,
-                their_role,
-                their_pk,
-            ))) => {
+            Ok(Some(Message::BootstrapRequest(their_uid, name_hash, their_role, their_pk))) => {
                 if !self.accept_bootstrap {
                     trace!("Bootstrapping off us is not allowed");
                     return self.terminate(core, poll);
@@ -129,13 +124,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
                 match self.validate_peer_uid(their_uid) {
                     Ok(their_uid) => self.handle_bootstrap_req(
-                        core,
-                        poll,
-                        their_uid,
-                        name_hash,
-                        their_addrs,
-                        their_role,
-                        their_pk,
+                        core, poll, their_uid, name_hash, their_role, their_pk,
                     ),
                     Err(()) => self.terminate(core, poll),
                 }
@@ -169,8 +158,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         poll: &Poll,
         their_uid: UID,
         name_hash: NameHash,
-        their_addrs: HashSet<SocketAddr>,
-        their_role: CrustUser,
+        their_role: BootstrapperRole,
         their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
@@ -192,39 +180,43 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         self.try_update_crust_config();
 
-        if !self.is_peer_whitelisted(their_role) {
+        if !self.is_peer_whitelisted(their_role.as_crust_role()) {
             trace!("Bootstrapper is not whitelisted. Denying bootstrap.");
             let reason = match their_role {
-                CrustUser::Node => BootstrapDenyReason::NodeNotWhitelisted,
-                CrustUser::Client => BootstrapDenyReason::ClientNotWhitelisted,
+                BootstrapperRole::Node(_) => BootstrapDenyReason::NodeNotWhitelisted,
+                BootstrapperRole::Client => BootstrapDenyReason::ClientNotWhitelisted,
             };
             return self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
         }
 
-        if their_role == CrustUser::Node && self.test_ext_reachability {
-            let on_check_reachability_result =
-                |mut state: RefMut<ExchangeMsg<UID>>,
-                 core: &mut EventLoopCore,
-                 poll: &Poll,
-                 child,
-                 res| {
-                    state.handle_check_reachability(core, poll, child, res);
-                };
-            self.spawn_ext_reachability_tests(
-                core,
-                poll,
-                their_uid,
-                their_addrs,
-                their_pk,
-                on_check_reachability_result,
-            );
-            if self.reachability_children.is_empty() {
-                debug!(
-                    "Bootstrapper failed to pass requisite condition of external \
-                     reachability. Denying bootstrap."
+        if let BootstrapperRole::Node(their_addrs) = their_role {
+            if self.test_ext_reachability {
+                let on_check_reachability_result =
+                    |mut state: RefMut<ExchangeMsg<UID>>,
+                     core: &mut EventLoopCore,
+                     poll: &Poll,
+                     child,
+                     res| {
+                        state.handle_check_reachability(core, poll, child, res);
+                    };
+                self.spawn_ext_reachability_tests(
+                    core,
+                    poll,
+                    their_uid,
+                    their_addrs,
+                    their_pk,
+                    on_check_reachability_result,
                 );
-                let reason = BootstrapDenyReason::FailedExternalReachability;
-                self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+                if self.reachability_children.is_empty() {
+                    debug!(
+                        "Bootstrapper failed to pass requisite condition of external \
+                         reachability. Denying bootstrap."
+                    );
+                    let reason = BootstrapDenyReason::FailedExternalReachability;
+                    self.write(core, poll, Some((Message::BootstrapDenied(reason), 0)));
+                }
+            } else {
+                self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node)
             }
         } else {
             self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Client)

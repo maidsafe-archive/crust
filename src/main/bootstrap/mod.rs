@@ -12,7 +12,9 @@ mod try_peer;
 
 pub use self::cache::Cache;
 use self::try_peer::TryPeer;
-use crate::common::{BootstrapDenyReason, CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
+use crate::common::{
+    BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid,
+};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::{ActiveConnection, ConnectionMap, CrustConfig, CrustError, Event, EventLoopCore};
 use crate::service_discovery::ServiceDiscovery;
@@ -47,9 +49,8 @@ pub struct Bootstrap<UID: Uid> {
     cm: ConnectionMap<UID>,
     peers: Vec<PeerInfo>,
     name_hash: NameHash,
-    our_global_direct_listeners: HashSet<SocketAddr>,
     our_uid: UID,
-    our_role: CrustUser,
+    our_role: BootstrapperRole,
     event_tx: crate::CrustEventSender<UID>,
     sd_meta: Option<ServiceDiscMeta>,
     bs_timer: CoreTimer,
@@ -63,16 +64,14 @@ pub struct Bootstrap<UID: Uid> {
 impl<UID: Uid> Bootstrap<UID> {
     /// # Args
     ///
-    /// `our_global_direct_listeners` - addresses sent to remote peer to check external reachablity with us.
-    /// `our_role` - Crust role: client or node. Clients are never checked for external
-    ///     reachability.
+    /// `our_role` - Crust role during  bootstrap: client or node. Clients are never checked for
+    ///     external reachability.
     pub fn start(
         core: &mut EventLoopCore,
         poll: &Poll,
         name_hash: NameHash,
-        our_global_direct_listeners: HashSet<SocketAddr>,
         our_uid: UID,
-        our_role: CrustUser,
+        our_role: BootstrapperRole,
         cm: ConnectionMap<UID>,
         config: CrustConfig,
         blacklist: HashSet<SocketAddr>,
@@ -99,7 +98,6 @@ impl<UID: Uid> Bootstrap<UID> {
             cm,
             peers,
             name_hash,
-            our_global_direct_listeners,
             our_uid,
             our_role,
             event_tx,
@@ -144,8 +142,7 @@ impl<UID: Uid> Bootstrap<UID> {
                 peer,
                 self.our_uid,
                 self.name_hash,
-                self.our_global_direct_listeners.clone(),
-                self.our_role,
+                self.our_role.clone(),
                 self.our_pk,
                 &self.our_sk,
                 Box::new(finish),
@@ -470,9 +467,8 @@ mod tests {
                         &mut core,
                         &poll,
                         [1; 32],
-                        Default::default(),
                         rand_uid(),
-                        CrustUser::Client,
+                        BootstrapperRole::Client,
                         conn_map,
                         config,
                         HashSet::new(),
@@ -521,9 +517,8 @@ mod tests {
                         &mut core,
                         &poll,
                         [1; 32],
-                        Default::default(),
                         rand_uid(),
-                        CrustUser::Client,
+                        BootstrapperRole::Client,
                         conn_map,
                         config,
                         HashSet::new(),
