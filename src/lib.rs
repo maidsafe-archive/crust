@@ -81,18 +81,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate unwrap;
 
-use config_file_handler;
-use crossbeam;
-use get_if_addrs;
-use igd;
-use maidsafe_utilities;
-use mio;
-use mio_extras;
-use net2;
-use rand;
-use safe_crypto;
-use socket_collection;
-
 #[cfg(test)]
 extern crate serde_json;
 #[cfg(test)]
