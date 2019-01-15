@@ -20,8 +20,8 @@ pub use self::error::CrustError;
 pub use self::event::Event;
 pub use self::service::Service;
 pub use self::types::{
-    ConfigWrapper, ConnectionId, ConnectionInfoResult, ConnectionMap, CrustConfig, CrustData,
-    EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    ConfigWrapper, ConnectionId, ConnectionInfoResult, CrustConfig, CrustData, EventLoop,
+    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 
 mod active_connection;

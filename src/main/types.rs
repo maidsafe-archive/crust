@@ -126,27 +126,29 @@ impl ConfigWrapper {
 
 /// Crust specific data stored in event loop `Core`.
 /// This data can be accessed when interfacing with event loop.
-pub struct CrustData {
+pub struct CrustData<UID> {
     pub bootstrap_cache: BootstrapCache,
     // TODO(povilas): use HashSet instead
     pub our_listeners: Vec<PeerInfo>,
+    /// Either established or in progress connections.
+    pub connections: HashMap<UID, ConnectionId>,
 }
 
-impl CrustData {
+impl<UID: Uid> CrustData<UID> {
     pub fn new(bootstrap_cache: BootstrapCache) -> Self {
         Self {
             bootstrap_cache,
             our_listeners: Default::default(),
+            connections: Default::default(),
         }
     }
 }
 
 /// Crust event loop state object. It is owned by the same thread event loop is running on.
 /// `EventLoopCore` manages Crust states like `Connect`, `ConnectionCandidate`, etc.
-pub type EventLoopCore = Core<CrustData>;
+pub type EventLoopCore<UID> = Core<CrustData<UID>>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
-pub type EventLoop = common::EventLoop<CrustData>;
+pub type EventLoop<UID> = common::EventLoop<CrustData<UID>>;
 
-pub type ConnectionMap<UID> = Arc<Mutex<HashMap<UID, ConnectionId>>>;
 pub type CrustConfig = Arc<Mutex<ConfigWrapper>>;

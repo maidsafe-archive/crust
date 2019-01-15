@@ -15,14 +15,14 @@ use crate::main::config_handler::{self, Config};
 use crate::main::service_discovery::ServiceDiscovery;
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
-    ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustData, CrustError,
-    Event, EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    ConnectionInfoResult, ConnectionListener, CrustConfig, CrustData, CrustError, Event, EventLoop,
+    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc, Mutex};
@@ -82,10 +82,9 @@ const DISABLE_NAT: bool = true;
 /// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
 pub struct Service<UID: Uid> {
     config: CrustConfig,
-    cm: ConnectionMap<UID>,
     event_tx: crate::CrustEventSender<UID>,
     mc: Arc<MappingContext>,
-    el: EventLoop,
+    el: EventLoop<UID>,
     name_hash: NameHash,
     our_uid: UID,
     our_pk: PublicEncryptKey,
@@ -129,7 +128,6 @@ impl<UID: Uid> Service<UID> {
         // TODO(povilas): get from constructor params
         let (our_pk, our_sk) = gen_encrypt_keypair();
         let service = Service {
-            cm: Arc::new(Mutex::new(HashMap::new())),
             config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
             event_tx,
             mc: Arc::new(mc),
@@ -148,13 +146,11 @@ impl<UID: Uid> Service<UID> {
     fn start_config_refresher(&self) -> crate::Res<()> {
         let (tx, rx) = mpsc::channel();
         let config = self.config.clone();
-        let cm = self.cm.clone();
         self.post(move |core, _| {
             if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
                 let _ = tx.send(ConfigRefresher::start(
                     core,
                     EventToken::ConfigRefresher.into(),
-                    cm,
                     config,
                 ));
             }
@@ -259,7 +255,7 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery<UID>>() {
                 Some(sd) => sd,
                 None => {
                     warn!("Token reserved for ServiceDiscovery has something else.");
@@ -271,17 +267,20 @@ impl<UID: Uid> Service<UID> {
     }
 
     fn get_peer_socket_addr(&self, peer_uid: &UID) -> crate::Res<SocketAddr> {
-        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
-                active_connection: Some(token),
-                ..
-            }) => token,
-            _ => return Err(CrustError::PeerNotFound),
-        };
-
+        let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
         let _ = self.post(move |core, _| {
+            let token = match core.user_data().connections.get(&peer_uid) {
+                Some(&ConnectionId {
+                    active_connection: Some(token),
+                    ..
+                }) => token,
+                _ => {
+                    let _ = tx.send(None);
+                    return;
+                }
+            };
             let state = match core.get_state(token) {
                 Some(state) => state,
                 None => {
@@ -347,7 +346,7 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery<UID>>() {
                 Some(sd) => sd,
                 None => {
                     warn!("Token reserved for ServiceDiscovery has something else.");
@@ -374,7 +373,6 @@ impl<UID: Uid> Service<UID> {
         let name_hash = self.name_hash;
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
-        let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, poll| {
@@ -389,7 +387,6 @@ impl<UID: Uid> Service<UID> {
                     name_hash,
                     our_uid,
                     bootstrapper_role,
-                    cm,
                     config,
                     blacklist,
                     EventToken::Bootstrap.into(),
@@ -417,7 +414,6 @@ impl<UID: Uid> Service<UID> {
     /// Starts accepting TCP connections. This is persistant until it errors out or is stopped
     /// explicitly.
     pub fn start_listening_tcp(&mut self) -> crate::Res<()> {
-        let cm = self.cm.clone();
         let mc = self.mc.clone();
         let config = self.config.clone();
         let port = unwrap!(self.config.lock())
@@ -443,7 +439,6 @@ impl<UID: Uid> Service<UID> {
                     force_include_port,
                     our_uid,
                     name_hash,
-                    cm,
                     config,
                     mc,
                     EventToken::Listener.into(),
@@ -483,14 +478,6 @@ impl<UID: Uid> Service<UID> {
             return Err(CrustError::RequestedConnectToSelf);
         }
 
-        if unwrap!(self.cm.lock()).contains_key(&their_ci.id) {
-            debug!(
-                "Already connected OR already in process of connecting to {:?}",
-                their_ci.id
-            );
-            return Ok(());
-        }
-
         {
             let guard = unwrap!(self.config.lock());
             if let Some(ref whitelisted_node_ips) = guard.cfg.whitelisted_node_ips {
@@ -504,19 +491,24 @@ impl<UID: Uid> Service<UID> {
         }
 
         let event_tx = self.event_tx.clone();
-        let cm = self.cm.clone();
         let our_nh = self.name_hash;
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let config = self.config.clone();
 
         self.post(move |core, poll| {
+            if core.user_data().connections.contains_key(&their_ci.id) {
+                debug!(
+                    "Already connected OR already in process of connecting to {:?}",
+                    their_ci.id
+                );
+                return;
+            }
             let _ = Connect::start(
                 core,
                 poll,
                 our_ci,
                 their_ci,
-                cm,
                 our_nh,
                 event_tx,
                 our_pk,
@@ -531,37 +523,50 @@ impl<UID: Uid> Service<UID> {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_uid: &UID) -> bool {
-        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
-                active_connection: Some(token),
-                ..
-            }) => token,
-            _ => return false,
-        };
+        let peer_uid = *peer_uid;
+        let (tx, rx) = mpsc::channel();
 
         let _ = self.post(move |core, poll| {
-            if let Some(state) = core.get_state(token) {
-                state.borrow_mut().terminate(core, poll);
+            if let Some(&ConnectionId {
+                active_connection: Some(token),
+                ..
+            }) = core.user_data().connections.get(&peer_uid)
+            {
+                if let Some(state) = core.get_state(token) {
+                    state.borrow_mut().terminate(core, poll);
+                }
+                let _ = tx.send(true);
+            } else {
+                let _ = tx.send(false);
             }
         });
 
-        true
+        rx.recv().unwrap_or(false)
     }
 
     /// Send data to a peer.
     pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> crate::Res<()> {
-        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
+        let peer_uid = *peer_uid;
+        let (tx, rx) = mpsc::channel();
+
+        let res = self.post(move |core, poll| {
+            if let Some(&ConnectionId {
                 active_connection: Some(token),
                 ..
-            }) => token,
-            _ => return Err(CrustError::PeerNotFound),
-        };
-
-        self.post(move |core, poll| {
-            if let Some(state) = core.get_state(token) {
-                state.borrow_mut().write(core, poll, msg, priority);
+            }) = core.user_data().connections.get(&peer_uid)
+            {
+                if let Some(state) = core.get_state(token) {
+                    state.borrow_mut().write(core, poll, msg, priority);
+                }
+                let _ = tx.send(Ok(()));
+            } else {
+                let _ = tx.send(Err(CrustError::PeerNotFound));
             }
+        });
+        res.and_then(|_| {
+            rx.recv()
+                .map_err(CrustError::ChannelRecv)
+                .and_then(|res| res)
         })
     }
 
@@ -647,13 +652,21 @@ impl<UID: Uid> Service<UID> {
 
     /// Check if we are connected to the given peer
     pub fn is_connected(&self, peer_uid: &UID) -> bool {
-        match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
-                active_connection: Some(_),
-                ..
-            }) => true,
-            _ => false,
-        }
+        let peer_uid = *peer_uid;
+        let (tx, rx) = mpsc::channel();
+
+        let _ = self.post(move |core, _| {
+            let connected = match core.user_data().connections.get(&peer_uid) {
+                Some(&ConnectionId {
+                    active_connection: Some(_),
+                    ..
+                }) => true,
+                _ => false,
+            };
+            let _ = tx.send(connected);
+        });
+
+        rx.recv().unwrap_or(false)
     }
 
     /// Returns our ID.
@@ -678,14 +691,14 @@ impl<UID: Uid> Service<UID> {
 
     fn post<F>(&self, f: F) -> crate::Res<()>
     where
-        F: FnOnce(&mut EventLoopCore, &Poll) + Send + 'static,
+        F: FnOnce(&mut EventLoopCore<UID>, &Poll) + Send + 'static,
     {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
 }
 
-fn our_global_listener_addrs(core: &EventLoopCore) -> HashSet<SocketAddr> {
+fn our_global_listener_addrs<UID: Uid>(core: &EventLoopCore<UID>) -> HashSet<SocketAddr> {
     core.user_data()
         .our_listeners
         .iter()

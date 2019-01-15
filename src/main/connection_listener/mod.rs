@@ -11,7 +11,7 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use crate::common::{NameHash, PeerInfo, State, Uid};
-use crate::main::{ConnectionMap, CrustConfig, CrustData, Event, EventLoopCore};
+use crate::main::{CrustConfig, CrustData, Event, EventLoopCore};
 use crate::nat::ip_addr_is_global;
 use crate::nat::{MappedTcpSocket, MappingContext};
 use mio::net::TcpListener;
@@ -33,7 +33,6 @@ const LISTENER_BACKLOG: i32 = 100;
 /// is enabled by default.
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
-    cm: ConnectionMap<UID>,
     config: CrustConfig,
     event_tx: crate::CrustEventSender<UID>,
     listener: TcpListener,
@@ -48,14 +47,13 @@ pub struct ConnectionListener<UID: Uid> {
 
 impl<UID: Uid> ConnectionListener<UID> {
     pub fn start(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         handshake_timeout_sec: Option<u64>,
         port: u16,
         force_include_port: bool,
         our_uid: UID,
         name_hash: NameHash,
-        cm: ConnectionMap<UID>,
         config: CrustConfig,
         mc: Arc<MappingContext>,
         token: Token,
@@ -66,7 +64,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         let event_tx_0 = event_tx.clone();
         let our_sk2 = our_sk.clone();
 
-        let finish = move |core: &mut EventLoopCore,
+        let finish = move |core: &mut EventLoopCore<UID>,
                            poll: &Poll,
                            socket,
                            mut mapped_addrs: Vec<SocketAddr>| {
@@ -94,7 +92,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                 mapped_addrs,
                 our_uid,
                 name_hash,
-                cm,
                 config,
                 token,
                 event_tx.clone(),
@@ -124,14 +121,13 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 
     fn handle_mapped_socket(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         timeout_sec: Option<u64>,
         socket: TcpBuilder,
         mapped_addrs: Vec<SocketAddr>,
         our_uid: UID,
         name_hash: NameHash,
-        cm: ConnectionMap<UID>,
         config: CrustConfig,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
@@ -152,7 +148,6 @@ impl<UID: Uid> ConnectionListener<UID> {
 
         let state = Self {
             token,
-            cm,
             config,
             event_tx: event_tx.clone(),
             listener,
@@ -171,7 +166,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         Ok(())
     }
 
-    fn accept(&self, core: &mut EventLoopCore, poll: &Poll) {
+    fn accept(&self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
@@ -191,7 +186,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.accept_bootstrap,
                         self.our_uid,
                         self.name_hash,
-                        self.cm.clone(),
                         self.config.clone(),
                         self.event_tx.clone(),
                         self.our_pk,
@@ -215,14 +209,14 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData> for ConnectionListener<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<CrustData<UID>> for ConnectionListener<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.accept(core, poll);
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         let _ = poll.deregister(&self.listener);
         let _ = core.remove_state(self.token);
     }
@@ -249,7 +243,6 @@ mod tests {
     use rand;
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
-    use std::collections::HashMap;
     use std::io::Read;
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
@@ -267,7 +260,7 @@ mod tests {
     const NAME_HASH_2: NameHash = [2; HASH_SIZE];
 
     struct Listener {
-        _el: EventLoop,
+        _el: EventLoop<UniqueId>,
         uid: UniqueId,
         addr: SocketAddr,
         event_rx: mpsc::Receiver<Event<UniqueId>>,
@@ -285,7 +278,6 @@ mod tests {
         let crust_sender =
             crate::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
-        let cm = Arc::new(Mutex::new(HashMap::new()));
         let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
         let config = Arc::new(Mutex::new(Default::default()));
         let (our_pk, our_sk) = gen_encrypt_keypair();
@@ -301,7 +293,6 @@ mod tests {
                     false,
                     uid,
                     NAME_HASH,
-                    cm,
                     config,
                     mc,
                     Token(LISTENER_TOKEN),
@@ -322,22 +313,24 @@ mod tests {
 
         let (tx, rx) = mpsc::channel();
         unwrap!(
-            el.send(CoreMessage::new(move |core: &mut EventLoopCore, _| {
-                let state = match core.get_state(Token(LISTENER_TOKEN)) {
-                    Some(state) => state,
-                    None => panic!("Listener not initialised"),
-                };
-                let mut state = state.borrow_mut();
-                let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
-                    Some(l) => l,
-                    None => panic!("Token reserved for ConnectionListener has something else."),
-                };
-                listener.set_accept_bootstrap(accept_bootstrap);
-                listener.set_ext_reachability_test(false);
+            el.send(CoreMessage::new(
+                move |core: &mut EventLoopCore<UniqueId>, _| {
+                    let state = match core.get_state(Token(LISTENER_TOKEN)) {
+                        Some(state) => state,
+                        None => panic!("Listener not initialised"),
+                    };
+                    let mut state = state.borrow_mut();
+                    let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
+                        Some(l) => l,
+                        None => panic!("Token reserved for ConnectionListener has something else."),
+                    };
+                    listener.set_accept_bootstrap(accept_bootstrap);
+                    listener.set_ext_reachability_test(false);
 
-                let listener_info = core.user_data_mut().our_listeners[0];
-                unwrap!(tx.send(listener_info));
-            })),
+                    let listener_info = core.user_data_mut().our_listeners[0];
+                    unwrap!(tx.send(listener_info));
+                }
+            )),
             "Could not send to tx"
         );
         let listener_info = unwrap!(rx.recv());

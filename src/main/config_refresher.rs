@@ -8,13 +8,12 @@
 // Software.
 
 use crate::common::{CoreTimer, CrustUser, State, Uid};
-use crate::main::{
-    read_config_file, ActiveConnection, ConnectionMap, CrustConfig, CrustData, EventLoopCore,
-};
+use crate::main::{read_config_file, ActiveConnection, CrustConfig, CrustData, EventLoopCore};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
+use std::marker::PhantomData;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -24,15 +23,14 @@ pub struct ConfigRefresher<UID: Uid> {
     token: Token,
     timer: CoreTimer,
     timeout: Timeout,
-    cm: ConnectionMap<UID>,
     config: CrustConfig,
+    _phantom: PhantomData<UID>,
 }
 
 impl<UID: Uid> ConfigRefresher<UID> {
     pub fn start(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         token: Token,
-        cm: ConnectionMap<UID>,
         config: CrustConfig,
     ) -> crate::Res<()> {
         trace!("Entered state ConfigRefresher");
@@ -44,8 +42,8 @@ impl<UID: Uid> ConfigRefresher<UID> {
             token,
             timer,
             timeout,
-            cm,
             config,
+            _phantom: PhantomData,
         }));
         let _ = core.insert_state(token, state);
 
@@ -53,13 +51,13 @@ impl<UID: Uid> ConfigRefresher<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData> for ConfigRefresher<UID> {
-    fn terminate(&mut self, core: &mut EventLoopCore, _poll: &Poll) {
+impl<UID: Uid> State<CrustData<UID>> for ConfigRefresher<UID> {
+    fn terminate(&mut self, core: &mut EventLoopCore<UID>, _poll: &Poll) {
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
     }
 
-    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, _timer_id: u8) {
         self.timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer);
 
         let config = match read_config_file() {
@@ -87,8 +85,9 @@ impl<UID: Uid> State<CrustData> for ConfigRefresher<UID> {
              longer whitelisted"
         );
 
-        // Peers collected to avoid keeping the mutex lock alive which might lead to deadlock
-        let peers_to_terminate: Vec<_> = unwrap!(self.cm.lock())
+        let peers_to_terminate: Vec<_> = core
+            .user_data()
+            .connections
             .values()
             .filter_map(|cid| {
                 cid.active_connection

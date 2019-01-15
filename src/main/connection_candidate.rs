@@ -8,7 +8,7 @@
 // Software.
 
 use crate::common::{Message, State, Uid};
-use crate::main::{ConnectionId, ConnectionMap, CrustData, EventLoopCore};
+use crate::main::{ConnectionId, CrustData, EventLoopCore};
 use mio::{Poll, PollOpt, Ready, Token};
 use socket_collection::{Priority, TcpSock};
 use std::any::Any;
@@ -17,33 +17,30 @@ use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish = Box<FnMut(&mut EventLoopCore, &Poll, Token, Option<TcpSock>)>;
+pub type Finish<UID> = Box<FnMut(&mut EventLoopCore<UID>, &Poll, Token, Option<TcpSock>)>;
 
 /// Exchanges `ConnectionChoose` message with remote peer and transitions to next state.
 pub struct ConnectionCandidate<UID: Uid> {
     token: Token,
-    cm: ConnectionMap<UID>,
     socket: TcpSock,
     our_id: UID,
     their_id: UID,
     msg: Option<(Message<UID>, Priority)>,
-    finish: Finish,
+    finish: Finish<UID>,
 }
 
 impl<UID: Uid> ConnectionCandidate<UID> {
     pub fn start(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         token: Token,
         socket: TcpSock,
-        cm: ConnectionMap<UID>,
         our_id: UID,
         their_id: UID,
-        finish: Finish,
+        finish: Finish<UID>,
     ) -> crate::Res<Token> {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
             token,
-            cm,
             socket,
             our_id,
             their_id,
@@ -66,7 +63,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         Ok(token)
     }
 
-    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn read(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, poll),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
@@ -76,11 +73,11 @@ impl<UID: Uid> ConnectionCandidate<UID> {
 
     fn write(
         &mut self,
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         msg: Option<(Message<UID>, Priority)>,
     ) {
-        let terminate = match unwrap!(self.cm.lock()).get(&self.their_id) {
+        let terminate = match core.user_data().connections.get(&self.their_id) {
             Some(&ConnectionId {
                 active_connection: Some(_),
                 ..
@@ -107,7 +104,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
     }
 
-    fn done(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn done(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let token = self.token;
         let socket = mem::replace(&mut self.socket, Default::default());
@@ -116,15 +113,15 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         (*self.finish)(core, poll, token, Some(socket));
     }
 
-    fn handle_error(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
     }
 }
 
-impl<UID: Uid> State<CrustData> for ConnectionCandidate<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<CrustData<UID>> for ConnectionCandidate<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll);
         }
@@ -134,12 +131,12 @@ impl<UID: Uid> State<CrustData> for ConnectionCandidate<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
 
-        let mut guard = unwrap!(self.cm.lock());
-        if let Entry::Occupied(mut oe) = guard.entry(self.their_id) {
+        let connections = &mut core.user_data_mut().connections;
+        if let Entry::Occupied(mut oe) = connections.entry(self.their_id) {
             oe.get_mut().currently_handshaking -= 1;
             if oe.get().currently_handshaking == 0 && oe.get().active_connection.is_none() {
                 let _ = oe.remove();
@@ -148,7 +145,7 @@ impl<UID: Uid> State<CrustData> for ConnectionCandidate<UID> {
         trace!(
             "Connection Map removed: {:?} -> {:?}",
             self.their_id,
-            guard.get(&self.their_id)
+            connections.get(&self.their_id)
         );
     }
 

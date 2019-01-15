@@ -13,8 +13,8 @@ use self::exchange_msg::ExchangeMsg;
 use crate::common::{CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid};
 use crate::main::bootstrap;
 use crate::main::{
-    ActiveConnection, ConnectionCandidate, ConnectionMap, CrustConfig, CrustData, CrustError,
-    Event, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    ActiveConnection, ConnectionCandidate, CrustConfig, CrustData, CrustError, Event,
+    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
@@ -33,7 +33,6 @@ const TIMEOUT_SEC: u64 = 60;
 pub struct Connect<UID: Uid> {
     token: Token,
     timeout: Timeout,
-    cm: ConnectionMap<UID>,
     our_nh: NameHash,
     our_id: UID,
     their_id: UID,
@@ -47,11 +46,10 @@ pub struct Connect<UID: Uid> {
 
 impl<UID: Uid> Connect<UID> {
     pub fn start(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         our_ci: PrivConnectionInfo<UID>,
         their_ci: PubConnectionInfo<UID>,
-        cm: ConnectionMap<UID>,
         our_nh: NameHash,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -72,7 +70,6 @@ impl<UID: Uid> Connect<UID> {
         let state = Rc::new(RefCell::new(Self {
             token,
             timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0)),
-            cm,
             our_nh,
             our_id: our_ci.id,
             their_id,
@@ -115,14 +112,14 @@ impl<UID: Uid> Connect<UID> {
 
     fn exchange_msg(
         &mut self,
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         socket: TcpSock,
         peer_info: PeerInfo,
         shared_key: SharedSecretKey,
     ) {
         let self_weak = self.self_weak.clone();
-        let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
+        let handler = move |core: &mut EventLoopCore<UID>, poll: &Poll, child, res| {
             if let Some(self_rc) = self_weak.upgrade() {
                 self_rc
                     .borrow_mut()
@@ -137,7 +134,6 @@ impl<UID: Uid> Connect<UID> {
             self.our_id,
             self.their_id,
             self.our_nh,
-            self.cm.clone(),
             self.our_pk,
             shared_key,
             self.our_global_direct_listeners.clone(),
@@ -150,7 +146,7 @@ impl<UID: Uid> Connect<UID> {
 
     fn handle_exchange_msg(
         &mut self,
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
@@ -160,7 +156,7 @@ impl<UID: Uid> Connect<UID> {
         if let Some(socket) = res {
             bootstrap::cache_peer_info(core, peer_info, &self.config);
             let self_weak = self.self_weak.clone();
-            let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
+            let handler = move |core: &mut EventLoopCore<UID>, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc
                         .borrow_mut()
@@ -173,7 +169,6 @@ impl<UID: Uid> Connect<UID> {
                 poll,
                 child,
                 socket,
-                self.cm.clone(),
                 self.our_id,
                 self.their_id,
                 Box::new(handler),
@@ -188,7 +183,7 @@ impl<UID: Uid> Connect<UID> {
 
     fn handle_connection_candidate(
         &mut self,
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         child: Token,
         res: Option<TcpSock>,
@@ -201,7 +196,6 @@ impl<UID: Uid> Connect<UID> {
                 poll,
                 child,
                 socket,
-                self.cm.clone(),
                 self.our_id,
                 self.their_id,
                 // Note; We connect only to Nodes
@@ -213,7 +207,7 @@ impl<UID: Uid> Connect<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn remove_peer_from_cache(&self, core: &mut EventLoopCore, peer_info: &PeerInfo) {
+    fn remove_peer_from_cache(&self, core: &mut EventLoopCore<UID>, peer_info: &PeerInfo) {
         let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
         bootstrap_cache.remove(peer_info);
         if let Err(e) = bootstrap_cache.commit() {
@@ -221,13 +215,13 @@ impl<UID: Uid> Connect<UID> {
         }
     }
 
-    fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn maybe_terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         if self.children.is_empty() {
             self.terminate(core, poll);
         }
     }
 
-    fn terminate_children(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -239,19 +233,19 @@ impl<UID: Uid> Connect<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData> for Connect<UID> {
-    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
+impl<UID: Uid> State<CrustData<UID>> for Connect<UID> {
+    fn timeout(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, _timer_id: u8) {
         debug!("Connect to peer {:?} timed out", self.their_id);
         self.terminate(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         self.terminate_children(core, poll);
 
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
 
-        if !unwrap!(self.cm.lock()).contains_key(&self.their_id) {
+        if !core.user_data().connections.contains_key(&self.their_id) {
             let _ = self.event_tx.send(Event::ConnectFailure(self.their_id));
         }
     }
@@ -275,7 +269,6 @@ mod tests {
         };
         use crate::Config;
         use safe_crypto::gen_encrypt_keypair;
-        use std::collections::HashMap;
         use std::sync::{Arc, Mutex};
 
         fn test_priv_conn_info() -> (PrivConnectionInfo<UniqueId>, SecretEncryptKey) {
@@ -303,14 +296,12 @@ mod tests {
             let config = Config::default();
             let config = Arc::new(Mutex::new(ConfigWrapper::new(config)));
 
-            let conn_map = Arc::new(Mutex::new(HashMap::new()));
             let (event_tx, _event_rx) = get_event_sender();
             unwrap!(Connect::start(
                 &mut core,
                 &poll,
                 our_ci,
                 their_ci.clone(),
-                conn_map,
                 [1; 32],
                 event_tx,
                 our_pk,

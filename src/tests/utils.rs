@@ -97,7 +97,7 @@ pub fn bootstrap_cache_tmp_file() -> PathBuf {
 }
 
 /// Creates `Core` for tests with some defaults.
-pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore {
+pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore<UniqueId> {
     let (event_tx, _event_rx) = channel();
     let timer = timer::Builder::default().build();
     EventLoopCore::new_for_tests(0, event_tx, timer, CrustData::new(bootstrap_cache))
