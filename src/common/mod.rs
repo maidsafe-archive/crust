@@ -48,10 +48,9 @@ pub enum BootstrapperRole {
     Client,
 }
 
-impl BootstrapperRole {
-    /// Converts into `CrustUser`.
-    pub fn as_crust_role(&self) -> CrustUser {
-        match self {
+impl From<&BootstrapperRole> for CrustUser {
+    fn from(role: &BootstrapperRole) -> CrustUser {
+        match role {
             BootstrapperRole::Node(_) => CrustUser::Node,
             BootstrapperRole::Client => CrustUser::Client,
         }

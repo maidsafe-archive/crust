@@ -173,7 +173,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         self.try_update_crust_config(core);
 
-        if !self.is_peer_whitelisted(their_role.as_crust_role(), &core.user_data().config.cfg) {
+        if !self.is_peer_whitelisted((&their_role).into(), &core.user_data().config.cfg) {
             trace!("Bootstrapper is not whitelisted. Denying bootstrap.");
             let reason = match their_role {
                 BootstrapperRole::Node(_) => BootstrapDenyReason::NodeNotWhitelisted,
