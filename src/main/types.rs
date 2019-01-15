@@ -14,7 +14,6 @@ use mio::Token;
 use safe_crypto::PublicEncryptKey;
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
 
 // ========================================================================================
 //                                     ConnectionId
@@ -132,6 +131,7 @@ pub struct CrustData<UID> {
     pub our_listeners: Vec<PeerInfo>,
     /// Either established or in progress connections.
     pub connections: HashMap<UID, ConnectionId>,
+    pub config: ConfigWrapper,
 }
 
 impl<UID: Uid> CrustData<UID> {
@@ -140,6 +140,7 @@ impl<UID: Uid> CrustData<UID> {
             bootstrap_cache,
             our_listeners: Default::default(),
             connections: Default::default(),
+            config: Default::default(),
         }
     }
 }
@@ -150,5 +151,3 @@ pub type EventLoopCore<UID> = Core<CrustData<UID>>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
 pub type EventLoop<UID> = common::EventLoop<CrustData<UID>>;
-
-pub type CrustConfig = Arc<Mutex<ConfigWrapper>>;

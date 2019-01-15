@@ -8,7 +8,7 @@
 // Software.
 
 use crate::common::{CoreTimer, CrustUser, State, Uid};
-use crate::main::{read_config_file, ActiveConnection, CrustConfig, CrustData, EventLoopCore};
+use crate::main::{read_config_file, ActiveConnection, CrustData, EventLoopCore};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
@@ -23,16 +23,11 @@ pub struct ConfigRefresher<UID: Uid> {
     token: Token,
     timer: CoreTimer,
     timeout: Timeout,
-    config: CrustConfig,
     _phantom: PhantomData<UID>,
 }
 
 impl<UID: Uid> ConfigRefresher<UID> {
-    pub fn start(
-        core: &mut EventLoopCore<UID>,
-        token: Token,
-        config: CrustConfig,
-    ) -> crate::Res<()> {
+    pub fn start(core: &mut EventLoopCore<UID>, token: Token) -> crate::Res<()> {
         trace!("Entered state ConfigRefresher");
 
         let timer = CoreTimer::new(token, 0);
@@ -42,7 +37,6 @@ impl<UID: Uid> ConfigRefresher<UID> {
             token,
             timer,
             timeout,
-            config,
             _phantom: PhantomData,
         }));
         let _ = core.insert_state(token, state);
@@ -74,7 +68,10 @@ impl<UID: Uid> State<CrustData<UID>> for ConfigRefresher<UID> {
         let whitelisted_node_ips = config.whitelisted_node_ips.clone();
         let whitelisted_client_ips = config.whitelisted_client_ips.clone();
 
-        if !unwrap!(self.config.lock()).check_for_refresh_and_reset_modified(config)
+        if !core
+            .user_data_mut()
+            .config
+            .check_for_refresh_and_reset_modified(config)
             || (whitelisted_node_ips.is_none() && whitelisted_client_ips.is_none())
         {
             return;

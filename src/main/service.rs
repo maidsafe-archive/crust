@@ -15,7 +15,7 @@ use crate::main::config_handler::{self, Config};
 use crate::main::service_discovery::ServiceDiscovery;
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
-    ConnectionInfoResult, ConnectionListener, CrustConfig, CrustData, CrustError, Event, EventLoop,
+    ConnectionInfoResult, ConnectionListener, CrustData, CrustError, Event, EventLoop,
     EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
@@ -23,9 +23,8 @@ use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
 use std::collections::HashSet;
-use std::error::Error;
 use std::net::{IpAddr, SocketAddr};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{mpsc, Arc};
 
 /// Reserved mio `Token` values for Crust speficic events.
 #[derive(Debug, PartialEq)]
@@ -81,7 +80,6 @@ const DISABLE_NAT: bool = true;
 /// [`set_service_discovery_listen`]: struct.Service.html#method.set_service_discovery_listen
 /// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
 pub struct Service<UID: Uid> {
-    config: CrustConfig,
     event_tx: crate::CrustEventSender<UID>,
     mc: Arc<MappingContext>,
     el: EventLoop<UID>,
@@ -120,7 +118,9 @@ impl<UID: Uid> Service<UID> {
             move || {
                 let cache = BootstrapCache::new(bootstrap_cache_file);
                 cache.read_file();
-                CrustData::new(cache)
+                let mut user_data = CrustData::new(cache);
+                user_data.config = ConfigWrapper::new(config);
+                user_data
             },
         )?;
         trace!("Event loop started");
@@ -128,7 +128,6 @@ impl<UID: Uid> Service<UID> {
         // TODO(povilas): get from constructor params
         let (our_pk, our_sk) = gen_encrypt_keypair();
         let service = Service {
-            config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
             event_tx,
             mc: Arc::new(mc),
             el,
@@ -145,13 +144,11 @@ impl<UID: Uid> Service<UID> {
 
     fn start_config_refresher(&self) -> crate::Res<()> {
         let (tx, rx) = mpsc::channel();
-        let config = self.config.clone();
         self.post(move |core, _| {
             if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
                 let _ = tx.send(ConfigRefresher::start(
                     core,
                     EventToken::ConfigRefresher.into(),
-                    config,
                 ));
             }
             let _ = tx.send(Ok(()));
@@ -217,17 +214,16 @@ impl<UID: Uid> Service<UID> {
     /// Initialises Service Discovery module and starts listening for responses to our beacon
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
-        let remote_port = unwrap!(self.config.lock())
-            .cfg
-            .service_discovery_port
-            .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
-        let listener_port = unwrap!(self.config.lock())
-            .cfg
-            .service_discovery_listener_port
-            .unwrap_or(remote_port);
-
         let our_pk = self.our_pk;
         let _ = self.post(move |core, poll| {
+            let config = &core.user_data().config.cfg;
+            let remote_port = config
+                .service_discovery_port
+                .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+            let listener_port = config
+                .service_discovery_listener_port
+                .unwrap_or(remote_port);
+
             if core
                 .get_state(EventToken::ServiceDiscovery.into())
                 .is_none()
@@ -266,7 +262,9 @@ impl<UID: Uid> Service<UID> {
         });
     }
 
-    fn get_peer_socket_addr(&self, peer_uid: &UID) -> crate::Res<SocketAddr> {
+    /// Checks if given peer was connected, if so, returns it's address together with a flag
+    /// indicating whether it was hard coded in config or not.
+    fn get_peer_socket_addr(&self, peer_uid: &UID) -> crate::Res<(SocketAddr, bool)> {
         let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
@@ -294,7 +292,15 @@ impl<UID: Uid> Service<UID> {
                 .downcast_mut::<ActiveConnection<UID>>()
             {
                 Some(active_connection) => {
-                    let _ = tx.send(Some(active_connection.peer_addr()));
+                    let config = &core.user_data().config.cfg;
+                    let peer_addr_res = active_connection.peer_addr().map(|peer_addr| {
+                        let was_hard_coded = config
+                            .hard_coded_contacts
+                            .iter()
+                            .any(|peer| peer.addr.ip() == peer_addr.ip());
+                        (peer_addr, was_hard_coded)
+                    });
+                    let _ = tx.send(Some(peer_addr_res));
                 }
                 None => {
                     debug!("Expected token {:?} to be ActiveConnection", token);
@@ -312,25 +318,14 @@ impl<UID: Uid> Service<UID> {
 
     /// Return the ip address of the peer.
     pub fn get_peer_ip_addr(&self, peer_uid: &UID) -> crate::Res<IpAddr> {
-        self.get_peer_socket_addr(peer_uid).map(|s| s.ip())
+        self.get_peer_socket_addr(peer_uid).map(|(s, _)| s.ip())
     }
 
     /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
     pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
-        match self.get_peer_socket_addr(peer_uid) {
-            Ok(s) => {
-                let config = unwrap!(self.config.lock());
-                config
-                    .cfg
-                    .hard_coded_contacts
-                    .iter()
-                    .any(|peer| peer.addr.ip() == s.ip())
-            }
-            Err(e) => {
-                debug!("{}", e.description());
-                false
-            }
-        }
+        self.get_peer_socket_addr(peer_uid)
+            .map(|(_, hard_coded)| hard_coded)
+            .unwrap_or(false)
     }
 
     // TODO temp remove
@@ -368,7 +363,6 @@ impl<UID: Uid> Service<UID> {
         blacklist: HashSet<SocketAddr>,
         crust_user: CrustUser,
     ) -> crate::Res<()> {
-        let config = self.config.clone();
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let our_pk = self.our_pk;
@@ -387,7 +381,6 @@ impl<UID: Uid> Service<UID> {
                     name_hash,
                     our_uid,
                     bootstrapper_role,
-                    config,
                     blacklist,
                     EventToken::Bootstrap.into(),
                     EventToken::ServiceDiscovery.into(),
@@ -415,14 +408,6 @@ impl<UID: Uid> Service<UID> {
     /// explicitly.
     pub fn start_listening_tcp(&mut self) -> crate::Res<()> {
         let mc = self.mc.clone();
-        let config = self.config.clone();
-        let port = unwrap!(self.config.lock())
-            .cfg
-            .tcp_acceptor_port
-            .unwrap_or(0);
-        let force_include_port = unwrap!(self.config.lock())
-            .cfg
-            .force_acceptor_port_in_ext_ep;
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let event_tx = self.event_tx.clone();
@@ -430,6 +415,10 @@ impl<UID: Uid> Service<UID> {
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         self.post(move |core, poll| {
+            let config = &core.user_data().config.cfg;
+            let port = config.tcp_acceptor_port.unwrap_or(0);
+            let force_include_port = config.force_acceptor_port_in_ext_ep;
+
             if core.get_state(EventToken::Listener.into()).is_none() {
                 ConnectionListener::start(
                     core,
@@ -439,7 +428,6 @@ impl<UID: Uid> Service<UID> {
                     force_include_port,
                     our_uid,
                     name_hash,
-                    config,
                     mc,
                     EventToken::Listener.into(),
                     event_tx,
@@ -478,9 +466,14 @@ impl<UID: Uid> Service<UID> {
             return Err(CrustError::RequestedConnectToSelf);
         }
 
-        {
-            let guard = unwrap!(self.config.lock());
-            if let Some(ref whitelisted_node_ips) = guard.cfg.whitelisted_node_ips {
+        let event_tx = self.event_tx.clone();
+        let our_nh = self.name_hash;
+        let our_pk = self.our_pk;
+        let our_sk = self.our_sk.clone();
+
+        self.post(move |core, poll| {
+            if let Some(ref whitelisted_node_ips) = core.user_data().config.cfg.whitelisted_node_ips
+            {
                 let their_direct = their_ci
                     .for_direct
                     .drain(..)
@@ -488,15 +481,7 @@ impl<UID: Uid> Service<UID> {
                     .collect();
                 their_ci.for_direct = their_direct;
             }
-        }
 
-        let event_tx = self.event_tx.clone();
-        let our_nh = self.name_hash;
-        let our_pk = self.our_pk;
-        let our_sk = self.our_sk.clone();
-        let config = self.config.clone();
-
-        self.post(move |core, poll| {
             if core.user_data().connections.contains_key(&their_ci.id) {
                 debug!(
                     "Already connected OR already in process of connecting to {:?}",
@@ -514,7 +499,6 @@ impl<UID: Uid> Service<UID> {
                 our_pk,
                 &our_sk,
                 our_global_listener_addrs(core),
-                config,
             );
         })?;
 

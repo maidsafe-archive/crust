@@ -12,7 +12,7 @@ use crate::common::{
     PeerInfo, State, Uid,
 };
 use crate::main::{
-    read_config_file, ActiveConnection, ConnectionCandidate, ConnectionId, CrustConfig, CrustData,
+    read_config_file, ActiveConnection, Config, ConnectionCandidate, ConnectionId, CrustData,
     Event, EventLoopCore,
 };
 use crate::nat::{ip_addr_is_global, GetExtAddr};
@@ -42,7 +42,6 @@ const MAX_EXT_REACHABILITY_TEST_ADDRS: usize = 3;
 /// Handles incoming socket according to the first received request.
 pub struct ExchangeMsg<UID: Uid> {
     token: Token,
-    config: CrustConfig,
     event_tx: crate::CrustEventSender<UID>,
     name_hash: NameHash,
     next_state: NextState<UID>,
@@ -70,7 +69,6 @@ impl<UID: Uid> ExchangeMsg<UID> {
         accept_bootstrap: bool,
         our_uid: UID,
         name_hash: NameHash,
-        config: CrustConfig,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
@@ -88,7 +86,6 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         let state = Rc::new(RefCell::new(Self {
             token,
-            config,
             event_tx,
             name_hash,
             next_state: NextState::None,
@@ -174,9 +171,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
             return self.terminate(core, poll);
         }
 
-        self.try_update_crust_config();
+        self.try_update_crust_config(core);
 
-        if !self.is_peer_whitelisted(their_role.as_crust_role()) {
+        if !self.is_peer_whitelisted(their_role.as_crust_role(), &core.user_data().config.cfg) {
             trace!("Bootstrapper is not whitelisted. Denying bootstrap.");
             let reason = match their_role {
                 BootstrapperRole::Node(_) => BootstrapDenyReason::NodeNotWhitelisted,
@@ -219,7 +216,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn is_peer_whitelisted(&self, peer_kind: CrustUser) -> bool {
+    fn is_peer_whitelisted(&self, peer_kind: CrustUser, config: &Config) -> bool {
         let peer_ip = match self.socket.peer_addr() {
             Ok(s) => s.ip(),
             Err(e) => {
@@ -232,13 +229,11 @@ impl<UID: Uid> ExchangeMsg<UID> {
         };
 
         let res = match peer_kind {
-            CrustUser::Node => unwrap!(self.config.lock())
-                .cfg
+            CrustUser::Node => config
                 .whitelisted_node_ips
                 .as_ref()
                 .map_or(true, |ips| ips.contains(&peer_ip)),
-            CrustUser::Client => unwrap!(self.config.lock())
-                .cfg
+            CrustUser::Client => config
                 .whitelisted_client_ips
                 .as_ref()
                 .map_or(true, |ips| ips.contains(&peer_ip)),
@@ -301,9 +296,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
             return self.terminate(core, poll);
         }
 
-        self.try_update_crust_config();
+        self.try_update_crust_config(core);
 
-        if !self.is_peer_whitelisted(CrustUser::Node) {
+        if !self.is_peer_whitelisted(CrustUser::Node, &core.user_data().config.cfg) {
             trace!("Connecting Node is not whitelisted. Denying connection.");
             return self.terminate(core, poll);
         }
@@ -493,9 +488,12 @@ impl<UID: Uid> ExchangeMsg<UID> {
         Ok(their_uid)
     }
 
-    fn try_update_crust_config(&self) {
+    fn try_update_crust_config(&self, core: &mut EventLoopCore<UID>) {
         match read_config_file() {
-            Ok(cfg) => unwrap!(self.config.lock()).check_for_update_and_mark_modified(cfg),
+            Ok(cfg) => core
+                .user_data_mut()
+                .config
+                .check_for_update_and_mark_modified(cfg),
             Err(e) => debug!("Could not read Crust config file: {:?}", e),
         }
     }

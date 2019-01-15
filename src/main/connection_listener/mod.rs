@@ -11,7 +11,7 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use crate::common::{NameHash, PeerInfo, State, Uid};
-use crate::main::{CrustConfig, CrustData, Event, EventLoopCore};
+use crate::main::{CrustData, Event, EventLoopCore};
 use crate::nat::ip_addr_is_global;
 use crate::nat::{MappedTcpSocket, MappingContext};
 use mio::net::TcpListener;
@@ -33,7 +33,6 @@ const LISTENER_BACKLOG: i32 = 100;
 /// is enabled by default.
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
-    config: CrustConfig,
     event_tx: crate::CrustEventSender<UID>,
     listener: TcpListener,
     name_hash: NameHash,
@@ -54,7 +53,6 @@ impl<UID: Uid> ConnectionListener<UID> {
         force_include_port: bool,
         our_uid: UID,
         name_hash: NameHash,
-        config: CrustConfig,
         mc: Arc<MappingContext>,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
@@ -92,7 +90,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                 mapped_addrs,
                 our_uid,
                 name_hash,
-                config,
                 token,
                 event_tx.clone(),
                 our_pk,
@@ -128,7 +125,6 @@ impl<UID: Uid> ConnectionListener<UID> {
         mapped_addrs: Vec<SocketAddr>,
         our_uid: UID,
         name_hash: NameHash,
-        config: CrustConfig,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -148,7 +144,6 @@ impl<UID: Uid> ConnectionListener<UID> {
 
         let state = Self {
             token,
-            config,
             event_tx: event_tx.clone(),
             listener,
             name_hash,
@@ -186,7 +181,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.accept_bootstrap,
                         self.our_uid,
                         self.name_hash,
-                        self.config.clone(),
                         self.event_tx.clone(),
                         self.our_pk,
                         &self.our_sk,
@@ -247,7 +241,7 @@ mod tests {
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
     use std::sync::mpsc;
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
     use std::time::Duration;
 
     type ConnectionListener = super::ConnectionListener<UniqueId>;
@@ -279,7 +273,6 @@ mod tests {
             crate::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
-        let config = Arc::new(Mutex::new(Default::default()));
         let (our_pk, our_sk) = gen_encrypt_keypair();
 
         let uid = rand::random();
@@ -293,7 +286,6 @@ mod tests {
                     false,
                     uid,
                     NAME_HASH,
-                    config,
                     mc,
                     Token(LISTENER_TOKEN),
                     crust_sender,
