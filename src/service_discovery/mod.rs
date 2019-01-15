@@ -18,6 +18,7 @@ use safe_crypto::PublicEncryptKey;
 use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use std::rc::Rc;
@@ -31,7 +32,7 @@ enum DiscoveryMsg {
     Request {
         our_pk: PublicEncryptKey,
     },
-    Response(Vec<PeerInfo>),
+    Response(HashSet<PeerInfo>),
 }
 
 /// Acts both as service discovery server and client.
@@ -43,7 +44,7 @@ pub struct ServiceDiscovery<T> {
     listen: bool,
     our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     seek_peers_req: DiscoveryMsg,
-    observers: Vec<Sender<Vec<PeerInfo>>>,
+    observers: Vec<Sender<HashSet<PeerInfo>>>,
     our_pk: PublicEncryptKey,
     phantom: PhantomData<T>,
 }
@@ -109,7 +110,7 @@ impl<T: 'static> ServiceDiscovery<T> {
     }
 
     /// Register service discovery observer
-    pub fn register_observer(&mut self, obs: Sender<Vec<PeerInfo>>) {
+    pub fn register_observer(&mut self, obs: Sender<HashSet<PeerInfo>>) {
         self.observers.push(obs);
     }
 
