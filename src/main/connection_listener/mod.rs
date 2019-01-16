@@ -319,7 +319,8 @@ mod tests {
                     listener.set_accept_bootstrap(accept_bootstrap);
                     listener.set_ext_reachability_test(false);
 
-                    let listener_info = core.user_data_mut().our_listeners[0];
+                    let listener_info =
+                        unwrap!(core.user_data_mut().our_listeners.iter().nth(0).cloned());
                     unwrap!(tx.send(listener_info));
                 }
             )),

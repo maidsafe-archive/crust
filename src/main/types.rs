@@ -12,7 +12,7 @@ use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::Config;
 use mio::Token;
 use safe_crypto::PublicEncryptKey;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 
 // ========================================================================================
@@ -127,8 +127,7 @@ impl ConfigWrapper {
 /// This data can be accessed when interfacing with event loop.
 pub struct CrustData<UID> {
     pub bootstrap_cache: BootstrapCache,
-    // TODO(povilas): use HashSet instead
-    pub our_listeners: Vec<PeerInfo>,
+    pub our_listeners: HashSet<PeerInfo>,
     /// Either established or in progress connections.
     pub connections: HashMap<UID, ConnectionId>,
     pub config: ConfigWrapper,
