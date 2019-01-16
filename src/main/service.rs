@@ -12,13 +12,13 @@ use crate::common::{
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
-use crate::main::service_discovery::ServiceDiscovery;
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
     ConnectionInfoResult, ConnectionListener, CrustData, CrustError, Event, EventLoop,
     EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
+use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
@@ -251,7 +251,10 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery<UID>>() {
+            let service_discovery = match state
+                .as_any()
+                .downcast_mut::<ServiceDiscovery<CrustData<UID>>>()
+            {
                 Some(sd) => sd,
                 None => {
                     warn!("Token reserved for ServiceDiscovery has something else.");
@@ -341,7 +344,10 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery<UID>>() {
+            let service_discovery = match state
+                .as_any()
+                .downcast_mut::<ServiceDiscovery<CrustData<UID>>>()
+            {
                 Some(sd) => sd,
                 None => {
                     warn!("Token reserved for ServiceDiscovery has something else.");

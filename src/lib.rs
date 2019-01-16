@@ -90,6 +90,7 @@ mod tests;
 mod common;
 mod main;
 mod nat;
+mod service_discovery;
 
 pub use crate::common::{CrustUser, PeerInfo, Uid};
 pub use crate::main::{

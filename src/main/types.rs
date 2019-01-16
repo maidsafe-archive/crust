@@ -123,6 +123,13 @@ impl ConfigWrapper {
     }
 }
 
+/// A type that holds our global listener addresses.
+pub trait GetGlobalListenerAddrs {
+    /// Returns a list of our global listener addresses.
+    /// Those addresses should be reported by connection listener.
+    fn get_global_listener_addrs(&self) -> HashSet<PeerInfo>;
+}
+
 /// Crust specific data stored in event loop `Core`.
 /// This data can be accessed when interfacing with event loop.
 pub struct CrustData<UID> {
@@ -141,6 +148,12 @@ impl<UID: Uid> CrustData<UID> {
             connections: Default::default(),
             config: Default::default(),
         }
+    }
+}
+
+impl<UID: Uid> GetGlobalListenerAddrs for CrustData<UID> {
+    fn get_global_listener_addrs(&self) -> HashSet<PeerInfo> {
+        self.our_listeners.clone()
     }
 }
 

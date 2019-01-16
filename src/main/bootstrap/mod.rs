@@ -15,8 +15,8 @@ use self::try_peer::TryPeer;
 use crate::common::{
     BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid,
 };
-use crate::main::service_discovery::ServiceDiscovery;
 use crate::main::{ActiveConnection, Config, CrustData, CrustError, Event, EventLoopCore};
+use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand;
@@ -297,7 +297,9 @@ fn seek_peers<UID: Uid>(
 ) -> crate::Res<(Receiver<HashSet<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery<UID>>());
+        let state = unwrap!(state
+            .as_any()
+            .downcast_mut::<ServiceDiscovery<CrustData<UID>>>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);

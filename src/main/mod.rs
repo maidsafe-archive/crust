@@ -21,7 +21,7 @@ pub use self::event::Event;
 pub use self::service::Service;
 pub use self::types::{
     ConfigWrapper, ConnectionId, ConnectionInfoResult, CrustData, EventLoop, EventLoopCore,
-    PrivConnectionInfo, PubConnectionInfo,
+    GetGlobalListenerAddrs, PrivConnectionInfo, PubConnectionInfo,
 };
 
 mod active_connection;
@@ -34,7 +34,6 @@ mod connection_listener;
 mod error;
 mod event;
 mod service;
-mod service_discovery;
 mod types;
 
 pub use self::config_handler::read_config_file;
