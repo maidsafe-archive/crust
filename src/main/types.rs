@@ -7,21 +7,23 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{self, Core, Uid};
+use crate::common::{self, Core, PeerInfo, Uid};
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::Config;
 use mio::Token;
 use safe_crypto::PublicEncryptKey;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
 
 // ========================================================================================
 //                                     ConnectionId
 // ========================================================================================
 #[derive(Debug, Clone, Copy)]
 pub struct ConnectionId {
+    /// mio token of the socket associated with this connection. Only set when connections
+    /// transitions to `ActiveConnection` state.
     pub active_connection: Option<Token>,
+    /// Number of currently ongoing connection attempts to some specific peer.
     pub currently_handshaking: usize,
 }
 
@@ -121,12 +123,43 @@ impl ConfigWrapper {
     }
 }
 
-/// Crust event loop state object. It is owned by the same thread event loop is running on,
-/// it holds bootstrap cache and manages Crust states like `Connect`, `ConnectionCandidate`, etc.
-pub type EventLoopCore = Core<BootstrapCache>;
+/// A type that holds our global listener addresses.
+pub trait GetGlobalListenerAddrs {
+    /// Returns a list of our global listener addresses.
+    /// Those addresses should be reported by connection listener.
+    fn get_global_listener_addrs(&self) -> HashSet<PeerInfo>;
+}
+
+/// Crust specific data stored in event loop `Core`.
+/// This data can be accessed when interfacing with event loop.
+pub struct CrustData<UID> {
+    pub bootstrap_cache: BootstrapCache,
+    pub our_listeners: HashSet<PeerInfo>,
+    /// Either established or in progress connections.
+    pub connections: HashMap<UID, ConnectionId>,
+    pub config: ConfigWrapper,
+}
+
+impl<UID: Uid> CrustData<UID> {
+    pub fn new(bootstrap_cache: BootstrapCache) -> Self {
+        Self {
+            bootstrap_cache,
+            our_listeners: Default::default(),
+            connections: Default::default(),
+            config: Default::default(),
+        }
+    }
+}
+
+impl<UID: Uid> GetGlobalListenerAddrs for CrustData<UID> {
+    fn get_global_listener_addrs(&self) -> HashSet<PeerInfo> {
+        self.our_listeners.clone()
+    }
+}
+
+/// Crust event loop state object. It is owned by the same thread event loop is running on.
+/// `EventLoopCore` manages Crust states like `Connect`, `ConnectionCandidate`, etc.
+pub type EventLoopCore<UID> = Core<CrustData<UID>>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
-pub type EventLoop = common::EventLoop<BootstrapCache>;
-
-pub type ConnectionMap<UID> = Arc<Mutex<HashMap<UID, ConnectionId>>>;
-pub type CrustConfig = Arc<Mutex<ConfigWrapper>>;
+pub type EventLoop<UID> = common::EventLoop<CrustData<UID>>;

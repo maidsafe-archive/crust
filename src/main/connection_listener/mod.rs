@@ -11,8 +11,7 @@ mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
 use crate::common::{NameHash, PeerInfo, State, Uid};
-use crate::main::bootstrap::Cache as BootstrapCache;
-use crate::main::{ConnectionMap, CrustConfig, Event, EventLoopCore};
+use crate::main::{CrustData, Event, EventLoopCore};
 use crate::nat::ip_addr_is_global;
 use crate::nat::{MappedTcpSocket, MappingContext};
 use mio::net::TcpListener;
@@ -25,7 +24,7 @@ use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 const LISTENER_BACKLOG: i32 = 100;
 
@@ -34,8 +33,6 @@ const LISTENER_BACKLOG: i32 = 100;
 /// is enabled by default.
 pub struct ConnectionListener<UID: Uid> {
     token: Token,
-    cm: ConnectionMap<UID>,
-    config: CrustConfig,
     event_tx: crate::CrustEventSender<UID>,
     listener: TcpListener,
     name_hash: NameHash,
@@ -49,17 +46,14 @@ pub struct ConnectionListener<UID: Uid> {
 
 impl<UID: Uid> ConnectionListener<UID> {
     pub fn start(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         handshake_timeout_sec: Option<u64>,
         port: u16,
         force_include_port: bool,
         our_uid: UID,
         name_hash: NameHash,
-        cm: ConnectionMap<UID>,
-        config: CrustConfig,
         mc: Arc<MappingContext>,
-        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -68,7 +62,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         let event_tx_0 = event_tx.clone();
         let our_sk2 = our_sk.clone();
 
-        let finish = move |core: &mut EventLoopCore,
+        let finish = move |core: &mut EventLoopCore<UID>,
                            poll: &Poll,
                            socket,
                            mut mapped_addrs: Vec<SocketAddr>| {
@@ -96,9 +90,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                 mapped_addrs,
                 our_uid,
                 name_hash,
-                cm,
-                config,
-                our_listeners,
                 token,
                 event_tx.clone(),
                 our_pk,
@@ -127,16 +118,13 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 
     fn handle_mapped_socket(
-        core: &mut EventLoopCore,
+        core: &mut EventLoopCore<UID>,
         poll: &Poll,
         timeout_sec: Option<u64>,
         socket: TcpBuilder,
         mapped_addrs: Vec<SocketAddr>,
         our_uid: UID,
         name_hash: NameHash,
-        cm: ConnectionMap<UID>,
-        config: CrustConfig,
-        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         event_tx: crate::CrustEventSender<UID>,
         our_pk: PublicEncryptKey,
@@ -148,15 +136,14 @@ impl<UID: Uid> ConnectionListener<UID> {
         let listener = TcpListener::from_std(listener)?;
         poll.register(&listener, token, Ready::readable(), PollOpt::edge())?;
 
-        *unwrap!(our_listeners.lock()) = mapped_addrs
-            .into_iter()
-            .map(|addr| PeerInfo::new(addr, our_pk))
-            .collect();
+        core.user_data_mut().our_listeners.extend(
+            mapped_addrs
+                .into_iter()
+                .map(|addr| PeerInfo::new(addr, our_pk)),
+        );
 
         let state = Self {
             token,
-            cm,
-            config,
             event_tx: event_tx.clone(),
             listener,
             name_hash,
@@ -174,7 +161,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         Ok(())
     }
 
-    fn accept(&self, core: &mut EventLoopCore, poll: &Poll) {
+    fn accept(&self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
@@ -194,8 +181,6 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.accept_bootstrap,
                         self.our_uid,
                         self.name_hash,
-                        self.cm.clone(),
-                        self.config.clone(),
                         self.event_tx.clone(),
                         self.our_pk,
                         &self.our_sk,
@@ -218,14 +203,14 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 }
 
-impl<UID: Uid> State<BootstrapCache> for ConnectionListener<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
+impl<UID: Uid> State<CrustData<UID>> for ConnectionListener<UID> {
+    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.accept(core, poll);
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         let _ = poll.deregister(&self.listener);
         let _ = core.remove_state(self.token);
     }
@@ -252,12 +237,11 @@ mod tests {
     use rand;
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
-    use std::collections::HashMap;
     use std::io::Read;
     use std::net::SocketAddr as StdSocketAddr;
     use std::net::TcpStream;
     use std::sync::mpsc;
-    use std::sync::{Arc, Mutex};
+    use std::sync::Arc;
     use std::time::Duration;
 
     type ConnectionListener = super::ConnectionListener<UniqueId>;
@@ -270,7 +254,7 @@ mod tests {
     const NAME_HASH_2: NameHash = [2; HASH_SIZE];
 
     struct Listener {
-        _el: EventLoop,
+        _el: EventLoop<UniqueId>,
         uid: UniqueId,
         addr: SocketAddr,
         event_rx: mpsc::Receiver<Event<UniqueId>>,
@@ -281,20 +265,16 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
-            || BootstrapCache::new(None),
+            || CrustData::new(BootstrapCache::new(None)),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();
         let crust_sender =
             crate::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
-        let cm = Arc::new(Mutex::new(HashMap::new()));
         let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
-        let config = Arc::new(Mutex::new(Default::default()));
-        let listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let (our_pk, our_sk) = gen_encrypt_keypair();
 
-        let listeners_clone = listeners.clone();
         let uid = rand::random();
         unwrap!(
             el.send(CoreMessage::new(move |core, poll| {
@@ -306,10 +286,7 @@ mod tests {
                     false,
                     uid,
                     NAME_HASH,
-                    cm,
-                    config,
                     mc,
-                    listeners_clone,
                     Token(LISTENER_TOKEN),
                     crust_sender,
                     our_pk,
@@ -328,29 +305,33 @@ mod tests {
 
         let (tx, rx) = mpsc::channel();
         unwrap!(
-            el.send(CoreMessage::new(move |core, _| {
-                let state = match core.get_state(Token(LISTENER_TOKEN)) {
-                    Some(state) => state,
-                    None => panic!("Listener not initialised"),
-                };
-                let mut state = state.borrow_mut();
-                let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
-                    Some(l) => l,
-                    None => panic!("Token reserved for ConnectionListener has something else."),
-                };
-                listener.set_accept_bootstrap(accept_bootstrap);
-                listener.set_ext_reachability_test(false);
-                unwrap!(tx.send(()));
-            })),
+            el.send(CoreMessage::new(
+                move |core: &mut EventLoopCore<UniqueId>, _| {
+                    let state = match core.get_state(Token(LISTENER_TOKEN)) {
+                        Some(state) => state,
+                        None => panic!("Listener not initialised"),
+                    };
+                    let mut state = state.borrow_mut();
+                    let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
+                        Some(l) => l,
+                        None => panic!("Token reserved for ConnectionListener has something else."),
+                    };
+                    listener.set_accept_bootstrap(accept_bootstrap);
+                    listener.set_ext_reachability_test(false);
+
+                    let listener_info =
+                        unwrap!(core.user_data_mut().our_listeners.iter().nth(0).cloned());
+                    unwrap!(tx.send(listener_info));
+                }
+            )),
             "Could not send to tx"
         );
-        unwrap!(rx.recv());
+        let listener_info = unwrap!(rx.recv());
 
-        let listen_info = &unwrap!(listeners.lock())[0];
         Listener {
             _el: el,
             uid,
-            addr: listen_info.addr,
+            addr: listener_info.addr,
             event_rx,
             pub_key: our_pk,
         }

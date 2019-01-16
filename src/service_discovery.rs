@@ -7,11 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-pub use self::errors::ServiceDiscoveryError;
-
-mod errors;
-
 use crate::common::{ipv4_addr, Core, PeerInfo, State};
+use crate::main::GetGlobalListenerAddrs;
+use maidsafe_utilities::serialisation::SerialisationError;
 use mio::net::UdpSocket;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::PublicEncryptKey;
@@ -19,12 +17,40 @@ use socket_collection::{Priority, SocketError, UdpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::io;
 use std::marker::PhantomData;
+use std::net::AddrParseError;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
-use std::sync::{Arc, Mutex};
 use std::u16;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum ServiceDiscoveryError {
+        Io(e: io::Error) {
+            description("Io error during service discovery")
+            display("Io error during service discovery: {}", e)
+            from()
+        }
+        AddrParse(e: AddrParseError) {
+            description("Error parsing address for service discovery")
+            display("Error parsing address for service discovery: {}", e)
+            from()
+        }
+        Serialisation(e: SerialisationError) {
+            description("Serialisation error during service discovery")
+            display("Serialisation error during service discovery: {}", e)
+            from()
+        }
+        /// `socket-collection` error
+        SocketError(e: SocketError) {
+            display("Socket error: {}", e)
+            cause(e)
+            from()
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 enum DiscoveryMsg {
@@ -37,29 +63,28 @@ enum DiscoveryMsg {
 
 /// Acts both as service discovery server and client.
 /// Service discovery is a method of finding peers on LAN using UDP packet broadcasting.
+/// Templatized by `Core` user data type.
 pub struct ServiceDiscovery<T> {
     token: Token,
     socket: UdpSock,
     remote_addr: SocketAddr,
     listen: bool,
-    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     seek_peers_req: DiscoveryMsg,
     observers: Vec<Sender<HashSet<PeerInfo>>>,
     our_pk: PublicEncryptKey,
-    phantom: PhantomData<T>,
+    _phantom: PhantomData<T>,
 }
 
-impl<T: 'static> ServiceDiscovery<T> {
+impl<T: 'static + GetGlobalListenerAddrs> ServiceDiscovery<T> {
     /// Starts service discovery process.
     ///
     /// # Args
     ///
-    /// - listener_port - port we will be litening for incoming service discovery requests.
-    /// - remote_port - port we will broadcasting service discovery requests to.
+    /// - `listener_port` - port we will be litening for incoming service discovery requests.
+    /// - `remote_port` - port we will broadcasting service discovery requests to.
     pub fn start(
         core: &mut Core<T>,
         poll: &Poll,
-        our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
         token: Token,
         listener_port: u16,
         remote_port: u16,
@@ -76,11 +101,10 @@ impl<T: 'static> ServiceDiscovery<T> {
             socket: udp_socket,
             remote_addr,
             listen: false,
-            our_listeners,
             seek_peers_req: DiscoveryMsg::Request { our_pk },
             observers: Vec::new(),
             our_pk,
-            phantom: PhantomData,
+            _phantom: PhantomData,
         };
 
         poll.register(
@@ -109,7 +133,7 @@ impl<T: 'static> ServiceDiscovery<T> {
         Ok(())
     }
 
-    /// Register service discovery observer
+    /// Register service discovery observer when `ServiceDiscovery` used as a client.
     pub fn register_observer(&mut self, obs: Sender<HashSet<PeerInfo>>) {
         self.observers.push(obs);
     }
@@ -145,10 +169,9 @@ impl<T: 'static> ServiceDiscovery<T> {
     ) {
         match msg {
             DiscoveryMsg::Request { our_pk: their_pk } => {
+                let our_listeners = core.user_data().get_global_listener_addrs();
                 if self.listen && self.our_pk != their_pk {
-                    let our_current_listeners =
-                        unwrap!(self.our_listeners.lock()).iter().cloned().collect();
-                    let resp = (DiscoveryMsg::Response(our_current_listeners), peer_addr, 0);
+                    let resp = (DiscoveryMsg::Response(our_listeners), peer_addr, 0);
                     self.write(core, poll, Some(resp));
                 }
             }
@@ -172,7 +195,7 @@ impl<T: 'static> ServiceDiscovery<T> {
     }
 }
 
-impl<T: 'static> State<T> for ServiceDiscovery<T> {
+impl<T: 'static + GetGlobalListenerAddrs> State<T> for ServiceDiscovery<T> {
     fn ready(&mut self, core: &mut Core<T>, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll);
@@ -200,25 +223,36 @@ mod tests {
     use safe_crypto::gen_encrypt_keypair;
     use std::str::FromStr;
     use std::sync::mpsc;
-    use std::sync::{Arc, Mutex};
     use std::time::Duration;
     use std::{net, thread};
+
+    struct EvloopData {
+        our_listeners: HashSet<PeerInfo>,
+    }
+
+    impl GetGlobalListenerAddrs for EvloopData {
+        fn get_global_listener_addrs(&self) -> HashSet<PeerInfo> {
+            self.our_listeners.clone()
+        }
+    }
 
     #[test]
     fn service_discovery() {
         const SERVICE_DISCOVERY_TOKEN: usize = 0;
 
-        // Poll-0
-        let el0 = unwrap!(
-            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0"), || ()),
-            "Could not run el0"
-        );
-
         let (service0_pk, _sk) = gen_encrypt_keypair();
         let addr = unwrap!(net::SocketAddr::from_str("138.139.140.150:54321"));
         let conn_info = PeerInfo::new(addr, service0_pk);
-        let listeners_0 = Arc::new(Mutex::new(vec![conn_info]));
-        let listeners_0_clone = listeners_0.clone();
+        let our_listeners: HashSet<PeerInfo> = vec![conn_info].iter().cloned().collect();
+        let our_listeners2 = our_listeners.clone();
+
+        // Poll-0
+        let el0 = unwrap!(
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL0"), move || {
+                EvloopData { our_listeners }
+            }),
+            "Could not run el0"
+        );
 
         // ServiceDiscovery-0
         {
@@ -226,15 +260,7 @@ mod tests {
             unwrap!(
                 el0.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(
-                            core,
-                            poll,
-                            listeners_0_clone,
-                            token_0,
-                            65_530,
-                            65_530,
-                            service0_pk,
-                        ),
+                        ServiceDiscovery::start(core, poll, token_0, 65_530, 65_530, service0_pk,),
                         "Could not spawn ServiceDiscovery_0"
                     );
                 })),
@@ -245,7 +271,10 @@ mod tests {
             unwrap!(el0.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_0));
                 let mut inner = state.borrow_mut();
-                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery<()>>()).set_listen(true);
+                unwrap!(inner
+                    .as_any()
+                    .downcast_mut::<ServiceDiscovery<EvloopData>>())
+                .set_listen(true);
             })));
         }
 
@@ -253,7 +282,9 @@ mod tests {
 
         // Poll-1
         let el1 = unwrap!(
-            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1"), || ()),
+            common::spawn_event_loop(SERVICE_DISCOVERY_TOKEN + 1, Some("EL1"), || EvloopData {
+                our_listeners: Default::default()
+            }),
             "Could not run el1"
         );
 
@@ -261,21 +292,12 @@ mod tests {
 
         // ServiceDiscovery-1
         {
-            let listeners_1 = Arc::new(Mutex::new(vec![]));
             let token_1 = Token(SERVICE_DISCOVERY_TOKEN);
             let (our_pk, _our_sk) = gen_encrypt_keypair();
             unwrap!(
                 el1.send(CoreMessage::new(move |core, poll| {
                     unwrap!(
-                        ServiceDiscovery::start(
-                            core,
-                            poll,
-                            listeners_1,
-                            token_1,
-                            0,
-                            65_530,
-                            our_pk
-                        ),
+                        ServiceDiscovery::start(core, poll, token_1, 0, 65_530, our_pk,),
                         "Could not spawn ServiceDiscovery_1"
                     );
                 })),
@@ -286,8 +308,10 @@ mod tests {
             unwrap!(el1.send(CoreMessage::new(move |core, _| {
                 let state = unwrap!(core.get_state(token_1));
                 let mut inner = state.borrow_mut();
-                unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery<()>>())
-                    .register_observer(tx);
+                unwrap!(inner
+                    .as_any()
+                    .downcast_mut::<ServiceDiscovery<EvloopData>>())
+                .register_observer(tx);
             })));
 
             // Seek peers
@@ -295,7 +319,9 @@ mod tests {
                 el1.send(CoreMessage::new(move |core, _| {
                     let state = unwrap!(core.get_state(token_1));
                     let mut inner = state.borrow_mut();
-                    let sd = unwrap!(inner.as_any().downcast_mut::<ServiceDiscovery<()>>());
+                    let sd = unwrap!(inner
+                        .as_any()
+                        .downcast_mut::<ServiceDiscovery<EvloopData>>());
                     unwrap!(sd.seek_peers());
                 })),
                 "Could not send to el1"
@@ -303,9 +329,6 @@ mod tests {
         }
 
         let peer_listeners = unwrap!(rx.recv_timeout(Duration::from_secs(30)));
-        assert_eq!(
-            peer_listeners.into_iter().collect::<Vec<_>>(),
-            *unwrap!(listeners_0.lock())
-        );
+        assert_eq!(peer_listeners, our_listeners2);
     }
 }

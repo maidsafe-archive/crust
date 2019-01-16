@@ -8,7 +8,7 @@
 // Software.
 
 use crate::common::{PeerInfo, Uid};
-use crate::main::{BootstrapCache, Config, Event, EventLoopCore};
+use crate::main::{BootstrapCache, Config, CrustData, Event, EventLoopCore};
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use mio_extras::channel::channel;
@@ -97,10 +97,10 @@ pub fn bootstrap_cache_tmp_file() -> PathBuf {
 }
 
 /// Creates `Core` for tests with some defaults.
-pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore {
+pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore<UniqueId> {
     let (event_tx, _event_rx) = channel();
     let timer = timer::Builder::default().build();
-    EventLoopCore::new_for_tests(0, event_tx, timer, bootstrap_cache)
+    EventLoopCore::new_for_tests(0, event_tx, timer, CrustData::new(bootstrap_cache))
 }
 
 /// Bootstrap cache on tmp directory with unique file name.

@@ -14,18 +14,17 @@ use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
-    ConnectionInfoResult, ConnectionListener, ConnectionMap, CrustConfig, CrustError, Event,
-    EventLoop, EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    ConnectionInfoResult, ConnectionListener, CrustData, CrustError, Event, EventLoop,
+    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
 use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
-use std::collections::{HashMap, HashSet};
-use std::error::Error;
+use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{mpsc, Arc};
 
 /// Reserved mio `Token` values for Crust speficic events.
 #[derive(Debug, PartialEq)]
@@ -81,14 +80,11 @@ const DISABLE_NAT: bool = true;
 /// [`set_service_discovery_listen`]: struct.Service.html#method.set_service_discovery_listen
 /// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
 pub struct Service<UID: Uid> {
-    config: CrustConfig,
-    cm: ConnectionMap<UID>,
     event_tx: crate::CrustEventSender<UID>,
     mc: Arc<MappingContext>,
-    el: EventLoop,
+    el: EventLoop<UID>,
     name_hash: NameHash,
     our_uid: UID,
-    our_listeners: Arc<Mutex<Vec<PeerInfo>>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
@@ -112,8 +108,6 @@ impl<UID: Uid> Service<UID> {
 
         let name_hash = name_hash(&config.network_name);
 
-        // Form our initial contact info
-        let our_listeners = Arc::new(Mutex::new(Vec::with_capacity(5)));
         let mut mc = MappingContext::try_new()?;
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
@@ -124,7 +118,9 @@ impl<UID: Uid> Service<UID> {
             move || {
                 let cache = BootstrapCache::new(bootstrap_cache_file);
                 cache.read_file();
-                cache
+                let mut user_data = CrustData::new(cache);
+                user_data.config = ConfigWrapper::new(config);
+                user_data
             },
         )?;
         trace!("Event loop started");
@@ -132,14 +128,11 @@ impl<UID: Uid> Service<UID> {
         // TODO(povilas): get from constructor params
         let (our_pk, our_sk) = gen_encrypt_keypair();
         let service = Service {
-            cm: Arc::new(Mutex::new(HashMap::new())),
-            config: Arc::new(Mutex::new(ConfigWrapper::new(config))),
             event_tx,
             mc: Arc::new(mc),
             el,
             name_hash,
             our_uid,
-            our_listeners,
             our_pk,
             our_sk,
         };
@@ -151,15 +144,11 @@ impl<UID: Uid> Service<UID> {
 
     fn start_config_refresher(&self) -> crate::Res<()> {
         let (tx, rx) = mpsc::channel();
-        let config = self.config.clone();
-        let cm = self.cm.clone();
         self.post(move |core, _| {
             if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
                 let _ = tx.send(ConfigRefresher::start(
                     core,
                     EventToken::ConfigRefresher.into(),
-                    cm,
-                    config,
                 ));
             }
             let _ = tx.send(Ok(()));
@@ -225,18 +214,16 @@ impl<UID: Uid> Service<UID> {
     /// Initialises Service Discovery module and starts listening for responses to our beacon
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
-        let our_listeners = self.our_listeners.clone();
-        let remote_port = unwrap!(self.config.lock())
-            .cfg
-            .service_discovery_port
-            .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
-        let listener_port = unwrap!(self.config.lock())
-            .cfg
-            .service_discovery_listener_port
-            .unwrap_or(remote_port);
-
         let our_pk = self.our_pk;
         let _ = self.post(move |core, poll| {
+            let config = &core.user_data().config.cfg;
+            let remote_port = config
+                .service_discovery_port
+                .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+            let listener_port = config
+                .service_discovery_listener_port
+                .unwrap_or(remote_port);
+
             if core
                 .get_state(EventToken::ServiceDiscovery.into())
                 .is_none()
@@ -244,7 +231,6 @@ impl<UID: Uid> Service<UID> {
                 if let Err(e) = ServiceDiscovery::start(
                     core,
                     poll,
-                    our_listeners,
                     EventToken::ServiceDiscovery.into(),
                     listener_port,
                     remote_port,
@@ -267,7 +253,7 @@ impl<UID: Uid> Service<UID> {
             let mut state = state.borrow_mut();
             let service_discovery = match state
                 .as_any()
-                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
+                .downcast_mut::<ServiceDiscovery<CrustData<UID>>>()
             {
                 Some(sd) => sd,
                 None => {
@@ -279,18 +265,23 @@ impl<UID: Uid> Service<UID> {
         });
     }
 
-    fn get_peer_socket_addr(&self, peer_uid: &UID) -> crate::Res<SocketAddr> {
-        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
-                active_connection: Some(token),
-                ..
-            }) => token,
-            _ => return Err(CrustError::PeerNotFound),
-        };
-
+    /// Checks if given peer was connected, if so, returns it's address together with a flag
+    /// indicating whether it was hard coded in config or not.
+    fn get_peer_socket_addr(&self, peer_uid: &UID) -> crate::Res<(SocketAddr, bool)> {
+        let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
         let _ = self.post(move |core, _| {
+            let token = match core.user_data().connections.get(&peer_uid) {
+                Some(&ConnectionId {
+                    active_connection: Some(token),
+                    ..
+                }) => token,
+                _ => {
+                    let _ = tx.send(None);
+                    return;
+                }
+            };
             let state = match core.get_state(token) {
                 Some(state) => state,
                 None => {
@@ -304,7 +295,15 @@ impl<UID: Uid> Service<UID> {
                 .downcast_mut::<ActiveConnection<UID>>()
             {
                 Some(active_connection) => {
-                    let _ = tx.send(Some(active_connection.peer_addr()));
+                    let config = &core.user_data().config.cfg;
+                    let peer_addr_res = active_connection.peer_addr().map(|peer_addr| {
+                        let was_hard_coded = config
+                            .hard_coded_contacts
+                            .iter()
+                            .any(|peer| peer.addr.ip() == peer_addr.ip());
+                        (peer_addr, was_hard_coded)
+                    });
+                    let _ = tx.send(Some(peer_addr_res));
                 }
                 None => {
                     debug!("Expected token {:?} to be ActiveConnection", token);
@@ -322,25 +321,14 @@ impl<UID: Uid> Service<UID> {
 
     /// Return the ip address of the peer.
     pub fn get_peer_ip_addr(&self, peer_uid: &UID) -> crate::Res<IpAddr> {
-        self.get_peer_socket_addr(peer_uid).map(|s| s.ip())
+        self.get_peer_socket_addr(peer_uid).map(|(s, _)| s.ip())
     }
 
     /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
     pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
-        match self.get_peer_socket_addr(peer_uid) {
-            Ok(s) => {
-                let config = unwrap!(self.config.lock());
-                config
-                    .cfg
-                    .hard_coded_contacts
-                    .iter()
-                    .any(|peer| peer.addr.ip() == s.ip())
-            }
-            Err(e) => {
-                debug!("{}", e.description());
-                false
-            }
-        }
+        self.get_peer_socket_addr(peer_uid)
+            .map(|(_, hard_coded)| hard_coded)
+            .unwrap_or(false)
     }
 
     // TODO temp remove
@@ -358,7 +346,7 @@ impl<UID: Uid> Service<UID> {
             let mut state = state.borrow_mut();
             let service_discovery = match state
                 .as_any()
-                .downcast_mut::<ServiceDiscovery<BootstrapCache>>()
+                .downcast_mut::<ServiceDiscovery<CrustData<UID>>>()
             {
                 Some(sd) => sd,
                 None => {
@@ -381,19 +369,17 @@ impl<UID: Uid> Service<UID> {
         blacklist: HashSet<SocketAddr>,
         crust_user: CrustUser,
     ) -> crate::Res<()> {
-        let config = self.config.clone();
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
-        let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
-        let bootstrapper_role = match crust_user {
-            CrustUser::Node => BootstrapperRole::Node(self.our_global_listener_addrs()),
-            CrustUser::Client => BootstrapperRole::Client,
-        };
 
         self.post(move |core, poll| {
+            let bootstrapper_role = match crust_user {
+                CrustUser::Node => BootstrapperRole::Node(our_global_listener_addrs(core)),
+                CrustUser::Client => BootstrapperRole::Client,
+            };
             if core.get_state(EventToken::Bootstrap.into()).is_none() {
                 if let Err(e) = Bootstrap::start(
                     core,
@@ -401,8 +387,6 @@ impl<UID: Uid> Service<UID> {
                     name_hash,
                     our_uid,
                     bootstrapper_role,
-                    cm,
-                    config,
                     blacklist,
                     EventToken::Bootstrap.into(),
                     EventToken::ServiceDiscovery.into(),
@@ -429,24 +413,18 @@ impl<UID: Uid> Service<UID> {
     /// Starts accepting TCP connections. This is persistant until it errors out or is stopped
     /// explicitly.
     pub fn start_listening_tcp(&mut self) -> crate::Res<()> {
-        let cm = self.cm.clone();
         let mc = self.mc.clone();
-        let config = self.config.clone();
-        let port = unwrap!(self.config.lock())
-            .cfg
-            .tcp_acceptor_port
-            .unwrap_or(0);
-        let force_include_port = unwrap!(self.config.lock())
-            .cfg
-            .force_acceptor_port_in_ext_ep;
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
-        let our_listeners = self.our_listeners.clone();
         let event_tx = self.event_tx.clone();
 
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         self.post(move |core, poll| {
+            let config = &core.user_data().config.cfg;
+            let port = config.tcp_acceptor_port.unwrap_or(0);
+            let force_include_port = config.force_acceptor_port_in_ext_ep;
+
             if core.get_state(EventToken::Listener.into()).is_none() {
                 ConnectionListener::start(
                     core,
@@ -456,10 +434,7 @@ impl<UID: Uid> Service<UID> {
                     force_include_port,
                     our_uid,
                     name_hash,
-                    cm,
-                    config,
                     mc,
-                    our_listeners,
                     EventToken::Listener.into(),
                     event_tx,
                     our_pk,
@@ -497,17 +472,14 @@ impl<UID: Uid> Service<UID> {
             return Err(CrustError::RequestedConnectToSelf);
         }
 
-        if unwrap!(self.cm.lock()).contains_key(&their_ci.id) {
-            debug!(
-                "Already connected OR already in process of connecting to {:?}",
-                their_ci.id
-            );
-            return Ok(());
-        }
+        let event_tx = self.event_tx.clone();
+        let our_nh = self.name_hash;
+        let our_pk = self.our_pk;
+        let our_sk = self.our_sk.clone();
 
-        {
-            let guard = unwrap!(self.config.lock());
-            if let Some(ref whitelisted_node_ips) = guard.cfg.whitelisted_node_ips {
+        self.post(move |core, poll| {
+            if let Some(ref whitelisted_node_ips) = core.user_data().config.cfg.whitelisted_node_ips
+            {
                 let their_direct = their_ci
                     .for_direct
                     .drain(..)
@@ -515,29 +487,24 @@ impl<UID: Uid> Service<UID> {
                     .collect();
                 their_ci.for_direct = their_direct;
             }
-        }
 
-        let event_tx = self.event_tx.clone();
-        let cm = self.cm.clone();
-        let our_nh = self.name_hash;
-        let our_pk = self.our_pk;
-        let our_sk = self.our_sk.clone();
-        let config = self.config.clone();
-        let our_global_direct_listeners = self.our_global_listener_addrs();
-
-        self.post(move |core, poll| {
+            if core.user_data().connections.contains_key(&their_ci.id) {
+                debug!(
+                    "Already connected OR already in process of connecting to {:?}",
+                    their_ci.id
+                );
+                return;
+            }
             let _ = Connect::start(
                 core,
                 poll,
                 our_ci,
                 their_ci,
-                cm,
                 our_nh,
                 event_tx,
                 our_pk,
                 &our_sk,
-                our_global_direct_listeners,
-                config,
+                our_global_listener_addrs(core),
             );
         })?;
 
@@ -546,37 +513,50 @@ impl<UID: Uid> Service<UID> {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_uid: &UID) -> bool {
-        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
-                active_connection: Some(token),
-                ..
-            }) => token,
-            _ => return false,
-        };
+        let peer_uid = *peer_uid;
+        let (tx, rx) = mpsc::channel();
 
         let _ = self.post(move |core, poll| {
-            if let Some(state) = core.get_state(token) {
-                state.borrow_mut().terminate(core, poll);
+            if let Some(&ConnectionId {
+                active_connection: Some(token),
+                ..
+            }) = core.user_data().connections.get(&peer_uid)
+            {
+                if let Some(state) = core.get_state(token) {
+                    state.borrow_mut().terminate(core, poll);
+                }
+                let _ = tx.send(true);
+            } else {
+                let _ = tx.send(false);
             }
         });
 
-        true
+        rx.recv().unwrap_or(false)
     }
 
     /// Send data to a peer.
     pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> crate::Res<()> {
-        let token = match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
+        let peer_uid = *peer_uid;
+        let (tx, rx) = mpsc::channel();
+
+        let res = self.post(move |core, poll| {
+            if let Some(&ConnectionId {
                 active_connection: Some(token),
                 ..
-            }) => token,
-            _ => return Err(CrustError::PeerNotFound),
-        };
-
-        self.post(move |core, poll| {
-            if let Some(state) = core.get_state(token) {
-                state.borrow_mut().write(core, poll, msg, priority);
+            }) = core.user_data().connections.get(&peer_uid)
+            {
+                if let Some(state) = core.get_state(token) {
+                    state.borrow_mut().write(core, poll, msg, priority);
+                }
+                let _ = tx.send(Ok(()));
+            } else {
+                let _ = tx.send(Err(CrustError::PeerNotFound));
             }
+        });
+        res.and_then(|_| {
+            rx.recv()
+                .map_err(CrustError::ChannelRecv)
+                .and_then(|res| res)
         })
     }
 
@@ -585,28 +565,38 @@ impl<UID: Uid> Service<UID> {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_listeners = unwrap!(self.our_listeners.lock())
-            .iter()
-            .map(|peer| peer.addr)
-            .collect();
         let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
+        let our_uid = self.our_uid;
+        let event_tx = self.event_tx.clone();
 
-        if DISABLE_NAT {
-            let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token,
-                result: Ok(PrivConnectionInfo {
-                    id: self.our_uid,
-                    for_direct: our_listeners,
-                    our_pk,
-                }),
-            });
-            let _ = self.event_tx.send(event);
+        let post_res = if DISABLE_NAT {
+            self.post(move |core, _poll| {
+                let our_listeners = core
+                    .user_data()
+                    .our_listeners
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect();
+                let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                    result_token,
+                    result: Ok(PrivConnectionInfo {
+                        id: our_uid,
+                        for_direct: our_listeners,
+                        our_pk,
+                    }),
+                });
+                let _ = event_tx.send(event);
+            })
         } else {
-            let event_tx = self.event_tx.clone();
-            let our_uid = self.our_uid;
             let mc = self.mc.clone();
-            if let Err(e) = self.post(move |core, poll| {
+            self.post(move |core, poll| {
+                let our_listeners = core
+                    .user_data()
+                    .our_listeners
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect();
                 let event_tx_clone = event_tx.clone();
                 match MappedTcpSocket::<_, UID, _>::start(
                     core,
@@ -638,26 +628,35 @@ impl<UID: Uid> Service<UID> {
                             }));
                     }
                 };
-            }) {
-                let _ = self
-                    .event_tx
-                    .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token,
-                        result: Err(e),
-                    }));
-            }
+            })
+        };
+        if let Err(e) = post_res {
+            let _ = self
+                .event_tx
+                .send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                    result_token,
+                    result: Err(e),
+                }));
         }
     }
 
     /// Check if we are connected to the given peer
     pub fn is_connected(&self, peer_uid: &UID) -> bool {
-        match unwrap!(self.cm.lock()).get(peer_uid) {
-            Some(&ConnectionId {
-                active_connection: Some(_),
-                ..
-            }) => true,
-            _ => false,
-        }
+        let peer_uid = *peer_uid;
+        let (tx, rx) = mpsc::channel();
+
+        let _ = self.post(move |core, _| {
+            let connected = match core.user_data().connections.get(&peer_uid) {
+                Some(&ConnectionId {
+                    active_connection: Some(_),
+                    ..
+                }) => true,
+                _ => false,
+            };
+            let _ = tx.send(connected);
+        });
+
+        rx.recv().unwrap_or(false)
     }
 
     /// Returns our ID.
@@ -674,27 +673,28 @@ impl<UID: Uid> Service<UID> {
     pub fn bootstrap_cached_peers(&self) -> crate::Res<HashSet<PeerInfo>> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let cache = core.user_data();
-            let _ = tx.send(cache.peers());
+            let cached_peers = core.user_data().bootstrap_cache.peers();
+            let _ = tx.send(cached_peers);
         });
         rx.recv().map_err(CrustError::ChannelRecv)
     }
 
     fn post<F>(&self, f: F) -> crate::Res<()>
     where
-        F: FnOnce(&mut EventLoopCore, &Poll) + Send + 'static,
+        F: FnOnce(&mut EventLoopCore<UID>, &Poll) + Send + 'static,
     {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
+}
 
-    fn our_global_listener_addrs(&self) -> HashSet<SocketAddr> {
-        unwrap!(self.our_listeners.lock())
-            .iter()
-            .map(|peer| peer.addr)
-            .filter(|addr| ip_addr_is_global(&addr.ip()))
-            .collect()
-    }
+fn our_global_listener_addrs<UID: Uid>(core: &EventLoopCore<UID>) -> HashSet<SocketAddr> {
+    core.user_data()
+        .our_listeners
+        .iter()
+        .map(|peer| peer.addr)
+        .filter(|addr| ip_addr_is_global(&addr.ip()))
+        .collect()
 }
 
 /// Returns a hash of the network name.

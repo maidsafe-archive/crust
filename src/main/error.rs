@@ -7,9 +7,8 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common;
 use crate::nat;
-use crate::service_discovery;
+use crate::{common, service_discovery};
 use config_file_handler;
 use maidsafe_utilities::serialisation::SerialisationError;
 use safe_crypto;
