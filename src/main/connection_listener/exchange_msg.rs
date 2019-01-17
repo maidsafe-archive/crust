@@ -111,7 +111,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         match self.socket.read::<Message<UID>>() {
             Ok(Some(Message::BootstrapRequest(their_uid, name_hash, their_role, their_pk))) => {
                 if !self.accept_bootstrap {
-                    trace!("Bootstrapping off us is not allowed");
+                    debug!("Bootstrapping off us is not allowed");
                     return self.terminate(core, poll);
                 }
 
@@ -134,12 +134,12 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 self.handle_echo_addr_req(core, poll, their_pk)
             }
             Ok(Some(message)) => {
-                trace!("Unexpected message in direct connect: {:?}", message);
+                debug!("Unexpected message in direct connect: {:?}", message);
                 self.terminate(core, poll)
             }
             Ok(None) => (),
             Err(e) => {
-                trace!("Failed to read from socket: {:?}", e);
+                debug!("Failed to read from socket: {:?}", e);
                 self.terminate(core, poll);
             }
         }
@@ -155,7 +155,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
-            trace!("Rejecting Bootstrapper with an invalid name hash.");
+            debug!("Rejecting Bootstrapper with an invalid name hash.");
             return self.write(
                 core,
                 poll,
@@ -167,14 +167,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
 
         if !self.use_authed_encryption(their_pk) {
-            trace!("Failed to set authenticated encryption context.");
+            debug!("Failed to set authenticated encryption context.");
             return self.terminate(core, poll);
         }
 
         self.try_update_crust_config(core);
 
         if !self.is_peer_whitelisted((&their_role).into(), &core.user_data().config.cfg) {
-            trace!("Bootstrapper is not whitelisted. Denying bootstrap.");
+            debug!("Bootstrapper is not whitelisted. Denying bootstrap.");
             let reason = match their_role {
                 BootstrapperRole::Node(_) => BootstrapDenyReason::NodeNotWhitelisted,
                 BootstrapperRole::Client => BootstrapDenyReason::ClientNotWhitelisted,
@@ -259,7 +259,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             return self.send_bootstrap_grant(core, poll, their_uid, CrustUser::Node);
         }
         if self.reachability_children.is_empty() {
-            trace!(
+            debug!(
                 "Bootstrapper failed to pass requisite condition of external recheability. \
                  Denying bootstrap."
             );
@@ -292,19 +292,19 @@ impl<UID: Uid> ExchangeMsg<UID> {
         their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
-            trace!("Invalid name hash given. Denying connection.");
+            debug!("Invalid name hash given. Denying connection.");
             return self.terminate(core, poll);
         }
 
         self.try_update_crust_config(core);
 
         if !self.is_peer_whitelisted(CrustUser::Node, &core.user_data().config.cfg) {
-            trace!("Connecting Node is not whitelisted. Denying connection.");
+            debug!("Connecting Node is not whitelisted. Denying connection.");
             return self.terminate(core, poll);
         }
 
         if !self.use_authed_encryption(their_pk) {
-            trace!("Failed to set authenticated encryption context.");
+            debug!("Failed to set authenticated encryption context.");
             return self.terminate(core, poll);
         }
 
@@ -392,7 +392,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         ) {
             (Ok(_), Ok(_)) => true,
             res => {
-                warn!("Failed to set decrypt/encrypt context: {:?}", res);
+                debug!("Failed to set decrypt/encrypt context: {:?}", res);
                 false
             }
         }

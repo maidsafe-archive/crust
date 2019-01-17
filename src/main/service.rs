@@ -236,7 +236,7 @@ impl<UID: Uid> Service<UID> {
                     remote_port,
                     our_pk,
                 ) {
-                    debug!("Could not start ServiceDiscovery: {:?}", e);
+                    info!("Could not start ServiceDiscovery: {:?}", e);
                 }
             }
         });

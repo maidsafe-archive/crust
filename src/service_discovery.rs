@@ -189,7 +189,10 @@ impl<T: 'static + GetGlobalListenerAddrs> ServiceDiscovery<T> {
         msg: Option<(DiscoveryMsg, SocketAddr, Priority)>,
     ) {
         if let Err(e) = self.socket.write_to(msg) {
-            debug!("Failed to send response: {:?}", e);
+            info!(
+                "Failed to send response: {:?}. Terminating service discovery...",
+                e
+            );
             self.terminate(core, poll);
         }
     }

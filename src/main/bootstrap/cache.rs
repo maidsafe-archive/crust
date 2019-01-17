@@ -17,6 +17,7 @@ use std::rc::Rc;
 /// Reference-counted bootstrap cache - keeps log of known publicly accessible peers.
 #[derive(Clone)]
 pub struct Cache {
+    // TODO(povilas): remove Rc and store bootstrap cache in Core
     inner: Rc<RefCell<Inner>>,
 }
 
