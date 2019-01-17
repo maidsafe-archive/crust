@@ -58,21 +58,7 @@ impl<UID: Uid> ActiveConnection<UID> {
             their_id
         );
 
-        let heartbeat = match Heartbeat::try_new(core, token) {
-            Ok(heartbeat) => heartbeat,
-            Err(e) => {
-                debug!(
-                    "{:?} - Failed to initialize heartbeat: {:?} - killing ActiveConnection \
-                     to {:?}",
-                    our_id, e, their_id
-                );
-                let _ = poll.deregister(&socket);
-                let _ = event_tx.send(Event::LostPeer(their_id));
-                // TODO See if this plays well with ConnectionMap<UID> manipulation below
-                return;
-            }
-        };
-
+        let heartbeat = Heartbeat::new(core, token);
         let state = Rc::new(RefCell::new(ActiveConnection {
             token,
             socket,
@@ -241,7 +227,7 @@ struct Heartbeat<UID> {
 }
 
 impl<UID: Uid> Heartbeat<UID> {
-    fn try_new(core: &mut EventLoopCore<UID>, state_id: Token) -> crate::Res<Self> {
+    fn new(core: &mut EventLoopCore<UID>, state_id: Token) -> Self {
         let recv_timer = CoreTimer::new(state_id, 0);
         let recv_timeout =
             core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer);
@@ -249,13 +235,13 @@ impl<UID: Uid> Heartbeat<UID> {
         let send_timer = CoreTimer::new(state_id, 1);
         let send_timeout = core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), send_timer);
 
-        Ok(Self {
+        Self {
             recv_timeout,
             recv_timer,
             send_timeout,
             send_timer,
             _phantom: PhantomData,
-        })
+        }
     }
 
     fn timeout(&mut self, core: &mut EventLoopCore<UID>, timer_id: u8) -> HeartbeatAction {

@@ -71,6 +71,20 @@ const DISABLE_NAT: bool = true;
 /// 2. to accept incoming connections via [`connect`], call [`start_listening_tcp`],
 /// 2. to accept incoming peers via service discovery on LAN, call [`set_service_discovery_listen`].
 ///
+/// ## Implementation Notes
+///
+/// It might be worthy knowing how `Service` operates under the hood. `Service::with_config()`
+/// creates a separate thread and spawns mio based event loop on it. This event loop is used
+/// for all networking operations.
+///
+/// `Service` is just a handle to interface with the underlying event loop:
+///
+/// 1. We use `Service` to spawn functions on an event loop, e.g. connect to some peer.
+/// 2. The actual Crust operation (connection, bootstrap, etc.) is executed in parallel on a
+///    dedicated thread.
+/// 3. When something happens, successful/failed connection, etc., `Service` emits events through
+///    the `CrustEventSender`.
+///
 /// [`try_new`]: struct.Service.html#method.try_new
 /// [`with_config`]: struct.Service.html#method.with_config
 /// [`connect`]: struct.Service.html#method.connect
@@ -81,6 +95,8 @@ const DISABLE_NAT: bool = true;
 /// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
 pub struct Service<UID: Uid> {
     event_tx: crate::CrustEventSender<UID>,
+    // TODO(povilas): see if we can eliminate Arc by moving MappingContext into CrustData
+    // stored in Core
     mc: Arc<MappingContext>,
     el: EventLoop<UID>,
     name_hash: NameHash,
@@ -236,7 +252,7 @@ impl<UID: Uid> Service<UID> {
                     remote_port,
                     our_pk,
                 ) {
-                    debug!("Could not start ServiceDiscovery: {:?}", e);
+                    info!("Could not start ServiceDiscovery: {:?}", e);
                 }
             }
         });

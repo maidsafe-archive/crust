@@ -105,7 +105,7 @@ impl<UID: Uid> TryPeer<UID> {
                         (*self.finish)(core, poll, token, Ok(data));
                     }
                     Err(e) => {
-                        warn!("Failed to set socket encrypt context: {}", e);
+                        debug!("Failed to set socket encrypt context: {}", e);
                         self.handle_error(core, poll, None);
                     }
                 }
@@ -143,7 +143,7 @@ impl<UID: Uid> State<CrustData<UID>> for TryPeer<UID> {
         }
 
         debug!(
-            "Considering the following event to indicate dirupted connection: {:?}",
+            "Considering the following event to indicate disrupted connection: {:?}",
             kind
         );
         self.handle_error(core, poll, None);

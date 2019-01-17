@@ -84,7 +84,7 @@ impl<UID: Uid> Bootstrap<UID> {
             Ok((rx, timeout)) => Some(ServiceDiscMeta { rx, timeout }),
             Err(CrustError::ServiceDiscNotEnabled) => None,
             Err(e) => {
-                warn!("Failed to seek peers using service discovery: {:?}", e);
+                debug!("Failed to seek peers using service discovery: {:?}", e);
                 return Err(e);
             }
         };
@@ -201,7 +201,7 @@ impl<UID: Uid> Bootstrap<UID> {
                         }
                     };
                     if is_err_fatal {
-                        error!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
+                        info!("Failed to Bootstrap: ({:?}) {}", reason, err_msg);
                         self.terminate(core, poll);
                         let _ = self.event_tx.send(Event::BootstrapFailed);
                         return;
@@ -219,7 +219,7 @@ impl<UID: Uid> Bootstrap<UID> {
 
     fn maybe_terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
         if self.children.is_empty() {
-            error!("Bootstrapper has no active children left - bootstrap has failed");
+            info!("Bootstrapper has no active children left - bootstrap has failed");
             self.terminate(core, poll);
             let _ = self.event_tx.send(Event::BootstrapFailed);
         }

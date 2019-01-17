@@ -95,7 +95,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                 our_pk,
                 our_sk,
             ) {
-                error!("TCP Listener failed to handle mapped socket: {:?}", e);
+                info!("TCP Listener failed to handle mapped socket: {:?}", e);
                 let _ = event_tx.send(Event::ListenerFailed);
             }
         };
@@ -103,7 +103,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         if let Err(e) =
             MappedTcpSocket::<_, UID, _>::start(core, poll, port, &mc, our_pk, &our_sk2, finish)
         {
-            error!("Error starting tcp_listening_socket: {:?}", e);
+            info!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
     }
@@ -170,7 +170,7 @@ impl<UID: Uid> ConnectionListener<UID> {
                         self.our_pk,
                         self.our_sk.clone(),
                     )) {
-                        warn!("Failed to set decryption context: {}", e);
+                        debug!("Failed to set decryption context: {}", e);
                         continue;
                     }
                     if let Err(e) = ExchangeMsg::start(

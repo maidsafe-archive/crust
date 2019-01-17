@@ -114,7 +114,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 {
                     Ok(_) => (*self.finish)(core, poll, token, Some(socket)),
                     Err(e) => {
-                        warn!("Failed to set socket encrypt context: {}", e);
+                        debug!("Failed to set socket encrypt context: {}", e);
                         self.handle_error(core, poll);
                     }
                 }
