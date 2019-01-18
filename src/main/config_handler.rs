@@ -42,6 +42,8 @@ pub struct Config {
     pub service_discovery_listener_port: Option<u16>,
     /// File for bootstrap cache
     pub bootstrap_cache_name: Option<OsString>,
+    /// Maximum number of peers the bootstrap cache can store
+    pub bootstrap_cache_limit: Option<usize>,
     /// Whitelisted nodes who are allowed to bootstrap off us or to connect to us
     pub whitelisted_node_ips: Option<HashSet<IpAddr>>,
     /// Whitelisted clients who are allowed to bootstrap off us
@@ -62,6 +64,7 @@ impl Default for Config {
             service_discovery_port: None,
             service_discovery_listener_port: None,
             bootstrap_cache_name: None,
+            bootstrap_cache_limit: None,
             whitelisted_node_ips: None,
             whitelisted_client_ips: None,
             network_name: None,

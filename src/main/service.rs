@@ -128,11 +128,12 @@ impl<UID: Uid> Service<UID> {
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
         let bootstrap_cache_file = config.bootstrap_cache_name.clone();
+        let bootstrap_cache_limit = config.bootstrap_cache_limit;
         let el = common::spawn_event_loop(
             EventToken::Unreserved as usize,
             Some(&format!("{:?}", our_uid)),
             move || {
-                let cache = BootstrapCache::new(bootstrap_cache_file);
+                let cache = BootstrapCache::new(bootstrap_cache_file, bootstrap_cache_limit);
                 cache.read_file();
                 let mut user_data = CrustData::new(cache);
                 user_data.config = ConfigWrapper::new(config);
