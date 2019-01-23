@@ -7,15 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{CoreTimer, CrustUser, Message, State, Uid};
+use crate::common::{CoreTimer, CrustUser, Message, State};
 use crate::main::{ConnectionId, CrustData, Event, EventLoopCore};
+use crate::PeerId;
 use mio::{Poll, Ready, Token};
 use mio_extras::timer::Timeout;
 use socket_collection::{Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
-use std::marker::PhantomData;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use std::time::Duration;
@@ -30,27 +30,27 @@ pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
 #[cfg(test)]
 const HEARTBEAT_PERIOD_MS: u64 = 300;
 
-pub struct ActiveConnection<UID: Uid> {
+pub struct ActiveConnection {
     token: Token,
     socket: TcpSock,
-    our_id: UID,
-    their_id: UID,
+    our_id: PeerId,
+    their_id: PeerId,
     their_role: CrustUser,
-    event_tx: crate::CrustEventSender<UID>,
-    heartbeat: Heartbeat<UID>,
+    event_tx: crate::CrustEventSender,
+    heartbeat: Heartbeat,
 }
 
-impl<UID: Uid> ActiveConnection<UID> {
+impl ActiveConnection {
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         token: Token,
         socket: TcpSock,
-        our_id: UID,
-        their_id: UID,
+        our_id: PeerId,
+        their_id: PeerId,
         their_role: CrustUser,
-        event: Event<UID>,
-        event_tx: crate::CrustEventSender<UID>,
+        event: Event,
+        event_tx: crate::CrustEventSender,
     ) {
         trace!(
             "Entered state ActiveConnection: {:?} -> {:?}",
@@ -88,9 +88,9 @@ impl<UID: Uid> ActiveConnection<UID> {
         state_mut.read(core, poll);
     }
 
-    fn read(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         loop {
-            match self.socket.read::<Message<UID>>() {
+            match self.socket.read::<Message>() {
                 Ok(Some(Message::Data(data))) => {
                     let _ =
                         self.event_tx
@@ -131,26 +131,21 @@ impl<UID: Uid> ActiveConnection<UID> {
         self.their_role
     }
 
-    fn write(
-        &mut self,
-        core: &mut EventLoopCore<UID>,
-        poll: &Poll,
-        msg: Option<(Message<UID>, Priority)>,
-    ) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, msg: Option<(Message, Priority)>) {
         if let Err(e) = self.socket.write(msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_receive_heartbeat(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn reset_receive_heartbeat(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if let Err(e) = self.heartbeat.reset_receive(core) {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
     }
 
-    fn reset_send_heartbeat(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn reset_send_heartbeat(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if let Err(e) = self.heartbeat.reset_send(core) {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
@@ -158,8 +153,8 @@ impl<UID: Uid> ActiveConnection<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for ActiveConnection<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
+impl State<CrustData> for ActiveConnection {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             self.write(core, poll, None);
         }
@@ -168,18 +163,12 @@ impl<UID: Uid> State<CrustData<UID>> for ActiveConnection<UID> {
         }
     }
 
-    fn write(
-        &mut self,
-        core: &mut EventLoopCore<UID>,
-        poll: &Poll,
-        data: Vec<u8>,
-        priority: Priority,
-    ) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, data: Vec<u8>, priority: Priority) {
         self.write(core, poll, Some((Message::Data(data), priority)));
         self.reset_send_heartbeat(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.heartbeat.terminate(core);
         let _ = poll.deregister(&self.socket);
         let _ = core.remove_state(self.token);
@@ -200,7 +189,7 @@ impl<UID: Uid> State<CrustData<UID>> for ActiveConnection<UID> {
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
     }
 
-    fn timeout(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, timer_id: u8) {
         match self.heartbeat.timeout(core, timer_id) {
             HeartbeatAction::Send => self.write(core, poll, Some((Message::Heartbeat, 0))),
             HeartbeatAction::Terminate => {
@@ -218,16 +207,15 @@ impl<UID: Uid> State<CrustData<UID>> for ActiveConnection<UID> {
     }
 }
 
-struct Heartbeat<UID> {
+struct Heartbeat {
     recv_timeout: Timeout,
     recv_timer: CoreTimer,
     send_timeout: Timeout,
     send_timer: CoreTimer,
-    _phantom: PhantomData<UID>,
 }
 
-impl<UID: Uid> Heartbeat<UID> {
-    fn new(core: &mut EventLoopCore<UID>, state_id: Token) -> Self {
+impl Heartbeat {
+    fn new(core: &mut EventLoopCore, state_id: Token) -> Self {
         let recv_timer = CoreTimer::new(state_id, 0);
         let recv_timeout =
             core.set_timeout(Duration::from_millis(INACTIVITY_TIMEOUT_MS), recv_timer);
@@ -240,11 +228,10 @@ impl<UID: Uid> Heartbeat<UID> {
             recv_timer,
             send_timeout,
             send_timer,
-            _phantom: PhantomData,
         }
     }
 
-    fn timeout(&mut self, core: &mut EventLoopCore<UID>, timer_id: u8) -> HeartbeatAction {
+    fn timeout(&mut self, core: &mut EventLoopCore, timer_id: u8) -> HeartbeatAction {
         if timer_id == self.recv_timer.timer_id {
             HeartbeatAction::Terminate
         } else {
@@ -254,7 +241,7 @@ impl<UID: Uid> Heartbeat<UID> {
         }
     }
 
-    fn reset_receive(&mut self, core: &mut EventLoopCore<UID>) -> crate::Res<()> {
+    fn reset_receive(&mut self, core: &mut EventLoopCore) -> crate::Res<()> {
         let _ = core.cancel_timeout(&self.recv_timeout);
         self.recv_timeout = core.set_timeout(
             Duration::from_millis(INACTIVITY_TIMEOUT_MS),
@@ -263,14 +250,14 @@ impl<UID: Uid> Heartbeat<UID> {
         Ok(())
     }
 
-    fn reset_send(&mut self, core: &mut EventLoopCore<UID>) -> crate::Res<()> {
+    fn reset_send(&mut self, core: &mut EventLoopCore) -> crate::Res<()> {
         let _ = core.cancel_timeout(&self.send_timeout);
         self.send_timeout =
             core.set_timeout(Duration::from_millis(HEARTBEAT_PERIOD_MS), self.send_timer);
         Ok(())
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>) {
+    fn terminate(&mut self, core: &mut EventLoopCore) {
         let _ = core.cancel_timeout(&self.recv_timeout);
         let _ = core.cancel_timeout(&self.send_timeout);
     }

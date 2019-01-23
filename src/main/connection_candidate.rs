@@ -7,8 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{Message, State, Uid};
+use crate::common::{Message, State};
 use crate::main::{ConnectionId, CrustData, EventLoopCore};
+use crate::PeerId;
 use mio::{Poll, PollOpt, Ready, Token};
 use socket_collection::{Priority, TcpSock};
 use std::any::Any;
@@ -17,27 +18,27 @@ use std::collections::hash_map::Entry;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish<UID> = Box<FnMut(&mut EventLoopCore<UID>, &Poll, Token, Option<TcpSock>)>;
+pub type Finish = Box<FnMut(&mut EventLoopCore, &Poll, Token, Option<TcpSock>)>;
 
 /// Exchanges `ConnectionChoose` message with remote peer and transitions to next state.
-pub struct ConnectionCandidate<UID: Uid> {
+pub struct ConnectionCandidate {
     token: Token,
     socket: TcpSock,
-    our_id: UID,
-    their_id: UID,
-    msg: Option<(Message<UID>, Priority)>,
-    finish: Finish<UID>,
+    our_id: PeerId,
+    their_id: PeerId,
+    msg: Option<(Message, Priority)>,
+    finish: Finish,
 }
 
-impl<UID: Uid> ConnectionCandidate<UID> {
+impl ConnectionCandidate {
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         token: Token,
         socket: TcpSock,
-        our_id: UID,
-        their_id: UID,
-        finish: Finish<UID>,
+        our_id: PeerId,
+        their_id: PeerId,
+        finish: Finish,
     ) -> crate::Res<Token> {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
             token,
@@ -63,20 +64,15 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         Ok(token)
     }
 
-    fn read(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
-        match self.socket.read::<Message<UID>>() {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::ChooseConnection)) => self.done(core, poll),
             Ok(Some(_)) | Err(_) => self.handle_error(core, poll),
             Ok(None) => (),
         }
     }
 
-    fn write(
-        &mut self,
-        core: &mut EventLoopCore<UID>,
-        poll: &Poll,
-        msg: Option<(Message<UID>, Priority)>,
-    ) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, msg: Option<(Message, Priority)>) {
         let terminate = match core.user_data().connections.get(&self.their_id) {
             Some(&ConnectionId {
                 active_connection: Some(_),
@@ -104,7 +100,7 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         }
     }
 
-    fn done(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn done(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let token = self.token;
         let socket = mem::replace(&mut self.socket, Default::default());
@@ -113,15 +109,15 @@ impl<UID: Uid> ConnectionCandidate<UID> {
         (*self.finish)(core, poll, token, Some(socket));
     }
 
-    fn handle_error(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for ConnectionCandidate<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
+impl State<CrustData> for ConnectionCandidate {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll);
         }
@@ -131,7 +127,7 @@ impl<UID: Uid> State<CrustData<UID>> for ConnectionCandidate<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
 

@@ -8,7 +8,7 @@
 // Software.
 
 pub use self::get_ext_addr::GetExtAddr;
-use crate::common::{Core, CoreMessage, CoreTimer, State, Uid};
+use crate::common::{Core, CoreMessage, CoreTimer, State};
 use crate::nat::{util, MappingContext, NatError};
 use igd::PortMappingProtocol;
 use maidsafe_utilities::thread;
@@ -29,7 +29,7 @@ mod get_ext_addr;
 const TIMEOUT_SEC: u64 = 3;
 
 /// A state which represents the in-progress mapping of a tcp socket.
-pub struct MappedTcpSocket<F, UID, T> {
+pub struct MappedTcpSocket<F, T> {
     token: Token,
     socket: Option<TcpBuilder>,
     igd_children: usize,
@@ -37,13 +37,12 @@ pub struct MappedTcpSocket<F, UID, T> {
     mapped_addrs: Vec<SocketAddr>,
     timeout: Timeout,
     finish: Option<F>,
-    phantom: PhantomData<(UID, T)>,
+    phantom: PhantomData<T>,
 }
 
-impl<F, UID, T: 'static> MappedTcpSocket<F, UID, T>
+impl<F, T: 'static> MappedTcpSocket<F, T>
 where
     F: FnOnce(&mut Core<T>, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
-    UID: Uid,
 {
     /// Start mapping a tcp socket
     pub fn start(
@@ -87,7 +86,7 @@ where
 
                     let mut state = state.borrow_mut();
                     let mapping_tcp_sock =
-                        match state.as_any().downcast_mut::<MappedTcpSocket<F, UID, T>>() {
+                        match state.as_any().downcast_mut::<MappedTcpSocket<F, T>>() {
                             Some(mapping_sock) => mapping_sock,
                             None => return,
                         };
@@ -125,7 +124,7 @@ where
                 }
             };
 
-            if let Ok(child) = GetExtAddr::<UID, _>::start(
+            if let Ok(child) = GetExtAddr::<_>::start(
                 core,
                 poll,
                 addr,
@@ -185,10 +184,9 @@ where
     }
 }
 
-impl<F, UID, T: 'static> State<T> for MappedTcpSocket<F, UID, T>
+impl<F, T: 'static> State<T> for MappedTcpSocket<F, T>
 where
     F: FnOnce(&mut Core<T>, &Poll, TcpBuilder, Vec<SocketAddr>) + Any,
-    UID: Uid,
 {
     fn timeout(&mut self, core: &mut Core<T>, poll: &Poll, _: u8) {
         self.terminate(core, poll)

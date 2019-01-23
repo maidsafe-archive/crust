@@ -9,13 +9,14 @@
 
 use crate::common::{
     ipv4_addr, BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, Message, NameHash,
-    PeerInfo, State, Uid,
+    PeerInfo, State,
 };
 use crate::main::{
     read_config_file, ActiveConnection, Config, ConnectionCandidate, ConnectionId, CrustData,
     Event, EventLoopCore,
 };
 use crate::nat::{ip_addr_is_global, GetExtAddr};
+use crate::PeerId;
 use mio::{Poll, PollOpt, Ready, Token};
 use mio_extras::timer::Timeout;
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
@@ -40,36 +41,36 @@ const CHECK_REACHABILITY_TIMEOUT_SEC: u64 = 3;
 const MAX_EXT_REACHABILITY_TEST_ADDRS: usize = 3;
 
 /// Handles incoming socket according to the first received request.
-pub struct ExchangeMsg<UID: Uid> {
+pub struct ExchangeMsg {
     token: Token,
-    event_tx: crate::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender,
     name_hash: NameHash,
-    next_state: NextState<UID>,
-    our_uid: UID,
+    next_state: NextState,
+    our_uid: PeerId,
     socket: TcpSock,
     timeout: Timeout,
     reachability_children: HashSet<Token>,
     accept_bootstrap: bool,
     test_ext_reachability: bool,
-    self_weak: Weak<RefCell<ExchangeMsg<UID>>>,
+    self_weak: Weak<RefCell<ExchangeMsg>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
-impl<UID: Uid> ExchangeMsg<UID> {
+impl ExchangeMsg {
     /// # Args
     ///
     /// `test_ext_reachability` - if true, we will check if remote peer has public IP and we can
     ///     reach it directly.
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         timeout_sec: Option<u64>,
         socket: TcpSock,
         accept_bootstrap: bool,
-        our_uid: UID,
+        our_uid: PeerId,
         name_hash: NameHash,
-        event_tx: crate::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         test_ext_reachability: bool,
@@ -107,8 +108,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
         Ok(())
     }
 
-    fn read(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
-        match self.socket.read::<Message<UID>>() {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_uid, name_hash, their_role, their_pk))) => {
                 if !self.accept_bootstrap {
                     debug!("Bootstrapping off us is not allowed");
@@ -147,9 +148,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn handle_bootstrap_req(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
-        their_uid: UID,
+        their_uid: PeerId,
         name_hash: NameHash,
         their_role: BootstrapperRole,
         their_pk: PublicEncryptKey,
@@ -185,8 +186,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
         if let BootstrapperRole::Node(their_addrs) = their_role {
             if self.test_ext_reachability {
                 let on_check_reachability_result =
-                    |mut state: RefMut<ExchangeMsg<UID>>,
-                     core: &mut EventLoopCore<UID>,
+                    |mut state: RefMut<ExchangeMsg>,
+                     core: &mut EventLoopCore,
                      poll: &Poll,
                      child,
                      res| {
@@ -248,10 +249,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn handle_check_reachability(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         child: Token,
-        res: Result<UID, ()>,
+        res: Result<PeerId, ()>,
     ) {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_uid) = res {
@@ -270,9 +271,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn send_bootstrap_grant(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
-        their_uid: UID,
+        their_uid: PeerId,
         peer_kind: CrustUser,
     ) {
         self.enter_handshaking_mode(core, their_uid);
@@ -284,9 +285,9 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn handle_connect(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
-        their_uid: UID,
+        their_uid: PeerId,
         name_hash: NameHash,
         their_addrs: HashSet<SocketAddr>,
         their_pk: PublicEncryptKey,
@@ -310,8 +311,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
         if self.test_ext_reachability {
             let on_check_reachability_result =
-                |mut state: RefMut<ExchangeMsg<UID>>,
-                 core: &mut EventLoopCore<UID>,
+                |mut state: RefMut<ExchangeMsg>,
+                 core: &mut EventLoopCore,
                  poll: &Poll,
                  child,
                  res| {
@@ -338,10 +339,10 @@ impl<UID: Uid> ExchangeMsg<UID> {
     /// Called when external reachability test passed.
     fn handle_check_reachability_on_connect(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         child: Token,
-        res: Result<UID, ()>,
+        res: Result<PeerId, ()>,
     ) {
         let _ = self.reachability_children.remove(&child);
         if let Ok(their_uid) = res {
@@ -355,7 +356,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 
     /// Sends response to incoming connection.
-    fn send_connect_grant(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, their_uid: UID) {
+    fn send_connect_grant(&mut self, core: &mut EventLoopCore, poll: &Poll, their_uid: PeerId) {
         self.enter_handshaking_mode(core, their_uid);
         self.next_state = NextState::ConnectionCandidate(their_uid);
         let msg = Message::ConnectResponse(self.our_uid, self.name_hash);
@@ -364,7 +365,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
 
     fn handle_echo_addr_req(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         their_pk: PublicEncryptKey,
     ) {
@@ -401,31 +402,29 @@ impl<UID: Uid> ExchangeMsg<UID> {
     /// Spawns multiple children states that check which of given addresses are publicly reachable.
     fn spawn_ext_reachability_tests<F>(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
-        their_uid: UID,
+        their_uid: PeerId,
         their_addrs: HashSet<SocketAddr>,
         their_pk: PublicEncryptKey,
         on_result: F,
     ) where
         F: 'static
-            + FnMut(RefMut<ExchangeMsg<UID>>, &mut EventLoopCore<UID>, &Poll, Token, Result<UID, ()>)
+            + FnMut(RefMut<ExchangeMsg>, &mut EventLoopCore, &Poll, Token, Result<PeerId, ()>)
             + Clone,
     {
         for their_listener in self.addrs_for_ext_reachability_test(their_addrs) {
             let self_weak = self.self_weak.clone();
             let mut on_result = on_result.clone();
-            let finish = move |core: &mut EventLoopCore<UID>,
-                               poll: &Poll,
-                               child,
-                               res: Result<SocketAddr, ()>| {
-                if let Some(self_rc) = self_weak.upgrade() {
-                    let res = res.map(|_| their_uid);
-                    on_result(self_rc.borrow_mut(), core, poll, child, res);
-                }
-            };
+            let finish =
+                move |core: &mut EventLoopCore, poll: &Poll, child, res: Result<SocketAddr, ()>| {
+                    if let Some(self_rc) = self_weak.upgrade() {
+                        let res = res.map(|_| their_uid);
+                        on_result(self_rc.borrow_mut(), core, poll, child, res);
+                    }
+                };
 
-            if let Ok(child) = GetExtAddr::<UID, CrustData<UID>>::start(
+            if let Ok(child) = GetExtAddr::<CrustData>::start(
                 core,
                 poll,
                 ipv4_addr(0, 0, 0, 0, 0),
@@ -459,7 +458,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
             .collect()
     }
 
-    fn enter_handshaking_mode(&self, core: &mut EventLoopCore<UID>, their_uid: UID) {
+    fn enter_handshaking_mode(&self, core: &mut EventLoopCore, their_uid: PeerId) {
         let connections = &mut core.user_data_mut().connections;
         connections
             .entry(their_uid)
@@ -479,7 +478,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         self.name_hash == name_hash
     }
 
-    fn validate_peer_uid(&self, their_uid: UID) -> Result<UID, ()> {
+    fn validate_peer_uid(&self, their_uid: PeerId) -> Result<PeerId, ()> {
         if self.our_uid == their_uid {
             debug!("Accepted connection from ourselves");
             return Err(());
@@ -488,7 +487,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         Ok(their_uid)
     }
 
-    fn try_update_crust_config(&self, core: &mut EventLoopCore<UID>) {
+    fn try_update_crust_config(&self, core: &mut EventLoopCore) {
         match read_config_file() {
             Ok(cfg) => core
                 .user_data_mut()
@@ -498,12 +497,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn write(
-        &mut self,
-        core: &mut EventLoopCore<UID>,
-        poll: &Poll,
-        msg: Option<(Message<UID>, Priority)>,
-    ) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, msg: Option<(Message, Priority)>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_uid, _) = self.next_state {
             let terminate = match core.user_data().connections.get(&their_uid).cloned() {
@@ -528,7 +522,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn done(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn done(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = core.cancel_timeout(&self.timeout);
 
@@ -551,7 +545,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
                 );
             }
             NextState::ConnectionCandidate(their_uid) => {
-                let handler = move |core: &mut EventLoopCore<UID>, poll: &Poll, token, res| {
+                let handler = move |core: &mut EventLoopCore, poll: &Poll, token, res| {
                     if let Some(socket) = res {
                         ActiveConnection::start(
                             core,
@@ -584,7 +578,7 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn terminate_childern(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate_childern(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         for child in self.reachability_children.drain() {
             core.get_state(child)
                 .map_or((), |c| c.borrow_mut().terminate(core, poll));
@@ -592,8 +586,8 @@ impl<UID: Uid> ExchangeMsg<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for ExchangeMsg<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
+impl State<CrustData> for ExchangeMsg {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.read(core, poll)
         }
@@ -602,7 +596,7 @@ impl<UID: Uid> State<CrustData<UID>> for ExchangeMsg<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate_childern(core, poll);
         let _ = core.remove_state(self.token);
 
@@ -629,7 +623,7 @@ impl<UID: Uid> State<CrustData<UID>> for ExchangeMsg<UID> {
         let _ = poll.deregister(&self.socket);
     }
 
-    fn timeout(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         debug!("Exchange message timed out. Terminating direct connection request.");
         self.terminate(core, poll)
     }
@@ -639,8 +633,8 @@ impl<UID: Uid> State<CrustData<UID>> for ExchangeMsg<UID> {
     }
 }
 
-enum NextState<UID> {
+enum NextState {
     None,
-    ActiveConnection(UID, CrustUser),
-    ConnectionCandidate(UID),
+    ActiveConnection(PeerId, CrustUser),
+    ConnectionCandidate(PeerId),
 }

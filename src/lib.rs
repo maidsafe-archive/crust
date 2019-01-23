@@ -92,14 +92,14 @@ mod main;
 mod nat;
 mod service_discovery;
 
-pub use crate::common::{CrustUser, PeerInfo, Uid};
+pub use crate::common::{CrustUser, PeerInfo};
 pub use crate::main::{
-    read_config_file, Config, ConnectionInfoResult, CrustError, Event, PrivConnectionInfo,
+    read_config_file, Config, ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
     PubConnectionInfo, Service,
 };
 pub use socket_collection::Priority;
 
 /// Used to receive events from a `Service`.
-pub type CrustEventSender<UID> = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event<UID>>;
+pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 /// Crust's result type
 pub type Res<T> = Result<T, CrustError>;

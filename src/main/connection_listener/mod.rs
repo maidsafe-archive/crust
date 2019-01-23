@@ -10,10 +10,11 @@
 mod exchange_msg;
 
 use self::exchange_msg::ExchangeMsg;
-use crate::common::{NameHash, PeerInfo, State, Uid};
+use crate::common::{NameHash, PeerInfo, State};
 use crate::main::{CrustData, Event, EventLoopCore};
 use crate::nat::ip_addr_is_global;
 use crate::nat::{MappedTcpSocket, MappingContext};
+use crate::PeerId;
 use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
 use net2::TcpBuilder;
@@ -31,12 +32,12 @@ const LISTENER_BACKLOG: i32 = 100;
 /// Accepts connections and transitions each connection into `ExchangeMsg` state.
 /// Optionally will make `ExchangeMsg` to test for peer external reachability. This behavior
 /// is enabled by default.
-pub struct ConnectionListener<UID: Uid> {
+pub struct ConnectionListener {
     token: Token,
-    event_tx: crate::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender,
     listener: TcpListener,
     name_hash: NameHash,
-    our_uid: UID,
+    our_uid: PeerId,
     timeout_sec: Option<u64>,
     accept_bootstrap: bool,
     our_pk: PublicEncryptKey,
@@ -44,25 +45,25 @@ pub struct ConnectionListener<UID: Uid> {
     test_ext_reachability: bool,
 }
 
-impl<UID: Uid> ConnectionListener<UID> {
+impl ConnectionListener {
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         handshake_timeout_sec: Option<u64>,
         port: u16,
         force_include_port: bool,
-        our_uid: UID,
+        our_uid: PeerId,
         name_hash: NameHash,
         mc: Arc<MappingContext>,
         token: Token,
-        event_tx: crate::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) {
         let event_tx_0 = event_tx.clone();
         let our_sk2 = our_sk.clone();
 
-        let finish = move |core: &mut EventLoopCore<UID>,
+        let finish = move |core: &mut EventLoopCore,
                            poll: &Poll,
                            socket,
                            mut mapped_addrs: Vec<SocketAddr>| {
@@ -100,9 +101,7 @@ impl<UID: Uid> ConnectionListener<UID> {
             }
         };
 
-        if let Err(e) =
-            MappedTcpSocket::<_, UID, _>::start(core, poll, port, &mc, our_pk, &our_sk2, finish)
-        {
+        if let Err(e) = MappedTcpSocket::start(core, poll, port, &mc, our_pk, &our_sk2, finish) {
             info!("Error starting tcp_listening_socket: {:?}", e);
             let _ = event_tx_0.send(Event::ListenerFailed);
         }
@@ -118,15 +117,15 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 
     fn handle_mapped_socket(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         timeout_sec: Option<u64>,
         socket: TcpBuilder,
         mapped_addrs: Vec<SocketAddr>,
-        our_uid: UID,
+        our_uid: PeerId,
         name_hash: NameHash,
         token: Token,
-        event_tx: crate::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) -> crate::Res<()> {
@@ -161,7 +160,7 @@ impl<UID: Uid> ConnectionListener<UID> {
         Ok(())
     }
 
-    fn accept(&self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn accept(&self, core: &mut EventLoopCore, poll: &Poll) {
         loop {
             match self.listener.accept() {
                 Ok((socket, _)) => {
@@ -203,14 +202,14 @@ impl<UID: Uid> ConnectionListener<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for ConnectionListener<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
+impl State<CrustData> for ConnectionListener {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_readable() {
             self.accept(core, poll);
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = poll.deregister(&self.listener);
         let _ = core.remove_state(self.token);
     }
@@ -230,11 +229,10 @@ mod tests {
     use crate::main::bootstrap::Cache as BootstrapCache;
     use crate::main::{Event, EventLoop};
     use crate::nat::MappingContext;
-    use crate::tests::UniqueId;
+    use crate::tests::rand_peer_id;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use mio::Events;
     use mio::Token;
-    use rand;
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
     use std::io::Read;
@@ -244,7 +242,7 @@ mod tests {
     use std::sync::Arc;
     use std::time::Duration;
 
-    type ConnectionListener = super::ConnectionListener<UniqueId>;
+    type ConnectionListener = super::ConnectionListener;
 
     // Make sure this is < EXCHANGE_MSG_TIMEOUT_SEC else blocking reader socket in this test will
     // exit with an EAGAIN error (unless this is what is wanted).
@@ -254,10 +252,10 @@ mod tests {
     const NAME_HASH_2: NameHash = [2; HASH_SIZE];
 
     struct Listener {
-        _el: EventLoop<UniqueId>,
-        uid: UniqueId,
+        _el: EventLoop,
+        uid: PeerId,
         addr: SocketAddr,
-        event_rx: mpsc::Receiver<Event<UniqueId>>,
+        event_rx: mpsc::Receiver<Event>,
         pub_key: PublicEncryptKey,
     }
 
@@ -275,7 +273,7 @@ mod tests {
         let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
         let (our_pk, our_sk) = gen_encrypt_keypair();
 
-        let uid = rand::random();
+        let uid = rand_peer_id();
         unwrap!(
             el.send(CoreMessage::new(move |core, poll| {
                 ConnectionListener::start(
@@ -305,25 +303,23 @@ mod tests {
 
         let (tx, rx) = mpsc::channel();
         unwrap!(
-            el.send(CoreMessage::new(
-                move |core: &mut EventLoopCore<UniqueId>, _| {
-                    let state = match core.get_state(Token(LISTENER_TOKEN)) {
-                        Some(state) => state,
-                        None => panic!("Listener not initialised"),
-                    };
-                    let mut state = state.borrow_mut();
-                    let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
-                        Some(l) => l,
-                        None => panic!("Token reserved for ConnectionListener has something else."),
-                    };
-                    listener.set_accept_bootstrap(accept_bootstrap);
-                    listener.set_ext_reachability_test(false);
+            el.send(CoreMessage::new(move |core: &mut EventLoopCore, _| {
+                let state = match core.get_state(Token(LISTENER_TOKEN)) {
+                    Some(state) => state,
+                    None => panic!("Listener not initialised"),
+                };
+                let mut state = state.borrow_mut();
+                let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
+                    Some(l) => l,
+                    None => panic!("Token reserved for ConnectionListener has something else."),
+                };
+                listener.set_accept_bootstrap(accept_bootstrap);
+                listener.set_ext_reachability_test(false);
 
-                    let listener_info =
-                        unwrap!(core.user_data_mut().our_listeners.iter().nth(0).cloned());
-                    unwrap!(tx.send(listener_info));
-                }
-            )),
+                let listener_info =
+                    unwrap!(core.user_data_mut().our_listeners.iter().nth(0).cloned());
+                unwrap!(tx.send(listener_info));
+            })),
             "Could not send to tx"
         );
         let listener_info = unwrap!(rx.recv());
@@ -351,7 +347,7 @@ mod tests {
         stream
     }
 
-    fn bootstrap(name_hash: NameHash, our_uid: UniqueId, listener: &Listener) {
+    fn bootstrap(name_hash: NameHash, our_uid: PeerId, listener: &Listener) {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
@@ -382,7 +378,7 @@ mod tests {
                             ));
                         }
                         if ev.readiness().is_readable() {
-                            let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
+                            let msg: Message = unwrap!(unwrap!(sock.read()));
                             break 'event_loop msg;
                         }
                     }
@@ -405,7 +401,7 @@ mod tests {
         }
     }
 
-    fn connect(name_hash: NameHash, our_uid: UniqueId, listener: &Listener) {
+    fn connect(name_hash: NameHash, our_uid: PeerId, listener: &Listener) {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
@@ -435,7 +431,7 @@ mod tests {
                             ));
                         }
                         if ev.readiness().is_readable() {
-                            let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
+                            let msg: Message = unwrap!(unwrap!(sock.read()));
                             let their_uid = match msg {
                                 Message::ConnectResponse(peer_uid, peer_hash) => {
                                     assert_eq!(peer_uid, listener.uid);
@@ -449,7 +445,7 @@ mod tests {
                                 msg => panic!("Unexpected message: {:?}", msg),
                             };
                             if our_uid > their_uid {
-                                let message = Message::ChooseConnection::<UniqueId>;
+                                let message = Message::ChooseConnection;
                                 let sent = unwrap!(sock.write(Some((message, 0))));
                                 assert!(sent);
                             }
@@ -470,7 +466,7 @@ mod tests {
     #[test]
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener(true);
-        let uid = rand::random();
+        let uid = rand_peer_id();
         bootstrap(NAME_HASH, uid, &listener);
     }
 
@@ -478,14 +474,14 @@ mod tests {
     #[should_panic]
     fn bootstrap_when_bootstrapping_is_disabled() {
         let listener = start_listener(false);
-        let uid = rand::random();
+        let uid = rand_peer_id();
         bootstrap(NAME_HASH, uid, &listener);
     }
 
     #[test]
     fn connect_with_correct_parameters() {
         let listener = start_listener(false);
-        let uid = rand::random();
+        let uid = rand_peer_id();
         connect(NAME_HASH, uid, &listener);
     }
 
@@ -500,7 +496,7 @@ mod tests {
     #[should_panic]
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener(true);
-        let uid = rand::random();
+        let uid = rand_peer_id();
         bootstrap(NAME_HASH_2, uid, &listener);
     }
 
@@ -508,7 +504,7 @@ mod tests {
     #[should_panic]
     fn connect_with_invalid_version_hash() {
         let listener = start_listener(true);
-        let uid = rand::random();
+        let uid = rand_peer_id();
         connect(NAME_HASH_2, uid, &listener);
     }
 
@@ -536,7 +532,7 @@ mod tests {
         let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
         unwrap!(sock.set_encrypt_ctx(enc_ctx));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
-        let message = Message::Heartbeat::<UniqueId>;
+        let message = Message::Heartbeat;
 
         let mut events = Events::with_capacity(16);
         let read_res = 'event_loop: loop {
@@ -555,7 +551,7 @@ mod tests {
                             ));
                         }
                         if ev.readiness().is_readable() {
-                            let res = sock.read::<Message<UniqueId>>();
+                            let res = sock.read::<Message>();
                             break 'event_loop res;
                         }
                     }
@@ -594,7 +590,7 @@ mod tests {
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
         let (our_pk, our_sk) = gen_encrypt_keypair();
-        let message = Message::EchoAddrReq::<UniqueId>(our_pk);
+        let message = Message::EchoAddrReq(our_pk);
 
         let shared_key = our_sk.shared_secret(&listener.pub_key);
         let dec_ctx = DecryptContext::authenticated(shared_key);
@@ -617,7 +613,7 @@ mod tests {
                             ));
                         }
                         if ev.readiness().is_readable() {
-                            let msg: Message<UniqueId> = unwrap!(unwrap!(sock.read()));
+                            let msg: Message = unwrap!(unwrap!(sock.read()));
                             break 'event_loop msg;
                         }
                     }
@@ -638,7 +634,7 @@ mod tests {
             our_addr,
             unwrap!(sock.local_addr(), "Could not obtain local addr")
         );
-        match sock.read::<Option<Message<UniqueId>>>() {
+        match sock.read::<Option<Message>>() {
             Err(SocketError::ZeroByteRead) => (),
             r => panic!("Unexpected result: {:?}", r),
         }

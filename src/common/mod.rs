@@ -12,11 +12,7 @@ pub use self::error::CommonError;
 pub use self::message::{BootstrapDenyReason, Message};
 pub use self::state::State;
 use safe_crypto::PublicEncryptKey;
-use serde::de::DeserializeOwned;
-use serde::ser::Serialize;
 use std::collections::HashSet;
-use std::fmt;
-use std::hash::Hash;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 pub const HASH_SIZE: usize = 32;
@@ -55,23 +51,6 @@ impl From<&BootstrapperRole> for CrustUser {
             BootstrapperRole::Client => CrustUser::Client,
         }
     }
-}
-
-/// Trait for specifying a unique identifier for a Crust peer
-pub trait Uid:
-    'static
-    + Send
-    + fmt::Debug
-    + Clone
-    + Copy
-    + Eq
-    + PartialEq
-    + Ord
-    + PartialOrd
-    + Hash
-    + Serialize
-    + DeserializeOwned
-{
 }
 
 /// Information necessary to connect to peer.

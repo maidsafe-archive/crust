@@ -37,3 +37,15 @@ mod service;
 mod types;
 
 pub use self::config_handler::read_config_file;
+
+use safe_crypto::{PublicEncryptKey, PublicSignKey};
+
+/// Used to identify unique peers.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+pub struct PeerId {
+    /// Public signing key is not used by Crust itself, but it is passed to Crust users when
+    /// new peers are found.
+    pub pub_sign_key: PublicSignKey,
+    /// Crust uses this field to actually identify different peers.
+    pub pub_enc_key: PublicEncryptKey,
+}
