@@ -7,14 +7,15 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{PeerInfo, Uid};
+use crate::common::PeerInfo;
 use crate::main::{BootstrapCache, Config, CrustData, Event, EventLoopCore};
+use crate::PeerId;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use mio_extras::channel::channel;
 use mio_extras::timer;
-use rand::{self, Rng};
-use safe_crypto::gen_encrypt_keypair;
+use rand;
+use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair};
 use std::env;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -40,15 +41,17 @@ macro_rules! expect_event {
     };
 }
 
-pub type UniqueId = [u8; 20];
-impl Uid for UniqueId {}
-
-/// Generates random unique id.
-pub fn rand_uid() -> UniqueId {
-    rand::thread_rng().gen()
+/// Generates random peer id.
+pub fn rand_peer_id() -> PeerId {
+    let (enc_pk, _enc_sk) = gen_encrypt_keypair();
+    let (sign_pk, _sign_sk) = gen_sign_keypair();
+    PeerId {
+        pub_sign_key: sign_pk,
+        pub_enc_key: enc_pk,
+    }
 }
 
-pub fn get_event_sender() -> (crate::CrustEventSender<UniqueId>, Receiver<Event<UniqueId>>) {
+pub fn get_event_sender() -> (crate::CrustEventSender, Receiver<Event>) {
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 
@@ -97,7 +100,7 @@ pub fn bootstrap_cache_tmp_file() -> PathBuf {
 }
 
 /// Creates `Core` for tests with some defaults.
-pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore<UniqueId> {
+pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore {
     let (event_tx, _event_rx) = channel();
     let timer = timer::Builder::default().build();
     EventLoopCore::new_for_tests(0, event_tx, timer, CrustData::new(bootstrap_cache))

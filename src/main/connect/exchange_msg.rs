@@ -7,8 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{Message, NameHash, State, Uid};
+use crate::common::{Message, NameHash, State};
 use crate::main::{ConnectionId, CrustData, EventLoopCore};
+use crate::PeerId;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SharedSecretKey};
 use socket_collection::{EncryptContext, Priority, TcpSock};
@@ -22,31 +23,31 @@ use std::rc::Rc;
 
 /// When connection messages are exchanged a callback is called with these parameters.
 /// A new mio `Token` is assigned to the given socket.
-pub type Finish<UID> = Box<FnMut(&mut EventLoopCore<UID>, &Poll, Token, Option<TcpSock>)>;
+pub type Finish = Box<FnMut(&mut EventLoopCore, &Poll, Token, Option<TcpSock>)>;
 
 /// Exchanges connect messages.
-pub struct ExchangeMsg<UID: Uid> {
+pub struct ExchangeMsg {
     token: Token,
-    expected_id: UID,
+    expected_id: PeerId,
     expected_nh: NameHash,
     socket: TcpSock,
-    msg: Option<(Message<UID>, Priority)>,
+    msg: Option<(Message, Priority)>,
     shared_key: SharedSecretKey,
-    finish: Finish<UID>,
+    finish: Finish,
 }
 
-impl<UID: Uid> ExchangeMsg<UID> {
+impl ExchangeMsg {
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         socket: TcpSock,
-        our_id: UID,
-        expected_id: UID,
+        our_id: PeerId,
+        expected_id: PeerId,
         name_hash: NameHash,
         our_pk: PublicEncryptKey,
         shared_key: SharedSecretKey,
         our_global_direct_listeners: HashSet<SocketAddr>,
-        finish: Finish<UID>,
+        finish: Finish,
     ) -> crate::Res<Token> {
         let token = core.get_new_token();
 
@@ -89,19 +90,14 @@ impl<UID: Uid> ExchangeMsg<UID> {
         Ok(token)
     }
 
-    fn write(
-        &mut self,
-        core: &mut EventLoopCore<UID>,
-        poll: &Poll,
-        msg: Option<(Message<UID>, Priority)>,
-    ) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, msg: Option<(Message, Priority)>) {
         if self.socket.write(msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
-    fn receive_response(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
-        match self.socket.read::<Message<UID>>() {
+    fn receive_response(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::ConnectResponse(their_uid, name_hash))) => {
                 if their_uid != self.expected_id || name_hash != self.expected_nh {
                     return self.handle_error(core, poll);
@@ -124,15 +120,15 @@ impl<UID: Uid> ExchangeMsg<UID> {
         }
     }
 
-    fn handle_error(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn handle_error(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate(core, poll);
         let token = self.token;
         (*self.finish)(core, poll, token, None);
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for ExchangeMsg<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
+impl State<CrustData> for ExchangeMsg {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             let req = self.msg.take();
             self.write(core, poll, req);
@@ -142,7 +138,7 @@ impl<UID: Uid> State<CrustData<UID>> for ExchangeMsg<UID> {
         }
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
 

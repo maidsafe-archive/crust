@@ -8,14 +8,14 @@
 // Software.
 
 use crate::common::{
-    self, BootstrapperRole, CoreMessage, CrustUser, NameHash, PeerInfo, Uid, HASH_SIZE,
+    self, BootstrapperRole, CoreMessage, CrustUser, NameHash, PeerInfo, HASH_SIZE,
 };
 use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
     ConnectionInfoResult, ConnectionListener, CrustData, CrustError, Event, EventLoop,
-    EventLoopCore, PrivConnectionInfo, PubConnectionInfo,
+    EventLoopCore, PeerId, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
@@ -93,22 +93,22 @@ const DISABLE_NAT: bool = true;
 /// [`start_listening_tcp`]: struct.Service.html#method.set_listening_tcp
 /// [`set_service_discovery_listen`]: struct.Service.html#method.set_service_discovery_listen
 /// [`set_ext_reachability_test`]: struct.Service.html#method.set_ext_reachability_test
-pub struct Service<UID: Uid> {
-    event_tx: crate::CrustEventSender<UID>,
+pub struct Service {
+    event_tx: crate::CrustEventSender,
     // TODO(povilas): see if we can eliminate Arc by moving MappingContext into CrustData
     // stored in Core
     mc: Arc<MappingContext>,
-    el: EventLoop<UID>,
+    el: EventLoop,
     name_hash: NameHash,
-    our_uid: UID,
+    our_uid: PeerId,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
-impl<UID: Uid> Service<UID> {
+impl Service {
     /// Construct a service. `event_tx` is the sending half of the channel which crust will send
     /// notifications on. Can fail, if can't read config file successfully.
-    pub fn try_new(event_tx: crate::CrustEventSender<UID>, our_uid: UID) -> crate::Res<Self> {
+    pub fn try_new(event_tx: crate::CrustEventSender, our_uid: PeerId) -> crate::Res<Self> {
         Service::with_config(event_tx, config_handler::read_config_file()?, our_uid)
     }
 
@@ -116,9 +116,9 @@ impl<UID: Uid> Service<UID> {
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
     pub fn with_config(
-        event_tx: crate::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender,
         config: Config,
-        our_uid: UID,
+        our_uid: PeerId,
     ) -> crate::Res<Self> {
         safe_crypto::init()?;
 
@@ -184,7 +184,7 @@ impl<UID: Uid> Service<UID> {
                 }
             };
             let mut state = state.borrow_mut();
-            let listener = match state.as_any().downcast_mut::<ConnectionListener<UID>>() {
+            let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
                 Some(l) => l,
                 None => {
                     warn!("Token reserved for ConnectionListener has something else.");
@@ -213,7 +213,7 @@ impl<UID: Uid> Service<UID> {
                 }
             };
             let mut state = state.borrow_mut();
-            let listener = match state.as_any().downcast_mut::<ConnectionListener<UID>>() {
+            let listener = match state.as_any().downcast_mut::<ConnectionListener>() {
                 Some(l) => l,
                 None => {
                     warn!("Token reserved for ConnectionListener has something else.");
@@ -267,23 +267,21 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state
-                .as_any()
-                .downcast_mut::<ServiceDiscovery<CrustData<UID>>>()
-            {
-                Some(sd) => sd,
-                None => {
-                    warn!("Token reserved for ServiceDiscovery has something else.");
-                    return;
-                }
-            };
+            let service_discovery =
+                match state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>() {
+                    Some(sd) => sd,
+                    None => {
+                        warn!("Token reserved for ServiceDiscovery has something else.");
+                        return;
+                    }
+                };
             service_discovery.set_listen(listen);
         });
     }
 
     /// Checks if given peer was connected, if so, returns it's address together with a flag
     /// indicating whether it was hard coded in config or not.
-    fn get_peer_socket_addr(&self, peer_uid: &UID) -> crate::Res<(SocketAddr, bool)> {
+    fn get_peer_socket_addr(&self, peer_uid: &PeerId) -> crate::Res<(SocketAddr, bool)> {
         let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
@@ -308,7 +306,7 @@ impl<UID: Uid> Service<UID> {
             match state
                 .borrow_mut()
                 .as_any()
-                .downcast_mut::<ActiveConnection<UID>>()
+                .downcast_mut::<ActiveConnection>()
             {
                 Some(active_connection) => {
                     let config = &core.user_data().config.cfg;
@@ -336,12 +334,12 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Return the ip address of the peer.
-    pub fn get_peer_ip_addr(&self, peer_uid: &UID) -> crate::Res<IpAddr> {
+    pub fn get_peer_ip_addr(&self, peer_uid: &PeerId) -> crate::Res<IpAddr> {
         self.get_peer_socket_addr(peer_uid).map(|(s, _)| s.ip())
     }
 
     /// Returns whether the given peer's IP is in the config file's hard-coded contacts list.
-    pub fn is_peer_hard_coded(&self, peer_uid: &UID) -> bool {
+    pub fn is_peer_hard_coded(&self, peer_uid: &PeerId) -> bool {
         self.get_peer_socket_addr(peer_uid)
             .map(|(_, hard_coded)| hard_coded)
             .unwrap_or(false)
@@ -360,16 +358,14 @@ impl<UID: Uid> Service<UID> {
                 None => return,
             };
             let mut state = state.borrow_mut();
-            let service_discovery = match state
-                .as_any()
-                .downcast_mut::<ServiceDiscovery<CrustData<UID>>>()
-            {
-                Some(sd) => sd,
-                None => {
-                    warn!("Token reserved for ServiceDiscovery has something else.");
-                    return;
-                }
-            };
+            let service_discovery =
+                match state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>() {
+                    Some(sd) => sd,
+                    None => {
+                        warn!("Token reserved for ServiceDiscovery has something else.");
+                        return;
+                    }
+                };
             service_discovery.register_observer(obs);
             let _ = service_discovery.seek_peers();
         });
@@ -477,8 +473,8 @@ impl<UID: Uid> Service<UID> {
     ///    obtained from the peer
     pub fn connect(
         &self,
-        our_ci: PrivConnectionInfo<UID>,
-        mut their_ci: PubConnectionInfo<UID>,
+        our_ci: PrivConnectionInfo,
+        mut their_ci: PubConnectionInfo,
     ) -> crate::Res<()> {
         if their_ci.id == self.our_uid {
             debug!(
@@ -528,7 +524,7 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, peer_uid: &UID) -> bool {
+    pub fn disconnect(&self, peer_uid: &PeerId) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
@@ -551,7 +547,7 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Send data to a peer.
-    pub fn send(&self, peer_uid: &UID, msg: Vec<u8>, priority: Priority) -> crate::Res<()> {
+    pub fn send(&self, peer_uid: &PeerId, msg: Vec<u8>, priority: Priority) -> crate::Res<()> {
         let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
@@ -614,7 +610,7 @@ impl<UID: Uid> Service<UID> {
                     .map(|peer| peer.addr)
                     .collect();
                 let event_tx_clone = event_tx.clone();
-                match MappedTcpSocket::<_, UID, _>::start(
+                match MappedTcpSocket::start(
                     core,
                     poll,
                     0,
@@ -657,7 +653,7 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Check if we are connected to the given peer
-    pub fn is_connected(&self, peer_uid: &UID) -> bool {
+    pub fn is_connected(&self, peer_uid: &PeerId) -> bool {
         let peer_uid = *peer_uid;
         let (tx, rx) = mpsc::channel();
 
@@ -676,7 +672,7 @@ impl<UID: Uid> Service<UID> {
     }
 
     /// Returns our ID.
-    pub fn id(&self) -> UID {
+    pub fn id(&self) -> PeerId {
         self.our_uid
     }
 
@@ -697,14 +693,14 @@ impl<UID: Uid> Service<UID> {
 
     fn post<F>(&self, f: F) -> crate::Res<()>
     where
-        F: FnOnce(&mut EventLoopCore<UID>, &Poll) + Send + 'static,
+        F: FnOnce(&mut EventLoopCore, &Poll) + Send + 'static,
     {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
     }
 }
 
-fn our_global_listener_addrs<UID: Uid>(core: &EventLoopCore<UID>) -> HashSet<SocketAddr> {
+fn our_global_listener_addrs(core: &EventLoopCore) -> HashSet<SocketAddr> {
     core.user_data()
         .our_listeners
         .iter()
@@ -727,11 +723,10 @@ mod tests {
     use super::*;
     use crate::common::CrustUser;
     use crate::main::{self, Event};
-    use crate::tests::{get_event_sender, timebomb, UniqueId};
+    use crate::tests::{get_event_sender, rand_peer_id, timebomb};
     use crate::CrustError;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
-    use rand;
     use std::collections::{hash_map, HashMap};
     use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
     use std::sync::mpsc::Receiver;
@@ -739,15 +734,15 @@ mod tests {
     use std::thread;
     use std::time::Duration;
 
-    type Service = super::Service<UniqueId>;
-    type PrivConnectionInfo = main::PrivConnectionInfo<UniqueId>;
-    type PubConnectionInfo = main::PubConnectionInfo<UniqueId>;
+    type Service = super::Service;
+    type PrivConnectionInfo = main::PrivConnectionInfo;
+    type PubConnectionInfo = main::PubConnectionInfo;
 
     #[test]
     fn connect_self() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx, event_rx) = get_event_sender();
-            let mut service = unwrap!(Service::try_new(event_tx, rand::random()));
+            let mut service = unwrap!(Service::try_new(event_tx, rand_peer_id()));
 
             unwrap!(service.start_listening_tcp());
             expect_event!(event_rx, Event::ListenerStarted(_));
@@ -771,14 +766,14 @@ mod tests {
     fn direct_connect_two_peers() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let mut service_0 = unwrap!(Service::try_new(event_tx_0, rand::random()));
+            let mut service_0 = unwrap!(Service::try_new(event_tx_0, rand_peer_id()));
 
             unwrap!(service_0.start_listening_tcp());
             expect_event!(event_rx_0, Event::ListenerStarted(_));
             unwrap!(service_0.set_ext_reachability_test(false));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let mut service_1 = unwrap!(Service::try_new(event_tx_1, rand::random()));
+            let mut service_1 = unwrap!(Service::try_new(event_tx_1, rand_peer_id()));
 
             unwrap!(service_1.start_listening_tcp());
             expect_event!(event_rx_1, Event::ListenerStarted(_));
@@ -795,10 +790,10 @@ mod tests {
         unwrap!(maidsafe_utilities::log::init(true));
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let service_0 = unwrap!(Service::try_new(event_tx_0, rand::random()));
+            let service_0 = unwrap!(Service::try_new(event_tx_0, rand_peer_id()));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let service_1 = unwrap!(Service::try_new(event_tx_1, rand::random()));
+            let service_1 = unwrap!(Service::try_new(event_tx_1, rand_peer_id()));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
             debug!("Exchanging messages ...");
@@ -809,9 +804,9 @@ mod tests {
 
     fn connect(
         service_0: &Service,
-        event_rx_0: &Receiver<Event<UniqueId>>,
+        event_rx_0: &Receiver<Event>,
         service_1: &Service,
-        event_rx_1: &Receiver<Event<UniqueId>>,
+        event_rx_1: &Receiver<Event>,
     ) {
         service_0.prepare_connection_info(0);
         service_1.prepare_connection_info(0);
@@ -835,9 +830,9 @@ mod tests {
 
     fn exchange_messages(
         service_0: &Service,
-        event_rx_0: &Receiver<Event<UniqueId>>,
+        event_rx_0: &Receiver<Event>,
         service_1: &Service,
-        event_rx_1: &Receiver<Event<UniqueId>>,
+        event_rx_1: &Receiver<Event>,
     ) {
         use rand;
         use std::iter;
@@ -869,7 +864,7 @@ mod tests {
 
     fn prepare_connection_info(
         service: &mut Service,
-        event_rx: &Receiver<Event<UniqueId>>,
+        event_rx: &Receiver<Event>,
     ) -> PrivConnectionInfo {
         static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
         let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
@@ -893,7 +888,7 @@ mod tests {
         const NUM_MSGS: usize = 100;
 
         struct TestNode {
-            event_rx: Receiver<Event<UniqueId>>,
+            event_rx: Receiver<Event>,
             service: Service,
             connection_id_rx: Receiver<PubConnectionInfo>,
             our_cis: Vec<PrivConnectionInfo>,
@@ -905,7 +900,7 @@ mod tests {
                 let (event_sender, event_rx) = get_event_sender();
                 let config = unwrap!(crate::main::config_handler::read_config_file());
                 let mut service =
-                    unwrap!(Service::with_config(event_sender, config, rand::random()));
+                    unwrap!(Service::with_config(event_sender, config, rand_peer_id()));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());
                 match unwrap!(event_rx.recv()) {

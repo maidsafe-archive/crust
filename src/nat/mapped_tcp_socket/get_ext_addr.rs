@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{Core, CoreTimer, Message, PeerInfo, State, Uid};
+use crate::common::{Core, CoreTimer, Message, PeerInfo, State};
 use crate::nat::{util, NatError};
 use mio::net::TcpStream;
 use mio::{Poll, PollOpt, Ready, Token};
@@ -24,15 +24,15 @@ pub type Finish<T> = Box<FnMut(&mut Core<T>, &Poll, Token, Result<SocketAddr, ()
 
 /// Does a STUN like request to retrieve my own public endpoint, except the request is fully
 /// encrypted.
-pub struct GetExtAddr<UID: Uid, T> {
+pub struct GetExtAddr<T> {
     token: Token,
     socket: TcpSock,
-    request: Option<(Message<UID>, Priority)>,
+    request: Option<(Message, Priority)>,
     timeout: Option<Timeout>,
     finish: Finish<T>,
 }
 
-impl<UID: Uid, T: 'static> GetExtAddr<UID, T> {
+impl<T: 'static> GetExtAddr<T> {
     pub fn start(
         core: &mut Core<T>,
         poll: &Poll,
@@ -75,14 +75,14 @@ impl<UID: Uid, T: 'static> GetExtAddr<UID, T> {
         Ok(token)
     }
 
-    fn write(&mut self, core: &mut Core<T>, poll: &Poll, msg: Option<(Message<UID>, Priority)>) {
+    fn write(&mut self, core: &mut Core<T>, poll: &Poll, msg: Option<(Message, Priority)>) {
         if self.socket.write(msg).is_err() {
             self.handle_error(core, poll);
         }
     }
 
     fn receive_response(&mut self, core: &mut Core<T>, poll: &Poll) {
-        match self.socket.read::<Message<UID>>() {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::EchoAddrResp(ext_addr))) => {
                 self.terminate(core, poll);
                 let token = self.token;
@@ -100,7 +100,7 @@ impl<UID: Uid, T: 'static> GetExtAddr<UID, T> {
     }
 }
 
-impl<UID: Uid, T: 'static> State<T> for GetExtAddr<UID, T> {
+impl<T: 'static> State<T> for GetExtAddr<T> {
     fn ready(&mut self, core: &mut Core<T>, poll: &Poll, kind: Ready) {
         if kind.is_writable() {
             let req = self.request.take();

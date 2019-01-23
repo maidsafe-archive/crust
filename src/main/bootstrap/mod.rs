@@ -13,10 +13,11 @@ mod try_peer;
 pub use self::cache::Cache;
 use self::try_peer::TryPeer;
 use crate::common::{
-    BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State, Uid,
+    BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State,
 };
 use crate::main::{ActiveConnection, Config, CrustData, CrustError, Event, EventLoopCore};
 use crate::service_discovery::ServiceDiscovery;
+use crate::PeerId;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand;
@@ -44,37 +45,37 @@ const MAX_CONTACTS_EXPECTED: usize = 1500;
 /// 1. attempts service discovery,
 /// 2. if no peers are found, tries cached ones,
 /// 3. if no success again, tries peers hard coded in the config.
-pub struct Bootstrap<UID: Uid> {
+pub struct Bootstrap {
     token: Token,
     peers: Vec<PeerInfo>,
     name_hash: NameHash,
-    our_uid: UID,
+    our_uid: PeerId,
     our_role: BootstrapperRole,
-    event_tx: crate::CrustEventSender<UID>,
+    event_tx: crate::CrustEventSender,
     sd_meta: Option<ServiceDiscMeta>,
     bs_timer: CoreTimer,
     bs_timeout: Timeout,
     children: HashSet<Token>,
-    self_weak: Weak<RefCell<Bootstrap<UID>>>,
+    self_weak: Weak<RefCell<Bootstrap>>,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
-impl<UID: Uid> Bootstrap<UID> {
+impl Bootstrap {
     /// # Args
     ///
     /// `our_role` - Crust role during  bootstrap: client or node. Clients are never checked for
     ///     external reachability.
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         name_hash: NameHash,
-        our_uid: UID,
+        our_uid: PeerId,
         our_role: BootstrapperRole,
         blacklist: HashSet<SocketAddr>,
         token: Token,
         service_discovery_token: Token,
-        event_tx: crate::CrustEventSender<UID>,
+        event_tx: crate::CrustEventSender,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
     ) -> crate::Res<()> {
@@ -121,7 +122,7 @@ impl<UID: Uid> Bootstrap<UID> {
         Ok(())
     }
 
-    fn begin_bootstrap(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn begin_bootstrap(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let peers = mem::replace(&mut self.peers, Vec::new());
         if peers.is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
@@ -130,7 +131,7 @@ impl<UID: Uid> Bootstrap<UID> {
 
         for peer in peers {
             let self_weak = self.self_weak.clone();
-            let finish = move |core: &mut EventLoopCore<UID>, poll: &Poll, child, res| {
+            let finish = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
                     self_rc.borrow_mut().handle_result(core, poll, child, res)
                 }
@@ -155,10 +156,10 @@ impl<UID: Uid> Bootstrap<UID> {
 
     fn handle_result(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         child: Token,
-        res: Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
+        res: Result<(TcpSock, PeerInfo, PeerId), (PeerInfo, Option<BootstrapDenyReason>)>,
     ) {
         let _ = self.children.remove(&child);
         match res {
@@ -217,7 +218,7 @@ impl<UID: Uid> Bootstrap<UID> {
         self.maybe_terminate(core, poll);
     }
 
-    fn maybe_terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         if self.children.is_empty() {
             info!("Bootstrapper has no active children left - bootstrap has failed");
             self.terminate(core, poll);
@@ -225,7 +226,7 @@ impl<UID: Uid> Bootstrap<UID> {
         }
     }
 
-    fn terminate_children(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate_children(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         for child in self.children.drain() {
             let child = match core.get_state(child) {
                 Some(state) => state,
@@ -237,8 +238,8 @@ impl<UID: Uid> Bootstrap<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for Bootstrap<UID> {
-    fn timeout(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, timer_id: u8) {
+impl State<CrustData> for Bootstrap {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, timer_id: u8) {
         if timer_id == self.bs_timer.timer_id {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             return self.terminate(core, poll);
@@ -250,7 +251,7 @@ impl<UID: Uid> State<CrustData<UID>> for Bootstrap<UID> {
         self.begin_bootstrap(core, poll);
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate_children(core, poll);
         if let Some(sd_meta) = self.sd_meta.take() {
             let _ = core.cancel_timeout(&sd_meta.timeout);
@@ -265,7 +266,7 @@ impl<UID: Uid> State<CrustData<UID>> for Bootstrap<UID> {
 }
 
 /// Puts given peer contacts into bootstrap cache which is then written to disk.
-pub fn cache_peer_info<UID: Uid>(core: &mut EventLoopCore<UID>, peer_info: PeerInfo) {
+pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
     let user_data = &mut core.user_data_mut();
     if user_data
         .config
@@ -290,16 +291,14 @@ struct ServiceDiscMeta {
 
 /// Runs service discovery state with a timeout. When timeout happens, `Bootstrap::timeout()`
 /// callback is called.
-fn seek_peers<UID: Uid>(
-    core: &mut EventLoopCore<UID>,
+fn seek_peers(
+    core: &mut EventLoopCore,
     service_discovery_token: Token,
     token: Token,
 ) -> crate::Res<(Receiver<HashSet<PeerInfo>>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_token) {
         let mut state = state.borrow_mut();
-        let state = unwrap!(state
-            .as_any()
-            .downcast_mut::<ServiceDiscovery<CrustData<UID>>>());
+        let state = unwrap!(state.as_any().downcast_mut::<ServiceDiscovery<CrustData>>());
 
         let (obs, rx) = mpsc::channel();
         state.register_observer(obs);
@@ -507,7 +506,7 @@ mod tests {
 
         mod handle_result {
             use super::*;
-            use crate::tests::utils::{get_event_sender, rand_uid, UniqueId};
+            use crate::tests::utils::{get_event_sender, rand_peer_id};
             use safe_crypto::gen_encrypt_keypair;
 
             mod when_result_is_error {
@@ -531,7 +530,7 @@ mod tests {
                         &mut core,
                         &poll,
                         [1; 32],
-                        rand_uid(),
+                        rand_peer_id(),
                         BootstrapperRole::Client,
                         HashSet::new(),
                         token,
@@ -543,8 +542,7 @@ mod tests {
 
                     let state = unwrap!(core.get_state(token));
                     let mut state = state.borrow_mut();
-                    let bootstrap_state =
-                        unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
+                    let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap>());
                     bootstrap_state.handle_result(
                         &mut core,
                         &poll,
@@ -576,7 +574,7 @@ mod tests {
                         &mut core,
                         &poll,
                         [1; 32],
-                        rand_uid(),
+                        rand_peer_id(),
                         BootstrapperRole::Client,
                         HashSet::new(),
                         token,
@@ -588,8 +586,7 @@ mod tests {
 
                     let state = unwrap!(core.get_state(token));
                     let mut state = state.borrow_mut();
-                    let bootstrap_state =
-                        unwrap!(state.as_any().downcast_mut::<Bootstrap<UniqueId>>());
+                    let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap>());
                     bootstrap_state.handle_result(
                         &mut core,
                         &poll,

@@ -7,27 +7,25 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{CoreTimer, CrustUser, State, Uid};
+use crate::common::{CoreTimer, CrustUser, State};
 use crate::main::{read_config_file, ActiveConnection, CrustData, EventLoopCore};
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use std::any::Any;
 use std::cell::RefCell;
-use std::marker::PhantomData;
 use std::rc::Rc;
 use std::time::Duration;
 
 const REFRESH_INTERVAL_SEC: u64 = 30;
 
-pub struct ConfigRefresher<UID: Uid> {
+pub struct ConfigRefresher {
     token: Token,
     timer: CoreTimer,
     timeout: Timeout,
-    _phantom: PhantomData<UID>,
 }
 
-impl<UID: Uid> ConfigRefresher<UID> {
-    pub fn start(core: &mut EventLoopCore<UID>, token: Token) -> crate::Res<()> {
+impl ConfigRefresher {
+    pub fn start(core: &mut EventLoopCore, token: Token) -> crate::Res<()> {
         trace!("Entered state ConfigRefresher");
 
         let timer = CoreTimer::new(token, 0);
@@ -37,7 +35,6 @@ impl<UID: Uid> ConfigRefresher<UID> {
             token,
             timer,
             timeout,
-            _phantom: PhantomData,
         }));
         let _ = core.insert_state(token, state);
 
@@ -45,13 +42,13 @@ impl<UID: Uid> ConfigRefresher<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for ConfigRefresher<UID> {
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, _poll: &Poll) {
+impl State<CrustData> for ConfigRefresher {
+    fn terminate(&mut self, core: &mut EventLoopCore, _poll: &Poll) {
         let _ = core.cancel_timeout(&self.timeout);
         let _ = core.remove_state(self.token);
     }
 
-    fn timeout(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, _timer_id: u8) {
+    fn timeout(&mut self, core: &mut EventLoopCore, poll: &Poll, _timer_id: u8) {
         self.timeout = core.set_timeout(Duration::from_secs(REFRESH_INTERVAL_SEC), self.timer);
 
         let config = match read_config_file() {
@@ -92,7 +89,7 @@ impl<UID: Uid> State<CrustData<UID>> for ConfigRefresher<UID> {
                     .and_then(|peer| {
                         let should_drop = {
                             let mut state = peer.borrow_mut();
-                            let ac = match state.as_any().downcast_mut::<ActiveConnection<UID>>() {
+                            let ac = match state.as_any().downcast_mut::<ActiveConnection>() {
                                 Some(ac) => ac,
                                 None => {
                                     warn!(

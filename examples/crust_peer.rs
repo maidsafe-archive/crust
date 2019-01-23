@@ -31,7 +31,7 @@
 //!    After you press ENTER you should be presented with a message declaring successful
 //!    connection:
 //!
-//!    > Connected to peer UniqueId([255, 1, 11, 129, 240, 47, 25, 225, 183, 51, 93, 187, 205, 123,
+//!    > Connected to peer PeerId([255, 1, 11, 129, 240, 47, 25, 225, 183, 51, 93, 187, 205, 123,
 //!      124, 62, 242, 136, 190, 60]) Node count: 1
 //!
 //! 6. Then you can exchange messages with connected peers:
@@ -95,8 +95,6 @@
 #[macro_use]
 extern crate log;
 #[macro_use]
-extern crate serde_derive;
-#[macro_use]
 extern crate unwrap;
 use clap;
 use crust;
@@ -106,9 +104,9 @@ use serde_json;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
-use crust::{Config, ConnectionInfoResult, Uid};
-use rand::distributions::{Distribution, Standard};
+use crust::{Config, ConnectionInfoResult, PeerId, PrivConnectionInfo, Service};
 use rand::Rng;
+use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair};
 use std::cmp;
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -117,19 +115,6 @@ use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd, Hash)]
-struct UniqueId([u8; 20]);
-impl Uid for UniqueId {}
-
-impl Distribution<UniqueId> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> UniqueId {
-        UniqueId(rng.gen())
-    }
-}
-
-type PrivConnectionInfo = crust::PrivConnectionInfo<UniqueId>;
-type Service = crust::Service<UniqueId>;
 
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
@@ -145,7 +130,7 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 ///
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
-    nodes: HashMap<usize, UniqueId>,
+    nodes: HashMap<usize, PeerId>,
     our_connection_infos: BTreeMap<u32, PrivConnectionInfo>,
     performance_start: Instant,
     performance_interval: Duration,
@@ -197,7 +182,7 @@ impl Network {
         println!();
     }
 
-    pub fn get_peer_id(&self, n: usize) -> Option<&UniqueId> {
+    pub fn get_peer_id(&self, n: usize) -> Option<&PeerId> {
         self.nodes.get(&n)
     }
 
@@ -249,7 +234,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
 fn handle_new_peer(
     service: &Service,
     protected_network: Arc<Mutex<Network>>,
-    peer_id: UniqueId,
+    peer_id: PeerId,
 ) -> usize {
     let mut network = unwrap!(protected_network.lock());
     let peer_index = network.next_peer_index();
@@ -312,7 +297,7 @@ fn main() {
         None
     };
 
-    let mut service = unwrap!(Service::with_config(event_sender, config, rand::random()));
+    let mut service = unwrap!(Service::with_config(event_sender, config, new_peer_id()));
     unwrap!(service.start_listening_tcp());
     service.start_service_discovery();
     let service = Arc::new(Mutex::new(service));
@@ -356,7 +341,7 @@ fn main() {
                                 );
                             }
                             crust::Event::ConnectionInfoPrepared(result) => {
-                                let ConnectionInfoResult::<UniqueId> {
+                                let ConnectionInfoResult {
                                     result_token,
                                     result,
                                 } = result;
@@ -682,5 +667,14 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
         None
     } else {
         None
+    }
+}
+
+fn new_peer_id() -> PeerId {
+    let (enc_pk, _enc_sk) = gen_encrypt_keypair();
+    let (sign_pk, _sign_sk) = gen_sign_keypair();
+    PeerId {
+        pub_sign_key: sign_pk,
+        pub_enc_key: enc_pk,
     }
 }

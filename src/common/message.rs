@@ -8,26 +8,27 @@
 // Software.
 
 use crate::common::{BootstrapperRole, NameHash};
+use crate::PeerId;
 use safe_crypto::PublicEncryptKey;
 use std::collections::HashSet;
 use std::net::SocketAddr;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum Message<UID> {
+pub enum Message {
     Heartbeat,
     /// Carries a list of our listener addresses in case remote peer wants to check our
     /// external reachability.
-    BootstrapRequest(UID, NameHash, BootstrapperRole, PublicEncryptKey),
-    BootstrapGranted(UID),
+    BootstrapRequest(PeerId, NameHash, BootstrapperRole, PublicEncryptKey),
+    BootstrapGranted(PeerId),
     BootstrapDenied(BootstrapDenyReason),
     EchoAddrReq(PublicEncryptKey),
     EchoAddrResp(SocketAddr),
     ChooseConnection,
     /// Send this message to initiate connection with remote peer. This message carries our ID,
     /// network name hash, list of public IP:port pairs and our public key.
-    ConnectRequest(UID, NameHash, HashSet<SocketAddr>, PublicEncryptKey),
+    ConnectRequest(PeerId, NameHash, HashSet<SocketAddr>, PublicEncryptKey),
     /// Response of accepted connection that carries remote peer's ID and network name hash.
-    ConnectResponse(UID, NameHash),
+    ConnectResponse(PeerId, NameHash),
     Data(Vec<u8>),
 }
 

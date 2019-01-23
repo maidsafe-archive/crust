@@ -7,10 +7,9 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{
-    BootstrapDenyReason, BootstrapperRole, Message, NameHash, PeerInfo, State, Uid,
-};
+use crate::common::{BootstrapDenyReason, BootstrapperRole, Message, NameHash, PeerInfo, State};
 use crate::main::{CrustData, EventLoopCore};
+use crate::PeerId;
 use mio::{Poll, PollOpt, Ready, Token};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
@@ -19,36 +18,36 @@ use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
 
-pub type Finish<UID> = Box<
+pub type Finish = Box<
     FnMut(
-        &mut EventLoopCore<UID>,
+        &mut EventLoopCore,
         &Poll,
         Token,
-        Result<(TcpSock, PeerInfo, UID), (PeerInfo, Option<BootstrapDenyReason>)>,
+        Result<(TcpSock, PeerInfo, PeerId), (PeerInfo, Option<BootstrapDenyReason>)>,
     ),
 >;
 
 /// Sends bootstrap request to a one specific address and waits for response.
-pub struct TryPeer<UID: Uid> {
+pub struct TryPeer {
     token: Token,
     peer: PeerInfo,
     socket: TcpSock,
-    request: Option<(Message<UID>, Priority)>,
-    finish: Finish<UID>,
+    request: Option<(Message, Priority)>,
+    finish: Finish,
     shared_key: SharedSecretKey,
 }
 
-impl<UID: Uid> TryPeer<UID> {
+impl TryPeer {
     pub fn start(
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         peer: PeerInfo,
-        our_uid: UID,
+        our_uid: PeerId,
         name_hash: NameHash,
         our_role: BootstrapperRole,
         our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
-        finish: Finish<UID>,
+        finish: Finish,
     ) -> crate::Res<Token> {
         let mut socket = TcpSock::connect(&peer.addr)?;
         socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(peer.pub_key))?;
@@ -80,19 +79,14 @@ impl<UID: Uid> TryPeer<UID> {
         Ok(token)
     }
 
-    fn write(
-        &mut self,
-        core: &mut EventLoopCore<UID>,
-        poll: &Poll,
-        msg: Option<(Message<UID>, Priority)>,
-    ) {
+    fn write(&mut self, core: &mut EventLoopCore, poll: &Poll, msg: Option<(Message, Priority)>) {
         if self.socket.write(msg).is_err() {
             self.handle_error(core, poll, None);
         }
     }
 
-    fn read(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
-        match self.socket.read::<Message<UID>>() {
+    fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+        match self.socket.read::<Message>() {
             Ok(Some(Message::BootstrapGranted(peer_uid))) => {
                 let _ = core.remove_state(self.token);
                 let token = self.token;
@@ -120,7 +114,7 @@ impl<UID: Uid> TryPeer<UID> {
 
     fn handle_error(
         &mut self,
-        core: &mut EventLoopCore<UID>,
+        core: &mut EventLoopCore,
         poll: &Poll,
         reason: Option<BootstrapDenyReason>,
     ) {
@@ -129,8 +123,8 @@ impl<UID: Uid> TryPeer<UID> {
     }
 }
 
-impl<UID: Uid> State<CrustData<UID>> for TryPeer<UID> {
-    fn ready(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll, kind: Ready) {
+impl State<CrustData> for TryPeer {
+    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
         if kind.is_writable() || kind.is_readable() {
             if kind.is_writable() {
                 let req = self.request.take();
@@ -149,7 +143,7 @@ impl<UID: Uid> State<CrustData<UID>> for TryPeer<UID> {
         self.handle_error(core, poll, None);
     }
 
-    fn terminate(&mut self, core: &mut EventLoopCore<UID>, poll: &Poll) {
+    fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         let _ = core.remove_state(self.token);
         let _ = poll.deregister(&self.socket);
     }
