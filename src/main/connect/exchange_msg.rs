@@ -11,7 +11,7 @@ use crate::common::{Message, NameHash, State};
 use crate::main::{ConnectionId, CrustData, EventLoopCore};
 use crate::PeerId;
 use mio::{Poll, PollOpt, Ready, Token};
-use safe_crypto::{PublicEncryptKey, SharedSecretKey};
+use safe_crypto::SharedSecretKey;
 use socket_collection::{EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
@@ -44,7 +44,6 @@ impl ExchangeMsg {
         our_id: PeerId,
         expected_id: PeerId,
         name_hash: NameHash,
-        our_pk: PublicEncryptKey,
         shared_key: SharedSecretKey,
         our_global_direct_listeners: HashSet<SocketAddr>,
         finish: Finish,
@@ -78,7 +77,7 @@ impl ExchangeMsg {
             expected_nh: name_hash,
             socket,
             msg: Some((
-                Message::ConnectRequest(our_id, name_hash, our_global_direct_listeners, our_pk),
+                Message::ConnectRequest(our_id, name_hash, our_global_direct_listeners),
                 0,
             )),
             shared_key,

@@ -53,7 +53,6 @@ pub struct ExchangeMsg {
     accept_bootstrap: bool,
     test_ext_reachability: bool,
     self_weak: Weak<RefCell<ExchangeMsg>>,
-    our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
@@ -71,7 +70,6 @@ impl ExchangeMsg {
         our_uid: PeerId,
         name_hash: NameHash,
         event_tx: crate::CrustEventSender,
-        our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         test_ext_reachability: bool,
     ) -> crate::Res<()> {
@@ -97,7 +95,6 @@ impl ExchangeMsg {
             accept_bootstrap,
             test_ext_reachability,
             self_weak: Default::default(),
-            our_pk,
             our_sk: our_sk.clone(),
         }));
 
@@ -110,23 +107,23 @@ impl ExchangeMsg {
 
     fn read(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         match self.socket.read::<Message>() {
-            Ok(Some(Message::BootstrapRequest(their_uid, name_hash, their_role, their_pk))) => {
+            Ok(Some(Message::BootstrapRequest(their_uid, name_hash, their_role))) => {
                 if !self.accept_bootstrap {
                     debug!("Bootstrapping off us is not allowed");
                     return self.terminate(core, poll);
                 }
 
                 match self.validate_peer_uid(their_uid) {
-                    Ok(their_uid) => self.handle_bootstrap_req(
-                        core, poll, their_uid, name_hash, their_role, their_pk,
-                    ),
+                    Ok(their_uid) => {
+                        self.handle_bootstrap_req(core, poll, their_uid, name_hash, their_role)
+                    }
                     Err(()) => self.terminate(core, poll),
                 }
             }
-            Ok(Some(Message::ConnectRequest(their_uid, name_hash, their_addrs, their_pk))) => {
+            Ok(Some(Message::ConnectRequest(their_uid, name_hash, their_addrs))) => {
                 match self.validate_peer_uid(their_uid) {
                     Ok(their_uid) => {
-                        self.handle_connect(core, poll, their_uid, name_hash, their_addrs, their_pk)
+                        self.handle_connect(core, poll, their_uid, name_hash, their_addrs)
                     }
                     Err(()) => self.terminate(core, poll),
                 }
@@ -153,7 +150,6 @@ impl ExchangeMsg {
         their_uid: PeerId,
         name_hash: NameHash,
         their_role: BootstrapperRole,
-        their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
             debug!("Rejecting Bootstrapper with an invalid name hash.");
@@ -167,7 +163,7 @@ impl ExchangeMsg {
             );
         }
 
-        if !self.use_authed_encryption(their_pk) {
+        if !self.use_authed_encryption(their_uid.pub_enc_key) {
             debug!("Failed to set authenticated encryption context.");
             return self.terminate(core, poll);
         }
@@ -198,7 +194,6 @@ impl ExchangeMsg {
                     poll,
                     their_uid,
                     their_addrs,
-                    their_pk,
                     on_check_reachability_result,
                 );
                 if self.reachability_children.is_empty() {
@@ -290,7 +285,6 @@ impl ExchangeMsg {
         their_uid: PeerId,
         name_hash: NameHash,
         their_addrs: HashSet<SocketAddr>,
-        their_pk: PublicEncryptKey,
     ) {
         if !self.is_valid_name_hash(name_hash) {
             debug!("Invalid name hash given. Denying connection.");
@@ -304,7 +298,7 @@ impl ExchangeMsg {
             return self.terminate(core, poll);
         }
 
-        if !self.use_authed_encryption(their_pk) {
+        if !self.use_authed_encryption(their_uid.pub_enc_key) {
             debug!("Failed to set authenticated encryption context.");
             return self.terminate(core, poll);
         }
@@ -323,7 +317,6 @@ impl ExchangeMsg {
                 poll,
                 their_uid,
                 their_addrs,
-                their_pk,
                 on_check_reachability_result,
             );
             if self.reachability_children.is_empty() {
@@ -406,7 +399,6 @@ impl ExchangeMsg {
         poll: &Poll,
         their_uid: PeerId,
         their_addrs: HashSet<SocketAddr>,
-        their_pk: PublicEncryptKey,
         on_result: F,
     ) where
         F: 'static
@@ -428,8 +420,8 @@ impl ExchangeMsg {
                 core,
                 poll,
                 ipv4_addr(0, 0, 0, 0, 0),
-                &PeerInfo::new(their_listener, their_pk),
-                self.our_pk,
+                &PeerInfo::new(their_listener, their_uid.pub_enc_key),
+                self.our_uid.pub_enc_key,
                 &self.our_sk,
                 Some(CHECK_REACHABILITY_TIMEOUT_SEC),
                 Box::new(finish),

@@ -15,7 +15,7 @@ use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use mio_extras::channel::channel;
 use mio_extras::timer;
 use rand;
-use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair};
+use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair, SecretEncryptKey};
 use std::env;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -42,13 +42,14 @@ macro_rules! expect_event {
 }
 
 /// Generates random peer id.
-pub fn rand_peer_id() -> PeerId {
-    let (enc_pk, _enc_sk) = gen_encrypt_keypair();
+pub fn rand_peer_id_and_enc_sk() -> (PeerId, SecretEncryptKey) {
+    let (enc_pk, enc_sk) = gen_encrypt_keypair();
     let (sign_pk, _sign_sk) = gen_sign_keypair();
-    PeerId {
+    let id = PeerId {
         pub_sign_key: sign_pk,
         pub_enc_key: enc_pk,
-    }
+    };
+    (id, enc_sk)
 }
 
 pub fn get_event_sender() -> (crate::CrustEventSender, Receiver<Event>) {

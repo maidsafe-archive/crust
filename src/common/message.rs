@@ -18,15 +18,17 @@ pub enum Message {
     Heartbeat,
     /// Carries a list of our listener addresses in case remote peer wants to check our
     /// external reachability.
-    BootstrapRequest(PeerId, NameHash, BootstrapperRole, PublicEncryptKey),
+    BootstrapRequest(PeerId, NameHash, BootstrapperRole),
+    /// Connection listener sends this message to the bootstrapee together with the peer ID that
+    /// runs connection listener.
     BootstrapGranted(PeerId),
     BootstrapDenied(BootstrapDenyReason),
     EchoAddrReq(PublicEncryptKey),
     EchoAddrResp(SocketAddr),
     ChooseConnection,
     /// Send this message to initiate connection with remote peer. This message carries our ID,
-    /// network name hash, list of public IP:port pairs and our public key.
-    ConnectRequest(PeerId, NameHash, HashSet<SocketAddr>, PublicEncryptKey),
+    /// network name hash ad list of public IP:port pairs.
+    ConnectRequest(PeerId, NameHash, HashSet<SocketAddr>),
     /// Response of accepted connection that carries remote peer's ID and network name hash.
     ConnectResponse(PeerId, NameHash),
     Data(Vec<u8>),

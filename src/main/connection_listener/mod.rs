@@ -18,7 +18,7 @@ use crate::PeerId;
 use mio::net::TcpListener;
 use mio::{Poll, PollOpt, Ready, Token};
 use net2::TcpBuilder;
-use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
+use safe_crypto::SecretEncryptKey;
 use socket_collection::{DecryptContext, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
@@ -40,7 +40,6 @@ pub struct ConnectionListener {
     our_uid: PeerId,
     timeout_sec: Option<u64>,
     accept_bootstrap: bool,
-    our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
     test_ext_reachability: bool,
 }
@@ -57,11 +56,11 @@ impl ConnectionListener {
         mc: Arc<MappingContext>,
         token: Token,
         event_tx: crate::CrustEventSender,
-        our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) {
         let event_tx_0 = event_tx.clone();
         let our_sk2 = our_sk.clone();
+        let our_pk = our_uid.pub_enc_key;
 
         let finish = move |core: &mut EventLoopCore,
                            poll: &Poll,
@@ -93,7 +92,6 @@ impl ConnectionListener {
                 name_hash,
                 token,
                 event_tx.clone(),
-                our_pk,
                 our_sk,
             ) {
                 info!("TCP Listener failed to handle mapped socket: {:?}", e);
@@ -126,7 +124,6 @@ impl ConnectionListener {
         name_hash: NameHash,
         token: Token,
         event_tx: crate::CrustEventSender,
-        our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) -> crate::Res<()> {
         let listener = socket.listen(LISTENER_BACKLOG)?;
@@ -138,7 +135,7 @@ impl ConnectionListener {
         core.user_data_mut().our_listeners.extend(
             mapped_addrs
                 .into_iter()
-                .map(|addr| PeerInfo::new(addr, our_pk)),
+                .map(|addr| PeerInfo::new(addr, our_uid.pub_enc_key)),
         );
 
         let state = Self {
@@ -149,7 +146,6 @@ impl ConnectionListener {
             our_uid,
             timeout_sec,
             accept_bootstrap: false,
-            our_pk,
             our_sk,
             test_ext_reachability: true,
         };
@@ -166,7 +162,7 @@ impl ConnectionListener {
                 Ok((socket, _)) => {
                     let mut socket = TcpSock::wrap(socket);
                     if let Err(e) = socket.set_decrypt_ctx(DecryptContext::anonymous_decrypt(
-                        self.our_pk,
+                        self.our_uid.pub_enc_key,
                         self.our_sk.clone(),
                     )) {
                         debug!("Failed to set decryption context: {}", e);
@@ -181,7 +177,6 @@ impl ConnectionListener {
                         self.our_uid,
                         self.name_hash,
                         self.event_tx.clone(),
-                        self.our_pk,
                         &self.our_sk,
                         self.test_ext_reachability,
                     ) {
@@ -229,7 +224,7 @@ mod tests {
     use crate::main::bootstrap::Cache as BootstrapCache;
     use crate::main::{Event, EventLoop};
     use crate::nat::MappingContext;
-    use crate::tests::rand_peer_id;
+    use crate::tests::rand_peer_id_and_enc_sk;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
     use mio::Events;
     use mio::Token;
@@ -241,8 +236,6 @@ mod tests {
     use std::sync::mpsc;
     use std::sync::Arc;
     use std::time::Duration;
-
-    type ConnectionListener = super::ConnectionListener;
 
     // Make sure this is < EXCHANGE_MSG_TIMEOUT_SEC else blocking reader socket in this test will
     // exit with an EAGAIN error (unless this is what is wanted).
@@ -256,7 +249,6 @@ mod tests {
         uid: PeerId,
         addr: SocketAddr,
         event_rx: mpsc::Receiver<Event>,
-        pub_key: PublicEncryptKey,
     }
 
     fn start_listener(accept_bootstrap: bool) -> Listener {
@@ -271,9 +263,7 @@ mod tests {
             crate::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let mc = Arc::new(unwrap!(MappingContext::try_new(), "Could not get MC"));
-        let (our_pk, our_sk) = gen_encrypt_keypair();
-
-        let uid = rand_peer_id();
+        let (uid, our_sk) = rand_peer_id_and_enc_sk();
         unwrap!(
             el.send(CoreMessage::new(move |core, poll| {
                 ConnectionListener::start(
@@ -287,7 +277,6 @@ mod tests {
                     mc,
                     Token(LISTENER_TOKEN),
                     crust_sender,
-                    our_pk,
                     our_sk,
                 );
             })),
@@ -329,7 +318,6 @@ mod tests {
             uid,
             addr: listener_info.addr,
             event_rx,
-            pub_key: our_pk,
         }
     }
 
@@ -347,19 +335,22 @@ mod tests {
         stream
     }
 
-    fn bootstrap(name_hash: NameHash, our_uid: PeerId, listener: &Listener) {
+    fn bootstrap(
+        name_hash: NameHash,
+        our_uid: PeerId,
+        our_sk: &SecretEncryptKey,
+        listener: &Listener,
+    ) {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
-        let (our_pk, our_sk) = gen_encrypt_keypair();
         let mut sock = unwrap!(TcpSock::connect(&listener.addr));
-        unwrap!(sock.set_encrypt_ctx(EncryptContext::anonymous_encrypt(listener.pub_key)));
-        let shared_key = our_sk.shared_secret(&listener.pub_key);
+        unwrap!(sock.set_encrypt_ctx(EncryptContext::anonymous_encrypt(listener.uid.pub_enc_key)));
+        let shared_key = our_sk.shared_secret(&listener.uid.pub_enc_key);
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key)));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
-        let message =
-            Message::BootstrapRequest(our_uid, name_hash, BootstrapperRole::Client, our_pk);
+        let message = Message::BootstrapRequest(our_uid, name_hash, BootstrapperRole::Client);
 
         let mut events = Events::with_capacity(16);
         let msg = 'event_loop: loop {
@@ -401,18 +392,22 @@ mod tests {
         }
     }
 
-    fn connect(name_hash: NameHash, our_uid: PeerId, listener: &Listener) {
+    fn connect(
+        name_hash: NameHash,
+        our_uid: PeerId,
+        our_sk: &SecretEncryptKey,
+        listener: &Listener,
+    ) {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
-        let (our_pk, our_sk) = gen_encrypt_keypair();
         let mut sock = unwrap!(TcpSock::connect(&listener.addr));
-        unwrap!(sock.set_encrypt_ctx(EncryptContext::anonymous_encrypt(listener.pub_key)));
-        let shared_key = our_sk.shared_secret(&listener.pub_key);
+        unwrap!(sock.set_encrypt_ctx(EncryptContext::anonymous_encrypt(listener.uid.pub_enc_key)));
+        let shared_key = our_sk.shared_secret(&listener.uid.pub_enc_key);
         unwrap!(sock.set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone())));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge()));
 
-        let message = Message::ConnectRequest(our_uid, name_hash, Default::default(), our_pk);
+        let message = Message::ConnectRequest(our_uid, name_hash, Default::default());
 
         let mut events = Events::with_capacity(16);
         'event_loop: loop {
@@ -466,60 +461,63 @@ mod tests {
     #[test]
     fn bootstrap_with_correct_parameters() {
         let listener = start_listener(true);
-        let uid = rand_peer_id();
-        bootstrap(NAME_HASH, uid, &listener);
+        let (uid, sk) = rand_peer_id_and_enc_sk();
+        bootstrap(NAME_HASH, uid, &sk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn bootstrap_when_bootstrapping_is_disabled() {
         let listener = start_listener(false);
-        let uid = rand_peer_id();
-        bootstrap(NAME_HASH, uid, &listener);
+        let (uid, sk) = rand_peer_id_and_enc_sk();
+        bootstrap(NAME_HASH, uid, &sk, &listener);
     }
 
     #[test]
     fn connect_with_correct_parameters() {
         let listener = start_listener(false);
-        let uid = rand_peer_id();
-        connect(NAME_HASH, uid, &listener);
+        let (uid, our_sk) = rand_peer_id_and_enc_sk();
+        connect(NAME_HASH, uid, &our_sk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn connect_to_self() {
         let listener = start_listener(true);
-        connect(NAME_HASH, listener.uid, &listener);
+        let (_uid, our_sk) = rand_peer_id_and_enc_sk();
+        connect(NAME_HASH, listener.uid, &our_sk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn bootstrap_with_invalid_version_hash() {
         let listener = start_listener(true);
-        let uid = rand_peer_id();
-        bootstrap(NAME_HASH_2, uid, &listener);
+        let (uid, sk) = rand_peer_id_and_enc_sk();
+        bootstrap(NAME_HASH_2, uid, &sk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn connect_with_invalid_version_hash() {
         let listener = start_listener(true);
-        let uid = rand_peer_id();
-        connect(NAME_HASH_2, uid, &listener);
+        let (uid, our_sk) = rand_peer_id_and_enc_sk();
+        connect(NAME_HASH_2, uid, &our_sk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener(true);
-        bootstrap(NAME_HASH, listener.uid, &listener);
+        let (_uid, sk) = rand_peer_id_and_enc_sk();
+        bootstrap(NAME_HASH, listener.uid, &sk, &listener);
     }
 
     #[test]
     #[should_panic]
     fn connect_with_invalid_pub_key() {
         let listener = start_listener(true);
-        connect(NAME_HASH, listener.uid, &listener);
+        let (_uid, our_sk) = rand_peer_id_and_enc_sk();
+        connect(NAME_HASH, listener.uid, &our_sk, &listener);
     }
 
     #[test]
@@ -529,7 +527,7 @@ mod tests {
         let el = unwrap!(Poll::new());
 
         let mut sock = unwrap!(TcpSock::connect(&listener.addr));
-        let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
+        let enc_ctx = EncryptContext::anonymous_encrypt(listener.uid.pub_enc_key);
         unwrap!(sock.set_encrypt_ctx(enc_ctx));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
         let message = Message::Heartbeat;
@@ -585,14 +583,14 @@ mod tests {
         let el = unwrap!(Poll::new());
 
         let mut sock = unwrap!(TcpSock::connect(&listener.addr));
-        let enc_ctx = EncryptContext::anonymous_encrypt(listener.pub_key);
+        let enc_ctx = EncryptContext::anonymous_encrypt(listener.uid.pub_enc_key);
         unwrap!(sock.set_encrypt_ctx(enc_ctx));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
 
         let (our_pk, our_sk) = gen_encrypt_keypair();
         let message = Message::EchoAddrReq(our_pk);
 
-        let shared_key = our_sk.shared_secret(&listener.pub_key);
+        let shared_key = our_sk.shared_secret(&listener.uid.pub_enc_key);
         let dec_ctx = DecryptContext::authenticated(shared_key);
         unwrap!(sock.set_decrypt_ctx(dec_ctx));
 
