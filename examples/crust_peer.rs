@@ -106,7 +106,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 
 use crust::{Config, ConnectionInfoResult, PeerId, PrivConnectionInfo, Service};
 use rand::Rng;
-use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair};
+use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair, SecretEncryptKey};
 use std::cmp;
 use std::collections::{BTreeMap, HashMap};
 use std::io;
@@ -297,7 +297,8 @@ fn main() {
         None
     };
 
-    let mut service = unwrap!(Service::with_config(event_sender, config, new_peer_id()));
+    let (peer_id, peer_sk) = new_peer_id();
+    let mut service = unwrap!(Service::with_config(event_sender, config, peer_id, peer_sk));
     unwrap!(service.start_listening_tcp());
     service.start_service_discovery();
     let service = Arc::new(Mutex::new(service));
@@ -670,11 +671,12 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
     }
 }
 
-fn new_peer_id() -> PeerId {
-    let (enc_pk, _enc_sk) = gen_encrypt_keypair();
+fn new_peer_id() -> (PeerId, SecretEncryptKey) {
+    let (enc_pk, enc_sk) = gen_encrypt_keypair();
     let (sign_pk, _sign_sk) = gen_sign_keypair();
-    PeerId {
+    let id = PeerId {
         pub_sign_key: sign_pk,
         pub_enc_key: enc_pk,
-    }
+    };
+    (id, enc_sk)
 }

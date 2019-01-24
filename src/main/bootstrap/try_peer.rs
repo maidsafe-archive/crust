@@ -11,7 +11,7 @@ use crate::common::{BootstrapDenyReason, BootstrapperRole, Message, NameHash, Pe
 use crate::main::{CrustData, EventLoopCore};
 use crate::PeerId;
 use mio::{Poll, PollOpt, Ready, Token};
-use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
+use safe_crypto::{SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, Priority, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
@@ -45,7 +45,6 @@ impl TryPeer {
         our_uid: PeerId,
         name_hash: NameHash,
         our_role: BootstrapperRole,
-        our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         finish: Finish,
     ) -> crate::Res<Token> {
@@ -66,10 +65,7 @@ impl TryPeer {
             token,
             peer,
             socket,
-            request: Some((
-                Message::BootstrapRequest(our_uid, name_hash, our_role, our_pk),
-                0,
-            )),
+            request: Some((Message::BootstrapRequest(our_uid, name_hash, our_role), 0)),
             finish,
             shared_key,
         };

@@ -20,7 +20,7 @@ use crate::main::{
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
 use mio::{Poll, Token};
-use safe_crypto::{self, gen_encrypt_keypair, PublicEncryptKey, SecretEncryptKey};
+use safe_crypto::{self, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
 use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
@@ -101,15 +101,31 @@ pub struct Service {
     el: EventLoop,
     name_hash: NameHash,
     our_uid: PeerId,
-    our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
 impl Service {
-    /// Construct a service. `event_tx` is the sending half of the channel which crust will send
-    /// notifications on. Can fail, if can't read config file successfully.
-    pub fn try_new(event_tx: crate::CrustEventSender, our_uid: PeerId) -> crate::Res<Self> {
-        Service::with_config(event_tx, config_handler::read_config_file()?, our_uid)
+    /// Construct a service.
+    ///
+    /// Can fail, if can't read config file successfully.
+    ///
+    /// ## Args
+    ///
+    /// - `event_tx` is the sending half of the channel which crust will send notifications on.
+    /// - `our_uid` is peer ID which contains public encryption key as well.
+    /// - `our_sk` is secret encryption key. This key with the combination of remote peer's public
+    ///    key is used to encrypt traffic between two peers.
+    pub fn try_new(
+        event_tx: crate::CrustEventSender,
+        our_uid: PeerId,
+        our_sk: SecretEncryptKey,
+    ) -> crate::Res<Self> {
+        Service::with_config(
+            event_tx,
+            config_handler::read_config_file()?,
+            our_uid,
+            our_sk,
+        )
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
@@ -119,6 +135,7 @@ impl Service {
         event_tx: crate::CrustEventSender,
         config: Config,
         our_uid: PeerId,
+        our_sk: SecretEncryptKey,
     ) -> crate::Res<Self> {
         safe_crypto::init()?;
 
@@ -141,15 +158,12 @@ impl Service {
         )?;
         trace!("Event loop started");
 
-        // TODO(povilas): get from constructor params
-        let (our_pk, our_sk) = gen_encrypt_keypair();
         let service = Service {
             event_tx,
             mc: Arc::new(mc),
             el,
             name_hash,
             our_uid,
-            our_pk,
             our_sk,
         };
 
@@ -230,7 +244,7 @@ impl Service {
     /// Initialises Service Discovery module and starts listening for responses to our beacon
     /// broadcasts.
     pub fn start_service_discovery(&mut self) {
-        let our_pk = self.our_pk;
+        let our_pk = self.our_uid.pub_enc_key;
         let _ = self.post(move |core, poll| {
             let config = &core.user_data().config.cfg;
             let remote_port = config
@@ -383,7 +397,6 @@ impl Service {
     ) -> crate::Res<()> {
         let our_uid = self.our_uid;
         let name_hash = self.name_hash;
-        let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let event_tx = self.event_tx.clone();
 
@@ -403,7 +416,6 @@ impl Service {
                     EventToken::Bootstrap.into(),
                     EventToken::ServiceDiscovery.into(),
                     event_tx.clone(),
-                    our_pk,
                     &our_sk,
                 ) {
                     error!("Could not bootstrap: {:?}", e);
@@ -430,7 +442,6 @@ impl Service {
         let name_hash = self.name_hash;
         let event_tx = self.event_tx.clone();
 
-        let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         self.post(move |core, poll| {
             let config = &core.user_data().config.cfg;
@@ -449,7 +460,6 @@ impl Service {
                     mc,
                     EventToken::Listener.into(),
                     event_tx,
-                    our_pk,
                     our_sk,
                 );
             }
@@ -486,7 +496,6 @@ impl Service {
 
         let event_tx = self.event_tx.clone();
         let our_nh = self.name_hash;
-        let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
 
         self.post(move |core, poll| {
@@ -514,7 +523,6 @@ impl Service {
                 their_ci,
                 our_nh,
                 event_tx,
-                our_pk,
                 &our_sk,
                 our_global_listener_addrs(core),
             );
@@ -577,7 +585,6 @@ impl Service {
     /// peer, see `Service::connect` for more info.
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&self, result_token: u32) {
-        let our_pk = self.our_pk;
         let our_sk = self.our_sk.clone();
         let our_uid = self.our_uid;
         let event_tx = self.event_tx.clone();
@@ -595,7 +602,6 @@ impl Service {
                     result: Ok(PrivConnectionInfo {
                         id: our_uid,
                         for_direct: our_listeners,
-                        our_pk,
                     }),
                 });
                 let _ = event_tx.send(event);
@@ -615,7 +621,7 @@ impl Service {
                     poll,
                     0,
                     &mc,
-                    our_pk,
+                    our_uid.pub_enc_key,
                     &our_sk,
                     move |_, _, _socket, _addrs| {
                         let event_tx = event_tx_clone;
@@ -624,7 +630,6 @@ impl Service {
                             result: Ok(PrivConnectionInfo {
                                 id: our_uid,
                                 for_direct: our_listeners,
-                                our_pk,
                             }),
                         });
                         let _ = event_tx.send(event);
@@ -678,7 +683,7 @@ impl Service {
 
     /// Returns service public key used to encrypt traffic.
     pub fn pub_key(&self) -> PublicEncryptKey {
-        self.our_pk
+        self.our_uid.pub_enc_key
     }
 
     /// Returns a list of peers stored in bootstrap cache.
@@ -722,8 +727,8 @@ fn name_hash(network_name: &Option<String>) -> NameHash {
 mod tests {
     use super::*;
     use crate::common::CrustUser;
-    use crate::main::{self, Event};
-    use crate::tests::{get_event_sender, rand_peer_id, timebomb};
+    use crate::main::{Event, PrivConnectionInfo, PubConnectionInfo};
+    use crate::tests::{get_event_sender, rand_peer_id_and_enc_sk, timebomb};
     use crate::CrustError;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
@@ -734,15 +739,12 @@ mod tests {
     use std::thread;
     use std::time::Duration;
 
-    type Service = super::Service;
-    type PrivConnectionInfo = main::PrivConnectionInfo;
-    type PubConnectionInfo = main::PubConnectionInfo;
-
     #[test]
     fn connect_self() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx, event_rx) = get_event_sender();
-            let mut service = unwrap!(Service::try_new(event_tx, rand_peer_id()));
+            let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
+            let mut service = unwrap!(Service::try_new(event_tx, peer_id, peer_sk));
 
             unwrap!(service.start_listening_tcp());
             expect_event!(event_rx, Event::ListenerStarted(_));
@@ -766,14 +768,16 @@ mod tests {
     fn direct_connect_two_peers() {
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let mut service_0 = unwrap!(Service::try_new(event_tx_0, rand_peer_id()));
+            let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
+            let mut service_0 = unwrap!(Service::try_new(event_tx_0, peer_id, peer_sk));
 
             unwrap!(service_0.start_listening_tcp());
             expect_event!(event_rx_0, Event::ListenerStarted(_));
             unwrap!(service_0.set_ext_reachability_test(false));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let mut service_1 = unwrap!(Service::try_new(event_tx_1, rand_peer_id()));
+            let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
+            let mut service_1 = unwrap!(Service::try_new(event_tx_1, peer_id, peer_sk));
 
             unwrap!(service_1.start_listening_tcp());
             expect_event!(event_rx_1, Event::ListenerStarted(_));
@@ -790,10 +794,12 @@ mod tests {
         unwrap!(maidsafe_utilities::log::init(true));
         timebomb(Duration::from_secs(30), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
-            let service_0 = unwrap!(Service::try_new(event_tx_0, rand_peer_id()));
+            let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
+            let service_0 = unwrap!(Service::try_new(event_tx_0, peer_id, peer_sk));
 
             let (event_tx_1, event_rx_1) = get_event_sender();
-            let service_1 = unwrap!(Service::try_new(event_tx_1, rand_peer_id()));
+            let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
+            let service_1 = unwrap!(Service::try_new(event_tx_1, peer_id, peer_sk));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
             debug!("Exchanging messages ...");
@@ -899,8 +905,9 @@ mod tests {
             fn new_with_sender(index: usize) -> (Self, mpsc::Sender<PubConnectionInfo>) {
                 let (event_sender, event_rx) = get_event_sender();
                 let config = unwrap!(crate::main::config_handler::read_config_file());
+                let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
                 let mut service =
-                    unwrap!(Service::with_config(event_sender, config, rand_peer_id()));
+                    unwrap!(Service::with_config(event_sender, config, peer_id, peer_sk));
                 // Start listener so that the test works without hole punching.
                 assert!(service.start_listening_tcp().is_ok());
                 match unwrap!(event_rx.recv()) {

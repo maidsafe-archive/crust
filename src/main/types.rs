@@ -12,7 +12,6 @@ use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::Config;
 use crate::PeerId;
 use mio::Token;
-use safe_crypto::PublicEncryptKey;
 use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 
@@ -50,8 +49,6 @@ pub struct PrivConnectionInfo {
     pub id: PeerId,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
-    #[doc(hidden)]
-    pub our_pk: PublicEncryptKey,
 }
 
 impl PrivConnectionInfo {
@@ -61,7 +58,6 @@ impl PrivConnectionInfo {
         PubConnectionInfo {
             for_direct: self.for_direct.clone(),
             id: self.id,
-            our_pk: self.our_pk,
         }
     }
 }
@@ -76,8 +72,6 @@ pub struct PubConnectionInfo {
     pub id: PeerId,
     #[doc(hidden)]
     pub for_direct: Vec<SocketAddr>,
-    #[doc(hidden)]
-    pub our_pk: PublicEncryptKey,
 }
 
 impl PubConnectionInfo {

@@ -22,7 +22,7 @@ use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
 use rand;
 use rand::seq::SliceRandom;
-use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
+use safe_crypto::SecretEncryptKey;
 use socket_collection::TcpSock;
 use std::any::Any;
 use std::cell::RefCell;
@@ -57,7 +57,6 @@ pub struct Bootstrap {
     bs_timeout: Timeout,
     children: HashSet<Token>,
     self_weak: Weak<RefCell<Bootstrap>>,
-    our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
 }
 
@@ -76,7 +75,6 @@ impl Bootstrap {
         token: Token,
         service_discovery_token: Token,
         event_tx: crate::CrustEventSender,
-        our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
     ) -> crate::Res<()> {
         let bs_timer = CoreTimer::new(token, BOOTSTRAP_TIMER_ID);
@@ -107,7 +105,6 @@ impl Bootstrap {
             bs_timeout,
             children: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
             self_weak: Weak::new(),
-            our_pk,
             our_sk: our_sk.clone(),
         }));
 
@@ -144,7 +141,6 @@ impl Bootstrap {
                 self.our_uid,
                 self.name_hash,
                 self.our_role.clone(),
-                self.our_pk,
                 &self.our_sk,
                 Box::new(finish),
             ) {
@@ -506,8 +502,7 @@ mod tests {
 
         mod handle_result {
             use super::*;
-            use crate::tests::utils::{get_event_sender, rand_peer_id};
-            use safe_crypto::gen_encrypt_keypair;
+            use crate::tests::utils::{get_event_sender, rand_peer_id_and_enc_sk};
 
             mod when_result_is_error {
                 use super::*;
@@ -521,22 +516,20 @@ mod tests {
                     let poll = unwrap!(Poll::new());
 
                     let dummy_service_discovery_token = Token(9999);
-
-                    let (our_pk, our_sk) = gen_encrypt_keypair();
                     let (event_tx, _event_rx) = get_event_sender();
                     let token = Token(1);
+                    let (peer_id, our_sk) = rand_peer_id_and_enc_sk();
 
                     unwrap!(Bootstrap::start(
                         &mut core,
                         &poll,
                         [1; 32],
-                        rand_peer_id(),
+                        peer_id,
                         BootstrapperRole::Client,
                         HashSet::new(),
                         token,
                         dummy_service_discovery_token,
                         event_tx,
-                        our_pk,
                         &our_sk
                     ));
 
@@ -565,22 +558,20 @@ mod tests {
                     let poll = unwrap!(Poll::new());
 
                     let dummy_service_discovery_token = Token(9999);
-
-                    let (our_pk, our_sk) = gen_encrypt_keypair();
                     let (event_tx, _event_rx) = get_event_sender();
                     let token = Token(1);
+                    let (peer_id, our_sk) = rand_peer_id_and_enc_sk();
 
                     unwrap!(Bootstrap::start(
                         &mut core,
                         &poll,
                         [1; 32],
-                        rand_peer_id(),
+                        peer_id,
                         BootstrapperRole::Client,
                         HashSet::new(),
                         token,
                         dummy_service_discovery_token,
                         event_tx,
-                        our_pk,
                         &our_sk
                     ));
 

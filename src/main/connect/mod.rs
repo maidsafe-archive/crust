@@ -19,7 +19,7 @@ use crate::main::{
 use crate::PeerId;
 use mio::{Poll, Token};
 use mio_extras::timer::Timeout;
-use safe_crypto::{PublicEncryptKey, SecretEncryptKey, SharedSecretKey};
+use safe_crypto::{SecretEncryptKey, SharedSecretKey};
 use socket_collection::{DecryptContext, EncryptContext, TcpSock};
 use std::any::Any;
 use std::cell::RefCell;
@@ -40,7 +40,6 @@ pub struct Connect {
     self_weak: Weak<RefCell<Connect>>,
     children: HashSet<Token>,
     event_tx: crate::CrustEventSender,
-    our_pk: PublicEncryptKey,
     our_global_direct_listeners: HashSet<SocketAddr>,
 }
 
@@ -52,7 +51,6 @@ impl Connect {
         their_ci: PubConnectionInfo,
         our_nh: NameHash,
         event_tx: crate::CrustEventSender,
-        our_pk: PublicEncryptKey,
         our_sk: &SecretEncryptKey,
         our_global_direct_listeners: HashSet<SocketAddr>,
     ) -> crate::Res<()> {
@@ -66,22 +64,22 @@ impl Connect {
 
         let token = core.get_new_token();
 
+        let our_id = our_ci.id;
         let state = Rc::new(RefCell::new(Self {
             token,
             timeout: core.set_timeout(Duration::from_secs(TIMEOUT_SEC), CoreTimer::new(token, 0)),
             our_nh,
-            our_id: our_ci.id,
+            our_id,
             their_id,
             self_weak: Weak::new(),
             children: HashSet::with_capacity(their_direct.len()),
             event_tx,
-            our_pk,
             our_global_direct_listeners,
         }));
 
         state.borrow_mut().self_weak = Rc::downgrade(&state);
 
-        let their_pk = their_ci.our_pk;
+        let their_pk = their_ci.id.pub_enc_key;
         let sockets = their_direct
             .into_iter()
             .filter_map(|addr| {
@@ -91,9 +89,9 @@ impl Connect {
             .collect::<Vec<_>>();
 
         for (mut socket, peer_info) in sockets {
-            let shared_key = our_sk.shared_secret(&their_ci.our_pk);
+            let shared_key = our_sk.shared_secret(&their_pk);
             match (
-                socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_ci.our_pk)),
+                socket.set_encrypt_ctx(EncryptContext::anonymous_encrypt(their_pk)),
                 socket.set_decrypt_ctx(DecryptContext::authenticated(shared_key.clone())),
             ) {
                 (Ok(_), Ok(_)) => state
@@ -132,7 +130,6 @@ impl Connect {
             self.our_id,
             self.their_id,
             self.our_nh,
-            self.our_pk,
             shared_key,
             self.our_global_direct_listeners.clone(),
             Box::new(handler),
@@ -261,17 +258,15 @@ mod tests {
         use super::*;
         use crate::common::ipv4_addr;
         use crate::tests::utils::{
-            get_event_sender, peer_info_with_rand_key, rand_peer_id, test_bootstrap_cache,
-            test_core,
+            get_event_sender, peer_info_with_rand_key, rand_peer_id_and_enc_sk,
+            test_bootstrap_cache, test_core,
         };
-        use safe_crypto::gen_encrypt_keypair;
 
         fn test_priv_conn_info() -> (PrivConnectionInfo, SecretEncryptKey) {
-            let (pk, sk) = gen_encrypt_keypair();
+            let (id, sk) = rand_peer_id_and_enc_sk();
             let conn_info = PrivConnectionInfo {
-                id: rand_peer_id(),
+                id,
                 for_direct: vec![ipv4_addr(1, 2, 3, 4, 4000)],
-                our_pk: pk,
             };
             (conn_info, sk)
         }
@@ -285,7 +280,6 @@ mod tests {
             let poll = unwrap!(Poll::new());
 
             let (our_ci, our_sk) = test_priv_conn_info();
-            let our_pk = our_ci.our_pk;
             let (their_ci, _) = test_priv_conn_info();
             let their_ci = their_ci.to_pub_connection_info();
 
@@ -297,7 +291,6 @@ mod tests {
                 their_ci.clone(),
                 [1; 32],
                 event_tx,
-                our_pk,
                 &our_sk,
                 Default::default(),
             ));
