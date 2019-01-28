@@ -274,7 +274,7 @@ mod tests {
         #[test]
         fn remove_peer_from_cache_does_what_it_says() {
             let cached_peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-            let bootstrap_cache = test_bootstrap_cache();
+            let mut bootstrap_cache = test_bootstrap_cache();
             bootstrap_cache.put(cached_peer);
             let mut core = test_core(bootstrap_cache);
             let poll = unwrap!(Poll::new());

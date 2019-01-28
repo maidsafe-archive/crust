@@ -509,7 +509,7 @@ mod tests {
 
                 #[test]
                 fn it_removes_peer_info_from_bootstrap_cache() {
-                    let bootstrap_cache = test_bootstrap_cache();
+                    let mut bootstrap_cache = test_bootstrap_cache();
                     let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                     bootstrap_cache.put(peer_info);
                     let mut core = test_core(bootstrap_cache);
@@ -549,7 +549,7 @@ mod tests {
 
                 #[test]
                 fn when_reason_is_invalid_hash_bootstrap_is_not_terminated() {
-                    let bootstrap_cache = test_bootstrap_cache();
+                    let mut bootstrap_cache = test_bootstrap_cache();
                     let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                     // there must be at least one bootstrap peer, otherwise Bootstrap state
                     // will be terminated too soon.
