@@ -226,8 +226,7 @@ mod tests {
     use crate::nat::MappingContext;
     use crate::tests::rand_peer_id_and_enc_sk;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use mio::Events;
-    use mio::Token;
+    use mio::{Events, Token};
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
     use std::io::Read;

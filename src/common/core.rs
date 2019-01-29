@@ -52,14 +52,13 @@ impl<T> Drop for EventLoop<T> {
 
 /// Spawns event loop in a separate thread and returns a handle to communicate with it.
 ///
-/// # Args
+/// ## Args
 ///
-/// - token_counter_start: initial value for mio event `Token`s used to register custom states.
-/// event_loop_id: event loop thread name.
-/// init_user_data: a callback to lazilly initialize user data associated with this event loop.
-///                 In some cases we need to initialize user data in the same thread that `Core` is
-///                 stored. e.g., if user data is an `Rc` we can't send it to event loop thread,
-///                 hence a callback.
+/// - `token_counter_start`: initial value for mio event `Token`s used to register custom states.
+/// - `event_loop_id`: event loop thread name.
+/// - `init_user_data`: a callback to lazilly initialize user data associated with this event loop.
+///    In some cases we need to initialize user data in the same thread that `Core` is stored.
+///    e.g., if user data is an `Rc` we can't send it to event loop thread, hence a callback.
 pub fn spawn_event_loop<T: 'static, F>(
     token_counter_start: usize,
     event_loop_id: Option<&str>,
