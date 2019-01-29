@@ -9,24 +9,37 @@
 
 use crate::common::PeerInfo;
 use config_file_handler::{self, FileHandler};
+use lru_time_cache::{LruCache, TimedEntry};
+use safe_crypto::PublicEncryptKey;
 use std::collections::HashSet;
 use std::ffi::OsString;
+use std::time::Duration;
 
-/// Reference-counted bootstrap cache - keeps log of known publicly accessible peers.
+/// Bootstrap cache - keeps log of known publicly accessible peers.
+/// This cache can optionally be stored on disk and loaded later.
 #[derive(Clone)]
 pub struct Cache {
     file_name: Option<OsString>,
-    peers: HashSet<PeerInfo>,
+    peers: LruCache<PublicEncryptKey, PeerInfo>,
 }
 
 impl Cache {
     /// Constructs new bootstrap cache. You can optionally specify the file name which will
     /// be used to read/write the cache to. If no file name is give, the default path is used, see
     /// `#get_default_file_name()`.
-    pub fn new(file_name: Option<OsString>) -> Self {
+    ///
+    /// ## Args
+    ///
+    /// - capacity: max cache size.
+    /// - timeout_secs: if cached peers are not used within this timeout in seconds, they will
+    ///   be evicted from the cache.
+    pub fn new(file_name: Option<OsString>, capacity: usize, timeout_secs: u64) -> Self {
         Cache {
             file_name,
-            peers: Default::default(),
+            peers: LruCache::with_expiry_duration_and_capacity(
+                Duration::from_secs(timeout_secs),
+                capacity,
+            ),
         }
     }
 
@@ -41,35 +54,67 @@ impl Cache {
     pub fn read_file(&mut self) {
         match self.open_file() {
             Ok(file_handler) => {
-                self.peers = file_handler.read_file().unwrap_or_else(|e| {
+                let peers = file_handler.read_file().unwrap_or_else(|e| {
                     info!("Failed to read bootstrap cache file: {}", e);
-                    HashSet::new()
-                })
+                    Default::default()
+                });
+                for peer in peers {
+                    let _ = self.peers.insert(peer.pub_key, peer);
+                }
             }
             Err(e) => info!("Failed to open bootstrap cache file: {}", e),
         }
     }
 
-    /// Inserts given peer to the cache.
-    pub fn put(&mut self, peer: PeerInfo) {
-        let _ = self.peers.insert(peer);
+    /// Inserts given peer to the cache. If peer is already cached, it is moved to cache front.
+    ///
+    /// ## Returns
+    ///
+    /// A list of expired peers.
+    pub fn put(&mut self, peer: PeerInfo) -> HashSet<PeerInfo> {
+        let (_, mut expired) = self.peers.notify_insert(peer.pub_key, peer);
+        expired.drain(..).map(|(_key, val)| val).collect()
     }
 
     /// Removes given peer from the cache.
     pub fn remove(&mut self, peer: &PeerInfo) {
-        let _ = self.peers.remove(peer);
+        let _ = self.peers.remove(&peer.pub_key);
     }
 
     /// Writes bootstrap cache to disk.
     pub fn commit(&self) -> crate::Res<()> {
         let file_handler = self.open_file()?;
-        file_handler.write_file(&self.peers)?;
+        let peers: HashSet<PeerInfo> = self.peers.peek_iter().map(|(_, peer)| *peer).collect();
+        file_handler.write_file(&peers)?;
         Ok(())
     }
 
-    /// Returns current snapshot of peers in the cache.
-    pub fn peers(&self) -> HashSet<PeerInfo> {
-        self.peers.clone()
+    /// Returns cached peers.
+    /// Moves returned peers to the top of the cache.
+    pub fn peers(&mut self) -> (HashSet<PeerInfo>, HashSet<PeerInfo>) {
+        let expired: HashSet<_> = self
+            .peers
+            .notify_iter()
+            .filter_map(|entry| match entry {
+                TimedEntry::Expired(_pub_key, peer_info) => Some(peer_info),
+                _ => None,
+            })
+            .collect();
+        let valid: HashSet<_> = self
+            .peers
+            .notify_iter()
+            .filter_map(|entry| match entry {
+                TimedEntry::Valid(_pub_key, peer_info) => Some(*peer_info),
+                _ => None,
+            })
+            .collect();
+        (valid, expired)
+    }
+
+    /// Returns a snaphost of cached.
+    /// Note that the peer last time used value is not updated in the cache.
+    pub fn snapshot(&self) -> HashSet<PeerInfo> {
+        self.peers.peek_iter().map(|(_, peer)| *peer).collect()
     }
 
     fn open_file(&self) -> crate::Res<FileHandler<HashSet<PeerInfo>>> {
@@ -141,38 +186,75 @@ mod tests {
                     ]
                 "#,
                 );
-                let mut cache = Cache::new(Some(fname));
+                let mut cache = Cache::new(Some(fname), 5, 120);
 
                 cache.read_file();
 
-                let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
+                let addrs: Vec<SocketAddr> =
+                    cache.snapshot().iter().map(|peer| peer.addr).collect();
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
             }
         }
 
-        #[test]
-        fn put() {
-            let mut cache = Cache::new(None);
+        mod put {
+            use super::*;
 
-            cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
-            cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+            #[test]
+            fn it_inserts_given_peer_to_the_front() {
+                let mut cache = Cache::new(None, 5, 120);
 
-            let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
-            assert_eq!(addrs.len(), 2);
-            assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
-            assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+
+                let addrs: Vec<SocketAddr> =
+                    cache.peers.iter().map(|(_, peer)| peer.addr).collect();
+                assert_eq!(addrs.len(), 2);
+                assert_eq!(addrs[0], ipv4_addr(1, 2, 3, 5, 5000));
+                assert_eq!(addrs[1], ipv4_addr(1, 2, 3, 4, 4000));
+            }
+
+            #[test]
+            fn when_peer_is_already_cached_it_is_moved_to_front() {
+                let mut cache = Cache::new(None, 5, 120);
+                let peer1 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                let _ = cache.put(peer1);
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+
+                let _ = cache.put(peer1);
+
+                let addrs: Vec<SocketAddr> =
+                    cache.peers.iter().map(|(_, peer)| peer.addr).collect();
+                assert_eq!(addrs.len(), 2);
+                assert_eq!(addrs[0], ipv4_addr(1, 2, 3, 4, 4000));
+                assert_eq!(addrs[1], ipv4_addr(1, 2, 3, 5, 5000));
+            }
+
+            #[test]
+            fn when_cache_is_full_given_peer_is_added_and_last_one_is_removed() {
+                let mut cache = Cache::new(None, 2, 120);
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 6, 6000)));
+
+                let addrs: Vec<SocketAddr> =
+                    cache.peers.iter().map(|(_, peer)| peer.addr).collect();
+                assert_eq!(addrs.len(), 2);
+                assert_eq!(addrs[0], ipv4_addr(1, 2, 3, 6, 6000));
+                assert_eq!(addrs[1], ipv4_addr(1, 2, 3, 5, 5000));
+            }
         }
 
         #[test]
         fn remove() {
-            let mut cache = Cache::new(None);
+            let mut cache = Cache::new(None, 5, 120);
             let peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-            cache.put(peer);
+            let _ = cache.put(peer);
 
             cache.remove(&peer);
 
-            assert!(cache.peers().is_empty());
+            assert!(cache.snapshot().is_empty());
         }
 
         mod commit {
@@ -181,15 +263,16 @@ mod tests {
             #[test]
             fn it_writes_cache_to_file() {
                 let tmp_fname: OsString = bootstrap_cache_tmp_file().into();
-                let mut cache = Cache::new(Some(tmp_fname.clone()));
-                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
-                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+                let mut cache = Cache::new(Some(tmp_fname.clone()), 5, 120);
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
 
                 unwrap!(cache.commit());
 
-                let mut cache = Cache::new(Some(tmp_fname));
+                let mut cache = Cache::new(Some(tmp_fname), 5, 120);
                 cache.read_file();
-                let addrs: Vec<SocketAddr> = cache.peers().iter().map(|peer| peer.addr).collect();
+                let addrs: Vec<SocketAddr> =
+                    cache.snapshot().iter().map(|peer| peer.addr).collect();
                 assert_eq!(addrs.len(), 2);
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));

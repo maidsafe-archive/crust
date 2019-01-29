@@ -254,7 +254,7 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
-            || CrustData::new(BootstrapCache::new(None)),
+            || CrustData::new(BootstrapCache::new(None, 200, 120)),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();

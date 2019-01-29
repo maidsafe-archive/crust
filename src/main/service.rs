@@ -10,7 +10,7 @@
 use crate::common::{
     self, BootstrapperRole, CoreMessage, CrustUser, NameHash, PeerInfo, HASH_SIZE,
 };
-use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::bootstrap;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
@@ -25,6 +25,10 @@ use socket_collection::Priority;
 use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc};
+
+const DEFAULT_BOOTSTAP_CACHE_LIMIT: usize = 200;
+/// Bootstrap cache peer timeout in seconds.
+const DEFAULT_BOOTSTAP_CACHE_TIMEOUT: u64 = 120;
 
 /// Reserved mio `Token` values for Crust speficic events.
 #[derive(Debug, PartialEq)]
@@ -149,7 +153,11 @@ impl Service {
             EventToken::Unreserved as usize,
             Some(&format!("{:?}", our_uid)),
             move || {
-                let mut cache = BootstrapCache::new(bootstrap_cache_file);
+                let mut cache = bootstrap::Cache::new(
+                    bootstrap_cache_file,
+                    DEFAULT_BOOTSTAP_CACHE_LIMIT,
+                    DEFAULT_BOOTSTAP_CACHE_TIMEOUT,
+                );
                 cache.read_file();
                 let mut user_data = CrustData::new(cache);
                 user_data.config = ConfigWrapper::new(config);
@@ -690,7 +698,7 @@ impl Service {
     pub fn bootstrap_cached_peers(&self) -> crate::Res<HashSet<PeerInfo>> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let cached_peers = core.user_data().bootstrap_cache.peers();
+            let cached_peers = core.user_data().bootstrap_cache.snapshot();
             let _ = tx.send(cached_peers);
         });
         rx.recv().map_err(CrustError::ChannelRecv)
