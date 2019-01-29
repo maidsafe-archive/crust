@@ -8,9 +8,11 @@
 // Software.
 
 mod cache;
+mod cache_validator;
 mod try_peer;
 
 pub use self::cache::Cache;
+pub use self::cache_validator::CacheValidator;
 use self::try_peer::TryPeer;
 use crate::common::{
     BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State,
@@ -88,8 +90,11 @@ impl Bootstrap {
             }
         };
 
-        // TODO(povilas): send expired_peers to cache validator
-        let (cached_peers, _expired_peers) = core.user_data_mut().bootstrap_cache.peers();
+        let (cached_peers, expired_peers) = core.user_data_mut().bootstrap_cache.peers();
+        if let Some(ref tx) = core.user_data().expired_cached_peers_tx {
+            let _ = tx.send(expired_peers);
+        }
+
         let peers = bootstrap_peers(cached_peers, &core.user_data().config.cfg, blacklist);
         let state = Rc::new(RefCell::new(Self {
             token,
@@ -273,8 +278,10 @@ pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
         return;
     }
 
-    // TODO(povilas): report expired_peers to cache validator
-    let _expired_peers = user_data.bootstrap_cache.put(peer_info);
+    let expired_peers = user_data.bootstrap_cache.put(peer_info);
+    if let Some(ref tx) = user_data.expired_cached_peers_tx {
+        let _ = tx.send(expired_peers);
+    }
     if let Err(e) = user_data.bootstrap_cache.commit() {
         info!("Failed to write bootstrap cache to disk: {}", e);
     }

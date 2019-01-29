@@ -174,24 +174,10 @@ impl Service {
             our_uid,
             our_sk,
         };
-
         service.start_config_refresher()?;
+        service.start_bootstrap_cache_validator()?;
 
         Ok(service)
-    }
-
-    fn start_config_refresher(&self) -> crate::Res<()> {
-        let (tx, rx) = mpsc::channel();
-        self.post(move |core, _| {
-            if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
-                let _ = tx.send(ConfigRefresher::start(
-                    core,
-                    EventToken::ConfigRefresher.into(),
-                ));
-            }
-            let _ = tx.send(Ok(()));
-        })?;
-        rx.recv()?
     }
 
     /// Allow (or disallow) peers from bootstrapping off us.
@@ -710,6 +696,30 @@ impl Service {
     {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
+    }
+
+    fn start_config_refresher(&self) -> crate::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        self.post(move |core, _| {
+            if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
+                let _ = tx.send(ConfigRefresher::start(
+                    core,
+                    EventToken::ConfigRefresher.into(),
+                ));
+            }
+            let _ = tx.send(Ok(()));
+        })?;
+        rx.recv()?
+    }
+
+    /// Starts a future that periodically tests if inactive cached bootstrap peers are still alive.
+    fn start_bootstrap_cache_validator(&self) -> crate::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        let (our_pk, our_sk) = (self.our_uid.pub_enc_key, self.our_sk.clone());
+        self.post(move |core, poll| {
+            let _ = tx.send(bootstrap::CacheValidator::start(core, poll, our_pk, our_sk));
+        })?;
+        rx.recv()?
     }
 }
 

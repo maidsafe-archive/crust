@@ -8,7 +8,7 @@
 // Software.
 
 use crate::common::PeerInfo;
-use crate::main::{BootstrapCache, Config, CrustData, Event, EventLoopCore};
+use crate::main::{BootstrapCache, Config, CrustData, Event, EventLoopCore, Service};
 use crate::PeerId;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
@@ -117,4 +117,13 @@ pub fn test_bootstrap_cache() -> BootstrapCache {
 pub fn peer_info_with_rand_key(addr: SocketAddr) -> PeerInfo {
     let (pk, _) = gen_encrypt_keypair();
     PeerInfo::new(addr, pk)
+}
+
+/// Generates `Service` instance for testing with default configuration.
+pub fn test_service() -> (Service, Receiver<Event>) {
+    let config = gen_config();
+    let (event_tx, event_rx) = get_event_sender();
+    let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
+    let service = unwrap!(Service::with_config(event_tx, config, peer_id, peer_sk));
+    (service, event_rx)
 }
