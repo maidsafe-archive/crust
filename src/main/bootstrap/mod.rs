@@ -88,7 +88,7 @@ impl Bootstrap {
             }
         };
 
-        let peers = shuffled_bootstrap_peers(
+        let peers = bootstrap_peers(
             core.user_data().bootstrap_cache.peers(),
             &core.user_data().config.cfg,
             blacklist,
@@ -150,6 +150,7 @@ impl Bootstrap {
         self.maybe_terminate(core, poll);
     }
 
+    /// Spawns `ActiveConnection` state and terminates remaining bootstrap attempts.
     fn handle_result(
         &mut self,
         core: &mut EventLoopCore,
@@ -310,20 +311,16 @@ fn seek_peers(
     }
 }
 
-/// Peers from bootstrap cache and hard coded contacts are shuffled individually.
-fn shuffled_bootstrap_peers(
-    cached_peers: HashSet<PeerInfo>,
+/// Peers to bootsrap off.
+fn bootstrap_peers(
+    mut cached_peers: HashSet<PeerInfo>,
     config: &Config,
     blacklist: HashSet<SocketAddr>,
 ) -> Vec<PeerInfo> {
-    let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
-    let mut rng = rand::thread_rng();
-
-    let mut cached: Vec<_> = cached_peers.iter().cloned().collect();
-    cached.shuffle(&mut rng);
-    peers.extend(cached);
+    let mut peers: Vec<_> = cached_peers.drain().collect();
 
     let mut hard_coded = config.hard_coded_contacts.clone();
+    let mut rng = rand::thread_rng();
     hard_coded.shuffle(&mut rng);
     peers.extend(hard_coded);
 
@@ -397,7 +394,7 @@ mod tests {
         }
     }
 
-    mod shuffled_bootstrap_peers {
+    mod bootstrap_peers {
         use super::*;
 
         #[test]
@@ -409,7 +406,7 @@ mod tests {
             let mut cached_peers = HashSet::new();
             let _ = cached_peers.insert(peer2);
 
-            let peers = shuffled_bootstrap_peers(cached_peers, &config, Default::default());
+            let peers = bootstrap_peers(cached_peers, &config, Default::default());
 
             assert_eq!(peers.len(), 2);
             assert!(peers.contains(&peer1));
@@ -427,7 +424,7 @@ mod tests {
             let mut blacklisted = HashSet::new();
             let _ = blacklisted.insert(ipv4_addr(1, 2, 3, 4, 4000));
 
-            let peers = shuffled_bootstrap_peers(cached_peers, &config, blacklisted);
+            let peers = bootstrap_peers(cached_peers, &config, blacklisted);
 
             assert_eq!(peers.len(), 1);
             assert!(peers.contains(&peer2));
