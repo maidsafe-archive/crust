@@ -85,10 +85,10 @@ impl CacheValidator {
     fn ping_peer_and_cache_alive(&mut self, core: &mut EventLoopCore, poll: &Poll, peer: PeerInfo) {
         let self_weak = self.self_weak.clone();
         let expired_tx = self.expired_tx.clone();
-        let on_done = move |core: &mut EventLoopCore,
-                            _poll: &Poll,
-                            request_token,
-                            req_status: Result<SocketAddr, ()>| {
+        let finish = move |core: &mut EventLoopCore,
+                           _poll: &Poll,
+                           request_token,
+                           req_status: Result<SocketAddr, ()>| {
             if let Some(self_rc) = self_weak.upgrade() {
                 let _ = self_rc.borrow_mut().sent_requests.remove(&request_token);
                 if req_status.is_ok() {
@@ -107,7 +107,7 @@ impl CacheValidator {
             self.our_pk,
             &self.our_sk,
             Some(PEER_TEST_TIMEOUT_SEC),
-            Box::new(on_done),
+            Box::new(finish),
         ) {
             let _ = self.sent_requests.insert(request_token);
         }
@@ -140,6 +140,7 @@ impl State<CrustData> for CacheValidator {
 
     fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate_requests(core, poll);
+        let _ = poll.deregister(&self.expired_rx);
         let _ = core.remove_state(self.token);
     }
 
