@@ -16,7 +16,7 @@ crossbeam = "~0.2.10"
 get_if_addrs = "~0.5.3"
 igd = "~0.7.0"
 log = "~0.4.6"
-lru_time_cache = { path = "../lru_time_cache" }
+lru_time_cache = { git = "https://github.com/maidsafe/lru_time_cache", rev = "e6cfe58" }
 maidsafe_utilities = "~0.17.0"
 mio = "~0.6.9"
 mio-extras = "~2.0.5"
