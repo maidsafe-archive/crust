@@ -226,8 +226,7 @@ mod tests {
     use crate::nat::MappingContext;
     use crate::tests::rand_peer_id_and_enc_sk;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use mio::Events;
-    use mio::Token;
+    use mio::{Events, Token};
     use safe_crypto::gen_encrypt_keypair;
     use socket_collection::{EncryptContext, SocketError};
     use std::io::Read;
@@ -255,7 +254,7 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
-            || CrustData::new(BootstrapCache::new(None)),
+            || CrustData::new(BootstrapCache::new(None, 200, 120)),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();

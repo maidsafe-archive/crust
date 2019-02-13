@@ -10,10 +10,12 @@
 #[macro_use]
 pub mod utils;
 
-pub use self::utils::{gen_config, get_event_sender, rand_peer_id_and_enc_sk, timebomb};
+pub use self::utils::{
+    gen_config, get_event_sender, rand_peer_id_and_enc_sk, test_service, timebomb,
+};
 
 use crate::common::{CrustUser, PeerInfo};
-use crate::main::{self, Config, Event};
+use crate::main::{Config, Event, Service};
 use crate::PeerId;
 use mio;
 use rand;
@@ -22,11 +24,9 @@ use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
-use std::sync::mpsc::{self, Receiver};
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-
-type Service = main::Service;
 
 fn localhost_contact_info(port: u16, pk: PublicEncryptKey) -> PeerInfo {
     use std::net::IpAddr;
@@ -39,14 +39,6 @@ fn gen_service_discovery_port() -> u16 {
     static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
 
     BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
-}
-
-fn test_service() -> (Service, Receiver<Event>) {
-    let config = gen_config();
-    let (event_tx, event_rx) = get_event_sender();
-    let (peer_id, peer_sk) = rand_peer_id_and_enc_sk();
-    let service = unwrap!(Service::with_config(event_tx, config, peer_id, peer_sk));
-    (service, event_rx)
 }
 
 mod connect {

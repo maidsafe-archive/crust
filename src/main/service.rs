@@ -10,38 +10,25 @@
 use crate::common::{
     self, BootstrapperRole, CoreMessage, CrustUser, NameHash, PeerInfo, HASH_SIZE,
 };
-use crate::main::bootstrap::Cache as BootstrapCache;
+use crate::main::bootstrap;
 use crate::main::config_handler::{self, Config};
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
     ConnectionInfoResult, ConnectionListener, CrustData, CrustError, Event, EventLoop,
-    EventLoopCore, PeerId, PrivConnectionInfo, PubConnectionInfo,
+    EventLoopCore, EventToken, PeerId, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
-use mio::{Poll, Token};
+use mio::Poll;
 use safe_crypto::{self, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
 use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc};
 
-/// Reserved mio `Token` values for Crust speficic events.
-#[derive(Debug, PartialEq)]
-#[repr(usize)]
-enum EventToken {
-    Bootstrap,
-    ServiceDiscovery,
-    Listener,
-    ConfigRefresher,
-    Unreserved,
-}
-
-impl From<EventToken> for Token {
-    fn from(token: EventToken) -> Token {
-        Token(token as usize)
-    }
-}
+const DEFAULT_BOOTSTAP_CACHE_LIMIT: usize = 200;
+/// Bootstrap cache peer timeout in seconds.
+const DEFAULT_BOOTSTAP_CACHE_TIMEOUT: u64 = 120;
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -149,7 +136,11 @@ impl Service {
             EventToken::Unreserved as usize,
             Some(&format!("{:?}", our_uid)),
             move || {
-                let cache = BootstrapCache::new(bootstrap_cache_file);
+                let mut cache = bootstrap::Cache::new(
+                    bootstrap_cache_file,
+                    DEFAULT_BOOTSTAP_CACHE_LIMIT,
+                    DEFAULT_BOOTSTAP_CACHE_TIMEOUT,
+                );
                 cache.read_file();
                 let mut user_data = CrustData::new(cache);
                 user_data.config = ConfigWrapper::new(config);
@@ -166,24 +157,10 @@ impl Service {
             our_uid,
             our_sk,
         };
-
         service.start_config_refresher()?;
+        service.start_bootstrap_cache_validator()?;
 
         Ok(service)
-    }
-
-    fn start_config_refresher(&self) -> crate::Res<()> {
-        let (tx, rx) = mpsc::channel();
-        self.post(move |core, _| {
-            if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
-                let _ = tx.send(ConfigRefresher::start(
-                    core,
-                    EventToken::ConfigRefresher.into(),
-                ));
-            }
-            let _ = tx.send(Ok(()));
-        })?;
-        rx.recv()?
     }
 
     /// Allow (or disallow) peers from bootstrapping off us.
@@ -690,7 +667,7 @@ impl Service {
     pub fn bootstrap_cached_peers(&self) -> crate::Res<HashSet<PeerInfo>> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let cached_peers = core.user_data().bootstrap_cache.peers();
+            let cached_peers = core.user_data().bootstrap_cache.snapshot();
             let _ = tx.send(cached_peers);
         });
         rx.recv().map_err(CrustError::ChannelRecv)
@@ -702,6 +679,35 @@ impl Service {
     {
         self.el.send(CoreMessage::new(f))?;
         Ok(())
+    }
+
+    fn start_config_refresher(&self) -> crate::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        self.post(move |core, _| {
+            if core.get_state(EventToken::ConfigRefresher.into()).is_none() {
+                let _ = tx.send(ConfigRefresher::start(
+                    core,
+                    EventToken::ConfigRefresher.into(),
+                ));
+            }
+            let _ = tx.send(Ok(()));
+        })?;
+        rx.recv()?
+    }
+
+    /// Starts a future that periodically tests if inactive cached bootstrap peers are still alive.
+    fn start_bootstrap_cache_validator(&self) -> crate::Res<()> {
+        let (tx, rx) = mpsc::channel();
+        let (our_pk, our_sk) = (self.our_uid.pub_enc_key, self.our_sk.clone());
+        self.post(move |core, _poll| {
+            let _ = tx.send(bootstrap::CacheValidator::start(
+                core,
+                EventToken::BootstrapCacheValidator.into(),
+                our_pk,
+                our_sk,
+            ));
+        })?;
+        rx.recv()?
     }
 }
 
@@ -732,6 +738,7 @@ mod tests {
     use crate::CrustError;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
+    use mio::Token;
     use std::collections::{hash_map, HashMap};
     use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
     use std::sync::mpsc::Receiver;

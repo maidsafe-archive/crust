@@ -8,9 +8,12 @@
 // Software.
 
 mod cache;
+mod cache_validator;
 mod try_peer;
 
 pub use self::cache::Cache;
+use self::cache_validator::test_inactive_cached_peers;
+pub use self::cache_validator::CacheValidator;
 use self::try_peer::TryPeer;
 use crate::common::{
     BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State,
@@ -88,11 +91,10 @@ impl Bootstrap {
             }
         };
 
-        let peers = shuffled_bootstrap_peers(
-            core.user_data().bootstrap_cache.peers(),
-            &core.user_data().config.cfg,
-            blacklist,
-        );
+        let (cached_peers, expired_peers) = core.user_data_mut().bootstrap_cache.peers();
+        test_inactive_cached_peers(core, poll, expired_peers);
+
+        let peers = bootstrap_peers(cached_peers, &core.user_data().config.cfg, blacklist);
         let state = Rc::new(RefCell::new(Self {
             token,
             peers,
@@ -150,6 +152,7 @@ impl Bootstrap {
         self.maybe_terminate(core, poll);
     }
 
+    /// Spawns `ActiveConnection` state and terminates remaining bootstrap attempts.
     fn handle_result(
         &mut self,
         core: &mut EventLoopCore,
@@ -262,7 +265,7 @@ impl State<CrustData> for Bootstrap {
 }
 
 /// Puts given peer contacts into bootstrap cache which is then written to disk.
-pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
+pub fn cache_peer_info(core: &mut EventLoopCore, poll: &Poll, peer_info: PeerInfo) {
     let user_data = &mut core.user_data_mut();
     if user_data
         .config
@@ -274,10 +277,11 @@ pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
         return;
     }
 
-    user_data.bootstrap_cache.put(peer_info);
+    let expired_peers = user_data.bootstrap_cache.put(peer_info);
     if let Err(e) = user_data.bootstrap_cache.commit() {
         info!("Failed to write bootstrap cache to disk: {}", e);
     }
+    test_inactive_cached_peers(core, poll, expired_peers);
 }
 
 struct ServiceDiscMeta {
@@ -310,20 +314,16 @@ fn seek_peers(
     }
 }
 
-/// Peers from bootstrap cache and hard coded contacts are shuffled individually.
-fn shuffled_bootstrap_peers(
-    cached_peers: HashSet<PeerInfo>,
+/// Peers to bootsrap off.
+fn bootstrap_peers(
+    mut cached_peers: HashSet<PeerInfo>,
     config: &Config,
     blacklist: HashSet<SocketAddr>,
 ) -> Vec<PeerInfo> {
-    let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
-    let mut rng = rand::thread_rng();
-
-    let mut cached: Vec<_> = cached_peers.iter().cloned().collect();
-    cached.shuffle(&mut rng);
-    peers.extend(cached);
+    let mut peers: Vec<_> = cached_peers.drain().collect();
 
     let mut hard_coded = config.hard_coded_contacts.clone();
+    let mut rng = rand::thread_rng();
     hard_coded.shuffle(&mut rng);
     peers.extend(hard_coded);
 
@@ -357,11 +357,12 @@ mod tests {
         #[test]
         fn it_puts_peer_contacts_into_bootstrap_cache() {
             let mut core = test_core(test_bootstrap_cache());
+            let poll = unwrap!(Poll::new());
             let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
 
-            cache_peer_info(&mut core, peer_info);
+            cache_peer_info(&mut core, &poll, peer_info);
 
-            let cached_peers = core.user_data().bootstrap_cache.peers();
+            let cached_peers = core.user_data().bootstrap_cache.snapshot();
             assert_eq!(cached_peers.len(), 1);
             assert_eq!(unwrap!(cached_peers.iter().next()), &peer_info);
         }
@@ -369,12 +370,13 @@ mod tests {
         #[test]
         fn it_wont_cache_hard_coded_peer() {
             let mut core = test_core(test_bootstrap_cache());
+            let poll = unwrap!(Poll::new());
             let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
             core.user_data_mut().config.cfg.hard_coded_contacts = vec![peer_info];
 
-            cache_peer_info(&mut core, peer_info);
+            cache_peer_info(&mut core, &poll, peer_info);
 
-            let cached_peers = core.user_data().bootstrap_cache.peers();
+            let cached_peers = core.user_data().bootstrap_cache.snapshot();
             assert!(cached_peers.is_empty());
         }
     }
@@ -397,7 +399,7 @@ mod tests {
         }
     }
 
-    mod shuffled_bootstrap_peers {
+    mod bootstrap_peers {
         use super::*;
 
         #[test]
@@ -409,7 +411,7 @@ mod tests {
             let mut cached_peers = HashSet::new();
             let _ = cached_peers.insert(peer2);
 
-            let peers = shuffled_bootstrap_peers(cached_peers, &config, Default::default());
+            let peers = bootstrap_peers(cached_peers, &config, Default::default());
 
             assert_eq!(peers.len(), 2);
             assert!(peers.contains(&peer1));
@@ -427,7 +429,7 @@ mod tests {
             let mut blacklisted = HashSet::new();
             let _ = blacklisted.insert(ipv4_addr(1, 2, 3, 4, 4000));
 
-            let peers = shuffled_bootstrap_peers(cached_peers, &config, blacklisted);
+            let peers = bootstrap_peers(cached_peers, &config, blacklisted);
 
             assert_eq!(peers.len(), 1);
             assert!(peers.contains(&peer2));
@@ -509,9 +511,9 @@ mod tests {
 
                 #[test]
                 fn it_removes_peer_info_from_bootstrap_cache() {
-                    let bootstrap_cache = test_bootstrap_cache();
+                    let mut bootstrap_cache = test_bootstrap_cache();
                     let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-                    bootstrap_cache.put(peer_info);
+                    let _ = bootstrap_cache.put(peer_info);
                     let mut core = test_core(bootstrap_cache);
                     let poll = unwrap!(Poll::new());
 
@@ -543,17 +545,17 @@ mod tests {
                         Err((peer_info, None)),
                     );
 
-                    let cached_peers = core.user_data().bootstrap_cache.peers();
+                    let cached_peers = core.user_data().bootstrap_cache.snapshot();
                     assert!(cached_peers.is_empty());
                 }
 
                 #[test]
                 fn when_reason_is_invalid_hash_bootstrap_is_not_terminated() {
-                    let bootstrap_cache = test_bootstrap_cache();
+                    let mut bootstrap_cache = test_bootstrap_cache();
                     let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                     // there must be at least one bootstrap peer, otherwise Bootstrap state
                     // will be terminated too soon.
-                    bootstrap_cache.put(peer_info);
+                    let _ = bootstrap_cache.put(peer_info);
                     let mut core = test_core(bootstrap_cache);
                     let poll = unwrap!(Poll::new());
 

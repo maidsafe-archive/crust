@@ -158,3 +158,27 @@ pub type EventLoopCore = Core<CrustData>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
 pub type EventLoop = common::EventLoop<CrustData>;
+
+/// Reserved mio `Token` values for Crust speficic events.
+#[derive(Debug, PartialEq)]
+#[repr(usize)]
+pub enum EventToken {
+    /// Bootstrap state token.
+    Bootstrap,
+    /// Service discovery listener token.
+    ServiceDiscovery,
+    /// Connection listener token.
+    Listener,
+    /// Config refresher token.
+    ConfigRefresher,
+    /// Bootstrap cache validator token.
+    BootstrapCacheValidator,
+    /// Up from this value you can use tokens for arbitrary events.
+    Unreserved,
+}
+
+impl From<EventToken> for Token {
+    fn from(token: EventToken) -> Token {
+        Token(token as usize)
+    }
+}
