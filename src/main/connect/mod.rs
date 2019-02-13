@@ -149,7 +149,7 @@ impl Connect {
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            bootstrap::cache_peer_info(core, peer_info);
+            bootstrap::cache_peer_info(core, poll, peer_info);
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {

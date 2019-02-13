@@ -265,7 +265,7 @@ impl State<CrustData> for Bootstrap {
 }
 
 /// Puts given peer contacts into bootstrap cache which is then written to disk.
-pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
+pub fn cache_peer_info(core: &mut EventLoopCore, poll: &Poll, peer_info: PeerInfo) {
     let user_data = &mut core.user_data_mut();
     if user_data
         .config
@@ -277,11 +277,11 @@ pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
         return;
     }
 
-    let _expired_peers = user_data.bootstrap_cache.put(peer_info);
-    //test_inactive_cached_peers(core, poll, expired_peers);
+    let expired_peers = user_data.bootstrap_cache.put(peer_info);
     if let Err(e) = user_data.bootstrap_cache.commit() {
         info!("Failed to write bootstrap cache to disk: {}", e);
     }
+    test_inactive_cached_peers(core, poll, expired_peers);
 }
 
 struct ServiceDiscMeta {
@@ -357,9 +357,10 @@ mod tests {
         #[test]
         fn it_puts_peer_contacts_into_bootstrap_cache() {
             let mut core = test_core(test_bootstrap_cache());
+            let poll = unwrap!(Poll::new());
             let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
 
-            cache_peer_info(&mut core, peer_info);
+            cache_peer_info(&mut core, &poll, peer_info);
 
             let cached_peers = core.user_data().bootstrap_cache.snapshot();
             assert_eq!(cached_peers.len(), 1);
@@ -369,10 +370,11 @@ mod tests {
         #[test]
         fn it_wont_cache_hard_coded_peer() {
             let mut core = test_core(test_bootstrap_cache());
+            let poll = unwrap!(Poll::new());
             let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
             core.user_data_mut().config.cfg.hard_coded_contacts = vec![peer_info];
 
-            cache_peer_info(&mut core, peer_info);
+            cache_peer_info(&mut core, &poll, peer_info);
 
             let cached_peers = core.user_data().bootstrap_cache.snapshot();
             assert!(cached_peers.is_empty());
