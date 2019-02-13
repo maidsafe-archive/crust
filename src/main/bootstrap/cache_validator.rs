@@ -8,10 +8,9 @@
 // Software.
 
 use crate::common::{ipv4_addr, PeerInfo, State};
-use crate::main::{CrustData, EventLoopCore};
+use crate::main::{CrustData, EventLoopCore, EventToken};
 use crate::nat::GetExtAddr;
-use mio::{Poll, PollOpt, Ready, Token};
-use mio_extras::channel::{channel, Receiver, Sender};
+use mio::{Poll, Token};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use std::any::Any;
 use std::cell::RefCell;
@@ -30,8 +29,6 @@ pub struct CacheValidator {
     token: Token,
     our_pk: PublicEncryptKey,
     our_sk: SecretEncryptKey,
-    expired_rx: Receiver<HashSet<PeerInfo>>,
-    expired_tx: Sender<HashSet<PeerInfo>>,
     /// Tokens for in progress states testing peer connectivity.
     sent_requests: HashSet<Token>,
     /// When need to reference self from the callbacks.
@@ -42,22 +39,14 @@ impl CacheValidator {
     /// Starts running bootstrap cache entry validation.
     pub fn start(
         core: &mut EventLoopCore,
-        poll: &Poll,
+        token: Token,
         our_pk: PublicEncryptKey,
         our_sk: SecretEncryptKey,
     ) -> crate::Res<()> {
-        let token = core.get_new_token();
-
-        let (expired_tx, expired_rx) = channel();
-        core.user_data_mut().expired_cached_peers_tx = Some(expired_tx.clone());
-        poll.register(&expired_rx, token, Ready::readable(), PollOpt::edge())?;
-
         let state = Rc::new(RefCell::new(Self {
             token,
             our_pk,
             our_sk,
-            expired_rx,
-            expired_tx: expired_tx.clone(),
             sent_requests: Default::default(),
             self_weak: Default::default(),
         }));
@@ -68,7 +57,7 @@ impl CacheValidator {
     }
 
     /// Sends STUN requests to cached peers that recently been inactive.
-    fn ping_inactive_peers(
+    pub fn ping_inactive_peers(
         &mut self,
         core: &mut EventLoopCore,
         poll: &Poll,
@@ -84,17 +73,17 @@ impl CacheValidator {
     /// If response arrives within timeout, peer is added to the bootstrap cache head.
     fn ping_peer_and_cache_alive(&mut self, core: &mut EventLoopCore, poll: &Poll, peer: PeerInfo) {
         let self_weak = self.self_weak.clone();
-        let expired_tx = self.expired_tx.clone();
         let finish = move |core: &mut EventLoopCore,
-                           _poll: &Poll,
+                           poll: &Poll,
                            request_token,
                            req_status: Result<SocketAddr, ()>| {
             if let Some(self_rc) = self_weak.upgrade() {
-                let _ = self_rc.borrow_mut().sent_requests.remove(&request_token);
+                let mut self_rc = self_rc.borrow_mut();
+                let _ = self_rc.sent_requests.remove(&request_token);
                 if req_status.is_ok() {
                     let expired_peers = core.user_data_mut().bootstrap_cache.put(peer);
                     if !expired_peers.is_empty() {
-                        let _ = expired_tx.send(expired_peers);
+                        self_rc.ping_inactive_peers(core, poll, expired_peers);
                     }
                 }
             }
@@ -123,29 +112,25 @@ impl CacheValidator {
             req_state.borrow_mut().terminate(core, poll);
         }
     }
-
-    fn read_expired_rx(&mut self, core: &mut EventLoopCore, poll: &Poll) {
-        while let Ok(expired_peers) = self.expired_rx.try_recv() {
-            self.ping_inactive_peers(core, poll, expired_peers);
-        }
-    }
 }
 
 impl State<CrustData> for CacheValidator {
-    fn ready(&mut self, core: &mut EventLoopCore, poll: &Poll, kind: Ready) {
-        if kind.is_readable() {
-            self.read_expired_rx(core, poll)
-        }
-    }
-
     fn terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
         self.terminate_requests(core, poll);
-        let _ = poll.deregister(&self.expired_rx);
         let _ = core.remove_state(self.token);
     }
 
     fn as_any(&mut self) -> &mut Any {
         self
+    }
+}
+
+/// Schedules tests for inactive cached bootstrap peers.
+pub fn test_inactive_cached_peers(core: &mut EventLoopCore, poll: &Poll, peers: HashSet<PeerInfo>) {
+    if let Some(state) = core.get_state(EventToken::BootstrapCacheValidator.into()) {
+        if let Some(validator) = state.borrow_mut().as_any().downcast_mut::<CacheValidator>() {
+            validator.ping_inactive_peers(core, poll, peers);
+        }
     }
 }
 
@@ -159,7 +144,7 @@ mod tests {
     use std::sync::mpsc;
     use std::time::Duration;
 
-    mod when_cache_has_inactive_peers {
+    mod ping_inactive_peers {
         use super::*;
 
         #[test]
@@ -179,9 +164,13 @@ mod tests {
             let (our_pk, our_sk) = gen_encrypt_keypair();
             let expired_peers: HashSet<_> = vec![remote_peer].drain(..).collect();
             unwrap!(el.send(CoreMessage::new(move |core, poll| {
-                unwrap!(CacheValidator::start(core, poll, our_pk, our_sk));
-                let tx = unwrap!(core.user_data().expired_cached_peers_tx.as_ref());
-                unwrap!(tx.send(expired_peers));
+                unwrap!(CacheValidator::start(
+                    core,
+                    EventToken::BootstrapCacheValidator.into(),
+                    our_pk,
+                    our_sk
+                ));
+                test_inactive_cached_peers(core, poll, expired_peers);
             })));
 
             std::thread::sleep(Duration::from_secs(PEER_TEST_TIMEOUT_SEC + 3));

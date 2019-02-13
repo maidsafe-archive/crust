@@ -12,6 +12,7 @@ mod cache_validator;
 mod try_peer;
 
 pub use self::cache::Cache;
+use self::cache_validator::test_inactive_cached_peers;
 pub use self::cache_validator::CacheValidator;
 use self::try_peer::TryPeer;
 use crate::common::{
@@ -91,9 +92,7 @@ impl Bootstrap {
         };
 
         let (cached_peers, expired_peers) = core.user_data_mut().bootstrap_cache.peers();
-        if let Some(ref tx) = core.user_data().expired_cached_peers_tx {
-            let _ = tx.send(expired_peers);
-        }
+        test_inactive_cached_peers(core, poll, expired_peers);
 
         let peers = bootstrap_peers(cached_peers, &core.user_data().config.cfg, blacklist);
         let state = Rc::new(RefCell::new(Self {
@@ -278,10 +277,8 @@ pub fn cache_peer_info(core: &mut EventLoopCore, peer_info: PeerInfo) {
         return;
     }
 
-    let expired_peers = user_data.bootstrap_cache.put(peer_info);
-    if let Some(ref tx) = user_data.expired_cached_peers_tx {
-        let _ = tx.send(expired_peers);
-    }
+    let _expired_peers = user_data.bootstrap_cache.put(peer_info);
+    //test_inactive_cached_peers(core, poll, expired_peers);
     if let Err(e) = user_data.bootstrap_cache.commit() {
         info!("Failed to write bootstrap cache to disk: {}", e);
     }

@@ -15,11 +15,11 @@ use crate::main::config_handler::{self, Config};
 use crate::main::{
     ActiveConnection, Bootstrap, ConfigRefresher, ConfigWrapper, Connect, ConnectionId,
     ConnectionInfoResult, ConnectionListener, CrustData, CrustError, Event, EventLoop,
-    EventLoopCore, PeerId, PrivConnectionInfo, PubConnectionInfo,
+    EventLoopCore, EventToken, PeerId, PrivConnectionInfo, PubConnectionInfo,
 };
 use crate::nat::{ip_addr_is_global, MappedTcpSocket, MappingContext};
 use crate::service_discovery::ServiceDiscovery;
-use mio::{Poll, Token};
+use mio::Poll;
 use safe_crypto::{self, PublicEncryptKey, SecretEncryptKey};
 use socket_collection::Priority;
 use std::collections::HashSet;
@@ -29,23 +29,6 @@ use std::sync::{mpsc, Arc};
 const DEFAULT_BOOTSTAP_CACHE_LIMIT: usize = 200;
 /// Bootstrap cache peer timeout in seconds.
 const DEFAULT_BOOTSTAP_CACHE_TIMEOUT: u64 = 120;
-
-/// Reserved mio `Token` values for Crust speficic events.
-#[derive(Debug, PartialEq)]
-#[repr(usize)]
-enum EventToken {
-    Bootstrap,
-    ServiceDiscovery,
-    Listener,
-    ConfigRefresher,
-    Unreserved,
-}
-
-impl From<EventToken> for Token {
-    fn from(token: EventToken) -> Token {
-        Token(token as usize)
-    }
-}
 
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
@@ -716,8 +699,13 @@ impl Service {
     fn start_bootstrap_cache_validator(&self) -> crate::Res<()> {
         let (tx, rx) = mpsc::channel();
         let (our_pk, our_sk) = (self.our_uid.pub_enc_key, self.our_sk.clone());
-        self.post(move |core, poll| {
-            let _ = tx.send(bootstrap::CacheValidator::start(core, poll, our_pk, our_sk));
+        self.post(move |core, _poll| {
+            let _ = tx.send(bootstrap::CacheValidator::start(
+                core,
+                EventToken::BootstrapCacheValidator.into(),
+                our_pk,
+                our_sk,
+            ));
         })?;
         rx.recv()?
     }
@@ -750,6 +738,7 @@ mod tests {
     use crate::CrustError;
     use maidsafe_utilities;
     use maidsafe_utilities::thread::Joiner;
+    use mio::Token;
     use std::collections::{hash_map, HashMap};
     use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
     use std::sync::mpsc::Receiver;

@@ -12,7 +12,6 @@ use crate::main::bootstrap::Cache as BootstrapCache;
 use crate::main::Config;
 use crate::PeerId;
 use mio::Token;
-use mio_extras::channel::Sender as MioSender;
 use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 
@@ -134,7 +133,6 @@ pub struct CrustData {
     /// Either established or in progress connections.
     pub connections: HashMap<PeerId, ConnectionId>,
     pub config: ConfigWrapper,
-    pub expired_cached_peers_tx: Option<MioSender<HashSet<PeerInfo>>>,
 }
 
 impl CrustData {
@@ -144,7 +142,6 @@ impl CrustData {
             our_listeners: Default::default(),
             connections: Default::default(),
             config: Default::default(),
-            expired_cached_peers_tx: Default::default(),
         }
     }
 }
@@ -161,3 +158,27 @@ pub type EventLoopCore = Core<CrustData>;
 
 /// Handle to Crust event loop that owns `EventLoopCore`.
 pub type EventLoop = common::EventLoop<CrustData>;
+
+/// Reserved mio `Token` values for Crust speficic events.
+#[derive(Debug, PartialEq)]
+#[repr(usize)]
+pub enum EventToken {
+    /// Bootstrap state token.
+    Bootstrap,
+    /// Service discovery listener token.
+    ServiceDiscovery,
+    /// Connection listener token.
+    Listener,
+    /// Config refresher token.
+    ConfigRefresher,
+    /// Bootstrap cache validator token.
+    BootstrapCacheValidator,
+    /// Up from this value you can use tokens for arbitrary events.
+    Unreserved,
+}
+
+impl From<EventToken> for Token {
+    fn from(token: EventToken) -> Token {
+        Token(token as usize)
+    }
+}

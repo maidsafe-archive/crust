@@ -21,7 +21,7 @@ pub use self::event::Event;
 pub use self::service::Service;
 pub use self::types::{
     ConfigWrapper, ConnectionId, ConnectionInfoResult, CrustData, EventLoop, EventLoopCore,
-    GetGlobalListenerAddrs, PrivConnectionInfo, PubConnectionInfo,
+    EventToken, GetGlobalListenerAddrs, PrivConnectionInfo, PubConnectionInfo,
 };
 
 mod active_connection;
