@@ -300,6 +300,7 @@ fn main() {
     let (peer_id, peer_sk) = new_peer_id();
     let mut service = unwrap!(Service::with_config(event_sender, config, peer_id, peer_sk));
     unwrap!(service.start_listening_tcp());
+    unwrap!(service.set_ext_reachability_test(false));
     service.start_service_discovery();
     let service = Arc::new(Mutex::new(service));
     let service_cloned = service.clone();
