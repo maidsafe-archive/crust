@@ -33,6 +33,7 @@
     improper_ctypes,
     missing_docs,
     non_shorthand_field_patterns,
+    nonstandard_style,
     overflowing_literals,
     plugin_as_library,
     stable_features,
