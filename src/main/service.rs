@@ -132,11 +132,7 @@ impl Service {
             EventToken::Unreserved as usize,
             Some(&format!("{:?}", our_uid)),
             move || {
-                let mut cache = bootstrap::Cache::new(
-                    bootstrap_cache_cfg.file_name,
-                    bootstrap_cache_cfg.max_size,
-                    bootstrap_cache_cfg.timeout,
-                );
+                let mut cache = bootstrap::Cache::new(bootstrap_cache_cfg);
                 cache.read_file();
                 let mut user_data = CrustData::new(cache);
                 user_data.config = ConfigWrapper::new(config);

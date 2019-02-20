@@ -94,8 +94,8 @@ mod service_discovery;
 
 pub use crate::common::{CrustUser, PeerInfo};
 pub use crate::main::{
-    read_config_file, Config, ConnectionInfoResult, CrustError, Event, PeerId, PrivConnectionInfo,
-    PubConnectionInfo, Service,
+    read_config_file, BootstrapCacheConfig, Config, ConnectionInfoResult, CrustError, Event,
+    PeerId, PrivConnectionInfo, PubConnectionInfo, Service,
 };
 pub use socket_collection::Priority;
 

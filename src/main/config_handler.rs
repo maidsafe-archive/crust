@@ -8,6 +8,7 @@
 // Software.
 
 use crate::common::PeerInfo;
+use crate::main::BootstrapCacheConfig;
 use config_file_handler::{self, FileHandler};
 use std::collections::HashSet;
 use std::ffi::OsString;
@@ -15,27 +16,6 @@ use std::net::IpAddr;
 
 #[cfg(test)]
 use std::path::PathBuf;
-
-/// Bootstrap cache specific configurable settings.
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-pub struct BootstrapCacheConfig {
-    /// File path for bootstrap cache.
-    pub file_name: Option<OsString>,
-    /// Maximum number of node contacts that will be cached for bootstrap.
-    pub max_size: usize,
-    /// Timeout for inactive cache entries in seconds.
-    pub timeout: u64,
-}
-
-impl Default for BootstrapCacheConfig {
-    fn default() -> BootstrapCacheConfig {
-        BootstrapCacheConfig {
-            file_name: None,
-            max_size: 200,
-            timeout: 120,
-        }
-    }
-}
 
 /// Crust configuration settings
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
