@@ -156,7 +156,7 @@ mod tests {
             let remote_peer = PeerInfo::new(ipv4_addr(127, 0, 0, 1, peer_port), peer_pk);
 
             let init_crust_data = move || {
-                let bootstrap_cache = bootstrap::Cache::new(None, 200, 120);
+                let bootstrap_cache = bootstrap::Cache::new(Default::default());
                 CrustData::new(bootstrap_cache)
             };
             let el = unwrap!(spawn_event_loop(0, None, init_crust_data));

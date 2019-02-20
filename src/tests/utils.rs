@@ -8,7 +8,9 @@
 // Software.
 
 use crate::common::PeerInfo;
-use crate::main::{BootstrapCache, Config, CrustData, Event, EventLoopCore, Service};
+use crate::main::{
+    BootstrapCache, BootstrapCacheConfig, Config, CrustData, Event, EventLoopCore, Service,
+};
 use crate::PeerId;
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
@@ -110,7 +112,11 @@ pub fn test_core(bootstrap_cache: BootstrapCache) -> EventLoopCore {
 /// Bootstrap cache on tmp directory with unique file name.
 pub fn test_bootstrap_cache() -> BootstrapCache {
     let cache_file = bootstrap_cache_tmp_file().into();
-    BootstrapCache::new(Some(cache_file), 100, 120)
+    BootstrapCache::new(BootstrapCacheConfig {
+        file_name: Some(cache_file),
+        max_size: 100,
+        timeout: 120,
+    })
 }
 
 /// Constructs peer info with random generated public key.

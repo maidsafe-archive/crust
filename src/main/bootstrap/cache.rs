@@ -15,6 +15,27 @@ use std::collections::HashSet;
 use std::ffi::OsString;
 use std::time::Duration;
 
+/// Bootstrap cache specific configurable settings.
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub struct CacheConfig {
+    /// File path for bootstrap cache.
+    pub file_name: Option<OsString>,
+    /// Maximum number of node contacts that will be cached for bootstrap.
+    pub max_size: usize,
+    /// Timeout for inactive cache entries in seconds.
+    pub timeout: u64,
+}
+
+impl Default for CacheConfig {
+    fn default() -> CacheConfig {
+        CacheConfig {
+            file_name: None,
+            max_size: 200,
+            timeout: 120,
+        }
+    }
+}
+
 /// Bootstrap cache - keeps log of known publicly accessible peers.
 /// This cache can optionally be stored on disk and loaded later.
 #[derive(Clone)]
@@ -27,18 +48,12 @@ impl Cache {
     /// Constructs new bootstrap cache. You can optionally specify the file name which will
     /// be used to read/write the cache to. If no file name is give, the default path is used, see
     /// `#get_default_file_name()`.
-    ///
-    /// ## Args
-    ///
-    /// - capacity: max cache size.
-    /// - timeout_secs: if cached peers are not used within this timeout in seconds, they will
-    ///   be evicted from the cache.
-    pub fn new(file_name: Option<OsString>, capacity: usize, timeout_secs: u64) -> Self {
+    pub fn new(cfg: CacheConfig) -> Self {
         Cache {
-            file_name,
+            file_name: cfg.file_name,
             peers: LruCache::with_expiry_duration_and_capacity(
-                Duration::from_secs(timeout_secs),
-                capacity,
+                Duration::from_secs(cfg.timeout),
+                cfg.max_size,
             ),
         }
     }
@@ -186,7 +201,11 @@ mod tests {
                     ]
                 "#,
                 );
-                let mut cache = Cache::new(Some(fname), 5, 120);
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: Some(fname),
+                    max_size: 5,
+                    timeout: 120,
+                });
 
                 cache.read_file();
 
@@ -202,7 +221,11 @@ mod tests {
 
             #[test]
             fn it_inserts_given_peer_to_the_front() {
-                let mut cache = Cache::new(None, 5, 120);
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: None,
+                    max_size: 5,
+                    timeout: 120,
+                });
 
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
@@ -216,7 +239,11 @@ mod tests {
 
             #[test]
             fn when_peer_is_already_cached_it_is_moved_to_front() {
-                let mut cache = Cache::new(None, 5, 120);
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: None,
+                    max_size: 5,
+                    timeout: 120,
+                });
                 let peer1 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
                 let _ = cache.put(peer1);
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
@@ -232,7 +259,11 @@ mod tests {
 
             #[test]
             fn when_cache_is_full_given_peer_is_added_and_last_one_is_removed() {
-                let mut cache = Cache::new(None, 2, 120);
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: None,
+                    max_size: 2,
+                    timeout: 120,
+                });
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
 
@@ -248,7 +279,11 @@ mod tests {
 
         #[test]
         fn remove() {
-            let mut cache = Cache::new(None, 5, 120);
+            let mut cache = Cache::new(CacheConfig {
+                file_name: None,
+                max_size: 2,
+                timeout: 120,
+            });
             let peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
             let _ = cache.put(peer);
 
@@ -263,13 +298,21 @@ mod tests {
             #[test]
             fn it_writes_cache_to_file() {
                 let tmp_fname: OsString = bootstrap_cache_tmp_file().into();
-                let mut cache = Cache::new(Some(tmp_fname.clone()), 5, 120);
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: Some(tmp_fname.clone()),
+                    max_size: 5,
+                    timeout: 120,
+                });
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
                 let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
 
                 unwrap!(cache.commit());
 
-                let mut cache = Cache::new(Some(tmp_fname), 5, 120);
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: Some(tmp_fname.clone()),
+                    max_size: 5,
+                    timeout: 120,
+                });
                 cache.read_file();
                 let addrs: Vec<SocketAddr> =
                     cache.snapshot().iter().map(|peer| peer.addr).collect();

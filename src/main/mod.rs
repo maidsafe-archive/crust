@@ -8,9 +8,9 @@
 // Software.
 
 pub use self::active_connection::{ActiveConnection, INACTIVITY_TIMEOUT_MS};
-pub use self::bootstrap::Bootstrap;
 #[cfg(test)]
 pub use self::bootstrap::Cache as BootstrapCache;
+pub use self::bootstrap::{Bootstrap, CacheConfig as BootstrapCacheConfig};
 pub use self::config_handler::Config;
 pub use self::config_refresher::ConfigRefresher;
 pub use self::connect::Connect;

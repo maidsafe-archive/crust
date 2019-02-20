@@ -221,7 +221,7 @@ mod tests {
     use crate::common::{
         self, BootstrapperRole, CoreMessage, CrustUser, Message, NameHash, HASH_SIZE,
     };
-    use crate::main::bootstrap::Cache as BootstrapCache;
+    use crate::main::bootstrap;
     use crate::main::{Event, EventLoop};
     use crate::nat::MappingContext;
     use crate::tests::rand_peer_id_and_enc_sk;
@@ -254,7 +254,7 @@ mod tests {
         let el = unwrap!(common::spawn_event_loop(
             LISTENER_TOKEN + 1,
             Some("Connection Listener Test"),
-            || CrustData::new(BootstrapCache::new(None, 200, 120)),
+            || CrustData::new(bootstrap::Cache::new(Default::default())),
         ));
 
         let (event_tx, event_rx) = mpsc::channel();

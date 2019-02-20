@@ -11,7 +11,7 @@ mod cache;
 mod cache_validator;
 mod try_peer;
 
-pub use self::cache::Cache;
+pub use self::cache::{Cache, CacheConfig};
 use self::cache_validator::test_inactive_cached_peers;
 pub use self::cache_validator::CacheValidator;
 use self::try_peer::TryPeer;
