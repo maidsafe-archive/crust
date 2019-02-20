@@ -16,6 +16,27 @@ use std::net::IpAddr;
 #[cfg(test)]
 use std::path::PathBuf;
 
+/// Bootstrap cache specific configurable settings.
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+pub struct BootstrapCacheConfig {
+    /// File path for bootstrap cache.
+    pub file_name: Option<OsString>,
+    /// Maximum number of node contacts that will be cached for bootstrap.
+    pub max_size: usize,
+    /// Timeout for inactive cache entries in seconds.
+    pub timeout: u64,
+}
+
+impl Default for BootstrapCacheConfig {
+    fn default() -> BootstrapCacheConfig {
+        BootstrapCacheConfig {
+            file_name: None,
+            max_size: 200,
+            timeout: 120,
+        }
+    }
+}
+
 /// Crust configuration settings
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
@@ -40,8 +61,8 @@ pub struct Config {
     /// useful when you want to run multiple instances of Crust on the same machine.
     /// By default it will use the same as `service_discovery_port` value.
     pub service_discovery_listener_port: Option<u16>,
-    /// File for bootstrap cache
-    pub bootstrap_cache_name: Option<OsString>,
+    /// Bootstrap cache specific settings.
+    pub bootstrap_cache: BootstrapCacheConfig,
     /// Whitelisted nodes who are allowed to bootstrap off us or to connect to us
     pub whitelisted_node_ips: Option<HashSet<IpAddr>>,
     /// Whitelisted clients who are allowed to bootstrap off us
@@ -61,7 +82,7 @@ impl Default for Config {
             force_acceptor_port_in_ext_ep: false,
             service_discovery_port: None,
             service_discovery_listener_port: None,
-            bootstrap_cache_name: None,
+            bootstrap_cache: Default::default(),
             whitelisted_node_ips: None,
             whitelisted_client_ips: None,
             network_name: None,

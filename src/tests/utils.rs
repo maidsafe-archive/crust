@@ -65,7 +65,7 @@ pub fn get_event_sender() -> (crate::CrustEventSender, Receiver<Event>) {
 // Generate config with unique bootstrap cache name.
 pub fn gen_config() -> Config {
     let mut config = Config::default();
-    config.bootstrap_cache_name = Some(bootstrap_cache_tmp_file().into());
+    config.bootstrap_cache.file_name = Some(bootstrap_cache_tmp_file().into());
     config
 }
 
