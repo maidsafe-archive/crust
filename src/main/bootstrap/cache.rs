@@ -104,6 +104,13 @@ impl Cache {
         Ok(())
     }
 
+    /// Calls `commit()` and if error happens just logs it.
+    pub fn try_commit(&self) {
+        if let Err(e) = self.commit() {
+            info!("Failed to write bootstrap cache to disk: {}", e);
+        }
+    }
+
     /// Returns cached peers.
     /// Moves returned peers to the top of the cache.
     pub fn peers(&mut self) -> (HashSet<PeerInfo>, HashSet<PeerInfo>) {
