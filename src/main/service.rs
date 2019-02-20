@@ -26,10 +26,6 @@ use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::{mpsc, Arc};
 
-const DEFAULT_BOOTSTAP_CACHE_LIMIT: usize = 200;
-/// Bootstrap cache peer timeout in seconds.
-const DEFAULT_BOOTSTAP_CACHE_TIMEOUT: u64 = 120;
-
 const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5484;
 
 const DISABLE_NAT: bool = true;
@@ -131,15 +127,15 @@ impl Service {
         let mut mc = MappingContext::try_new()?;
         mc.add_peer_stuns(config.hard_coded_contacts.iter().cloned());
 
-        let bootstrap_cache_file = config.bootstrap_cache_name.clone();
+        let bootstrap_cache_cfg = config.bootstrap_cache.clone();
         let el = common::spawn_event_loop(
             EventToken::Unreserved as usize,
             Some(&format!("{:?}", our_uid)),
             move || {
                 let mut cache = bootstrap::Cache::new(
-                    bootstrap_cache_file,
-                    DEFAULT_BOOTSTAP_CACHE_LIMIT,
-                    DEFAULT_BOOTSTAP_CACHE_TIMEOUT,
+                    bootstrap_cache_cfg.file_name,
+                    bootstrap_cache_cfg.max_size,
+                    bootstrap_cache_cfg.timeout,
                 );
                 cache.read_file();
                 let mut user_data = CrustData::new(cache);
