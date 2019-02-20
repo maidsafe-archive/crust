@@ -219,7 +219,7 @@ mod tests {
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_SEC;
     use super::*;
     use crate::common::{
-        self, BootstrapperRole, CoreMessage, CrustUser, Message, NameHash, HASH_SIZE,
+        self, ipv4_addr, BootstrapperRole, CoreMessage, CrustUser, Message, NameHash, HASH_SIZE,
     };
     use crate::main::bootstrap;
     use crate::main::{Event, EventLoop};
@@ -581,7 +581,8 @@ mod tests {
         const SOCKET_TOKEN: Token = Token(0);
         let el = unwrap!(Poll::new());
 
-        let mut sock = unwrap!(TcpSock::connect(&listener.addr));
+        let listener_addr = ipv4_addr(127, 0, 0, 1, listener.addr.port());
+        let mut sock = unwrap!(TcpSock::connect(&listener_addr));
         let enc_ctx = EncryptContext::anonymous_encrypt(listener.uid.pub_enc_key);
         unwrap!(sock.set_encrypt_ctx(enc_ctx));
         unwrap!(el.register(&sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge(),));
