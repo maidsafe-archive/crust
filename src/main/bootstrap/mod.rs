@@ -181,9 +181,7 @@ impl Bootstrap {
                 {
                     let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
                     bootstrap_cache.remove(&bad_peer);
-                    if let Err(e) = bootstrap_cache.commit() {
-                        info!("Failed to write bootstrap cache to disk: {}", e);
-                    }
+                    bootstrap_cache.try_commit();
                 }
 
                 if let Some(reason) = opt_reason {
@@ -278,9 +276,7 @@ pub fn cache_peer_info(core: &mut EventLoopCore, poll: &Poll, peer_info: PeerInf
     }
 
     let expired_peers = user_data.bootstrap_cache.put(peer_info);
-    if let Err(e) = user_data.bootstrap_cache.commit() {
-        info!("Failed to write bootstrap cache to disk: {}", e);
-    }
+    user_data.bootstrap_cache.try_commit();
     test_inactive_cached_peers(core, poll, expired_peers);
 }
 

@@ -205,9 +205,7 @@ impl Connect {
     fn remove_peer_from_cache(&self, core: &mut EventLoopCore, peer_info: &PeerInfo) {
         let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
         bootstrap_cache.remove(peer_info);
-        if let Err(e) = bootstrap_cache.commit() {
-            info!("Failed to write bootstrap cache to disk: {}", e);
-        }
+        bootstrap_cache.try_commit();
     }
 
     fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
