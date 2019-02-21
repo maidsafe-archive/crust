@@ -312,12 +312,11 @@ fn seek_peers(
 
 /// Peers to bootsrap off.
 fn bootstrap_peers(
-    mut cached_peers: HashSet<PeerInfo>,
+    cached_peers: Vec<PeerInfo>,
     config: &Config,
     blacklist: HashSet<SocketAddr>,
 ) -> Vec<PeerInfo> {
-    let mut peers: Vec<_> = cached_peers.drain().collect();
-
+    let mut peers = cached_peers;
     let mut hard_coded = config.hard_coded_contacts.clone();
     let mut rng = rand::thread_rng();
     hard_coded.shuffle(&mut rng);
@@ -404,8 +403,7 @@ mod tests {
             let peer2 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000));
             let mut config = Config::default();
             config.hard_coded_contacts = vec![peer1];
-            let mut cached_peers = HashSet::new();
-            let _ = cached_peers.insert(peer2);
+            let cached_peers = vec![peer2];
 
             let peers = bootstrap_peers(cached_peers, &config, Default::default());
 
@@ -420,8 +418,7 @@ mod tests {
             let peer2 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000));
             let mut config = Config::default();
             config.hard_coded_contacts = vec![peer1];
-            let mut cached_peers = HashSet::new();
-            let _ = cached_peers.insert(peer2);
+            let cached_peers = vec![peer2];
             let mut blacklisted = HashSet::new();
             let _ = blacklisted.insert(ipv4_addr(1, 2, 3, 4, 4000));
 

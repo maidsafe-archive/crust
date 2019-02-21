@@ -17,6 +17,7 @@ pub use self::utils::{
 use crate::common::{CrustUser, PeerInfo};
 use crate::main::{Config, Event, Service};
 use crate::PeerId;
+use hamcrest2::prelude::*;
 use mio;
 use rand;
 use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
@@ -72,7 +73,7 @@ mod connect {
         });
         let pub_ci1 = unwrap!(ci_rx1.recv());
         let pub_key1 = pub_ci1.id.pub_enc_key;
-        let expected_conns: HashSet<PeerInfo> = pub_ci1
+        let expected_conns: Vec<PeerInfo> = pub_ci1
             .for_direct
             .iter()
             .map(|addr| PeerInfo::new(*addr, pub_key1))
@@ -84,7 +85,7 @@ mod connect {
         });
 
         let cached_peers = unwrap!(service2.bootstrap_cached_peers());
-        assert!(cached_peers.is_subset(&expected_conns));
+        assert_that!(&expected_conns, contains(cached_peers));
     }
 
     #[test]
