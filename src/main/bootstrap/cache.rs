@@ -46,7 +46,7 @@ pub struct Cache {
 
 impl Cache {
     /// Constructs new bootstrap cache. You can optionally specify the file name which will
-    /// be used to read/write the cache to. If no file name is give, the default path is used, see
+    /// be used to read/write the cache to. If no file name is given, the default path is used, see
     /// `#get_default_file_name()`.
     pub fn new(cfg: CacheConfig) -> Self {
         Cache {
