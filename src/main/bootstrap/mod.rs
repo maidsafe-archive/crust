@@ -12,8 +12,7 @@ mod cache_validator;
 mod try_peer;
 
 pub use self::cache::{Cache, CacheConfig};
-use self::cache_validator::test_inactive_cached_peers;
-pub use self::cache_validator::CacheValidator;
+pub use self::cache_validator::{test_inactive_cached_peers, CacheValidator};
 use self::try_peer::TryPeer;
 use crate::common::{
     BootstrapDenyReason, BootstrapperRole, CoreTimer, CrustUser, NameHash, PeerInfo, State,

@@ -7,7 +7,8 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-use crate::common::{CoreTimer, CrustUser, Message, State};
+use crate::common::{CoreTimer, CrustUser, Message, PeerInfo, State};
+use crate::main::bootstrap::test_inactive_cached_peers;
 use crate::main::{ConnectionId, CrustData, Event, EventLoopCore};
 use crate::PeerId;
 use mio::{Poll, Ready, Token};
@@ -38,6 +39,7 @@ pub struct ActiveConnection {
     their_role: CrustUser,
     event_tx: crate::CrustEventSender,
     heartbeat: Heartbeat,
+    peer_info: PeerInfo,
 }
 
 impl ActiveConnection {
@@ -58,6 +60,14 @@ impl ActiveConnection {
             their_id
         );
 
+        let their_addr = if let Ok(addr) = socket.peer_addr() {
+            addr
+        } else {
+            debug!("Failed to get active connection socket address.");
+            return;
+        };
+        let peer_info = PeerInfo::new(their_addr, their_id.pub_enc_key);
+
         let heartbeat = Heartbeat::new(core, token);
         let state = Rc::new(RefCell::new(ActiveConnection {
             token,
@@ -67,6 +77,7 @@ impl ActiveConnection {
             their_role,
             event_tx,
             heartbeat,
+            peer_info,
         }));
         let _ = core.insert_state(token, state.clone());
 
@@ -96,13 +107,16 @@ impl ActiveConnection {
                         self.event_tx
                             .send(Event::NewMessage(self.their_id, self.their_role, data));
                     self.reset_receive_heartbeat(core, poll);
+                    self.updated_bootstrap_cache(core, poll);
                 }
                 Ok(Some(Message::Heartbeat)) => {
                     self.reset_receive_heartbeat(core, poll);
+                    self.updated_bootstrap_cache(core, poll);
                 }
                 Ok(Some(message)) => {
                     debug!("{:?} - Unexpected message: {:?}", self.our_id, message);
                     self.reset_receive_heartbeat(core, poll);
+                    self.updated_bootstrap_cache(core, poll);
                 }
                 Ok(None) => return,
                 Err(e) => {
@@ -135,6 +149,8 @@ impl ActiveConnection {
         if let Err(e) = self.socket.write(msg) {
             debug!("{:?} - Failed to write socket: {:?}", self.our_id, e);
             self.terminate(core, poll);
+        } else {
+            self.updated_bootstrap_cache(core, poll);
         }
     }
 
@@ -150,6 +166,13 @@ impl ActiveConnection {
             debug!("{:?} - Failed to reset heartbeat: {:?}", self.our_id, e);
             self.terminate(core, poll);
         }
+    }
+
+    /// If peer we are communicating with is in bootstrap cache, move it to the top of the cache.
+    fn updated_bootstrap_cache(&mut self, core: &mut EventLoopCore, poll: &Poll) {
+        let expired_peers = core.user_data_mut().bootstrap_cache.touch(&self.peer_info);
+        core.user_data_mut().bootstrap_cache.try_commit();
+        test_inactive_cached_peers(core, poll, expired_peers);
     }
 }
 
@@ -266,4 +289,102 @@ impl Heartbeat {
 enum HeartbeatAction {
     Send,
     Terminate,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::common::ipv4_addr;
+    use crate::main::bootstrap;
+    use crate::tests::utils::{
+        get_event_sender, peer_info_with_rand_key, rand_peer_id_and_enc_sk, test_core,
+    };
+    use hamcrest2::prelude::*;
+    use mio::{Events, Poll, PollOpt, Ready, Token};
+    use std::net::TcpListener;
+    use std::thread;
+
+    fn wait_until_connected(sock: &TcpSock) {
+        const SOCKET_TOKEN: Token = Token(0);
+        let el = unwrap!(Poll::new());
+        unwrap!(el.register(sock, SOCKET_TOKEN, Ready::writable(), PollOpt::edge()));
+        let mut events = Events::with_capacity(16);
+        loop {
+            unwrap!(el.poll(&mut events, None));
+            for ev in events.iter() {
+                match ev.token() {
+                    SOCKET_TOKEN => return,
+                    _ => panic!("Unexpected event"),
+                }
+            }
+        }
+    }
+
+    mod active_connection {
+        use super::*;
+
+        mod write {
+            use super::*;
+            use std::io::Read;
+
+            #[test]
+            fn it_moves_peer_to_the_top_of_the_bootstrap_cache() {
+                let listener = unwrap!(TcpListener::bind(ipv4_addr(0, 0, 0, 0, 0)));
+                let listener_port = unwrap!(listener.local_addr()).port();
+                let _listener_thread = thread::spawn(move || {
+                    // just to block the listener
+                    let mut sock = unwrap!(unwrap!(listener.incoming().next()));
+                    let mut buf = [0; 4096];
+                    let _ = sock.read(&mut buf);
+                });
+
+                let (peer1_id, _) = rand_peer_id_and_enc_sk();
+                let peer1_sock = unwrap!(TcpSock::connect(&ipv4_addr(127, 0, 0, 1, listener_port)));
+                wait_until_connected(&peer1_sock);
+                let peer1_addr = unwrap!(peer1_sock.peer_addr());
+                let peer1_info = PeerInfo::new(peer1_addr, peer1_id.pub_enc_key);
+
+                let mut cache = bootstrap::Cache::new(Default::default());
+                let _ = cache.put(peer1_info);
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+
+                let mut core = test_core(cache);
+                let poll = unwrap!(Poll::new());
+                let (event_tx, _event_rx) = get_event_sender();
+                let (our_id, _) = rand_peer_id_and_enc_sk();
+                let event = Event::ConnectSuccess(peer1_id);
+                let token = Token(1);
+                ActiveConnection::start(
+                    &mut core,
+                    &poll,
+                    token,
+                    peer1_sock,
+                    our_id,
+                    peer1_id,
+                    CrustUser::Client,
+                    event,
+                    event_tx,
+                );
+
+                let state = unwrap!(core.get_state(token));
+                let mut state = state.borrow_mut();
+                let active_conn = unwrap!(state.as_any().downcast_mut::<ActiveConnection>());
+                active_conn.write(&mut core, &poll, None);
+
+                let cached_addrs: Vec<_> = core
+                    .user_data()
+                    .bootstrap_cache
+                    .snapshot()
+                    .iter()
+                    .map(|peer| peer.addr)
+                    .collect();
+                assert_that!(
+                    &cached_addrs,
+                    contains(vec![peer1_addr, ipv4_addr(1, 2, 3, 4, 4000),])
+                        .in_order()
+                        .exactly()
+                );
+            }
+        }
+    }
 }
