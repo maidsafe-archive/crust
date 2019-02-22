@@ -104,6 +104,12 @@ impl Cache {
         self.peers.peek_iter().map(|(_, peer)| *peer).collect()
     }
 
+    /// Moves given peer to the cache head. The difference from `put()` is that `touch()` won't
+    /// insert new peer, if it does not exist in the cache.
+    pub fn touch(&mut self, peer: &PeerInfo) {
+        let _ = self.peers.get(&peer.pub_key);
+    }
+
     fn open_file(&self) -> crate::Res<FileHandler<Vec<PeerInfo>>> {
         let fname = self
             .file_name
@@ -117,6 +123,7 @@ impl Cache {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hamcrest2::prelude::*;
 
     mod cache {
         use super::*;
@@ -307,6 +314,70 @@ mod tests {
                 assert_eq!(addrs[0], ipv4_addr(1, 2, 3, 5, 5000));
                 assert_eq!(addrs[1], ipv4_addr(1, 2, 3, 4, 4000));
                 assert_eq!(addrs[2], ipv4_addr(1, 2, 3, 6, 6000));
+            }
+        }
+
+        mod touch {
+            use super::*;
+
+            #[test]
+            fn it_doesnt_change_cache_if_given_peer_is_not_in_it() {
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: None,
+                    max_size: 5,
+                });
+                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+
+                cache.touch(&peer_info_with_rand_key(ipv4_addr(1, 2, 3, 6, 6000)));
+
+                let addrs: Vec<_> = cache.peers().iter().map(|peer| peer.addr).collect();
+                assert_that!(
+                    &addrs,
+                    contains(vec![
+                        ipv4_addr(1, 2, 3, 5, 5000),
+                        ipv4_addr(1, 2, 3, 4, 4000)
+                    ])
+                    .in_order()
+                    .exactly()
+                );
+            }
+
+            #[test]
+            fn it_moves_given_peer_to_cache_front() {
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: None,
+                    max_size: 5,
+                });
+                let peer1 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
+                cache.put(peer1);
+                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+                cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 6, 6000)));
+                let addrs: Vec<_> = cache.peers().iter().map(|peer| peer.addr).collect();
+                assert_that!(
+                    &addrs,
+                    contains(vec![
+                        ipv4_addr(1, 2, 3, 6, 6000),
+                        ipv4_addr(1, 2, 3, 5, 5000),
+                        ipv4_addr(1, 2, 3, 4, 4000)
+                    ])
+                    .in_order()
+                    .exactly()
+                );
+
+                cache.touch(&peer1);
+
+                let addrs: Vec<_> = cache.peers().iter().map(|peer| peer.addr).collect();
+                assert_that!(
+                    &addrs,
+                    contains(vec![
+                        ipv4_addr(1, 2, 3, 4, 4000),
+                        ipv4_addr(1, 2, 3, 6, 6000),
+                        ipv4_addr(1, 2, 3, 5, 5000)
+                    ])
+                    .in_order()
+                    .exactly()
+                );
             }
         }
     }
