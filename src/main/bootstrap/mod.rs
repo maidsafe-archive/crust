@@ -181,9 +181,7 @@ impl Bootstrap {
                 {
                     let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
                     bootstrap_cache.remove(&bad_peer);
-                    if let Err(e) = bootstrap_cache.commit() {
-                        info!("Failed to write bootstrap cache to disk: {}", e);
-                    }
+                    bootstrap_cache.try_commit();
                 }
 
                 if let Some(reason) = opt_reason {
@@ -278,9 +276,7 @@ pub fn cache_peer_info(core: &mut EventLoopCore, poll: &Poll, peer_info: PeerInf
     }
 
     let expired_peers = user_data.bootstrap_cache.put(peer_info);
-    if let Err(e) = user_data.bootstrap_cache.commit() {
-        info!("Failed to write bootstrap cache to disk: {}", e);
-    }
+    user_data.bootstrap_cache.try_commit();
     test_inactive_cached_peers(core, poll, expired_peers);
 }
 
@@ -316,12 +312,11 @@ fn seek_peers(
 
 /// Peers to bootsrap off.
 fn bootstrap_peers(
-    mut cached_peers: HashSet<PeerInfo>,
+    cached_peers: Vec<PeerInfo>,
     config: &Config,
     blacklist: HashSet<SocketAddr>,
 ) -> Vec<PeerInfo> {
-    let mut peers: Vec<_> = cached_peers.drain().collect();
-
+    let mut peers = cached_peers;
     let mut hard_coded = config.hard_coded_contacts.clone();
     let mut rng = rand::thread_rng();
     hard_coded.shuffle(&mut rng);
@@ -408,8 +403,7 @@ mod tests {
             let peer2 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000));
             let mut config = Config::default();
             config.hard_coded_contacts = vec![peer1];
-            let mut cached_peers = HashSet::new();
-            let _ = cached_peers.insert(peer2);
+            let cached_peers = vec![peer2];
 
             let peers = bootstrap_peers(cached_peers, &config, Default::default());
 
@@ -424,8 +418,7 @@ mod tests {
             let peer2 = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000));
             let mut config = Config::default();
             config.hard_coded_contacts = vec![peer1];
-            let mut cached_peers = HashSet::new();
-            let _ = cached_peers.insert(peer2);
+            let cached_peers = vec![peer2];
             let mut blacklisted = HashSet::new();
             let _ = blacklisted.insert(ipv4_addr(1, 2, 3, 4, 4000));
 

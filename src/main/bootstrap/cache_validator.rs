@@ -9,7 +9,7 @@
 
 use crate::common::{ipv4_addr, PeerInfo, State};
 use crate::main::{CrustData, EventLoopCore, EventToken};
-use crate::nat::GetExtAddr;
+use crate::nat::{GetExtAddr, GetExtAddrFinish};
 use mio::{Poll, Token};
 use safe_crypto::{PublicEncryptKey, SecretEncryptKey};
 use std::any::Any;
@@ -72,6 +72,23 @@ impl CacheValidator {
     /// Send STUN request to given peer and wait for response.
     /// If response arrives within timeout, peer is added to the bootstrap cache head.
     fn ping_peer_and_cache_alive(&mut self, core: &mut EventLoopCore, poll: &Poll, peer: PeerInfo) {
+        let finish = self.make_ping_resp_handler(peer);
+        if let Ok(request_token) = GetExtAddr::start(
+            core,
+            poll,
+            ipv4_addr(0, 0, 0, 0, 0),
+            &peer,
+            self.our_pk,
+            &self.our_sk,
+            Some(PEER_TEST_TIMEOUT_SEC),
+            finish,
+        ) {
+            let _ = self.sent_requests.insert(request_token);
+        }
+    }
+
+    /// Build a function that will handle response from the peer.
+    fn make_ping_resp_handler(&self, peer: PeerInfo) -> GetExtAddrFinish<CrustData> {
         let self_weak = self.self_weak.clone();
         let finish = move |core: &mut EventLoopCore,
                            poll: &Poll,
@@ -81,25 +98,16 @@ impl CacheValidator {
                 let mut self_rc = self_rc.borrow_mut();
                 let _ = self_rc.sent_requests.remove(&request_token);
                 if req_status.is_ok() {
-                    let expired_peers = core.user_data_mut().bootstrap_cache.put(peer);
+                    let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
+                    let expired_peers = bootstrap_cache.put(peer);
+                    bootstrap_cache.try_commit();
                     if !expired_peers.is_empty() {
                         self_rc.ping_inactive_peers(core, poll, expired_peers);
                     }
                 }
             }
         };
-        if let Ok(request_token) = GetExtAddr::start(
-            core,
-            poll,
-            ipv4_addr(0, 0, 0, 0, 0),
-            &peer,
-            self.our_pk,
-            &self.our_sk,
-            Some(PEER_TEST_TIMEOUT_SEC),
-            Box::new(finish),
-        ) {
-            let _ = self.sent_requests.insert(request_token);
-        }
+        Box::new(finish)
     }
 
     /// Terminates any in-progress requests.

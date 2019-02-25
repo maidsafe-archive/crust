@@ -69,11 +69,11 @@ impl Cache {
     pub fn read_file(&mut self) {
         match self.open_file() {
             Ok(file_handler) => {
-                let peers = file_handler.read_file().unwrap_or_else(|e| {
+                let mut peers = file_handler.read_file().unwrap_or_else(|e| {
                     info!("Failed to read bootstrap cache file: {}", e);
                     Default::default()
                 });
-                for peer in peers {
+                for peer in peers.drain(..).rev() {
                     let _ = self.peers.insert(peer.pub_key, peer);
                 }
             }
@@ -99,14 +99,21 @@ impl Cache {
     /// Writes bootstrap cache to disk.
     pub fn commit(&self) -> crate::Res<()> {
         let file_handler = self.open_file()?;
-        let peers: HashSet<PeerInfo> = self.peers.peek_iter().map(|(_, peer)| *peer).collect();
+        let peers: Vec<PeerInfo> = self.peers.peek_iter().map(|(_, peer)| *peer).collect();
         file_handler.write_file(&peers)?;
         Ok(())
     }
 
-    /// Returns cached peers.
+    /// Calls `commit()` and if error happens just logs it.
+    pub fn try_commit(&self) {
+        if let Err(e) = self.commit() {
+            info!("Failed to write bootstrap cache to disk: {}", e);
+        }
+    }
+
+    /// Returns cached peers in the most recently used order.
     /// Moves returned peers to the top of the cache.
-    pub fn peers(&mut self) -> (HashSet<PeerInfo>, HashSet<PeerInfo>) {
+    pub fn peers(&mut self) -> (Vec<PeerInfo>, HashSet<PeerInfo>) {
         let expired: HashSet<_> = self
             .peers
             .notify_iter()
@@ -115,7 +122,7 @@ impl Cache {
                 _ => None,
             })
             .collect();
-        let valid: HashSet<_> = self
+        let valid: Vec<_> = self
             .peers
             .notify_iter()
             .filter_map(|entry| match entry {
@@ -128,11 +135,11 @@ impl Cache {
 
     /// Returns a snaphost of cached.
     /// Note that the peer last time used value is not updated in the cache.
-    pub fn snapshot(&self) -> HashSet<PeerInfo> {
+    pub fn snapshot(&self) -> Vec<PeerInfo> {
         self.peers.peek_iter().map(|(_, peer)| *peer).collect()
     }
 
-    fn open_file(&self) -> crate::Res<FileHandler<HashSet<PeerInfo>>> {
+    fn open_file(&self) -> crate::Res<FileHandler<Vec<PeerInfo>>> {
         let fname = self
             .file_name
             .as_ref()
@@ -209,8 +216,7 @@ mod tests {
 
                 cache.read_file();
 
-                let addrs: Vec<SocketAddr> =
-                    cache.snapshot().iter().map(|peer| peer.addr).collect();
+                let addrs: Vec<_> = cache.snapshot().iter().map(|peer| peer.addr).collect();
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
             }
@@ -314,11 +320,37 @@ mod tests {
                     timeout: 120,
                 });
                 cache.read_file();
-                let addrs: Vec<SocketAddr> =
-                    cache.snapshot().iter().map(|peer| peer.addr).collect();
+                let addrs: Vec<_> = cache.snapshot().iter().map(|peer| peer.addr).collect();
                 assert_eq!(addrs.len(), 2);
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 4, 4000)));
                 assert!(addrs.contains(&ipv4_addr(1, 2, 3, 5, 5000)));
+            }
+
+            #[test]
+            fn it_retains_cached_items_order() {
+                let tmp_fname: OsString = bootstrap_cache_tmp_file().into();
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: Some(tmp_fname.clone()),
+                    max_size: 5,
+                    timeout: 120,
+                });
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 6, 6000)));
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000)));
+                let _ = cache.put(peer_info_with_rand_key(ipv4_addr(1, 2, 3, 5, 5000)));
+
+                unwrap!(cache.commit());
+
+                let mut cache = Cache::new(CacheConfig {
+                    file_name: Some(tmp_fname),
+                    max_size: 5,
+                    timeout: 120,
+                });
+                cache.read_file();
+                let addrs: Vec<_> = cache.snapshot().iter().map(|peer| peer.addr).collect();
+                assert_eq!(addrs.len(), 3);
+                assert_eq!(addrs[0], ipv4_addr(1, 2, 3, 5, 5000));
+                assert_eq!(addrs[1], ipv4_addr(1, 2, 3, 4, 4000));
+                assert_eq!(addrs[2], ipv4_addr(1, 2, 3, 6, 6000));
             }
         }
     }

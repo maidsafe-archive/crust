@@ -82,6 +82,9 @@ extern crate serde_derive;
 extern crate unwrap;
 
 #[cfg(test)]
+#[macro_use]
+extern crate hamcrest2;
+#[cfg(test)]
 extern crate serde_json;
 #[cfg(test)]
 #[macro_use]

@@ -7,7 +7,7 @@
 // specific language governing permissions and limitations relating to use of the SAFE Network
 // Software.
 
-pub use self::get_ext_addr::GetExtAddr;
+pub use self::get_ext_addr::{Finish as GetExtAddrFinish, GetExtAddr};
 use crate::common::{Core, CoreMessage, CoreTimer, State};
 use crate::nat::{util, MappingContext, NatError};
 use igd::PortMappingProtocol;

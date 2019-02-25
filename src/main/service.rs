@@ -655,8 +655,8 @@ impl Service {
         self.our_uid.pub_enc_key
     }
 
-    /// Returns a list of peers stored in bootstrap cache.
-    pub fn bootstrap_cached_peers(&self) -> crate::Res<HashSet<PeerInfo>> {
+    /// Returns a list of peers stored in bootstrap cache ordered by the most recently used.
+    pub fn bootstrap_cached_peers(&self) -> crate::Res<Vec<PeerInfo>> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
             let cached_peers = core.user_data().bootstrap_cache.snapshot();
