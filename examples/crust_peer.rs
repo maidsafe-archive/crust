@@ -104,7 +104,7 @@ use serde_json;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 
-use crust::{Config, ConnectionInfoResult, PeerId, PrivConnectionInfo, Service};
+use crust::{read_config_file, ConnectionInfoResult, PeerId, PrivConnectionInfo, Service};
 use rand::Rng;
 use safe_crypto::{gen_encrypt_keypair, gen_sign_keypair, SecretEncryptKey};
 use std::cmp;
@@ -283,10 +283,7 @@ fn main() {
         crust_event_category,
         category_tx,
     );
-    // TODO {{{
-    // let mut config = unwrap!(::crust::read_config_file());
-    let mut config = Config::default();
-    // }}}
+    let mut config = unwrap!(read_config_file());
 
     config.service_discovery_port = if matches.is_present("discovery-port") {
         Some(unwrap!(
