@@ -80,6 +80,7 @@ impl Cache {
     }
 
     /// Removes given peer from the cache.
+    #[allow(unused)]
     pub fn remove(&mut self, peer: &PeerInfo) {
         let _ = self.peers.remove(&peer.pub_key);
     }

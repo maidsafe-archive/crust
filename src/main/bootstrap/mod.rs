@@ -174,12 +174,6 @@ impl Bootstrap {
                 );
             }
             Err((bad_peer, opt_reason)) => {
-                {
-                    let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
-                    bootstrap_cache.remove(&bad_peer);
-                    bootstrap_cache.try_commit();
-                }
-
                 if let Some(reason) = opt_reason {
                     let (err_msg, is_err_fatal) = match reason {
                         BootstrapDenyReason::InvalidNameHash => ("Network name mismatch.", false),
@@ -494,46 +488,6 @@ mod tests {
 
             mod when_result_is_error {
                 use super::*;
-
-                #[test]
-                fn it_removes_peer_info_from_bootstrap_cache() {
-                    let mut bootstrap_cache = test_bootstrap_cache();
-                    let peer_info = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-                    bootstrap_cache.put(peer_info);
-                    let mut core = test_core(bootstrap_cache);
-                    let poll = unwrap!(Poll::new());
-
-                    let dummy_service_discovery_token = Token(9999);
-                    let (event_tx, _event_rx) = get_event_sender();
-                    let token = Token(1);
-                    let (peer_id, our_sk) = rand_peer_id_and_enc_sk();
-
-                    unwrap!(Bootstrap::start(
-                        &mut core,
-                        &poll,
-                        [1; 32],
-                        peer_id,
-                        BootstrapperRole::Client,
-                        HashSet::new(),
-                        token,
-                        dummy_service_discovery_token,
-                        event_tx,
-                        &our_sk
-                    ));
-
-                    let state = unwrap!(core.get_state(token));
-                    let mut state = state.borrow_mut();
-                    let bootstrap_state = unwrap!(state.as_any().downcast_mut::<Bootstrap>());
-                    bootstrap_state.handle_result(
-                        &mut core,
-                        &poll,
-                        Token(2),
-                        Err((peer_info, None)),
-                    );
-
-                    let cached_peers = core.user_data().bootstrap_cache.peers();
-                    assert!(cached_peers.is_empty());
-                }
 
                 #[test]
                 fn when_reason_is_invalid_hash_bootstrap_is_not_terminated() {
