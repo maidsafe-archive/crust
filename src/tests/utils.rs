@@ -115,7 +115,6 @@ pub fn test_bootstrap_cache() -> BootstrapCache {
     BootstrapCache::new(BootstrapCacheConfig {
         file_name: Some(cache_file),
         max_size: 100,
-        timeout: 120,
     })
 }
 

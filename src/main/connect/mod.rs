@@ -149,7 +149,7 @@ impl Connect {
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            bootstrap::cache_peer_info(core, poll, peer_info);
+            bootstrap::cache_peer_info(core, peer_info);
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -273,7 +273,7 @@ mod tests {
         fn remove_peer_from_cache_does_what_it_says() {
             let cached_peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
             let mut bootstrap_cache = test_bootstrap_cache();
-            let _ = bootstrap_cache.put(cached_peer);
+            bootstrap_cache.put(cached_peer);
             let mut core = test_core(bootstrap_cache);
             let poll = unwrap!(Poll::new());
 
@@ -300,7 +300,7 @@ mod tests {
 
             connect_state.remove_peer_from_cache(&mut core, &cached_peer);
 
-            let cached_peers = core.user_data().bootstrap_cache.snapshot();
+            let cached_peers = core.user_data().bootstrap_cache.peers();
             assert!(cached_peers.is_empty());
         }
     }

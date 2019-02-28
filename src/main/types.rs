@@ -171,8 +171,6 @@ pub enum EventToken {
     Listener,
     /// Config refresher token.
     ConfigRefresher,
-    /// Bootstrap cache validator token.
-    BootstrapCacheValidator,
     /// Up from this value you can use tokens for arbitrary events.
     Unreserved,
 }
