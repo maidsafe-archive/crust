@@ -37,5 +37,5 @@ hamcrest2 = "~0.2.3"
 
 [[example]]
 bench = false
-name = "crust_peer"
-path = "examples/crust_peer.rs"
+name = "secure_p2p_connection"
+path = "examples/secure_p2p_connection.rs"
