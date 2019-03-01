@@ -269,6 +269,14 @@ fn main() {
                 )
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("test-extreach")
+                .short("t")
+                .long("test-extreach")
+                .help(
+                    "Enables the External Reachability Test."
+                )
+        )
         .get_matches();
 
     // Construct Service and start listening
@@ -304,9 +312,10 @@ fn main() {
     let network = Arc::new(Mutex::new(Network::new()));
     let network2 = network.clone();
 
-    // Start event-handling thread
     let running_speed_test = matches.is_present("speed");
+    let test_extreach = matches.is_present("test-extreach");
 
+    // Start event-handling thread
     let _joiner = maidsafe_utilities::thread::named("CrustNode event handler", move || {
         let service = service_cloned;
         let timeout = Duration::from_millis(100);
@@ -392,6 +401,16 @@ fn main() {
                                     network2.clone(),
                                     peer_id,
                                 );
+                            }
+                            crust::Event::ListenerStarted(port) => {
+                                println!("\nListener started on port {}", port);
+                                if !test_extreach {
+                                    println!("Test for External Reachability is disabled");
+                                    let service_guard = unwrap!(service.lock());
+                                    unwrap!(service_guard.set_ext_reachability_test(false));
+                                } else {
+                                    println!("Test for External Reachability is enabled");
+                                }
                             }
                             crust::Event::LostPeer(peer_id) => {
                                 println!("\nLost connection to peer {:?}", peer_id);
