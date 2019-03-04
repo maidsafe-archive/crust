@@ -12,7 +12,7 @@
 //!
 //! ## Use
 //!
-//! 1. `cargo run --example crust_peer`
+//! 1. `cargo run --example secure_p2p_connection`
 //! 2. Type `prepare-connection-info` command and press ENTER. Crust will generate your
 //!    connection information and print it in JSON format.
 //! 3. Repeat the steps 1 and 2 on a remote machine or on localhost but in a different terminal.
@@ -246,7 +246,7 @@ fn handle_new_peer(
 fn main() {
     unwrap!(maidsafe_utilities::log::init(true));
 
-    let matches = App::new("crust_peer")
+    let matches = App::new("secure_p2p_connection")
         .about(
             "The crust peer will run, using any config file it can find to \
              try and bootstrap off any provided peers.",
