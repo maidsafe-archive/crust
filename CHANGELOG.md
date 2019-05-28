@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.32.0]
+- Update version to allow further local testing
+
 ## [0.31.0]
 - Update to dual license (MIT/BSD)
 - Upgrade unwrap version to 1.2.0
