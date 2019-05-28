@@ -8,11 +8,8 @@ os:
   - osx
 language: rust
 rust:
-  - 1.29.2
+  - stable
 sudo: false
-branches:
-  only:
-    - master
 cache:
   cargo: true
 before_script:
