@@ -26,8 +26,6 @@
     non_shorthand_field_patterns,
     overflowing_literals,
     plugin_as_library,
-    private_no_mangle_fns,
-    private_no_mangle_statics,
     stable_features,
     unconditional_recursion,
     unknown_lints,
@@ -595,7 +593,7 @@ fn parse_user_command(cmd: &str) -> Option<UserCommand> {
     unwrap!(app.write_help(&mut help_message));
     let help_message = unwrap!(String::from_utf8(help_message));
     let matches = app.get_matches_from_safe(
-        cmd.trim_right_matches(|c| c == '\r' || c == '\n')
+        cmd.trim_end_matches(|c| c == '\r' || c == '\n')
             .split(' ')
             .collect::<Vec<_>>(),
     );
