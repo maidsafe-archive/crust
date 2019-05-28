@@ -127,7 +127,8 @@ impl<UID: Uid> State for ConfigRefresher<UID> {
                             None
                         }
                     })
-            }).collect();
+            })
+            .collect();
 
         for peer in peers_to_terminate {
             peer.borrow_mut().terminate(core, poll);

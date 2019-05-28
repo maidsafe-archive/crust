@@ -248,7 +248,8 @@ impl SockInner {
                 queue.front().map_or(true, |&(ref timestamp, _)| {
                     timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
                 })
-            }).map(|(&priority, _)| priority)
+            })
+            .map(|(&priority, _)| priority)
             .collect();
         let dropped_msgs: usize = expired_keys
             .iter()
