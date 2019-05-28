@@ -149,7 +149,7 @@ impl Connect {
     ) {
         let _ = self.children.remove(&child);
         if let Some(socket) = res {
-            bootstrap::cache_peer_info(core, poll, peer_info);
+            bootstrap::cache_peer_info(core, peer_info);
             let self_weak = self.self_weak.clone();
             let handler = move |core: &mut EventLoopCore, poll: &Poll, child, res| {
                 if let Some(self_rc) = self_weak.upgrade() {
@@ -170,8 +170,6 @@ impl Connect {
             ) {
                 let _ = self.children.insert(child);
             }
-        } else {
-            self.remove_peer_from_cache(core, &peer_info);
         }
         self.maybe_terminate(core, poll);
     }
@@ -200,12 +198,6 @@ impl Connect {
             );
         }
         self.maybe_terminate(core, poll);
-    }
-
-    fn remove_peer_from_cache(&self, core: &mut EventLoopCore, peer_info: &PeerInfo) {
-        let bootstrap_cache = &mut core.user_data_mut().bootstrap_cache;
-        bootstrap_cache.remove(peer_info);
-        bootstrap_cache.try_commit();
     }
 
     fn maybe_terminate(&mut self, core: &mut EventLoopCore, poll: &Poll) {
@@ -245,63 +237,5 @@ impl State<CrustData> for Connect {
 
     fn as_any(&mut self) -> &mut Any {
         self
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    mod connect {
-        use super::*;
-        use crate::common::ipv4_addr;
-        use crate::tests::utils::{
-            get_event_sender, peer_info_with_rand_key, rand_peer_id_and_enc_sk,
-            test_bootstrap_cache, test_core,
-        };
-
-        fn test_priv_conn_info() -> (PrivConnectionInfo, SecretEncryptKey) {
-            let (id, sk) = rand_peer_id_and_enc_sk();
-            let conn_info = PrivConnectionInfo {
-                id,
-                for_direct: vec![ipv4_addr(1, 2, 3, 4, 4000)],
-            };
-            (conn_info, sk)
-        }
-
-        #[test]
-        fn remove_peer_from_cache_does_what_it_says() {
-            let cached_peer = peer_info_with_rand_key(ipv4_addr(1, 2, 3, 4, 4000));
-            let mut bootstrap_cache = test_bootstrap_cache();
-            let _ = bootstrap_cache.put(cached_peer);
-            let mut core = test_core(bootstrap_cache);
-            let poll = unwrap!(Poll::new());
-
-            let (our_ci, our_sk) = test_priv_conn_info();
-            let (their_ci, _) = test_priv_conn_info();
-            let their_ci = their_ci.to_pub_connection_info();
-
-            let (event_tx, _event_rx) = get_event_sender();
-            unwrap!(Connect::start(
-                &mut core,
-                &poll,
-                our_ci,
-                their_ci.clone(),
-                [1; 32],
-                event_tx,
-                &our_sk,
-                Default::default(),
-            ));
-
-            let connect_state_token = Token(0);
-            let state = unwrap!(core.get_state(connect_state_token));
-            let mut state = state.borrow_mut();
-            let connect_state = unwrap!(state.as_any().downcast_mut::<Connect>());
-
-            connect_state.remove_peer_from_cache(&mut core, &cached_peer);
-
-            let cached_peers = core.user_data().bootstrap_cache.snapshot();
-            assert!(cached_peers.is_empty());
-        }
     }
 }

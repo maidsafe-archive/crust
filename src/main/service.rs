@@ -150,7 +150,6 @@ impl Service {
             our_sk,
         };
         service.start_config_refresher()?;
-        service.start_bootstrap_cache_validator()?;
 
         Ok(service)
     }
@@ -659,7 +658,7 @@ impl Service {
     pub fn bootstrap_cached_peers(&self) -> crate::Res<Vec<PeerInfo>> {
         let (tx, rx) = mpsc::channel();
         let _ = self.post(move |core, _| {
-            let cached_peers = core.user_data().bootstrap_cache.snapshot();
+            let cached_peers = core.user_data().bootstrap_cache.peers();
             let _ = tx.send(cached_peers);
         });
         rx.recv().map_err(CrustError::ChannelRecv)
@@ -683,21 +682,6 @@ impl Service {
                 ));
             }
             let _ = tx.send(Ok(()));
-        })?;
-        rx.recv()?
-    }
-
-    /// Starts a future that periodically tests if inactive cached bootstrap peers are still alive.
-    fn start_bootstrap_cache_validator(&self) -> crate::Res<()> {
-        let (tx, rx) = mpsc::channel();
-        let (our_pk, our_sk) = (self.our_uid.pub_enc_key, self.our_sk.clone());
-        self.post(move |core, _poll| {
-            let _ = tx.send(bootstrap::CacheValidator::start(
-                core,
-                EventToken::BootstrapCacheValidator.into(),
-                our_pk,
-                our_sk,
-            ));
         })?;
         rx.recv()?
     }
