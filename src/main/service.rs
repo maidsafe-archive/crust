@@ -563,7 +563,7 @@ mod tests {
     use main::{self, Event};
     use rand;
     use std::collections::{hash_map, HashMap};
-    use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::Receiver;
     use std::sync::{mpsc, Arc, Barrier};
     use std::thread;
@@ -669,7 +669,6 @@ mod tests {
         service_1: &Service,
         event_rx_1: &Receiver<Event<UniqueId>>,
     ) {
-        use rand;
         use std::iter;
 
         let id_0 = service_0.id();
@@ -701,7 +700,7 @@ mod tests {
         service: &mut Service,
         event_rx: &Receiver<Event<UniqueId>>,
     ) -> PrivConnectionInfo {
-        static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+        static TOKEN_COUNTER: AtomicUsize = AtomicUsize::new(0);
         let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
 
         service.prepare_connection_info(token);
