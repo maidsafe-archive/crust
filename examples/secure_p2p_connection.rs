@@ -83,13 +83,12 @@
     box_pointers,
     missing_copy_implementations,
     missing_debug_implementations,
-    variant_size_differences
-)]
-// FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
-// on code in the master branch
-#![cfg_attr(
-    feature = "cargo-clippy",
-    allow(clone_on_ref_ptr, needless_pass_by_value)
+    variant_size_differences,
+
+    // FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
+    // on code in the master branch
+    clippy::clone_on_ref_ptr,
+    clippy::needless_pass_by_value
 )]
 
 #[macro_use]
@@ -273,9 +272,7 @@ fn main() {
             Arg::with_name("test-extreach")
                 .short("t")
                 .long("test-extreach")
-                .help(
-                    "Enables the External Reachability Test."
-                )
+                .help("Enables the External Reachability Test."),
         )
         .get_matches();
 

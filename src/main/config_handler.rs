@@ -87,7 +87,6 @@ pub fn read_config_file() -> crate::Res<Config> {
 #[cfg(test)]
 #[allow(dead_code)]
 pub fn write_config_file(hard_coded_contacts: Option<Vec<PeerInfo>>) -> crate::Res<PathBuf> {
-    use serde_json;
     use std::io::Write;
 
     let mut config = Config::default();
