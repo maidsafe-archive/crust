@@ -24,7 +24,7 @@ use safe_crypto::{gen_encrypt_keypair, PublicEncryptKey};
 use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -37,7 +37,7 @@ fn localhost_contact_info(port: u16, pk: PublicEncryptKey) -> PeerInfo {
 
 fn gen_service_discovery_port() -> u16 {
     const BASE: u16 = 40_000;
-    static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+    static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
     BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
 }
