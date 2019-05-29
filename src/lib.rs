@@ -55,23 +55,19 @@
     box_pointers,
     missing_copy_implementations,
     missing_debug_implementations,
-    variant_size_differences
-)]
-// FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
-// on code in the master branch
-#![cfg_attr(
-    feature = "cargo-clippy",
-    allow(
-        clone_on_ref_ptr,
-        decimal_literal_representation,
-        needless_pass_by_value,
-        too_many_arguments
-    )
+    variant_size_differences,
+
+    // FIXME: `needless_pass_by_value` and `clone_on_ref_ptr` required to make no intrusive changes
+    // on code in the master branch
+    clippy::clone_on_ref_ptr,
+    clippy::decimal_literal_representation,
+    clippy::needless_pass_by_value,
+    clippy::too_many_arguments
 )]
 
 #[macro_use]
 extern crate log;
-#[cfg_attr(feature = "cargo-clippy", allow(useless_attribute))]
+#[allow(clippy::useless_attribute)]
 #[macro_use]
 extern crate quick_error;
 #[macro_use]

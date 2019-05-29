@@ -162,7 +162,6 @@ impl<UID: Uid> Service<UID> {
                     debug!("Could not start ServiceDiscovery: {:?}", e);
                 }
             }
-            () // Only to get rustfmt happy else it corrects it in a way it detects error
         });
     }
 

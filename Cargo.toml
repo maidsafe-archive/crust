@@ -7,7 +7,7 @@ license = "MIT OR BSD-3-Clause"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.31.0"
+version = "0.32.0"
 
 [[example]]
 bench = false
@@ -21,7 +21,7 @@ crossbeam = "~0.2.10"
 get_if_addrs = "~0.4.1"
 igd = "~0.6.0"
 log = "~0.3.6"
-maidsafe_utilities = "~0.17.0"
+maidsafe_utilities = "~0.18.0"
 mio = "~0.6.9"
 mio-extras = "~2.0.5"
 net2 = "~0.2.30"

@@ -175,10 +175,9 @@ impl<UID: Uid> Bootstrap<UID> {
                     let mut is_err_fatal = true;
                     let err_msg = match reason {
                         BootstrapDenyReason::InvalidNameHash => "Network name mismatch.",
-                        #[cfg_attr(rustfmt, rustfmt_skip)]
                         BootstrapDenyReason::FailedExternalReachability => {
                             "Bootstrappee node could not establish connection to us."
-                        },
+                        }
                         BootstrapDenyReason::NodeNotWhitelisted => {
                             is_err_fatal = false;
                             "Our Node is not whitelisted"
