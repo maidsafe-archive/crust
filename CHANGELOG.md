@@ -1,5 +1,12 @@
 # CRUST - Change Log
 
+## [0.32.1]
+- Update byteorder depdendency to 1.3.0
+
+## [0.32.0]
+- Update to rust stable
+- Update depdencies and fix clippy errors
+
 ## [0.31.0]
 - Update to dual license (MIT/BSD)
 - Upgrade unwrap version to 1.2.0
