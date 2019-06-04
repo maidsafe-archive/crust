@@ -7,7 +7,7 @@ license = "MIT OR BSD-3-Clause"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.32.0"
+version = "0.32.1"
 
 [[example]]
 bench = false
@@ -15,7 +15,7 @@ name = "crust_peer"
 path = "examples/crust_peer.rs"
 
 [dependencies]
-byteorder = "~1.2.0"
+byteorder = "~1.3.0"
 config_file_handler = "~0.11.0"
 crossbeam = "~0.2.10"
 get_if_addrs = "~0.4.1"
